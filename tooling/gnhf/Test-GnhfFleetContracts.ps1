@@ -39,6 +39,7 @@ function Get-FileText {
 
 $requiredFiles = @(
     "Install-AgentSwitchboardGnhf.ps1",
+    "Start-AgentSwitchboard.ps1",
     "Start-GnhfSprint.ps1",
     "Start-GnhfFleet.ps1",
     "Get-GnhfFleetStatus.ps1",
@@ -94,6 +95,19 @@ if ($null -ne $installer) {
     Add-CheckResult -Passed ($installer.Contains("ReadToEndAsync()")) -Name "installer/async-probe-drain" -FailureMessage "redirected output is not drained asynchronously"
     Add-CheckResult -Passed ($installer.Contains('Available = $probeSucceeded')) -Name "installer/probe-gates-readiness" -FailureMessage "command presence can still be mistaken for readiness"
     Add-CheckResult -Passed ($installer.Contains('Test-GnhfFleetContracts.ps1')) -Name "installer/copies-validator" -FailureMessage "contract validator is not installed with the fleet"
+}
+
+$operatorLauncher = Get-FileText "Start-AgentSwitchboard.ps1"
+if ($null -ne $operatorLauncher) {
+    Add-CheckResult -Passed ($operatorLauncher.Contains('[switch]$Bootstrap')) -Name "operator/explicit-bootstrap" -FailureMessage "bootstrap is not explicit"
+    Add-CheckResult -Passed ($operatorLauncher.Contains('[switch]$PushBranch')) -Name "operator/explicit-push" -FailureMessage "push is not an explicit switch"
+    Add-CheckResult -Passed ($operatorLauncher.Contains('Start-GnhfSprint.ps1')) -Name "operator/delegates-to-bounded-sprint" -FailureMessage "operator launcher bypasses the bounded sprint launcher"
+    Add-CheckResult -Passed ($operatorLauncher.Contains('agent-switchboard.cmd')) -Name "operator/installs-reusable-command" -FailureMessage "reusable command launcher is not installed"
+    Add-CheckResult -Passed ($operatorLauncher.Contains('opencode-implementation.md')) -Name "operator/default-opencode-prompt" -FailureMessage "OpenCode default prompt is missing"
+    Add-CheckResult -Passed ($operatorLauncher.Contains('goose-validation.md')) -Name "operator/default-goose-prompt" -FailureMessage "Goose default prompt is missing"
+    Add-CheckResult -Passed ($operatorLauncher.Contains('agy-architecture.md')) -Name "operator/default-agy-prompt" -FailureMessage "AGY default prompt is missing"
+    Add-CheckResult -Passed ($operatorLauncher.Contains('copilot-tests.md')) -Name "operator/default-copilot-prompt" -FailureMessage "Copilot default prompt is missing"
+    Add-CheckResult -Passed (-not $operatorLauncher.Contains('PushBranch = $true')) -Name "operator/no-default-push" -FailureMessage "branch push is enabled by default"
 }
 
 $sprintLauncher = Get-FileText "Start-GnhfSprint.ps1"
