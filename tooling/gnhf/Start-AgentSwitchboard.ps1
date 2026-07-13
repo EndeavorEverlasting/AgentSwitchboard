@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$RepoPath = (Get-Location).Path,
-    [ValidateSet("opencode", "goose", "agy", "copilot")]
+    [ValidateSet("opencode", "goose", "agy", "copilot", "claude", "codex", "pi")]
     [string]$Agent = "opencode",
     [string]$PromptPath,
     [string]$Prompt,
@@ -13,6 +13,10 @@ param(
     [string]$StopWhen = "The bounded sprint is committed in the isolated worktree, targeted validation passes, and no unrelated files changed.",
     [string]$InstallRoot = "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet",
     [switch]$Bootstrap,
+    [ValidateSet("Core", "GnhfNative", "All", "None")]
+    [string]$InstallProfile = "Core",
+    [ValidateSet("goose", "opencode", "agy", "copilot", "claude", "codex", "pi", "gemini")]
+    [string[]]$InstallAgent = @(),
     [switch]$InstallOpenCodeAndCopilot,
     [switch]$PushBranch,
     [switch]$ListAgents
@@ -41,6 +45,21 @@ function Show-AgentReadiness {
         $status = if ($record.available) { "READY" } else { "BLOCKED" }
         $color = if ($record.available) { "Green" } else { "Yellow" }
         Write-Host ("  {0,-9} {1,-7} {2}" -f $agentName, $status, $record.evidence) -ForegroundColor $color
+    }
+
+    $workstationProperty = $State.PSObject.Properties["workstationInstall"]
+    if ($workstationProperty -and $workstationProperty.Value.evidence) {
+        foreach ($agentName in @("claude", "codex", "pi", "gemini")) {
+            $evidenceProperty = $workstationProperty.Value.evidence.PSObject.Properties[$agentName]
+            if (-not $evidenceProperty) {
+                continue
+            }
+
+            $record = $evidenceProperty.Value
+            $status = if ($record.installed) { "READY" } else { "MISSING" }
+            $color = if ($record.installed) { "Green" } else { "DarkGray" }
+            Write-Host ("  {0,-9} {1,-7} {2}" -f $agentName, $status, $record.evidence) -ForegroundColor $color
+        }
     }
 }
 
@@ -82,27 +101,43 @@ $RepoPath = (Resolve-Path -LiteralPath $RepoPath).Path
 $repoName = Split-Path -Leaf $RepoPath
 $statePath = Join-Path $InstallRoot "state.json"
 
-if ($Bootstrap -and -not (Test-Path -LiteralPath $statePath)) {
+if ($Bootstrap) {
     Write-Section "Bootstrap AgentSwitchboard"
-    $installerPath = Join-Path $PSScriptRoot "Install-AgentSwitchboardGnhf.ps1"
-    if (-not (Test-Path -LiteralPath $installerPath)) {
-        throw "Bootstrap installer not found: $installerPath"
-    }
+    $workstationInstallerPath = Join-Path $PSScriptRoot "Install-AgentSwitchboardWorkstation.ps1"
+    if (Test-Path -LiteralPath $workstationInstallerPath) {
+        $requestedInstallAgents = @($InstallAgent)
+        if ($InstallOpenCodeAndCopilot) {
+            $requestedInstallAgents = @($requestedInstallAgents) + @("opencode", "copilot")
+        }
 
-    $installParameters = @{
-        DefaultRepoPath = $RepoPath
-        InstallRoot = $InstallRoot
+        $installParameters = @{
+            DefaultRepoPath = $RepoPath
+            InstallRoot = $InstallRoot
+            InstallProfile = $InstallProfile
+            InstallAgent = @($requestedInstallAgents | Select-Object -Unique)
+        }
+        & $workstationInstallerPath @installParameters
     }
-    if ($InstallOpenCodeAndCopilot) {
-        $installParameters["InstallOpenCodeAndCopilot"] = $true
-    }
+    else {
+        $installerPath = Join-Path $PSScriptRoot "Install-AgentSwitchboardGnhf.ps1"
+        if (-not (Test-Path -LiteralPath $installerPath)) {
+            throw "Bootstrap installer not found: $workstationInstallerPath or $installerPath"
+        }
 
-    & $installerPath @installParameters
+        $installParameters = @{
+            DefaultRepoPath = $RepoPath
+            InstallRoot = $InstallRoot
+        }
+        if ($InstallOpenCodeAndCopilot) {
+            $installParameters["InstallOpenCodeAndCopilot"] = $true
+        }
+        & $installerPath @installParameters
+    }
 }
 
 if (-not (Test-Path -LiteralPath $statePath)) {
-    $bootstrapCommand = "pwsh -File `"$PSCommandPath`" -RepoPath `"$RepoPath`" -Bootstrap -ListAgents"
-    throw "Fleet state not found: $statePath. Run the one-time bootstrap/readiness probe:`n$bootstrapCommand"
+    $bootstrapCommand = "pwsh -File `"$PSCommandPath`" -RepoPath `"$RepoPath`" -Bootstrap -InstallProfile Core -ListAgents"
+    throw "Fleet state not found: $statePath. Run the one-time workstation bootstrap/readiness probe:`n$bootstrapCommand"
 }
 
 Install-OperatorLauncher -DestinationRoot $InstallRoot
@@ -114,14 +149,23 @@ if ($ListAgents) {
     return
 }
 
-$agentProperty = $state.agents.PSObject.Properties[$Agent]
-if (-not $agentProperty) {
-    throw "Agent '$Agent' has no adapter record in $statePath. Rerun bootstrap to refresh detection."
+$nativeAgents = @("claude", "codex", "pi")
+if ($nativeAgents -contains $Agent) {
+    $nativeCommand = Get-Command $Agent -ErrorAction SilentlyContinue
+    if (-not $nativeCommand) {
+        throw "Agent '$Agent' is not installed. Rerun bootstrap with -InstallAgent $Agent, or use -InstallProfile GnhfNative."
+    }
 }
+else {
+    $agentProperty = $state.agents.PSObject.Properties[$Agent]
+    if (-not $agentProperty) {
+        throw "Agent '$Agent' has no adapter record in $statePath. Rerun bootstrap to refresh detection."
+    }
 
-$agentRecord = $agentProperty.Value
-if (-not $agentRecord.available) {
-    throw "Agent '$Agent' is blocked. Evidence: $($agentRecord.evidence)"
+    $agentRecord = $agentProperty.Value
+    if (-not $agentRecord.available) {
+        throw "Agent '$Agent' is blocked. Evidence: $($agentRecord.evidence)"
+    }
 }
 
 $defaultPromptByAgent = @{
@@ -147,8 +191,9 @@ elseif ($PromptPath) {
     $PromptPath = (Resolve-Path -LiteralPath $PromptPath).Path
 }
 else {
-    if (-not $repoName.Equals("AgentSwitchboard", [StringComparison]::OrdinalIgnoreCase)) {
-        throw "No sprint prompt was supplied for '$repoName'. Copy a bounded sprint prompt and pass -Prompt (Get-Clipboard -Raw), or pass -PromptPath. Bundled default prompts are scoped specifically to AgentSwitchboard."
+    $hasBundledPrompt = $defaultPromptByAgent.ContainsKey($Agent)
+    if (-not $repoName.Equals("AgentSwitchboard", [StringComparison]::OrdinalIgnoreCase) -or -not $hasBundledPrompt) {
+        throw "No sprint prompt was supplied for '$repoName' with agent '$Agent'. Copy a bounded sprint prompt and pass -Prompt (Get-Clipboard -Raw), or pass -PromptPath. Bundled default prompts are scoped specifically to AgentSwitchboard's original four lanes."
     }
 
     $PromptPath = Join-Path $PSScriptRoot (Join-Path "prompts" $defaultPromptByAgent[$Agent])
