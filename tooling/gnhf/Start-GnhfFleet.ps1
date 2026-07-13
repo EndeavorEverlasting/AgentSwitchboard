@@ -10,6 +10,10 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+if ($Wait -and $KeepWindowsOpen) {
+    throw "-Wait and -KeepWindowsOpen are mutually exclusive. Use -Wait for automation or -KeepWindowsOpen for interactive inspection."
+}
+
 function Start-PwshProcess {
     param([Parameter(Mandatory)][string[]]$Arguments)
 
@@ -150,13 +154,16 @@ foreach ($sprint in $manifest.sprints) {
 }
 
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-$launchReportPath = Join-Path $InstallRoot "reports\fleet-launch-$timestamp.json"
+$reportsRoot = Join-Path $InstallRoot "reports"
+New-Item -ItemType Directory -Path $reportsRoot -Force | Out-Null
+$launchReportPath = Join-Path $reportsRoot "fleet-launch-$timestamp.json"
 [pscustomobject]@{
     schemaVersion = 1
     launchedAt = (Get-Date).ToString("o")
     manifestPath = $ManifestPath
     pushBranches = [bool]$PushBranches
     keepWindowsOpen = [bool]$KeepWindowsOpen
+    waitForCompletion = [bool]$Wait
     launches = @($launches)
 } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $launchReportPath -Encoding utf8NoBOM
 
