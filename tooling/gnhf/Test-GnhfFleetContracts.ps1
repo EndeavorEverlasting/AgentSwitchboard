@@ -1,0 +1,132 @@
+[CmdletBinding()]
+param(
+    [string]$RootPath = $PSScriptRoot
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+$RootPath = (Resolve-Path -LiteralPath $RootPath).Path
+$failures = [System.Collections.Generic.List[string]]::new()
+$passes = [System.Collections.Generic.List[string]]::new()
+
+function Add-CheckResult {
+    param(
+        [Parameter(Mandatory)][bool]$Passed,
+        [Parameter(Mandatory)][string]$Name,
+        [Parameter(Mandatory)][string]$FailureMessage
+    )
+
+    if ($Passed) {
+        [void]$passes.Add($Name)
+    }
+    else {
+        [void]$failures.Add("$Name`: $FailureMessage")
+    }
+}
+
+function Get-FileText {
+    param([Parameter(Mandatory)][string]$RelativePath)
+
+    $path = Join-Path $RootPath $RelativePath
+    if (-not (Test-Path -LiteralPath $path)) {
+        [void]$failures.Add("required-file/$RelativePath`: file is missing")
+        return $null
+    }
+
+    return Get-Content -LiteralPath $path -Raw
+}
+
+$requiredFiles = @(
+    "Install-AgentSwitchboardGnhf.ps1",
+    "Start-GnhfSprint.ps1",
+    "Start-GnhfFleet.ps1",
+    "Get-GnhfFleetStatus.ps1",
+    "Test-GnhfFleetContracts.ps1",
+    "gnhf-fleet.example.json",
+    "README.md"
+)
+
+foreach ($relativePath in $requiredFiles) {
+    Add-CheckResult `
+        -Passed (Test-Path -LiteralPath (Join-Path $RootPath $relativePath)) `
+        -Name "required-file/$relativePath" `
+        -FailureMessage "file is missing"
+}
+
+$powerShellFiles = Get-ChildItem -LiteralPath $RootPath -Filter "*.ps1" -File
+foreach ($file in $powerShellFiles) {
+    $tokens = $null
+    $parseErrors = $null
+    [void][System.Management.Automation.Language.Parser]::ParseFile(
+        $file.FullName,
+        [ref]$tokens,
+        [ref]$parseErrors
+    )
+
+    Add-CheckResult `
+        -Passed ($parseErrors.Count -eq 0) `
+        -Name "powershell-parse/$($file.Name)" `
+        -FailureMessage (($parseErrors | ForEach-Object { $_.Message }) -join "; ")
+}
+
+$manifestPath = Join-Path $RootPath "gnhf-fleet.example.json"
+try {
+    $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+    Add-CheckResult -Passed ($manifest.schemaVersion -eq 1) -Name "manifest/schema-version" -FailureMessage "expected schemaVersion 1"
+    Add-CheckResult -Passed ($manifest.sprints.Count -eq 4) -Name "manifest/sprint-count" -FailureMessage "expected four defined sprint lanes"
+
+    foreach ($sprint in $manifest.sprints) {
+        $name = [string]$sprint.name
+        Add-CheckResult -Passed (-not [string]::IsNullOrWhiteSpace($name)) -Name "manifest/name" -FailureMessage "a sprint has no name"
+        Add-CheckResult -Passed (-not [string]::IsNullOrWhiteSpace([string]$sprint.agent)) -Name "manifest/$name/agent" -FailureMessage "agent is missing"
+        Add-CheckResult -Passed (-not [string]::IsNullOrWhiteSpace([string]$sprint.repoPath)) -Name "manifest/$name/repoPath" -FailureMessage "repoPath is missing"
+        Add-CheckResult -Passed (-not [string]::IsNullOrWhiteSpace([string]$sprint.promptPath)) -Name "manifest/$name/promptPath" -FailureMessage "promptPath is missing"
+        Add-CheckResult -Passed (-not [string]::IsNullOrWhiteSpace([string]$sprint.stopWhen)) -Name "manifest/$name/stopWhen" -FailureMessage "observable stop condition is missing"
+    }
+}
+catch {
+    [void]$failures.Add("manifest/json`: $($_.Exception.Message)")
+}
+
+$installer = Get-FileText "Install-AgentSwitchboardGnhf.ps1"
+if ($null -ne $installer) {
+    Add-CheckResult -Passed ($installer.Contains("ReadToEndAsync()")) -Name "installer/async-probe-drain" -FailureMessage "redirected output is not drained asynchronously"
+    Add-CheckResult -Passed ($installer.Contains('Available = $probeSucceeded')) -Name "installer/probe-gates-readiness" -FailureMessage "command presence can still be mistaken for readiness"
+    Add-CheckResult -Passed ($installer.Contains('Test-GnhfFleetContracts.ps1')) -Name "installer/copies-validator" -FailureMessage "contract validator is not installed with the fleet"
+}
+
+$sprintLauncher = Get-FileText "Start-GnhfSprint.ps1"
+if ($null -ne $sprintLauncher) {
+    Add-CheckResult -Passed ($sprintLauncher.Contains('$objective | & $gnhfPath @gnhfArguments')) -Name "sprint/stdin-prompt" -FailureMessage "prompt is not streamed through stdin"
+    Add-CheckResult -Passed (-not $sprintLauncher.Contains('[void]$gnhfArguments.Add($objective)')) -Name "sprint/no-prompt-argv" -FailureMessage "prompt is still appended to argv"
+    Add-CheckResult -Passed ($sprintLauncher.Contains('Write-Error -ErrorRecord $_ -ErrorAction Continue')) -Name "sprint/controlled-error-path" -FailureMessage "catch block can terminate before the explicit exit path"
+}
+
+$fleetLauncher = Get-FileText "Start-GnhfFleet.ps1"
+if ($null -ne $fleetLauncher) {
+    Add-CheckResult -Passed ($fleetLauncher.Contains('if ($Wait -and $KeepWindowsOpen)')) -Name "fleet/rejects-deadlock-flags" -FailureMessage "-Wait and -KeepWindowsOpen can still be combined"
+    Add-CheckResult -Passed ($fleetLauncher.Contains('New-Item -ItemType Directory -Path $reportsRoot -Force')) -Name "fleet/recreates-report-directory" -FailureMessage "launch report directory is not recreated"
+}
+
+$statusReporter = Get-FileText "Get-GnhfFleetStatus.ps1"
+if ($null -ne $statusReporter) {
+    Add-CheckResult -Passed ($statusReporter.Contains('New-Item -ItemType Directory -Path $reportsRoot -Force')) -Name "status/recreates-report-directory" -FailureMessage "morning report directory is not recreated"
+}
+
+Write-Host "GNHF FLEET CONTRACT VALIDATION" -ForegroundColor Cyan
+foreach ($pass in $passes) {
+    Write-Host "[PASS] $pass" -ForegroundColor Green
+}
+foreach ($failure in $failures) {
+    Write-Host "[FAIL] $failure" -ForegroundColor Red
+}
+
+Write-Host ""
+Write-Host ("Result: {0} passed / {1} failed" -f $passes.Count, $failures.Count)
+
+if ($failures.Count -gt 0) {
+    exit 1
+}
+
+exit 0
