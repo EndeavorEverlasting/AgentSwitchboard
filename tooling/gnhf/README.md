@@ -14,6 +14,51 @@ Windows-first launchers for bounded unattended GNHF sprints.
 - CLI readiness requires a successful version probe, not command presence alone.
 - Prompt files are streamed over stdin so detailed PRDs do not hit Windows argv limits.
 
+## Start here: launch an agent and code
+
+From the AgentSwitchboard checkout, bootstrap the fleet and launch one bounded OpenCode sprint against SysAdminSuite:
+
+```powershell
+cd "C:\Users\Cheex\Desktop\dev\agents\AgentSwitchboard"
+
+pwsh -NoLogo -NoProfile -File .\tooling\gnhf\Start-AgentSwitchboard.ps1 `
+  -RepoPath "C:\Users\Cheex\Desktop\dev\SysAdminSuite" `
+  -Agent opencode `
+  -Bootstrap
+```
+
+The bootstrap installs or locates GNHF, probes OpenCode, Goose, AGY, and Copilot, writes local fleet state under `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet`, and installs this reusable launcher:
+
+```text
+%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\agent-switchboard.cmd
+```
+
+After the first bootstrap, enter any clean Git repository and launch the default bounded sprint for an available agent:
+
+```powershell
+cd "C:\Users\Cheex\Desktop\dev\SysAdminSuite"
+& "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet\agent-switchboard.cmd" -Agent opencode
+```
+
+List the detected adapters without starting work:
+
+```powershell
+& "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet\agent-switchboard.cmd" -ListAgents
+```
+
+Launch a custom sprint brief:
+
+```powershell
+& "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet\agent-switchboard.cmd" `
+  -Agent goose `
+  -PromptPath "C:\path\to\bounded-sprint.md" `
+  -MaxIterations 2 `
+  -MaxTokens 100000 `
+  -StopWhen "The scoped validation is complete, evidence is recorded, and no implementation files changed."
+```
+
+Default prompt routing is OpenCode for implementation, Goose for validation, AGY for architecture, and Copilot for tests. Use `-PushBranch` only after a controlled local run proves the lane; local commit-only worktrees are the default.
+
 ## Validate the fleet contracts
 
 The validator uses the built-in PowerShell parser and deterministic text/manifest checks; it does not launch agents or mutate a target repository.
