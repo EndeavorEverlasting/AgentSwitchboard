@@ -1,0 +1,215 @@
+[CmdletBinding()]
+param(
+    [string]$RepoPath = (Get-Location).Path,
+    [ValidateSet("opencode", "goose", "agy", "copilot")]
+    [string]$Agent = "opencode",
+    [string]$PromptPath,
+    [string]$Prompt,
+    [string]$Name,
+    [ValidateRange(1, 100)]
+    [int]$MaxIterations = 4,
+    [ValidateRange(0, 1000000000)]
+    [int]$MaxTokens = 250000,
+    [string]$StopWhen = "The bounded sprint is committed in the isolated worktree, targeted validation passes, and no unrelated files changed.",
+    [string]$InstallRoot = "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet",
+    [switch]$Bootstrap,
+    [switch]$InstallOpenCodeAndCopilot,
+    [switch]$PushBranch,
+    [switch]$ListAgents
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+function Write-Section {
+    param([Parameter(Mandatory)][string]$Text)
+    Write-Host "`n=== $Text ===" -ForegroundColor Cyan
+}
+
+function Show-AgentReadiness {
+    param([Parameter(Mandatory)]$State)
+
+    Write-Host "Agent readiness:" -ForegroundColor Cyan
+    foreach ($agentName in @("opencode", "goose", "agy", "copilot")) {
+        $property = $State.agents.PSObject.Properties[$agentName]
+        if (-not $property) {
+            Write-Host ("  {0,-9} UNKNOWN  no state record" -f $agentName) -ForegroundColor Yellow
+            continue
+        }
+
+        $record = $property.Value
+        $status = if ($record.available) { "READY" } else { "BLOCKED" }
+        $color = if ($record.available) { "Green" } else { "Yellow" }
+        Write-Host ("  {0,-9} {1,-7} {2}" -f $agentName, $status, $record.evidence) -ForegroundColor $color
+    }
+}
+
+function Install-OperatorLauncher {
+    param([Parameter(Mandatory)][string]$DestinationRoot)
+
+    New-Item -ItemType Directory -Path $DestinationRoot -Force | Out-Null
+
+    $destinationScript = Join-Path $DestinationRoot "Start-AgentSwitchboard.ps1"
+    $sourceScript = [IO.Path]::GetFullPath($PSCommandPath)
+    $destinationFullPath = [IO.Path]::GetFullPath($destinationScript)
+    if (-not $sourceScript.Equals($destinationFullPath, [StringComparison]::OrdinalIgnoreCase)) {
+        Copy-Item -LiteralPath $sourceScript -Destination $destinationScript -Force
+    }
+
+    $cmdLauncher = @'
+@echo off
+setlocal
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0Start-AgentSwitchboard.ps1" %*
+set "_code=%ERRORLEVEL%"
+endlocal & exit /b %_code%
+'@
+    Set-Content -LiteralPath (Join-Path $DestinationRoot "agent-switchboard.cmd") -Value $cmdLauncher -Encoding ascii
+}
+
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    throw "AgentSwitchboard requires PowerShell 7. Open pwsh and rerun this command."
+}
+
+if ($Prompt -and $PromptPath) {
+    throw "Use either -Prompt or -PromptPath, not both."
+}
+
+if ([string]::IsNullOrWhiteSpace($StopWhen)) {
+    throw "-StopWhen must describe an observable completion condition."
+}
+
+$RepoPath = (Resolve-Path -LiteralPath $RepoPath).Path
+$statePath = Join-Path $InstallRoot "state.json"
+
+if ($Bootstrap -and -not (Test-Path -LiteralPath $statePath)) {
+    Write-Section "Bootstrap AgentSwitchboard"
+    $installerPath = Join-Path $PSScriptRoot "Install-AgentSwitchboardGnhf.ps1"
+    if (-not (Test-Path -LiteralPath $installerPath)) {
+        throw "Bootstrap installer not found: $installerPath"
+    }
+
+    $installParameters = @{
+        DefaultRepoPath = $RepoPath
+        InstallRoot = $InstallRoot
+    }
+    if ($InstallOpenCodeAndCopilot) {
+        $installParameters.InstallOpenCodeAndCopilot = $true
+    }
+
+    & $installerPath @installParameters
+}
+
+if (-not (Test-Path -LiteralPath $statePath)) {
+    $bootstrapCommand = "pwsh -File `"$PSCommandPath`" -RepoPath `"$RepoPath`" -Agent $Agent -Bootstrap"
+    throw "Fleet state not found: $statePath. Run the one-time bootstrap:`n$bootstrapCommand"
+}
+
+Install-OperatorLauncher -DestinationRoot $InstallRoot
+$state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
+
+if ($ListAgents) {
+    Show-AgentReadiness -State $state
+    Write-Host "`nLauncher: $(Join-Path $InstallRoot 'agent-switchboard.cmd')" -ForegroundColor Cyan
+    return
+}
+
+$agentProperty = $state.agents.PSObject.Properties[$Agent]
+if (-not $agentProperty) {
+    throw "Agent '$Agent' has no adapter record in $statePath. Rerun bootstrap to refresh detection."
+}
+
+$agentRecord = $agentProperty.Value
+if (-not $agentRecord.available) {
+    throw "Agent '$Agent' is blocked. Evidence: $($agentRecord.evidence)"
+}
+
+$defaultPromptByAgent = @{
+    opencode = "opencode-implementation.md"
+    goose = "goose-validation.md"
+    agy = "agy-architecture.md"
+    copilot = "copilot-tests.md"
+}
+
+$runtimePromptPath = $null
+if ($Prompt) {
+    if ([string]::IsNullOrWhiteSpace($Prompt)) {
+        throw "-Prompt cannot be blank."
+    }
+
+    $runtimePromptRoot = Join-Path $InstallRoot "runtime-prompts"
+    New-Item -ItemType Directory -Path $runtimePromptRoot -Force | Out-Null
+    $runtimePromptPath = Join-Path $runtimePromptRoot ("operator-{0}.md" -f (Get-Date -Format "yyyyMMdd-HHmmss-fff"))
+    Set-Content -LiteralPath $runtimePromptPath -Value $Prompt -Encoding utf8NoBOM
+    $PromptPath = $runtimePromptPath
+}
+elseif ($PromptPath) {
+    $PromptPath = (Resolve-Path -LiteralPath $PromptPath).Path
+}
+else {
+    $PromptPath = Join-Path $PSScriptRoot (Join-Path "prompts" $defaultPromptByAgent[$Agent])
+    if (-not (Test-Path -LiteralPath $PromptPath)) {
+        $installedPromptPath = Join-Path $InstallRoot (Join-Path "prompts" $defaultPromptByAgent[$Agent])
+        if (Test-Path -LiteralPath $installedPromptPath) {
+            $PromptPath = $installedPromptPath
+        }
+        else {
+            throw "Default prompt not found for '$Agent'. Supply -PromptPath explicitly."
+        }
+    }
+}
+
+if (-not $Name) {
+    $repoName = Split-Path -Leaf $RepoPath
+    $Name = "$repoName-$Agent"
+}
+
+$sprintLauncher = Join-Path $InstallRoot "Start-GnhfSprint.ps1"
+if (-not (Test-Path -LiteralPath $sprintLauncher)) {
+    throw "Sprint launcher not found: $sprintLauncher. Rerun with -Bootstrap after removing stale fleet state."
+}
+
+$arguments = [System.Collections.Generic.List[string]]::new()
+foreach ($argument in @(
+    "-NoLogo",
+    "-NoProfile",
+    "-ExecutionPolicy", "Bypass",
+    "-File", $sprintLauncher,
+    "-RepoPath", $RepoPath,
+    "-Agent", $Agent,
+    "-PromptPath", $PromptPath,
+    "-Name", $Name,
+    "-MaxIterations", [string]$MaxIterations,
+    "-MaxTokens", [string]$MaxTokens,
+    "-StopWhen", $StopWhen
+)) {
+    [void]$arguments.Add($argument)
+}
+if ($PushBranch) {
+    [void]$arguments.Add("-PushBranch")
+}
+
+Write-Section "Launch coding sprint"
+Write-Host "Repo:       $RepoPath"
+Write-Host "Agent:      $Agent"
+Write-Host "Prompt:     $PromptPath"
+Write-Host "Iterations: $MaxIterations"
+Write-Host "Token cap:  $MaxTokens"
+Write-Host "Push:       $([bool]$PushBranch)"
+Write-Host "Launcher:   $sprintLauncher"
+
+$exitCode = 1
+try {
+    & pwsh @arguments
+    $exitCode = $LASTEXITCODE
+}
+finally {
+    if ($runtimePromptPath -and (Test-Path -LiteralPath $runtimePromptPath)) {
+        Remove-Item -LiteralPath $runtimePromptPath -Force
+    }
+}
+
+if ($exitCode -ne 0) {
+    throw "AgentSwitchboard sprint failed with exit code $exitCode. Review the launcher summary under '$InstallRoot\logs'."
+}
+
+Write-Host "`nSprint completed successfully. Review the generated GNHF worktree and launcher summary before merging." -ForegroundColor Green
