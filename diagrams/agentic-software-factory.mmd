@@ -1,0 +1,49 @@
+flowchart LR
+    subgraph HB["Engineer boundaries"]
+        Intake["Intent, constraints, risk budget, acceptance criteria"]
+        Review{"Acceptance, exception, or escalation review"}
+    end
+
+    subgraph AF["Agentic layer — software factory"]
+        Router["Factory Router Agent"]
+        Route{"Select a predefined ADW"}
+        Chore["Routine chore ADW"]
+        Feature["Feature-build ADW"]
+        Hotfix["Critical hotfix ADW"]
+        Plan["Planning and decomposition agent"]
+        Context["Repository evidence, contracts, policies, and prior artifacts"]
+        Sandbox["Provision isolated agent sandbox"]
+        Build["Build Agent\nretain session for repair"]
+        Guards["Deterministic code guardrails\nformat · lint · type · schema · policy"]
+        GuardGate{"Guardrails pass?"}
+        TestAgent["Test Agent\nfocused execution and failure compression"]
+        TestGate{"Required tests pass?"}
+        Evidence["Evidence pack\ndiff · checks · logs · artifacts · risks"]
+        Escalation{"Ambiguous, unsafe, or outside policy?"}
+    end
+
+    subgraph AL["Application layer"]
+        Repo[("Repository")]
+        Delivery["Build, package, deploy, or merge gate"]
+    end
+
+    Intake --> Router --> Route
+    Route --> Chore
+    Route --> Feature
+    Route --> Hotfix
+    Chore --> Plan
+    Feature --> Plan
+    Hotfix --> Plan
+    Context --> Plan
+    Plan --> Sandbox --> Build --> Repo
+    Repo --> Guards --> GuardGate
+    GuardGate -- "No: deterministic errors" --> Build
+    GuardGate -- "Yes" --> TestAgent --> TestGate
+    TestGate -- "No: summarized failures" --> Build
+    TestGate -- "Yes" --> Evidence --> Review
+    Build --> Escalation
+    Guards --> Escalation
+    TestAgent --> Escalation
+    Escalation -- "Yes" --> Review
+    Review -- "Revise intent or authorize exception" --> Router
+    Review -- "Accepted" --> Delivery
