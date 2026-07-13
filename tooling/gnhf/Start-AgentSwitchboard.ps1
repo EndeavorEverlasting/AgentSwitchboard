@@ -8,7 +8,7 @@ param(
     [string]$Name,
     [ValidateRange(1, 100)]
     [int]$MaxIterations = 4,
-    [ValidateRange(0, 1000000000)]
+    [ValidateRange(1, 1000000000)]
     [int]$MaxTokens = 250000,
     [string]$StopWhen = "The bounded sprint is committed in the isolated worktree, targeted validation passes, and no unrelated files changed.",
     [string]$InstallRoot = "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet",
@@ -79,6 +79,7 @@ if ([string]::IsNullOrWhiteSpace($StopWhen)) {
 }
 
 $RepoPath = (Resolve-Path -LiteralPath $RepoPath).Path
+$repoName = Split-Path -Leaf $RepoPath
 $statePath = Join-Path $InstallRoot "state.json"
 
 if ($Bootstrap -and -not (Test-Path -LiteralPath $statePath)) {
@@ -93,15 +94,15 @@ if ($Bootstrap -and -not (Test-Path -LiteralPath $statePath)) {
         InstallRoot = $InstallRoot
     }
     if ($InstallOpenCodeAndCopilot) {
-        $installParameters.InstallOpenCodeAndCopilot = $true
+        $installParameters["InstallOpenCodeAndCopilot"] = $true
     }
 
     & $installerPath @installParameters
 }
 
 if (-not (Test-Path -LiteralPath $statePath)) {
-    $bootstrapCommand = "pwsh -File `"$PSCommandPath`" -RepoPath `"$RepoPath`" -Agent $Agent -Bootstrap"
-    throw "Fleet state not found: $statePath. Run the one-time bootstrap:`n$bootstrapCommand"
+    $bootstrapCommand = "pwsh -File `"$PSCommandPath`" -RepoPath `"$RepoPath`" -Bootstrap -ListAgents"
+    throw "Fleet state not found: $statePath. Run the one-time bootstrap/readiness probe:`n$bootstrapCommand"
 }
 
 Install-OperatorLauncher -DestinationRoot $InstallRoot
@@ -146,6 +147,10 @@ elseif ($PromptPath) {
     $PromptPath = (Resolve-Path -LiteralPath $PromptPath).Path
 }
 else {
+    if (-not $repoName.Equals("AgentSwitchboard", [StringComparison]::OrdinalIgnoreCase)) {
+        throw "No sprint prompt was supplied for '$repoName'. Copy a bounded sprint prompt and pass -Prompt (Get-Clipboard -Raw), or pass -PromptPath. Bundled default prompts are scoped specifically to AgentSwitchboard."
+    }
+
     $PromptPath = Join-Path $PSScriptRoot (Join-Path "prompts" $defaultPromptByAgent[$Agent])
     if (-not (Test-Path -LiteralPath $PromptPath)) {
         $installedPromptPath = Join-Path $InstallRoot (Join-Path "prompts" $defaultPromptByAgent[$Agent])
@@ -159,7 +164,6 @@ else {
 }
 
 if (-not $Name) {
-    $repoName = Split-Path -Leaf $RepoPath
     $Name = "$repoName-$Agent"
 }
 
