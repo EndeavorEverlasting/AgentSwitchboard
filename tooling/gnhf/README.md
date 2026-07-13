@@ -11,6 +11,18 @@ Windows-first launchers for bounded unattended GNHF sprints.
 - No merge, deployment, force-push, reset of user work, or secret handling is automated.
 - Parallel lanes must have disjoint owned scopes.
 - AGY is enabled only when an ACP server command is verified.
+- CLI readiness requires a successful version probe, not command presence alone.
+- Prompt files are streamed over stdin so detailed PRDs do not hit Windows argv limits.
+
+## Validate the fleet contracts
+
+The validator uses the built-in PowerShell parser and deterministic text/manifest checks; it does not launch agents or mutate a target repository.
+
+```powershell
+pwsh -NoLogo -NoProfile -File .\Test-GnhfFleetContracts.ps1
+```
+
+It checks PowerShell syntax, the example manifest, readiness gating, asynchronous probe output draining, prompt streaming, incompatible flag rejection, controlled failure reporting, and report-directory recovery.
 
 ## Install
 
@@ -79,6 +91,8 @@ pwsh -File "$root\Start-GnhfFleet.ps1" `
 ```
 
 To push each generated GNHF branch after successful iterations, explicitly add `-PushBranches`. Local commit-only mode is safer for the first controlled run.
+
+`-Wait` is intended for automation and cannot be combined with `-KeepWindowsOpen`; interactive windows must not hold an unattended parent process open indefinitely.
 
 ## Morning review
 
