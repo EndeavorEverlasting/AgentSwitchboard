@@ -127,6 +127,8 @@ $summary = [ordered]@{
     exitCode = $null
     completedAt = $null
     launcherLog = $transcriptPath
+    promptSource = $PSCmdlet.ParameterSetName
+    promptUtf8Bytes = [Text.Encoding]::UTF8.GetByteCount($objective)
 }
 
 $gnhfArguments = [System.Collections.Generic.List[string]]::new()
@@ -146,7 +148,6 @@ if ($MaxTokens -gt 0) {
 if ($PushBranch) {
     [void]$gnhfArguments.Add("--push")
 }
-[void]$gnhfArguments.Add($objective)
 
 $env:GNHF_TELEMETRY = "0"
 $exitCode = 1
@@ -165,11 +166,13 @@ try {
     $recentCommits | ForEach-Object { Write-Host "  $_" }
 
     Set-Location -LiteralPath $RepoPath
-    & $gnhfPath @gnhfArguments
+    # GNHF reads stdin when no prompt argument is supplied. Streaming avoids
+    # Windows command-line length limits for real PRDs and detailed sprint briefs.
+    $objective | & $gnhfPath @gnhfArguments
     $exitCode = $LASTEXITCODE
 }
 catch {
-    Write-Error $_
+    Write-Error -ErrorRecord $_ -ErrorAction Continue
     $exitCode = 1
 }
 finally {
