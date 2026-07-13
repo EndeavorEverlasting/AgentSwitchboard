@@ -42,7 +42,7 @@ function Invoke-Checked {
         Write-Host ("+ {0} {1}" -f $FilePath, ($ArgumentList -join " ")) -ForegroundColor DarkGray
         & $FilePath @ArgumentList
         if ($LASTEXITCODE -ne 0) {
-            throw "Command failed with exit code $LASTEXITCODE: $FilePath $($ArgumentList -join ' ')"
+            throw "Command failed with exit code ${LASTEXITCODE}: $FilePath $($ArgumentList -join ' ')"
         }
     }
     finally {
@@ -81,16 +81,26 @@ function Invoke-Probe {
         $process.StartInfo = $psi
         [void]$process.Start()
 
+        # Drain both redirected streams while the process is running. Waiting before
+        # reading can deadlock when a CLI emits enough help or diagnostic output to
+        # fill an OS pipe buffer.
+        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+        $stderrTask = $process.StandardError.ReadToEndAsync()
+
         if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
             $result.TimedOut = $true
-            try { $process.Kill($true) } catch {}
+            try {
+                $process.Kill($true)
+                $process.WaitForExit()
+            }
+            catch {}
         }
         else {
             $result.ExitCode = $process.ExitCode
         }
 
-        $stdout = $process.StandardOutput.ReadToEnd()
-        $stderr = $process.StandardError.ReadToEnd()
+        $stdout = $stdoutTask.GetAwaiter().GetResult()
+        $stderr = $stderrTask.GetAwaiter().GetResult()
         $result.Output = (($stdout, $stderr) -join [Environment]::NewLine).Trim()
     }
     catch {
@@ -160,21 +170,34 @@ function Get-CommandRecord {
             Available = $false
             Path = $null
             Version = $null
+            Evidence = "$Name command not found."
         }
     }
 
     $probe = Invoke-Probe -FilePath $command.Source -ArgumentList $VersionArguments
-    $version = if ($probe.Output) {
+    $probeSucceeded = (-not $probe.TimedOut -and $probe.ExitCode -eq 0)
+    $version = if ($probeSucceeded -and $probe.Output) {
         ($probe.Output -split "\r?\n" | Select-Object -First 1).Trim()
-    } else {
+    } elseif ($probeSucceeded) {
         "detected"
+    } else {
+        $null
+    }
+
+    $evidence = if ($probeSucceeded) {
+        "$Name version probe exited successfully."
+    } elseif ($probe.TimedOut) {
+        "$Name command was found at '$($command.Source)', but its version probe timed out after 15 seconds."
+    } else {
+        "$Name command was found at '$($command.Source)', but its version probe failed with exit code $($probe.ExitCode). Output: $($probe.Output)"
     }
 
     return [pscustomobject]@{
         Name = $Name
-        Available = $true
+        Available = $probeSucceeded
         Path = $command.Source
         Version = $version
+        Evidence = $evidence
     }
 }
 
@@ -282,6 +305,9 @@ if (-not $gnhfCommand) {
 }
 
 $gnhfProbe = Invoke-Probe -FilePath $gnhfCommand.Source -ArgumentList @("--version")
+if ($gnhfProbe.TimedOut -or $gnhfProbe.ExitCode -ne 0) {
+    throw "GNHF was found at '$($gnhfCommand.Source)', but its version probe failed. Output: $($gnhfProbe.Output)"
+}
 Write-Host "GNHF: $($gnhfProbe.Output)" -ForegroundColor Green
 
 if ($InstallOpenCodeAndCopilot) {
@@ -320,7 +346,7 @@ $goose = Get-CommandRecord -Name "goose"
 $agy = Get-CommandRecord -Name "agy"
 
 $gooseAcpReady = $false
-$gooseEvidence = "goose command not found."
+$gooseEvidence = $goose.Evidence
 if ($goose.Available) {
     $gooseAcpProbe = Invoke-Probe -FilePath $goose.Path -ArgumentList @("acp", "--help")
     $gooseAcpReady = (-not $gooseAcpProbe.TimedOut -and $gooseAcpProbe.ExitCode -eq 0)
@@ -334,7 +360,7 @@ if ($goose.Available) {
 $agyAcp = [pscustomobject]@{
     Ready = $false
     Command = $null
-    Evidence = "agy command not found."
+    Evidence = $agy.Evidence
 }
 if ($agy.Available) {
     $agyAcp = Test-AgyAcp -AgyPath $agy.Path -ExplicitCommand $AgyAcpCommand
@@ -347,7 +373,7 @@ $agents = [ordered]@{
         version = $openCode.Version
         agentSpec = "opencode"
         integration = "native"
-        evidence = if ($openCode.Available) { "Native GNHF adapter." } else { "opencode command not found." }
+        evidence = if ($openCode.Available) { "Native GNHF adapter. $($openCode.Evidence)" } else { $openCode.Evidence }
     }
     copilot = [ordered]@{
         available = $copilot.Available
@@ -355,7 +381,7 @@ $agents = [ordered]@{
         version = $copilot.Version
         agentSpec = "copilot"
         integration = "native"
-        evidence = if ($copilot.Available) { "Native GNHF adapter." } else { "copilot command not found." }
+        evidence = if ($copilot.Available) { "Native GNHF adapter. $($copilot.Evidence)" } else { $copilot.Evidence }
     }
     goose = [ordered]@{
         available = ($goose.Available -and $gooseAcpReady)
@@ -392,6 +418,7 @@ $filesToCopy = @(
     "Start-GnhfSprint.ps1",
     "Start-GnhfFleet.ps1",
     "Get-GnhfFleetStatus.ps1",
+    "Test-GnhfFleetContracts.ps1",
     "Install-AgentSwitchboardGnhf.ps1",
     "README.md"
 )
