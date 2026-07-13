@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.0",
+  "generated_date": "2026-07-13",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "sprint": "AgentSwitchboard repository-floor recovery",
+  "lane": "coordinator/repository-floor/branch-governance",
+  "observed_remote_state": {
+    "default_branch": "main",
+    "head_commit": "1c559d6930be3a28321021eea04bcd8f7e323ecb",
+    "head_message": "Initial commit",
+    "tracked_files": [
+      "LICENSE",
+      "README.md"
+    ],
+    "open_pull_requests": 0,
+    "repository_visibility": "public"
+  },
+  "known_local_seed": {
+    "reported_path": "C:\\Users\\Cheex\\Desktop\\dev\\agents\\agent-smoke-test",
+    "reported_branch": "main",
+    "reported_commit": "6e91164",
+    "reported_message": "Baseline agent bench bootstrap",
+    "reported_files": [
+      "AgentBenchBootstrap.zip",
+      "AgentBenchBootstrap/Install-AgentBench.ps1",
+      "AgentBenchBootstrap/README-AgentBench.txt",
+      "AgentBenchBootstrap/Run-AgentBench-Installer.cmd"
+    ],
+    "github_reachability": "not found",
+    "local_worktree_verified": false
+  },
+  "history_relationship": {
+    "status": "unproven",
+    "reason": "The reported local seed commit is not reachable through the connected GitHub repository, branches, pull requests, or organization commit search. A local merge-base check is still required."
+  },
+  "canonical_base_decision": {
+    "remote_main_remains_canonical": true,
+    "canonical_base": "main@1c559d6930be3a28321021eea04bcd8f7e323ecb",
+    "recovery_branch": "sprint/repository-floor-recovery",
+    "rewrite_remote_main": false,
+    "force_push_allowed": false,
+    "blind_unrelated_history_merge_allowed": false,
+    "local_seed_commit_must_be_preserved": true
+  },
+  "safe_reconciliation_strategy": [
+    "Run scripts/Test-RepositoryFloor.ps1 in the reported local repository and capture its JSON output.",
+    "Create a local preservation branch at 6e91164 and push it as preserve/local-bootstrap-seed so the original local root commit remains reachable.",
+    "Fetch origin and create an integration worktree from origin/main.",
+    "Restore the bootstrap source files from preserve/local-bootstrap-seed into the integration worktree without importing the generated ZIP by default.",
+    "Commit the imported source files on a bounded integration branch, validate, push, and update this pull request."
+  ],
+  "current_blocker": {
+    "code": "LOCAL_SEED_UNAVAILABLE_TO_CONNECTOR",
+    "description": "The connected GitHub environment cannot inspect or push the reported local-only commit or its files.",
+    "smallest_safe_resolution": "Run the repository-floor probe locally, then push 6e91164 to preserve/local-bootstrap-seed before importing files onto the remote-main-based integration branch."
+  },
+  "proof": {
+    "remote_main_rewritten": false,
+    "remote_seed_preserved": true,
+    "local_seed_preserved_remotely": false,
+    "secrets_inspected": false,
+    "feature_scope_entered": false
+  }
+}
