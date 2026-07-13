@@ -133,8 +133,10 @@ foreach ($repoPath in $repoPaths) {
 }
 
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-$jsonPath = Join-Path $InstallRoot "reports\morning-review-$timestamp.json"
-$mdPath = Join-Path $InstallRoot "reports\morning-review-$timestamp.md"
+$reportsRoot = Join-Path $InstallRoot "reports"
+New-Item -ItemType Directory -Path $reportsRoot -Force | Out-Null
+$jsonPath = Join-Path $reportsRoot "morning-review-$timestamp.json"
+$mdPath = Join-Path $reportsRoot "morning-review-$timestamp.md"
 
 [pscustomobject]@{
     schemaVersion = 1
