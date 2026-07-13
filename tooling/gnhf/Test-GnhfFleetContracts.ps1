@@ -39,7 +39,7 @@ function Get-FileText {
 
 $requiredFiles = @(
     "Install-AgentSwitchboardGnhf.ps1",
-    "Start-AgentSwitchboard.ps1",
+    "Install-AgentSwitchboardWorkstation.ps1",
     "Start-GnhfSprint.ps1",
     "Start-GnhfFleet.ps1",
     "Get-GnhfFleetStatus.ps1",
@@ -97,20 +97,20 @@ if ($null -ne $installer) {
     Add-CheckResult -Passed ($installer.Contains('Test-GnhfFleetContracts.ps1')) -Name "installer/copies-validator" -FailureMessage "contract validator is not installed with the fleet"
 }
 
-$operatorLauncher = Get-FileText "Start-AgentSwitchboard.ps1"
-if ($null -ne $operatorLauncher) {
-    Add-CheckResult -Passed ($operatorLauncher.Contains('[switch]$Bootstrap')) -Name "operator/explicit-bootstrap" -FailureMessage "bootstrap is not explicit"
-    Add-CheckResult -Passed ($operatorLauncher.Contains('[switch]$PushBranch')) -Name "operator/explicit-push" -FailureMessage "push is not an explicit switch"
-    Add-CheckResult -Passed ($operatorLauncher.Contains('[ValidateRange(1, 1000000000)]')) -Name "operator/requires-token-cap" -FailureMessage "operator permits an unbounded zero token cap"
-    Add-CheckResult -Passed ($operatorLauncher.Contains('Start-GnhfSprint.ps1')) -Name "operator/delegates-to-bounded-sprint" -FailureMessage "operator launcher bypasses the bounded sprint launcher"
-    Add-CheckResult -Passed ($operatorLauncher.Contains('agent-switchboard.cmd')) -Name "operator/installs-reusable-command" -FailureMessage "reusable command launcher is not installed"
-    Add-CheckResult -Passed ($operatorLauncher.Contains('repoName.Equals("AgentSwitchboard"')) -Name "operator/restricts-bundled-prompts" -FailureMessage "AgentSwitchboard-specific prompts can be silently applied to another repo"
-    Add-CheckResult -Passed ($operatorLauncher.Contains('Get-Clipboard -Raw')) -Name "operator/external-prompt-guidance" -FailureMessage "external repos do not receive actionable prompt guidance"
-    Add-CheckResult -Passed ($operatorLauncher.Contains('opencode-implementation.md')) -Name "operator/default-opencode-prompt" -FailureMessage "OpenCode default prompt is missing"
-    Add-CheckResult -Passed ($operatorLauncher.Contains('goose-validation.md')) -Name "operator/default-goose-prompt" -FailureMessage "Goose default prompt is missing"
-    Add-CheckResult -Passed ($operatorLauncher.Contains('agy-architecture.md')) -Name "operator/default-agy-prompt" -FailureMessage "AGY default prompt is missing"
-    Add-CheckResult -Passed ($operatorLauncher.Contains('copilot-tests.md')) -Name "operator/default-copilot-prompt" -FailureMessage "Copilot default prompt is missing"
-    Add-CheckResult -Passed (-not $operatorLauncher.Contains('PushBranch = $true')) -Name "operator/no-default-push" -FailureMessage "branch push is enabled by default"
+$workstationInstaller = Get-FileText "Install-AgentSwitchboardWorkstation.ps1"
+if ($null -ne $workstationInstaller) {
+    Add-CheckResult -Passed ($workstationInstaller.Contains('[string]$InstallProfile = "Core"')) -Name "workstation/core-profile-default" -FailureMessage "fresh workstation bootstrap does not default to the core profile"
+    Add-CheckResult -Passed ($workstationInstaller.Contains('@("goose", "opencode", "agy")')) -Name "workstation/core-profile-members" -FailureMessage "core profile does not include goose, opencode, and agy"
+    Add-CheckResult -Passed ($workstationInstaller.Contains('https://github.com/aaif-goose/goose/releases/download/stable/download_cli.ps1')) -Name "workstation/goose-official-source" -FailureMessage "Goose official Windows installer is missing"
+    Add-CheckResult -Passed ($workstationInstaller.Contains('https://antigravity.google/cli/install.ps1')) -Name "workstation/agy-official-source" -FailureMessage "AGY official Windows installer is missing"
+    Add-CheckResult -Passed ($workstationInstaller.Contains('https://claude.ai/install.ps1')) -Name "workstation/claude-official-source" -FailureMessage "Claude recommended Windows installer is missing"
+    Add-CheckResult -Passed ($workstationInstaller.Contains('https://chatgpt.com/codex/install.ps1')) -Name "workstation/codex-official-source" -FailureMessage "Codex recommended Windows installer is missing"
+    Add-CheckResult -Passed ($workstationInstaller.Contains('opencode-ai@latest')) -Name "workstation/opencode-package" -FailureMessage "OpenCode package is missing"
+    Add-CheckResult -Passed ($workstationInstaller.Contains('@github/copilot@latest')) -Name "workstation/copilot-package" -FailureMessage "Copilot CLI package is missing"
+    Add-CheckResult -Passed ($workstationInstaller.Contains('@earendil-works/pi-coding-agent@latest')) -Name "workstation/pi-current-package" -FailureMessage "Pi package name is stale or missing"
+    Add-CheckResult -Passed ($workstationInstaller.Contains('remoteInstallerPolicy')) -Name "workstation/records-install-policy" -FailureMessage "install evidence does not record the remote installer policy"
+    Add-CheckResult -Passed ($workstationInstaller.Contains('agyBoundary')) -Name "workstation/agy-truth-boundary" -FailureMessage "AGY installation can be mistaken for GNHF readiness"
+    Add-CheckResult -Passed ($workstationInstaller.Contains('Remove-Item -LiteralPath $tempRoot -Recurse -Force')) -Name "workstation/temp-cleanup" -FailureMessage "downloaded installer cleanup is missing"
 }
 
 $sprintLauncher = Get-FileText "Start-GnhfSprint.ps1"
