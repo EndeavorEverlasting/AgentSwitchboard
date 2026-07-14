@@ -15,8 +15,15 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+$pathHelpersPath = Join-Path $PSScriptRoot "GnhfFleet.Paths.ps1"
+if (-not (Test-Path -LiteralPath $pathHelpersPath -PathType Leaf)) {
+    throw "Path helper library not found: $pathHelpersPath"
+}
+. $pathHelpersPath
+
 function Invoke-Git {
     param([Parameter(Mandatory)][string[]]$Arguments)
+
     $output = & git -C $RepoPath @Arguments 2>&1
     if ($LASTEXITCODE -ne 0) {
         throw "git $($Arguments -join ' ') failed:`n$($output -join [Environment]::NewLine)"
@@ -53,17 +60,14 @@ function Resolve-AgentSpec {
     return [string]$agentRecord.agentSpec
 }
 
-$RepoPath = (Resolve-Path -LiteralPath $RepoPath).Path
-$statePath = Join-Path $InstallRoot "state.json"
-if (-not (Test-Path -LiteralPath $statePath)) {
-    throw "Fleet state not found: $statePath. Run Install-AgentSwitchboardGnhf.ps1 first."
-}
-
+$RepoPath = Resolve-GnhfFleetDirectory -Path $RepoPath -Description "target repository"
+$InstallRoot = Get-GnhfFleetAbsolutePath -Path $InstallRoot
+$statePath = Resolve-GnhfFleetFile -Path (Join-Path $InstallRoot "state.json") -Description "fleet state"
 $state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
 $agentSpec = Resolve-AgentSpec -RequestedAgent $Agent -State $state
 
 if ($PSCmdlet.ParameterSetName -eq "PromptFile") {
-    $PromptPath = (Resolve-Path -LiteralPath $PromptPath).Path
+    $PromptPath = Resolve-GnhfFleetFile -Path $PromptPath -Description "sprint prompt"
     $objective = Get-Content -LiteralPath $PromptPath -Raw
 }
 else {
@@ -94,20 +98,26 @@ if ($branch.StartsWith("gnhf/")) {
 }
 
 $recentCommits = Invoke-Git -Arguments @("log", "--oneline", "--decorate", "-5")
-
-$gnhfPath = [string]$state.gnhf.commandPath
-if (-not (Test-Path -LiteralPath $gnhfPath)) {
+$configuredGnhfPath = [string]$state.gnhf.commandPath
+$gnhfPath = $null
+if ($configuredGnhfPath -and (Test-Path -LiteralPath $configuredGnhfPath -PathType Leaf)) {
+    $gnhfPath = (Get-Item -LiteralPath $configuredGnhfPath -Force).FullName
+}
+else {
     $gnhfCommand = Get-Command gnhf -ErrorAction SilentlyContinue
     if (-not $gnhfCommand) {
-        throw "The configured GNHF executable is unavailable: $gnhfPath"
+        throw "The configured GNHF executable is unavailable: $configuredGnhfPath. Rerun the installer to repair state."
     }
     $gnhfPath = $gnhfCommand.Source
 }
 
-$timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+$logsRoot = Ensure-GnhfFleetDirectory -Path (Join-Path $InstallRoot "logs")
+$timestamp = Get-Date -Format "yyyyMMdd-HHmmss-fff"
 $safeName = ($Name -replace "[^A-Za-z0-9._-]", "-").Trim("-")
-$runLogDir = Join-Path $InstallRoot "logs\$timestamp-$safeName"
-New-Item -ItemType Directory -Path $runLogDir -Force | Out-Null
+if ([string]::IsNullOrWhiteSpace($safeName)) {
+    $safeName = "gnhf-sprint"
+}
+$runLogDir = Ensure-GnhfFleetDirectory -Path (Join-Path $logsRoot "$timestamp-$safeName")
 $transcriptPath = Join-Path $runLogDir "launcher-transcript.txt"
 $summaryPath = Join-Path $runLogDir "launcher-summary.json"
 
@@ -151,9 +161,13 @@ if ($PushBranch) {
 
 $env:GNHF_TELEMETRY = "0"
 $exitCode = 1
+$transcriptStarted = $false
+$oldLocation = Get-Location
 
-Start-Transcript -LiteralPath $transcriptPath -Force | Out-Null
 try {
+    Start-Transcript -LiteralPath $transcriptPath -Force | Out-Null
+    $transcriptStarted = $true
+
     Write-Host "`n=== GNHF SPRINT ===" -ForegroundColor Cyan
     Write-Host "Repo:       $RepoPath"
     Write-Host "Base:       $branch"
@@ -166,8 +180,6 @@ try {
     $recentCommits | ForEach-Object { Write-Host "  $_" }
 
     Set-Location -LiteralPath $RepoPath
-    # GNHF reads stdin when no prompt argument is supplied. Streaming avoids
-    # Windows command-line length limits for real PRDs and detailed sprint briefs.
     $objective | & $gnhfPath @gnhfArguments
     $exitCode = $LASTEXITCODE
 }
@@ -176,10 +188,14 @@ catch {
     $exitCode = 1
 }
 finally {
+    Set-Location -LiteralPath $oldLocation.Path
     $summary.exitCode = $exitCode
     $summary.completedAt = (Get-Date).ToString("o")
+    [void](Ensure-GnhfFleetParentDirectory -Path $summaryPath)
     $summary | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $summaryPath -Encoding utf8NoBOM
-    Stop-Transcript | Out-Null
+    if ($transcriptStarted) {
+        Stop-Transcript | Out-Null
+    }
 }
 
 Write-Host "`nLauncher summary: $summaryPath" -ForegroundColor Cyan
