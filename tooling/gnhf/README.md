@@ -11,15 +11,18 @@ Windows-first launchers for bounded unattended GNHF sprints.
 - No merge, deployment, force-push, reset of user work, or secret handling is automated.
 - Parallel lanes must have disjoint owned scopes.
 - AGY is enabled only when an ACP server command is verified.
-- CLI readiness requires a successful version probe, not command presence alone.
+- Hermes is enabled only when both `hermes --version` and `hermes acp --help` succeed.
+- CLI readiness requires a successful command probe, not command presence alone.
 - Prompt files are streamed over stdin so detailed PRDs do not hit Windows argv limits.
 
-## Idempotence contract
+## Idempotence and failure contract
 
 Bootstrap and reporting commands are safe to run repeatedly:
 
-- A healthy existing GNHF, OpenCode, or Copilot CLI installation is reused.
+- A healthy existing GNHF, OpenCode, Copilot CLI, or Hermes installation is reused.
 - Missing or unhealthy requested tools are installed or repaired.
+- Hermes installation failure does not erase the rest of the fleet; Hermes is recorded as `BLOCKED` with evidence.
+- Every clickable setup run writes a transcript and JSON summary under `%LOCALAPPDATA%\AgentSwitchboard\setup-logs`.
 - Existing directories are reused; missing directory trees are created.
 - A file occupying a required directory path, or a directory occupying a required file path, produces a clear blocking error.
 - Files already running from the installed fleet directory are not copied onto themselves.
@@ -29,38 +32,69 @@ Bootstrap and reporting commands are safe to run repeatedly:
 - One missing fleet repository or prompt causes that lane to be skipped and recorded; it does not prevent valid lanes from launching.
 - Morning review records missing repositories and stale worktree directories instead of aborting the whole report.
 
-## Start here: launch an agent and code
+## Click once: robust setup
 
-From the AgentSwitchboard checkout, run bootstrap and the readiness probe against your target repository:
-
-```powershell
-cd "C:\Users\Cheex\Desktop\dev\agents\AgentSwitchboard"
-
-pwsh -NoLogo -NoProfile -File .\tooling\gnhf\Start-AgentSwitchboard.ps1 `
-  -RepoPath "C:\Users\Cheex\Desktop\dev\SysAdminSuite" `
-  -Bootstrap `
-  -ListAgents
-```
-
-The same command can be run again after an interrupted or partial setup. Bootstrap refreshes scripts and readiness state while preserving the installed fleet manifest.
-
-The bootstrap installs, repairs, or reuses GNHF; probes OpenCode, Goose, AGY, and Copilot; writes local fleet state under `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet`; and installs this reusable launcher:
+From the AgentSwitchboard checkout, double-click:
 
 ```text
-%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\agent-switchboard.cmd
+tooling\gnhf\Setup-AgentSwitchboard.cmd
 ```
 
-For a target repository such as SysAdminSuite, supply the real bounded sprint prompt. The fastest path is to copy the prompt to the Windows clipboard, enter the clean target repository, and launch:
+The window stays open after success or failure. The launcher:
+
+1. verifies PowerShell 7;
+2. installs or repairs Hermes from its official Windows installer;
+3. installs or repairs GNHF, OpenCode, and Copilot CLI while reusing healthy installations;
+4. probes OpenCode, Goose, AGY, Copilot, and Hermes;
+5. persists Hermes as the ACP adapter `acp:hermes acp` only when its version and ACP probes succeed;
+6. runs the core fleet and Hermes-specific contract validators;
+7. writes a transcript and machine-readable summary even when setup fails.
+
+Setup evidence is stored in a timestamped directory:
+
+```text
+%LOCALAPPDATA%\AgentSwitchboard\setup-logs\<timestamp>\
+  setup-transcript.txt
+  setup-summary.json
+```
+
+The setup can also be run from PowerShell:
+
+```powershell
+pwsh -NoLogo -NoProfile -File .\tooling\gnhf\Setup-AgentSwitchboard.ps1 `
+  -DefaultRepoPath "C:\Users\Cheex\Desktop\dev\SysAdminSuite" `
+  -InstallOpenCodeAndCopilot
+```
+
+Use `-SkipHermesInstall` to probe an existing Hermes command without downloading or repairing it.
+
+## Start here: launch an agent and code
+
+After setup, list readiness without starting work:
+
+```powershell
+& "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet\agent-switchboard.cmd" -ListAgents
+```
+
+The reusable fleet lives under:
+
+```text
+%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet
+```
+
+For a target repository such as SysAdminSuite, supply the real bounded sprint prompt. Copy the prompt to the Windows clipboard, enter the clean target repository, and launch:
 
 ```powershell
 cd "C:\Users\Cheex\Desktop\dev\SysAdminSuite"
 
 & "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet\agent-switchboard.cmd" `
-  -Agent opencode `
+  -Agent hermes `
   -Prompt (Get-Clipboard -Raw) `
   -MaxIterations 4 `
   -MaxTokens 250000
 ```
+
+Change `hermes` to `opencode`, `goose`, `agy`, or `copilot` when that adapter reports `READY`.
 
 Or launch from a tracked or local prompt file:
 
@@ -73,23 +107,34 @@ Or launch from a tracked or local prompt file:
   -StopWhen "The scoped validation is complete, evidence is recorded, and no implementation files changed."
 ```
 
-List the detected adapters without starting work:
+The bundled OpenCode, Goose, AGY, Copilot, and Hermes prompts are scoped specifically to AgentSwitchboard. They are selected automatically only when the target repository folder is named `AgentSwitchboard`; other repositories must receive `-Prompt` or `-PromptPath` so the launcher cannot silently apply the wrong owned scope. Use `-PushBranch` only after a controlled local run proves the lane; local commit-only worktrees are the default.
+
+## Bootstrap or repair from PowerShell
+
+`Start-AgentSwitchboard.ps1 -Bootstrap` delegates to the same robust setup orchestrator, so refreshing the fleet cannot silently remove the Hermes readiness record:
 
 ```powershell
-& "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet\agent-switchboard.cmd" -ListAgents
+cd "C:\Users\Cheex\Desktop\dev\agents\AgentSwitchboard"
+
+pwsh -NoLogo -NoProfile -File .\tooling\gnhf\Start-AgentSwitchboard.ps1 `
+  -RepoPath "C:\Users\Cheex\Desktop\dev\SysAdminSuite" `
+  -Bootstrap `
+  -InstallOpenCodeAndCopilot `
+  -ListAgents
 ```
 
-The bundled OpenCode, Goose, AGY, and Copilot prompts are scoped specifically to AgentSwitchboard. They are selected automatically only when the target repository folder is named `AgentSwitchboard`; other repositories must receive `-Prompt` or `-PromptPath` so the launcher cannot silently apply the wrong owned scope. Use `-PushBranch` only after a controlled local run proves the lane; local commit-only worktrees are the default.
+The same command can be rerun after an interrupted or partial setup. Bootstrap refreshes scripts and readiness state while preserving the installed fleet manifest.
 
 ## Validate the fleet contracts
 
-The validator uses the built-in PowerShell parser, temporary-directory behavior checks, and deterministic text/manifest checks. It does not launch agents or mutate a target repository.
+The validators use the built-in PowerShell parser, temporary-directory behavior checks, and deterministic text/manifest checks. They do not launch agents or mutate a target repository.
 
 ```powershell
-pwsh -NoLogo -NoProfile -File .\Test-GnhfFleetContracts.ps1
+pwsh -NoLogo -NoProfile -File .\tooling\gnhf\Test-GnhfFleetContracts.ps1
+pwsh -NoLogo -NoProfile -File .\tooling\gnhf\Test-HermesSetupContracts.ps1
 ```
 
-It checks:
+They check:
 
 - PowerShell syntax and manifest structure;
 - readiness gating and asynchronous probe output draining;
@@ -100,11 +145,16 @@ It checks:
 - existing-manifest preservation;
 - reuse of healthy installations;
 - invalid-lane skipping;
-- missing-repository and stale-worktree reporting.
+- missing-repository and stale-worktree reporting;
+- official Hermes installer routing;
+- Hermes ACP capability probing and state persistence;
+- setup transcript and JSON summary production;
+- double-click launcher visibility, exit-code preservation, and log guidance;
+- Hermes operator and prompt integration.
 
-## Install or repair
+## Lower-level GNHF installer
 
-Open PowerShell 7 in the AgentSwitchboard checkout or installed fleet directory:
+The lower-level installer remains available when only GNHF fleet internals need repair:
 
 ```powershell
 pwsh -File .\Install-AgentSwitchboardGnhf.ps1 `
@@ -122,13 +172,6 @@ pwsh -File .\Install-AgentSwitchboardGnhf.ps1 `
   -RebuildGnhf
 ```
 
-Install or repair OpenCode and Copilot when requested:
-
-```powershell
-pwsh -File .\Install-AgentSwitchboardGnhf.ps1 `
-  -InstallOpenCodeAndCopilot
-```
-
 Reset the installed fleet manifest only when intentionally discarding its customizations:
 
 ```powershell
@@ -144,37 +187,37 @@ pwsh -File .\Install-AgentSwitchboardGnhf.ps1 `
   -AgyAcpCommand "agy <exact-acp-server-arguments>"
 ```
 
-The installer writes operational files to:
-
-```text
-%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet
-```
-
 ## Authenticate once
 
-Run each agent interactively before unattended work:
+Run each READY agent interactively before unattended work:
 
 ```powershell
 opencode
+
 goose
+
 agy
+
 copilot
+
+hermes model
+hermes
 ```
 
-Use each tool's own login/provider flow. Do not put provider keys in the fleet manifest or prompts.
+Use each tool's own login/provider flow. Do not put provider keys in the fleet manifest, prompts, setup summary, or repository.
 
-## Start one sprint
+## Start one sprint directly
 
 ```powershell
 $root = "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet"
 
 pwsh -File "$root\Start-GnhfSprint.ps1" `
   -RepoPath "C:\Users\Cheex\Desktop\dev\agents\AgentSwitchboard" `
-  -Agent opencode `
-  -PromptPath "$root\prompts\opencode-implementation.md" `
-  -Name "agent-switchboard-core" `
-  -MaxIterations 6 `
-  -MaxTokens 500000 `
+  -Agent hermes `
+  -PromptPath "$root\prompts\hermes-implementation.md" `
+  -Name "agent-switchboard-hermes" `
+  -MaxIterations 4 `
+  -MaxTokens 250000 `
   -StopWhen "The bounded change is committed, targeted validation passes, and no unrelated files changed."
 ```
 
@@ -220,13 +263,15 @@ The report survives missing configured repositories and stale worktree registrat
 | OpenCode | Native `--agent opencode` |
 | Copilot CLI | Native `--agent copilot` |
 | Goose | ACP custom command `acp:goose acp` |
+| Hermes | ACP custom command `acp:hermes acp`; version and ACP probes must pass |
 | AGY | ACP only; exact server launch command must be detected or supplied |
 
 ## Scope discipline
 
-Do not launch four agents against the same files. Good parallel lanes:
+Do not launch multiple agents against the same files. Good parallel lanes:
 
 - implementation: `installers/`, `scripts/core/`
+- Hermes integration: `tooling/hermes/`, `docs/integrations/hermes/`, `tests/hermes/`
 - tests: `tests/`, `tests/fixtures/`
 - architecture: `docs/architecture/`, `diagrams/`
 - validation/reporting: `validators/`, `reports/templates/`
