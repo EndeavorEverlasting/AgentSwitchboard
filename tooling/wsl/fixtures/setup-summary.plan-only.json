@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "completedAt": "2026-07-14T12:00:00.0000000Z",
+  "status": "plan-only",
+  "manifestPath": "tooling/wsl/wsl-workstation.example.json",
+  "distribution": "Ubuntu",
+  "rebootRequired": false,
+  "planMode": true,
+  "commandResults": [
+    {
+      "step": "enable-wsl-feature",
+      "status": "planned",
+      "evidence": "WSL not available. In apply mode, would attempt feature enablement.",
+      "rebootRequired": true
+    },
+    {
+      "step": "install-distribution",
+      "status": "planned",
+      "evidence": "Distribution 'Ubuntu' not found. Would install.",
+      "rebootRequired": true
+    },
+    {
+      "step": "linux-bootstrap",
+      "status": "planned",
+      "evidence": "Would copy bootstrap script and execute."
+    }
+  ],
+  "repoResults": [
+    {
+      "name": "AgentSwitchboard",
+      "destination": "~/dev/agents/AgentSwitchboard",
+      "status": "planned"
+    }
+  ]
+}

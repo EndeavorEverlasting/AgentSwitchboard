@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "completedAt": "2026-07-14T12:00:00.0000000Z",
+  "status": "reboot-required",
+  "manifestPath": "tooling/wsl/wsl-workstation.example.json",
+  "distribution": "Ubuntu",
+  "rebootRequired": true,
+  "commandResults": [
+    {
+      "step": "enable-wsl-feature",
+      "status": "applied",
+      "evidence": "WSL feature enabled successfully.",
+      "rebootRequired": true
+    }
+  ]
+}
