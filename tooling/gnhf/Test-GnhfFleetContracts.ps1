@@ -76,7 +76,7 @@ $manifestPath = Join-Path $RootPath "gnhf-fleet.example.json"
 try {
     $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
     Add-CheckResult -Passed ($manifest.schemaVersion -eq 1) -Name "manifest/schema-version" -FailureMessage "expected schemaVersion 1"
-    Add-CheckResult -Passed ($manifest.sprints.Count -eq 4) -Name "manifest/sprint-count" -FailureMessage "expected four defined sprint lanes"
+    Add-CheckResult -Passed ($manifest.sprints.Count -eq 5) -Name "manifest/sprint-count" -FailureMessage "expected five defined sprint lanes"
 
     foreach ($sprint in $manifest.sprints) {
         $name = [string]$sprint.name
