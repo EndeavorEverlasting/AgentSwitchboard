@@ -28,6 +28,14 @@ function Add-Result {
     }
 }
 
+function Get-LatestOperatorSummary {
+    param([Parameter(Mandatory)][string]$EvidencePath)
+
+    return Get-ChildItem -LiteralPath $EvidencePath -Filter "operator-summary.json" -File -Recurse -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTimeUtc -Descending |
+        Select-Object -First 1
+}
+
 try {
     New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
     $env:LOCALAPPDATA = Join-Path $tempRoot "LocalAppData"
@@ -44,9 +52,7 @@ try {
 
     Add-Result -Passed ($exitCode -ne 0) -Name "missing-config/nonzero-exit" -FailureMessage "wrapper unexpectedly returned zero"
 
-    $operatorSummaryFile = Get-ChildItem -LiteralPath $operatorEvidence -Filter "operator-summary.json" -File -Recurse -ErrorAction SilentlyContinue |
-        Sort-Object LastWriteTimeUtc -Descending |
-        Select-Object -First 1
+    $operatorSummaryFile = Get-LatestOperatorSummary -EvidencePath $operatorEvidence
     Add-Result -Passed ($null -ne $operatorSummaryFile) -Name "missing-config/operator-summary" -FailureMessage "operator-summary.json was not produced"
 
     if ($operatorSummaryFile) {
@@ -58,8 +64,31 @@ try {
         Add-Result -Passed (Test-Path -LiteralPath ([string]$summary.consoleLogPath) -PathType Leaf) -Name "missing-config/technician-log" -FailureMessage "technician console log is missing"
     }
 
-    $leftoverPrompt = Get-ChildItem -LiteralPath $tempRoot -Filter "sprint-prompt.md" -File -Recurse -ErrorAction SilentlyContinue
-    Add-Result -Passed (@($leftoverPrompt).Count -eq 0) -Name "missing-config/no-prompt-artifact" -FailureMessage "an ephemeral prompt file was left behind"
+    $sentinel = "NAP-PROMPT-SENTINEL-" + [Guid]::NewGuid().ToString("N")
+    $promptEvidence = Join-Path $tempRoot "prompt-operator-runs"
+    $promptHarnessOutput = Join-Path $tempRoot "prompt-harness-console.log"
+
+    & pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File $wrapperPath `
+        -ConfigPath $missingConfig `
+        -Prompt $sentinel `
+        -EvidenceRoot $promptEvidence *> $promptHarnessOutput
+    $promptExitCode = $LASTEXITCODE
+
+    Add-Result -Passed ($promptExitCode -ne 0) -Name "prompt-boundary/nonzero-exit" -FailureMessage "wrapper unexpectedly returned zero"
+
+    $promptSummaryFile = Get-LatestOperatorSummary -EvidencePath $promptEvidence
+    Add-Result -Passed ($null -ne $promptSummaryFile) -Name "prompt-boundary/operator-summary" -FailureMessage "operator-summary.json was not produced"
+    if ($promptSummaryFile) {
+        $promptSummary = Get-Content -LiteralPath $promptSummaryFile.FullName -Raw | ConvertFrom-Json
+        Add-Result -Passed ([string]$promptSummary.promptTransport -eq "ephemeral-file") -Name "prompt-boundary/transport" -FailureMessage "direct prompt was not converted to an ephemeral file"
+    }
+
+    $leftoverPrompt = Get-ChildItem -LiteralPath $tempRoot -Filter "*prompt*.md" -File -Recurse -ErrorAction SilentlyContinue
+    Add-Result -Passed (@($leftoverPrompt).Count -eq 0) -Name "prompt-boundary/no-prompt-artifact" -FailureMessage "an ephemeral prompt file was left behind"
+
+    $sentinelMatches = Get-ChildItem -LiteralPath $tempRoot -File -Recurse -ErrorAction SilentlyContinue |
+        Select-String -SimpleMatch $sentinel -ErrorAction SilentlyContinue
+    Add-Result -Passed (@($sentinelMatches).Count -eq 0) -Name "prompt-boundary/no-prompt-text-in-evidence" -FailureMessage "prompt text was persisted in an evidence file"
 }
 catch {
     [void]$failures.Add("harness/runtime: $($_.Exception.Message)")
