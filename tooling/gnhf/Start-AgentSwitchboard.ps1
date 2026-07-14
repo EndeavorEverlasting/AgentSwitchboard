@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$RepoPath = (Get-Location).Path,
-    [ValidateSet("opencode", "goose", "agy", "copilot")]
+    [ValidateSet("opencode", "goose", "agy", "copilot", "hermes")]
     [string]$Agent = "opencode",
     [string]$PromptPath,
     [string]$Prompt,
@@ -14,6 +14,7 @@ param(
     [string]$InstallRoot = "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet",
     [switch]$Bootstrap,
     [switch]$InstallOpenCodeAndCopilot,
+    [switch]$SkipHermesInstall,
     [switch]$PushBranch,
     [switch]$ListAgents
 )
@@ -36,7 +37,7 @@ function Show-AgentReadiness {
     param([Parameter(Mandatory)]$State)
 
     Write-Host "Agent readiness:" -ForegroundColor Cyan
-    foreach ($agentName in @("opencode", "goose", "agy", "copilot")) {
+    foreach ($agentName in @("opencode", "goose", "agy", "copilot", "hermes")) {
         $property = $State.agents.PSObject.Properties[$agentName]
         if (-not $property) {
             Write-Host ("  {0,-9} UNKNOWN  no state record" -f $agentName) -ForegroundColor Yellow
@@ -88,19 +89,23 @@ $statePath = Join-Path $InstallRoot "state.json"
 
 if ($Bootstrap) {
     Write-Section "Bootstrap or repair AgentSwitchboard"
-    $installerPath = Resolve-GnhfFleetFile -Path (Join-Path $PSScriptRoot "Install-AgentSwitchboardGnhf.ps1") -Description "bootstrap installer"
+    $setupPath = Resolve-GnhfFleetFile -Path (Join-Path $PSScriptRoot "Setup-AgentSwitchboard.ps1") -Description "robust setup orchestrator"
 
-    $installParameters = @{
+    $setupParameters = @{
         DefaultRepoPath = $RepoPath
         InstallRoot = $InstallRoot
     }
     if ($InstallOpenCodeAndCopilot) {
-        $installParameters["InstallOpenCodeAndCopilot"] = $true
+        $setupParameters["InstallOpenCodeAndCopilot"] = $true
+    }
+    if ($SkipHermesInstall) {
+        $setupParameters["SkipHermesInstall"] = $true
     }
 
-    # Bootstrap is deliberately idempotent. It refreshes missing scripts and state,
-    # reuses healthy tools, and preserves an existing customized fleet manifest.
-    & $installerPath @installParameters
+    # Robust setup owns installation, Hermes ACP probing, transcript/summary evidence,
+    # and contract validation. Delegating here prevents a core-only bootstrap from
+    # overwriting the Hermes readiness record.
+    & $setupPath @setupParameters
 }
 
 if (-not (Test-Path -LiteralPath $statePath)) {
@@ -118,6 +123,7 @@ $state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
 if ($ListAgents) {
     Show-AgentReadiness -State $state
     Write-Host "`nLauncher: $(Join-Path $InstallRoot 'agent-switchboard.cmd')" -ForegroundColor Cyan
+    Write-Host "Setup logs: $(Join-Path $env:LOCALAPPDATA 'AgentSwitchboard\setup-logs')" -ForegroundColor Cyan
     return
 }
 
@@ -136,6 +142,7 @@ $defaultPromptByAgent = @{
     goose = "goose-validation.md"
     agy = "agy-architecture.md"
     copilot = "copilot-tests.md"
+    hermes = "hermes-implementation.md"
 }
 
 $runtimePromptPath = $null
