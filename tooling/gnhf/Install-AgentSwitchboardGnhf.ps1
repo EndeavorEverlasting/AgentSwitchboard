@@ -277,7 +277,7 @@ function Test-AgyAcp {
             return [pscustomobject]@{
                 Ready = $true
                 Command = $candidate.Command
-                Evidence = "$($candidate.Command) --help exited successfully."
+                Evidence = "$($candidate.Command) probe exited successfully."
             }
         }
     }
@@ -456,8 +456,9 @@ $filesToCopy = @(
 )
 
 foreach ($file in $filesToCopy) {
-    $source = Resolve-GnhfFleetFile -Path (Join-Path $PSScriptRoot $file) -Description "bundle file"
-    Copy-Item -LiteralPath $source -Destination (Join-Path $InstallRoot $file) -Force
+    $source = Join-Path $PSScriptRoot $file
+    $destination = Join-Path $InstallRoot $file
+    [void](Copy-GnhfFleetFile -Source $source -Destination $destination)
 }
 
 $sourcePromptsRoot = Resolve-GnhfFleetDirectory -Path (Join-Path $PSScriptRoot "prompts") -Description "bundle prompts directory"
@@ -466,7 +467,7 @@ if ($promptFiles.Count -eq 0) {
     throw "Bundle prompts directory contains no prompt files: $sourcePromptsRoot"
 }
 foreach ($promptFile in $promptFiles) {
-    Copy-Item -LiteralPath $promptFile.FullName -Destination (Join-Path $promptsRoot $promptFile.Name) -Force
+    [void](Copy-GnhfFleetFile -Source $promptFile.FullName -Destination (Join-Path $promptsRoot $promptFile.Name))
 }
 
 $manifestSource = Resolve-GnhfFleetFile -Path (Join-Path $PSScriptRoot "gnhf-fleet.example.json") -Description "fleet manifest template"
@@ -524,7 +525,7 @@ $cmdLaunchers = @{
     "agent-switchboard.cmd" = 'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0Start-AgentSwitchboard.ps1" %*'
 }
 foreach ($launcher in $cmdLaunchers.GetEnumerator()) {
-    $content = "@echo off`r`nsetlocal`r`n$($launcher.Value)`r`nset `_code=%ERRORLEVEL%`r`nendlocal & exit /b %_code%`r`n"
+    $content = "@echo off`r`nsetlocal`r`n$($launcher.Value)`r`nset `"_code=%ERRORLEVEL%`"`r`nendlocal & exit /b %_code%`r`n"
     Set-Content -LiteralPath (Join-Path $InstallRoot $launcher.Key) -Value $content -Encoding ascii
 }
 
