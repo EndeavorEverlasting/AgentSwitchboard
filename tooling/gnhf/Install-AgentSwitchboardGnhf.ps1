@@ -6,12 +6,20 @@ param(
     [string]$DefaultRepoPath,
     [string]$AgyAcpCommand,
     [switch]$SkipGnhfBuild,
+    [switch]$RebuildGnhf,
     [switch]$InstallOpenCodeAndCopilot,
+    [switch]$ResetManifest,
     [bool]$DisableGnhfTelemetry = $true
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+$pathHelpersPath = Join-Path $PSScriptRoot "GnhfFleet.Paths.ps1"
+if (-not (Test-Path -LiteralPath $pathHelpersPath -PathType Leaf)) {
+    throw "Path helper library not found: $pathHelpersPath"
+}
+. $pathHelpersPath
 
 function Write-Section {
     param([Parameter(Mandatory)][string]$Text)
@@ -29,14 +37,15 @@ function Refresh-CurrentPath {
 function Invoke-Checked {
     param(
         [Parameter(Mandatory)][string]$FilePath,
-        [Parameter()][string[]]$ArgumentList = @(),
-        [Parameter()][string]$WorkingDirectory
+        [string[]]$ArgumentList = @(),
+        [string]$WorkingDirectory
     )
 
     $oldLocation = Get-Location
     try {
         if ($WorkingDirectory) {
-            Set-Location -LiteralPath $WorkingDirectory
+            $resolvedWorkingDirectory = Resolve-GnhfFleetDirectory -Path $WorkingDirectory -Description "command working directory"
+            Set-Location -LiteralPath $resolvedWorkingDirectory
         }
 
         Write-Host ("+ {0} {1}" -f $FilePath, ($ArgumentList -join " ")) -ForegroundColor DarkGray
@@ -53,7 +62,7 @@ function Invoke-Checked {
 function Invoke-Probe {
     param(
         [Parameter(Mandatory)][string]$FilePath,
-        [Parameter()][string[]]$ArgumentList = @(),
+        [string[]]$ArgumentList = @(),
         [int]$TimeoutSeconds = 15
     )
 
@@ -81,9 +90,6 @@ function Invoke-Probe {
         $process.StartInfo = $psi
         [void]$process.Start()
 
-        # Drain both redirected streams while the process is running. Waiting before
-        # reading can deadlock when a CLI emits enough help or diagnostic output to
-        # fill an OS pipe buffer.
         $stdoutTask = $process.StandardOutput.ReadToEndAsync()
         $stderrTask = $process.StandardError.ReadToEndAsync()
 
@@ -117,9 +123,8 @@ function Resolve-GnhfClone {
     )
 
     $candidates = [System.Collections.Generic.List[string]]::new()
-
     if ($ExplicitPath) {
-        [void]$candidates.Add($ExplicitPath)
+        [void]$candidates.Add((Get-GnhfFleetAbsolutePath -Path $ExplicitPath))
     }
 
     foreach ($candidate in @(
@@ -128,25 +133,29 @@ function Resolve-GnhfClone {
         (Join-Path $HOME "source\repos\gnhf")
     )) {
         if ($candidate) {
-            [void]$candidates.Add($candidate)
+            [void]$candidates.Add((Get-GnhfFleetAbsolutePath -Path $candidate))
         }
     }
 
-    if (Test-Path -LiteralPath $SearchRoot) {
+    if (Test-Path -LiteralPath $SearchRoot -PathType Container) {
         Get-ChildItem -LiteralPath $SearchRoot -Directory -Filter "gnhf" -Recurse -Depth 4 -ErrorAction SilentlyContinue |
             ForEach-Object { [void]$candidates.Add($_.FullName) }
     }
 
     foreach ($candidate in ($candidates | Select-Object -Unique)) {
+        if (-not (Test-Path -LiteralPath $candidate -PathType Container)) {
+            continue
+        }
+
         $packageJson = Join-Path $candidate "package.json"
-        if (-not (Test-Path -LiteralPath $packageJson)) {
+        if (-not (Test-Path -LiteralPath $packageJson -PathType Leaf)) {
             continue
         }
 
         try {
             $package = Get-Content -LiteralPath $packageJson -Raw | ConvertFrom-Json
             if ($package.name -eq "gnhf") {
-                return (Resolve-Path -LiteralPath $candidate).Path
+                return (Get-Item -LiteralPath $candidate -Force).FullName
             }
         }
         catch {
@@ -174,31 +183,75 @@ function Get-CommandRecord {
         }
     }
 
-    $probe = Invoke-Probe -FilePath $command.Source -ArgumentList $VersionArguments
+    $commandPath = $command.Source
+    $probe = Invoke-Probe -FilePath $commandPath -ArgumentList $VersionArguments
     $probeSucceeded = (-not $probe.TimedOut -and $probe.ExitCode -eq 0)
     $version = if ($probeSucceeded -and $probe.Output) {
         ($probe.Output -split "\r?\n" | Select-Object -First 1).Trim()
-    } elseif ($probeSucceeded) {
+    }
+    elseif ($probeSucceeded) {
         "detected"
-    } else {
+    }
+    else {
         $null
     }
 
     $evidence = if ($probeSucceeded) {
         "$Name version probe exited successfully."
-    } elseif ($probe.TimedOut) {
-        "$Name command was found at '$($command.Source)', but its version probe timed out after 15 seconds."
-    } else {
-        "$Name command was found at '$($command.Source)', but its version probe failed with exit code $($probe.ExitCode). Output: $($probe.Output)"
+    }
+    elseif ($probe.TimedOut) {
+        "$Name command was found at '$commandPath', but its version probe timed out after 15 seconds."
+    }
+    else {
+        "$Name command was found at '$commandPath', but its version probe failed with exit code $($probe.ExitCode). Output: $($probe.Output)"
     }
 
     return [pscustomobject]@{
         Name = $Name
         Available = $probeSucceeded
-        Path = $command.Source
+        Path = $commandPath
         Version = $version
         Evidence = $evidence
     }
+}
+
+function Install-GnhfSource {
+    param([Parameter(Mandatory)][string]$RepoPath)
+
+    $node = Get-Command node -ErrorAction SilentlyContinue
+    $npm = Get-Command npm -ErrorAction SilentlyContinue
+    if (-not $node -or -not $npm) {
+        throw "Node.js and npm are required to build the cloned GNHF repository."
+    }
+
+    $nodeVersion = (& $node.Source --version).TrimStart("v")
+    $nodeMajor = [int]($nodeVersion.Split(".")[0])
+    if ($nodeMajor -lt 20) {
+        throw "GNHF requires Node.js 20 or newer. Detected: $nodeVersion"
+    }
+
+    if (-not (Get-Command pnpm -ErrorAction SilentlyContinue)) {
+        Write-Host "Installing pnpm 11.1.1 required by the current GNHF checkout..." -ForegroundColor Yellow
+        Invoke-Checked -FilePath $npm.Source -ArgumentList @("install", "--global", "pnpm@11.1.1")
+        Refresh-CurrentPath
+    }
+
+    $pnpm = (Get-Command pnpm -ErrorAction Stop).Source
+    Invoke-Checked -FilePath $pnpm -ArgumentList @("install", "--frozen-lockfile") -WorkingDirectory $RepoPath
+    Invoke-Checked -FilePath $pnpm -ArgumentList @("run", "build") -WorkingDirectory $RepoPath
+    Invoke-Checked -FilePath $pnpm -ArgumentList @("link", "--global") -WorkingDirectory $RepoPath
+    Refresh-CurrentPath
+}
+
+function Install-PublishedGnhf {
+    $npm = Get-Command npm -ErrorAction SilentlyContinue
+    if (-not $npm) {
+        throw "GNHF is unavailable and npm is not installed. Install Node.js 20 or newer, then rerun."
+    }
+
+    Write-Host "Installing or repairing the published GNHF package..." -ForegroundColor Yellow
+    Invoke-Checked -FilePath $npm.Source -ArgumentList @("install", "--global", "gnhf")
+    Refresh-CurrentPath
 }
 
 function Test-AgyAcp {
@@ -215,21 +268,17 @@ function Test-AgyAcp {
         }
     }
 
-    $subcommandProbe = Invoke-Probe -FilePath $AgyPath -ArgumentList @("acp", "--help")
-    if (-not $subcommandProbe.TimedOut -and $subcommandProbe.ExitCode -eq 0) {
-        return [pscustomobject]@{
-            Ready = $true
-            Command = "agy acp"
-            Evidence = "agy acp --help exited successfully."
-        }
-    }
-
-    $flagProbe = Invoke-Probe -FilePath $AgyPath -ArgumentList @("--acp", "--help")
-    if (-not $flagProbe.TimedOut -and $flagProbe.ExitCode -eq 0) {
-        return [pscustomobject]@{
-            Ready = $true
-            Command = "agy --acp"
-            Evidence = "agy --acp --help exited successfully."
+    foreach ($candidate in @(
+        @{ Arguments = @("acp", "--help"); Command = "agy acp" },
+        @{ Arguments = @("--acp", "--help"); Command = "agy --acp" }
+    )) {
+        $probe = Invoke-Probe -FilePath $AgyPath -ArgumentList $candidate.Arguments
+        if (-not $probe.TimedOut -and $probe.ExitCode -eq 0) {
+            return [pscustomobject]@{
+                Ready = $true
+                Command = $candidate.Command
+                Evidence = "$($candidate.Command) --help exited successfully."
+            }
         }
     }
 
@@ -244,102 +293,86 @@ function Test-AgyAcp {
 if ($PSVersionTable.PSVersion.Major -lt 7) {
     throw "This bootstrap requires PowerShell 7 because it uses safe process ArgumentList handling. Run it from pwsh."
 }
+if ($SkipGnhfBuild -and $RebuildGnhf) {
+    throw "-SkipGnhfBuild and -RebuildGnhf are mutually exclusive."
+}
 
 Write-Section "AgentSwitchboard GNHF Fleet Setup"
 Refresh-CurrentPath
 
 $resolvedGnhfRepo = Resolve-GnhfClone -ExplicitPath $GnhfRepoPath -SearchRoot $DevRoot
-
 if ($resolvedGnhfRepo) {
     Write-Host "GNHF source clone: $resolvedGnhfRepo" -ForegroundColor Green
 }
 else {
-    Write-Warning "No GNHF source clone was found under '$DevRoot'. An existing global gnhf command can still be used."
+    Write-Host "No GNHF source clone found. A healthy global install will be reused, or the published package will be installed." -ForegroundColor DarkGray
 }
 
-Write-Section "Build or locate GNHF"
+Write-Section "Reuse, build, or install GNHF"
+$gnhf = Get-CommandRecord -Name "gnhf"
 
-$gnhfCommand = Get-Command gnhf -ErrorAction SilentlyContinue
-
-if (-not $SkipGnhfBuild -and $resolvedGnhfRepo) {
-    $node = Get-Command node -ErrorAction SilentlyContinue
-    $npm = Get-Command npm -ErrorAction SilentlyContinue
-
-    if (-not $node -or -not $npm) {
-        throw "Node.js and npm are required to build the cloned GNHF repository."
+if ($gnhf.Available -and -not $RebuildGnhf) {
+    Write-Host "Using existing GNHF installation: $($gnhf.Path)" -ForegroundColor Green
+}
+else {
+    if ($RebuildGnhf -and -not $resolvedGnhfRepo) {
+        throw "-RebuildGnhf requires a valid GNHF source clone. Supply -GnhfRepoPath or place the clone under '$DevRoot'."
     }
 
-    $nodeVersion = (& node --version).TrimStart("v")
-    $nodeMajor = [int]($nodeVersion.Split(".")[0])
-    if ($nodeMajor -lt 20) {
-        throw "GNHF requires Node.js 20 or newer. Detected: $nodeVersion"
+    if ($resolvedGnhfRepo -and -not $SkipGnhfBuild) {
+        Write-Host "Building and linking GNHF from the existing source clone..." -ForegroundColor Yellow
+        Install-GnhfSource -RepoPath $resolvedGnhfRepo
+        $gnhf = Get-CommandRecord -Name "gnhf"
     }
 
-    if (-not (Get-Command pnpm -ErrorAction SilentlyContinue)) {
-        Write-Host "Installing pnpm 11.1.1 required by the current GNHF checkout..." -ForegroundColor Yellow
-        Invoke-Checked -FilePath $npm.Source -ArgumentList @("install", "--global", "pnpm@11.1.1")
-        Refresh-CurrentPath
+    if (-not $gnhf.Available) {
+        Install-PublishedGnhf
+        $gnhf = Get-CommandRecord -Name "gnhf"
     }
-
-    $pnpm = (Get-Command pnpm -ErrorAction Stop).Source
-    Invoke-Checked -FilePath $pnpm -ArgumentList @("install", "--frozen-lockfile") -WorkingDirectory $resolvedGnhfRepo
-    Invoke-Checked -FilePath $pnpm -ArgumentList @("run", "build") -WorkingDirectory $resolvedGnhfRepo
-    Invoke-Checked -FilePath $pnpm -ArgumentList @("link", "--global") -WorkingDirectory $resolvedGnhfRepo
-    Refresh-CurrentPath
-    $gnhfCommand = Get-Command gnhf -ErrorAction SilentlyContinue
 }
 
-if (-not $gnhfCommand) {
-    if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
-        throw "gnhf is not available and npm is unavailable. Build the clone manually, then rerun."
-    }
-
-    Write-Host "Installing the published GNHF package because no command is currently available..." -ForegroundColor Yellow
-    Invoke-Checked -FilePath (Get-Command npm).Source -ArgumentList @("install", "--global", "gnhf")
-    Refresh-CurrentPath
-    $gnhfCommand = Get-Command gnhf -ErrorAction SilentlyContinue
+if (-not $gnhf.Available) {
+    throw "GNHF installation or repair completed, but readiness validation still failed. $($gnhf.Evidence)"
 }
-
-if (-not $gnhfCommand) {
-    throw "GNHF installation completed but the gnhf command is still not visible."
-}
-
-$gnhfProbe = Invoke-Probe -FilePath $gnhfCommand.Source -ArgumentList @("--version")
-if ($gnhfProbe.TimedOut -or $gnhfProbe.ExitCode -ne 0) {
-    throw "GNHF was found at '$($gnhfCommand.Source)', but its version probe failed. Output: $($gnhfProbe.Output)"
-}
-Write-Host "GNHF: $($gnhfProbe.Output)" -ForegroundColor Green
+Write-Host "GNHF: $($gnhf.Version)" -ForegroundColor Green
 
 if ($InstallOpenCodeAndCopilot) {
-    Write-Section "Install missing native agents"
+    Write-Section "Reuse or repair native agents"
 
-    if (-not (Get-Command opencode -ErrorAction SilentlyContinue)) {
+    $openCodeBefore = Get-CommandRecord -Name "opencode"
+    if (-not $openCodeBefore.Available) {
         $npm = Get-Command npm -ErrorAction Stop
+        Write-Host "Installing or repairing OpenCode..." -ForegroundColor Yellow
         Invoke-Checked -FilePath $npm.Source -ArgumentList @("install", "--global", "opencode-ai")
         Refresh-CurrentPath
     }
+    else {
+        Write-Host "Using existing OpenCode installation: $($openCodeBefore.Path)" -ForegroundColor Green
+    }
 
-    if (-not (Get-Command copilot -ErrorAction SilentlyContinue)) {
-        if (Get-Command winget -ErrorAction SilentlyContinue) {
+    $copilotBefore = Get-CommandRecord -Name "copilot"
+    if (-not $copilotBefore.Available) {
+        $existingCopilotCommand = Get-Command copilot -ErrorAction SilentlyContinue
+        if (-not $existingCopilotCommand -and (Get-Command winget -ErrorAction SilentlyContinue)) {
+            Write-Host "Installing GitHub Copilot CLI with WinGet..." -ForegroundColor Yellow
             Invoke-Checked -FilePath (Get-Command winget).Source -ArgumentList @(
-                "install",
-                "--id", "GitHub.Copilot",
-                "--exact",
-                "--source", "winget",
-                "--accept-source-agreements",
-                "--accept-package-agreements"
+                "install", "--id", "GitHub.Copilot", "--exact", "--source", "winget",
+                "--accept-source-agreements", "--accept-package-agreements"
             )
         }
         else {
             $npm = Get-Command npm -ErrorAction Stop
+            Write-Host "Installing or repairing GitHub Copilot CLI with npm..." -ForegroundColor Yellow
             Invoke-Checked -FilePath $npm.Source -ArgumentList @("install", "--global", "@github/copilot")
         }
         Refresh-CurrentPath
     }
+    else {
+        Write-Host "Using existing Copilot CLI installation: $($copilotBefore.Path)" -ForegroundColor Green
+    }
 }
 
 Write-Section "Detect agent adapters"
-
 $openCode = Get-CommandRecord -Name "opencode"
 $copilot = Get-CommandRecord -Name "copilot"
 $goose = Get-CommandRecord -Name "goose"
@@ -352,16 +385,13 @@ if ($goose.Available) {
     $gooseAcpReady = (-not $gooseAcpProbe.TimedOut -and $gooseAcpProbe.ExitCode -eq 0)
     $gooseEvidence = if ($gooseAcpReady) {
         "goose acp --help exited successfully."
-    } else {
+    }
+    else {
         "goose was found, but 'goose acp --help' did not succeed. $($gooseAcpProbe.Output)"
     }
 }
 
-$agyAcp = [pscustomobject]@{
-    Ready = $false
-    Command = $null
-    Evidence = $agy.Evidence
-}
+$agyAcp = [pscustomobject]@{ Ready = $false; Command = $null; Evidence = $agy.Evidence }
 if ($agy.Available) {
     $agyAcp = Test-AgyAcp -AgyPath $agy.Path -ExplicitCommand $AgyAcpCommand
 }
@@ -407,14 +437,16 @@ foreach ($entry in $agents.GetEnumerator()) {
     Write-Host ("{0,-8} {1,-8} {2}" -f $entry.Key, $status, $entry.Value.evidence) -ForegroundColor $color
 }
 
-Write-Section "Install fleet scripts"
-
-New-Item -ItemType Directory -Path $InstallRoot -Force | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $InstallRoot "prompts") -Force | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $InstallRoot "logs") -Force | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $InstallRoot "reports") -Force | Out-Null
+Write-Section "Install or refresh fleet scripts"
+$InstallRoot = Ensure-GnhfFleetDirectory -Path $InstallRoot
+$promptsRoot = Ensure-GnhfFleetDirectory -Path (Join-Path $InstallRoot "prompts")
+[void](Ensure-GnhfFleetDirectory -Path (Join-Path $InstallRoot "logs"))
+[void](Ensure-GnhfFleetDirectory -Path (Join-Path $InstallRoot "reports"))
+[void](Ensure-GnhfFleetDirectory -Path (Join-Path $InstallRoot "runtime-prompts"))
 
 $filesToCopy = @(
+    "GnhfFleet.Paths.ps1",
+    "Start-AgentSwitchboard.ps1",
     "Start-GnhfSprint.ps1",
     "Start-GnhfFleet.ps1",
     "Get-GnhfFleetStatus.ps1",
@@ -424,32 +456,49 @@ $filesToCopy = @(
 )
 
 foreach ($file in $filesToCopy) {
-    $source = Join-Path $PSScriptRoot $file
-    if (-not (Test-Path -LiteralPath $source)) {
-        throw "Bundle file missing: $source"
-    }
+    $source = Resolve-GnhfFleetFile -Path (Join-Path $PSScriptRoot $file) -Description "bundle file"
     Copy-Item -LiteralPath $source -Destination (Join-Path $InstallRoot $file) -Force
 }
 
-Copy-Item -Path (Join-Path $PSScriptRoot "prompts\*") -Destination (Join-Path $InstallRoot "prompts") -Recurse -Force
-
-$manifestSource = Join-Path $PSScriptRoot "gnhf-fleet.example.json"
-$manifestTarget = Join-Path $InstallRoot "gnhf-fleet.json"
-$manifestText = Get-Content -LiteralPath $manifestSource -Raw
-if ($DefaultRepoPath) {
-    $resolvedDefaultRepo = (Resolve-Path -LiteralPath $DefaultRepoPath).Path
-    $manifestText = $manifestText.Replace('__REPO_PATH__', $resolvedDefaultRepo.Replace('\', '\\'))
+$sourcePromptsRoot = Resolve-GnhfFleetDirectory -Path (Join-Path $PSScriptRoot "prompts") -Description "bundle prompts directory"
+$promptFiles = @(Get-ChildItem -LiteralPath $sourcePromptsRoot -File)
+if ($promptFiles.Count -eq 0) {
+    throw "Bundle prompts directory contains no prompt files: $sourcePromptsRoot"
 }
-Set-Content -LiteralPath $manifestTarget -Value $manifestText -Encoding utf8NoBOM
+foreach ($promptFile in $promptFiles) {
+    Copy-Item -LiteralPath $promptFile.FullName -Destination (Join-Path $promptsRoot $promptFile.Name) -Force
+}
+
+$manifestSource = Resolve-GnhfFleetFile -Path (Join-Path $PSScriptRoot "gnhf-fleet.example.json") -Description "fleet manifest template"
+$manifestTarget = Join-Path $InstallRoot "gnhf-fleet.json"
+if (Test-Path -LiteralPath $manifestTarget) {
+    if (-not (Test-Path -LiteralPath $manifestTarget -PathType Leaf)) {
+        throw "Expected the fleet manifest path to be a file, but found a directory: $manifestTarget"
+    }
+
+    if (-not $ResetManifest) {
+        Write-Host "Preserving existing customized fleet manifest: $manifestTarget" -ForegroundColor Green
+    }
+}
+
+if ($ResetManifest -or -not (Test-Path -LiteralPath $manifestTarget -PathType Leaf)) {
+    $manifestText = Get-Content -LiteralPath $manifestSource -Raw
+    if ($DefaultRepoPath) {
+        $resolvedDefaultRepo = Resolve-GnhfFleetDirectory -Path $DefaultRepoPath -Description "default repository"
+        $manifestText = $manifestText.Replace('__REPO_PATH__', $resolvedDefaultRepo.Replace('\', '\\'))
+    }
+    Set-Content -LiteralPath $manifestTarget -Value $manifestText -Encoding utf8NoBOM
+    Write-Host "Wrote fleet manifest: $manifestTarget" -ForegroundColor Green
+}
 
 $state = [ordered]@{
     schemaVersion = 1
     installedAt = (Get-Date).ToString("o")
     installRoot = $InstallRoot
     gnhf = [ordered]@{
-        commandPath = $gnhfCommand.Source
+        commandPath = $gnhf.Path
         sourceRepoPath = $resolvedGnhfRepo
-        versionOutput = $gnhfProbe.Output
+        versionOutput = $gnhf.Version
     }
     agents = $agents
     safety = [ordered]@{
@@ -458,6 +507,7 @@ $state = [ordered]@{
         maxIterationsRequired = $true
         cleanTreeRequired = $true
         directMainWritesForbidden = $true
+        preservesExistingManifest = (-not $ResetManifest)
     }
 }
 
@@ -469,22 +519,22 @@ if ($DisableGnhfTelemetry) {
     [Environment]::SetEnvironmentVariable("GNHF_TELEMETRY", "0", "User")
 }
 
-$cmdLauncher = @'
-@echo off
-setlocal
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0Start-GnhfFleet.ps1" %*
-endlocal
-'@
-Set-Content -LiteralPath (Join-Path $InstallRoot "Start-GnhfFleet.cmd") -Value $cmdLauncher -Encoding ascii
+$cmdLaunchers = @{
+    "Start-GnhfFleet.cmd" = 'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0Start-GnhfFleet.ps1" %*'
+    "agent-switchboard.cmd" = 'pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0Start-AgentSwitchboard.ps1" %*'
+}
+foreach ($launcher in $cmdLaunchers.GetEnumerator()) {
+    $content = "@echo off`r`nsetlocal`r`n$($launcher.Value)`r`nset `_code=%ERRORLEVEL%`r`nendlocal & exit /b %_code%`r`n"
+    Set-Content -LiteralPath (Join-Path $InstallRoot $launcher.Key) -Value $content -Encoding ascii
+}
 
 Write-Section "Setup complete"
 Write-Host "Install root: $InstallRoot" -ForegroundColor Green
 Write-Host "State:        $statePath"
 Write-Host "Manifest:     $manifestTarget"
 Write-Host ""
-Write-Host "One-time authentication still happens inside each agent's own CLI." -ForegroundColor Yellow
-Write-Host "Then launch with:"
-Write-Host "  pwsh -File `"$InstallRoot\Start-GnhfFleet.ps1`" -ManifestPath `"$manifestTarget`"" -ForegroundColor Cyan
-Write-Host ""
+Write-Host "Existing healthy tools were reused. Missing or unhealthy requested tools were installed or repaired." -ForegroundColor Cyan
+Write-Host "Run readiness:"
+Write-Host "  pwsh -File `"$InstallRoot\Start-AgentSwitchboard.ps1`" -ListAgents" -ForegroundColor Cyan
 Write-Host "Morning review:"
 Write-Host "  pwsh -File `"$InstallRoot\Get-GnhfFleetStatus.ps1`" -ManifestPath `"$manifestTarget`"" -ForegroundColor Cyan
