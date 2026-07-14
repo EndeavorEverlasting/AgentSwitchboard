@@ -95,3 +95,26 @@ function Ensure-GnhfFleetParentDirectory {
 
     return Ensure-GnhfFleetDirectory -Path $parent
 }
+
+function Copy-GnhfFleetFile {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$Source,
+        [Parameter(Mandatory)][string]$Destination
+    )
+
+    $sourceFullPath = Resolve-GnhfFleetFile -Path $Source -Description "copy source"
+    $destinationFullPath = Get-GnhfFleetAbsolutePath -Path $Destination
+    [void](Ensure-GnhfFleetParentDirectory -Path $destinationFullPath)
+
+    if ($sourceFullPath.Equals($destinationFullPath, [StringComparison]::OrdinalIgnoreCase)) {
+        return $destinationFullPath
+    }
+
+    if (Test-Path -LiteralPath $destinationFullPath -PathType Container) {
+        throw "Expected copy destination to be a file, but found a directory: $destinationFullPath"
+    }
+
+    Copy-Item -LiteralPath $sourceFullPath -Destination $destinationFullPath -Force
+    return (Get-Item -LiteralPath $destinationFullPath -Force).FullName
+}
