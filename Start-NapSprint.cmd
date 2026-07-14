@@ -13,13 +13,14 @@ if not exist "%_config%" (
 )
 
 echo.
-echo Starting bounded unattended sprint...
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0tooling\nap\Start-AgentSwitchboardNap.ps1" %*
+echo Starting bounded unattended sprint through the technician-safe wrapper...
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0tooling\nap\Invoke-NapSprintSafely.ps1" %*
 set "_code=%ERRORLEVEL%"
 popd
 echo.
-echo Evidence root: %LOCALAPPDATA%\AgentSwitchboard\Nap\runs
-if not "%_code%"=="0" echo Nap sprint stopped or failed with exit code %_code%.
+echo Operator evidence: %LOCALAPPDATA%\AgentSwitchboard\Nap\operator-runs
+echo Inner run evidence: %LOCALAPPDATA%\AgentSwitchboard\Nap\runs
+if not "%_code%"=="0" echo The run stopped safely with exit code %_code%. Follow the displayed next action.
 pause
 endlocal & exit /b %_code%
 
