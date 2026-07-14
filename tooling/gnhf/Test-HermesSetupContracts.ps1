@@ -61,6 +61,7 @@ if ($null -ne $setup) {
     Add-Check -Passed ($setup.Contains('Core fleet setup will continue and Hermes will be recorded as BLOCKED')) -Name "setup/graceful-hermes-failure" -FailureMessage "Hermes installation failure can abort the entire setup"
     Add-Check -Passed ($setup.Contains('Test-GnhfFleetContracts.ps1')) -Name "setup/core-validator" -FailureMessage "core validator is not executed"
     Add-Check -Passed ($setup.Contains('Test-HermesSetupContracts.ps1')) -Name "setup/hermes-validator" -FailureMessage "Hermes validator is not executed"
+    Add-Check -Passed ($setup.Contains('"gnhf-fleet.example.json"')) -Name "setup/preserves-manifest-template" -FailureMessage "repeat setup from the installed directory can lose the manifest template"
     Add-Check -Passed ($setup.Contains('Copy-SetupFile')) -Name "setup/idempotent-copy" -FailureMessage "setup bundle is not copied with a self-copy guard"
 }
 
@@ -78,6 +79,7 @@ if ($null -ne $operator) {
     Add-Check -Passed ($operator.Contains('@("opencode", "goose", "agy", "copilot", "hermes")')) -Name "operator/hermes-readiness" -FailureMessage "readiness output omits Hermes"
     Add-Check -Passed ($operator.Contains('hermes = "hermes-implementation.md"')) -Name "operator/hermes-prompt" -FailureMessage "Hermes default prompt mapping is missing"
     Add-Check -Passed ($operator.Contains('Setup-AgentSwitchboard.ps1')) -Name "operator/bootstrap-delegates-to-robust-setup" -FailureMessage "bootstrap bypasses the robust setup and can erase Hermes state"
+    Add-Check -Passed ($operator.Contains('Setup logs:')) -Name "operator/setup-log-discovery" -FailureMessage "readiness output does not reveal setup log location"
 }
 
 if ($null -ne $prompt) {
