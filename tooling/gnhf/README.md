@@ -14,9 +14,24 @@ Windows-first launchers for bounded unattended GNHF sprints.
 - CLI readiness requires a successful version probe, not command presence alone.
 - Prompt files are streamed over stdin so detailed PRDs do not hit Windows argv limits.
 
+## Idempotence contract
+
+Bootstrap and reporting commands are safe to run repeatedly:
+
+- A healthy existing GNHF, OpenCode, or Copilot CLI installation is reused.
+- Missing or unhealthy requested tools are installed or repaired.
+- Existing directories are reused; missing directory trees are created.
+- A file occupying a required directory path, or a directory occupying a required file path, produces a clear blocking error.
+- Files already running from the installed fleet directory are not copied onto themselves.
+- An existing customized `gnhf-fleet.json` is preserved by default.
+- `-ResetManifest` is required to replace the installed manifest from the template.
+- `-RebuildGnhf` is required to rebuild a healthy GNHF command from the source clone.
+- One missing fleet repository or prompt causes that lane to be skipped and recorded; it does not prevent valid lanes from launching.
+- Morning review records missing repositories and stale worktree directories instead of aborting the whole report.
+
 ## Start here: launch an agent and code
 
-From the AgentSwitchboard checkout, run the one-time bootstrap and readiness probe against your target repository:
+From the AgentSwitchboard checkout, run bootstrap and the readiness probe against your target repository:
 
 ```powershell
 cd "C:\Users\Cheex\Desktop\dev\agents\AgentSwitchboard"
@@ -27,7 +42,9 @@ pwsh -NoLogo -NoProfile -File .\tooling\gnhf\Start-AgentSwitchboard.ps1 `
   -ListAgents
 ```
 
-The bootstrap installs or locates GNHF, probes OpenCode, Goose, AGY, and Copilot, writes local fleet state under `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet`, and installs this reusable launcher:
+The same command can be run again after an interrupted or partial setup. Bootstrap refreshes scripts and readiness state while preserving the installed fleet manifest.
+
+The bootstrap installs, repairs, or reuses GNHF; probes OpenCode, Goose, AGY, and Copilot; writes local fleet state under `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet`; and installs this reusable launcher:
 
 ```text
 %LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\agent-switchboard.cmd
@@ -66,17 +83,28 @@ The bundled OpenCode, Goose, AGY, and Copilot prompts are scoped specifically to
 
 ## Validate the fleet contracts
 
-The validator uses the built-in PowerShell parser and deterministic text/manifest checks; it does not launch agents or mutate a target repository.
+The validator uses the built-in PowerShell parser, temporary-directory behavior checks, and deterministic text/manifest checks. It does not launch agents or mutate a target repository.
 
 ```powershell
 pwsh -NoLogo -NoProfile -File .\Test-GnhfFleetContracts.ps1
 ```
 
-It checks PowerShell syntax, the example manifest, readiness gating, asynchronous probe output draining, prompt streaming, incompatible flag rejection, controlled failure reporting, and report-directory recovery.
+It checks:
 
-## Install
+- PowerShell syntax and manifest structure;
+- readiness gating and asynchronous probe output draining;
+- prompt streaming and incompatible flag rejection;
+- creation and reuse of nested directories;
+- file-versus-directory collision handling;
+- repeated same-path file copies;
+- existing-manifest preservation;
+- reuse of healthy installations;
+- invalid-lane skipping;
+- missing-repository and stale-worktree reporting.
 
-Open PowerShell 7 in the extracted bundle:
+## Install or repair
+
+Open PowerShell 7 in the AgentSwitchboard checkout or installed fleet directory:
 
 ```powershell
 pwsh -File .\Install-AgentSwitchboardGnhf.ps1 `
@@ -84,17 +112,39 @@ pwsh -File .\Install-AgentSwitchboardGnhf.ps1 `
   -DefaultRepoPath "C:\Users\Cheex\Desktop\dev\agents\AgentSwitchboard"
 ```
 
-Add `-InstallOpenCodeAndCopilot` only when those two commands are missing.
+A healthy global `gnhf` command is used as-is. When GNHF is unavailable or unhealthy, the installer builds the existing source clone when possible, then falls back to installing the published package.
+
+Use an explicit source rebuild only when needed:
+
+```powershell
+pwsh -File .\Install-AgentSwitchboardGnhf.ps1 `
+  -GnhfRepoPath "C:\path\to\your\gnhf" `
+  -RebuildGnhf
+```
+
+Install or repair OpenCode and Copilot when requested:
+
+```powershell
+pwsh -File .\Install-AgentSwitchboardGnhf.ps1 `
+  -InstallOpenCodeAndCopilot
+```
+
+Reset the installed fleet manifest only when intentionally discarding its customizations:
+
+```powershell
+pwsh -File .\Install-AgentSwitchboardGnhf.ps1 `
+  -ResetManifest `
+  -DefaultRepoPath "C:\Users\Cheex\Desktop\dev\agents\AgentSwitchboard"
+```
 
 If AGY exposes ACP but auto-detection does not recognize its launch form:
 
 ```powershell
 pwsh -File .\Install-AgentSwitchboardGnhf.ps1 `
-  -GnhfRepoPath "C:\path\to\your\gnhf" `
   -AgyAcpCommand "agy <exact-acp-server-arguments>"
 ```
 
-The installer writes the operational files to:
+The installer writes operational files to:
 
 ```text
 %LOCALAPPDATA%\AgentSwitchboard\GnhfFleet
@@ -144,6 +194,8 @@ To push each generated GNHF branch after successful iterations, explicitly add `
 
 `-Wait` is intended for automation and cannot be combined with `-KeepWindowsOpen`; interactive windows must not hold an unattended parent process open indefinitely.
 
+Every enabled lane receives a launch record. Invalid paths, unknown agents, blocked agents, and process-start failures are recorded with explicit statuses while healthy lanes continue.
+
 ## Morning review
 
 ```powershell
@@ -158,6 +210,8 @@ The report is written under:
 ```text
 %LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\reports
 ```
+
+The report survives missing configured repositories and stale worktree registrations. Those conditions are emitted as `unavailable` or `worktree-missing` evidence instead of terminating the report.
 
 ## Agent mapping
 
