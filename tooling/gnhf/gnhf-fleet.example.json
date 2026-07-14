@@ -42,6 +42,16 @@
       "maxIterations": 4,
       "maxTokens": 250000,
       "stopWhen": "The bounded tests or validator are committed and pass, with no application behavior changes."
+    },
+    {
+      "name": "hermes-implementation",
+      "enabled": false,
+      "agent": "hermes",
+      "repoPath": "__REPO_PATH__",
+      "promptPath": "prompts/hermes-implementation.md",
+      "maxIterations": 6,
+      "maxTokens": 500000,
+      "stopWhen": "The bounded Hermes change is committed, targeted validation passes, no unrelated files changed, and the branch contains at least one useful commit."
     }
   ]
 }

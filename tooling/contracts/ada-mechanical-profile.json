@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "profileId": "ada-mechanical-profile",
+  "name": "Ada Mechanical Capability Profile",
+  "description": "Deterministic, non-autonomous executor profile for AgentSwitchboard workers.",
+  "policy": {
+    "mandatoryDryRun": true,
+    "autonomousRepairAttempts": 0,
+    "stopOnFirstDeviation": true,
+    "independentValidation": {
+      "command": "pwsh -NoLogo -NoProfile -File tooling/contracts/Test-WorkerRunContracts.ps1",
+      "requiredConclusion": "success"
+    }
+  },
+  "budgets": {
+    "maxFileChanges": 4,
+    "maxOperationSeconds": 300,
+    "maxTokenCap": 500000,
+    "maxOperationsCount": 15
+  },
+  "exactOperations": [
+    {
+      "operation": "git.fetch",
+      "description": "Fetch remote refs without merging.",
+      "arguments": ["remote", "branch"]
+    },
+    {
+      "operation": "git.worktree.add",
+      "description": "Create isolated worktree from a pinned commit.",
+      "arguments": ["path", "commitSha"]
+    },
+    {
+      "operation": "file.patch",
+      "description": "Apply a bounded diff or replacement chunk.",
+      "arguments": ["targetFile", "chunks"]
+    },
+    {
+      "operation": "validation.run",
+      "description": "Execute targeted repository validators.",
+      "arguments": ["command", "timeoutMs"]
+    },
+    {
+      "operation": "git.commit_and_push",
+      "description": "Commit staged changes and push to isolated branch.",
+      "arguments": ["message", "branch"]
+    }
+  ]
+}
