@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "runId": "invalid-sha-001",
+  "repository": {
+    "name": "AgentSwitchboard",
+    "path": "C:\\worktrees\\AgentSwitchboard-invalid-sha",
+    "remote": "origin"
+  },
+  "worker": {
+    "executor": "goose",
+    "provider": "openrouter",
+    "lane": "validation"
+  },
+  "git": {
+    "branch": "sprint/invalid-sha",
+    "worktreePath": "C:\\worktrees\\AgentSwitchboard-invalid-sha",
+    "baseSha": "not-a-commit",
+    "headSha": "cccccccccccccccccccccccccccccccccccccccc",
+    "dirty": false
+  },
+  "scope": {
+    "owned": ["tooling/contracts/"],
+    "forbidden": ["provider credentials"]
+  },
+  "dependencies": {
+    "parentRunIds": [],
+    "consumedCommits": []
+  },
+  "changes": {
+    "files": ["tooling/contracts/example.json"],
+    "commits": ["cccccccccccccccccccccccccccccccccccccccc"]
+  },
+  "validation": [
+    {
+      "command": "pwsh -File tooling/contracts/Test-WorkerRunContracts.ps1",
+      "status": "passed",
+      "evidence": "Fixture should be rejected before integration."
+    }
+  ],
+  "evidence": {
+    "summaryPath": ".agent-switchboard/runs/invalid-sha-001/summary.json",
+    "logPaths": []
+  },
+  "integration": {
+    "status": "ready",
+    "conflicts": [],
+    "supersededByRunId": null
+  }
+}
