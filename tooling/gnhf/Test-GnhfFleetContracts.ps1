@@ -110,6 +110,13 @@ if (Test-Path -LiteralPath $pathHelpersPath -PathType Leaf) {
         $resolvedFile = Resolve-GnhfFleetFile -Path $sampleFile -Description "sample file"
         Add-CheckResult -Passed ($resolvedFile -eq (Get-Item -LiteralPath $sampleFile).FullName) -Name "paths/resolves-existing-file" -FailureMessage "existing file did not resolve"
 
+        $sameFile = Copy-GnhfFleetFile -Source $sampleFile -Destination $sampleFile
+        Add-CheckResult -Passed ($sameFile -eq $resolvedFile) -Name "paths/skips-self-copy" -FailureMessage "copying an installed file onto itself failed"
+
+        $copiedFile = Join-Path $tempRoot "copy\sample.txt"
+        [void](Copy-GnhfFleetFile -Source $sampleFile -Destination $copiedFile)
+        Add-CheckResult -Passed (Test-Path -LiteralPath $copiedFile -PathType Leaf) -Name "paths/creates-copy-parent" -FailureMessage "copy helper did not create the destination parent"
+
         $collisionThrown = $false
         try {
             [void](Ensure-GnhfFleetDirectory -Path $sampleFile)
@@ -141,6 +148,8 @@ if (Test-Path -LiteralPath $pathHelpersPath -PathType Leaf) {
 $pathHelpers = Get-FileText "GnhfFleet.Paths.ps1"
 if ($null -ne $pathHelpers) {
     Add-CheckResult -Passed ($pathHelpers.Contains("function Ensure-GnhfFleetDirectory")) -Name "paths/ensure-directory-helper" -FailureMessage "shared directory helper is missing"
+    Add-CheckResult -Passed ($pathHelpers.Contains("function Copy-GnhfFleetFile")) -Name "paths/idempotent-copy-helper" -FailureMessage "shared file copy helper is missing"
+    Add-CheckResult -Passed ($pathHelpers.Contains("sourceFullPath.Equals($destinationFullPath")) -Name "paths/self-copy-guard" -FailureMessage "same-source and destination copies are not skipped"
     Add-CheckResult -Passed ($pathHelpers.Contains("-PathType Container")) -Name "paths/distinguishes-directory-type" -FailureMessage "directory type is not validated"
     Add-CheckResult -Passed ($pathHelpers.Contains("existing non-directory item")) -Name "paths/clear-collision-error" -FailureMessage "file/directory collisions are not explicit"
 }
@@ -153,9 +162,9 @@ if ($null -ne $installer) {
     Add-CheckResult -Passed ($installer.Contains('[switch]$RebuildGnhf')) -Name "installer/explicit-source-rebuild" -FailureMessage "source rebuild cannot be requested explicitly"
     Add-CheckResult -Passed ($installer.Contains('[switch]$ResetManifest')) -Name "installer/explicit-manifest-reset" -FailureMessage "manifest reset is not explicit"
     Add-CheckResult -Passed ($installer.Contains('Preserving existing customized fleet manifest')) -Name "installer/preserves-existing-manifest" -FailureMessage "bootstrap can overwrite a customized manifest"
+    Add-CheckResult -Passed ($installer.Contains('Copy-GnhfFleetFile -Source $source -Destination $destination')) -Name "installer/uses-idempotent-copy" -FailureMessage "bootstrap can copy installed files onto themselves"
     Add-CheckResult -Passed ($installer.Contains('GnhfFleet.Paths.ps1')) -Name "installer/copies-path-helpers" -FailureMessage "path helpers are not installed with the fleet"
     Add-CheckResult -Passed ($installer.Contains('Test-GnhfFleetContracts.ps1')) -Name "installer/copies-validator" -FailureMessage "contract validator is not installed with the fleet"
-    Add-CheckResult -Passed ($installer.Contains('sourceFullPath.Equals($destinationFullPath')) -Name "installer/skips-self-copy" -FailureMessage "running the installer from its installed directory can copy files onto themselves"
 }
 
 $operatorLauncher = Get-FileText "Start-AgentSwitchboard.ps1"
