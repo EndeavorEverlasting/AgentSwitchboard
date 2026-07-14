@@ -292,7 +292,8 @@ try {
     foreach ($fileName in @(
         "Setup-AgentSwitchboard.ps1",
         "Setup-AgentSwitchboard.cmd",
-        "Test-HermesSetupContracts.ps1"
+        "Test-HermesSetupContracts.ps1",
+        "gnhf-fleet.example.json"
     )) {
         Copy-SetupFile -Source (Join-Path $PSScriptRoot $fileName) -Destination (Join-Path $InstallRoot $fileName)
     }
@@ -301,7 +302,7 @@ try {
     $installedPrompts = Join-Path $InstallRoot "prompts"
     New-Item -ItemType Directory -Path $installedPrompts -Force | Out-Null
     Copy-SetupFile -Source $hermesPromptSource -Destination (Join-Path $installedPrompts "hermes-implementation.md")
-    Add-SetupStep -Name "setup-bundle-copy" -Status "passed" -Evidence "Setup launchers, Hermes validator, and Hermes prompt were installed under $InstallRoot."
+    Add-SetupStep -Name "setup-bundle-copy" -Status "passed" -Evidence "Setup launchers, validators, manifest template, and Hermes prompt were installed under $InstallRoot."
 
     Write-Section "Validate setup contracts"
     $coreValidator = Join-Path $PSScriptRoot "Test-GnhfFleetContracts.ps1"
