@@ -76,11 +76,27 @@ function Invoke-Probe {
 
     try {
         $psi = [System.Diagnostics.ProcessStartInfo]::new()
-        $psi.FileName = $FilePath
         $psi.UseShellExecute = $false
         $psi.RedirectStandardOutput = $true
         $psi.RedirectStandardError = $true
+        $psi.RedirectStandardInput = $true
         $psi.CreateNoWindow = $true
+
+        if ($FilePath.EndsWith(".ps1", [System.StringComparison]::OrdinalIgnoreCase)) {
+            $psi.FileName = "pwsh.exe"
+            [void]$psi.ArgumentList.Add("-NoProfile")
+            [void]$psi.ArgumentList.Add("-NonInteractive")
+            [void]$psi.ArgumentList.Add("-File")
+            [void]$psi.ArgumentList.Add($FilePath)
+        }
+        elseif ($FilePath.EndsWith(".cmd", [System.StringComparison]::OrdinalIgnoreCase) -or $FilePath.EndsWith(".bat", [System.StringComparison]::OrdinalIgnoreCase)) {
+            $psi.FileName = "cmd.exe"
+            [void]$psi.ArgumentList.Add("/c")
+            [void]$psi.ArgumentList.Add($FilePath)
+        }
+        else {
+            $psi.FileName = $FilePath
+        }
 
         foreach ($argument in $ArgumentList) {
             [void]$psi.ArgumentList.Add($argument)
@@ -89,6 +105,7 @@ function Invoke-Probe {
         $process = [System.Diagnostics.Process]::new()
         $process.StartInfo = $psi
         [void]$process.Start()
+        $process.StandardInput.Close()
 
         $stdoutTask = $process.StandardOutput.ReadToEndAsync()
         $stderrTask = $process.StandardError.ReadToEndAsync()

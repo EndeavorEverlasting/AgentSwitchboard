@@ -14,7 +14,7 @@ function Add-CheckResult {
     param(
         [Parameter(Mandatory)][bool]$Passed,
         [Parameter(Mandatory)][string]$Name,
-        [Parameter(Mandatory)][string]$FailureMessage
+        [Parameter()][AllowEmptyString()][string]$FailureMessage = ""
     )
 
     if ($Passed) {
@@ -149,7 +149,7 @@ $pathHelpers = Get-FileText "GnhfFleet.Paths.ps1"
 if ($null -ne $pathHelpers) {
     Add-CheckResult -Passed ($pathHelpers.Contains("function Ensure-GnhfFleetDirectory")) -Name "paths/ensure-directory-helper" -FailureMessage "shared directory helper is missing"
     Add-CheckResult -Passed ($pathHelpers.Contains("function Copy-GnhfFleetFile")) -Name "paths/idempotent-copy-helper" -FailureMessage "shared file copy helper is missing"
-    Add-CheckResult -Passed ($pathHelpers.Contains("sourceFullPath.Equals($destinationFullPath")) -Name "paths/self-copy-guard" -FailureMessage "same-source and destination copies are not skipped"
+    Add-CheckResult -Passed ($pathHelpers.Contains('sourceFullPath.Equals($destinationFullPath')) -Name "paths/self-copy-guard" -FailureMessage "same-source and destination copies are not skipped"
     Add-CheckResult -Passed ($pathHelpers.Contains("-PathType Container")) -Name "paths/distinguishes-directory-type" -FailureMessage "directory type is not validated"
     Add-CheckResult -Passed ($pathHelpers.Contains("existing non-directory item")) -Name "paths/clear-collision-error" -FailureMessage "file/directory collisions are not explicit"
 }

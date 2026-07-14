@@ -250,31 +250,31 @@ else {
         [void]$markdown.Add("## $heading")
         [void]$markdown.Add("")
         [void]$markdown.Add("- Availability: **$($row.availability)**")
-        [void]$markdown.Add("- Repository: ``$($row.repoPath)``")
-        if ($row.worktreePath) { [void]$markdown.Add("- Worktree: ``$($row.worktreePath)``") }
-        if ($row.head) { [void]$markdown.Add("- HEAD: ``$($row.head)``") }
-        [void]$markdown.Add("- Notes: $(if ($row.notesPath) { "``$($row.notesPath)``" } else { "not found" })")
-        [void]$markdown.Add("- Debug log: $(if ($row.debugLogPath) { "``$($row.debugLogPath)``" } else { "not found" })")
+        [void]$markdown.Add("- Repository: " + '`' + $row.repoPath + '`')
+        if ($row.worktreePath) { [void]$markdown.Add("- Worktree: " + '`' + $row.worktreePath + '`') }
+        if ($row.head) { [void]$markdown.Add("- HEAD: " + '`' + $row.head + '`') }
+        [void]$markdown.Add("- Notes: $(if ($row.notesPath) { '`' + $row.notesPath + '`' } else { 'not found' })")
+        [void]$markdown.Add("- Debug log: $(if ($row.debugLogPath) { '`' + $row.debugLogPath + '`' } else { 'not found' })")
         if ($row.error) { [void]$markdown.Add("- Evidence: $($row.error)") }
         [void]$markdown.Add("")
 
         if ($row.worktreePath) {
             [void]$markdown.Add("### Git status")
             [void]$markdown.Add("")
-            [void]$markdown.Add("```text")
+            [void]$markdown.Add('```text')
             if ($row.status.Count -gt 0) {
                 foreach ($line in $row.status) { [void]$markdown.Add([string]$line) }
             }
             else {
                 [void]$markdown.Add("(clean or unavailable)")
             }
-            [void]$markdown.Add("```")
+            [void]$markdown.Add('```')
             [void]$markdown.Add("")
             [void]$markdown.Add("### Recent commits")
             [void]$markdown.Add("")
-            [void]$markdown.Add("```text")
+            [void]$markdown.Add('```text')
             foreach ($line in $row.recentCommits) { [void]$markdown.Add([string]$line) }
-            [void]$markdown.Add("```")
+            [void]$markdown.Add('```')
             [void]$markdown.Add("")
         }
     }

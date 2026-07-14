@@ -14,7 +14,7 @@ function Add-Check {
     param(
         [Parameter(Mandatory)][bool]$Passed,
         [Parameter(Mandatory)][string]$Name,
-        [Parameter(Mandatory)][string]$FailureMessage
+        [Parameter()][AllowEmptyString()][string]$FailureMessage = ""
     )
 
     if ($Passed) {
