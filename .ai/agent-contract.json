@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "contractVersion": "1.0.0",
   "canonicalRepository": "EndeavorEverlasting/AgentSwitchboard",
-  "canonicalBranch": "docs/canonical-agent-operating-contract",
+  "canonicalRefPolicy": "merged-default-branch",
   "entrypoints": {
     "universal": "AGENTS.md",
     "claude": "CLAUDE.md",
