@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "distribution": {
+    "name": "Ubuntu",
+    "preferredVersion": 2,
+    "autoInstall": false
+  },
+  "linuxDevRoot": "~/dev",
+  "packages": [
+    "git",
+    "curl",
+    "build-essential",
+    "tmux",
+    "unzip",
+    "jq"
+  ],
+  "agents": [
+    {
+      "name": "opencode",
+      "enabled": true,
+      "installCommand": "npm install --global opencode-ai",
+      "probeCommand": "opencode --version",
+      "requiresNode": true
+    },
+    {
+      "name": "agy",
+      "enabled": false,
+      "installCommand": "npm install --global @anthropic-ai/agy",
+      "probeCommand": "agy --help",
+      "requiresNode": true
+    },
+    {
+      "name": "goose",
+      "enabled": false,
+      "installCommand": "curl -fsSL https://github.com/block/goose/releases/latest/download/goose-linux-x86_64 -o /usr/local/bin/goose && chmod +x /usr/local/bin/goose",
+      "probeCommand": "goose --version",
+      "requiresNode": false
+    }
+  ],
+  "repositories": [
+    {
+      "name": "AgentSwitchboard",
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard.git",
+      "destination": "~/dev/agents/AgentSwitchboard",
+      "branch": "main",
+      "enabled": true
+    }
+  ],
+  "dotfilePolicy": {
+    "backupExisting": true,
+    "managedFiles": [
+      "~/.tmux.conf",
+      "~/.bashrc",
+      "~/.gitconfig"
+    ],
+    "backupSuffix": ".agent-switchboard-backup"
+  },
+  "wezterm": {
+    "enabled": true,
+    "configDestination": "~/.wezterm.lua",
+    "launchDistribution": "Ubuntu"
+  },
+  "tmux": {
+    "enabled": true,
+    "configDestination": "~/.tmux.conf",
+    "pluginManager": "tpm"
+  },
+  "rebootPolicy": {
+    "requireRebootBeforeContinue": true,
+    "maxRebootAttempts": 1
+  },
+  "pathMapping": {
+    "windowsToLinux": true,
+    "wslUncPrefix": "\\\\wsl$\\",
+    "linuxFsPreferred": true,
+    "mntcFallback": false
+  }
+}

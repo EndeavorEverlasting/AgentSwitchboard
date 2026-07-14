@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "queriedAt": "2026-07-14T12:00:00.0000000Z",
+  "wsl": {
+    "available": false,
+    "evidence": "wsl.exe not found on PATH.",
+    "wslPath": null,
+    "statusOutput": null
+  },
+  "distributions": [],
+  "defaultDistribution": null,
+  "developerDistributions": [],
+  "dockerDesktopPresent": false
+}

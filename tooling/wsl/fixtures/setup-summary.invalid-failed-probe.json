@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "completedAt": "2026-07-14T12:00:00.0000000Z",
+  "status": "completed-with-errors",
+  "manifestPath": "tooling/wsl/wsl-workstation.example.json",
+  "distribution": "Ubuntu",
+  "rebootRequired": false,
+  "planMode": false,
+  "commandResults": [
+    {
+      "step": "wsl-feature-check",
+      "status": "already-installed",
+      "evidence": "wsl.exe found."
+    },
+    {
+      "step": "distribution-check",
+      "status": "already-installed",
+      "evidence": "Distribution 'Ubuntu' found."
+    },
+    {
+      "step": "linux-bootstrap",
+      "status": "failed",
+      "evidence": "Agent installation failed: opencode probe returned non-zero exit code.",
+      "exitCode": 1
+    }
+  ],
+  "repoResults": [
+    {
+      "name": "AgentSwitchboard",
+      "destination": "~/dev/agents/AgentSwitchboard",
+      "status": "clone-failed",
+      "remote": "https://github.com/EndeavorEverlasting/AgentSwitchboard.git",
+      "evidence": "fatal: repository not found"
+    }
+  ]
+}
