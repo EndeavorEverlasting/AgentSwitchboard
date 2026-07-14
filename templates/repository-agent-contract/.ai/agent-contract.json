@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "contractVersion": "REPLACE_CONTRACT_VERSION",
+  "canonicalRepository": "EndeavorEverlasting/AgentSwitchboard",
+  "repository": "REPLACE_OWNER/REPLACE_REPOSITORY",
+  "relationship": "child",
+  "entrypoints": {
+    "universal": "AGENTS.md",
+    "claude": "CLAUDE.md",
+    "skills": "SKILLS.md",
+    "capabilities": "CAPABILITIES.md",
+    "triggers": "TRIGGERS.md"
+  },
+  "skillRoot": ".ai/skills",
+  "localRulesMayStrengthen": true,
+  "localRulesMayWeaken": false
+}
