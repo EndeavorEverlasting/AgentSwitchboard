@@ -195,7 +195,7 @@ function Install-HermesIfNeeded {
         Invoke-WebRequest -Uri $installerUri -OutFile $installerPath -UseBasicParsing
         Add-SetupStep -Name "hermes-installer-download" -Status "passed" -Evidence "Downloaded official installer from $installerUri."
 
-        & pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File $installerPath
+        & pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File $installerPath | Out-Host
         if ($LASTEXITCODE -ne 0) {
             throw "Hermes installer exited with code $LASTEXITCODE."
         }
