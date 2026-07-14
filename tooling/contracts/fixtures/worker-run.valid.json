@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "runId": "sysadmin-hermes-validation-001",
+  "repository": {
+    "name": "SysAdminSuite",
+    "path": "C:\\worktrees\\SysAdminSuite-hermes-validation",
+    "remote": "origin"
+  },
+  "worker": {
+    "executor": "hermes",
+    "provider": "copilot",
+    "lane": "validation"
+  },
+  "git": {
+    "branch": "sprint/hermes-validation",
+    "worktreePath": "C:\\worktrees\\SysAdminSuite-hermes-validation",
+    "baseSha": "1111111111111111111111111111111111111111",
+    "headSha": "2222222222222222222222222222222222222222",
+    "dirty": false
+  },
+  "scope": {
+    "owned": [
+      "Tests/",
+      "validators/"
+    ],
+    "forbidden": [
+      "live target mutation",
+      "provider credentials",
+      "default-branch merge"
+    ]
+  },
+  "dependencies": {
+    "parentRunIds": [
+      "sysadmin-opencode-implementation-001"
+    ],
+    "consumedCommits": [
+      "3333333333333333333333333333333333333333"
+    ]
+  },
+  "changes": {
+    "files": [
+      "Tests/Pester/Example.Tests.ps1"
+    ],
+    "commits": [
+      "2222222222222222222222222222222222222222"
+    ]
+  },
+  "validation": [
+    {
+      "command": "Invoke-Pester Tests/Pester/Example.Tests.ps1",
+      "status": "passed",
+      "evidence": "12 tests passed; transcript stored in the run log."
+    }
+  ],
+  "evidence": {
+    "summaryPath": ".agent-switchboard/runs/sysadmin-hermes-validation-001/summary.json",
+    "logPaths": [
+      ".agent-switchboard/runs/sysadmin-hermes-validation-001/worker.log"
+    ]
+  },
+  "integration": {
+    "status": "ready",
+    "conflicts": [],
+    "supersededByRunId": null
+  }
+}
