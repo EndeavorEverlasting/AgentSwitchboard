@@ -42,7 +42,9 @@ $requiredFiles = @(
     (Join-Path $RepositoryRoot "Start-NapSprint.cmd"),
     (Join-Path $RootPath "Configure-NapSprint.ps1"),
     (Join-Path $RootPath "Start-AgentSwitchboardNap.ps1"),
+    (Join-Path $RootPath "Invoke-NapSprintSafely.ps1"),
     (Join-Path $RootPath "Test-NapSprintContracts.ps1"),
+    (Join-Path $RootPath "Test-NapOperatorHarness.ps1"),
     (Join-Path $RootPath "nap-sprint.example.json"),
     (Join-Path $RootPath "README.md")
 )
@@ -112,11 +114,31 @@ if ($null -ne $launcherText) {
     Add-Result -Passed ($launcherText.Contains('if ([bool]$config.pushBranch)')) -Name "launcher/explicit-push" -FailureMessage "push is not gated by config"
 }
 
+$wrapperText = Get-RequiredText -Path (Join-Path $RootPath "Invoke-NapSprintSafely.ps1")
+if ($null -ne $wrapperText) {
+    Add-Result -Passed ($wrapperText.Contains('Get-NapFailureGuidance')) -Name "wrapper/failure-guidance" -FailureMessage "failure classification is missing"
+    Add-Result -Passed ($wrapperText.Contains('operator-summary.json')) -Name "wrapper/operator-summary" -FailureMessage "operator summary is missing"
+    Add-Result -Passed ($wrapperText.Contains('technician-console.log')) -Name "wrapper/technician-log" -FailureMessage "technician log is missing"
+    Add-Result -Passed ($wrapperText.Contains('& pwsh @childArguments *> $consoleLogPath')) -Name "wrapper/contains-raw-child-output" -FailureMessage "raw child output can spill into the technician console"
+    Add-Result -Passed ($wrapperText.Contains('Next action:')) -Name "wrapper/actionable-console" -FailureMessage "technician next action is not displayed"
+    Add-Result -Passed ($wrapperText.Contains('argumentCount = 0')) -Name "wrapper/no-argument-persistence" -FailureMessage "wrapper does not prove it avoids persisting raw arguments"
+    Add-Result -Passed (-not $wrapperText.Contains('launcherArguments = $PSBoundParameters')) -Name "wrapper/no-secret-argument-dump" -FailureMessage "raw bound parameters may be persisted"
+}
+
+$harnessText = Get-RequiredText -Path (Join-Path $RootPath "Test-NapOperatorHarness.ps1")
+if ($null -ne $harnessText) {
+    Add-Result -Passed ($harnessText.Contains('missing-config/failure-code')) -Name "harness/missing-config-case" -FailureMessage "missing configuration path is not covered"
+    Add-Result -Passed ($harnessText.Contains('NAP-CONFIG')) -Name "harness/stable-failure-code" -FailureMessage "stable failure code is not asserted"
+    Add-Result -Passed ($harnessText.Contains('no-prompt-artifact')) -Name "harness/no-prompt-leak" -FailureMessage "prompt cleanup is not asserted"
+    Add-Result -Passed ($harnessText.Contains('$env:LOCALAPPDATA = $oldLocalAppData')) -Name "harness/restores-environment" -FailureMessage "LOCALAPPDATA is not restored"
+}
+
 $startCmd = Get-RequiredText -Path (Join-Path $RepositoryRoot "Start-NapSprint.cmd")
 if ($null -ne $startCmd) {
     Add-Result -Passed ($startCmd.Contains('where pwsh')) -Name "cmd/pwsh-preflight" -FailureMessage "PowerShell 7 presence is not checked"
     Add-Result -Passed ($startCmd.Contains('Configure-NapSprint.ps1')) -Name "cmd/first-run-config" -FailureMessage "missing config is not repaired"
-    Add-Result -Passed ($startCmd.Contains('Start-AgentSwitchboardNap.ps1')) -Name "cmd/delegates-launch" -FailureMessage "CMD bypasses the nap launcher"
+    Add-Result -Passed ($startCmd.Contains('Invoke-NapSprintSafely.ps1')) -Name "cmd/technician-safe-wrapper" -FailureMessage "CMD bypasses the technician-safe wrapper"
+    Add-Result -Passed ($startCmd.Contains('operator-runs')) -Name "cmd/operator-evidence-path" -FailureMessage "operator evidence path is not displayed"
     Add-Result -Passed ($startCmd.Contains('pause')) -Name "cmd/keeps-result-visible" -FailureMessage "double-click window closes immediately"
     Add-Result -Passed ($startCmd.Contains('exit /b %_code%')) -Name "cmd/preserves-exit-code" -FailureMessage "exit code is not preserved"
 }
