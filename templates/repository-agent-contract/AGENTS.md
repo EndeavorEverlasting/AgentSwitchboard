@@ -1,0 +1,36 @@
+# Agent Operating Contract
+
+Canonical source: `EndeavorEverlasting/AgentSwitchboard`  
+Pinned contract version: `REPLACE_CONTRACT_VERSION`
+
+## Repository mission
+
+`REPLACE_REPOSITORY_MISSION`
+
+## Required reading
+
+1. this `AGENTS.md`;
+2. nearest nested `AGENTS.md`;
+3. `README.md` and repository operating docs;
+4. tool adapter such as `CLAUDE.md`;
+5. `SKILLS.md`, `CAPABILITIES.md`, and `TRIGGERS.md`;
+6. selected `.ai/skills/*/SKILL.md`;
+7. current plans, tests, validators, PRs, and Git history.
+
+## Entry points
+
+- source: `REPLACE_SOURCE_ROOTS`
+- launchers: `REPLACE_LAUNCHERS`
+- tests and validators: `REPLACE_VALIDATION_COMMANDS`
+- generated artifacts: `REPLACE_ARTIFACT_PATHS`
+
+## Safety boundaries
+
+- forbidden scope: `REPLACE_FORBIDDEN_SCOPE`
+- runtime or deployment boundary: `REPLACE_RUNTIME_BOUNDARY`
+- secret and personal-data policy: `REPLACE_DATA_POLICY`
+- target mutation policy: `REPLACE_TARGET_MUTATION_POLICY`
+
+## Delivery contract
+
+Use isolated branches and worktrees for concurrent writers. Reuse healthy existing tools and directories. Make bounded tracked changes, run repository-native checks, commit, push when authorized, and report exact proof and gaps.
