@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "repoPath": "__REPO_PATH__",
+  "preferredAgents": [
+    "hermes",
+    "opencode",
+    "goose",
+    "copilot"
+  ],
+  "promptSource": "clipboard",
+  "promptPath": null,
+  "name": "nap-sprint",
+  "maxIterations": 4,
+  "maxTokens": 250000,
+  "stopWhen": "The bounded sprint is committed in the isolated GNHF worktree, targeted validation passes, no unrelated files changed, and the branch contains at least one useful commit.",
+  "bootstrapIfMissing": true,
+  "installOpenCodeAndCopilotDuringBootstrap": true,
+  "pushBranch": false
+}
