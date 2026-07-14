@@ -83,6 +83,7 @@ $runRoot = Join-Path $env:LOCALAPPDATA "AgentSwitchboard\Nap\runs\$timestamp"
 New-Item -ItemType Directory -Path $runRoot -Force | Out-Null
 $transcriptPath = Join-Path $runRoot "nap-transcript.txt"
 $summaryPath = Join-Path $runRoot "nap-summary.json"
+$runtimePromptPath = $null
 $transcriptStarted = $false
 $exitCode = 1
 $failure = $null
@@ -195,7 +196,7 @@ try {
         $objective = Get-Content -LiteralPath $configuredPromptPath -Raw
         $promptSource = "config-file:$configuredPromptPath"
     }
-    else {
+    elseif ([string]$config.promptSource -eq "clipboard") {
         try {
             $objective = Get-Clipboard -Raw
         }
@@ -203,6 +204,9 @@ try {
             throw "Could not read the Windows clipboard. Supply -Prompt or -PromptPath. $($_.Exception.Message)"
         }
         $promptSource = "clipboard"
+    }
+    else {
+        throw "Unsupported promptSource '$($config.promptSource)'. Expected clipboard or file."
     }
 
     if ([string]::IsNullOrWhiteSpace($objective)) {
@@ -217,6 +221,7 @@ try {
     $maxIterations = [int]$config.maxIterations
     $maxTokens = [int]$config.maxTokens
     $stopWhen = [string]$config.stopWhen
+    $sprintName = [string]$config.name
     if ($maxIterations -lt 1 -or $maxIterations -gt 100) {
         throw "maxIterations must be between 1 and 100."
     }
@@ -225,6 +230,9 @@ try {
     }
     if ([string]::IsNullOrWhiteSpace($stopWhen)) {
         throw "The nap configuration stopWhen value cannot be blank."
+    }
+    if ([string]::IsNullOrWhiteSpace($sprintName)) {
+        throw "The nap configuration name value cannot be blank."
     }
     $summary.maxIterations = $maxIterations
     $summary.maxTokens = $maxTokens
@@ -314,13 +322,16 @@ try {
             $beforeLogs = @(Get-ChildItem -LiteralPath $innerLogsRoot -Directory | ForEach-Object { $_.FullName })
         }
 
+        $runtimePromptPath = Join-Path $runRoot "sprint-prompt.md"
+        Set-Content -LiteralPath $runtimePromptPath -Value $objective -Encoding utf8NoBOM
+
         $launcherArguments = [System.Collections.Generic.List[string]]::new()
         foreach ($item in @(
             "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $launcherPath,
             "-RepoPath", $RepoPath,
             "-Agent", $selectedAgent,
-            "-Prompt", $objective,
-            "-Name", [string]$config.name,
+            "-PromptPath", $runtimePromptPath,
+            "-Name", $sprintName,
             "-MaxIterations", [string]$maxIterations,
             "-MaxTokens", [string]$maxTokens,
             "-StopWhen", $stopWhen,
@@ -372,6 +383,9 @@ catch {
     }
 }
 finally {
+    if ($runtimePromptPath -and (Test-Path -LiteralPath $runtimePromptPath -PathType Leaf)) {
+        Remove-Item -LiteralPath $runtimePromptPath -Force -ErrorAction SilentlyContinue
+    }
     $summary.completedAt = (Get-Date).ToString("o")
     $summary.selectedAgent = $selectedAgent
     $summary.selectedAgentEvidence = $selectedAgentEvidence
