@@ -21,6 +21,12 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+$pathHelpersPath = Join-Path $PSScriptRoot "GnhfFleet.Paths.ps1"
+if (-not (Test-Path -LiteralPath $pathHelpersPath -PathType Leaf)) {
+    throw "Path helper library not found: $pathHelpersPath"
+}
+. $pathHelpersPath
+
 function Write-Section {
     param([Parameter(Mandatory)][string]$Text)
     Write-Host "`n=== $Text ===" -ForegroundColor Cyan
@@ -47,8 +53,7 @@ function Show-AgentReadiness {
 function Install-OperatorLauncher {
     param([Parameter(Mandatory)][string]$DestinationRoot)
 
-    New-Item -ItemType Directory -Path $DestinationRoot -Force | Out-Null
-
+    $DestinationRoot = Ensure-GnhfFleetDirectory -Path $DestinationRoot
     $destinationScript = Join-Path $DestinationRoot "Start-AgentSwitchboard.ps1"
     $sourceScript = [IO.Path]::GetFullPath($PSCommandPath)
     $destinationFullPath = [IO.Path]::GetFullPath($destinationScript)
@@ -69,25 +74,21 @@ endlocal & exit /b %_code%
 if ($PSVersionTable.PSVersion.Major -lt 7) {
     throw "AgentSwitchboard requires PowerShell 7. Open pwsh and rerun this command."
 }
-
 if ($Prompt -and $PromptPath) {
     throw "Use either -Prompt or -PromptPath, not both."
 }
-
 if ([string]::IsNullOrWhiteSpace($StopWhen)) {
     throw "-StopWhen must describe an observable completion condition."
 }
 
-$RepoPath = (Resolve-Path -LiteralPath $RepoPath).Path
+$RepoPath = Resolve-GnhfFleetDirectory -Path $RepoPath -Description "target repository"
 $repoName = Split-Path -Leaf $RepoPath
+$InstallRoot = Get-GnhfFleetAbsolutePath -Path $InstallRoot
 $statePath = Join-Path $InstallRoot "state.json"
 
-if ($Bootstrap -and -not (Test-Path -LiteralPath $statePath)) {
-    Write-Section "Bootstrap AgentSwitchboard"
-    $installerPath = Join-Path $PSScriptRoot "Install-AgentSwitchboardGnhf.ps1"
-    if (-not (Test-Path -LiteralPath $installerPath)) {
-        throw "Bootstrap installer not found: $installerPath"
-    }
+if ($Bootstrap) {
+    Write-Section "Bootstrap or repair AgentSwitchboard"
+    $installerPath = Resolve-GnhfFleetFile -Path (Join-Path $PSScriptRoot "Install-AgentSwitchboardGnhf.ps1") -Description "bootstrap installer"
 
     $installParameters = @{
         DefaultRepoPath = $RepoPath
@@ -97,14 +98,20 @@ if ($Bootstrap -and -not (Test-Path -LiteralPath $statePath)) {
         $installParameters["InstallOpenCodeAndCopilot"] = $true
     }
 
+    # Bootstrap is deliberately idempotent. It refreshes missing scripts and state,
+    # reuses healthy tools, and preserves an existing customized fleet manifest.
     & $installerPath @installParameters
 }
 
 if (-not (Test-Path -LiteralPath $statePath)) {
     $bootstrapCommand = "pwsh -File `"$PSCommandPath`" -RepoPath `"$RepoPath`" -Bootstrap -ListAgents"
-    throw "Fleet state not found: $statePath. Run the one-time bootstrap/readiness probe:`n$bootstrapCommand"
+    throw "Fleet state not found: $statePath. Run the bootstrap/readiness probe:`n$bootstrapCommand"
+}
+if (-not (Test-Path -LiteralPath $statePath -PathType Leaf)) {
+    throw "Expected fleet state to be a file, but found a directory: $statePath"
 }
 
+$InstallRoot = Ensure-GnhfFleetDirectory -Path $InstallRoot
 Install-OperatorLauncher -DestinationRoot $InstallRoot
 $state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
 
@@ -116,7 +123,7 @@ if ($ListAgents) {
 
 $agentProperty = $state.agents.PSObject.Properties[$Agent]
 if (-not $agentProperty) {
-    throw "Agent '$Agent' has no adapter record in $statePath. Rerun bootstrap to refresh detection."
+    throw "Agent '$Agent' has no adapter record in $statePath. Rerun with -Bootstrap -ListAgents to refresh detection."
 }
 
 $agentRecord = $agentProperty.Value
@@ -137,29 +144,29 @@ if ($Prompt) {
         throw "-Prompt cannot be blank."
     }
 
-    $runtimePromptRoot = Join-Path $InstallRoot "runtime-prompts"
-    New-Item -ItemType Directory -Path $runtimePromptRoot -Force | Out-Null
+    $runtimePromptRoot = Ensure-GnhfFleetDirectory -Path (Join-Path $InstallRoot "runtime-prompts")
     $runtimePromptPath = Join-Path $runtimePromptRoot ("operator-{0}.md" -f (Get-Date -Format "yyyyMMdd-HHmmss-fff"))
     Set-Content -LiteralPath $runtimePromptPath -Value $Prompt -Encoding utf8NoBOM
     $PromptPath = $runtimePromptPath
 }
 elseif ($PromptPath) {
-    $PromptPath = (Resolve-Path -LiteralPath $PromptPath).Path
+    $PromptPath = Resolve-GnhfFleetFile -Path $PromptPath -Description "sprint prompt"
 }
 else {
     if (-not $repoName.Equals("AgentSwitchboard", [StringComparison]::OrdinalIgnoreCase)) {
         throw "No sprint prompt was supplied for '$repoName'. Copy a bounded sprint prompt and pass -Prompt (Get-Clipboard -Raw), or pass -PromptPath. Bundled default prompts are scoped specifically to AgentSwitchboard."
     }
 
-    $PromptPath = Join-Path $PSScriptRoot (Join-Path "prompts" $defaultPromptByAgent[$Agent])
-    if (-not (Test-Path -LiteralPath $PromptPath)) {
-        $installedPromptPath = Join-Path $InstallRoot (Join-Path "prompts" $defaultPromptByAgent[$Agent])
-        if (Test-Path -LiteralPath $installedPromptPath) {
-            $PromptPath = $installedPromptPath
-        }
-        else {
-            throw "Default prompt not found for '$Agent'. Supply -PromptPath explicitly."
-        }
+    $sourcePromptPath = Join-Path $PSScriptRoot (Join-Path "prompts" $defaultPromptByAgent[$Agent])
+    $installedPromptPath = Join-Path $InstallRoot (Join-Path "prompts" $defaultPromptByAgent[$Agent])
+    if (Test-Path -LiteralPath $sourcePromptPath -PathType Leaf) {
+        $PromptPath = (Get-Item -LiteralPath $sourcePromptPath -Force).FullName
+    }
+    elseif (Test-Path -LiteralPath $installedPromptPath -PathType Leaf) {
+        $PromptPath = (Get-Item -LiteralPath $installedPromptPath -Force).FullName
+    }
+    else {
+        throw "Default prompt not found for '$Agent'. Supply -PromptPath explicitly or rerun -Bootstrap to repair installed prompts."
     }
 }
 
@@ -167,11 +174,7 @@ if (-not $Name) {
     $Name = "$repoName-$Agent"
 }
 
-$sprintLauncher = Join-Path $InstallRoot "Start-GnhfSprint.ps1"
-if (-not (Test-Path -LiteralPath $sprintLauncher)) {
-    throw "Sprint launcher not found: $sprintLauncher. Rerun with -Bootstrap after removing stale fleet state."
-}
-
+$sprintLauncher = Resolve-GnhfFleetFile -Path (Join-Path $InstallRoot "Start-GnhfSprint.ps1") -Description "bounded sprint launcher"
 $arguments = [System.Collections.Generic.List[string]]::new()
 foreach ($argument in @(
     "-NoLogo",
@@ -207,7 +210,7 @@ try {
     $exitCode = $LASTEXITCODE
 }
 finally {
-    if ($runtimePromptPath -and (Test-Path -LiteralPath $runtimePromptPath)) {
+    if ($runtimePromptPath -and (Test-Path -LiteralPath $runtimePromptPath -PathType Leaf)) {
         Remove-Item -LiteralPath $runtimePromptPath -Force
     }
 }
