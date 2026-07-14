@@ -82,6 +82,9 @@ function Get-NapFailureGuidance {
 if ($PSVersionTable.PSVersion.Major -lt 7) {
     throw "PowerShell 7 is required. Run this operator wrapper with pwsh."
 }
+if ($Prompt -and $PromptPath) {
+    throw "Use either -Prompt or -PromptPath, not both."
+}
 
 if ([string]::IsNullOrWhiteSpace($EvidenceRoot)) {
     $EvidenceRoot = Join-Path ([IO.Path]::GetTempPath()) "AgentSwitchboard\Nap\operator-runs"
@@ -95,6 +98,7 @@ $operatorSummaryPath = Join-Path $operatorRunRoot "operator-summary.json"
 $startedAt = Get-Date
 $innerRunsRoot = Join-Path $env:LOCALAPPDATA "AgentSwitchboard\Nap\runs"
 $innerSummaryPath = $null
+$wrapperPromptPath = $null
 $childExitCode = 70
 $failureText = $null
 $guidance = $null
@@ -113,6 +117,7 @@ $summary = [ordered]@{
     innerSummaryPath = $null
     consoleLogPath = $consoleLogPath
     argumentCount = 0
+    promptTransport = if ($Prompt) { "ephemeral-file" } elseif ($PromptPath) { "file" } else { "configured" }
 }
 
 try {
@@ -126,12 +131,24 @@ try {
         [void]$childArguments.Add($item)
     }
 
-    foreach ($parameterName in @("ConfigPath", "RepoPath", "Agent", "Prompt", "PromptPath", "InstallRoot")) {
+    foreach ($parameterName in @("ConfigPath", "RepoPath", "Agent", "InstallRoot")) {
         if ($PSBoundParameters.ContainsKey($parameterName)) {
             [void]$childArguments.Add("-$parameterName")
             [void]$childArguments.Add([string](Get-Variable -Name $parameterName -ValueOnly))
         }
     }
+
+    if ($Prompt) {
+        $wrapperPromptPath = Join-Path $operatorRunRoot "operator-prompt.md"
+        Set-Content -LiteralPath $wrapperPromptPath -Value $Prompt -Encoding utf8NoBOM
+        [void]$childArguments.Add("-PromptPath")
+        [void]$childArguments.Add($wrapperPromptPath)
+    }
+    elseif ($PromptPath) {
+        [void]$childArguments.Add("-PromptPath")
+        [void]$childArguments.Add($PromptPath)
+    }
+
     if ($PlanOnly) {
         [void]$childArguments.Add("-PlanOnly")
     }
@@ -209,6 +226,10 @@ catch {
     Write-Host "Next action: $($guidance.NextAction)" -ForegroundColor Yellow
 }
 finally {
+    if ($wrapperPromptPath -and (Test-Path -LiteralPath $wrapperPromptPath -PathType Leaf)) {
+        Remove-Item -LiteralPath $wrapperPromptPath -Force -ErrorAction SilentlyContinue
+    }
+
     $summary.completedAt = (Get-Date).ToString("o")
     $summary.childExitCode = $childExitCode
     $summary.innerSummaryPath = $innerSummaryPath
