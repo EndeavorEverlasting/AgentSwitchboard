@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "runId": "invalid-ready-dirty-001",
+  "repository": {
+    "name": "AgentSwitchboard",
+    "path": "C:\\worktrees\\AgentSwitchboard-invalid",
+    "remote": "origin"
+  },
+  "worker": {
+    "executor": "opencode",
+    "provider": "opencode-zen",
+    "lane": "implementation"
+  },
+  "git": {
+    "branch": "sprint/invalid-ready-dirty",
+    "worktreePath": "C:\\worktrees\\AgentSwitchboard-invalid",
+    "baseSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "headSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "dirty": true
+  },
+  "scope": {
+    "owned": ["tooling/contracts/"],
+    "forbidden": ["default-branch merge"]
+  },
+  "dependencies": {
+    "parentRunIds": [],
+    "consumedCommits": []
+  },
+  "changes": {
+    "files": ["tooling/contracts/example.json"],
+    "commits": ["bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"]
+  },
+  "validation": [
+    {
+      "command": "pwsh -File tooling/contracts/Test-WorkerRunContracts.ps1",
+      "status": "passed",
+      "evidence": "Contract checks passed."
+    }
+  ],
+  "evidence": {
+    "summaryPath": ".agent-switchboard/runs/invalid-ready-dirty-001/summary.json",
+    "logPaths": []
+  },
+  "integration": {
+    "status": "ready",
+    "conflicts": [],
+    "supersededByRunId": null
+  }
+}
