@@ -25,6 +25,25 @@ After setup, list READY and BLOCKED agents:
 
 See the [GNHF fleet guide](tooling/gnhf/README.md) for bounded sprint and parallel-fleet commands.
 
+## Agent operating contract
+
+AgentSwitchboard is the canonical policy source for the EndeavorEverlasting repository family.
+
+Start with [`AGENTS.md`](AGENTS.md), then read the tool adapter and routing documents:
+
+- [`CLAUDE.md`](CLAUDE.md)
+- [`SKILLS.md`](SKILLS.md)
+- [`CAPABILITIES.md`](CAPABILITIES.md)
+- [`TRIGGERS.md`](TRIGGERS.md)
+- [Repository-family governance](docs/governance/repository-family.md)
+- [Machine-readable contract](.ai/agent-contract.json)
+
+Reusable child-repository adoption files live under [`templates/repository-agent-contract/`](templates/repository-agent-contract/). Validate the contract with:
+
+```powershell
+pwsh -NoLogo -NoProfile -File .\scripts\Test-AgentDocumentationContract.ps1
+```
+
 ## Architecture
 
 - [Agentic Software Factory](docs/architecture/agentic-software-factory.md)
