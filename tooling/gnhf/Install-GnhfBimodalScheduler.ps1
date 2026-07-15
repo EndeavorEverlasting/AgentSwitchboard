@@ -31,6 +31,7 @@ $requiredSourceFiles = @(
     "Install-GnhfBimodalScheduler.ps1",
     "Test-GnhfBimodalSchedulerContracts.ps1",
     "gnhf-bimodal.example.json",
+    "BIMODAL_SCHEDULER.md",
     "README.md"
 )
 $schemaFiles = @(
@@ -160,6 +161,7 @@ $summary = [ordered]@{
     activeManifestPath = if (Test-Path -LiteralPath $manifestTargetPath -PathType Leaf) { $manifestTargetPath } else { $null }
     manifestExamplePath = $manifestExampleTargetPath
     launcherPath = $launcherPath
+    operatorGuidePath = Join-Path $InstallRoot "BIMODAL_SCHEDULER.md"
     defaultMode = "maximize-sprint-completion"
     secondaryMode = "maximize-token-efficiency"
     automaticPush = $false
