@@ -72,11 +72,15 @@ def main() -> int:
     require("curl |" not in bash_script and "curl -fsSL |" not in bash_script, "pipe-to-shell installation is forbidden")
     require("login" not in bash_script.lower() and "oauth" not in bash_script.lower(), "bootstrap must not authenticate")
 
-    bash_script_path = (WSL / "scripts" / "configure-gnhf-workspace.sh").as_posix()
-    subprocess.run(
-        ["bash", "-n", bash_script_path],
-        check=True,
-    )
+    # Windows exposes a WSL-forwarding bash.exe that is not the Git Bash used by
+    # the workflow shell. The Windows workflow performs its own explicit Bash
+    # syntax step, so avoid selecting the wrong execution domain here.
+    if sys.platform != "win32":
+        bash_script_path = (WSL / "scripts" / "configure-gnhf-workspace.sh").as_posix()
+        subprocess.run(
+            ["bash", "-n", bash_script_path],
+            check=True,
+        )
 
     ps_script = (WSL / "Install-TmuxGnhfWorkspace.ps1").read_text(encoding="utf-8")
     require("[switch]$Apply" in ps_script, "apply must be explicit")
