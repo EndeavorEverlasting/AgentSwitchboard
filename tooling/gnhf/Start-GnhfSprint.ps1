@@ -21,14 +21,36 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $pathHelpersPath = Join-Path $PSScriptRoot "GnhfFleet.Paths.ps1"
-$modelActivationPath = Join-Path $PSScriptRoot "GnhfModelActivation.ps1"
-foreach ($requiredPath in @($pathHelpersPath, $modelActivationPath)) {
-    if (-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)) {
-        throw "GNHF launcher dependency not found: $requiredPath"
-    }
+if (-not (Test-Path -LiteralPath $pathHelpersPath -PathType Leaf)) {
+    throw "Path helper library not found: $pathHelpersPath"
 }
 . $pathHelpersPath
-. $modelActivationPath
+
+$modelActivationPath = Join-Path $PSScriptRoot "GnhfModelActivation.ps1"
+if (Test-Path -LiteralPath $modelActivationPath -PathType Leaf) {
+    . $modelActivationPath
+}
+else {
+    function Get-GnhfModelActivationResult {
+        param(
+            [string]$AcknowledgementPath,
+            [string]$ExpectedProfileId,
+            [string]$ExpectedAgent,
+            [string]$ExpectedModel,
+            [string]$ExpectedRoutingDecisionHash
+        )
+        [pscustomobject][ordered]@{
+            state = if ([string]::IsNullOrWhiteSpace($ExpectedModel)) { "not-requested" } else { "requested-only" }
+            requestedModel = if ([string]::IsNullOrWhiteSpace($ExpectedModel)) { $null } else { $ExpectedModel }
+            acknowledgedModel = $null
+            acknowledgementPath = if ([string]::IsNullOrWhiteSpace($AcknowledgementPath)) { $null } else { $AcknowledgementPath }
+            evidenceKind = $null
+            evidence = $null
+            recordedAt = $null
+            validationError = "model activation helper unavailable"
+        }
+    }
+}
 
 function Invoke-Git {
     param([Parameter(Mandatory)][string[]]$Arguments)
