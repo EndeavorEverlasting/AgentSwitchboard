@@ -50,7 +50,7 @@ $requiredFiles = @(
     "schemas/gnhf-bimodal-run.schema.json",
     "fixtures/gnhf-usage-completion.json",
     "fixtures/gnhf-usage-efficiency.json",
-    "README.md"
+    "BIMODAL_SCHEDULER.md"
 )
 foreach ($relativePath in $requiredFiles) {
     Add-Check -Passed (Test-Path -LiteralPath (Join-Path $RootPath $relativePath) -PathType Leaf) -Name "required-file/$relativePath" -FailureMessage "file missing"
@@ -163,13 +163,16 @@ if ($installer) {
     Add-Check -Passed ($installer.Contains('Preserving existing customized bimodal manifest')) -Name "installer/preserves-manifest"
     Add-Check -Passed ($installer.Contains('Start-GnhfBimodal.cmd')) -Name "installer/clickable-launcher"
     Add-Check -Passed ($installer.Contains('automaticPush = $false') -and $installer.Contains('automaticMerge = $false')) -Name "installer/no-auto-push-merge"
+    Add-Check -Passed ($installer.Contains('BIMODAL_SCHEDULER.md')) -Name "installer/copies-operator-guide"
 }
 
-$readme = Read-Text "README.md"
-if ($readme) {
-    Add-Check -Passed ($readme.Contains('maximize-sprint-completion')) -Name "docs/completion-mode"
-    Add-Check -Passed ($readme.Contains('maximize-token-efficiency')) -Name "docs/efficiency-mode"
-    Add-Check -Passed ($readme.Contains('usage snapshot')) -Name "docs/usage-contract"
+$guide = Read-Text "BIMODAL_SCHEDULER.md"
+if ($guide) {
+    Add-Check -Passed ($guide.Contains('maximize-sprint-completion')) -Name "docs/completion-mode"
+    Add-Check -Passed ($guide.Contains('maximize-token-efficiency')) -Name "docs/efficiency-mode"
+    Add-Check -Passed ($guide.Contains('usage snapshot')) -Name "docs/usage-contract"
+    Add-Check -Passed ($guide.Contains('AGENTSWITCHBOARD_MODEL_PROFILE')) -Name "docs/wrapper-contract"
+    Add-Check -Passed ($guide.Contains('does not merge or push automatically') -or $guide.Contains('No automatic push, merge')) -Name "docs/review-boundary"
 }
 
 Write-Host ""
