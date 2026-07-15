@@ -14,6 +14,12 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
     throw "This installer requires PowerShell 7. Run it from pwsh."
 }
 
+$repositoryContractModule = Join-Path $PSScriptRoot "WslRepositoryContracts.psm1"
+if (-not (Test-Path -LiteralPath $repositoryContractModule -PathType Leaf)) {
+    throw "Repository contract module not found: $repositoryContractModule"
+}
+Import-Module -Name $repositoryContractModule -Force
+
 function Write-Section {
     param([Parameter(Mandatory)][string]$Text)
     Write-Host "`n=== $Text ===" -ForegroundColor Cyan
@@ -68,10 +74,17 @@ function Invoke-WslDistroCommand {
     param(
         [Parameter(Mandatory)][string]$Distribution,
         [Parameter(Mandatory)][string]$ShellCommand,
+        [string[]]$ShellArgumentList = @(),
         [int]$TimeoutSeconds = 60
     )
 
-    return Invoke-SafeCommand -FilePath $WslExe -ArgumentList @("-d", $Distribution, "-e", "bash", "-c", $ShellCommand) -TimeoutSeconds $TimeoutSeconds
+    $wslArguments = @("-d", $Distribution, "-e", "bash", "-c", $ShellCommand)
+    if ($ShellArgumentList.Count -gt 0) {
+        $wslArguments += "_"
+        $wslArguments += $ShellArgumentList
+    }
+
+    return Invoke-SafeCommand -FilePath $WslExe -ArgumentList $wslArguments -TimeoutSeconds $TimeoutSeconds
 }
 
 function Backup-ManagedFile {
@@ -226,7 +239,7 @@ if (-not $distExists) {
                 status = "failed"
                 evidence = $_.Exception.Message
             })
-            throw "Failed to install distribution: $($_.Exception.Message)"
+            throw "Failed to install WSL feature: $($_.Exception.Message)"
         }
     } else {
         $commandResults.Add([pscustomobject]@{
@@ -323,6 +336,33 @@ else {
 
 Write-Section "Repository Cloning"
 
+$repositoryProbeScript = @'
+set -euo pipefail
+relative_destination=$1
+destination=$HOME
+if [[ -n "$relative_destination" ]]; then
+    destination="$HOME/$relative_destination"
+fi
+if [[ -d "$destination/.git" ]]; then
+    git -C "$destination" remote get-url origin 2>/dev/null || printf 'NO_REMOTE\n'
+else
+    printf 'MISSING\n'
+fi
+'@
+
+$repositoryCloneScript = @'
+set -euo pipefail
+relative_destination=$1
+repository_url=$2
+repository_branch=$3
+destination=$HOME
+if [[ -n "$relative_destination" ]]; then
+    destination="$HOME/$relative_destination"
+fi
+mkdir -p -- "$(dirname -- "$destination")"
+git clone --branch "$repository_branch" -- "$repository_url" "$destination"
+'@
+
 if ($manifest.repositories) {
     foreach ($repo in $manifest.repositories) {
         if (-not $repo.enabled) {
@@ -330,16 +370,46 @@ if ($manifest.repositories) {
             continue
         }
 
-        $destPath = $repo.destination
-        $checkCmd = "test -d '$destPath/.git' && echo EXISTS || echo MISSING"
-        $checkResult = Invoke-WslDistroCommand -Distribution $targetDist -ShellCommand $checkCmd -TimeoutSeconds 15
+        $destPath = [string]$repo.destination
+        try {
+            $relativeDestination = ConvertTo-WslHomeRelativePath -Path $destPath
+            $repoUrl = Assert-GitHubRepositoryUrl -Url ([string]$repo.url)
+            $branchCandidate = [string]$repo.branch
+            if ([string]::IsNullOrWhiteSpace($branchCandidate)) {
+                $branchCandidate = "main"
+            }
+            $repoBranch = Assert-GitBranchName -Branch $branchCandidate
+        }
+        catch {
+            Write-Host "Repository '$($repo.name)' has an invalid manifest contract: $($_.Exception.Message)" -ForegroundColor Red
+            $repoResults.Add([pscustomobject]@{
+                name = $repo.name
+                destination = $destPath
+                status = "invalid-manifest"
+                evidence = $_.Exception.Message
+            })
+            continue
+        }
 
-        if ($checkResult.Output -match "EXISTS") {
-            $remoteCmd = "git -C '$destPath' remote get-url origin 2>/dev/null || echo NO_REMOTE"
-            $remoteResult = Invoke-WslDistroCommand -Distribution $targetDist -ShellCommand $remoteCmd -TimeoutSeconds 15
-            $currentRemote = $remoteResult.Output.Trim()
+        $probeResult = Invoke-WslDistroCommand `
+            -Distribution $targetDist `
+            -ShellCommand $repositoryProbeScript `
+            -ShellArgumentList @($relativeDestination) `
+            -TimeoutSeconds 15
+        if ($probeResult.ExitCode -ne 0) {
+            Write-Host "Repository '$($repo.name)' probe failed." -ForegroundColor Red
+            $repoResults.Add([pscustomobject]@{
+                name = $repo.name
+                destination = $destPath
+                status = "probe-failed"
+                evidence = "Repository probe failed inside the selected WSL distribution."
+            })
+            continue
+        }
 
-            if ($currentRemote -eq $repo.url) {
+        $currentRemote = $probeResult.Output.Trim()
+        if ($currentRemote -ne "MISSING") {
+            if ($currentRemote -eq $repoUrl) {
                 Write-Host "Repository '$($repo.name)' already exists with correct remote." -ForegroundColor Green
                 $repoResults.Add([pscustomobject]@{
                     name = $repo.name
@@ -349,46 +419,48 @@ if ($manifest.repositories) {
                 })
             }
             else {
-                Write-Host "Repository '$($repo.name)' exists but with wrong remote: $currentRemote (expected $($repo.url))" -ForegroundColor Yellow
+                Write-Host "Repository '$($repo.name)' exists but with wrong remote: $currentRemote (expected $repoUrl)" -ForegroundColor Yellow
                 $repoResults.Add([pscustomobject]@{
                     name = $repo.name
                     destination = $destPath
                     status = "wrong-remote"
                     remote = $currentRemote
-                    expectedRemote = $repo.url
+                    expectedRemote = $repoUrl
                 })
             }
+            continue
+        }
+
+        if ($planMode) {
+            Write-Host "[PLAN] Would clone $($repo.name) from $repoUrl to $destPath" -ForegroundColor Yellow
+            $repoResults.Add([pscustomobject]@{
+                name = $repo.name
+                destination = $destPath
+                status = "planned"
+            })
+            continue
+        }
+
+        Write-Host "Cloning $($repo.name)..." -ForegroundColor Yellow
+        $cloneResult = Invoke-WslDistroCommand `
+            -Distribution $targetDist `
+            -ShellCommand $repositoryCloneScript `
+            -ShellArgumentList @($relativeDestination, $repoUrl, $repoBranch) `
+            -TimeoutSeconds 120
+
+        $repoResults.Add([pscustomobject]@{
+            name = $repo.name
+            destination = $destPath
+            status = if ($cloneResult.ExitCode -eq 0) { "cloned" } else { "clone-failed" }
+            remote = $repoUrl
+            evidence = $cloneResult.Output
+        })
+
+        if ($cloneResult.ExitCode -eq 0) {
+            Write-Host "Cloned $($repo.name) to $destPath" -ForegroundColor Green
         }
         else {
-            if ($planMode) {
-                Write-Host "[PLAN] Would clone $($repo.name) from $($repo.url) to $destPath" -ForegroundColor Yellow
-                $repoResults.Add([pscustomobject]@{
-                    name = $repo.name
-                    destination = $destPath
-                    status = "planned"
-                })
-            }
-            else {
-                Write-Host "Cloning $($repo.name)..." -ForegroundColor Yellow
-                $parentDir = Split-Path $destPath -Parent
-                $cloneCmd = "mkdir -p '$parentDir' && git clone --branch $($repo.branch) $($repo.url) '$destPath'"
-                $cloneResult = Invoke-WslDistroCommand -Distribution $targetDist -ShellCommand $cloneCmd -TimeoutSeconds 120
-
-                $repoResults.Add([pscustomobject]@{
-                    name = $repo.name
-                    destination = $destPath
-                    status = if ($cloneResult.ExitCode -eq 0) { "cloned" } else { "clone-failed" }
-                    remote = $repo.url
-                    evidence = $cloneResult.Output
-                })
-
-                if ($cloneResult.ExitCode -eq 0) {
-                    Write-Host "Cloned $($repo.name) to $destPath" -ForegroundColor Green
-                }
-                else {
-                    Write-Host "Failed to clone $($repo.name): $($cloneResult.Output)" -ForegroundColor Red
-                }
-            }
+            Write-Host "Failed to clone $($repo.name): $($cloneResult.Output)" -ForegroundColor Red
         }
     }
 }
@@ -420,8 +492,13 @@ if ($planMode -and $manifest.tmux -and $manifest.tmux.enabled) {
 
 Stop-Transcript | Out-Null
 
-$finalStatus = if ($commandResults | Where-Object { $_.status -eq "failed" }) { "completed-with-errors" }
-    elseif ($commandResults | Where-Object { $_.status -eq "planned" }) { "plan-only" }
+$repositoryFailureStatuses = @("clone-failed", "invalid-manifest", "probe-failed", "wrong-remote")
+$hasRepositoryFailure = @(
+    $repoResults | Where-Object { $_.status -in $repositoryFailureStatuses }
+).Count -gt 0
+
+$finalStatus = if (($commandResults | Where-Object { $_.status -eq "failed" }) -or $hasRepositoryFailure) { "completed-with-errors" }
+    elseif (($commandResults | Where-Object { $_.status -eq "planned" }) -or ($repoResults | Where-Object { $_.status -eq "planned" })) { "plan-only" }
     else { "completed" }
 
 $summary = [ordered]@{
