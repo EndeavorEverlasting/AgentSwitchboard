@@ -30,6 +30,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           foreach ($path in @(
             './tooling/wsl/Install-TmuxGnhfWorkspace.ps1',
+            './tooling/wsl/Invoke-TmuxGnhfRuntimeProof.ps1',
             './tooling/wsl/Test-TmuxGnhfWorkspaceContracts.ps1'
           )) {
             $tokens = $null
