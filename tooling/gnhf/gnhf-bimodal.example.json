@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "mode": "maximize-sprint-completion",
+  "repoPath": "__REPO_PATH__",
+  "objectivePath": "__OBJECTIVE_PATH__",
+  "usageSnapshotPath": "__USAGE_SNAPSHOT_PATH__",
+  "stopWhen": "The sprint objective is complete, validation passes, the branch contains useful commits, no unrelated changes remain, and no further bounded task is justified.",
+  "session": {
+    "maxSegments": 12,
+    "maxWallMinutes": 480,
+    "segmentMaxIterations": 3,
+    "segmentMaxTokens": 300000,
+    "segmentWallMinutes": 90,
+    "maxConsecutiveNoProgress": 2,
+    "cooldownSeconds": 15,
+    "worktreeRoot": "__WORKTREE_ROOT__"
+  },
+  "policy": {
+    "reservePercent": 30,
+    "maxUsableSharePerSegmentPercent": 25
+  },
+  "profiles": [
+    {
+      "id": "opencode-primary",
+      "enabled": true,
+      "agent": "opencode",
+      "agentSpec": "opencode",
+      "model": "configured-primary-model",
+      "completionPriority": 10,
+      "efficiencyPriority": 30,
+      "minimumSegmentTokens": 25000,
+      "reserveTokens": 100000,
+      "segmentMaxTokens": 300000
+    },
+    {
+      "id": "copilot-secondary",
+      "enabled": true,
+      "agent": "copilot",
+      "agentSpec": "copilot",
+      "model": "configured-secondary-model",
+      "completionPriority": 20,
+      "efficiencyPriority": 20,
+      "minimumSegmentTokens": 20000,
+      "reserveTokens": 75000,
+      "segmentMaxTokens": 200000
+    },
+    {
+      "id": "goose-efficient",
+      "enabled": true,
+      "agent": "goose",
+      "agentSpec": "acp:goose acp",
+      "model": "configured-efficient-model",
+      "completionPriority": 30,
+      "efficiencyPriority": 10,
+      "minimumSegmentTokens": 10000,
+      "reserveTokens": 50000,
+      "segmentMaxTokens": 125000
+    }
+  ]
+}
