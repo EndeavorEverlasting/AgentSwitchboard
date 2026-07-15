@@ -174,7 +174,7 @@ function Select-GnhfRoutingProfile {
         }
     }
 
-    $switchOutcomes = @("quota-exhausted", "authentication-blocked", "permanent-error", "timed-out", "profile-unavailable")
+    $switchOutcomes = @("quota-exhausted", "authentication-blocked", "permanent-error", "timed-out", "profile-unavailable", "failed")
     if ($Mode -eq "maximize-sprint-completion" -and $PreviousProfileId -and $PreviousOutcome -notin $switchOutcomes) {
         $current = $eligible | Where-Object { $_.profileId -eq $PreviousProfileId } | Select-Object -First 1
         if ($current) {
@@ -187,7 +187,14 @@ function Select-GnhfRoutingProfile {
     }
 
     if ($Mode -eq "maximize-sprint-completion") {
-        $selected = $eligible |
+        $candidatePool = $eligible
+        if ($PreviousProfileId -and $PreviousOutcome -in $switchOutcomes) {
+            $alternatives = @($eligible | Where-Object { $_.profileId -ne $PreviousProfileId })
+            if ($alternatives.Count -gt 0) {
+                $candidatePool = $alternatives
+            }
+        }
+        $selected = $candidatePool |
             Sort-Object completionPriority, @{ Expression = { if ($_.tokensKnown) { -1 * $_.tokensRemaining } else { 0 } } }, profileId |
             Select-Object -First 1
         return [pscustomobject]@{
@@ -250,10 +257,12 @@ function Get-GnhfSegmentOutcome {
     if ($TimedOut) {
         return [pscustomobject]@{ status = "timed-out"; switchProfile = $true; objectiveComplete = $false }
     }
-    if ($normalized -match 'stop[_ -]?when[_ -]?(?:reached|satisfied)|stop condition[^\r\n]{0,80}(?:met|satisfied)|condition[^\r\n]{0,80}satisfied') {
+    $negativeStopEvidence = $normalized -match '(?:stop[_ -]?when|stop condition|condition)[^\r\n]{0,80}\b(?:not|never|failed to)\b[^\r\n]{0,40}\b(?:reached|met|satisfied)\b'
+    $positiveStopEvidence = $normalized -match 'stop[_ -]?when[_ -]?(?:reached|satisfied)|stop condition[^\r\n]{0,80}(?:met|satisfied)|condition[^\r\n]{0,80}satisfied'
+    if ($positiveStopEvidence -and -not $negativeStopEvidence) {
         return [pscustomobject]@{ status = "objective-complete"; switchProfile = $false; objectiveComplete = $true }
     }
-    if ($normalized -match 'low credit|insufficient credit|quota|usage limit|rate limit|tokens? exhausted|out of tokens|max tokens|token cap') {
+    if ($normalized -match 'low credit|insufficient credit|quota|usage limit|rate limit|tokens? exhausted|out of tokens|(?:max tokens|token cap)[^\r\n]{0,40}(?:reached|exceeded|exhausted)') {
         return [pscustomobject]@{ status = "quota-exhausted"; switchProfile = $true; objectiveComplete = $false }
     }
     if ($normalized -match 'not authenticated|authentication required|login required|unauthorized|forbidden|invalid api key') {
