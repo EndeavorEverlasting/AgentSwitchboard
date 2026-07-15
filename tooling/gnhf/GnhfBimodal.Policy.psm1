@@ -42,6 +42,63 @@ function Get-GnhfSnapshotRecord {
     return $null
 }
 
+function Get-GnhfSnapshotFreshness {
+    param(
+        [Parameter(Mandatory)]$Snapshot,
+        [Parameter(Mandatory)]$Policy,
+        [datetimeoffset]$Now = [DateTimeOffset]::UtcNow
+    )
+
+    $capturedAtProperty = $Snapshot.PSObject.Properties["capturedAt"]
+    if (-not $capturedAtProperty -or [string]::IsNullOrWhiteSpace([string]$capturedAtProperty.Value)) {
+        return [pscustomobject]@{
+            acceptable = $false
+            reason = "usage-snapshot-captured-at-missing"
+            capturedAt = $null
+            ageSeconds = $null
+        }
+    }
+
+    $capturedAt = [DateTimeOffset]::MinValue
+    if (-not [DateTimeOffset]::TryParse([string]$capturedAtProperty.Value, [ref]$capturedAt)) {
+        return [pscustomobject]@{
+            acceptable = $false
+            reason = "usage-snapshot-captured-at-invalid"
+            capturedAt = $null
+            ageSeconds = $null
+        }
+    }
+
+    $maxAgeMinutes = Get-GnhfNumericProperty -Object $Policy -Name "maxUsageSnapshotAgeMinutes" -Default 30
+    $futureSkewMinutes = Get-GnhfNumericProperty -Object $Policy -Name "maxUsageSnapshotFutureSkewMinutes" -Default 5
+    $ageSeconds = [long][Math]::Floor(($Now.ToUniversalTime() - $capturedAt.ToUniversalTime()).TotalSeconds)
+
+    if ($ageSeconds -lt (-60 * $futureSkewMinutes)) {
+        return [pscustomobject]@{
+            acceptable = $false
+            reason = "usage-snapshot-from-future"
+            capturedAt = $capturedAt.ToString("o")
+            ageSeconds = $ageSeconds
+        }
+    }
+
+    if ($maxAgeMinutes -gt 0 -and $ageSeconds -gt (60 * $maxAgeMinutes)) {
+        return [pscustomobject]@{
+            acceptable = $false
+            reason = "usage-snapshot-stale"
+            capturedAt = $capturedAt.ToString("o")
+            ageSeconds = $ageSeconds
+        }
+    }
+
+    return [pscustomobject]@{
+        acceptable = $true
+        reason = "usage-snapshot-fresh"
+        capturedAt = $capturedAt.ToString("o")
+        ageSeconds = [Math]::Max(0, $ageSeconds)
+    }
+}
+
 function Get-GnhfProfileRoutingState {
     param(
         [Parameter(Mandatory)]$Profile,
@@ -157,7 +214,8 @@ function Select-GnhfRoutingProfile {
         [Parameter(Mandatory)]$Policy,
         [string]$PreviousProfileId,
         [string]$PreviousOutcome,
-        [hashtable]$SegmentCounts = @{}
+        [hashtable]$SegmentCounts = @{},
+        [datetimeoffset]$Now = [DateTimeOffset]::UtcNow
     )
 
     $states = @(
@@ -165,12 +223,28 @@ function Select-GnhfRoutingProfile {
             Get-GnhfProfileRoutingState -Profile $profile -Snapshot $Snapshot -Mode $Mode -Policy $Policy
         }
     )
+
+    $freshness = Get-GnhfSnapshotFreshness -Snapshot $Snapshot -Policy $Policy -Now $Now
+    if (-not $freshness.acceptable) {
+        foreach ($state in $states) {
+            $state.eligible = $false
+            $state.eligibilityReason = $freshness.reason
+        }
+        return [pscustomobject]@{
+            selected = $null
+            states = $states
+            reason = $freshness.reason
+            usageSnapshot = $freshness
+        }
+    }
+
     $eligible = @($states | Where-Object { $_.eligible })
     if ($eligible.Count -eq 0) {
         return [pscustomobject]@{
             selected = $null
             states = $states
             reason = if ($Mode -eq "maximize-token-efficiency") { "all-profiles-at-reserve-or-unavailable" } else { "all-profiles-exhausted-or-unavailable" }
+            usageSnapshot = $freshness
         }
     }
 
@@ -182,6 +256,7 @@ function Select-GnhfRoutingProfile {
                 selected = $current
                 states = $states
                 reason = "continue-current-profile-until-exhausted"
+                usageSnapshot = $freshness
             }
         }
     }
@@ -201,6 +276,7 @@ function Select-GnhfRoutingProfile {
             selected = $selected
             states = $states
             reason = if ($PreviousProfileId) { "switch-after-exhaustion-or-block" } else { "highest-completion-priority" }
+            usageSnapshot = $freshness
         }
     }
 
@@ -218,6 +294,7 @@ function Select-GnhfRoutingProfile {
         selected = $selected
         states = $states
         reason = if ($PreviousProfileId -and $selected.profileId -ne $PreviousProfileId) { "rotate-to-preserve-usage" } else { "most-efficient-eligible-profile" }
+        usageSnapshot = $freshness
     }
 }
 
@@ -268,6 +345,9 @@ function Get-GnhfSegmentOutcome {
     if ($normalized -match 'not authenticated|authentication required|login required|unauthorized|forbidden|invalid api key') {
         return [pscustomobject]@{ status = "authentication-blocked"; switchProfile = $true; objectiveComplete = $false }
     }
+    if ($normalized -match "agent '[^']+' is not ready|unknown agent|resolved gnhf agent specification is empty|readiness probe failed") {
+        return [pscustomobject]@{ status = "permanent-error"; switchProfile = $true; objectiveComplete = $false }
+    }
     if ($normalized -match 'permanent error|unsupported model|model not found|provider unavailable') {
         return [pscustomobject]@{ status = "permanent-error"; switchProfile = $true; objectiveComplete = $false }
     }
@@ -281,6 +361,7 @@ function Get-GnhfSegmentOutcome {
 }
 
 Export-ModuleMember -Function @(
+    "Get-GnhfSnapshotFreshness",
     "Get-GnhfProfileRoutingState",
     "Select-GnhfRoutingProfile",
     "Get-GnhfSegmentTokenCap",
