@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 2,
+  "distribution": "Ubuntu",
+  "wslBootstrapManifest": "wsl-tmux-gnhf-base.example.json",
+  "workspace": {
+    "sessionName": "dev",
+    "keepAliveProcessName": "agent-switchboard-wsl-keepalive",
+    "installRoot": "%LOCALAPPDATA%\\AgentSwitchboard\\tmux-gnhf",
+    "createDesktopShortcut": false,
+    "shortcutName": "AgentSwitchboard tmux"
+  },
+  "node": {
+    "minimumMajor": 20,
+    "autoInstallOfficialLts": true,
+    "installRoot": "~/.local/agent-switchboard/node"
+  },
+  "gnhf": {
+    "enabled": true,
+    "upstreamRepository": "https://github.com/kunchenguid/gnhf.git",
+    "npmPackage": "gnhf",
+    "autoInstall": true,
+    "defaultAgent": "opencode",
+    "installDefaultAgent": true,
+    "defaultAgentNpmPackage": "opencode-ai",
+    "configPath": "~/.gnhf/config.yml",
+    "preserveExistingConfig": true,
+    "disableTelemetry": true,
+    "maxConsecutiveFailures": 3,
+    "preventSleep": true,
+    "commitMessagePreset": "conventional",
+    "safeWrapper": {
+      "name": "gnhf-safe",
+      "worktree": true,
+      "push": true,
+      "maxIterations": 10,
+      "maxTokens": 5000000
+    }
+  }
+}
