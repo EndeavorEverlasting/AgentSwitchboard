@@ -1,2 +1,8 @@
 # WSL setup runtime artifacts
 %LOCALAPPDATA%\AgentSwitchboard\wsl-setup\
+
+# Operator-local workstation manifests
+tooling/wsl/*.local.json
+
+# GNHF local run metadata
+.gnhf/

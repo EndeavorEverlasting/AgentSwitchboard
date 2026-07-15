@@ -1,0 +1,101 @@
+name: tmux GNHF workstation contracts
+
+on:
+  pull_request:
+    paths:
+      - "Setup-TmuxGnhfWorkspace.cmd"
+      - "tooling/wsl/**"
+      - "docs/workstation/tmux-gnhf-other-computer.md"
+      - "docs/workstation/tmux-gnhf-technician-quickstart.md"
+      - ".github/workflows/tmux-gnhf-workspace-contracts.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - name: Validate JSON and Bash contracts
+        shell: bash
+        run: |
+          set +e
+          python3 tooling/wsl/tests/test_tmux_gnhf_workspace_contracts.py > python-contracts-linux.log 2>&1
+          status=$?
+          cat python-contracts-linux.log
+          exit "$status"
+
+      - name: Upload Linux contract log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tmux-gnhf-python-contracts-linux
+          path: python-contracts-linux.log
+          if-no-files-found: error
+
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - name: Parse PowerShell files
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($path in @(
+            './tooling/wsl/Start-TmuxGnhfWorkspaceSetup.ps1',
+            './tooling/wsl/Install-TmuxGnhfWorkspace.ps1',
+            './tooling/wsl/Invoke-TmuxGnhfRuntimeProof.ps1',
+            './tooling/wsl/Test-TmuxGnhfWorkspaceContracts.ps1'
+          )) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $path),
+              [ref]$tokens,
+              [ref]$errors
+            )
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object { Write-Error "${path}: $($_.Message)" }
+              exit 1
+            }
+          }
+
+      - name: Parse JSON fixtures
+        shell: pwsh
+        run: |
+          Get-ChildItem ./tooling/wsl -Filter '*.json' -File -Recurse |
+            ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json | Out-Null }
+
+      - name: Validate Bash syntax
+        shell: bash
+        run: |
+          bash -n tooling/wsl/scripts/bootstrap-agent-workstation.sh
+          bash -n tooling/wsl/scripts/configure-gnhf-workspace.sh
+
+      - name: Run Python contracts
+        shell: pwsh
+        run: |
+          python tooling/wsl/tests/test_tmux_gnhf_workspace_contracts.py *> python-contracts-windows.log
+          $status = $LASTEXITCODE
+          Get-Content -LiteralPath python-contracts-windows.log
+          exit $status
+
+      - name: Upload Windows contract log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tmux-gnhf-python-contracts-windows
+          path: python-contracts-windows.log
+          if-no-files-found: error
+
+      - name: Run combined PowerShell validator
+        shell: pwsh
+        run: ./tooling/wsl/Test-TmuxGnhfWorkspaceContracts.ps1
