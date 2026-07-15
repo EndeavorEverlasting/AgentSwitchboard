@@ -4,7 +4,21 @@ Windows-first automation for installing, configuring, routing, smoke-testing, an
 
 AgentSwitchboard is being built as an **agentic engineering control plane**: engineers define intent and acceptance boundaries, agents perform contextual planning and implementation, and deterministic code supplies fast, repeatable guardrails. The goal is to move routine coding execution into evidence-backed AI Developer Workflows rather than placing a human inside every edit-test-repair loop.
 
-## One-click Windows setup
+## Persistent tmux + GNHF workstation
+
+For a new personal or technician Windows workstation, clone the repository and then double-click:
+
+```text
+Setup-TmuxGnhfWorkspace.cmd
+```
+
+The click-ready launcher creates a local manifest from safe defaults, checks WSL and Ubuntu, handles reboot boundaries honestly, runs a read-only plan, requires an explicit `INSTALL` confirmation, installs Linux packages through a root-only package phase, applies the persistent WezTerm → tmux → GNHF workspace, validates the command-level result, and preserves timestamped local logs.
+
+Start with the [technician quick start](docs/workstation/tmux-gnhf-technician-quickstart.md). The detailed [other-computer guide](docs/workstation/tmux-gnhf-other-computer.md) remains the advanced reference.
+
+The setup does not authenticate providers, collect tokens, call paid models during validation, push Git branches, unregister WSL, or claim live agent/runtime proof without observation.
+
+## One-click Windows agent-fleet setup
 
 Double-click [`Setup-AgentSwitchboard.cmd`](Setup-AgentSwitchboard.cmd) from the repository root.
 
@@ -24,16 +38,6 @@ After setup, list READY and BLOCKED agents:
 ```
 
 See the [GNHF fleet guide](tooling/gnhf/README.md) for bounded sprint and parallel-fleet commands.
-
-## WSL tmux + GNHF workstation
-
-For the persistent Windows workflow:
-
-```text
-WezTerm -> tmux -> coding agent -> bounded GNHF worktree run
-```
-
-start with the [other-computer tmux and GNHF guide](docs/workstation/tmux-gnhf-other-computer.md). The integration is plan-only by default, installs GNHF into WSL without automatic authentication, creates a capped `gnhf-safe` wrapper, and generates a persistent tmux launcher with explicit Status and destructive Stop operations.
 
 ## Architecture
 
