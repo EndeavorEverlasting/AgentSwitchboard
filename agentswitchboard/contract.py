@@ -158,7 +158,7 @@ def _completed_probe(result: subprocess.CompletedProcess[str]) -> tuple[bool, st
 
 def _run_wsl(distro: str, arguments: list[str], timeout: int = 10) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        ["wsl.exe", "-d", distro, "--", *arguments],
+        ["wsl.exe", "-d", distro, "--exec", *arguments],
         capture_output=True,
         text=True,
         timeout=timeout,

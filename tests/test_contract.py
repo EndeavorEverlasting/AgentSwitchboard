@@ -103,7 +103,7 @@ def test_windows_wsl_live_install_and_bridge_probe_stay_in_selected_distro():
     finally: contract.subprocess.run=original
     assert result["overall_status"]=="pass" and result["proof"]["installation_observed"] is True
     assert all(row["selected_backend"]=="bridge" for row in result["agents"].values())
-    assert observed and all(command[:4]==["wsl.exe","-d","Ubuntu","--"] for command in observed)
+    assert observed and all(command[:4]==["wsl.exe","-d","Ubuntu","--exec"] for command in observed)
 
 
 def test_pr6_review_defects_are_repaired():
