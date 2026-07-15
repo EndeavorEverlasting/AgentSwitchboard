@@ -24,6 +24,7 @@ $planMode = -not $Apply
 
 $requiredSourceFiles = @(
     "GnhfFleet.Paths.ps1",
+    "GnhfModelActivation.ps1",
     "Start-GnhfSprint.ps1",
     "GnhfBimodal.Policy.ps1",
     "GnhfBimodal.Policy.psm1",
@@ -36,12 +37,14 @@ $requiredSourceFiles = @(
 )
 $schemaFiles = @(
     "gnhf-usage-snapshot.schema.json",
+    "gnhf-model-activation.schema.json",
     "gnhf-routing-decision.schema.json",
     "gnhf-bimodal-run.schema.json"
 )
 $fixtureFiles = @(
     "gnhf-usage-completion.json",
-    "gnhf-usage-efficiency.json"
+    "gnhf-usage-efficiency.json",
+    "gnhf-model-activation-acknowledged.json"
 )
 
 foreach ($relativePath in $requiredSourceFiles) {
