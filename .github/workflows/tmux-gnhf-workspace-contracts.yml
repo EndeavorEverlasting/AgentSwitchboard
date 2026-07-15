@@ -16,13 +16,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          show-progress: false
+
       - name: Validate JSON and Bash contracts
-        run: python3 tooling/wsl/tests/test_tmux_gnhf_workspace_contracts.py
+        shell: bash
+        run: |
+          set +e
+          python3 tooling/wsl/tests/test_tmux_gnhf_workspace_contracts.py > python-contracts-linux.log 2>&1
+          status=$?
+          cat python-contracts-linux.log
+          exit "$status"
+
+      - name: Upload Linux contract log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tmux-gnhf-python-contracts-linux
+          path: python-contracts-linux.log
+          if-no-files-found: error
 
   windows-contracts:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          show-progress: false
 
       - name: Parse PowerShell files
         shell: pwsh
@@ -58,7 +77,19 @@ jobs:
 
       - name: Run Python contracts
         shell: pwsh
-        run: python tooling/wsl/tests/test_tmux_gnhf_workspace_contracts.py
+        run: |
+          python tooling/wsl/tests/test_tmux_gnhf_workspace_contracts.py *> python-contracts-windows.log
+          $status = $LASTEXITCODE
+          Get-Content -LiteralPath python-contracts-windows.log
+          exit $status
+
+      - name: Upload Windows contract log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tmux-gnhf-python-contracts-windows
+          path: python-contracts-windows.log
+          if-no-files-found: error
 
       - name: Run combined PowerShell validator
         shell: pwsh
