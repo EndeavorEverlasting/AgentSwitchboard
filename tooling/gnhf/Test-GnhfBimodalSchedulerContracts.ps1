@@ -98,27 +98,41 @@ $efficiencySnapshot = Get-Content -LiteralPath (Join-Path $RootPath "fixtures/gn
 $profiles = @($config.profiles)
 $policy = $config.policy
 
-$completion = Select-GnhfRoutingProfile -Mode "maximize-sprint-completion" -Profiles $profiles -Snapshot $completionSnapshot -Policy $policy
-Add-Check -Passed ($completion.selected.profileId -eq "opencode-primary") -Name "policy/completion-prefers-primary"
+$completionOrder = @($profiles | Sort-Object completionPriority | ForEach-Object id)
+$expectedCompletionOrder = @("deepseek-primary", "opencode-secondary", "agy-tertiary", "copilot-fallback", "goose-efficient")
+Add-Check -Passed (($completionOrder -join "|") -eq ($expectedCompletionOrder -join "|")) -Name "manifest/deepseek-opencode-agy-fallback-order" -FailureMessage "actual order: $($completionOrder -join ', ')"
+$agyDefault = $profiles | Where-Object id -eq "agy-tertiary" | Select-Object -First 1
+Add-Check -Passed (-not [bool]$agyDefault.enabled -and [string]::IsNullOrWhiteSpace([string]$agyDefault.agentSpec)) -Name "manifest/agy-requires-detected-adapter"
 
-$completionContinues = Select-GnhfRoutingProfile -Mode "maximize-sprint-completion" -Profiles $profiles -Snapshot $completionSnapshot -Policy $policy -PreviousProfileId "opencode-primary" -PreviousOutcome "progressed"
-Add-Check -Passed ($completionContinues.selected.profileId -eq "opencode-primary" -and $completionContinues.reason -eq "continue-current-profile-until-exhausted") -Name "policy/completion-stays-until-exhausted"
+$completion = Select-GnhfRoutingProfile -Mode "maximize-sprint-completion" -Profiles $profiles -Snapshot $completionSnapshot -Policy $policy
+Add-Check -Passed ($completion.selected.profileId -eq "deepseek-primary") -Name "policy/completion-prefers-deepseek"
+
+$completionContinues = Select-GnhfRoutingProfile -Mode "maximize-sprint-completion" -Profiles $profiles -Snapshot $completionSnapshot -Policy $policy -PreviousProfileId "deepseek-primary" -PreviousOutcome "progressed"
+Add-Check -Passed ($completionContinues.selected.profileId -eq "deepseek-primary" -and $completionContinues.reason -eq "continue-current-profile-until-exhausted") -Name "policy/completion-stays-on-deepseek-until-exhausted"
 
 $exhaustedSnapshot = $completionSnapshot | ConvertTo-Json -Depth 30 | ConvertFrom-Json -Depth 30
-($exhaustedSnapshot.profiles | Where-Object profileId -eq "opencode-primary").tokensRemaining = 0
-$completionSwitch = Select-GnhfRoutingProfile -Mode "maximize-sprint-completion" -Profiles $profiles -Snapshot $exhaustedSnapshot -Policy $policy -PreviousProfileId "opencode-primary" -PreviousOutcome "quota-exhausted"
-Add-Check -Passed ($completionSwitch.selected.profileId -eq "copilot-secondary") -Name "policy/completion-switches-after-exhaustion"
+($exhaustedSnapshot.profiles | Where-Object profileId -eq "deepseek-primary").tokensRemaining = 0
+$completionSwitch = Select-GnhfRoutingProfile -Mode "maximize-sprint-completion" -Profiles $profiles -Snapshot $exhaustedSnapshot -Policy $policy -PreviousProfileId "deepseek-primary" -PreviousOutcome "quota-exhausted"
+Add-Check -Passed ($completionSwitch.selected.profileId -eq "opencode-secondary") -Name "policy/completion-falls-back-to-opencode"
 
-$failedFallback = Select-GnhfRoutingProfile -Mode "maximize-sprint-completion" -Profiles $profiles -Snapshot $completionSnapshot -Policy $policy -PreviousProfileId "opencode-primary" -PreviousOutcome "failed"
-Add-Check -Passed ($failedFallback.selected.profileId -eq "copilot-secondary" -and $failedFallback.reason -eq "switch-after-exhaustion-or-block") -Name "policy/completion-switches-after-generic-failure"
+$failedFallback = Select-GnhfRoutingProfile -Mode "maximize-sprint-completion" -Profiles $profiles -Snapshot $completionSnapshot -Policy $policy -PreviousProfileId "deepseek-primary" -PreviousOutcome "failed"
+Add-Check -Passed ($failedFallback.selected.profileId -eq "opencode-secondary" -and $failedFallback.reason -eq "switch-after-exhaustion-or-block") -Name "policy/completion-switches-to-opencode-after-deepseek-failure"
+
+$agyConfig = $config | ConvertTo-Json -Depth 30 | ConvertFrom-Json -Depth 30
+($agyConfig.profiles | Where-Object id -eq "agy-tertiary").enabled = $true
+$agySnapshot = $completionSnapshot | ConvertTo-Json -Depth 30 | ConvertFrom-Json -Depth 30
+($agySnapshot.profiles | Where-Object profileId -eq "deepseek-primary").tokensRemaining = 0
+($agySnapshot.profiles | Where-Object profileId -eq "opencode-secondary").tokensRemaining = 0
+$agySwitch = Select-GnhfRoutingProfile -Mode "maximize-sprint-completion" -Profiles @($agyConfig.profiles) -Snapshot $agySnapshot -Policy $agyConfig.policy -PreviousProfileId "opencode-secondary" -PreviousOutcome "quota-exhausted"
+Add-Check -Passed ($agySwitch.selected.profileId -eq "agy-tertiary") -Name "policy/completion-uses-agy-third-when-enabled"
 
 $efficiency = Select-GnhfRoutingProfile -Mode "maximize-token-efficiency" -Profiles $profiles -Snapshot $efficiencySnapshot -Policy $policy
 Add-Check -Passed ($efficiency.selected.profileId -eq "goose-efficient") -Name "policy/efficiency-prefers-efficient-profile"
-$primaryEfficiencyState = $efficiency.states | Where-Object profileId -eq "opencode-primary"
-Add-Check -Passed (-not $primaryEfficiencyState.eligible -and $primaryEfficiencyState.eligibilityReason -eq "reserve-floor-reached") -Name "policy/efficiency-preserves-reserve"
+$primaryEfficiencyState = $efficiency.states | Where-Object profileId -eq "deepseek-primary"
+Add-Check -Passed (-not $primaryEfficiencyState.eligible -and $primaryEfficiencyState.eligibilityReason -eq "reserve-floor-reached") -Name "policy/efficiency-preserves-deepseek-reserve"
 
 $rotation = Select-GnhfRoutingProfile -Mode "maximize-token-efficiency" -Profiles $profiles -Snapshot $efficiencySnapshot -Policy $policy -PreviousProfileId "goose-efficient" -PreviousOutcome "progressed" -SegmentCounts @{ "goose-efficient" = 1 }
-Add-Check -Passed ($rotation.selected.profileId -eq "copilot-secondary" -and $rotation.reason -eq "rotate-to-preserve-usage") -Name "policy/efficiency-rotates-profiles"
+Add-Check -Passed ($rotation.selected.profileId -eq "copilot-fallback" -and $rotation.reason -eq "rotate-to-preserve-usage") -Name "policy/efficiency-rotates-profiles"
 
 $efficiencyCap = Get-GnhfSegmentTokenCap -SelectedState $efficiency.selected -Mode "maximize-token-efficiency" -Policy $policy -DefaultSegmentMaxTokens 300000
 Add-Check -Passed ($efficiencyCap -eq 75000) -Name "policy/efficiency-bounds-segment-share" -FailureMessage "expected 75000, got $efficiencyCap"
@@ -180,6 +194,7 @@ $guide = Read-Text "BIMODAL_SCHEDULER.md"
 if ($guide) {
     Add-Check -Passed ($guide.Contains('maximize-sprint-completion')) -Name "docs/completion-mode"
     Add-Check -Passed ($guide.Contains('maximize-token-efficiency')) -Name "docs/efficiency-mode"
+    Add-Check -Passed ($guide.Contains('DeepSeek') -and $guide.Contains('OpenCode') -and $guide.Contains('Anti-Gravity')) -Name "docs/completion-hierarchy"
     Add-Check -Passed ($guide.Contains('usage snapshot')) -Name "docs/usage-contract"
     Add-Check -Passed ($guide.Contains('AGENTSWITCHBOARD_MODEL_PROFILE')) -Name "docs/wrapper-contract"
     Add-Check -Passed ($guide.Contains('does not merge or push automatically') -or $guide.Contains('No automatic push, merge')) -Name "docs/review-boundary"
