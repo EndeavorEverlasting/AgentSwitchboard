@@ -167,10 +167,12 @@ def _run_wsl(distro: str, arguments: list[str], timeout: int = 10) -> subprocess
 
 
 def _windows_path_to_wsl(distro: str, path: Path) -> str:
-    converted = _run_wsl(distro, ["wslpath", "-a", str(path.resolve())])
-    if converted.returncode != 0 or not converted.stdout.strip():
-        raise RuntimeError(converted.stderr.strip() or f"could not convert path for WSL distro {distro}")
-    return converted.stdout.strip().splitlines()[0]
+    resolved = str(path.resolve())
+    matched = re.match(r"^([A-Za-z]):[\\/](.*)$", resolved)
+    if not matched:
+        raise RuntimeError(f"could not convert host path for WSL distro {distro}")
+    drive, remainder = matched.groups()
+    return f"/mnt/{drive.lower()}/{remainder.replace(chr(92), '/')}"
 
 
 def _probe_wsl_wrapper(distro: str, wrapper: str, allow_bridge: bool = False) -> tuple[bool, str | None]:

@@ -95,7 +95,6 @@ def test_windows_wsl_live_install_and_bridge_probe_stay_in_selected_distro():
     def fake_run(command, **kwargs):
         observed.append(command)
         joined=" ".join(command)
-        if "wslpath" in command: return subprocess.CompletedProcess(command,0,"/mnt/c/repo/install-agent-wrappers.sh\n","")
         if "install-agent-wrappers.sh" in joined: return subprocess.CompletedProcess(command,0,"installed\n","")
         if "_native" in joined: return subprocess.CompletedProcess(command,127,"","native missing")
         return subprocess.CompletedProcess(command,0,"bridge fixture 1.0\n","")
