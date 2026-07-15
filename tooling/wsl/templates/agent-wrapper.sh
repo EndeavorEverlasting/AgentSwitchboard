@@ -10,6 +10,18 @@ esac
 case "$agent" in opencode|agy|goose) ;; *) printf 'Unsupported agent wrapper: %s\n' "$agent" >&2; exit 2 ;; esac
 
 managed_dir=$(cd "$(dirname "$0")" && pwd -P)
+policy_domain=""
+policy_bridge=0
+if [[ -f "$managed_dir/policy.env" ]]; then
+  while IFS='=' read -r key value; do
+    case "$key" in
+      execution_domain) policy_domain=$value ;;
+      allow_windows_bridge) policy_bridge=$value ;;
+    esac
+  done < "$managed_dir/policy.env"
+fi
+execution_domain=${AGENT_SWITCHBOARD_DOMAIN:-$policy_domain}
+allow_windows_bridge=${AGENT_SWITCHBOARD_ALLOW_WINDOWS_BRIDGE:-$policy_bridge}
 probe=false
 if [[ "${1:-}" == "--agent-switchboard-probe" ]]; then probe=true; shift; fi
 
@@ -19,6 +31,9 @@ find_native() {
     [[ -n "$candidate" ]] || continue
     resolved=$(readlink -f "$candidate" 2>/dev/null || printf '%s' "$candidate")
     case "$resolved" in "$managed_dir"/*) continue ;; esac
+    if [[ "$execution_domain" == windows-wsl ]]; then
+      case "$resolved" in /mnt/[a-zA-Z]/*) continue ;; esac
+    fi
     printf '%s\n' "$candidate"
     return 0
   done < <(type -aP "$agent" 2>/dev/null || true)
@@ -52,7 +67,7 @@ case "$mode" in
     if native_candidate=$(find_native); then
       if $probe; then exec "$native_candidate" --version; else exec "$native_candidate" "$@"; fi
     fi
-    if [[ "${AGENT_SWITCHBOARD_ALLOW_WINDOWS_BRIDGE:-0}" == 1 ]]; then run_bridge "$@"; fi
+    if [[ "$allow_windows_bridge" == 1 ]]; then run_bridge "$@"; fi
     printf '%s has no healthy native command; set AGENT_SWITCHBOARD_ALLOW_WINDOWS_BRIDGE=1 only when the domain contract permits bridging\n' "$agent" >&2
     exit 127
     ;;

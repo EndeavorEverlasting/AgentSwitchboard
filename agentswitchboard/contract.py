@@ -190,9 +190,12 @@ def _run_live_windows_wsl(request: Mapping[str, Any], repo_root: Path) -> dict[s
     if request.get("operation") == "install-missing":
         installer = repo_root / "tooling" / "wsl" / "scripts" / "install-agent-wrappers.sh"
         installer_wsl = _windows_path_to_wsl(distro, installer)
+        install_command = 'exec "$1" --destination "$HOME/.local/agent-switchboard/bin" --execution-domain windows-wsl'
+        if request.get("bridge_permission"):
+            install_command += " --allow-windows-bridge"
         completed = _run_wsl(
             distro,
-            ["bash", "-lc", 'exec "$1" --destination "$HOME/.local/agent-switchboard/bin"', "_", installer_wsl],
+            ["bash", "-lc", install_command, "_", installer_wsl],
             timeout=30,
         )
         if completed.returncode != 0:

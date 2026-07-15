@@ -80,7 +80,8 @@ def test_wrapper_manifest_and_installation_shell_loop():
     with tempfile.TemporaryDirectory() as temp:
         root=Path(temp); managed=root/"managed"; native=root/"native"; native.mkdir()
         subprocess.run(["bash",installer,"--destination",str(managed)],cwd=ROOT,check=True,capture_output=True,text=True)
-        assert {p.name for p in managed.iterdir()}=={n for a in ("opencode","agy","goose") for n in (a,f"{a}_native",f"{a}_win")}
+        expected={n for a in ("opencode","agy","goose") for n in (a,f"{a}_native",f"{a}_win")}|{"policy.env"}
+        assert {p.name for p in managed.iterdir()}==expected
         for agent in ("opencode","agy","goose"):
             fake=native/agent; fake.write_text("#!/usr/bin/env bash\nprintf '%s native fixture\\n' \"$(basename \"$0\")\"\n",encoding="utf-8"); fake.chmod(0o755)
         env={**os.environ,"PATH":f"{managed}:{native}:{os.environ['PATH']}"}
@@ -104,6 +105,7 @@ def test_windows_wsl_live_install_and_bridge_probe_stay_in_selected_distro():
     assert result["overall_status"]=="pass" and result["proof"]["installation_observed"] is True
     assert all(row["selected_backend"]=="bridge" for row in result["agents"].values())
     assert observed and all(command[:4]==["wsl.exe","-d","Ubuntu","--exec"] for command in observed)
+    assert any("--allow-windows-bridge" in " ".join(command) for command in observed)
 
 
 def test_pr6_review_defects_are_repaired():
