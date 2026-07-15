@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/gnhf/schemas/gnhf-routing-decision.schema.json",
+  "title": "AgentSwitchboard GNHF routing decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "decidedAt", "runId", "segment", "mode", "reason", "selectedProfile", "segmentBudget", "usageSnapshotHash", "candidates"],
+  "properties": {
+    "schemaVersion": { "const": "agentswitchboard-gnhf-routing-decision/v1" },
+    "decidedAt": { "type": "string", "format": "date-time" },
+    "runId": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$" },
+    "segment": { "type": "integer", "minimum": 1 },
+    "mode": { "enum": ["maximize-sprint-completion", "maximize-token-efficiency"] },
+    "reason": { "type": "string", "minLength": 1 },
+    "selectedProfile": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["profileId", "agent", "agentSpec", "model"],
+      "properties": {
+        "profileId": { "type": "string" },
+        "agent": { "type": "string" },
+        "agentSpec": { "type": "string" },
+        "model": { "type": ["string", "null"] }
+      }
+    },
+    "segmentBudget": { "type": ["integer", "null"], "minimum": 1 },
+    "usageSnapshotHash": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["profileId", "eligible", "eligibilityReason"],
+        "properties": {
+          "profileId": { "type": "string" },
+          "eligible": { "type": "boolean" },
+          "eligibilityReason": { "type": "string" },
+          "tokensRemaining": { "type": ["integer", "null"] },
+          "reserveTokens": { "type": "integer" },
+          "usableTokens": { "type": ["integer", "null"] }
+        }
+      }
+    }
+  }
+}
