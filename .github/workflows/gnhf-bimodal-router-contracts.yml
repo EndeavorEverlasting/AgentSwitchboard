@@ -17,6 +17,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           show-progress: false
+          fetch-depth: 0
 
       - name: Parse bimodal JSON contracts
         shell: bash
@@ -49,6 +50,13 @@ jobs:
         run: |
           test ! -d tooling/gnhf/bimodal-runs
           ! git ls-files | grep -E '(^|/)bimodal-run\.json$|(^|/)events\.jsonl$|routing-decision-[0-9]+\.json$'
+
+      - name: Check diff and checkout hygiene
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          git diff --check "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}"
+          test -z "$(git status --short)"
 
   windows-contracts:
     runs-on: windows-latest
