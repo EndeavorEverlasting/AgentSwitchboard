@@ -1,0 +1,28 @@
+name: tmux GNHF workstation contracts
+
+on:
+  pull_request:
+    paths:
+      - "tooling/wsl/**"
+      - "docs/workstation/tmux-gnhf-other-computer.md"
+      - ".github/workflows/tmux-gnhf-workspace-contracts.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate JSON and Bash contracts
+        run: python3 tooling/wsl/tests/test_tmux_gnhf_workspace_contracts.py
+
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate PowerShell and cross-platform contracts
+        shell: pwsh
+        run: ./tooling/wsl/Test-TmuxGnhfWorkspaceContracts.ps1
