@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 WSL = ROOT / "tooling" / "wsl"
+SUPPORTED_GNHF_VERSION = "0.1.42"
 
 
 def require(condition: bool, message: str) -> None:
@@ -23,19 +24,20 @@ def load_json(path: Path) -> dict:
 
 
 def validate_manifest(data: dict, *, valid: bool) -> None:
+    gnhf = data.get("gnhf", {})
     conditions = [
         data.get("schemaVersion") == 1,
         isinstance(data.get("distribution"), str) and bool(data["distribution"]),
         data.get("workspace", {}).get("sessionName") == "dev",
         data.get("node", {}).get("minimumMajor", 0) >= 20,
-        data.get("gnhf", {}).get("upstreamRepository")
-        == "https://github.com/kunchenguid/gnhf.git",
-        data.get("gnhf", {}).get("npmPackage") == "gnhf",
-        data.get("gnhf", {}).get("defaultAgent") == "opencode",
-        data.get("gnhf", {}).get("safeWrapper", {}).get("worktree") is True,
-        data.get("gnhf", {}).get("safeWrapper", {}).get("push") is False,
-        data.get("gnhf", {}).get("safeWrapper", {}).get("maxIterations", 0) > 0,
-        data.get("gnhf", {}).get("safeWrapper", {}).get("maxTokens", 0) > 0,
+        gnhf.get("upstreamRepository") == "https://github.com/kunchenguid/gnhf.git",
+        gnhf.get("supportedVersion") == SUPPORTED_GNHF_VERSION,
+        gnhf.get("npmPackage") == f"gnhf@{SUPPORTED_GNHF_VERSION}",
+        gnhf.get("defaultAgent") == "opencode",
+        gnhf.get("safeWrapper", {}).get("worktree") is True,
+        gnhf.get("safeWrapper", {}).get("push") is False,
+        gnhf.get("safeWrapper", {}).get("maxIterations", 0) > 0,
+        gnhf.get("safeWrapper", {}).get("maxTokens", 0) > 0,
     ]
     require(all(conditions) is valid, f"manifest validity mismatch: expected {valid}")
 
