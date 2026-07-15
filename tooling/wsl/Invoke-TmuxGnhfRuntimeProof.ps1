@@ -33,14 +33,13 @@ function Write-ProofEvent {
         data = $Data
     }
     $script:events.Add([pscustomobject]$event)
-    $prefix = "[$State]"
     $color = switch ($State) {
         "PASS" { "Green" }
         "FAIL" { "Red" }
         "SKIP" { "Yellow" }
         default { "Cyan" }
     }
-    Write-Host "$prefix $Step - $Message" -ForegroundColor $color
+    Write-Host "[$State] $Step - $Message" -ForegroundColor $color
 }
 
 function Invoke-BoundedProcess {
@@ -108,6 +107,32 @@ function Wait-ForCondition {
     return $false
 }
 
+function Get-TmuxClientLines {
+    param(
+        [Parameter(Mandatory)][string]$Distribution,
+        [Parameter(Mandatory)][string]$SessionName
+    )
+
+    $result = Invoke-WslBash -Distribution $Distribution -Command "tmux list-clients -F '#{session_name}|#{client_tty}' 2>/dev/null || true" -TimeoutSeconds 10
+    return @(
+        $result.Stdout -split '\r?\n' |
+            Where-Object { $_ -and $_ -like "${SessionName}|*" }
+    )
+}
+
+function Get-TmuxWindowLines {
+    param(
+        [Parameter(Mandatory)][string]$Distribution,
+        [Parameter(Mandatory)][string]$SessionName
+    )
+
+    $result = Invoke-WslBash -Distribution $Distribution -Command "tmux list-windows -t '$SessionName' -F '#{window_id}|#{window_index}|#{window_name}'" -TimeoutSeconds 15
+    if ($result.ExitCode -ne 0) {
+        throw "Unable to list tmux windows. $($result.Output)"
+    }
+    return @($result.Stdout -split '\r?\n' | Where-Object { $_ })
+}
+
 function Get-RoutingSummary {
     param([string]$Path)
 
@@ -145,14 +170,13 @@ function Get-RoutingSummary {
         return $null
     }
 
-    $hash = (Get-FileHash -LiteralPath $resolved -Algorithm SHA256).Hash
     return [ordered]@{
         supplied = $true
         selectedAgent = Find-Value -Candidates $containers -Names @("selectedAgent", "agentId", "agent")
         selectedModel = Find-Value -Candidates $containers -Names @("selectedModel", "modelId", "model")
         tokenAvailability = Find-Value -Candidates $containers -Names @("tokenAvailability", "availableTokens", "remainingTokens", "tokenRemaining")
         switchReason = Find-Value -Candidates $containers -Names @("switchReason", "reasonCode", "reason")
-        evidenceHash = $hash
+        evidenceHash = (Get-FileHash -LiteralPath $resolved -Algorithm SHA256).Hash
     }
 }
 
@@ -214,7 +238,8 @@ $startScript = Join-Path $installRoot "Start-TmuxGnhfWorkspace.ps1"
 $statusScript = Join-Path $installRoot "Get-TmuxGnhfWorkspaceStatus.ps1"
 
 if (-not $ArtifactRoot) {
-    $ArtifactRoot = Join-Path $installRoot ("runtime-proof\" + (Get-Date -Format "yyyyMMdd-HHmmss"))
+    $runtimeRoot = Join-Path $installRoot "runtime-proof"
+    $ArtifactRoot = Join-Path $runtimeRoot (Get-Date -Format "yyyyMMdd-HHmmss")
 }
 $ArtifactRoot = [System.IO.Path]::GetFullPath($ArtifactRoot)
 New-Item -ItemType Directory -Path $ArtifactRoot -Force | Out-Null
@@ -230,7 +255,6 @@ if ($selectedAgent -notmatch '^[A-Za-z0-9._-]+$') {
 $repoRoot = $null
 $branch = $null
 $head = $null
-$statusLines = @()
 
 try {
     $git = Get-Command git.exe -ErrorAction SilentlyContinue
@@ -240,7 +264,7 @@ try {
     $repoRoot = $rootResult.Stdout.Trim()
 
     $statusResult = Invoke-BoundedProcess -FilePath $git.Source -ArgumentList @("-C", $repoRoot, "status", "--short")
-    $statusLines = @($statusResult.Stdout -split "`r?`n" | Where-Object { $_ })
+    $statusLines = @($statusResult.Stdout -split '\r?\n' | Where-Object { $_ })
     if ($statusLines.Count -gt 0) {
         throw "Repository floor is dirty. Preserve unknown work and rerun from a clean checkout."
     }
@@ -250,8 +274,13 @@ try {
     Write-ProofEvent -Step "repo-floor" -State "PASS" -Message "clean_checkout" -Data @{ branch = $branch; head = $head }
 
     $validator = Join-Path $PSScriptRoot "Test-TmuxGnhfWorkspaceContracts.ps1"
-    & $validator
-    if ($LASTEXITCODE -ne 0) { throw "Targeted workstation contracts failed." }
+    $pwsh = (Get-Command pwsh.exe -ErrorAction Stop).Source
+    $validationResult = Invoke-BoundedProcess -FilePath $pwsh -ArgumentList @(
+        "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $validator
+    ) -TimeoutSeconds 180
+    if ($validationResult.ExitCode -ne 0) {
+        throw "Targeted workstation contracts failed. $($validationResult.Output)"
+    }
     $proof.targetedValidation = $true
     Write-ProofEvent -Step "targeted-validation" -State "PASS" -Message "workstation_contracts_passed"
 
@@ -279,8 +308,8 @@ try {
 
     $attached = Wait-ForCondition -TimeoutSeconds $WaitSeconds -Condition {
         $status = & $statusScript
-        $clients = Invoke-WslBash -Distribution $distribution -Command "tmux list-clients -F '#{session_name}|#{client_tty}' 2>/dev/null | awk -F'|' '`$1 == \"$sessionName\" { print }'" -TimeoutSeconds 10
-        return ([bool]$status.keepAliveRunning -and [bool]$status.sessionAvailable -and [bool]$clients.Stdout)
+        $clients = Get-TmuxClientLines -Distribution $distribution -SessionName $sessionName
+        return ([bool]$status.keepAliveRunning -and [bool]$status.sessionAvailable -and $clients.Count -gt 0)
     }
     if (-not $attached) { throw "Workspace did not reach attached state within $WaitSeconds seconds." }
     $proof.launcherAttached = $true
@@ -304,52 +333,51 @@ try {
 
     $proof.behaviorObserved = Read-OperatorObservation -Step "behavior-observed" -Prompt "Inside tmux, open the selected agent and perform one harmless interaction that does not modify files, accounts, or personal data. Confirm that input and response were actually observed."
 
-    $markerResult = Invoke-WslBash -Distribution $distribution -Command "tmux new-window -d -P -F '#{window_id}' -t '$sessionName:' -n runtime-proof" -TimeoutSeconds 15
-    if ($markerResult.ExitCode -ne 0 -or -not $markerResult.Stdout) {
-        throw "Unable to create the disposable tmux marker window. $($markerResult.Output)"
+    if ($NonInteractive) {
+        Write-ProofEvent -Step "persistence-cycle" -State "SKIP" -Message "interactive_detach_required"
     }
-    $markerWindowId = $markerResult.Stdout.Trim()
-    $beforeWindows = (Invoke-WslBash -Distribution $distribution -Command "tmux list-windows -t '$sessionName' -F '#{window_id}|#{window_index}|#{window_name}'" -TimeoutSeconds 15).Stdout -split "`r?`n"
-    Write-ProofEvent -Step "persistence-marker" -State "PASS" -Message "disposable_window_created" -Data @{ markerWindowId = $markerWindowId }
+    else {
+        $markerResult = Invoke-WslBash -Distribution $distribution -Command "tmux new-window -d -P -F '#{window_id}' -t '${sessionName}:' -n runtime-proof" -TimeoutSeconds 15
+        if ($markerResult.ExitCode -ne 0 -or -not $markerResult.Stdout) {
+            throw "Unable to create the disposable tmux marker window. $($markerResult.Output)"
+        }
+        $markerWindowId = $markerResult.Stdout.Trim()
+        $beforeWindows = Get-TmuxWindowLines -Distribution $distribution -SessionName $sessionName
+        Write-ProofEvent -Step "persistence-marker" -State "PASS" -Message "disposable_window_created" -Data @{ markerWindowId = $markerWindowId }
 
-    if (-not $NonInteractive) {
         [void](Read-Host "In WezTerm, press Ctrl+B, release, then D to detach. Return to this PowerShell window and press Enter")
-    }
 
-    $detached = Wait-ForCondition -TimeoutSeconds $WaitSeconds -Condition {
-        $clients = Invoke-WslBash -Distribution $distribution -Command "tmux list-clients -F '#{session_name}' 2>/dev/null | grep -Fx '$sessionName' || true" -TimeoutSeconds 10
-        return (-not [bool]$clients.Stdout)
-    }
-    if (-not $detached) { throw "tmux client did not detach within $WaitSeconds seconds." }
-    $proof.detachObserved = $true
-    Write-ProofEvent -Step "detach" -State "PASS" -Message "no_tmux_clients_attached"
+        $detached = Wait-ForCondition -TimeoutSeconds $WaitSeconds -Condition {
+            return (Get-TmuxClientLines -Distribution $distribution -SessionName $sessionName).Count -eq 0
+        }
+        if (-not $detached) { throw "tmux client did not detach within $WaitSeconds seconds." }
+        $proof.detachObserved = $true
+        Write-ProofEvent -Step "detach" -State "PASS" -Message "no_tmux_clients_attached"
 
-    $detachedStatus = & $statusScript
-    $markerDuringDetach = Invoke-WslBash -Distribution $distribution -Command "tmux list-windows -t '$sessionName' -F '#{window_id}' | grep -Fx '$markerWindowId'" -TimeoutSeconds 15
-    if (-not $detachedStatus.keepAliveRunning -or -not $detachedStatus.sessionAvailable -or $markerDuringDetach.ExitCode -ne 0) {
-        throw "tmux session or marker window did not survive detach."
-    }
-    $proof.persistenceObserved = $true
-    Write-ProofEvent -Step "detached-persistence" -State "PASS" -Message "session_and_marker_survived_detach"
+        $detachedStatus = & $statusScript
+        $detachedWindows = Get-TmuxWindowLines -Distribution $distribution -SessionName $sessionName
+        if (-not $detachedStatus.keepAliveRunning -or -not $detachedStatus.sessionAvailable -or -not ($detachedWindows | Where-Object { $_ -like "${markerWindowId}|*" })) {
+            throw "tmux session or marker window did not survive detach."
+        }
+        $proof.persistenceObserved = $true
+        Write-ProofEvent -Step "detached-persistence" -State "PASS" -Message "session_and_marker_survived_detach"
 
-    & $startScript
-    $reattached = Wait-ForCondition -TimeoutSeconds $WaitSeconds -Condition {
-        $clients = Invoke-WslBash -Distribution $distribution -Command "tmux list-clients -F '#{session_name}' 2>/dev/null | grep -Fx '$sessionName' || true" -TimeoutSeconds 10
-        return [bool]$clients.Stdout
-    }
-    if (-not $reattached) { throw "Workspace did not reattach within $WaitSeconds seconds." }
+        & $startScript
+        $reattached = Wait-ForCondition -TimeoutSeconds $WaitSeconds -Condition {
+            return (Get-TmuxClientLines -Distribution $distribution -SessionName $sessionName).Count -gt 0
+        }
+        if (-not $reattached) { throw "Workspace did not reattach within $WaitSeconds seconds." }
 
-    $afterWindows = (Invoke-WslBash -Distribution $distribution -Command "tmux list-windows -t '$sessionName' -F '#{window_id}|#{window_index}|#{window_name}'" -TimeoutSeconds 15).Stdout -split "`r?`n"
-    if (-not ($afterWindows | Where-Object { $_ -like "$markerWindowId|*" })) {
-        throw "The disposable marker window was not present after reattach."
-    }
-    $proof.reattachObserved = $true
-    Write-ProofEvent -Step "reattach" -State "PASS" -Message "same_tmux_session_and_marker_reattached" -Data @{
-        beforeWindowCount = @($beforeWindows).Count
-        afterWindowCount = @($afterWindows).Count
-    }
+        $afterWindows = Get-TmuxWindowLines -Distribution $distribution -SessionName $sessionName
+        if (-not ($afterWindows | Where-Object { $_ -like "${markerWindowId}|*" })) {
+            throw "The disposable marker window was not present after reattach."
+        }
+        $proof.reattachObserved = $true
+        Write-ProofEvent -Step "reattach" -State "PASS" -Message "same_tmux_session_and_marker_reattached" -Data @{
+            beforeWindowCount = $beforeWindows.Count
+            afterWindowCount = $afterWindows.Count
+        }
 
-    if ($markerWindowId) {
         [void](Invoke-WslBash -Distribution $distribution -Command "tmux kill-window -t '$markerWindowId'" -TimeoutSeconds 15)
         Write-ProofEvent -Step "cleanup" -State "PASS" -Message "disposable_marker_removed"
         $markerWindowId = $null
