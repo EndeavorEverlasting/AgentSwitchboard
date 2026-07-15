@@ -7,6 +7,7 @@ $ErrorActionPreference = "Stop"
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $requiredFiles = @(
     "tooling/wsl/Install-TmuxGnhfWorkspace.ps1",
+    "tooling/wsl/Invoke-TmuxGnhfRuntimeProof.ps1",
     "tooling/wsl/tmux-gnhf-workstation.example.json",
     "tooling/wsl/wsl-tmux-gnhf-base.example.json",
     "tooling/wsl/scripts/configure-gnhf-workspace.sh",
@@ -43,6 +44,7 @@ foreach ($relativePath in $requiredFiles) {
 
 foreach ($relativePath in @(
     "tooling/wsl/Install-TmuxGnhfWorkspace.ps1",
+    "tooling/wsl/Invoke-TmuxGnhfRuntimeProof.ps1",
     "tooling/wsl/Test-TmuxGnhfWorkspaceContracts.ps1"
 )) {
     $path = Join-Path $repoRoot $relativePath
@@ -102,6 +104,20 @@ Assert-Contract -Condition ($installer -match 'wezterm-gui\.exe') -Message "laun
 Assert-Contract -Condition ($installer -match 'ConfirmImpact = ''High''') -Message "Stop is high-impact and confirmed"
 Assert-Contract -Condition ($installer -notmatch '--unregister') -Message "no WSL unregister"
 Assert-Contract -Condition ($installer -notmatch 'reset --hard') -Message "no destructive Git reset"
+
+$runtimeProof = Get-Content -LiteralPath (Join-Path $repoRoot "tooling/wsl/Invoke-TmuxGnhfRuntimeProof.ps1") -Raw
+Assert-Contract -Condition ($runtimeProof -match 'git.+status.+--short' -or $runtimeProof -match '"status", "--short"') -Message "runtime proof requires a clean repository floor"
+Assert-Contract -Condition ($runtimeProof -match 'Test-TmuxGnhfWorkspaceContracts\.ps1') -Message "runtime proof runs targeted validation first"
+Assert-Contract -Condition ($runtimeProof -match 'Start-TmuxGnhfWorkspace\.ps1') -Message "runtime proof uses repo-owned launcher"
+Assert-Contract -Condition ($runtimeProof -match 'Get-TmuxGnhfWorkspaceStatus\.ps1') -Message "runtime proof uses repo-owned status collector"
+Assert-Contract -Condition ($runtimeProof -match 'Wait-ForCondition') -Message "runtime waits are bounded"
+Assert-Contract -Condition ($runtimeProof -match 'surfaceReadyObserved' -and $runtimeProof -match 'behaviorObserved') -Message "surface and behavior observation remain distinct"
+Assert-Contract -Condition ($runtimeProof -match 'persistenceObserved' -and $runtimeProof -match 'reattachObserved') -Message "detach persistence and reattach are separate gates"
+Assert-Contract -Condition ($runtimeProof -match 'RoutingEvidencePath') -Message "runtime proof can consume concurrent routing evidence"
+Assert-Contract -Condition ($runtimeProof -match 'selectedModel' -and $runtimeProof -match 'tokenAvailability' -and $runtimeProof -match 'switchReason') -Message "model and token routing evidence is normalized without owning policy"
+Assert-Contract -Condition ($runtimeProof -match 'evidenceHash') -Message "external routing evidence is referenced by hash"
+Assert-Contract -Condition ($runtimeProof -notmatch 'api[_-]?key|access[_-]?token|refresh[_-]?token|oauth') -Message "runtime proof does not collect authentication secrets"
+Assert-Contract -Condition ($runtimeProof -match 'live-runtime-observed' -and $runtimeProof -match 'launcher-and-command-ack') -Message "proof levels distinguish ACK from live observation"
 
 $bashContent = Get-Content -LiteralPath (Join-Path $repoRoot "tooling/wsl/scripts/configure-gnhf-workspace.sh") -Raw
 Assert-Contract -Condition ($bashContent -match 'SHASUMS256\.txt') -Message "official Node checksum verification"
