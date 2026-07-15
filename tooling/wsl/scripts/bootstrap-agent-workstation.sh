@@ -29,6 +29,7 @@ echo "$CONFIG_JSON" | jq -e . >/dev/null 2>&1 || {
 
 DIST_NAME=$(echo "$CONFIG_JSON" | jq -r '.distribution.name // "Ubuntu"')
 LINUX_DEV_ROOT=$(echo "$CONFIG_JSON" | jq -r '.linuxDevRoot // "~/dev"')
+SKIP_PACKAGE_INSTALLATION=$(echo "$CONFIG_JSON" | jq -r '.skipPackageInstallation // false')
 TMUX_ENABLED=$(echo "$CONFIG_JSON" | jq -r '.tmux.enabled // false')
 TMUX_CONFIG_DEST=$(echo "$CONFIG_JSON" | jq -r '.tmux.configDestination // "~/.tmux.conf"')
 WEZTERM_ENABLED=$(echo "$CONFIG_JSON" | jq -r '.wezterm.enabled // false')
@@ -51,7 +52,9 @@ backup_file() {
 
 echo "--- Package Installation ---"
 
-if command -v apt &>/dev/null; then
+if [ "$SKIP_PACKAGE_INSTALLATION" = "true" ]; then
+    echo "Package installation: skipped (prepared by the Windows guided orchestrator)"
+elif command -v apt &>/dev/null; then
     echo "Updating apt package lists..."
     sudo apt-get update -qq
 
@@ -152,7 +155,7 @@ for i in $(seq 0 $((REPO_COUNT - 1))); do
     REPO_NAME=$(echo "$CONFIG_JSON" | jq -r ".repositories[$i].name")
     REPO_URL=$(echo "$CONFIG_JSON" | jq -r ".repositories[$i].url")
     REPO_DEST=$(echo "$CONFIG_JSON" | jq -r ".repositories[$i].destination")
-    REPO_BRANCH=$(echo "$CONFIG_JSON" | jq -r ".repositories[$i].branch // "main"")
+    REPO_BRANCH=$(echo "$CONFIG_JSON" | jq -r ".repositories[$i].branch // \"main\"")
     REPO_ENABLED=$(echo "$CONFIG_JSON" | jq -r ".repositories[$i].enabled")
 
     if [ "$REPO_ENABLED" != "true" ]; then
