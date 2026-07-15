@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "agentswitchboard-gnhf-usage/v1",
+  "capturedAt": "2026-07-15T06:30:00Z",
+  "source": "fixture",
+  "profiles": [
+    {
+      "profileId": "opencode-primary",
+      "agent": "opencode",
+      "model": "primary-model",
+      "ready": true,
+      "authenticated": true,
+      "tokensRemaining": 310000,
+      "tokenCapacity": 1000000,
+      "resetAt": "2026-07-16T00:00:00Z",
+      "blockedReason": null,
+      "evidence": "near 30 percent reserve"
+    },
+    {
+      "profileId": "copilot-secondary",
+      "agent": "copilot",
+      "model": "secondary-model",
+      "ready": true,
+      "authenticated": true,
+      "tokensRemaining": 650000,
+      "tokenCapacity": 1000000,
+      "resetAt": "2026-07-16T00:00:00Z",
+      "blockedReason": null,
+      "evidence": "usable headroom"
+    },
+    {
+      "profileId": "goose-efficient",
+      "agent": "goose",
+      "model": "efficient-model",
+      "ready": true,
+      "authenticated": true,
+      "tokensRemaining": 600000,
+      "tokenCapacity": 1000000,
+      "resetAt": "2026-07-16T00:00:00Z",
+      "blockedReason": null,
+      "evidence": "efficient profile"
+    }
+  ]
+}
