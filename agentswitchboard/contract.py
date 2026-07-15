@@ -151,7 +151,79 @@ def _probe(command: Path) -> tuple[bool, str | None]:
         return False, None
 
 
+def _completed_probe(result: subprocess.CompletedProcess[str]) -> tuple[bool, str | None]:
+    lines = (result.stdout or result.stderr or "").strip().splitlines()
+    return result.returncode == 0, lines[0] if lines else None
+
+
+def _run_wsl(distro: str, arguments: list[str], timeout: int = 10) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["wsl.exe", "-d", distro, "--", *arguments],
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        check=False,
+    )
+
+
+def _windows_path_to_wsl(distro: str, path: Path) -> str:
+    converted = _run_wsl(distro, ["wslpath", "-a", str(path.resolve())])
+    if converted.returncode != 0 or not converted.stdout.strip():
+        raise RuntimeError(converted.stderr.strip() or f"could not convert path for WSL distro {distro}")
+    return converted.stdout.strip().splitlines()[0]
+
+
+def _probe_wsl_wrapper(distro: str, wrapper: str, allow_bridge: bool = False) -> tuple[bool, str | None]:
+    bridge = "export AGENT_SWITCHBOARD_ALLOW_WINDOWS_BRIDGE=1; " if allow_bridge else ""
+    command = (
+        'export PATH="$HOME/.local/agent-switchboard/bin:$PATH"; '
+        f'{bridge}exec "$HOME/.local/agent-switchboard/bin/{wrapper}" --agent-switchboard-probe'
+    )
+    return _completed_probe(_run_wsl(distro, ["bash", "-lc", command]))
+
+
+def _run_live_windows_wsl(request: Mapping[str, Any], repo_root: Path) -> dict[str, Any]:
+    distro = str(request["distro"])
+    installed = False
+    if request.get("operation") == "install-missing":
+        installer = repo_root / "tooling" / "wsl" / "scripts" / "install-agent-wrappers.sh"
+        installer_wsl = _windows_path_to_wsl(distro, installer)
+        completed = _run_wsl(
+            distro,
+            ["bash", "-lc", 'exec "$1" --destination "$HOME/.local/agent-switchboard/bin"', "_", installer_wsl],
+            timeout=30,
+        )
+        if completed.returncode != 0:
+            raise RuntimeError(completed.stderr.strip() or "WSL wrapper installation failed")
+        installed = True
+
+    agents: dict[str, dict[str, Any]] = {}
+    for agent in request.get("requested_agents", []):
+        native_ok, _ = _probe_wsl_wrapper(distro, f"{agent}_native")
+        bridge_ok = False
+        if not native_ok and request.get("bridge_permission"):
+            bridge_ok, _ = _probe_wsl_wrapper(distro, f"{agent}_win")
+        backend = "native" if native_ok else "bridge" if bridge_ok else "missing"
+        canonical_ok, version = (False, None)
+        if backend != "missing":
+            canonical_ok, version = _probe_wsl_wrapper(distro, agent, allow_bridge=backend == "bridge")
+        result = _agent_result(agent, "windows-wsl", backend if canonical_ok else "missing")
+        result.update(
+            version=version,
+            smoke_status="command-probe-passed" if canonical_ok else "command-probe-failed",
+            action_required=not canonical_ok,
+            reason_code="command-probe-passed" if canonical_ok else "command-probe-failed",
+        )
+        agents[agent] = result
+    action = any(item["action_required"] for item in agents.values())
+    result = build_result(request, agents, "action-required" if action else "pass", EXIT_ACTION_REQUIRED if action else EXIT_SUCCESS)
+    result["proof"]["installation_observed"] = installed
+    return result
+
+
 def run_live(request: Mapping[str, Any], repo_root: Path) -> dict[str, Any]:
+    if request.get("execution_domain") == "windows-wsl":
+        return _run_live_windows_wsl(request, repo_root)
     destination = Path.home() / ".local" / "agent-switchboard" / "bin"
     if request.get("operation") == "install-missing":
         installer = repo_root / "tooling" / "wsl" / "scripts" / "install-agent-wrappers.sh"

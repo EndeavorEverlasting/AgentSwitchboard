@@ -89,6 +89,24 @@ def test_wrapper_manifest_and_installation_shell_loop():
             assert result.returncode==0 and "native fixture" in result.stdout
 
 
+def test_windows_wsl_live_install_and_bridge_probe_stay_in_selected_distro():
+    request=load(REQUESTS/"v2-bridge.json"); request["operation"]="install-missing"
+    observed=[]; original=contract.subprocess.run
+    def fake_run(command, **kwargs):
+        observed.append(command)
+        joined=" ".join(command)
+        if "wslpath" in command: return subprocess.CompletedProcess(command,0,"/mnt/c/repo/install-agent-wrappers.sh\n","")
+        if "install-agent-wrappers.sh" in joined: return subprocess.CompletedProcess(command,0,"installed\n","")
+        if "_native" in joined: return subprocess.CompletedProcess(command,127,"","native missing")
+        return subprocess.CompletedProcess(command,0,"bridge fixture 1.0\n","")
+    contract.subprocess.run=fake_run
+    try: result=contract.run_live(request,ROOT)
+    finally: contract.subprocess.run=original
+    assert result["overall_status"]=="pass" and result["proof"]["installation_observed"] is True
+    assert all(row["selected_backend"]=="bridge" for row in result["agents"].values())
+    assert observed and all(command[:4]==["wsl.exe","-d","Ubuntu","--"] for command in observed)
+
+
 def test_pr6_review_defects_are_repaired():
     ps=(ROOT/"tooling/wsl/Install-AgentSwitchboardWsl.ps1").read_text(encoding="utf-8-sig")
     bootstrap=(ROOT/"tooling/wsl/scripts/bootstrap-agent-workstation.sh").read_text(encoding="utf-8")
