@@ -241,7 +241,7 @@ function Get-GnhfSegmentTokenCap {
 function Get-GnhfSegmentOutcome {
     param(
         [Parameter(Mandatory)][int]$ExitCode,
-        [Parameter(Mandatory)][string]$LogText,
+        [Parameter(Mandatory)][AllowEmptyString()][string]$LogText,
         [Parameter(Mandatory)][int]$CommitDelta,
         [switch]$TimedOut
     )
