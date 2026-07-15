@@ -152,7 +152,7 @@ for i in $(seq 0 $((REPO_COUNT - 1))); do
     REPO_NAME=$(echo "$CONFIG_JSON" | jq -r ".repositories[$i].name")
     REPO_URL=$(echo "$CONFIG_JSON" | jq -r ".repositories[$i].url")
     REPO_DEST=$(echo "$CONFIG_JSON" | jq -r ".repositories[$i].destination")
-    REPO_BRANCH=$(echo "$CONFIG_JSON" | jq -r ".repositories[$i].branch // "main"")
+    REPO_BRANCH=$(echo "$CONFIG_JSON" | jq -r ".repositories[$i].branch // \"main\"")
     REPO_ENABLED=$(echo "$CONFIG_JSON" | jq -r ".repositories[$i].enabled")
 
     if [ "$REPO_ENABLED" != "true" ]; then

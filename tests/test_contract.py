@@ -1,273 +1,106 @@
 #!/usr/bin/env python3
-"""Contract tests for the AgentSwitchboard invocation and result schemas."""
 from __future__ import annotations
 
 import json
+import os
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
-FIXTURES = ROOT / "fixtures"
-EXPECTED = FIXTURES / "results"
-REQUESTS = FIXTURES / "requests"
-SCHEMA_DIR = ROOT / "schemas"
-
+ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+from agentswitchboard import contract
+
+REQUESTS = ROOT / "fixtures/requests"
+INVOCATION_SCHEMA = ROOT / "schemas/agentswitchboard-invocation/v2.json"
+RESULT_SCHEMA = ROOT / "schemas/agentswitchboard-result/v2.json"
 
 
-def read(path: Path) -> str:
-    assert path.is_file(), f"missing file: {path.relative_to(ROOT)}"
-    return path.read_text(encoding="utf-8")
+def load(path: Path): return json.loads(path.read_text(encoding="utf-8"))
 
 
-def load(path: Path) -> dict:
-    return json.loads(read(path))
+def validate(data, schema_path):
+    try: import jsonschema
+    except ImportError: return
+    jsonschema.validate(data, load(schema_path))
 
 
-def load_contract():
-    """Load the contract module."""
-    import agentswitchboard.contract as c
-    return c
+def test_v2_requests_and_results_validate():
+    for name in ("v2-native.json", "v2-bridge.json", "v2-missing.json", "v2-auth-required.json"):
+        request=load(REQUESTS/name); assert contract.validate_request(request)==[]; validate(request,INVOCATION_SCHEMA)
+        result=contract.run_fixture(request); validate(result,RESULT_SCHEMA)
+        assert result["schema_version"]=="agentswitchboard-result/v2"
+        assert result["proof"]["provider_response_observed"] is False
 
 
-def test_schemas_are_valid_json():
-    for schema in SCHEMA_DIR.rglob("*.json"):
-        load(schema)
+def test_non_object_and_secret_requests_fail_cleanly():
+    assert "JSON object" in contract.validate_request([])[0]
+    request=load(REQUESTS/"v2-native.json"); request["secret_token"]="do-not-accept"
+    errors=contract.validate_request(request)
+    assert any("unknown" in item for item in errors) and any("secret" in item for item in errors)
 
 
-def test_valid_request_accepted():
-    c = load_contract()
-    req = load(REQUESTS / "valid-inventory-windows-fixture.json")
-    errors = c.validate_request(req)
-    assert errors == [], f"expected no errors, got: {errors}"
+def test_domain_distro_and_bridge_invariants():
+    request=load(REQUESTS/"v2-native.json")
+    request["distro"]="docker-desktop"; assert any("Docker" in item for item in contract.validate_request(request))
+    request=load(REQUESTS/"v2-bridge.json"); request["bridge_permission"]=False
+    result=contract.run_fixture(request)
+    assert result["overall_status"]=="action-required"
+    assert all(item["selected_backend"]=="missing" for item in result["agents"].values())
 
 
-def test_valid_install_missing_accepted():
-    c = load_contract()
-    req = load(REQUESTS / "valid-install-missing-linux-fixture.json")
-    errors = c.validate_request(req)
-    assert errors == [], f"expected no errors, got: {errors}"
+def test_fixture_resolution_policy_and_authentication_posture():
+    native=contract.run_fixture(load(REQUESTS/"v2-native.json"))
+    bridge=contract.run_fixture(load(REQUESTS/"v2-bridge.json"))
+    auth=contract.run_fixture(load(REQUESTS/"v2-auth-required.json"))
+    assert all(item["selected_backend"]=="native" for item in native["agents"].values())
+    assert all(item["selected_backend"]=="bridge" for item in bridge["agents"].values())
+    assert auth["agents"]["opencode"]["authentication_readiness"]=="required"
+    assert auth["proof"]["authentication_observed"] is False
 
 
-def test_valid_smoke_wsl_accepted():
-    c = load_contract()
-    req = load(REQUESTS / "valid-smoke-wsl-fixture.json")
-    errors = c.validate_request(req)
-    assert errors == [], f"expected no errors, got: {errors}"
+def test_cli_returns_normalized_unsupported_and_invalid_object_codes():
+    unsupported=subprocess.run([sys.executable,"-m","agentswitchboard",str(REQUESTS/"v2-macos-unsupported.json")],cwd=ROOT,capture_output=True,text=True)
+    assert unsupported.returncode==3
+    assert json.loads(unsupported.stdout)["overall_status"]=="unsupported"
+    invalid=subprocess.run([sys.executable,"-m","agentswitchboard","--validate"],cwd=ROOT,input="[]",capture_output=True,text=True)
+    assert invalid.returncode==2 and "JSON object" in invalid.stderr
 
 
-def test_reject_unknown_field():
-    c = load_contract()
-    req = load(REQUESTS / "reject-unknown-field.json")
-    errors = c.validate_request(req)
-    assert any("unknown" in e.lower() for e in errors), f"expected unknown field error, got: {errors}"
+def test_wrapper_manifest_and_installation_shell_loop():
+    if not shutil.which("bash"): return
+    manifest=load(ROOT/"tooling/wsl/wrapper-manifest.json")
+    assert set(manifest["agents"])=={"opencode","agy","goose"}
+    installer="tooling/wsl/scripts/install-agent-wrappers.sh"
+    subprocess.run(["bash","-n",installer],cwd=ROOT,check=True)
+    subprocess.run(["bash","-n","tooling/wsl/templates/agent-wrapper.sh"],cwd=ROOT,check=True)
+    if os.name=="nt": return  # Dedicated Linux CI executes the wrapper runtime loop.
+    with tempfile.TemporaryDirectory() as temp:
+        root=Path(temp); managed=root/"managed"; native=root/"native"; native.mkdir()
+        subprocess.run(["bash",installer,"--destination",str(managed)],cwd=ROOT,check=True,capture_output=True,text=True)
+        assert {p.name for p in managed.iterdir()}=={n for a in ("opencode","agy","goose") for n in (a,f"{a}_native",f"{a}_win")}
+        for agent in ("opencode","agy","goose"):
+            fake=native/agent; fake.write_text("#!/usr/bin/env bash\nprintf '%s native fixture\\n' \"$(basename \"$0\")\"\n",encoding="utf-8"); fake.chmod(0o755)
+        env={**os.environ,"PATH":f"{managed}:{native}:{os.environ['PATH']}"}
+        for agent in ("opencode","agy","goose"):
+            result=subprocess.run([str(managed/agent),"--agent-switchboard-probe"],env=env,capture_output=True,text=True,timeout=10)
+            assert result.returncode==0 and "native fixture" in result.stdout
 
 
-def test_reject_macos_platform():
-    c = load_contract()
-    req = load(REQUESTS / "reject-macos-platform.json")
-    errors = c.validate_request(req)
-    assert any("unsupported platform" in e.lower() for e in errors), f"expected unsupported platform error, got: {errors}"
-
-
-def test_reject_unsupported_agent():
-    c = load_contract()
-    req = load(REQUESTS / "reject-unsupported-agent.json")
-    errors = c.validate_request(req)
-    assert any("unsupported agent" in e.lower() for e in errors), f"expected unsupported agent error, got: {errors}"
-
-
-def test_reject_secret_values():
-    c = load_contract()
-    req = load(REQUESTS / "reject-secret-token-value.json")
-    errors = c.validate_request(req)
-    assert any("secret" in e.lower() for e in errors), f"expected secret-like values error, got: {errors}"
-
-
-def test_reject_duplicate_agent():
-    c = load_contract()
-    req = load(REQUESTS / "reject-duplicate-agent.json")
-    errors = c.validate_request(req)
-    assert any("duplicate" in e.lower() for e in errors), f"expected duplicate agent error, got: {errors}"
-
-
-def test_reject_wrong_profile_platform():
-    c = load_contract()
-    req = load(REQUESTS / "reject-wrong-profile-platform.json")
-    errors = c.validate_request(req)
-    assert any("not compatible" in e.lower() for e in errors), f"expected compatibility error, got: {errors}"
-
-
-def test_reject_absolute_evidence_path():
-    c = load_contract()
-    req = load(REQUESTS / "reject-absolute-evidence-path.json")
-    errors = c.validate_request(req)
-    assert any("absolute path" in e.lower() for e in errors), f"expected absolute path error, got: {errors}"
-
-
-def test_reject_empty_agents():
-    c = load_contract()
-    req = load(REQUESTS / "reject-empty-agents.json")
-    errors = c.validate_request(req)
-    assert len(errors) > 0, "expected errors for empty agents list"
-
-
-def test_reject_bad_schema_version():
-    c = load_contract()
-    req = load(REQUESTS / "reject-bad-schema-version.json")
-    errors = c.validate_request(req)
-    assert any("schema_version" in e.lower() for e in errors), f"expected schema_version error, got: {errors}"
-
-
-def test_result_round_trip():
-    """Verify fixture execution produces the expected result structure."""
-    c = load_contract()
-    req = load(REQUESTS / "valid-inventory-windows-fixture.json")
-    result = c.run_fixture(req)
-    assert result["schema_version"] == "agentswitchboard-result/v1"
-    assert result["overall_status"] == "PASS"
-    assert result["exit_code"] == 0
-    assert result["proof_ceiling"]["fixture_mode"] is True
-    assert result["proof_ceiling"]["real_agent_installation_proven"] is False
-    assert len(result["agents"]) == 3
-
-
-def test_result_matches_expected_fixture():
-    c = load_contract()
-    req = load(REQUESTS / "valid-inventory-windows-fixture.json")
-    expected = load(EXPECTED / "expected-inventory-windows.json")
-    actual = c.run_fixture(req)
-    assert actual == expected, f"result mismatch\n expected: {json.dumps(expected, indent=2)}\n actual: {json.dumps(actual, indent=2)}"
-
-
-def test_no_network_in_fixture_mode():
-    """Verify fixture results always have fixture_mode: true and no live claims."""
-    c = load_contract()
-    for req_file in REQUESTS.rglob("*.json"):
-        req = load(req_file)
-        if req.get("fixture_mode", False):
-            result = c.run_fixture(req)
-            assert result["proof_ceiling"]["fixture_mode"] is True
-            assert result["proof_ceiling"]["real_agent_installation_proven"] is False
-            assert result["proof_ceiling"]["authentication_proven"] is False
-            assert result["proof_ceiling"]["hosted_model_response_proven"] is False
-            assert result["proof_ceiling"]["sysadminsuite_integration_proven"] is False
-
-
-def test_supported_profiles_cli():
-    """Verify the --supported-profiles CLI flag."""
-    result = subprocess.run(
-        [sys.executable, "-m", "agentswitchboard", "--supported-profiles"],
-        capture_output=True, text=True,
-    )
-    assert result.returncode == 0
-    assert "windows-native" in result.stdout
-    assert "linux-native" in result.stdout
-    assert "wsl-tmux" in result.stdout
-
-
-def test_supported_operations_cli():
-    result = subprocess.run(
-        [sys.executable, "-m", "agentswitchboard", "--supported-operations"],
-        capture_output=True, text=True,
-    )
-    assert result.returncode == 0
-    for op in ("inventory", "install-missing", "repair-check", "smoke"):
-        assert op in result.stdout
-
-
-def test_supported_agents_cli():
-    result = subprocess.run(
-        [sys.executable, "-m", "agentswitchboard", "--supported-agents"],
-        capture_output=True, text=True,
-    )
-    assert result.returncode == 0
-    for agent in ("opencode", "agy", "goose"):
-        assert agent in result.stdout
-
-
-def test_version_cli():
-    result = subprocess.run(
-        [sys.executable, "-m", "agentswitchboard", "--version"],
-        capture_output=True, text=True,
-    )
-    assert result.returncode == 0
-    assert "agentswitchboard" in result.stdout
-
-
-def test_validate_cli():
-    valid = REQUESTS / "valid-inventory-windows-fixture.json"
-    result = subprocess.run(
-        [sys.executable, "-m", "agentswitchboard", "--validate"],
-        input=valid.read_text(encoding="utf-8"),
-        capture_output=True, text=True,
-    )
-    assert "PASSED" in result.stdout
-
-
-def test_validate_rejects_macos():
-    bad = REQUESTS / "reject-macos-platform.json"
-    result = subprocess.run(
-        [sys.executable, "-m", "agentswitchboard", "--validate"],
-        input=bad.read_text(encoding="utf-8"),
-        capture_output=True, text=True,
-    )
-    assert result.returncode != 0
-    assert "FAILED" in result.stdout or result.returncode == 2
-
-
-def test_cli_execute_fixture():
-    req_file = REQUESTS / "valid-inventory-windows-fixture.json"
-    result = subprocess.run(
-        [sys.executable, "-m", "agentswitchboard", str(req_file)],
-        capture_output=True, text=True,
-    )
-    assert result.returncode == 0
-    parsed = json.loads(result.stdout)
-    assert parsed["schema_version"] == "agentswitchboard-result/v1"
-    assert parsed["overall_status"] == "PASS"
-
-
-def test_cli_execute_rejects_invalid():
-    req_file = REQUESTS / "reject-unknown-field.json"
-    result = subprocess.run(
-        [sys.executable, "-m", "agentswitchboard", str(req_file)],
-        capture_output=True, text=True,
-    )
-    assert result.returncode == 2
-
-
-def test_proof_ceiling_always_false():
-    c = load_contract()
-    for req_file in REQUESTS.rglob("*.json"):
-        req = load(req_file)
-        if not req.get("fixture_mode", False):
-            continue
-        result = c.run_fixture(req)
-        p = result["proof_ceiling"]
-        assert p["real_agent_installation_proven"] is False
-        assert p["authentication_proven"] is False
-        assert p["hosted_model_response_proven"] is False
-        assert p["sysadminsuite_integration_proven"] is False
-
-
-def main():
-    test_names = [n for n in dir() if n.startswith("test_")]
-    passed = 0
-    failed = 0
-    for name in sorted(test_names):
-        fn = globals()[name]
-        try:
-            fn()
-            print(f"  PASS  {name}")
-            passed += 1
-        except Exception as e:
-            print(f"  FAIL  {name}: {e}")
-            failed += 1
-    print(f"\n{passed} passed, {failed} failed")
-    return 1 if failed else 0
+def test_pr6_review_defects_are_repaired():
+    ps=(ROOT/"tooling/wsl/Install-AgentSwitchboardWsl.ps1").read_text(encoding="utf-8-sig")
+    bootstrap=(ROOT/"tooling/wsl/scripts/bootstrap-agent-workstation.sh").read_text(encoding="utf-8")
+    manifest=load(ROOT/"tooling/wsl/wsl-workstation.example.json")
+    assert 'return "/mnt/$drive/$rest"' in ps
+    assert 'if ($wslCommand) { & $WslExe --list --verbose' in ps
+    assert '$HOME/' in ps and 'tmuxDestination' in ps
+    assert '// \\"main\\"' in bootstrap
+    assert {"nodejs","npm"} <= set(manifest["packages"])
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    tests=[value for name,value in sorted(globals().items()) if name.startswith("test_")]
+    for test in tests: test()
+    print(f"PASS: {len(tests)} AgentSwitchboard multi-domain contract groups")

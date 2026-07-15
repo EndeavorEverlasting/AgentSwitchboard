@@ -1,0 +1,1 @@
+{"schema_version":"agentswitchboard-invocation/v2","platform":"macos","execution_domain":"unsupported","requested_agents":["opencode"],"operation":"inventory","install_missing_only":true,"native_preference":true,"bridge_permission":false,"posture":"fixture","fixture_scenario":"native"}

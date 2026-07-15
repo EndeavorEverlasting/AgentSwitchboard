@@ -1,0 +1,1 @@
+{"schema_version":"agentswitchboard-invocation/v2","platform":"windows","execution_domain":"windows-wsl","distro":"Ubuntu","requested_agents":["opencode","agy","goose"],"operation":"smoke","install_missing_only":true,"native_preference":true,"bridge_permission":true,"posture":"fixture","fixture_scenario":"bridge"}

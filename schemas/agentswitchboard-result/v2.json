@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/agentswitchboard-result/v2.json",
+  "title": "AgentSwitchboard Multi-Domain Result v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "request", "overall_status", "agents", "exit_code", "proof"],
+  "properties": {
+    "schema_version": {"const": "agentswitchboard-result/v2"},
+    "request": {"type": "object"},
+    "overall_status": {"enum": ["pass", "partial", "action-required", "unsupported", "failure"]},
+    "agents": {
+      "type": "object", "additionalProperties": false,
+      "patternProperties": {"^(opencode|agy|goose)$": {"$ref": "#/$defs/agentResult"}}
+    },
+    "exit_code": {"enum": [0, 1, 2, 3, 4]},
+    "proof": {
+      "type": "object", "additionalProperties": false,
+      "required": ["fixture", "installation_observed", "authentication_observed", "provider_response_observed", "interactive_behavior_observed"],
+      "properties": {
+        "fixture": {"type": "boolean"},
+        "installation_observed": {"const": false},
+        "authentication_observed": {"const": false},
+        "provider_response_observed": {"const": false},
+        "interactive_behavior_observed": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "agentResult": {
+      "type": "object", "additionalProperties": false,
+      "required": ["installation_domain", "selected_backend", "wrapper_type", "command_path_class", "version", "authentication_readiness", "smoke_status", "action_required", "reason_code", "commands"],
+      "properties": {
+        "installation_domain": {"enum": ["windows-native", "windows-wsl", "linux-native"]},
+        "selected_backend": {"enum": ["native", "bridge", "missing", "unknown"]},
+        "wrapper_type": {"enum": ["canonical", "native", "bridge", "missing"]},
+        "command_path_class": {"enum": ["managed-wrapper", "system-path", "user-path", "windows-interop", "missing", "unknown"]},
+        "version": {"type": ["string", "null"]},
+        "authentication_readiness": {"enum": ["unknown", "required", "ready"]},
+        "smoke_status": {"enum": ["not-attempted", "command-probe-passed", "command-probe-failed"]},
+        "action_required": {"type": "boolean"},
+        "reason_code": {"type": "string", "minLength": 1},
+        "commands": {
+          "type": "object", "additionalProperties": false,
+          "required": ["canonical", "native", "bridge"],
+          "properties": {"canonical": {"type": "string"}, "native": {"type": "string"}, "bridge": {"type": "string"}}
+        }
+      }
+    }
+  }
+}

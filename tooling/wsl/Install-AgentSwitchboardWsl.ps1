@@ -81,10 +81,10 @@ function Backup-ManagedFile {
         [Parameter(Mandatory)][string]$BackupSuffix
     )
 
-    $checkProbe = Invoke-WslDistroCommand -Distribution $Distribution -ShellCommand "test -f '$LinuxPath' && echo EXISTS || echo MISSING"
+    $checkProbe = Invoke-WslDistroCommand -Distribution $Distribution -ShellCommand "test -f `"$LinuxPath`" && echo EXISTS || echo MISSING"
     if ($checkProbe.Output -match "EXISTS") {
         $backupPath = "${LinuxPath}${BackupSuffix}"
-        $copyResult = Invoke-WslDistroCommand -Distribution $Distribution -ShellCommand "cp '$LinuxPath' '$backupPath' 2>/dev/null && echo BACKED_UP || echo BACKUP_FAILED"
+        $copyResult = Invoke-WslDistroCommand -Distribution $Distribution -ShellCommand "cp `"$LinuxPath`" `"$backupPath`" 2>/dev/null && echo BACKED_UP || echo BACKUP_FAILED"
         if ($copyResult.Output -match "BACKED_UP") {
             Write-Host "  Backed up: $LinuxPath -> $backupPath" -ForegroundColor Yellow
             return $true
@@ -103,7 +103,7 @@ function Convert-WindowsPathToWsl {
     $resolved = (Resolve-Path -LiteralPath $WindowsPath).Path
     $drive = $resolved.Substring(0, 1).ToLower()
     $rest = $resolved.Substring(3) -replace "\\", "/"
-    return "/mnt/$drive$rest"
+    return "/mnt/$drive/$rest"
 }
 
 $manifest = Get-Content -LiteralPath $ManifestPath -Raw | ConvertFrom-Json
@@ -187,7 +187,7 @@ else {
 
 Write-Section "Distribution Check"
 
-$listOutput = & $WslExe --list --verbose 2>&1
+$listOutput = if ($wslCommand) { & $WslExe --list --verbose 2>&1 } else { @() }
 $distributionNames = @($listOutput | ForEach-Object {
     $line = [string]$_
     if ($line -match "^\s*\*?\s*(\S+)\s+") { $matches[1] }
@@ -207,7 +207,7 @@ if (-not $distExists) {
         })
         $rebootRequired = $true
     }
-    else {
+    elseif ($wslCommand) {
         Write-Host "Distribution '$targetDist' not found. Installing..." -ForegroundColor Yellow
         try {
             $installResult = Invoke-SafeCommand -FilePath $WslExe -ArgumentList @("--install", "-d", $targetDist) -TimeoutSeconds 300
@@ -228,6 +228,13 @@ if (-not $distExists) {
             })
             throw "Failed to install distribution: $($_.Exception.Message)"
         }
+    } else {
+        $commandResults.Add([pscustomobject]@{
+            step = "install-distribution"
+            status = "deferred-until-reboot"
+            evidence = "wsl.exe is not available until the WSL feature reboot checkpoint completes."
+            rebootRequired = $true
+        })
     }
 }
 else {
@@ -391,16 +398,17 @@ Write-Section "Configuration Templates"
 if ($manifest.tmux -and $manifest.tmux.enabled -and -not $planMode) {
     $tmuxTemplate = Join-Path $PSScriptRoot "templates" | Join-Path -ChildPath "tmux.conf"
     if (Test-Path -LiteralPath $tmuxTemplate -PathType Leaf) {
+        $tmuxDestination = if ($manifest.tmux.configDestination.StartsWith('~/')) { '$HOME/' + $manifest.tmux.configDestination.Substring(2) } else { $manifest.tmux.configDestination }
         $backupPolicy = $manifest.dotfilePolicy
         if ($backupPolicy -and $backupPolicy.backupExisting) {
-            [void](Backup-ManagedFile -Distribution $targetDist -LinuxPath $manifest.tmux.configDestination -BackupSuffix $backupPolicy.backupSuffix)
+            [void](Backup-ManagedFile -Distribution $targetDist -LinuxPath $tmuxDestination -BackupSuffix $backupPolicy.backupSuffix)
         }
 
         $tmuxTempDest = "/tmp/agent-switchboard-tmux.conf"
         $tempTmux = Join-Path $env:TEMP "agent-switchboard-tmux-$($timestamp).conf"
         Copy-Item -LiteralPath $tmuxTemplate -Destination $tempTmux -Force
         $wslTempTmuxPath = Convert-WindowsPathToWsl -WindowsPath $tempTmux
-        & $WslExe -d $targetDist -e bash -c "cp '$wslTempTmuxPath' '$tmuxTempDest' && cp '$tmuxTempDest' '$($manifest.tmux.configDestination)' && rm -f '$tmuxTempDest'"
+        & $WslExe -d $targetDist -e bash -c "cp '$wslTempTmuxPath' '$tmuxTempDest' && cp '$tmuxTempDest' `"$tmuxDestination`" && rm -f '$tmuxTempDest'"
         Remove-Item -LiteralPath $tempTmux -Force -ErrorAction SilentlyContinue
         Write-Host "tmux configuration installed: $($manifest.tmux.configDestination)" -ForegroundColor Green
     }

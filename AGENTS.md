@@ -6,8 +6,8 @@ This repository publishes the AgentSwitchboard invocation and result contract us
 
 ## Contract structure
 
-- `schemas/agentswitchboard-invocation/v1.json` — request schema
-- `schemas/agentswitchboard-result/v1.json` — result schema
+- `schemas/agentswitchboard-invocation/v2.json` — execution-domain request schema
+- `schemas/agentswitchboard-result/v2.json` — native/bridge result schema
 - `agentswitchboard/` — Python module with CLI entrypoint, request validation, fixture execution, and result builder
 - `fixtures/` — sampled request and expected result files
 - `tests/` — contract tests
@@ -18,10 +18,11 @@ This repository publishes the AgentSwitchboard invocation and result contract us
 - agy
 - goose
 
-## Supported platforms
+## Supported execution domains
 
-- windows
-- linux
+- windows-native
+- windows-wsl
+- linux-native
 
 macOS is explicitly unsupported.
 
@@ -51,7 +52,12 @@ macOS is explicitly unsupported.
 
 ## Proof ceiling
 
-Fixture mode returns synthetic data with `proof_ceiling` fields all set to `false`. Real agent installation, authentication, hosted-model responses, and SysAdminSuite integration are not proven by this contract.
+Fixture mode returns synthetic data with observation fields set to `false`. Real agent installation, authentication, hosted-model responses, and SysAdminSuite integration are not proven by this contract.
+
+Canonical wrappers prefer a healthy native command. Explicit `<agent>_native`
+and `<agent>_win` wrappers remain available for diagnosis; bridge use requires
+the invoking contract to allow it. Alias-only discovery is never the automation
+contract.
 
 ## Entrypoints
 

@@ -1,2 +1,7 @@
 # WSL setup runtime artifacts
 %LOCALAPPDATA%\AgentSwitchboard\wsl-setup\
+
+# Python bytecode and local test caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
