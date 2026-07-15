@@ -17,7 +17,9 @@
   },
   "policy": {
     "reservePercent": 30,
-    "maxUsableSharePerSegmentPercent": 25
+    "maxUsableSharePerSegmentPercent": 25,
+    "maxUsageSnapshotAgeMinutes": 30,
+    "maxUsageSnapshotFutureSkewMinutes": 5
   },
   "profiles": [
     {
