@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 WSL = ROOT / "tooling" / "wsl"
+SUPPORTED_GNHF_VERSION = "0.1.42"
 
 
 def require(condition: bool, message: str) -> None:
@@ -24,16 +25,14 @@ def load_json(path: Path) -> dict:
 
 def validate_manifest(data: dict, *, valid: bool) -> None:
     gnhf = data.get("gnhf", {})
-    supported_version = gnhf.get("supportedVersion")
-    expected_package = f"gnhf@{supported_version}" if supported_version else None
     conditions = [
         data.get("schemaVersion") == 1,
         isinstance(data.get("distribution"), str) and bool(data["distribution"]),
         data.get("workspace", {}).get("sessionName") == "dev",
         data.get("node", {}).get("minimumMajor", 0) >= 20,
         gnhf.get("upstreamRepository") == "https://github.com/kunchenguid/gnhf.git",
-        isinstance(supported_version, str) and bool(supported_version),
-        gnhf.get("npmPackage") == expected_package,
+        gnhf.get("supportedVersion") == SUPPORTED_GNHF_VERSION,
+        gnhf.get("npmPackage") == f"gnhf@{SUPPORTED_GNHF_VERSION}",
         gnhf.get("defaultAgent") == "opencode",
         gnhf.get("safeWrapper", {}).get("worktree") is True,
         gnhf.get("safeWrapper", {}).get("push") is False,
@@ -45,15 +44,19 @@ def validate_manifest(data: dict, *, valid: bool) -> None:
 
 def main() -> int:
     required = [
+        ROOT / "Setup-TmuxGnhfWorkspace.cmd",
+        WSL / "Start-TmuxGnhfWorkspaceSetup.ps1",
         WSL / "Install-TmuxGnhfWorkspace.ps1",
         WSL / "Invoke-TmuxGnhfRuntimeProof.ps1",
         WSL / "tmux-gnhf-workstation.example.json",
         WSL / "wsl-tmux-gnhf-base.example.json",
+        WSL / "scripts" / "bootstrap-agent-workstation.sh",
         WSL / "scripts" / "configure-gnhf-workspace.sh",
         WSL / "templates" / "wezterm-tmux.lua",
         WSL / "fixtures" / "tmux-gnhf-manifest.valid.json",
         WSL / "fixtures" / "tmux-gnhf-manifest.invalid.json",
         ROOT / "docs" / "workstation" / "tmux-gnhf-other-computer.md",
+        ROOT / "docs" / "workstation" / "tmux-gnhf-technician-quickstart.md",
     ]
     for path in required:
         require(path.is_file(), f"missing required file: {path.relative_to(ROOT)}")
@@ -76,15 +79,16 @@ def main() -> int:
     require("curl |" not in bash_script and "curl -fsSL |" not in bash_script, "pipe-to-shell installation is forbidden")
     require("login" not in bash_script.lower() and "oauth" not in bash_script.lower(), "bootstrap must not authenticate")
 
-    # Windows exposes a WSL-forwarding bash.exe that is not the Git Bash used by
-    # the workflow shell. The Windows workflow performs its own explicit Bash
-    # syntax step, so avoid selecting the wrong execution domain here.
+    user_bootstrap = (WSL / "scripts" / "bootstrap-agent-workstation.sh").read_text(encoding="utf-8")
+    require("skipPackageInstallation" in user_bootstrap, "guided root package phase must be able to suppress duplicate sudo work")
+    require("prepared by the Windows guided orchestrator" in user_bootstrap, "skip posture must be explicit in evidence")
+
     if sys.platform != "win32":
-        bash_script_path = (WSL / "scripts" / "configure-gnhf-workspace.sh").as_posix()
-        subprocess.run(
-            ["bash", "-n", bash_script_path],
-            check=True,
-        )
+        for script in (
+            WSL / "scripts" / "bootstrap-agent-workstation.sh",
+            WSL / "scripts" / "configure-gnhf-workspace.sh",
+        ):
+            subprocess.run(["bash", "-n", script.as_posix()], check=True)
 
     ps_script = (WSL / "Install-TmuxGnhfWorkspace.ps1").read_text(encoding="utf-8")
     require("[switch]$Apply" in ps_script, "apply must be explicit")
@@ -95,6 +99,26 @@ def main() -> int:
     require("Get-CimInstance Win32_Process" in ps_script, "PID ownership must verify the command line")
     require("ConfirmImpact = 'High'" in ps_script, "Stop must be explicitly destructive")
     require("--unregister" not in ps_script and "reset --hard" not in ps_script, "destructive reset is forbidden")
+
+    guided = (WSL / "Start-TmuxGnhfWorkspaceSetup.ps1").read_text(encoding="utf-8")
+    for token in (
+        'ValidateSet("Guided", "Plan", "Apply")',
+        'Read-Host "Confirmation"',
+        'Start-Process -FilePath "dism.exe" -Verb RunAs',
+        '-u root',
+        'skipPackageInstallation',
+        'setup-runs',
+        'operator-summary.json',
+        'Get-TmuxGnhfWorkspaceStatus.ps1',
+    ):
+        require(token in guided, f"guided setup is missing contract token: {token}")
+    require("--unregister" not in guided and "--push" not in guided and "git.exe push" not in guided.lower(), "guided setup must not reset WSL or execute Git push")
+    require("token value" not in guided.lower() and "api_key" not in guided.lower(), "guided setup must not collect credentials")
+
+    cmd = (ROOT / "Setup-TmuxGnhfWorkspace.cmd").read_text(encoding="utf-8")
+    require("Start-TmuxGnhfWorkspaceSetup.ps1" in cmd, "root CMD must delegate to the guided orchestrator")
+    require("pwsh.exe -NoLogo -NoProfile" in cmd, "root CMD must use PowerShell 7 without profile side effects")
+    require("pause >nul" in cmd, "root CMD must keep failures visible")
 
     runtime = (WSL / "Invoke-TmuxGnhfRuntimeProof.ps1").read_text(encoding="utf-8")
     require('"status", "--short"' in runtime, "runtime collector must reject a dirty repository floor")
@@ -128,6 +152,10 @@ def main() -> int:
         "Routing evidence",
     ):
         require(label in guide, f"guide is missing execution-context or integration label: {label}")
+
+    quickstart = (ROOT / "docs" / "workstation" / "tmux-gnhf-technician-quickstart.md").read_text(encoding="utf-8")
+    for token in ("Setup-TmuxGnhfWorkspace.cmd", "type INSTALL", "same CMD", "operator-summary.json", "Technician completion checklist"):
+        require(token in quickstart, f"technician quick start is missing: {token}")
 
     print("PASS: tmux + GNHF workstation contracts")
     return 0
