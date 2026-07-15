@@ -4,7 +4,7 @@
   "status": "plan-only",
   "manifestPath": "tooling/wsl/wsl-workstation.example.json",
   "distribution": "Ubuntu",
-  "rebootRequired": false,
+  "rebootRequired": true,
   "planMode": true,
   "commandResults": [
     {
