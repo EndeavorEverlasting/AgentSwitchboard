@@ -1,0 +1,100 @@
+name: GNHF bimodal router contracts
+
+on:
+  pull_request:
+    paths:
+      - "tooling/gnhf/**"
+      - ".github/workflows/gnhf-bimodal-router-contracts.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - name: Parse bimodal JSON contracts
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("tooling/gnhf")
+          paths = [
+              root / "gnhf-bimodal.example.json",
+              root / "schemas/gnhf-usage-snapshot.schema.json",
+              root / "schemas/gnhf-routing-decision.schema.json",
+              root / "schemas/gnhf-bimodal-run.schema.json",
+              root / "fixtures/gnhf-usage-completion.json",
+              root / "fixtures/gnhf-usage-efficiency.json",
+          ]
+          for path in paths:
+              json.loads(path.read_text(encoding="utf-8"))
+          manifest = json.loads(paths[0].read_text(encoding="utf-8"))
+          assert manifest["mode"] == "maximize-sprint-completion"
+          assert manifest["policy"]["reservePercent"] > 0
+          assert manifest["session"]["maxSegments"] > 0
+          assert manifest["session"]["segmentWallMinutes"] > 0
+          print("PASS: bimodal JSON contracts")
+          PY
+
+      - name: Enforce no committed runtime evidence
+        shell: bash
+        run: |
+          test ! -d tooling/gnhf/bimodal-runs
+          ! git ls-files | grep -E '(^|/)bimodal-run\.json$|(^|/)events\.jsonl$|routing-decision-[0-9]+\.json$'
+
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - name: Parse PowerShell files and module
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($path in @(
+            '.\tooling\gnhf\GnhfBimodal.Policy.ps1',
+            '.\tooling\gnhf\GnhfBimodal.Policy.psm1',
+            '.\tooling\gnhf\Invoke-GnhfBimodalScheduler.ps1',
+            '.\tooling\gnhf\Install-GnhfBimodalScheduler.ps1',
+            '.\tooling\gnhf\Start-GnhfSprint.ps1',
+            '.\tooling\gnhf\Test-GnhfBimodalSchedulerContracts.ps1',
+            '.\tooling\gnhf\Test-GnhfBimodalPlanHarness.ps1'
+          )) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $path),
+              [ref]$tokens,
+              [ref]$errors
+            )
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object { Write-Error "${path}: $($_.Message)" }
+              exit 1
+            }
+          }
+
+      - name: Run bimodal policy contracts
+        shell: pwsh
+        run: .\tooling\gnhf\Test-GnhfBimodalSchedulerContracts.ps1
+
+      - name: Run disposable plan harness
+        shell: pwsh
+        run: .\tooling\gnhf\Test-GnhfBimodalPlanHarness.ps1
+
+      - name: Run installer plan
+        shell: pwsh
+        run: .\tooling\gnhf\Install-GnhfBimodalScheduler.ps1
+
+      - name: Run existing fleet regression contracts
+        shell: pwsh
+        run: .\tooling\gnhf\Test-GnhfFleetContracts.ps1
