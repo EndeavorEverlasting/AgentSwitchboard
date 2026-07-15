@@ -85,11 +85,35 @@ jobs:
 
       - name: Run bimodal policy contracts
         shell: pwsh
-        run: .\tooling\gnhf\Test-GnhfBimodalSchedulerContracts.ps1
+        run: |
+          .\tooling\gnhf\Test-GnhfBimodalSchedulerContracts.ps1 *> bimodal-policy-contracts.log
+          $status = $LASTEXITCODE
+          Get-Content -LiteralPath bimodal-policy-contracts.log
+          exit $status
+
+      - name: Upload policy contract log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gnhf-bimodal-policy-contracts
+          path: bimodal-policy-contracts.log
+          if-no-files-found: error
 
       - name: Run disposable plan harness
         shell: pwsh
-        run: .\tooling\gnhf\Test-GnhfBimodalPlanHarness.ps1
+        run: |
+          .\tooling\gnhf\Test-GnhfBimodalPlanHarness.ps1 *> bimodal-plan-harness.log
+          $status = $LASTEXITCODE
+          Get-Content -LiteralPath bimodal-plan-harness.log
+          exit $status
+
+      - name: Upload plan harness log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gnhf-bimodal-plan-harness
+          path: bimodal-plan-harness.log
+          if-no-files-found: warn
 
       - name: Run installer plan
         shell: pwsh
