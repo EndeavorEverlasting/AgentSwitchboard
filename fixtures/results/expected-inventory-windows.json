@@ -1,0 +1,46 @@
+{
+  "schema_version": "agentswitchboard-result/v1",
+  "invocation_request": {
+    "schema_version": "agentswitchboard-invocation/v1",
+    "execution_profile_id": "windows-native",
+    "platform": "windows",
+    "requested_agents": ["opencode", "agy", "goose"],
+    "operation": "inventory",
+    "fixture_mode": true
+  },
+  "overall_status": "PASS",
+  "agents": {
+    "opencode": {
+      "installation_state": "present",
+      "detected_version": "0.1.0",
+      "authentication_readiness": "not_applicable",
+      "smoke_status": "passed",
+      "action_taken": "fixture: inventory completed for opencode",
+      "reason_code": "fixture_mode"
+    },
+    "agy": {
+      "installation_state": "present",
+      "detected_version": "1.0.0",
+      "authentication_readiness": "not_applicable",
+      "smoke_status": "passed",
+      "action_taken": "fixture: inventory completed for agy",
+      "reason_code": "fixture_mode"
+    },
+    "goose": {
+      "installation_state": "present",
+      "detected_version": "0.5.0",
+      "authentication_readiness": "not_applicable",
+      "smoke_status": "passed",
+      "action_taken": "fixture: inventory completed for goose",
+      "reason_code": "fixture_mode"
+    }
+  },
+  "exit_code": 0,
+  "proof_ceiling": {
+    "fixture_mode": true,
+    "real_agent_installation_proven": false,
+    "authentication_proven": false,
+    "hosted_model_response_proven": false,
+    "sysadminsuite_integration_proven": false
+  }
+}

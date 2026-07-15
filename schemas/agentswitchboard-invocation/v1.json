@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/agentswitchboard-invocation/v1.json",
+  "title": "AgentSwitchboard Invocation Request v1",
+  "description": "Versioned request contract for AgentSwitchboard workstation-agent operations. SysAdminSuite sends this shape; AgentSwitchboard executes the requested operation and returns a normalized result.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "execution_profile_id",
+    "platform",
+    "requested_agents",
+    "operation",
+    "fixture_mode"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "agentswitchboard-invocation/v1"
+    },
+    "execution_profile_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "description": "Execution profile from the workstation contract: e.g. 'windows-native', 'linux-native', 'wsl-tmux'"
+    },
+    "platform": {
+      "enum": [
+        "windows",
+        "linux"
+      ],
+      "description": "Target platform. macOS is explicitly unsupported."
+    },
+    "requested_agents": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/agentId"
+      },
+      "description": "Agent IDs to operate on. Must be known supported agents."
+    },
+    "operation": {
+      "enum": [
+        "inventory",
+        "install-missing",
+        "repair-check",
+        "smoke"
+      ],
+      "description": "inventory: detect and report state only. install-missing: detect and install only missing agents. repair-check: assess whether repair is needed. smoke: run per-agent smoke tests."
+    },
+    "fixture_mode": {
+      "type": "boolean",
+      "description": "When true, never contact network, host model providers, or real agent installers. Return fixture data."
+    },
+    "evidence_output_dir": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "description": "Optional relative or portable path for sanitized evidence output. Must not be an absolute machine-local path."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "platform": { "const": "windows" }
+        },
+        "required": ["platform"]
+      },
+      "then": {
+        "properties": {
+          "execution_profile_id": {
+            "enum": ["windows-native", "wsl-tmux"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "platform": { "const": "linux" }
+        },
+        "required": ["platform"]
+      },
+      "then": {
+        "properties": {
+          "execution_profile_id": {
+            "enum": ["linux-native"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "fixture_mode": { "const": false }
+        },
+        "required": ["fixture_mode"]
+      },
+      "then": {
+        "properties": {
+          "evidence_output_dir": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "agentId": {
+      "type": "string",
+      "enum": [
+        "opencode",
+        "agy",
+        "goose"
+      ],
+      "description": "Known supported agent identifiers."
+    }
+  }
+}
