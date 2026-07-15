@@ -31,6 +31,21 @@ This mode preserves usage for later interactive work.
 
 This mode cannot manufacture quota or infer exact provider balances. Its guarantee is only as current and accurate as the supplied usage snapshot.
 
+## Default completion hierarchy
+
+The example manifest codifies this completion-first order:
+
+1. **DeepSeek** through the OpenCode adapter.
+2. **OpenCode** using its separately configured fallback model.
+3. **Anti-Gravity / AGY** when its readiness state contains a verified ACP adapter.
+4. Other eligible profiles, currently Copilot followed by Goose.
+
+The hierarchy is expressed through `completionPriority`; smaller numbers run first. It applies only to `maximize-sprint-completion`. The efficiency mode continues to use reserve eligibility and `efficiencyPriority` rather than blindly following this order.
+
+The example uses placeholder model identifiers. Replace them with model IDs supported by the installed agent configuration. DeepSeek is a model/provider preference, not a new executable: the primary profile launches the existing OpenCode adapter with DeepSeek routing context.
+
+AGY is disabled in the example by default. Its `agentSpec` is blank so, after the operator explicitly enables the profile, `Start-GnhfSprint.ps1` uses the exact ACP adapter already verified and stored by AgentSwitchboard readiness setup. The scheduler does not guess Anti-Gravity server arguments.
+
 ## Ownership boundary
 
 The scheduler owns:
@@ -61,13 +76,13 @@ The input contract is:
 schemas/gnhf-usage-snapshot.schema.json
 ```
 
-A minimal profile record looks like this **JSON FILE CONTENT**:
+A minimal DeepSeek-first profile record looks like this **JSON FILE CONTENT**:
 
 ```json
 {
-  "profileId": "opencode-primary",
+  "profileId": "deepseek-primary",
   "agent": "opencode",
-  "model": "configured-primary-model",
+  "model": "deepseek/configured-primary-model",
   "ready": true,
   "authenticated": true,
   "tokensRemaining": 900000,
@@ -88,7 +103,7 @@ A profile combines:
 
 - an AgentSwitchboard profile ID;
 - a GNHF agent name;
-- an exact GNHF agent specification;
+- an exact GNHF agent specification, or a blank override that reuses the verified readiness-state adapter;
 - a model identifier for evidence and wrapper context;
 - completion and efficiency priorities;
 - reserve and segment limits.
@@ -126,6 +141,8 @@ pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass `
 ```
 
 An existing customized `gnhf-bimodal.json` is preserved. `-ResetManifest` is required to replace it and requires all three local paths.
+
+Before enabling live execution, replace the placeholder model IDs and leave `agy-tertiary` disabled until AgentSwitchboard reports AGY ready with a verified ACP command.
 
 ## Plan a run
 
@@ -205,7 +222,8 @@ It switches profiles after evidence of:
 - authentication blockage;
 - permanent provider/model failure;
 - bounded timeout;
-- profile unavailability.
+- profile unavailability;
+- a generic failed segment when another eligible profile exists.
 
 It stops the whole scheduler after:
 
@@ -217,7 +235,7 @@ It stops the whole scheduler after:
 - consecutive no-progress segments;
 - an internal scheduler failure.
 
-Printing the configured stop text is not completion proof. The classifier requires language indicating the condition was actually reached or satisfied.
+Printing the configured stop text is not completion proof. The classifier requires language indicating the condition was actually reached or satisfied and rejects negated evidence such as `not satisfied`.
 
 ## Evidence
 
