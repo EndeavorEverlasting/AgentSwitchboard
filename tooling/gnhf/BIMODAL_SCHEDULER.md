@@ -22,7 +22,7 @@ This mode intentionally prioritizes finishing the sprint over preserving daytime
 
 This mode preserves usage for later interactive work.
 
-- Require a known usage snapshot. Unknown token availability is not treated as safe.
+- Require a known and fresh usage snapshot. Unknown or stale token availability is not treated as safe.
 - Protect the larger of each profile's fixed reserve and configured reserve percentage.
 - Exclude a profile when its usable amount above reserve is smaller than its minimum segment allowance.
 - Rotate among eligible profiles instead of draining one profile continuously.
@@ -44,7 +44,7 @@ The hierarchy is expressed through `completionPriority`; smaller numbers run fir
 
 The example uses placeholder model identifiers. Replace them with model IDs supported by the installed agent configuration. DeepSeek is a model/provider preference, not a new executable: the primary profile launches the existing OpenCode adapter with DeepSeek routing context.
 
-AGY is disabled in the example by default. Its `agentSpec` is blank so, after the operator explicitly enables the profile, `Start-GnhfSprint.ps1` uses the exact ACP adapter already verified and stored by AgentSwitchboard readiness setup. The scheduler does not guess Anti-Gravity server arguments.
+AGY is disabled in the example by default. Its `agentSpec` is blank so, after the operator explicitly enables the profile, `Start-GnhfSprint.ps1` uses the exact ACP adapter already verified and stored by AgentSwitchboard readiness setup. The scheduler does not guess Anti-Gravity server arguments. If AGY is enabled before readiness succeeds, the launcher emits explicit not-ready evidence; the outcome classifier treats that as a permanent profile failure so the scheduler can block that profile and continue to the next eligible fallback.
 
 ## Ownership boundary
 
@@ -56,7 +56,9 @@ The scheduler owns:
 - log-informed handoff between sequential segments;
 - routing-decision, segment, event, and run artifacts;
 - stop and switch classification;
-- fixed and percentage reserve enforcement.
+- fixed and percentage reserve enforcement;
+- rejecting stale or implausibly future usage snapshots;
+- preserving the distinction between a requested model and acknowledged activation evidence.
 
 A provider-specific usage collector or concurrent token-management sprint owns:
 
@@ -64,9 +66,10 @@ A provider-specific usage collector or concurrent token-management sprint owns:
 - querying or estimating provider/model availability;
 - interpreting provider reset windows;
 - producing the usage snapshot;
-- configuring the exact model inside an agent wrapper when the CLI lacks a universal GNHF model flag.
+- configuring the exact model inside an agent wrapper when the CLI lacks a universal GNHF model flag;
+- writing model acknowledgement evidence only after the wrapper or provider actually acknowledges the requested model.
 
-The scheduler consumes that evidence and never writes back to it.
+The scheduler consumes that evidence and never writes credentials or provider account state back to it.
 
 ## Usage snapshot
 
@@ -97,6 +100,19 @@ Do not put provider keys, bearer tokens, cookies, refresh tokens, or full accoun
 
 The scheduler hashes the snapshot used for each routing decision. It locally subtracts token totals that GNHF logs expose, but it reloads the external snapshot before every decision so a concurrent collector may refresh it atomically.
 
+The example policy includes:
+
+```json
+{
+  "maxUsageSnapshotAgeMinutes": 30,
+  "maxUsageSnapshotFutureSkewMinutes": 5
+}
+```
+
+A snapshot older than `maxUsageSnapshotAgeMinutes` is rejected with `usage-snapshot-stale`. A timestamp farther into the future than the allowed skew is rejected with `usage-snapshot-from-future`. In either case, every profile is made ineligible before routing. This prevents an old high balance from defeating reserve preservation.
+
+Fixtures use historical timestamps by design. Contract and plan harnesses replace `capturedAt` with a current test timestamp before testing normal routing, then separately prove stale evidence is blocked.
+
 ## Model profiles
 
 A profile combines:
@@ -114,9 +130,28 @@ A profile combines:
 AGENTSWITCHBOARD_MODEL_PROFILE
 AGENTSWITCHBOARD_MODEL
 AGENTSWITCHBOARD_ROUTING_DECISION
+AGENTSWITCHBOARD_ROUTING_DECISION_HASH
+AGENTSWITCHBOARD_MODEL_ACK_PATH
 ```
 
-A concurrent agent-wrapper sprint may consume those values to select the actual model. The scheduler records a model name but does not falsely claim the underlying CLI changed models unless that wrapper or agent configuration implements and proves it.
+The first three identify the requested profile, requested model, and routing artifact. The hash binds acknowledgement evidence to the exact routing decision. `AGENTSWITCHBOARD_MODEL_ACK_PATH` is a unique local path where a compatible wrapper may atomically write:
+
+```text
+schemas/gnhf-model-activation.schema.json
+```
+
+A valid acknowledgement must match the expected profile, agent, requested model, and routing-decision hash. The launcher summary records one of these states:
+
+- `not-requested` — no model was requested;
+- `requested-only` — a model was requested, but no valid acknowledgement was written;
+- `acknowledged` — the wrapper or CLI explicitly acknowledged the exact requested model;
+- `observed-response` — provider response evidence identified the exact requested model;
+- `rejected` — the wrapper explicitly rejected the requested model;
+- `invalid-acknowledgement` — an acknowledgement file existed but did not match the request contract.
+
+A routing decision or environment variable alone remains `requested-only`. The launcher never upgrades it to `acknowledged` merely because OpenCode was selected.
+
+The acknowledgement file must contain bounded evidence text, not secrets, raw headers, bearer tokens, cookies, or full provider responses.
 
 ## Install or repair
 
@@ -167,7 +202,7 @@ pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass `
   -PlanOnly
 ```
 
-Plan mode validates the repository and evidence, selects a profile, calculates its segment budget, and writes a routing-decision artifact. It does not create a target-repository worktree or launch GNHF.
+Plan mode validates the repository and evidence, selects a profile, calculates its segment budget, and writes a routing-decision artifact. It does not create a target-repository worktree or launch GNHF. A stale usage snapshot produces a no-selection routing decision rather than silently using old quota evidence.
 
 ## Run
 
@@ -221,6 +256,7 @@ It switches profiles after evidence of:
 - token or quota exhaustion;
 - authentication blockage;
 - permanent provider/model failure;
+- a fleet readiness failure such as AGY not ready;
 - bounded timeout;
 - profile unavailability;
 - a generic failed segment when another eligible profile exists.
@@ -230,6 +266,7 @@ It stops the whole scheduler after:
 - an observed satisfied stop condition;
 - no eligible profiles;
 - all profiles reaching efficiency reserves;
+- stale or future-dated usage evidence;
 - the maximum wall time;
 - the maximum segment count;
 - consecutive no-progress segments;
@@ -251,9 +288,9 @@ Each run writes under:
   segments\segment-*.json
 ```
 
-The routing decision records the usage snapshot SHA-256 hash, candidate eligibility, selected profile, model, reason, and token budget.
+The routing decision records the usage snapshot SHA-256 hash, candidate eligibility, selected profile, requested model, reason, and token budget.
 
-GNHF launcher summaries record the routing-decision hash and redact custom ACP command details from the summary.
+Each launcher run writes under the installed `logs` directory. Its `launcher-summary.json` records the routing-decision hash and a `modelActivation` object. Compatible wrappers write `model-activation.json` at the path supplied by `AGENTSWITCHBOARD_MODEL_ACK_PATH`. Custom ACP command details remain redacted from summaries.
 
 ## Safety and proof ceiling
 
@@ -262,6 +299,9 @@ GNHF launcher summaries record the routing-decision hash and redact custom ACP c
 - No automatic push, merge, deployment, or default-branch write.
 - One isolated scheduler branch and worktree.
 - Every wait, segment, token allowance, and overall run is bounded.
-- A profile/model selection record proves the router's decision, not that a provider honored the requested model.
+- A profile/model selection record proves only the router's request.
+- `acknowledged` proves a matching wrapper or CLI acknowledgement, not necessarily a completed provider response.
+- `observed-response` requires the wrapper to identify the requested model from provider response evidence.
+- Invalid or mismatched acknowledgements are retained as `invalid-acknowledgement`, not promoted.
 - Log classification proves only the matched evidence. It does not prove code correctness.
-- Live model switching, real quota preservation, and completed overnight sprint behavior require controlled runtime proof with actual provider accounts.
+- Live cross-model switching, real quota preservation, and completed overnight sprint behavior still require controlled runtime proof with actual provider accounts.
