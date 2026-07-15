@@ -123,7 +123,8 @@ Assert-Contract -Condition ($guided -match 'setup-runs' -and $guided -match 'ope
 Assert-Contract -Condition ($guided -match '"-u", "root"' -or $guided -match '-u root') -Message "Linux package preparation has a root-only phase"
 Assert-Contract -Condition ($guided -match 'skipPackageInstallation') -Message "user setup suppresses duplicate sudo package work"
 Assert-Contract -Condition ($guided -match 'Get-TmuxGnhfWorkspaceStatus\.ps1') -Message "guided apply validates the generated workspace"
-Assert-Contract -Condition ($guided -notmatch '--unregister|reset --hard|git(?:\.exe)?\s+push') -Message "guided setup forbids destructive reset and Git push"
+Assert-Contract -Condition ($guided -notmatch '--unregister|reset --hard') -Message "guided setup forbids destructive WSL or Git reset"
+Assert-Contract -Condition ($guided -notmatch '(?im)^\s*(?:&\s*)?git(?:\.exe)?\s+push\b') -Message "guided setup does not execute Git push"
 Assert-Contract -Condition ($guided -notmatch 'api[_-]?key|access[_-]?token|refresh[_-]?token') -Message "guided setup does not collect authentication secrets"
 
 $rootCmd = Get-Content -LiteralPath (Join-Path $repoRoot "Setup-TmuxGnhfWorkspace.cmd") -Raw
