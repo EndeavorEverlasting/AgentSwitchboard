@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "queriedAt": "2026-07-14T12:00:00.0000000Z",
+  "wsl": {
+    "available": true,
+    "evidence": "wsl.exe --status succeeded.",
+    "wslPath": "C:\\WINDOWS\\System32\\wsl.exe",
+    "statusOutput": "Default Distribution: Ubuntu"
+  },
+  "distributions": [
+    {
+      "name": "Ubuntu",
+      "state": "Running",
+      "version": "2",
+      "isDefault": true,
+      "isDockerDesktop": false
+    }
+  ],
+  "defaultDistribution": "Ubuntu",
+  "developerDistributions": [
+    {
+      "name": "Ubuntu",
+      "accessible": true,
+      "shell": "/bin/bash",
+      "distroIdentity": "Ubuntu 22.04.3 LTS",
+      "systemdState": "running",
+      "git": { "available": true, "version": "git version 2.34.1", "evidence": "git detected." },
+      "tmux": { "available": true, "version": "tmux 3.3a", "evidence": "tmux detected." },
+      "node": { "available": true, "version": "v20.11.0", "evidence": "node detected." },
+      "npm": { "available": true, "version": "10.2.4", "evidence": "npm detected." },
+      "agy": { "available": false, "version": null, "evidence": "agy not found or probe failed." },
+      "opencode": { "available": true, "version": "0.1.0", "evidence": "opencode detected." },
+      "goose": { "available": false, "version": null, "evidence": "goose not found or probe failed." }
+    }
+  ],
+  "dockerDesktopPresent": false
+}

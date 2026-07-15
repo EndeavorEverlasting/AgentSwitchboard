@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "queriedAt": "2026-07-14T12:00:00.0000000Z",
+  "wsl": {
+    "available": true,
+    "evidence": "wsl.exe --status succeeded.",
+    "wslPath": "C:\\WINDOWS\\System32\\wsl.exe",
+    "statusOutput": "Default Distribution: Ubuntu"
+  },
+  "distributions": [
+    {
+      "name": "Ubuntu",
+      "state": "Stopped",
+      "version": "2",
+      "isDefault": true,
+      "isDockerDesktop": false
+    }
+  ],
+  "defaultDistribution": "Ubuntu",
+  "developerDistributions": [],
+  "dockerDesktopPresent": false
+}

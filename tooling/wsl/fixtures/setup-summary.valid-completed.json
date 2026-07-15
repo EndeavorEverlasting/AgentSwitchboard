@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "completedAt": "2026-07-14T12:00:00.0000000Z",
+  "status": "completed",
+  "manifestPath": "tooling/wsl/wsl-workstation.example.json",
+  "distribution": "Ubuntu",
+  "rebootRequired": false,
+  "planMode": false,
+  "commandResults": [
+    {
+      "step": "wsl-feature-check",
+      "status": "already-installed",
+      "evidence": "wsl.exe found at C:\\WINDOWS\\System32\\wsl.exe"
+    },
+    {
+      "step": "distribution-check",
+      "status": "already-installed",
+      "evidence": "Distribution 'Ubuntu' found."
+    },
+    {
+      "step": "linux-bootstrap",
+      "status": "applied",
+      "evidence": "Bootstrap script completed successfully."
+    }
+  ],
+  "repoResults": [
+    {
+      "name": "AgentSwitchboard",
+      "destination": "~/dev/agents/AgentSwitchboard",
+      "status": "already-exists-correct-remote",
+      "remote": "https://github.com/EndeavorEverlasting/AgentSwitchboard.git"
+    }
+  ]
+}

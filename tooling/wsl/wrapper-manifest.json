@@ -1,0 +1,10 @@
+{
+  "schema_version": "agentswitchboard-wrapper-manifest/v1",
+  "managed_destination": "~/.local/agent-switchboard/bin",
+  "policy": "native-first-explicit-bridge",
+  "agents": {
+    "opencode": {"canonical": "opencode", "native": "opencode_native", "bridge": "opencode_win", "bridge_kind": "windows-cmd"},
+    "agy": {"canonical": "agy", "native": "agy_native", "bridge": "agy_win", "bridge_kind": "windows-exe"},
+    "goose": {"canonical": "goose", "native": "goose_native", "bridge": "goose_win", "bridge_kind": "windows-exe"}
+  }
+}

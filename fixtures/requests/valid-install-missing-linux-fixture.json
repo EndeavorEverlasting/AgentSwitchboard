@@ -1,0 +1,8 @@
+{
+  "schema_version": "agentswitchboard-invocation/v1",
+  "execution_profile_id": "linux-native",
+  "platform": "linux",
+  "requested_agents": ["opencode", "agy"],
+  "operation": "install-missing",
+  "fixture_mode": true
+}

@@ -1,0 +1,1 @@
+{"schema_version":"agentswitchboard-invocation/v2","platform":"linux","execution_domain":"linux-native","requested_agents":["opencode"],"operation":"smoke","install_missing_only":true,"native_preference":true,"bridge_permission":false,"posture":"fixture","fixture_scenario":"authentication-required"}
