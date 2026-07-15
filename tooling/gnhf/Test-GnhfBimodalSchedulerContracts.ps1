@@ -109,6 +109,9 @@ $exhaustedSnapshot = $completionSnapshot | ConvertTo-Json -Depth 30 | ConvertFro
 $completionSwitch = Select-GnhfRoutingProfile -Mode "maximize-sprint-completion" -Profiles $profiles -Snapshot $exhaustedSnapshot -Policy $policy -PreviousProfileId "opencode-primary" -PreviousOutcome "quota-exhausted"
 Add-Check -Passed ($completionSwitch.selected.profileId -eq "copilot-secondary") -Name "policy/completion-switches-after-exhaustion"
 
+$failedFallback = Select-GnhfRoutingProfile -Mode "maximize-sprint-completion" -Profiles $profiles -Snapshot $completionSnapshot -Policy $policy -PreviousProfileId "opencode-primary" -PreviousOutcome "failed"
+Add-Check -Passed ($failedFallback.selected.profileId -eq "copilot-secondary" -and $failedFallback.reason -eq "switch-after-exhaustion-or-block") -Name "policy/completion-switches-after-generic-failure"
+
 $efficiency = Select-GnhfRoutingProfile -Mode "maximize-token-efficiency" -Profiles $profiles -Snapshot $efficiencySnapshot -Policy $policy
 Add-Check -Passed ($efficiency.selected.profileId -eq "goose-efficient") -Name "policy/efficiency-prefers-efficient-profile"
 $primaryEfficiencyState = $efficiency.states | Where-Object profileId -eq "opencode-primary"
@@ -126,6 +129,12 @@ $declarationOnly = Get-GnhfSegmentOutcome -ExitCode 0 -LogText "Stop when: The o
 Add-Check -Passed ($declarationOnly.status -eq "progressed" -and -not $declarationOnly.objectiveComplete) -Name "outcome/no-stop-text-inflation"
 $completed = Get-GnhfSegmentOutcome -ExitCode 0 -LogText "The stop condition was satisfied after validation." -CommitDelta 1
 Add-Check -Passed ($completed.status -eq "objective-complete" -and $completed.objectiveComplete) -Name "outcome/observes-stop-condition"
+$negativeStop = Get-GnhfSegmentOutcome -ExitCode 0 -LogText "The stop condition was not satisfied after validation." -CommitDelta 1
+Add-Check -Passed ($negativeStop.status -eq "progressed" -and -not $negativeStop.objectiveComplete) -Name "outcome/rejects-negated-stop-condition"
+$negativeCondition = Get-GnhfSegmentOutcome -ExitCode 0 -LogText "The condition was never satisfied." -CommitDelta 0
+Add-Check -Passed ($negativeCondition.status -eq "no-progress" -and -not $negativeCondition.objectiveComplete) -Name "outcome/rejects-never-satisfied-condition"
+$budgetDeclaration = Get-GnhfSegmentOutcome -ExitCode 0 -LogText "Token cap: 500000" -CommitDelta 1
+Add-Check -Passed ($budgetDeclaration.status -eq "progressed" -and -not $budgetDeclaration.switchProfile) -Name "outcome/token-budget-is-not-exhaustion"
 $quota = Get-GnhfSegmentOutcome -ExitCode 1 -LogText "Permanent agent error: usage limit reached." -CommitDelta 0
 Add-Check -Passed ($quota.status -eq "quota-exhausted" -and $quota.switchProfile) -Name "outcome/quota-switches-profile"
 $auth = Get-GnhfSegmentOutcome -ExitCode 1 -LogText "Authentication required; login required." -CommitDelta 0
@@ -155,6 +164,7 @@ if ($launcher) {
     Add-Check -Passed ($launcher.Contains('AGENTSWITCHBOARD_MODEL_PROFILE') -and $launcher.Contains('AGENTSWITCHBOARD_MODEL')) -Name "launcher/model-context"
     Add-Check -Passed ($launcher.Contains('routingDecisionHash')) -Name "launcher/decision-hash"
     Add-Check -Passed ($launcher.Contains('Get-SafeAgentSpecLabel')) -Name "launcher/redacts-custom-acp"
+    Add-Check -Passed (-not $launcher.Contains('Write-Host "Token cap:') -and $launcher.Contains('Write-Host "Budget:')) -Name "launcher/token-budget-not-usage-log"
 }
 
 $installer = Read-Text "Install-GnhfBimodalScheduler.ps1"
