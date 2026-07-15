@@ -68,6 +68,12 @@ Improve one bounded fixture concern, validate it, and stop without broadening sc
     if ($completion.mode -ne "maximize-sprint-completion" -or $completion.selectedProfile.profileId -ne "opencode-primary") {
         throw "completion mode selected an unexpected profile"
     }
+    if ($completion.selectedAgent -ne "opencode" -or $completion.selectedModel -ne "configured-primary-model" -or [long]$completion.tokenAvailability -ne 900000) {
+        throw "completion routing decision did not expose runtime-compatible agent, model, and token fields"
+    }
+    if ($completion.switchReason -ne $completion.reason) {
+        throw "completion routing decision switchReason diverged from the policy reason"
+    }
 
     & $pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File $scheduler -ConfigPath $configPath -InstallRoot $installRoot -Mode maximize-token-efficiency -UsageSnapshotPath (Join-Path $RootPath "fixtures\gnhf-usage-efficiency.json") -PlanOnly
     if ($LASTEXITCODE -ne 0) { throw "efficiency plan failed with exit code $LASTEXITCODE" }
@@ -77,6 +83,9 @@ Improve one bounded fixture concern, validate it, and stop without broadening sc
     $efficiency = Get-Content -LiteralPath $efficiencyDecision.FullName -Raw | ConvertFrom-Json -Depth 20
     if ($efficiency.mode -ne "maximize-token-efficiency" -or $efficiency.selectedProfile.profileId -ne "goose-efficient") {
         throw "efficiency mode selected an unexpected profile"
+    }
+    if ($efficiency.selectedAgent -ne "goose" -or $efficiency.selectedModel -ne "configured-efficient-model" -or [long]$efficiency.tokenAvailability -ne 600000) {
+        throw "efficiency routing decision did not expose runtime-compatible agent, model, and token fields"
     }
     if ([long]$efficiency.segmentBudget -ne 75000) {
         throw "efficiency segment budget was not reserve-aware: $($efficiency.segmentBudget)"
