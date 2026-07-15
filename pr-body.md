@@ -4,8 +4,8 @@ Publish the stable, versioned external invocation and result contract that SysAd
 
 ## Scope
 
-- Versioned request schema (`agentswitchboard-invocation/v1`)
-- Versioned result schema (`agentswitchboard-result/v1`)
+- Versioned request schema (`agentswitchboard-invocation/v2`)
+- Versioned result schema (`agentswitchboard-result/v2`)
 - Contract validation and rejection logic
 - Fixture-mode execution (no network, no real installers)
 - CLI entrypoint for Windows and Linux
