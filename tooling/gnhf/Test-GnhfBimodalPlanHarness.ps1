@@ -65,11 +65,11 @@ Improve one bounded fixture concern, validate it, and stop without broadening sc
         Select-Object -First 1
     if (-not $completionDecision) { throw "completion routing decision was not generated" }
     $completion = Get-Content -LiteralPath $completionDecision.FullName -Raw | ConvertFrom-Json -Depth 20
-    if ($completion.mode -ne "maximize-sprint-completion" -or $completion.selectedProfile.profileId -ne "opencode-primary") {
+    if ($completion.mode -ne "maximize-sprint-completion" -or $completion.selectedProfile.profileId -ne "deepseek-primary") {
         throw "completion mode selected an unexpected profile"
     }
-    if ($completion.selectedAgent -ne "opencode" -or $completion.selectedModel -ne "configured-primary-model" -or [long]$completion.tokenAvailability -ne 900000) {
-        throw "completion routing decision did not expose runtime-compatible agent, model, and token fields"
+    if ($completion.selectedAgent -ne "opencode" -or $completion.selectedModel -ne "deepseek/configured-primary-model" -or [long]$completion.tokenAvailability -ne 900000) {
+        throw "completion routing decision did not expose DeepSeek-first runtime-compatible agent, model, and token fields"
     }
     if ($completion.switchReason -ne $completion.reason) {
         throw "completion routing decision switchReason diverged from the policy reason"
