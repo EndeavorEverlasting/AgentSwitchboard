@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "distribution": {
+    "name": "Ubuntu",
+    "preferredVersion": 2,
+    "autoInstall": false
+  },
+  "linuxDevRoot": "~/dev",
+  "packages": [
+    "ca-certificates",
+    "git",
+    "curl",
+    "build-essential",
+    "tmux",
+    "unzip",
+    "jq",
+    "xz-utils"
+  ],
+  "agents": [],
+  "repositories": [
+    {
+      "name": "AgentSwitchboard",
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard.git",
+      "destination": "~/dev/agents/AgentSwitchboard",
+      "branch": "main",
+      "enabled": true
+    }
+  ],
+  "dotfilePolicy": {
+    "backupExisting": true,
+    "managedFiles": [
+      "~/.tmux.conf",
+      "~/.bashrc"
+    ],
+    "backupSuffix": ".agent-switchboard-backup"
+  },
+  "wezterm": {
+    "enabled": false,
+    "configDestination": "~/.wezterm.lua",
+    "launchDistribution": "Ubuntu"
+  },
+  "tmux": {
+    "enabled": true,
+    "configDestination": "~/.tmux.conf",
+    "pluginManager": "tpm"
+  },
+  "rebootPolicy": {
+    "requireRebootBeforeContinue": true,
+    "maxRebootAttempts": 1
+  },
+  "pathMapping": {
+    "windowsToLinux": true,
+    "wslUncPrefix": "\\\\wsl$\\",
+    "linuxFsPreferred": true,
+    "mntcFallback": false
+  }
+}
