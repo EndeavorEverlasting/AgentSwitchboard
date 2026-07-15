@@ -28,6 +28,7 @@ $requiredSourceFiles = @(
     "GnhfBimodal.Policy.ps1",
     "GnhfBimodal.Policy.psm1",
     "Invoke-GnhfBimodalScheduler.ps1",
+    "Install-GnhfBimodalScheduler.ps1",
     "Test-GnhfBimodalSchedulerContracts.ps1",
     "gnhf-bimodal.example.json",
     "README.md"
@@ -50,6 +51,11 @@ foreach ($fileName in $schemaFiles) {
 }
 foreach ($fileName in $fixtureFiles) {
     [void](Resolve-GnhfFleetFile -Path (Join-Path $SourceRoot "fixtures\$fileName") -Description "scheduler fixture '$fileName'")
+}
+
+$allManifestValuesSupplied = $DefaultRepoPath -and $ObjectivePath -and $UsageSnapshotPath
+if ($ResetManifest -and -not $allManifestValuesSupplied) {
+    throw "-ResetManifest requires -DefaultRepoPath, -ObjectivePath, and -UsageSnapshotPath so placeholders are not installed as an active configuration."
 }
 
 $validator = Join-Path $SourceRoot "Test-GnhfBimodalSchedulerContracts.ps1"
@@ -109,7 +115,6 @@ foreach ($fileName in $fixtureFiles) {
 }
 [void](Copy-GnhfFleetFile -Source $manifestTemplatePath -Destination $manifestExampleTargetPath)
 
-$allManifestValuesSupplied = $DefaultRepoPath -and $ObjectivePath -and $UsageSnapshotPath
 if ($allManifestValuesSupplied) {
     $resolvedRepoPath = Resolve-GnhfFleetDirectory -Path $DefaultRepoPath -Description "default scheduler repository"
     $resolvedObjectivePath = Resolve-GnhfFleetFile -Path $ObjectivePath -Description "scheduler objective"
@@ -128,9 +133,6 @@ if ($allManifestValuesSupplied) {
     else {
         Write-Host "Preserving existing customized bimodal manifest: $manifestTargetPath" -ForegroundColor Green
     }
-}
-elseif ($ResetManifest) {
-    throw "-ResetManifest requires -DefaultRepoPath, -ObjectivePath, and -UsageSnapshotPath so placeholders are not installed as an active configuration."
 }
 elseif (-not (Test-Path -LiteralPath $manifestTargetPath -PathType Leaf)) {
     Write-Warning "No active bimodal manifest was created because repository, objective, and usage snapshot paths were not all supplied. Copy and edit '$manifestExampleTargetPath' before execution."
