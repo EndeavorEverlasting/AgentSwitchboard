@@ -30,16 +30,19 @@ jobs:
           paths = [
               root / "gnhf-bimodal.example.json",
               root / "schemas/gnhf-usage-snapshot.schema.json",
+              root / "schemas/gnhf-model-activation.schema.json",
               root / "schemas/gnhf-routing-decision.schema.json",
               root / "schemas/gnhf-bimodal-run.schema.json",
               root / "fixtures/gnhf-usage-completion.json",
               root / "fixtures/gnhf-usage-efficiency.json",
+              root / "fixtures/gnhf-model-activation-acknowledged.json",
           ]
           for path in paths:
               json.loads(path.read_text(encoding="utf-8"))
           manifest = json.loads(paths[0].read_text(encoding="utf-8"))
           assert manifest["mode"] == "maximize-sprint-completion"
           assert manifest["policy"]["reservePercent"] > 0
+          assert manifest["policy"]["maxUsageSnapshotAgeMinutes"] > 0
           assert manifest["session"]["maxSegments"] > 0
           assert manifest["session"]["segmentWallMinutes"] > 0
           print("PASS: bimodal JSON contracts")
@@ -49,7 +52,7 @@ jobs:
         shell: bash
         run: |
           test ! -d tooling/gnhf/bimodal-runs
-          ! git ls-files | grep -E '(^|/)bimodal-run\.json$|(^|/)events\.jsonl$|routing-decision-[0-9]+\.json$'
+          ! git ls-files | grep -E '(^|/)bimodal-run\.json$|(^|/)events\.jsonl$|routing-decision-[0-9]+\.json$|(^|/)model-activation\.json$'
 
       - name: Check diff and checkout hygiene
         if: github.event_name == 'pull_request'
@@ -70,6 +73,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           foreach ($path in @(
+            '.\tooling\gnhf\GnhfModelActivation.ps1',
             '.\tooling\gnhf\GnhfBimodal.Policy.ps1',
             '.\tooling\gnhf\GnhfBimodal.Policy.psm1',
             '.\tooling\gnhf\Invoke-GnhfBimodalScheduler.ps1',
