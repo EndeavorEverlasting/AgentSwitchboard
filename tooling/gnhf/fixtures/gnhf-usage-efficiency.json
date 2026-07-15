@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "agentswitchboard-gnhf-usage/v1",
+  "capturedAt": "2026-07-15T06:30:00Z",
+  "source": "fixture",
+  "profiles": [
+    {
+      "profileId": "deepseek-primary",
+      "agent": "opencode",
+      "model": "deepseek/configured-primary-model",
+      "ready": true,
+      "authenticated": true,
+      "tokensRemaining": 310000,
+      "tokenCapacity": 1000000,
+      "resetAt": "2026-07-16T00:00:00Z",
+      "blockedReason": null,
+      "evidence": "near 30 percent reserve"
+    },
+    {
+      "profileId": "opencode-secondary",
+      "agent": "opencode",
+      "model": "configured-opencode-fallback-model",
+      "ready": true,
+      "authenticated": true,
+      "tokensRemaining": 500000,
+      "tokenCapacity": 1000000,
+      "resetAt": "2026-07-16T00:00:00Z",
+      "blockedReason": null,
+      "evidence": "OpenCode fallback headroom"
+    },
+    {
+      "profileId": "agy-tertiary",
+      "agent": "agy",
+      "model": "configured-antigravity-model",
+      "ready": true,
+      "authenticated": true,
+      "tokensRemaining": 700000,
+      "tokenCapacity": 1000000,
+      "resetAt": "2026-07-16T00:00:00Z",
+      "blockedReason": null,
+      "evidence": "Anti-Gravity fixture disabled by manifest"
+    },
+    {
+      "profileId": "copilot-fallback",
+      "agent": "copilot",
+      "model": "configured-copilot-model",
+      "ready": true,
+      "authenticated": true,
+      "tokensRemaining": 650000,
+      "tokenCapacity": 1000000,
+      "resetAt": "2026-07-16T00:00:00Z",
+      "blockedReason": null,
+      "evidence": "usable fallback headroom"
+    },
+    {
+      "profileId": "goose-efficient",
+      "agent": "goose",
+      "model": "configured-efficient-model",
+      "ready": true,
+      "authenticated": true,
+      "tokensRemaining": 600000,
+      "tokenCapacity": 1000000,
+      "resetAt": "2026-07-16T00:00:00Z",
+      "blockedReason": null,
+      "evidence": "efficient profile"
+    }
+  ]
+}

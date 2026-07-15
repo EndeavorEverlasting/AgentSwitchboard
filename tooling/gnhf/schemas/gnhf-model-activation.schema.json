@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/gnhf/schemas/gnhf-model-activation.schema.json",
+  "title": "AgentSwitchboard model activation acknowledgement",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "recordedAt",
+    "profileId",
+    "agent",
+    "requestedModel",
+    "activationState",
+    "acknowledgedModel",
+    "routingDecisionHash",
+    "evidenceKind",
+    "evidence"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "agentswitchboard-model-activation/v1" },
+    "recordedAt": { "type": "string", "format": "date-time" },
+    "profileId": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$" },
+    "agent": { "type": "string", "minLength": 1 },
+    "requestedModel": { "type": "string", "minLength": 1 },
+    "activationState": { "enum": ["acknowledged", "observed-response", "rejected"] },
+    "acknowledgedModel": { "type": ["string", "null"] },
+    "routingDecisionHash": {
+      "type": ["string", "null"],
+      "pattern": "^[A-Fa-f0-9]{64}$"
+    },
+    "evidenceKind": {
+      "enum": ["cli-acknowledgement", "provider-response", "wrapper-rejection"]
+    },
+    "evidence": { "type": "string", "minLength": 1, "maxLength": 500 }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "activationState": { "enum": ["acknowledged", "observed-response"] }
+        }
+      },
+      "then": {
+        "properties": {
+          "acknowledgedModel": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "activationState": { "const": "rejected" }
+        }
+      },
+      "then": {
+        "properties": {
+          "acknowledgedModel": { "type": "null" }
+        }
+      }
+    }
+  ]
+}

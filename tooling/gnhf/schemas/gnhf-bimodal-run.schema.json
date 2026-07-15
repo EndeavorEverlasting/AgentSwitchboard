@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/gnhf/schemas/gnhf-bimodal-run.schema.json",
+  "title": "AgentSwitchboard GNHF bimodal run",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "runId", "mode", "status", "startedAt", "completedAt", "repoPath", "branch", "worktreePath", "stopReason", "segments"],
+  "properties": {
+    "schemaVersion": { "const": "agentswitchboard-gnhf-bimodal-run/v1" },
+    "runId": { "type": "string" },
+    "mode": { "enum": ["maximize-sprint-completion", "maximize-token-efficiency"] },
+    "status": { "enum": ["completed", "partial", "blocked", "failed", "plan-only"] },
+    "startedAt": { "type": "string", "format": "date-time" },
+    "completedAt": { "type": "string", "format": "date-time" },
+    "repoPath": { "type": "string" },
+    "branch": { "type": ["string", "null"] },
+    "worktreePath": { "type": ["string", "null"] },
+    "stopReason": { "type": "string" },
+    "objectiveComplete": { "type": "boolean" },
+    "segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["segment", "profileId", "agent", "model", "tokenCap", "status", "exitCode", "commitDelta", "decisionPath"],
+        "properties": {
+          "segment": { "type": "integer", "minimum": 1 },
+          "profileId": { "type": "string" },
+          "agent": { "type": "string" },
+          "model": { "type": ["string", "null"] },
+          "tokenCap": { "type": "integer", "minimum": 1 },
+          "status": { "type": "string" },
+          "exitCode": { "type": ["integer", "null"] },
+          "commitDelta": { "type": "integer", "minimum": 0 },
+          "estimatedTokens": { "type": ["integer", "null"], "minimum": 0 },
+          "decisionPath": { "type": "string" },
+          "launcherSummaryPath": { "type": ["string", "null"] },
+          "logPaths": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

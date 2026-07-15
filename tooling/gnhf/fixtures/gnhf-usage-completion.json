@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "agentswitchboard-gnhf-usage/v1",
+  "capturedAt": "2026-07-15T06:30:00Z",
+  "source": "fixture",
+  "profiles": [
+    {
+      "profileId": "deepseek-primary",
+      "agent": "opencode",
+      "model": "deepseek/configured-primary-model",
+      "ready": true,
+      "authenticated": true,
+      "tokensRemaining": 900000,
+      "tokenCapacity": 1000000,
+      "resetAt": "2026-07-16T00:00:00Z",
+      "blockedReason": null,
+      "evidence": "fixture DeepSeek primary"
+    },
+    {
+      "profileId": "opencode-secondary",
+      "agent": "opencode",
+      "model": "configured-opencode-fallback-model",
+      "ready": true,
+      "authenticated": true,
+      "tokensRemaining": 800000,
+      "tokenCapacity": 1000000,
+      "resetAt": "2026-07-16T00:00:00Z",
+      "blockedReason": null,
+      "evidence": "fixture OpenCode fallback"
+    },
+    {
+      "profileId": "agy-tertiary",
+      "agent": "agy",
+      "model": "configured-antigravity-model",
+      "ready": true,
+      "authenticated": true,
+      "tokensRemaining": 750000,
+      "tokenCapacity": 1000000,
+      "resetAt": "2026-07-16T00:00:00Z",
+      "blockedReason": null,
+      "evidence": "fixture Anti-Gravity fallback"
+    },
+    {
+      "profileId": "copilot-fallback",
+      "agent": "copilot",
+      "model": "configured-copilot-model",
+      "ready": true,
+      "authenticated": true,
+      "tokensRemaining": 700000,
+      "tokenCapacity": 1000000,
+      "resetAt": "2026-07-16T00:00:00Z",
+      "blockedReason": null,
+      "evidence": "fixture remaining fallback"
+    },
+    {
+      "profileId": "goose-efficient",
+      "agent": "goose",
+      "model": "configured-efficient-model",
+      "ready": true,
+      "authenticated": true,
+      "tokensRemaining": 500000,
+      "tokenCapacity": 1000000,
+      "resetAt": "2026-07-16T00:00:00Z",
+      "blockedReason": null,
+      "evidence": "fixture efficient profile"
+    }
+  ]
+}

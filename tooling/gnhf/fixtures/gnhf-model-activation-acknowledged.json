@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "agentswitchboard-model-activation/v1",
+  "recordedAt": "2026-07-15T17:45:00Z",
+  "profileId": "deepseek-primary",
+  "agent": "opencode",
+  "requestedModel": "deepseek/configured-primary-model",
+  "activationState": "acknowledged",
+  "acknowledgedModel": "deepseek/configured-primary-model",
+  "routingDecisionHash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "evidenceKind": "cli-acknowledgement",
+  "evidence": "Fixture wrapper acknowledged the exact configured model."
+}

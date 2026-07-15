@@ -2,6 +2,7 @@
 param(
     [Parameter(Mandatory)][string]$RepoPath,
     [Parameter(Mandatory)][string]$Agent,
+    [string]$AgentSpecOverride,
     [Parameter(Mandatory, ParameterSetName = "PromptFile")][string]$PromptPath,
     [Parameter(Mandatory, ParameterSetName = "PromptText")][string]$Prompt,
     [string]$Name = "gnhf-sprint",
@@ -9,7 +10,11 @@ param(
     [ValidateRange(0, 1000000000)][int]$MaxTokens = 500000,
     [Parameter(Mandatory)][string]$StopWhen,
     [string]$InstallRoot = "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet",
-    [switch]$PushBranch
+    [switch]$PushBranch,
+    [switch]$CurrentBranch,
+    [string]$ModelProfileId,
+    [string]$ModelId,
+    [string]$RoutingDecisionPath
 )
 
 Set-StrictMode -Version Latest
@@ -20,6 +25,32 @@ if (-not (Test-Path -LiteralPath $pathHelpersPath -PathType Leaf)) {
     throw "Path helper library not found: $pathHelpersPath"
 }
 . $pathHelpersPath
+
+$modelActivationPath = Join-Path $PSScriptRoot "GnhfModelActivation.ps1"
+if (Test-Path -LiteralPath $modelActivationPath -PathType Leaf) {
+    . $modelActivationPath
+}
+else {
+    function Get-GnhfModelActivationResult {
+        param(
+            [string]$AcknowledgementPath,
+            [string]$ExpectedProfileId,
+            [string]$ExpectedAgent,
+            [string]$ExpectedModel,
+            [string]$ExpectedRoutingDecisionHash
+        )
+        [pscustomobject][ordered]@{
+            state = if ([string]::IsNullOrWhiteSpace($ExpectedModel)) { "not-requested" } else { "requested-only" }
+            requestedModel = if ([string]::IsNullOrWhiteSpace($ExpectedModel)) { $null } else { $ExpectedModel }
+            acknowledgedModel = $null
+            acknowledgementPath = if ([string]::IsNullOrWhiteSpace($AcknowledgementPath)) { $null } else { $AcknowledgementPath }
+            evidenceKind = $null
+            evidence = $null
+            recordedAt = $null
+            validationError = "model activation helper unavailable"
+        }
+    }
+}
 
 function Invoke-Git {
     param([Parameter(Mandatory)][string[]]$Arguments)
@@ -60,11 +91,23 @@ function Resolve-AgentSpec {
     return [string]$agentRecord.agentSpec
 }
 
+function Get-SafeAgentSpecLabel {
+    param([Parameter(Mandatory)][string]$AgentSpec)
+
+    if ($AgentSpec.StartsWith("acp:") -and $AgentSpec.Substring(4).Contains(" ")) {
+        return "acp:custom"
+    }
+    return $AgentSpec
+}
+
 $RepoPath = Resolve-GnhfFleetDirectory -Path $RepoPath -Description "target repository"
 $InstallRoot = Get-GnhfFleetAbsolutePath -Path $InstallRoot
 $statePath = Resolve-GnhfFleetFile -Path (Join-Path $InstallRoot "state.json") -Description "fleet state"
 $state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
-$agentSpec = Resolve-AgentSpec -RequestedAgent $Agent -State $state
+$resolvedStateAgentSpec = Resolve-AgentSpec -RequestedAgent $Agent -State $state
+$agentSpec = if ([string]::IsNullOrWhiteSpace($AgentSpecOverride)) { $resolvedStateAgentSpec } else { $AgentSpecOverride.Trim() }
+if ([string]::IsNullOrWhiteSpace($agentSpec)) { throw "Resolved GNHF agent specification is empty." }
+$safeAgentSpec = Get-SafeAgentSpecLabel -AgentSpec $agentSpec
 
 if ($PSCmdlet.ParameterSetName -eq "PromptFile") {
     $PromptPath = Resolve-GnhfFleetFile -Path $PromptPath -Description "sprint prompt"
@@ -76,6 +119,12 @@ else {
 
 if ([string]::IsNullOrWhiteSpace($objective)) {
     throw "The sprint prompt is empty."
+}
+
+$routingDecisionHash = $null
+if ($RoutingDecisionPath) {
+    $RoutingDecisionPath = Resolve-GnhfFleetFile -Path $RoutingDecisionPath -Description "routing decision"
+    $routingDecisionHash = (Get-FileHash -LiteralPath $RoutingDecisionPath -Algorithm SHA256).Hash
 }
 
 $insideWorkTree = (Invoke-Git -Arguments @("rev-parse", "--is-inside-work-tree") | Select-Object -First 1).Trim()
@@ -93,7 +142,15 @@ $branch = (Invoke-Git -Arguments @("branch", "--show-current") | Select-Object -
 if ([string]::IsNullOrWhiteSpace($branch)) {
     throw "Detached HEAD is not allowed for an unattended sprint."
 }
-if ($branch.StartsWith("gnhf/")) {
+if ($CurrentBranch) {
+    if ($branch -in @("main", "master", "trunk")) {
+        throw "Scheduler current-branch mode refuses a protected default branch: $branch"
+    }
+    if (-not $branch.StartsWith("switchboard/gnhf-")) {
+        throw "Scheduler current-branch mode requires a scheduler-owned 'switchboard/gnhf-*' branch. Current branch: $branch"
+    }
+}
+elseif ($branch.StartsWith("gnhf/")) {
     throw "Launch worktree mode from a non-GNHF base branch. Current branch: $branch"
 }
 
@@ -120,15 +177,27 @@ if ([string]::IsNullOrWhiteSpace($safeName)) {
 $runLogDir = Ensure-GnhfFleetDirectory -Path (Join-Path $logsRoot "$timestamp-$safeName")
 $transcriptPath = Join-Path $runLogDir "launcher-transcript.txt"
 $summaryPath = Join-Path $runLogDir "launcher-summary.json"
+$modelAcknowledgementPath = Join-Path $runLogDir "model-activation.json"
 
 $summary = [ordered]@{
-    schemaVersion = 1
+    schemaVersion = 2
     name = $Name
     startedAt = (Get-Date).ToString("o")
     repoPath = $RepoPath
     baseBranch = $branch
+    executionMode = if ($CurrentBranch) { "scheduler-current-branch" } else { "gnhf-worktree" }
     agentRequested = $Agent
-    agentSpec = $agentSpec
+    agentSpec = $safeAgentSpec
+    modelProfileId = if ($ModelProfileId) { $ModelProfileId } else { $null }
+    modelId = if ($ModelId) { $ModelId } else { $null }
+    modelActivation = Get-GnhfModelActivationResult `
+        -AcknowledgementPath $modelAcknowledgementPath `
+        -ExpectedProfileId $ModelProfileId `
+        -ExpectedAgent $Agent `
+        -ExpectedModel $ModelId `
+        -ExpectedRoutingDecisionHash $routingDecisionHash
+    routingDecisionPath = if ($RoutingDecisionPath) { $RoutingDecisionPath } else { $null }
+    routingDecisionHash = $routingDecisionHash
     maxIterations = $MaxIterations
     maxTokens = $MaxTokens
     stopWhen = $StopWhen
@@ -144,7 +213,12 @@ $summary = [ordered]@{
 $gnhfArguments = [System.Collections.Generic.List[string]]::new()
 [void]$gnhfArguments.Add("--agent")
 [void]$gnhfArguments.Add($agentSpec)
-[void]$gnhfArguments.Add("--worktree")
+if ($CurrentBranch) {
+    [void]$gnhfArguments.Add("--current-branch")
+}
+else {
+    [void]$gnhfArguments.Add("--worktree")
+}
 [void]$gnhfArguments.Add("--max-iterations")
 [void]$gnhfArguments.Add([string]$MaxIterations)
 if ($MaxTokens -gt 0) {
@@ -159,7 +233,21 @@ if ($PushBranch) {
     [void]$gnhfArguments.Add("--push")
 }
 
+$oldEnvironment = @{
+    GNHF_TELEMETRY = $env:GNHF_TELEMETRY
+    AGENTSWITCHBOARD_MODEL_PROFILE = $env:AGENTSWITCHBOARD_MODEL_PROFILE
+    AGENTSWITCHBOARD_MODEL = $env:AGENTSWITCHBOARD_MODEL
+    AGENTSWITCHBOARD_ROUTING_DECISION = $env:AGENTSWITCHBOARD_ROUTING_DECISION
+    AGENTSWITCHBOARD_ROUTING_DECISION_HASH = $env:AGENTSWITCHBOARD_ROUTING_DECISION_HASH
+    AGENTSWITCHBOARD_MODEL_ACK_PATH = $env:AGENTSWITCHBOARD_MODEL_ACK_PATH
+}
 $env:GNHF_TELEMETRY = "0"
+if ($ModelProfileId) { $env:AGENTSWITCHBOARD_MODEL_PROFILE = $ModelProfileId }
+if ($ModelId) { $env:AGENTSWITCHBOARD_MODEL = $ModelId }
+if ($RoutingDecisionPath) { $env:AGENTSWITCHBOARD_ROUTING_DECISION = $RoutingDecisionPath }
+if ($routingDecisionHash) { $env:AGENTSWITCHBOARD_ROUTING_DECISION_HASH = $routingDecisionHash }
+if ($ModelId) { $env:AGENTSWITCHBOARD_MODEL_ACK_PATH = $modelAcknowledgementPath }
+
 $exitCode = 1
 $transcriptStarted = $false
 $oldLocation = Get-Location
@@ -171,9 +259,15 @@ try {
     Write-Host "`n=== GNHF SPRINT ===" -ForegroundColor Cyan
     Write-Host "Repo:       $RepoPath"
     Write-Host "Base:       $branch"
-    Write-Host "Agent:      $agentSpec"
+    Write-Host "Mode:       $($summary.executionMode)"
+    Write-Host "Agent:      $safeAgentSpec"
+    if ($ModelProfileId) { Write-Host "Profile:    $ModelProfileId" }
+    if ($ModelId) {
+        Write-Host "Model:      $ModelId"
+        Write-Host "Model ACK:  $modelAcknowledgementPath"
+    }
     Write-Host "Iterations: $MaxIterations"
-    Write-Host "Token cap:  $MaxTokens"
+    Write-Host "Budget:     $MaxTokens"
     Write-Host "Push:       $([bool]$PushBranch)"
     Write-Host "Stop when:  $StopWhen"
     Write-Host "`nRecent commits:"
@@ -191,11 +285,23 @@ finally {
     Set-Location -LiteralPath $oldLocation.Path
     $summary.exitCode = $exitCode
     $summary.completedAt = (Get-Date).ToString("o")
+    $summary.modelActivation = Get-GnhfModelActivationResult `
+        -AcknowledgementPath $modelAcknowledgementPath `
+        -ExpectedProfileId $ModelProfileId `
+        -ExpectedAgent $Agent `
+        -ExpectedModel $ModelId `
+        -ExpectedRoutingDecisionHash $routingDecisionHash
     [void](Ensure-GnhfFleetParentDirectory -Path $summaryPath)
-    $summary | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $summaryPath -Encoding utf8NoBOM
+    $summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $summaryPath -Encoding utf8NoBOM
     if ($transcriptStarted) {
         Stop-Transcript | Out-Null
     }
+    $env:GNHF_TELEMETRY = $oldEnvironment.GNHF_TELEMETRY
+    $env:AGENTSWITCHBOARD_MODEL_PROFILE = $oldEnvironment.AGENTSWITCHBOARD_MODEL_PROFILE
+    $env:AGENTSWITCHBOARD_MODEL = $oldEnvironment.AGENTSWITCHBOARD_MODEL
+    $env:AGENTSWITCHBOARD_ROUTING_DECISION = $oldEnvironment.AGENTSWITCHBOARD_ROUTING_DECISION
+    $env:AGENTSWITCHBOARD_ROUTING_DECISION_HASH = $oldEnvironment.AGENTSWITCHBOARD_ROUTING_DECISION_HASH
+    $env:AGENTSWITCHBOARD_MODEL_ACK_PATH = $oldEnvironment.AGENTSWITCHBOARD_MODEL_ACK_PATH
 }
 
 Write-Host "`nLauncher summary: $summaryPath" -ForegroundColor Cyan
