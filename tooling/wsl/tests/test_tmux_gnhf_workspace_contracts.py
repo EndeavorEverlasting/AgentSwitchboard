@@ -23,19 +23,22 @@ def load_json(path: Path) -> dict:
 
 
 def validate_manifest(data: dict, *, valid: bool) -> None:
+    gnhf = data.get("gnhf", {})
+    supported_version = gnhf.get("supportedVersion")
+    expected_package = f"gnhf@{supported_version}" if supported_version else None
     conditions = [
         data.get("schemaVersion") == 1,
         isinstance(data.get("distribution"), str) and bool(data["distribution"]),
         data.get("workspace", {}).get("sessionName") == "dev",
         data.get("node", {}).get("minimumMajor", 0) >= 20,
-        data.get("gnhf", {}).get("upstreamRepository")
-        == "https://github.com/kunchenguid/gnhf.git",
-        data.get("gnhf", {}).get("npmPackage") == "gnhf",
-        data.get("gnhf", {}).get("defaultAgent") == "opencode",
-        data.get("gnhf", {}).get("safeWrapper", {}).get("worktree") is True,
-        data.get("gnhf", {}).get("safeWrapper", {}).get("push") is False,
-        data.get("gnhf", {}).get("safeWrapper", {}).get("maxIterations", 0) > 0,
-        data.get("gnhf", {}).get("safeWrapper", {}).get("maxTokens", 0) > 0,
+        gnhf.get("upstreamRepository") == "https://github.com/kunchenguid/gnhf.git",
+        isinstance(supported_version, str) and bool(supported_version),
+        gnhf.get("npmPackage") == expected_package,
+        gnhf.get("defaultAgent") == "opencode",
+        gnhf.get("safeWrapper", {}).get("worktree") is True,
+        gnhf.get("safeWrapper", {}).get("push") is False,
+        gnhf.get("safeWrapper", {}).get("maxIterations", 0) > 0,
+        gnhf.get("safeWrapper", {}).get("maxTokens", 0) > 0,
     ]
     require(all(conditions) is valid, f"manifest validity mismatch: expected {valid}")
 
