@@ -4,8 +4,7 @@ param(
     [ValidateSet("maximize-sprint-completion", "maximize-token-efficiency")][string]$Mode,
     [string]$UsageSnapshotPath,
     [string]$InstallRoot = "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet",
-    [switch]$PlanOnly,
-    [switch]$KeepWorktree
+    [switch]$PlanOnly
 )
 
 Set-StrictMode -Version Latest
@@ -19,7 +18,7 @@ foreach ($requiredPath in @($pathHelpersPath, $policyPath)) {
     }
 }
 . $pathHelpersPath
-Import-Module $policyPath -Force
+. $policyPath
 
 function Invoke-RouterGit {
     param(
@@ -28,16 +27,31 @@ function Invoke-RouterGit {
         [switch]$AllowFailure
     )
 
-    $output = & git -C $Repository @Arguments 2>&1
+    $lines = @(& git -C $Repository @Arguments 2>&1)
     $exitCode = $LASTEXITCODE
     if ($exitCode -ne 0 -and -not $AllowFailure) {
-        throw "git $($Arguments -join ' ') failed in '$Repository':`n$($output -join [Environment]::NewLine)"
+        throw "git $($Arguments -join ' ') failed in '$Repository':`n$($lines -join [Environment]::NewLine)"
     }
-    return [pscustomobject]@{
+
+    [pscustomobject]@{
         ExitCode = $exitCode
-        Output = @($output)
-        Text = ($output -join [Environment]::NewLine)
+        Output = $lines
+        Text = ($lines -join [Environment]::NewLine)
     }
+}
+
+function Get-RouterGitScalar {
+    param(
+        [Parameter(Mandatory)][string]$Repository,
+        [Parameter(Mandatory)][string[]]$Arguments
+    )
+
+    $result = Invoke-RouterGit -Repository $Repository -Arguments $Arguments
+    $value = @($result.Output | Where-Object { $null -ne $_ } | Select-Object -First 1)
+    if ($value.Count -eq 0) {
+        return ""
+    }
+    return ([string]$value[0]).Trim()
 }
 
 function Get-RequiredProperty {
@@ -51,14 +65,14 @@ function Get-RequiredProperty {
     if (-not $property -or $null -eq $property.Value -or [string]::IsNullOrWhiteSpace([string]$property.Value)) {
         throw "$Description is missing required property '$Name'."
     }
-    return $property.Value
+    $property.Value
 }
 
 function Get-UsageSnapshot {
     param(
         [Parameter(Mandatory)][string]$Path,
-        [hashtable]$ConsumedByProfile,
-        [hashtable]$BlockedProfiles
+        [Parameter(Mandatory)][hashtable]$ConsumedByProfile,
+        [Parameter(Mandatory)][hashtable]$BlockedProfiles
     )
 
     $resolved = Resolve-GnhfFleetFile -Path $Path -Description "GNHF usage snapshot"
@@ -78,7 +92,7 @@ function Get-UsageSnapshot {
         }
     }
 
-    return [pscustomobject]@{
+    [pscustomobject]@{
         Path = $resolved
         Hash = (Get-FileHash -LiteralPath $resolved -Algorithm SHA256).Hash
         Data = $snapshot
@@ -87,10 +101,15 @@ function Get-UsageSnapshot {
 
 function ConvertTo-SafeSlug {
     param([Parameter(Mandatory)][string]$Value)
+
     $slug = ($Value.ToLowerInvariant() -replace "[^a-z0-9]+", "-").Trim("-")
-    if ($slug.Length -gt 48) { $slug = $slug.Substring(0, 48).Trim("-") }
-    if ([string]::IsNullOrWhiteSpace($slug)) { return "bimodal-sprint" }
-    return $slug
+    if ($slug.Length -gt 48) {
+        $slug = $slug.Substring(0, 48).Trim("-")
+    }
+    if ([string]::IsNullOrWhiteSpace($slug)) {
+        return "bimodal-sprint"
+    }
+    $slug
 }
 
 function Write-RoutingDecision {
@@ -140,7 +159,7 @@ function Write-RoutingDecision {
         )
     }
     $decision | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $Path -Encoding utf8NoBOM
-    return [pscustomobject]$decision
+    [pscustomobject]$decision
 }
 
 function Get-NewGnhfLogFiles {
@@ -153,7 +172,8 @@ function Get-NewGnhfLogFiles {
     if (-not (Test-Path -LiteralPath $runRoot -PathType Container)) {
         return @()
     }
-    return @(
+
+    @(
         Get-ChildItem -LiteralPath $runRoot -File -Recurse -ErrorAction SilentlyContinue |
             Where-Object { $_.LastWriteTimeUtc -ge $Since.ToUniversalTime() -and $_.Name -in @("gnhf.log", "notes.md") } |
             Sort-Object LastWriteTimeUtc
@@ -161,19 +181,26 @@ function Get-NewGnhfLogFiles {
 }
 
 function Get-EstimatedTokensFromText {
-    param([Parameter(Mandatory)][string]$Text)
+    param([AllowEmptyString()][string]$Text)
 
     $matches = [regex]::Matches($Text, '(?im)(?:tokens?|token total|total tokens)[^0-9]{0,24}([0-9][0-9,]*)')
-    if ($matches.Count -eq 0) { return $null }
+    if ($matches.Count -eq 0) {
+        return $null
+    }
+
     $values = @(
         foreach ($match in $matches) {
             $raw = $match.Groups[1].Value.Replace(",", "")
             $parsed = 0L
-            if ([long]::TryParse($raw, [ref]$parsed)) { $parsed }
+            if ([long]::TryParse($raw, [ref]$parsed)) {
+                $parsed
+            }
         }
     )
-    if ($values.Count -eq 0) { return $null }
-    return [long]($values | Measure-Object -Maximum).Maximum
+    if ($values.Count -eq 0) {
+        return $null
+    }
+    [long]($values | Measure-Object -Maximum).Maximum
 }
 
 function Start-BoundedSchedulerSegment {
@@ -192,13 +219,14 @@ function Start-BoundedSchedulerSegment {
     )
 
     $pwsh = (Get-Command pwsh -ErrorAction Stop).Source
-    $psi = [System.Diagnostics.ProcessStartInfo]::new()
-    $psi.FileName = $pwsh
-    $psi.UseShellExecute = $false
-    $psi.CreateNoWindow = $true
-    $psi.RedirectStandardOutput = $true
-    $psi.RedirectStandardError = $true
-    foreach ($argument in @(
+    $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+    $startInfo.FileName = $pwsh
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $true
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+
+    $arguments = @(
         "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass",
         "-File", $WorkerScript,
         "-RepoPath", $WorktreePath,
@@ -212,25 +240,32 @@ function Start-BoundedSchedulerSegment {
         "-InstallRoot", $InstallRoot,
         "-CurrentBranch",
         "-ModelProfileId", [string]$Profile.profileId,
-        "-ModelId", [string]$Profile.model,
         "-RoutingDecisionPath", $DecisionPath
-    )) {
-        [void]$psi.ArgumentList.Add($argument)
+    )
+    if ($null -ne $Profile.model -and -not [string]::IsNullOrWhiteSpace([string]$Profile.model)) {
+        $arguments += @("-ModelId", [string]$Profile.model)
+    }
+    foreach ($argument in $arguments) {
+        [void]$startInfo.ArgumentList.Add($argument)
     }
 
     $process = [System.Diagnostics.Process]::new()
-    $process.StartInfo = $psi
+    $process.StartInfo = $startInfo
     [void]$process.Start()
     $stdoutTask = $process.StandardOutput.ReadToEndAsync()
     $stderrTask = $process.StandardError.ReadToEndAsync()
     $timedOut = -not $process.WaitForExit($TimeoutMinutes * 60 * 1000)
     if ($timedOut) {
-        try { $process.Kill($true); $process.WaitForExit() } catch {}
+        try {
+            $process.Kill($true)
+            $process.WaitForExit()
+        }
+        catch {}
     }
+
     $stdout = $stdoutTask.GetAwaiter().GetResult()
     $stderr = $stderrTask.GetAwaiter().GetResult()
-
-    return [pscustomobject]@{
+    [pscustomobject]@{
         ExitCode = if ($timedOut) { 124 } else { $process.ExitCode }
         TimedOut = $timedOut
         Stdout = $stdout
@@ -246,9 +281,16 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
 $ConfigPath = Resolve-GnhfFleetFile -Path $ConfigPath -Description "bimodal scheduler config"
 $configDirectory = Split-Path -Parent $ConfigPath
 $config = Get-Content -LiteralPath $ConfigPath -Raw | ConvertFrom-Json -Depth 40
-if ([int]$config.schemaVersion -ne 1) { throw "Unsupported scheduler schemaVersion: $($config.schemaVersion)" }
+if ([int]$config.schemaVersion -ne 1) {
+    throw "Unsupported scheduler schemaVersion: $($config.schemaVersion)"
+}
 
-$effectiveMode = if ($Mode) { $Mode } else { [string](Get-RequiredProperty -Object $config -Name "mode" -Description "scheduler config") }
+$effectiveMode = if ($Mode) {
+    $Mode
+}
+else {
+    [string](Get-RequiredProperty -Object $config -Name "mode" -Description "scheduler config")
+}
 if ($effectiveMode -notin @("maximize-sprint-completion", "maximize-token-efficiency")) {
     throw "Unsupported scheduler mode: $effectiveMode"
 }
@@ -263,25 +305,32 @@ else {
 }
 $stopWhen = [string](Get-RequiredProperty -Object $config -Name "stopWhen" -Description "scheduler config")
 $profiles = @($config.profiles)
-if ($profiles.Count -lt 1) { throw "Scheduler config contains no model profiles." }
+if ($profiles.Count -lt 1) {
+    throw "Scheduler config contains no model profiles."
+}
 
 $InstallRoot = Ensure-GnhfFleetDirectory -Path $InstallRoot
 $statePath = Resolve-GnhfFleetFile -Path (Join-Path $InstallRoot "state.json") -Description "fleet state"
 $workerScript = Resolve-GnhfFleetFile -Path (Join-Path $InstallRoot "Start-GnhfSprint.ps1") -Description "bounded sprint launcher"
-$state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json -Depth 30
+[void](Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json -Depth 30)
 
-$dirty = @(Invoke-RouterGit -Repository $repoPath -Arguments @("status", "--porcelain=v1")).Output | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+$statusResult = Invoke-RouterGit -Repository $repoPath -Arguments @("status", "--porcelain=v1")
+$dirty = @($statusResult.Output | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
 if ($dirty.Count -gt 0) {
     throw "The target repository is dirty. Preserve unknown work and rerun from a clean checkout.`n$($dirty -join [Environment]::NewLine)"
 }
-$baseBranch = ((Invoke-RouterGit -Repository $repoPath -Arguments @("branch", "--show-current")).Output | Select-Object -First 1).Trim()
-if ([string]::IsNullOrWhiteSpace($baseBranch)) { throw "Detached HEAD is not allowed." }
+$baseBranch = Get-RouterGitScalar -Repository $repoPath -Arguments @("branch", "--show-current")
+if ([string]::IsNullOrWhiteSpace($baseBranch)) {
+    throw "Detached HEAD is not allowed."
+}
 if ($baseBranch.StartsWith("gnhf/") -or $baseBranch.StartsWith("switchboard/gnhf-")) {
     throw "Start the bimodal scheduler from a clean non-GNHF base branch. Current branch: $baseBranch"
 }
 
 $objective = Get-Content -LiteralPath $objectivePath -Raw
-if ([string]::IsNullOrWhiteSpace($objective)) { throw "The sprint objective is empty." }
+if ([string]::IsNullOrWhiteSpace($objective)) {
+    throw "The sprint objective is empty."
+}
 $objectiveSlug = ConvertTo-SafeSlug -Value (($objective -split '\r?\n' | Select-Object -First 1))
 $runId = "{0}-{1}" -f (Get-Date -Format "yyyyMMdd-HHmmss"), ([guid]::NewGuid().ToString("N").Substring(0, 8))
 $runRoot = Ensure-GnhfFleetDirectory -Path (Join-Path $InstallRoot "bimodal-runs\$runId")
@@ -299,7 +348,6 @@ $worktreeRoot = if ($worktreeRootRaw -and $worktreeRootRaw -ne "__WORKTREE_ROOT_
 else {
     "$repoPath-agent-switchboard-worktrees"
 }
-[void](Ensure-GnhfFleetDirectory -Path $worktreeRoot)
 $worktreePath = Join-Path $worktreeRoot $runId
 $routerBranch = "switchboard/gnhf-$objectiveSlug-$($runId.Substring(0, 15))"
 
@@ -337,7 +385,9 @@ try {
     $initialTokenCap = if ($initialSelection.selected) {
         Get-GnhfSegmentTokenCap -SelectedState $initialSelection.selected -Mode $effectiveMode -Policy $config.policy -DefaultSegmentMaxTokens ([long]$config.session.segmentMaxTokens)
     }
-    else { 1L }
+    else {
+        1L
+    }
     $planDecisionPath = Join-Path $decisionsRoot "routing-decision-000.json"
     [void](Write-RoutingDecision -Path $planDecisionPath -RunId $runId -Segment 1 -EffectiveMode $effectiveMode -Selection $initialSelection -TokenCap $initialTokenCap -SnapshotHash $initialSnapshot.Hash)
 
@@ -354,8 +404,10 @@ try {
         }
     }
     else {
+        [void](Ensure-GnhfFleetDirectory -Path $worktreeRoot)
         [void](Invoke-RouterGit -Repository $repoPath -Arguments @("worktree", "add", "-b", $routerBranch, $worktreePath, $baseBranch))
         $worktreeCreated = $true
+
         $maxSegments = [int]$config.session.maxSegments
         $maxWallMinutes = [int]$config.session.maxWallMinutes
         $segmentIterations = [int]$config.session.segmentMaxIterations
@@ -417,36 +469,45 @@ $historyText
 "@
             Set-Content -LiteralPath $handoffPath -Value $handoff -Encoding utf8NoBOM
 
-            $commitBefore = [int](((Invoke-RouterGit -Repository $worktreePath -Arguments @("rev-list", "--count", "HEAD")).Output | Select-Object -First 1).Trim())
+            $commitBefore = [int](Get-RouterGitScalar -Repository $worktreePath -Arguments @("rev-list", "--count", "HEAD"))
             $segmentStarted = Get-Date
             $segmentName = "bimodal-$($segmentNumber.ToString('000'))-$($selected.profileId)"
             $processResult = Start-BoundedSchedulerSegment -WorkerScript $workerScript -WorktreePath $worktreePath -Profile $selected -PromptPath $stablePromptPath -Name $segmentName -MaxIterations $segmentIterations -MaxTokens $tokenCap -StopWhen $stopWhen -InstallRoot $InstallRoot -TimeoutMinutes $segmentWallMinutes -DecisionPath $decisionPath
-            $commitAfter = [int](((Invoke-RouterGit -Repository $worktreePath -Arguments @("rev-list", "--count", "HEAD")).Output | Select-Object -First 1).Trim())
+            $commitAfter = [int](Get-RouterGitScalar -Repository $worktreePath -Arguments @("rev-list", "--count", "HEAD"))
             $commitDelta = [Math]::Max(0, $commitAfter - $commitBefore)
 
             $newLogs = Get-NewGnhfLogFiles -WorktreePath $worktreePath -Since $segmentStarted
             $logTextParts = [System.Collections.Generic.List[string]]::new()
             [void]$logTextParts.Add($processResult.Text)
             foreach ($logFile in $newLogs) {
-                try { [void]$logTextParts.Add((Get-Content -LiteralPath $logFile.FullName -Raw)) } catch {}
+                try {
+                    [void]$logTextParts.Add((Get-Content -LiteralPath $logFile.FullName -Raw))
+                }
+                catch {}
             }
             $combinedLogText = $logTextParts -join [Environment]::NewLine
             $outcome = Get-GnhfSegmentOutcome -ExitCode $processResult.ExitCode -LogText $combinedLogText -CommitDelta $commitDelta -TimedOut:$processResult.TimedOut
             $estimatedTokens = Get-EstimatedTokensFromText -Text $combinedLogText
+
             if ($null -ne $estimatedTokens) {
-                if (-not $consumedByProfile.ContainsKey($selected.profileId)) { $consumedByProfile[$selected.profileId] = 0L }
+                if (-not $consumedByProfile.ContainsKey($selected.profileId)) {
+                    $consumedByProfile[$selected.profileId] = 0L
+                }
                 $consumedByProfile[$selected.profileId] = [long]$consumedByProfile[$selected.profileId] + [long]$estimatedTokens
             }
             if ($outcome.status -in @("quota-exhausted", "authentication-blocked", "permanent-error", "timed-out")) {
                 $blockedProfiles[$selected.profileId] = $outcome.status
             }
-            if (-not $segmentCounts.ContainsKey($selected.profileId)) { $segmentCounts[$selected.profileId] = 0 }
+            if (-not $segmentCounts.ContainsKey($selected.profileId)) {
+                $segmentCounts[$selected.profileId] = 0
+            }
             $segmentCounts[$selected.profileId] = [int]$segmentCounts[$selected.profileId] + 1
 
             $launcherSummary = Get-ChildItem -LiteralPath (Join-Path $InstallRoot "logs") -Filter "launcher-summary.json" -File -Recurse -ErrorAction SilentlyContinue |
                 Where-Object { $_.LastWriteTime -ge $segmentStarted } |
                 Sort-Object LastWriteTime -Descending |
                 Select-Object -First 1
+
             $segmentRecord = [pscustomobject][ordered]@{
                 segment = $segmentNumber
                 profileId = $selected.profileId
@@ -459,7 +520,7 @@ $historyText
                 estimatedTokens = $estimatedTokens
                 decisionPath = $decisionPath
                 launcherSummaryPath = if ($launcherSummary) { $launcherSummary.FullName } else { $null }
-                logPaths = @($newLogs | ForEach-Object { $_.FullName })
+                logPaths = @($newLogs | ForEach-Object FullName)
             }
             [void]$segments.Add($segmentRecord)
             $segmentRecord | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $segmentsRoot ("segment-{0:d3}.json" -f $segmentNumber)) -Encoding utf8NoBOM
@@ -471,6 +532,7 @@ $historyText
                 $stopReason = "objective-complete"
                 break
             }
+
             if ($outcome.status -eq "no-progress") {
                 $consecutiveNoProgress++
             }
@@ -484,8 +546,12 @@ $historyText
 
             $previousProfileId = [string]$selected.profileId
             $previousOutcome = [string]$outcome.status
-            if ($cooldownSeconds -gt 0) { Start-Sleep -Seconds $cooldownSeconds }
-            if ($segmentNumber -eq $maxSegments) { $stopReason = "max-segments-reached" }
+            if ($cooldownSeconds -gt 0) {
+                Start-Sleep -Seconds $cooldownSeconds
+            }
+            if ($segmentNumber -eq $maxSegments) {
+                $stopReason = "max-segments-reached"
+            }
         }
 
         if ($segments.Count -gt 0 -and $runStatus -notin @("completed", "blocked")) {
@@ -522,6 +588,10 @@ finally {
     }
 }
 
-if ($runStatus -eq "failed") { exit 1 }
-if ($runStatus -eq "blocked") { exit 2 }
+if ($runStatus -eq "failed") {
+    exit 1
+}
+if ($runStatus -eq "blocked") {
+    exit 2
+}
 exit 0
