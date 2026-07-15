@@ -61,7 +61,7 @@ contract.
 
 ## Entrypoints
 
-```
+```console
 python -m agentswitchboard request.json [--pretty]
 python -m agentswitchboard --validate < request.json
 python -m agentswitchboard --supported-profiles
