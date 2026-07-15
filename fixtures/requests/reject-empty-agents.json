@@ -1,0 +1,8 @@
+{
+  "schema_version": "agentswitchboard-invocation/v1",
+  "execution_profile_id": "windows-native",
+  "platform": "windows",
+  "requested_agents": [],
+  "operation": "inventory",
+  "fixture_mode": true
+}

@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/agentswitchboard-result/v1.json",
+  "title": "AgentSwitchboard Result v1",
+  "description": "Normalized result contract for AgentSwitchboard workstation-agent operations. Returned for every invocation whether fixture or live.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "invocation_request",
+    "overall_status",
+    "agents",
+    "exit_code",
+    "proof_ceiling"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "agentswitchboard-result/v1"
+    },
+    "invocation_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "execution_profile_id",
+        "platform",
+        "requested_agents",
+        "operation",
+        "fixture_mode"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "agentswitchboard-invocation/v1"
+        },
+        "execution_profile_id": {
+          "type": "string"
+        },
+        "platform": {
+          "enum": ["windows", "linux"]
+        },
+        "requested_agents": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "operation": {
+          "enum": ["inventory", "install-missing", "repair-check", "smoke"]
+        },
+        "fixture_mode": {
+          "type": "boolean"
+        }
+      }
+    },
+    "overall_status": {
+      "enum": [
+        "PASS",
+        "SKIP",
+        "FAIL",
+        "authentication_required",
+        "unsupported_profile"
+      ]
+    },
+    "agents": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "patternProperties": {
+        "^(opencode|agy|goose)$": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "installation_state",
+            "detected_version",
+            "authentication_readiness",
+            "smoke_status",
+            "action_taken",
+            "reason_code"
+          ],
+          "properties": {
+            "installation_state": {
+              "enum": ["present", "absent", "unknown"]
+            },
+            "detected_version": {
+              "type": ["string", "null"],
+              "description": "Detected version string, or null if not installed or undetectable."
+            },
+            "authentication_readiness": {
+              "enum": ["ready", "not_ready", "unknown", "not_applicable"]
+            },
+            "smoke_status": {
+              "enum": ["passed", "failed", "skipped", "not_applicable"]
+            },
+            "action_taken": {
+              "type": "string",
+              "description": "Human-readable summary of what was done for this agent."
+            },
+            "reason_code": {
+              "type": "string",
+              "description": "Machine-readable reason code for status or action."
+            }
+          }
+        }
+      }
+    },
+    "exit_code": {
+      "type": "integer",
+      "enum": [0, 1, 2, 3, 4]
+    },
+    "proof_ceiling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fixture_mode",
+        "real_agent_installation_proven",
+        "authentication_proven",
+        "hosted_model_response_proven",
+        "sysadminsuite_integration_proven"
+      ],
+      "properties": {
+        "fixture_mode": {
+          "type": "boolean"
+        },
+        "real_agent_installation_proven": {
+          "type": "boolean",
+          "const": false
+        },
+        "authentication_proven": {
+          "type": "boolean",
+          "const": false
+        },
+        "hosted_model_response_proven": {
+          "type": "boolean",
+          "const": false
+        },
+        "sysadminsuite_integration_proven": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    }
+  }
+}

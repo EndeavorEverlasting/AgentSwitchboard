@@ -1,0 +1,8 @@
+{
+  "schema_version": "agentswitchboard-invocation/v1",
+  "execution_profile_id": "windows-native",
+  "platform": "macos",
+  "requested_agents": ["opencode"],
+  "operation": "inventory",
+  "fixture_mode": true
+}

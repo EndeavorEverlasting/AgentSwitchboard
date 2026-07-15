@@ -1,0 +1,9 @@
+{
+  "schema_version": "agentswitchboard-invocation/v1",
+  "execution_profile_id": "linux-native",
+  "platform": "linux",
+  "requested_agents": ["opencode"],
+  "operation": "inventory",
+  "fixture_mode": true,
+  "evidence_output_dir": "C:\\Users\\User\\evidence"
+}
