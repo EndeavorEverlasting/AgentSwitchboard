@@ -72,8 +72,9 @@ def main() -> int:
     require("curl |" not in bash_script and "curl -fsSL |" not in bash_script, "pipe-to-shell installation is forbidden")
     require("login" not in bash_script.lower() and "oauth" not in bash_script.lower(), "bootstrap must not authenticate")
 
+    bash_script_path = (WSL / "scripts" / "configure-gnhf-workspace.sh").as_posix()
     subprocess.run(
-        ["bash", "-n", str(WSL / "scripts" / "configure-gnhf-workspace.sh")],
+        ["bash", "-n", bash_script_path],
         check=True,
     )
 
