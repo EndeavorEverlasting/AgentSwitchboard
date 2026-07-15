@@ -6,16 +6,20 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $requiredFiles = @(
+    "Setup-TmuxGnhfWorkspace.cmd",
+    "tooling/wsl/Start-TmuxGnhfWorkspaceSetup.ps1",
     "tooling/wsl/Install-TmuxGnhfWorkspace.ps1",
     "tooling/wsl/Invoke-TmuxGnhfRuntimeProof.ps1",
     "tooling/wsl/tmux-gnhf-workstation.example.json",
     "tooling/wsl/wsl-tmux-gnhf-base.example.json",
+    "tooling/wsl/scripts/bootstrap-agent-workstation.sh",
     "tooling/wsl/scripts/configure-gnhf-workspace.sh",
     "tooling/wsl/templates/wezterm-tmux.lua",
     "tooling/wsl/fixtures/tmux-gnhf-manifest.valid.json",
     "tooling/wsl/fixtures/tmux-gnhf-manifest.invalid.json",
     "tooling/wsl/tests/test_tmux_gnhf_workspace_contracts.py",
-    "docs/workstation/tmux-gnhf-other-computer.md"
+    "docs/workstation/tmux-gnhf-other-computer.md",
+    "docs/workstation/tmux-gnhf-technician-quickstart.md"
 )
 
 $failures = [System.Collections.Generic.List[string]]::new()
@@ -43,6 +47,7 @@ foreach ($relativePath in $requiredFiles) {
 }
 
 foreach ($relativePath in @(
+    "tooling/wsl/Start-TmuxGnhfWorkspaceSetup.ps1",
     "tooling/wsl/Install-TmuxGnhfWorkspace.ps1",
     "tooling/wsl/Invoke-TmuxGnhfRuntimeProof.ps1",
     "tooling/wsl/Test-TmuxGnhfWorkspaceContracts.ps1"
@@ -77,12 +82,17 @@ foreach ($relativePath in @(
 
 $bash = Get-Command bash -ErrorAction SilentlyContinue
 if ($bash) {
-    $bashScript = Join-Path $repoRoot "tooling/wsl/scripts/configure-gnhf-workspace.sh"
-    & $bash.Source -n $bashScript
-    Assert-Contract -Condition ($LASTEXITCODE -eq 0) -Message "Bash syntax: configure-gnhf-workspace.sh"
+    foreach ($relativePath in @(
+        "tooling/wsl/scripts/bootstrap-agent-workstation.sh",
+        "tooling/wsl/scripts/configure-gnhf-workspace.sh"
+    )) {
+        $bashScript = Join-Path $repoRoot $relativePath
+        & $bash.Source -n $bashScript
+        Assert-Contract -Condition ($LASTEXITCODE -eq 0) -Message "Bash syntax: $relativePath"
+    }
 }
 else {
-    Write-Host "[SKIP] bash syntax: bash_not_available" -ForegroundColor Yellow
+    Write-Host "[SKIP] Bash syntax: bash_not_available" -ForegroundColor Yellow
 }
 
 $python = Get-Command python -ErrorAction SilentlyContinue
@@ -105,6 +115,26 @@ Assert-Contract -Condition ($installer -match 'ConfirmImpact = ''High''') -Messa
 Assert-Contract -Condition ($installer -notmatch '--unregister') -Message "no WSL unregister"
 Assert-Contract -Condition ($installer -notmatch 'reset --hard') -Message "no destructive Git reset"
 
+$guided = Get-Content -LiteralPath (Join-Path $repoRoot "tooling/wsl/Start-TmuxGnhfWorkspaceSetup.ps1") -Raw
+Assert-Contract -Condition ($guided -match 'ValidateSet\("Guided", "Plan", "Apply"\)') -Message "guided launcher exposes bounded modes"
+Assert-Contract -Condition ($guided -match 'Start-Process -FilePath "dism\.exe" -Verb RunAs') -Message "Windows feature enablement is explicit and elevated"
+Assert-Contract -Condition ($guided -match 'Read-Host "Confirmation"' -and $guided -match 'INSTALL') -Message "apply requires exact operator confirmation"
+Assert-Contract -Condition ($guided -match 'setup-runs' -and $guided -match 'operator-summary\.json') -Message "guided setup writes durable local evidence"
+Assert-Contract -Condition ($guided -match '"-u", "root"' -or $guided -match '-u root') -Message "Linux package preparation has a root-only phase"
+Assert-Contract -Condition ($guided -match 'skipPackageInstallation') -Message "user setup suppresses duplicate sudo package work"
+Assert-Contract -Condition ($guided -match 'Get-TmuxGnhfWorkspaceStatus\.ps1') -Message "guided apply validates the generated workspace"
+Assert-Contract -Condition ($guided -notmatch '--unregister|reset --hard|git(?:\.exe)?\s+push') -Message "guided setup forbids destructive reset and Git push"
+Assert-Contract -Condition ($guided -notmatch 'api[_-]?key|access[_-]?token|refresh[_-]?token') -Message "guided setup does not collect authentication secrets"
+
+$rootCmd = Get-Content -LiteralPath (Join-Path $repoRoot "Setup-TmuxGnhfWorkspace.cmd") -Raw
+Assert-Contract -Condition ($rootCmd -match 'Start-TmuxGnhfWorkspaceSetup\.ps1') -Message "root CMD delegates to the guided orchestrator"
+Assert-Contract -Condition ($rootCmd -match 'pwsh\.exe -NoLogo -NoProfile') -Message "root CMD uses PowerShell 7 without profile side effects"
+Assert-Contract -Condition ($rootCmd -match 'pause >nul') -Message "root CMD keeps failures visible"
+
+$userBootstrap = Get-Content -LiteralPath (Join-Path $repoRoot "tooling/wsl/scripts/bootstrap-agent-workstation.sh") -Raw
+Assert-Contract -Condition ($userBootstrap -match 'skipPackageInstallation') -Message "WSL bootstrap accepts prepared package state"
+Assert-Contract -Condition ($userBootstrap -match 'prepared by the Windows guided orchestrator') -Message "prepared package state is reported honestly"
+
 $runtimeProof = Get-Content -LiteralPath (Join-Path $repoRoot "tooling/wsl/Invoke-TmuxGnhfRuntimeProof.ps1") -Raw
 Assert-Contract -Condition ($runtimeProof -match 'git.+status.+--short' -or $runtimeProof -match '"status", "--short"') -Message "runtime proof requires a clean repository floor"
 Assert-Contract -Condition ($runtimeProof -match 'Test-TmuxGnhfWorkspaceContracts\.ps1') -Message "runtime proof runs targeted validation first"
@@ -124,6 +154,11 @@ Assert-Contract -Condition ($bashContent -match 'SHASUMS256\.txt') -Message "off
 Assert-Contract -Condition ($bashContent -notmatch 'curl\s+[^\r\n]*\|\s*(bash|sh)') -Message "no pipe-to-shell installer"
 Assert-Contract -Condition ($bashContent -match 'GNHF_TELEMETRY=0') -Message "telemetry posture is explicit"
 Assert-Contract -Condition ($bashContent -match '--worktree' -and $bashContent -match '--max-iterations' -and $bashContent -match '--max-tokens') -Message "GNHF safe wrapper is isolated and capped"
+
+$quickStart = Get-Content -LiteralPath (Join-Path $repoRoot "docs/workstation/tmux-gnhf-technician-quickstart.md") -Raw
+Assert-Contract -Condition ($quickStart -match 'Setup-TmuxGnhfWorkspace\.cmd') -Message "technician guide names the one-click launcher"
+Assert-Contract -Condition ($quickStart -match 'type INSTALL' -and $quickStart -match 'same CMD') -Message "technician guide explains confirmation and resume"
+Assert-Contract -Condition ($quickStart -match 'operator-summary\.json' -and $quickStart -match 'Technician completion checklist') -Message "technician guide explains evidence and acceptance"
 
 Write-Host ""
 if ($failures.Count -gt 0) {
