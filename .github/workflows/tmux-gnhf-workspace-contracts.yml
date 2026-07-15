@@ -23,6 +23,42 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate PowerShell and cross-platform contracts
+
+      - name: Parse PowerShell files
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($path in @(
+            './tooling/wsl/Install-TmuxGnhfWorkspace.ps1',
+            './tooling/wsl/Test-TmuxGnhfWorkspaceContracts.ps1'
+          )) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $path),
+              [ref]$tokens,
+              [ref]$errors
+            )
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object { Write-Error "$path: $($_.Message)" }
+              exit 1
+            }
+          }
+
+      - name: Parse JSON fixtures
+        shell: pwsh
+        run: |
+          Get-ChildItem ./tooling/wsl -Filter '*.json' -File -Recurse |
+            ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json | Out-Null }
+
+      - name: Validate Bash syntax
+        shell: bash
+        run: bash -n tooling/wsl/scripts/configure-gnhf-workspace.sh
+
+      - name: Run Python contracts
+        shell: pwsh
+        run: python tooling/wsl/tests/test_tmux_gnhf_workspace_contracts.py
+
+      - name: Run combined PowerShell validator
         shell: pwsh
         run: ./tooling/wsl/Test-TmuxGnhfWorkspaceContracts.ps1
