@@ -28,9 +28,18 @@ jobs:
         run: python -m pip install --disable-pip-version-check pytest jsonschema
 
       - name: Run Python contracts
-        run: python -m pytest -q
+        run: python -m pytest -q --junitxml=pytest-results.xml
+
+      - name: Upload Python contract result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-contract-results
+          path: pytest-results.xml
+          if-no-files-found: error
 
       - name: Parse Bash entrypoints
+        if: always()
         run: |
           bash -n tooling/wsl/scripts/bootstrap-agent-workstation.sh
           bash -n tooling/wsl/scripts/install-agent-wrappers.sh
