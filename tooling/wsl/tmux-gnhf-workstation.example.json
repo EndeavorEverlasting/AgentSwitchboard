@@ -17,7 +17,8 @@
   "gnhf": {
     "enabled": true,
     "upstreamRepository": "https://github.com/kunchenguid/gnhf.git",
-    "npmPackage": "gnhf",
+    "supportedVersion": "0.1.42",
+    "npmPackage": "gnhf@0.1.42",
     "autoInstall": true,
     "defaultAgent": "opencode",
     "installDefaultAgent": true,
