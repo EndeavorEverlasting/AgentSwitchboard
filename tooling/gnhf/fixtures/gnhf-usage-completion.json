@@ -4,40 +4,64 @@
   "source": "fixture",
   "profiles": [
     {
-      "profileId": "opencode-primary",
+      "profileId": "deepseek-primary",
       "agent": "opencode",
-      "model": "primary-model",
+      "model": "deepseek/configured-primary-model",
       "ready": true,
       "authenticated": true,
       "tokensRemaining": 900000,
       "tokenCapacity": 1000000,
       "resetAt": "2026-07-16T00:00:00Z",
       "blockedReason": null,
-      "evidence": "fixture"
+      "evidence": "fixture DeepSeek primary"
     },
     {
-      "profileId": "copilot-secondary",
+      "profileId": "opencode-secondary",
+      "agent": "opencode",
+      "model": "configured-opencode-fallback-model",
+      "ready": true,
+      "authenticated": true,
+      "tokensRemaining": 800000,
+      "tokenCapacity": 1000000,
+      "resetAt": "2026-07-16T00:00:00Z",
+      "blockedReason": null,
+      "evidence": "fixture OpenCode fallback"
+    },
+    {
+      "profileId": "agy-tertiary",
+      "agent": "agy",
+      "model": "configured-antigravity-model",
+      "ready": true,
+      "authenticated": true,
+      "tokensRemaining": 750000,
+      "tokenCapacity": 1000000,
+      "resetAt": "2026-07-16T00:00:00Z",
+      "blockedReason": null,
+      "evidence": "fixture Anti-Gravity fallback"
+    },
+    {
+      "profileId": "copilot-fallback",
       "agent": "copilot",
-      "model": "secondary-model",
+      "model": "configured-copilot-model",
       "ready": true,
       "authenticated": true,
       "tokensRemaining": 700000,
       "tokenCapacity": 1000000,
       "resetAt": "2026-07-16T00:00:00Z",
       "blockedReason": null,
-      "evidence": "fixture"
+      "evidence": "fixture remaining fallback"
     },
     {
       "profileId": "goose-efficient",
       "agent": "goose",
-      "model": "efficient-model",
+      "model": "configured-efficient-model",
       "ready": true,
       "authenticated": true,
       "tokensRemaining": 500000,
       "tokenCapacity": 1000000,
       "resetAt": "2026-07-16T00:00:00Z",
       "blockedReason": null,
-      "evidence": "fixture"
+      "evidence": "fixture efficient profile"
     }
   ]
 }
