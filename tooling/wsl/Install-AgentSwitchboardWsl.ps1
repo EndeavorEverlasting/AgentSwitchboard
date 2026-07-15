@@ -239,7 +239,7 @@ if (-not $distExists) {
                 status = "failed"
                 evidence = $_.Exception.Message
             })
-            throw "Failed to install WSL feature: $($_.Exception.Message)"
+            throw "Failed to install distribution: $($_.Exception.Message)"
         }
     } else {
         $commandResults.Add([pscustomobject]@{
