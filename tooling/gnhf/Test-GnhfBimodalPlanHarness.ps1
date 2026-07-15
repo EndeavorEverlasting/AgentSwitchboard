@@ -12,6 +12,8 @@ $repoPath = Join-Path $tempRoot "target"
 $installRoot = Join-Path $tempRoot "install"
 $objectivePath = Join-Path $tempRoot "objective.md"
 $snapshotPath = Join-Path $tempRoot "usage.json"
+$efficiencySnapshotPath = Join-Path $tempRoot "usage-efficiency.json"
+$staleSnapshotPath = Join-Path $tempRoot "usage-stale.json"
 $configPath = Join-Path $tempRoot "bimodal.json"
 
 function Invoke-GitChecked {
@@ -21,6 +23,17 @@ function Invoke-GitChecked {
         throw "git $($Arguments -join ' ') failed:`n$($output -join [Environment]::NewLine)"
     }
     return @($output)
+}
+
+function Write-FreshSnapshot {
+    param(
+        [Parameter(Mandatory)][string]$Source,
+        [Parameter(Mandatory)][string]$Destination,
+        [datetimeoffset]$CapturedAt = [DateTimeOffset]::UtcNow
+    )
+    $snapshot = Get-Content -LiteralPath $Source -Raw | ConvertFrom-Json -Depth 30
+    $snapshot.capturedAt = $CapturedAt.ToString("o")
+    $snapshot | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $Destination -Encoding utf8NoBOM
 }
 
 try {
@@ -37,7 +50,10 @@ try {
     Set-Content -LiteralPath $objectivePath -Encoding utf8NoBOM -Value @'
 Improve one bounded fixture concern, validate it, and stop without broadening scope.
 '@
-    Copy-Item -LiteralPath (Join-Path $RootPath "fixtures\gnhf-usage-completion.json") -Destination $snapshotPath
+    Write-FreshSnapshot -Source (Join-Path $RootPath "fixtures\gnhf-usage-completion.json") -Destination $snapshotPath
+    Write-FreshSnapshot -Source (Join-Path $RootPath "fixtures\gnhf-usage-efficiency.json") -Destination $efficiencySnapshotPath
+    Write-FreshSnapshot -Source (Join-Path $RootPath "fixtures\gnhf-usage-completion.json") -Destination $staleSnapshotPath -CapturedAt ([DateTimeOffset]::UtcNow.AddHours(-2))
+
     Copy-Item -LiteralPath (Join-Path $RootPath "Start-GnhfSprint.ps1") -Destination (Join-Path $installRoot "Start-GnhfSprint.ps1")
     [ordered]@{
         schemaVersion = 1
@@ -75,7 +91,7 @@ Improve one bounded fixture concern, validate it, and stop without broadening sc
         throw "completion routing decision switchReason diverged from the policy reason"
     }
 
-    & $pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File $scheduler -ConfigPath $configPath -InstallRoot $installRoot -Mode maximize-token-efficiency -UsageSnapshotPath (Join-Path $RootPath "fixtures\gnhf-usage-efficiency.json") -PlanOnly
+    & $pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File $scheduler -ConfigPath $configPath -InstallRoot $installRoot -Mode maximize-token-efficiency -UsageSnapshotPath $efficiencySnapshotPath -PlanOnly
     if ($LASTEXITCODE -ne 0) { throw "efficiency plan failed with exit code $LASTEXITCODE" }
     $efficiencyDecision = Get-ChildItem -LiteralPath (Join-Path $installRoot "bimodal-runs") -Filter "routing-decision-000.json" -File -Recurse |
         Sort-Object LastWriteTime -Descending |
@@ -89,6 +105,16 @@ Improve one bounded fixture concern, validate it, and stop without broadening sc
     }
     if ([long]$efficiency.segmentBudget -ne 75000) {
         throw "efficiency segment budget was not reserve-aware: $($efficiency.segmentBudget)"
+    }
+
+    & $pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File $scheduler -ConfigPath $configPath -InstallRoot $installRoot -UsageSnapshotPath $staleSnapshotPath -PlanOnly
+    if ($LASTEXITCODE -ne 0) { throw "stale-evidence plan failed unexpectedly with exit code $LASTEXITCODE" }
+    $staleDecision = Get-ChildItem -LiteralPath (Join-Path $installRoot "bimodal-runs") -Filter "routing-decision-000.json" -File -Recurse |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -First 1
+    $stale = Get-Content -LiteralPath $staleDecision.FullName -Raw | ConvertFrom-Json -Depth 20
+    if ($null -ne $stale.selectedProfile -or $stale.reason -ne "usage-snapshot-stale") {
+        throw "stale usage snapshot was not blocked before routing"
     }
 
     $headAfter = ((Invoke-GitChecked -Arguments @("rev-parse", "HEAD")) | Select-Object -First 1).Trim()
