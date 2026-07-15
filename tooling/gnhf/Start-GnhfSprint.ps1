@@ -21,10 +21,14 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $pathHelpersPath = Join-Path $PSScriptRoot "GnhfFleet.Paths.ps1"
-if (-not (Test-Path -LiteralPath $pathHelpersPath -PathType Leaf)) {
-    throw "Path helper library not found: $pathHelpersPath"
+$modelActivationPath = Join-Path $PSScriptRoot "GnhfModelActivation.ps1"
+foreach ($requiredPath in @($pathHelpersPath, $modelActivationPath)) {
+    if (-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)) {
+        throw "GNHF launcher dependency not found: $requiredPath"
+    }
 }
 . $pathHelpersPath
+. $modelActivationPath
 
 function Invoke-Git {
     param([Parameter(Mandatory)][string[]]$Arguments)
@@ -151,6 +155,7 @@ if ([string]::IsNullOrWhiteSpace($safeName)) {
 $runLogDir = Ensure-GnhfFleetDirectory -Path (Join-Path $logsRoot "$timestamp-$safeName")
 $transcriptPath = Join-Path $runLogDir "launcher-transcript.txt"
 $summaryPath = Join-Path $runLogDir "launcher-summary.json"
+$modelAcknowledgementPath = Join-Path $runLogDir "model-activation.json"
 
 $summary = [ordered]@{
     schemaVersion = 2
@@ -163,6 +168,12 @@ $summary = [ordered]@{
     agentSpec = $safeAgentSpec
     modelProfileId = if ($ModelProfileId) { $ModelProfileId } else { $null }
     modelId = if ($ModelId) { $ModelId } else { $null }
+    modelActivation = Get-GnhfModelActivationResult `
+        -AcknowledgementPath $modelAcknowledgementPath `
+        -ExpectedProfileId $ModelProfileId `
+        -ExpectedAgent $Agent `
+        -ExpectedModel $ModelId `
+        -ExpectedRoutingDecisionHash $routingDecisionHash
     routingDecisionPath = if ($RoutingDecisionPath) { $RoutingDecisionPath } else { $null }
     routingDecisionHash = $routingDecisionHash
     maxIterations = $MaxIterations
@@ -205,11 +216,15 @@ $oldEnvironment = @{
     AGENTSWITCHBOARD_MODEL_PROFILE = $env:AGENTSWITCHBOARD_MODEL_PROFILE
     AGENTSWITCHBOARD_MODEL = $env:AGENTSWITCHBOARD_MODEL
     AGENTSWITCHBOARD_ROUTING_DECISION = $env:AGENTSWITCHBOARD_ROUTING_DECISION
+    AGENTSWITCHBOARD_ROUTING_DECISION_HASH = $env:AGENTSWITCHBOARD_ROUTING_DECISION_HASH
+    AGENTSWITCHBOARD_MODEL_ACK_PATH = $env:AGENTSWITCHBOARD_MODEL_ACK_PATH
 }
 $env:GNHF_TELEMETRY = "0"
 if ($ModelProfileId) { $env:AGENTSWITCHBOARD_MODEL_PROFILE = $ModelProfileId }
 if ($ModelId) { $env:AGENTSWITCHBOARD_MODEL = $ModelId }
 if ($RoutingDecisionPath) { $env:AGENTSWITCHBOARD_ROUTING_DECISION = $RoutingDecisionPath }
+if ($routingDecisionHash) { $env:AGENTSWITCHBOARD_ROUTING_DECISION_HASH = $routingDecisionHash }
+if ($ModelId) { $env:AGENTSWITCHBOARD_MODEL_ACK_PATH = $modelAcknowledgementPath }
 
 $exitCode = 1
 $transcriptStarted = $false
@@ -225,7 +240,10 @@ try {
     Write-Host "Mode:       $($summary.executionMode)"
     Write-Host "Agent:      $safeAgentSpec"
     if ($ModelProfileId) { Write-Host "Profile:    $ModelProfileId" }
-    if ($ModelId) { Write-Host "Model:      $ModelId" }
+    if ($ModelId) {
+        Write-Host "Model:      $ModelId"
+        Write-Host "Model ACK:  $modelAcknowledgementPath"
+    }
     Write-Host "Iterations: $MaxIterations"
     Write-Host "Budget:     $MaxTokens"
     Write-Host "Push:       $([bool]$PushBranch)"
@@ -245,8 +263,14 @@ finally {
     Set-Location -LiteralPath $oldLocation.Path
     $summary.exitCode = $exitCode
     $summary.completedAt = (Get-Date).ToString("o")
+    $summary.modelActivation = Get-GnhfModelActivationResult `
+        -AcknowledgementPath $modelAcknowledgementPath `
+        -ExpectedProfileId $ModelProfileId `
+        -ExpectedAgent $Agent `
+        -ExpectedModel $ModelId `
+        -ExpectedRoutingDecisionHash $routingDecisionHash
     [void](Ensure-GnhfFleetParentDirectory -Path $summaryPath)
-    $summary | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $summaryPath -Encoding utf8NoBOM
+    $summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $summaryPath -Encoding utf8NoBOM
     if ($transcriptStarted) {
         Stop-Transcript | Out-Null
     }
@@ -254,6 +278,8 @@ finally {
     $env:AGENTSWITCHBOARD_MODEL_PROFILE = $oldEnvironment.AGENTSWITCHBOARD_MODEL_PROFILE
     $env:AGENTSWITCHBOARD_MODEL = $oldEnvironment.AGENTSWITCHBOARD_MODEL
     $env:AGENTSWITCHBOARD_ROUTING_DECISION = $oldEnvironment.AGENTSWITCHBOARD_ROUTING_DECISION
+    $env:AGENTSWITCHBOARD_ROUTING_DECISION_HASH = $oldEnvironment.AGENTSWITCHBOARD_ROUTING_DECISION_HASH
+    $env:AGENTSWITCHBOARD_MODEL_ACK_PATH = $oldEnvironment.AGENTSWITCHBOARD_MODEL_ACK_PATH
 }
 
 Write-Host "`nLauncher summary: $summaryPath" -ForegroundColor Cyan
