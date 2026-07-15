@@ -5,29 +5,107 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schema_version", "platform", "execution_domain", "requested_agents", "operation",
-    "install_missing_only", "native_preference", "bridge_permission", "posture"
+    "schema_version",
+    "platform",
+    "execution_domain",
+    "requested_agents",
+    "operation",
+    "install_missing_only",
+    "native_preference",
+    "bridge_permission",
+    "posture"
   ],
   "properties": {
     "schema_version": {"const": "agentswitchboard-invocation/v2"},
     "platform": {"enum": ["windows", "linux", "macos"]},
     "execution_domain": {"enum": ["windows-native", "windows-wsl", "linux-native", "unsupported"]},
-    "distro": {"type": "string", "minLength": 1, "maxLength": 80, "not": {"enum": ["docker-desktop", "docker-desktop-data"]}},
-    "requested_agents": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["opencode", "agy", "goose"]}},
+    "distro": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "not": {"enum": ["docker-desktop", "docker-desktop-data"]}
+    },
+    "requested_agents": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"enum": ["opencode", "agy", "goose"]}
+    },
     "operation": {"enum": ["inventory", "install-missing", "repair-check", "smoke"]},
     "install_missing_only": {"const": true},
     "native_preference": {"type": "boolean"},
     "bridge_permission": {"type": "boolean"},
     "posture": {"enum": ["fixture", "live"]},
-    "fixture_scenario": {"enum": ["native", "bridge", "missing", "authentication-required", "malformed"]},
-    "evidence_output_dir": {"type": "string", "minLength": 1, "pattern": "^(?![~/\\\\])(?![A-Za-z]:[\\\\/]).+$"}
+    "fixture_scenario": {
+      "enum": ["native", "bridge", "missing", "authentication-required", "malformed"]
+    },
+    "evidence_output_dir": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?![~/\\\\])(?![A-Za-z]:[\\\\/]).+$"
+    }
   },
   "allOf": [
-    {"if": {"properties": {"execution_domain": {"const": "windows-wsl"}}, "required": ["execution_domain"]}, "then": {"required": ["distro"], "properties": {"platform": {"const": "windows"}}}},
-    {"if": {"properties": {"execution_domain": {"const": "windows-native"}}, "required": ["execution_domain"]}, "then": {"not": {"required": ["distro"]}, "properties": {"platform": {"const": "windows"}}}},
-    {"if": {"properties": {"execution_domain": {"const": "linux-native"}}, "required": ["execution_domain"]}, "then": {"not": {"required": ["distro"]}, "properties": {"platform": {"const": "linux"}}}},
-    {"if": {"properties": {"platform": {"const": "macos"}}, "required": ["platform"]}, "then": {"properties": {"execution_domain": {"const": "unsupported"}}}},
-    {"if": {"properties": {"posture": {"const": "fixture"}}, "required": ["posture"]}, "then": {"required": ["fixture_scenario"]}},
-    {"if": {"properties": {"posture": {"const": "live"}}, "required": ["posture"]}, "then": {"not": {"required": ["fixture_scenario"]}}}
+    {
+      "if": {
+        "properties": {"execution_domain": {"const": "windows-wsl"}},
+        "required": ["execution_domain"]
+      },
+      "then": {
+        "required": ["distro"],
+        "properties": {"platform": {"const": "windows"}}
+      }
+    },
+    {
+      "if": {
+        "properties": {"execution_domain": {"const": "windows-native"}},
+        "required": ["execution_domain"]
+      },
+      "then": {
+        "not": {"required": ["distro"]},
+        "properties": {"platform": {"const": "windows"}}
+      }
+    },
+    {
+      "if": {
+        "properties": {"execution_domain": {"const": "linux-native"}},
+        "required": ["execution_domain"]
+      },
+      "then": {
+        "not": {"required": ["distro"]},
+        "properties": {"platform": {"const": "linux"}}
+      }
+    },
+    {
+      "if": {
+        "properties": {"platform": {"const": "macos"}},
+        "required": ["platform"]
+      },
+      "then": {"properties": {"execution_domain": {"const": "unsupported"}}}
+    },
+    {
+      "if": {
+        "properties": {"execution_domain": {"const": "unsupported"}},
+        "required": ["execution_domain"]
+      },
+      "then": {
+        "required": ["platform"],
+        "properties": {"platform": {"const": "macos"}}
+      }
+    },
+    {
+      "if": {
+        "properties": {"posture": {"const": "fixture"}},
+        "required": ["posture"]
+      },
+      "then": {"required": ["fixture_scenario"]}
+    },
+    {
+      "if": {
+        "properties": {"posture": {"const": "live"}},
+        "required": ["posture"]
+      },
+      "then": {"not": {"required": ["fixture_scenario"]}}
+    }
   ]
 }
