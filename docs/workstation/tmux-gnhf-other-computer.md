@@ -33,7 +33,7 @@ It does **not** authenticate coding agents, call a paid model, or prove that an 
 
 ## Before beginning
 
-Use the computer's administrator account when Windows installation policy requires it.
+Use the daily Windows account that will own the WSL distribution and coding workspace. Elevate that account when Windows installation policy requires it. Avoid creating the daily WSL profile under a separate administrator-only account.
 
 Required or automatically planned:
 
@@ -87,7 +87,7 @@ Important defaults:
 
 - WSL distribution: `Ubuntu`;
 - tmux session: `dev`;
-- GNHF default agent: `opencode`;
+- GNHF fallback/default agent: `opencode`;
 - GNHF telemetry: disabled;
 - worktree mode: enabled;
 - automatic push: disabled;
@@ -95,6 +95,8 @@ Important defaults:
 - maximum tokens: 5,000,000.
 
 The runtime caps are placed in `gnhf-safe` because GNHF documents iteration and token caps as runtime-only flags rather than persistent `config.yml` values.
+
+The manifest default is a fallback, not a permanent model-routing policy. A separate concurrent AgentSwitchboard lane owns dynamic agent/model selection based on token availability and token management. This workstation lane is designed to consume that lane's evidence without replacing its policy.
 
 ## 3. Run the read-only plan
 
@@ -112,7 +114,7 @@ No `-Apply` switch means plan mode. Review the output for:
 - the selected distribution;
 - packages that would be installed;
 - Node and npm posture;
-- GNHF and OpenCode posture;
+- GNHF and fallback-agent posture;
 - WezTerm installation;
 - configuration replacement or preservation decisions;
 - shortcut and persistent-workspace actions.
@@ -198,6 +200,8 @@ AgentSwitchboard does not automate account authentication. Follow the selected a
 
 For OpenCode, confirm that a usable provider is configured before starting an unattended GNHF run. A version response only proves command availability, not authentication or model readiness.
 
+When the concurrent token/model router selects another ready agent or model, use that selection. The workstation setup must not force OpenCode after a routing decision has been produced.
+
 ## 8. Run a bounded GNHF sprint
 
 GNHF must be run from a Git repository with a clean working tree. The managed wrapper uses worktree isolation, does not push, prevents sleep, and applies the configured iteration and token caps.
@@ -239,7 +243,84 @@ Check status without opening the GUI:
 
 A command acknowledgment is not proof of persistence. Confirm that the same tmux windows return after closing and reopening WezTerm.
 
-## 10. Stop the persistent workspace intentionally
+## 10. Runtime proof collector
+
+The repo-owned runtime collector automates the evidence chain that can be verified safely. It requires a clean AgentSwitchboard checkout, runs targeted contracts first, uses the generated Start and Status scripts, bounds waits, creates a disposable tmux marker window, verifies detach survival, relaunches WezTerm, and confirms the same marker exists after reattach.
+
+The collector asks the operator to attest only the two things that cannot be proven from process metadata alone:
+
+- the Bash/tmux surface was visibly ready;
+- one harmless agent interaction was actually observed.
+
+It does not capture the interaction, prompt, response, credentials, or account data.
+
+### WINDOWS POWERSHELL 7
+
+Run after installation from a clean AgentSwitchboard checkout:
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass `
+  -File .\tooling\wsl\Invoke-TmuxGnhfRuntimeProof.ps1 `
+  -ManifestPath .\tooling\wsl\tmux-gnhf-workstation.local.json
+```
+
+The collector writes local evidence under:
+
+```text
+%LOCALAPPDATA%\AgentSwitchboard\tmux-gnhf\runtime-proof\<timestamp>\
+  runtime-proof.json
+  runtime-events.jsonl
+```
+
+The files remain local and must not be committed. The result names the exact proof level reached:
+
+- `preflight-only`;
+- `targeted-static-validation`;
+- `launcher-and-command-ack`;
+- `live-session-persistence`;
+- `live-runtime-observed`.
+
+A version response or command ACK alone cannot produce `live-runtime-observed`.
+
+## 11. Routing evidence from the concurrent model/token sprint
+
+Dynamic switching between agents or models based on token availability is owned by a separate concurrent sprint. That lane remains authoritative for:
+
+- availability and quota discovery;
+- token-budget policy;
+- model and agent selection;
+- switch reasons;
+- fallback order;
+- provider-specific readiness.
+
+This workstation/runtime lane must welcome and consume those changes rather than duplicate them.
+
+When the router emits a JSON evidence artifact, pass it to the runtime collector:
+
+### WINDOWS POWERSHELL 7
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass `
+  -File .\tooling\wsl\Invoke-TmuxGnhfRuntimeProof.ps1 `
+  -ManifestPath .\tooling\wsl\tmux-gnhf-workstation.local.json `
+  -RoutingEvidencePath <path-to-router-evidence.json>
+```
+
+`<path-to-router-evidence.json>` is a path placeholder. Replace it with the actual local artifact path produced by the routing sprint.
+
+The collector treats the routing artifact as external evidence. It records only:
+
+- selected agent when exposed;
+- selected model when exposed;
+- token availability when exposed;
+- switch reason when exposed;
+- SHA-256 hash of the evidence file.
+
+It does not rewrite the routing file, choose a different model, consume tokens, authenticate providers, or persist token values beyond the normalized availability field supplied by the routing contract. If no routing evidence is supplied, the manifest's default agent is used only as a fallback for the version/ACK probe.
+
+The integration should be merged by contract adaptation, not by one sprint taking ownership of the other's files. When the concurrent branch lands, update accepted property names or schema validation in the collector while preserving the router as the canonical policy owner.
+
+## 12. Stop the persistent workspace intentionally
 
 Stopping the workspace terminates the tmux session and any agents running inside it.
 
@@ -264,7 +345,8 @@ PowerShell displays a high-impact confirmation prompt. Do not run the Stop scrip
 - The first live run may require a Windows reboot before WSL is usable.
 - Existing unmanaged WezTerm and GNHF configurations are preserved, which may require manual review before replacement.
 - GNHF installation does not authenticate an agent or configure paid-provider credentials.
-- `gnhf-safe` defaults to OpenCode. Other agents require explicit AgentSwitchboard integration and readiness proof.
+- The default manifest still names OpenCode as a fallback until the concurrent routing contract is merged and supplied at runtime.
+- The runtime collector accepts routing evidence flexibly, but the exact schema must be tightened after the concurrent sprint publishes its final contract.
 - The WSL keepalive preserves tmux only while Windows is running. A Windows restart ends the session.
 - Native Linux and WSL are separate execution domains; success in WSL is not native-Linux proof.
 - The generated workspace status proves processes and tmux metadata, not that an agent is responsive.
@@ -275,18 +357,22 @@ PowerShell displays a high-impact confirmation prompt. Do not run the Stop scrip
 - Unattended coding agents can make incorrect or overly broad changes even when isolated in worktrees.
 - GNHF may reset ordinary failed iterations. Never point it at unknown uncommitted work.
 - Large iteration or token caps can consume significant provider quota.
-- Windows-to-WSL executable bridges can have path, signal, and terminal-mode differences. The managed GNHF default uses a WSL-native OpenCode installation instead.
+- A model/token router can change the selected execution backend between runs; runtime evidence must record the actual selection used.
+- Windows-to-WSL executable bridges can have path, signal, and terminal-mode differences. Prefer WSL-native commands when the routing contract marks them healthy.
 - Killing WSL, ending the keepalive, or running the Stop script terminates the persistent tmux workspace.
 
 ## Next steps after installation
 
-1. Prove detach, close, reopen, and same-session recovery.
-2. Prove the selected agent responds inside tmux.
-3. Run one small GNHF worktree sprint with low caps.
-4. Review every generated commit and the GNHF exit summary.
-5. Record exact failures in AgentSwitchboard fixtures and validators.
-6. Only then consider additional agents, larger caps, multiple parallel worktrees, or scheduled unattended runs.
+1. Run the repo-owned runtime proof collector.
+2. Prove detach, close, reopen, and same-session recovery.
+3. Prove the selected agent responds inside tmux.
+4. Supply the concurrent model/token router's evidence artifact when available.
+5. Run one small GNHF worktree sprint with low caps.
+6. Review every generated commit and the GNHF exit summary.
+7. Record exact failures in AgentSwitchboard fixtures and validators.
+8. Merge the routing integration by consuming its published contract, without duplicating its policy.
+9. Only then consider larger caps, multiple parallel worktrees, or scheduled unattended runs.
 
 ## Impact
 
-Once live proof is complete, the setup removes the need to remember which terminal receives which command. A new Windows machine can be prepared through one plan/apply entrypoint, while AgentSwitchboard preserves configuration boundaries, GNHF uses bounded worktrees, tmux provides persistent sessions, and all authentication remains an explicit human action.
+Once live proof is complete, the setup removes the need to remember which terminal receives which command. A new Windows machine can be prepared through one plan/apply entrypoint, while AgentSwitchboard preserves configuration boundaries, GNHF uses bounded worktrees, tmux provides persistent sessions, dynamic model/token routing can select an available backend through its own contract, and all authentication remains an explicit human action.
