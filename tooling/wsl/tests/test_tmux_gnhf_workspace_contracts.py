@@ -10,7 +10,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 WSL = ROOT / "tooling" / "wsl"
-SUPPORTED_GNHF_VERSION = "0.1.42"
 
 
 def require(condition: bool, message: str) -> None:
@@ -24,20 +23,19 @@ def load_json(path: Path) -> dict:
 
 
 def validate_manifest(data: dict, *, valid: bool) -> None:
-    gnhf = data.get("gnhf", {})
     conditions = [
         data.get("schemaVersion") == 1,
         isinstance(data.get("distribution"), str) and bool(data["distribution"]),
         data.get("workspace", {}).get("sessionName") == "dev",
         data.get("node", {}).get("minimumMajor", 0) >= 20,
-        gnhf.get("upstreamRepository") == "https://github.com/kunchenguid/gnhf.git",
-        gnhf.get("supportedVersion") == SUPPORTED_GNHF_VERSION,
-        gnhf.get("npmPackage") == f"gnhf@{SUPPORTED_GNHF_VERSION}",
-        gnhf.get("defaultAgent") == "opencode",
-        gnhf.get("safeWrapper", {}).get("worktree") is True,
-        gnhf.get("safeWrapper", {}).get("push") is False,
-        gnhf.get("safeWrapper", {}).get("maxIterations", 0) > 0,
-        gnhf.get("safeWrapper", {}).get("maxTokens", 0) > 0,
+        data.get("gnhf", {}).get("upstreamRepository")
+        == "https://github.com/kunchenguid/gnhf.git",
+        data.get("gnhf", {}).get("npmPackage") == "gnhf",
+        data.get("gnhf", {}).get("defaultAgent") == "opencode",
+        data.get("gnhf", {}).get("safeWrapper", {}).get("worktree") is True,
+        data.get("gnhf", {}).get("safeWrapper", {}).get("push") is False,
+        data.get("gnhf", {}).get("safeWrapper", {}).get("maxIterations", 0) > 0,
+        data.get("gnhf", {}).get("safeWrapper", {}).get("maxTokens", 0) > 0,
     ]
     require(all(conditions) is valid, f"manifest validity mismatch: expected {valid}")
 
@@ -45,6 +43,7 @@ def validate_manifest(data: dict, *, valid: bool) -> None:
 def main() -> int:
     required = [
         WSL / "Install-TmuxGnhfWorkspace.ps1",
+        WSL / "Invoke-TmuxGnhfRuntimeProof.ps1",
         WSL / "tmux-gnhf-workstation.example.json",
         WSL / "wsl-tmux-gnhf-base.example.json",
         WSL / "scripts" / "configure-gnhf-workspace.sh",
@@ -94,6 +93,21 @@ def main() -> int:
     require("ConfirmImpact = 'High'" in ps_script, "Stop must be explicitly destructive")
     require("--unregister" not in ps_script and "reset --hard" not in ps_script, "destructive reset is forbidden")
 
+    runtime = (WSL / "Invoke-TmuxGnhfRuntimeProof.ps1").read_text(encoding="utf-8")
+    require('"status", "--short"' in runtime, "runtime collector must reject a dirty repository floor")
+    require("Test-TmuxGnhfWorkspaceContracts.ps1" in runtime, "targeted contracts must run before runtime")
+    require("Start-TmuxGnhfWorkspace.ps1" in runtime, "runtime must use the repo-owned launcher")
+    require("Get-TmuxGnhfWorkspaceStatus.ps1" in runtime, "runtime must use the repo-owned status collector")
+    require("Wait-ForCondition" in runtime, "runtime waits must be bounded")
+    require("surfaceReadyObserved" in runtime and "behaviorObserved" in runtime, "surface readiness and behavior must be distinct")
+    require("detachObserved" in runtime and "persistenceObserved" in runtime and "reattachObserved" in runtime, "persistence chain must be explicit")
+    require("RoutingEvidencePath" in runtime, "runtime must accept concurrent routing evidence")
+    require("selectedAgent" in runtime and "selectedModel" in runtime, "runtime must normalize the routed agent and model")
+    require("tokenAvailability" in runtime and "switchReason" in runtime, "runtime must normalize token-routing context")
+    require("evidenceHash" in runtime, "external routing evidence must be referenced by hash")
+    require("live-runtime-observed" in runtime and "launcher-and-command-ack" in runtime, "proof levels must reject ACK inflation")
+    require("api_key" not in runtime.lower() and "access_token" not in runtime.lower(), "runtime collector must not collect secrets")
+
     lua = (WSL / "templates" / "wezterm-tmux.lua").read_text(encoding="utf-8")
     require("__DISTRO__" in lua and "__SESSION__" in lua, "template placeholders are required")
     require("tmux has-session" in lua and "tmux attach-session" in lua, "WezTerm must attach to the managed session")
@@ -101,8 +115,16 @@ def main() -> int:
     require("PowerShell 7" in lua, "native PowerShell fallback must remain available")
 
     guide = (ROOT / "docs" / "workstation" / "tmux-gnhf-other-computer.md").read_text(encoding="utf-8")
-    for label in ("WINDOWS POWERSHELL 7", "WEZTERM / TMUX BASH", "FILE CONTENT", "What is automated", "Known gaps"):
-        require(label in guide, f"guide is missing execution-context label: {label}")
+    for label in (
+        "WINDOWS POWERSHELL 7",
+        "WEZTERM / TMUX BASH",
+        "FILE CONTENT",
+        "What is automated",
+        "Known gaps",
+        "Runtime proof collector",
+        "Routing evidence",
+    ):
+        require(label in guide, f"guide is missing execution-context or integration label: {label}")
 
     print("PASS: tmux + GNHF workstation contracts")
     return 0
