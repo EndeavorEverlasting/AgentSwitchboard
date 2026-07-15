@@ -227,7 +227,7 @@ try {
     if ($ModelProfileId) { Write-Host "Profile:    $ModelProfileId" }
     if ($ModelId) { Write-Host "Model:      $ModelId" }
     Write-Host "Iterations: $MaxIterations"
-    Write-Host "Token cap:  $MaxTokens"
+    Write-Host "Budget:     $MaxTokens"
     Write-Host "Push:       $([bool]$PushBranch)"
     Write-Host "Stop when:  $StopWhen"
     Write-Host "`nRecent commits:"
