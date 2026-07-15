@@ -197,7 +197,13 @@ def test_windows_wsl_live_install_and_bridge_probe_stay_in_selected_distro():
     request = load(REQUESTS / "v2-bridge.json")
     request["operation"] = "install-missing"
     observed = []
-    original = contract.subprocess.run
+    original_run = contract.subprocess.run
+    original_converter = contract._windows_path_to_wsl
+
+    def fake_path_converter(distro, path):
+        assert distro == "Ubuntu"
+        assert path.name == "install-agent-wrappers.sh"
+        return "/mnt/c/repo/tooling/wsl/scripts/install-agent-wrappers.sh"
 
     def fake_run(command, **kwargs):
         observed.append(command)
@@ -217,11 +223,13 @@ def test_windows_wsl_live_install_and_bridge_probe_stay_in_selected_distro():
             return subprocess.CompletedProcess(command, 0, "bridge fixture 1.0\n", "")
         raise AssertionError(f"unexpected subprocess command: {command!r}")
 
+    contract._windows_path_to_wsl = fake_path_converter
     contract.subprocess.run = fake_run
     try:
         result = contract.run_live(request, ROOT)
     finally:
-        contract.subprocess.run = original
+        contract.subprocess.run = original_run
+        contract._windows_path_to_wsl = original_converter
     assert result["overall_status"] == "pass"
     assert result["proof"]["installation_observed"] is True
     assert all(row["selected_backend"] == "bridge" for row in result["agents"].values())
