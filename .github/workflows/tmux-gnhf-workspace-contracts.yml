@@ -3,8 +3,10 @@ name: tmux GNHF workstation contracts
 on:
   pull_request:
     paths:
+      - "Setup-TmuxGnhfWorkspace.cmd"
       - "tooling/wsl/**"
       - "docs/workstation/tmux-gnhf-other-computer.md"
+      - "docs/workstation/tmux-gnhf-technician-quickstart.md"
       - ".github/workflows/tmux-gnhf-workspace-contracts.yml"
   workflow_dispatch:
 
@@ -48,6 +50,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           foreach ($path in @(
+            './tooling/wsl/Start-TmuxGnhfWorkspaceSetup.ps1',
             './tooling/wsl/Install-TmuxGnhfWorkspace.ps1',
             './tooling/wsl/Invoke-TmuxGnhfRuntimeProof.ps1',
             './tooling/wsl/Test-TmuxGnhfWorkspaceContracts.ps1'
@@ -73,7 +76,9 @@ jobs:
 
       - name: Validate Bash syntax
         shell: bash
-        run: bash -n tooling/wsl/scripts/configure-gnhf-workspace.sh
+        run: |
+          bash -n tooling/wsl/scripts/bootstrap-agent-workstation.sh
+          bash -n tooling/wsl/scripts/configure-gnhf-workspace.sh
 
       - name: Run Python contracts
         shell: pwsh
