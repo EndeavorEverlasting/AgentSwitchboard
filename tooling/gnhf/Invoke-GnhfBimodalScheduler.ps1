@@ -134,6 +134,9 @@ function Write-RoutingDecision {
     else {
         $null
     }
+    $selectedAgent = if ($Selection.selected) { [string]$Selection.selected.agent } else { $null }
+    $selectedModel = if ($Selection.selected -and $null -ne $Selection.selected.model) { [string]$Selection.selected.model } else { $null }
+    $tokenAvailability = if ($Selection.selected -and $Selection.selected.tokensKnown) { [long]$Selection.selected.tokensRemaining } else { $null }
 
     $decision = [ordered]@{
         schemaVersion = "agentswitchboard-gnhf-routing-decision/v1"
@@ -142,6 +145,10 @@ function Write-RoutingDecision {
         segment = $Segment
         mode = $EffectiveMode
         reason = [string]$Selection.reason
+        switchReason = [string]$Selection.reason
+        selectedAgent = $selectedAgent
+        selectedModel = $selectedModel
+        tokenAvailability = $tokenAvailability
         selectedProfile = $selected
         segmentBudget = if ($Selection.selected) { $TokenCap } else { $null }
         usageSnapshotHash = $SnapshotHash
