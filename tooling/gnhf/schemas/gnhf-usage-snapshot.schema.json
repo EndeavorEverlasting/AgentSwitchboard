@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/gnhf/schemas/gnhf-usage-snapshot.schema.json",
+  "title": "AgentSwitchboard GNHF usage snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "capturedAt", "profiles"],
+  "properties": {
+    "schemaVersion": { "const": "agentswitchboard-gnhf-usage/v1" },
+    "capturedAt": { "type": "string", "format": "date-time" },
+    "source": { "type": "string", "minLength": 1 },
+    "profiles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["profileId", "ready", "authenticated"],
+        "properties": {
+          "profileId": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$" },
+          "agent": { "type": ["string", "null"] },
+          "model": { "type": ["string", "null"] },
+          "ready": { "type": "boolean" },
+          "authenticated": { "type": "boolean" },
+          "tokensRemaining": { "type": ["integer", "null"], "minimum": 0 },
+          "tokenCapacity": { "type": ["integer", "null"], "minimum": 0 },
+          "resetAt": { "type": ["string", "null"], "format": "date-time" },
+          "blockedReason": { "type": ["string", "null"] },
+          "evidence": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}
