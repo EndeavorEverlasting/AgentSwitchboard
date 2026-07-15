@@ -1,8 +1,13 @@
 {
-  "schema_version": "agentswitchboard-invocation/v1",
-  "execution_profile_id": "wsl-tmux",
+  "schema_version": "agentswitchboard-invocation/v2",
   "platform": "windows",
+  "execution_domain": "windows-wsl",
+  "distro": "Ubuntu",
   "requested_agents": ["goose"],
   "operation": "smoke",
-  "fixture_mode": true
+  "install_missing_only": true,
+  "native_preference": true,
+  "bridge_permission": false,
+  "posture": "fixture",
+  "fixture_scenario": "native"
 }
