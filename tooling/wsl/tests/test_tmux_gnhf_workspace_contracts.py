@@ -110,6 +110,7 @@ def main() -> int:
         'setup-runs',
         'operator-summary.json',
         'Get-TmuxGnhfWorkspaceStatus.ps1',
+        'Replace([string][char]0, [string]::Empty)',
     ):
         require(token in guided, f"guided setup is missing contract token: {token}")
     require("--unregister" not in guided and "--push" not in guided and "git.exe push" not in guided.lower(), "guided setup must not reset WSL or execute Git push")
