@@ -43,6 +43,8 @@ The bridge passes no `--model` argument by default. That is intentional: AGY ret
 
 Before opening GNHF, the sprint launcher performs one tiny read-only AGY plan-mode request. When AGY returns an explicit message such as `Individual quota reached`, the launcher records `quota-exhausted` and exits before GNHF can retry the same failed prompt.
 
+The launch decision is an explicit Boolean gate and does not reuse a process exit code as control state. Preflight classifications use stable launcher exit codes: 75 for quota exhaustion, 76 for rate limiting, 77 for authentication required, and 78 for an unclassified agent response. This prevents an AGY exit code of 1 from being mistaken for "GNHF has not run yet."
+
 The router then verifies that:
 
 1. the base repository remains clean and at the same commit;
@@ -50,6 +52,14 @@ The router then verifies that:
 3. no new worktree remains for review.
 
 Only after those checks does it continue to the next route. Authentication failures, rate limits, network faults, validation errors, malformed output, and generic agent failures stop the run.
+
+Run the deterministic Windows regression proof with:
+
+```powershell
+pwsh -NoLogo -NoProfile -File .\tooling\gnhf\tests\Test-GnhfFailFastRuntime.ps1
+```
+
+The test uses temporary repositories and fake commands. It proves a quota response that exits 1 does not invoke GNHF or create a GNHF branch/worktree, then proves fallback occurs after the no-mutation gate and is accepted only with a commit ahead of the base.
 
 ## Run a bounded routed proof
 
