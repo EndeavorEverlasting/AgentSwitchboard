@@ -1,0 +1,15 @@
+{
+  "kind": "desktop-gnhf-runtime-result",
+  "schemaVersion": 1,
+  "status": "blocked",
+  "targetState": { "clean": false, "detached": false, "branch": "main", "baseCommit": "1111111" },
+  "spawn": { "acknowledged": false, "processId": null },
+  "process": { "exitCode": null },
+  "commitProof": { "required": true, "observed": false, "branch": null, "headCommit": null, "commitsAhead": 0 },
+  "artifacts": [],
+  "validation": [],
+  "blocker": { "code": "DIRTY_TARGET", "evidence": "Preflight observed tracked target changes before process spawn." },
+  "proofLevel": "preflight-only",
+  "proofCeiling": "Target cleanliness preflight only; no process, worktree, artifact, or commit was observed.",
+  "exactNextCommand": "git status --short"
+}

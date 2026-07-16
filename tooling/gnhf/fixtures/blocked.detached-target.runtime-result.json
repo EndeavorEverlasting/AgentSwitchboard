@@ -1,0 +1,15 @@
+{
+  "kind": "desktop-gnhf-runtime-result",
+  "schemaVersion": 1,
+  "status": "blocked",
+  "targetState": { "clean": true, "detached": true, "branch": null, "baseCommit": "1111111" },
+  "spawn": { "acknowledged": false, "processId": null },
+  "process": { "exitCode": null },
+  "commitProof": { "required": true, "observed": false, "branch": null, "headCommit": null, "commitsAhead": 0 },
+  "artifacts": [],
+  "validation": [],
+  "blocker": { "code": "DETACHED_HEAD", "evidence": "Preflight found no attached target branch." },
+  "proofLevel": "preflight-only",
+  "proofCeiling": "Target branch preflight only; no process, worktree, artifact, or commit was observed.",
+  "exactNextCommand": "git switch main"
+}

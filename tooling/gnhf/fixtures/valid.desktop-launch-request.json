@@ -1,0 +1,11 @@
+{
+  "kind": "desktop-gnhf-launch-request",
+  "schemaVersion": 1,
+  "requestPath": "tooling/gnhf/fixtures/desktop-gnhf-proof.request.md",
+  "compiledPromptPath": "tooling/gnhf/fixtures/desktop-gnhf-proof.compiled.txt",
+  "targetRepo": "__TARGET_REPO__",
+  "executionMode": "disposable-proof",
+  "requireCleanTarget": true,
+  "visiblePromptEmission": true,
+  "timeoutSeconds": 600
+}

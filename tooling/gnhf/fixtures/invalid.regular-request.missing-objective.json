@@ -1,0 +1,15 @@
+{
+  "kind": "regular-sprint-request",
+  "schemaVersion": 1,
+  "repository": {
+    "name": "desktop-gnhf-disposable-proof",
+    "remote": "https://github.com/EndeavorEverlasting/AgentSwitchboard",
+    "localPath": "__TARGET_REPO__",
+    "branchContext": "Use an isolated worktree."
+  },
+  "ownedScope": ["proof/gnhf-desktop-proof.txt"],
+  "forbiddenScope": ["All other paths"],
+  "expectedArtifacts": ["Committed proof artifact"],
+  "safetyConstraints": ["Do not push, merge, deploy, or handle credentials"],
+  "desiredProofLevel": "local-workstation-observed"
+}
