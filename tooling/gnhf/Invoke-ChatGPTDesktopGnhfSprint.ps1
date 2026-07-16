@@ -35,6 +35,8 @@ $executionMode = if ($Run) { "run" } else { "plan" }
 $nonce = [guid]::NewGuid().ToString("N")
 $requestDocument = $null
 $compiledDocument = $null
+$launchRequest = $null
+$launchRequestValidation = $null
 $renderedPrompt = $null
 $resolvedTargetRepo = $null
 $baseBranch = $null
@@ -98,6 +100,7 @@ $validationSummary = [ordered]@{
     exactChangedFiles = $false
     worktreeClean = $false
     baseClean = $false
+    resultContractValid = $false
 }
 
 function Write-AtomicJson {
@@ -360,15 +363,35 @@ try {
     $inside = Invoke-Git -Repository $resolvedTargetRepo -Arguments @("rev-parse", "--is-inside-work-tree")
     if ($inside.Stdout.Trim() -ne "true") { throw "Target is not a Git worktree: $resolvedTargetRepo" }
     $targetStatus = Invoke-Git -Repository $resolvedTargetRepo -Arguments @("status", "--short")
-    if (-not [string]::IsNullOrWhiteSpace($targetStatus.Stdout)) { throw "Target repository must be clean before launch." }
+    if (-not [string]::IsNullOrWhiteSpace($targetStatus.Stdout)) {
+        $script:failureClassification = "dirty-target-blocker"
+        throw "Target repository must be clean before launch."
+    }
     $validationSummary.targetClean = $true
     $baseBranch = (Invoke-Git -Repository $resolvedTargetRepo -Arguments @("branch", "--show-current")).Stdout.Trim()
-    if ([string]::IsNullOrWhiteSpace($baseBranch)) { throw "Detached target repositories cannot be launched." }
+    if ([string]::IsNullOrWhiteSpace($baseBranch)) {
+        $script:failureClassification = "detached-target-blocker"
+        throw "Detached target repositories cannot be launched."
+    }
     if ([string]$compiledDocument.gitExecution.baseBranch -cne $baseBranch) {
         throw "Compiled base branch '$($compiledDocument.gitExecution.baseBranch)' does not match target branch '$baseBranch'."
     }
     $validationSummary.targetAttached = $true
     $baseCommit = (Invoke-Git -Repository $resolvedTargetRepo -Arguments @("rev-parse", "HEAD")).Stdout.Trim()
+
+    $launchRequest = [pscustomobject][ordered]@{
+        kind = "desktop-gnhf-launch-request"
+        schemaVersion = 1
+        requestPath = $RequestPath
+        compiledPromptPath = $CompiledPromptPath
+        targetRepo = $resolvedTargetRepo
+        executionMode = if ($Run -and $CreateDisposableProofRepo) { "disposable-proof" } elseif ($Run) { "run" } else { "plan" }
+        requireCleanTarget = $true
+        visiblePromptEmission = $true
+        timeoutSeconds = [int]$compiledDocument.bounds.timeoutSeconds
+    }
+    $launchRequestValidation = Test-GnhfPromptContract -Document $launchRequest -ExpectedKind "desktop-gnhf-launch-request"
+    if (-not $launchRequestValidation.Valid) { throw "Desktop launch request contract failed: $($launchRequestValidation.Errors -join '; ')" }
 
     $renderedPrompt = Render-CompiledPrompt -PromptText ([string]$compiledDocument.prompt) -Repository $resolvedTargetRepo -ProofNonce $nonce
     Set-Content -LiteralPath $compiledEvidencePath -Value $renderedPrompt -Encoding utf8NoBOM
@@ -376,6 +399,7 @@ try {
         schemaVersion = 1
         request = [ordered]@{ kind=$requestValidation.Kind; valid=$requestValidation.Valid; sha256=(Get-Sha256 $requestText); errors=@($requestValidation.Errors) }
         compiledPrompt = [ordered]@{ kind=$compiledValidation.Kind; valid=$compiledValidation.Valid; sourceSha256=(Get-Sha256 $compiledText); renderedPromptSha256=(Get-Sha256 $renderedPrompt); errors=@($compiledValidation.Errors) }
+        launchRequest = [ordered]@{ kind=$launchRequestValidation.Kind; valid=$launchRequestValidation.Valid; errors=@($launchRequestValidation.Errors) }
         targetRepo = $resolvedTargetRepo
         nonce = $nonce
     }
@@ -488,15 +512,84 @@ catch {
 }
 finally {
     $launchResult.completedAt = (Get-Date).ToString("o")
-    Write-AtomicJson -Value $proof -Path $worktreeProofPath
-    Write-AtomicJson -Value $validationSummary -Path $validationSummaryPath
-    Write-AtomicJson -Value $launchResult -Path $launchResultPath
     $nextCommand = if ($compiledDocument -and $compiledDocument.PSObject.Properties.Name -contains "nextCommand") {
         [string]$compiledDocument.nextCommand
     }
     else {
         "Review $launchResultPath"
     }
+    $evidenceResult = $null
+    if (-not $Run -and $exitCode -eq 0 -and $launchRequest) {
+        $evidenceResult = $launchRequest
+    }
+    else {
+        $runtimeStatus = if ($exitCode -eq 0) {
+            "succeeded"
+        }
+        elseif ($script:failureClassification -in @("dirty-target-blocker", "detached-target-blocker", "spawn-preflight-blocker", "quota-exhausted-blocker")) {
+            "blocked"
+        }
+        else {
+            "failed"
+        }
+        $artifactResults = @($proof.expectedArtifacts | ForEach-Object {
+            [pscustomobject][ordered]@{ path=[string]$_; observed=($exitCode -eq 0 -and $proof.artifactProof) }
+        })
+        $validationResults = @(
+            [pscustomobject][ordered]@{ command="prompt contracts"; result=$(if ($validationSummary.requestValid -and $validationSummary.compiledPromptValid) { "passed" } else { "failed" }) },
+            [pscustomobject][ordered]@{ command="workstation plan"; result=$(if ($validationSummary.workstationPlanPassed) { "passed" } else { "skipped" }) },
+            [pscustomobject][ordered]@{ command="visible prompt emission"; result=$(if ($validationSummary.visiblePromptEmitted) { "passed" } else { "skipped" }) },
+            [pscustomobject][ordered]@{ command="git diff --check and proof verification"; result=$(if ($validationSummary.exactChangedFiles -and $validationSummary.expectedArtifactsCommitted) { "passed" } elseif ($Run -and $launchResult.startAcknowledged) { "failed" } else { "skipped" }) }
+        )
+        $evidenceResult = [ordered]@{
+            kind = "desktop-gnhf-runtime-result"
+            schemaVersion = 1
+            status = $runtimeStatus
+            targetState = [ordered]@{
+                clean = [bool]$validationSummary.targetClean
+                detached = (-not [bool]$validationSummary.targetAttached)
+                branch = if ($baseBranch) { $baseBranch } else { $null }
+                baseCommit = if ($baseCommit -match '^[0-9a-f]{7,40}$') { $baseCommit } else { "0000000" }
+            }
+            spawn = [ordered]@{ acknowledged=[bool]$launchResult.startAcknowledged; processId=$null }
+            process = [ordered]@{ exitCode=$launchResult.processExitCode }
+            commitProof = [ordered]@{
+                required = $true
+                observed = ($exitCode -eq 0 -and [bool]$proof.commit)
+                branch = $proof.branch
+                headCommit = $proof.commit
+                commitsAhead = [int]$proof.commitsAhead
+            }
+            artifacts = $artifactResults
+            validation = $validationResults
+            proofLevel = if ($exitCode -eq 0) { [string]$launchResult.proofLevel } elseif ($launchResult.startAcknowledged) { "process-observed" } else { "preflight-only" }
+            proofCeiling = [string]$launchResult.proofCeiling
+            exactNextCommand = $nextCommand
+        }
+        if ($runtimeStatus -eq "blocked") {
+            $blockerCode = switch ($script:failureClassification) {
+                "dirty-target-blocker" { "DIRTY_TARGET" }
+                "detached-target-blocker" { "DETACHED_HEAD" }
+                "quota-exhausted-blocker" { "QUOTA_EXHAUSTED" }
+                default { "SPAWN_PREFLIGHT_BLOCKED" }
+            }
+            $evidenceResult["blocker"] = [ordered]@{ code=$blockerCode; evidence=[string]$launchResult.error }
+        }
+    }
+    if (Get-Command Test-GnhfPromptContract -ErrorAction SilentlyContinue) {
+        $expectedResultKind = if ($evidenceResult.kind -eq "desktop-gnhf-launch-request") { "desktop-gnhf-launch-request" } else { "desktop-gnhf-runtime-result" }
+        $resultValidation = Test-GnhfPromptContract -Document ([pscustomobject]$evidenceResult) -ExpectedKind $expectedResultKind
+        $validationSummary.resultContractValid = [bool]$resultValidation.Valid
+        if (-not $resultValidation.Valid) {
+            $launchResult.status = "failed"
+            $launchResult.classification = "runtime-result-contract-failed"
+            $launchResult.error = $resultValidation.Errors -join "; "
+            $exitCode = 1
+        }
+    }
+    Write-AtomicJson -Value $proof -Path $worktreeProofPath
+    Write-AtomicJson -Value $validationSummary -Path $validationSummaryPath
+    Write-AtomicJson -Value $evidenceResult -Path $launchResultPath
     $handoff = @(
         "AgentSwitchboard ChatGPT Desktop GNHF sprint",
         "status: $($launchResult.status)",
