@@ -27,6 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Reject committed runtime evidence and secrets
         shell: bash
         run: |
@@ -35,5 +37,9 @@ jobs:
           ! grep -R -n -E 'DEEPSEEK_API_KEY|sk-[A-Za-z0-9_-]{12,}' \
             tooling/gnhf/Start-DeepSeekGnhfLiveProof.ps1 \
             tooling/gnhf/DEEPSEEK_LIVE_PROOF.md
-          git diff --check
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git diff --check "origin/${GITHUB_BASE_REF}...HEAD"
+          else
+            git diff --check HEAD^
+          fi
           test -z "$(git status --short)"
