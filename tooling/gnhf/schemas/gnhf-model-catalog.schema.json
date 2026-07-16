@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/gnhf/schemas/gnhf-model-catalog.schema.json",
+  "title": "AgentSwitchboard runtime model catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "capturedAt",
+    "source",
+    "authentication",
+    "providers",
+    "models"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "agentswitchboard-gnhf-model-catalog/v1"
+    },
+    "capturedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command",
+        "refresh",
+        "providerDirectoryHash"
+      ],
+      "properties": {
+        "command": {
+          "const": "opencode models --refresh"
+        },
+        "refresh": {
+          "type": "boolean"
+        },
+        "providerDirectoryHash": {
+          "type": "string",
+          "pattern": "^[A-Fa-f0-9]{64}$"
+        }
+      }
+    },
+    "authentication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command",
+        "reportedProviderIds"
+      ],
+      "properties": {
+        "command": {
+          "const": "opencode auth list"
+        },
+        "reportedProviderIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "providers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "providerId",
+          "documented",
+          "modelCount",
+          "authenticationStatus"
+        ],
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "displayName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "documented": {
+            "type": "boolean"
+          },
+          "modelCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "authenticationStatus": {
+            "enum": [
+              "reported",
+              "not-reported",
+              "unknown"
+            ]
+          }
+        }
+      }
+    },
+    "models": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "fullId",
+          "providerId",
+          "modelId",
+          "available",
+          "agentAdapters",
+          "routingTags"
+        ],
+        "properties": {
+          "fullId": {
+            "type": "string",
+            "pattern": "^[^/]+/.+$"
+          },
+          "providerId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "modelId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "agentAdapters": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "routingTags": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}
