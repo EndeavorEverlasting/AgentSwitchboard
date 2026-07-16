@@ -67,7 +67,15 @@ if not "%_setup_code%"=="0" (
   exit /b %_setup_code%
 )
 
-pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%ROOT%tooling\wsl\Install-WindowsWorkstationLiveProof.ps1" -SourceRoot "%ROOT%tooling\wsl" -ManifestPath "%ROOT%tooling\wsl\tmux-gnhf-workstation.example.json" -Apply -RunAfterInstall -Confirm:$false
+set "WORKSTATION_MANIFEST=%ROOT%tooling\wsl\tmux-gnhf-workstation.local.json"
+if not exist "%WORKSTATION_MANIFEST%" (
+  echo [FAIL] The computer-local workstation manifest was not created by phase 1:
+  echo        %WORKSTATION_MANIFEST%
+  pause >nul
+  exit /b 2
+)
+
+pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%ROOT%tooling\wsl\Install-WindowsWorkstationLiveProof.ps1" -SourceRoot "%ROOT%tooling\wsl" -ManifestPath "%WORKSTATION_MANIFEST%" -Apply -RunAfterInstall -Confirm:$false
 set "_code=%ERRORLEVEL%"
 if not "%_code%"=="0" (
   echo.
