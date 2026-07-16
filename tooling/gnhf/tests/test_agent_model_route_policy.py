@@ -57,6 +57,7 @@ def main() -> None:
     installer_text = INSTALLER.read_text(encoding="utf-8")
     bridge_text = BRIDGE.read_text(encoding="utf-8")
     doc_text = DOC.read_text(encoding="utf-8")
+    policy_text = POLICY.read_text(encoding="utf-8")
 
     assert "AGY quota is exhausted and no mutation was observed" in router_text
     assert "Test-NoMutationAfterFailure" in router_text
@@ -89,25 +90,26 @@ def main() -> None:
     assert "permanently" in doc_text.lower() and "model" in doc_text.lower()
     assert "flat" in doc_text.lower() and "pricing" in doc_text.lower()
 
-    combined = "\n".join(
-        (
-            router_text,
-            sprint_text,
-            installer_text,
-            bridge_text,
-            doc_text,
-            POLICY.read_text(encoding="utf-8"),
-        )
+    all_text = "\n".join(
+        (router_text, sprint_text, installer_text, bridge_text, doc_text, policy_text)
     )
-    forbidden = [
+    for pattern in (
         r"sk-[A-Za-z0-9]",
         r"api[_-]?key\s*[:=]\s*['\"][^'\"]+",
-        r"git\s+push",
-        r"--push\b",
         r"acp:agy\s+acp",
-    ]
-    for pattern in forbidden:
-        assert re.search(pattern, combined, flags=re.IGNORECASE) is None, pattern
+    ):
+        assert re.search(pattern, all_text, flags=re.IGNORECASE) is None, pattern
+
+    # Start-GnhfSprint keeps an explicit operator-only PushBranch switch for
+    # existing fleet workflows. The automatic router, installer, bridge, and
+    # policy must never request or advertise a push themselves.
+    automatic_routing_text = "\n".join(
+        (router_text, installer_text, bridge_text, policy_text)
+    )
+    for pattern in (r"git\s+push", r"--push\b"):
+        assert (
+            re.search(pattern, automatic_routing_text, flags=re.IGNORECASE) is None
+        ), pattern
 
     print("PASS: AgentSwitchboard quota-preserving agent model route contracts")
 
