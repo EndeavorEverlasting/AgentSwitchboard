@@ -70,14 +70,14 @@ jobs:
         shell: pwsh
         run: |
           ./tooling/wsl/Test-WindowsWorkstationLiveProofContracts.ps1 |
-            Tee-Object -FilePath windows-live-proof-contracts.log
+            Tee-Object -FilePath "$env:RUNNER_TEMP\windows-live-proof-contracts.log"
       - name: Run installer plan
         shell: pwsh
         run: |
           ./tooling/wsl/Install-WindowsWorkstationLiveProof.ps1 `
             -SourceRoot ./tooling/wsl `
             -ManifestPath ./tooling/wsl/tmux-gnhf-workstation.example.json |
-            Tee-Object -FilePath windows-live-proof-install-plan.log
+            Tee-Object -FilePath "$env:RUNNER_TEMP\windows-live-proof-install-plan.log"
       - name: Verify clean checkout
         shell: pwsh
         run: |
@@ -93,5 +93,5 @@ jobs:
         with:
           name: windows-workstation-live-proof-contracts
           path: |
-            windows-live-proof-contracts.log
-            windows-live-proof-install-plan.log
+            ${{ runner.temp }}/windows-live-proof-contracts.log
+            ${{ runner.temp }}/windows-live-proof-install-plan.log
