@@ -16,7 +16,8 @@ New-Item -ItemType Directory -Path $InstallRoot -Force | Out-Null
 
 $routerSource = Join-Path $PSScriptRoot "Start-AutoRoutedGnhfSprint.ps1"
 $policySource = Join-Path $PSScriptRoot "model-route-policy.example.json"
-foreach ($required in @($routerSource, $policySource)) {
+$agyBridgeSource = Join-Path $PSScriptRoot "Invoke-AgyPiBridge.ps1"
+foreach ($required in @($routerSource, $policySource, $agyBridgeSource)) {
     if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
         throw "Required router artifact not found: $required"
     }
@@ -25,9 +26,23 @@ foreach ($required in @($routerSource, $policySource)) {
 $routerTarget = Join-Path $InstallRoot "Start-AutoRoutedGnhfSprint.ps1"
 $policyExampleTarget = Join-Path $InstallRoot "model-route-policy.example.json"
 $policyTarget = Join-Path $InstallRoot "model-route-policy.json"
+$bridgeRoot = Join-Path $InstallRoot "agy-pi-bridge"
+$agyBridgeTarget = Join-Path $bridgeRoot "Invoke-AgyPiBridge.ps1"
+$piShimTarget = Join-Path $bridgeRoot "pi.cmd"
 
+New-Item -ItemType Directory -Path $bridgeRoot -Force | Out-Null
 Copy-Item -LiteralPath $routerSource -Destination $routerTarget -Force
 Copy-Item -LiteralPath $policySource -Destination $policyExampleTarget -Force
+Copy-Item -LiteralPath $agyBridgeSource -Destination $agyBridgeTarget -Force
+
+$piShim = @'
+@echo off
+setlocal
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0Invoke-AgyPiBridge.ps1" %*
+set "_code=%ERRORLEVEL%"
+endlocal & exit /b %_code%
+'@
+Set-Content -LiteralPath $piShimTarget -Value $piShim -Encoding ascii
 
 if ($ResetPolicy -or -not (Test-Path -LiteralPath $policyTarget -PathType Leaf)) {
     if (Test-Path -LiteralPath $policyTarget -PathType Leaf) {
@@ -42,7 +57,10 @@ else {
     Write-Host "Preserved customized model route policy: $policyTarget" -ForegroundColor Green
 }
 
-$null = Get-Content -LiteralPath $policyTarget -Raw | ConvertFrom-Json
+$policy = Get-Content -LiteralPath $policyTarget -Raw | ConvertFrom-Json
+if ($policy.schemaVersion -ne 2) {
+    Write-Warning "The preserved local model route policy uses schemaVersion $($policy.schemaVersion). Run with -ResetPolicy after reviewing the backup when you are ready to adopt quota-preserving routing."
+}
 
 $launcherPath = Join-Path $InstallRoot "agent-switchboard-auto.cmd"
 $launcher = @'
@@ -55,8 +73,10 @@ endlocal & exit /b %_code%
 Set-Content -LiteralPath $launcherPath -Value $launcher -Encoding ascii
 
 Write-Host "`nAgent/model router installed." -ForegroundColor Green
-Write-Host "Router:   $routerTarget"
-Write-Host "Policy:   $policyTarget"
-Write-Host "Launcher: $launcherPath"
+Write-Host "Router:     $routerTarget"
+Write-Host "Policy:     $policyTarget"
+Write-Host "AGY bridge: $agyBridgeTarget"
+Write-Host "Pi shim:    $piShimTarget"
+Write-Host "Launcher:   $launcherPath"
 Write-Host "`nList routes:"
 Write-Host "  & `"$launcherPath`" -ListRoutes" -ForegroundColor Cyan
