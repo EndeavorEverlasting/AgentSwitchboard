@@ -1,0 +1,45 @@
+name: GNHF DeepSeek live proof contracts
+
+on:
+  pull_request:
+    paths:
+      - "tooling/gnhf/Start-DeepSeekGnhfLiveProof.ps1"
+      - "tooling/gnhf/Start-DeepSeekGnhfLiveProof.cmd"
+      - "tooling/gnhf/Test-DeepSeekGnhfLiveProofContracts.ps1"
+      - "tooling/gnhf/DEEPSEEK_LIVE_PROOF.md"
+      - ".github/workflows/gnhf-deepseek-live-proof-contracts.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse and validate live proof contracts
+        shell: pwsh
+        run: |
+          ./tooling/gnhf/Test-DeepSeekGnhfLiveProofContracts.ps1
+
+  linux-hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reject committed runtime evidence and secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! git ls-files | grep -E '(^|/)(live-proofs|opencode-smoke|model-activation-observed|deepseek-live-proof-summary)(/|\.|$)'
+          ! grep -R -n -E 'DEEPSEEK_API_KEY|sk-[A-Za-z0-9_-]{12,}' \
+            tooling/gnhf/Start-DeepSeekGnhfLiveProof.ps1 \
+            tooling/gnhf/DEEPSEEK_LIVE_PROOF.md
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git diff --check "origin/${GITHUB_BASE_REF}...HEAD"
+          else
+            git diff --check HEAD^
+          fi
+          test -z "$(git status --short)"
