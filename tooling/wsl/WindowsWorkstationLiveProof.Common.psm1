@@ -20,7 +20,15 @@ function Invoke-ProofBoundedProcess {
     $process = [Diagnostics.Process]::new(); $process.StartInfo = $psi; [void]$process.Start()
     $stdoutTask = $process.StandardOutput.ReadToEndAsync(); $stderrTask = $process.StandardError.ReadToEndAsync()
     $timedOut = -not $process.WaitForExit($TimeoutSeconds * 1000)
-    if ($timedOut) { try { $process.Kill($true); $process.WaitForExit() } catch {} }
+    if ($timedOut) {
+        try { $process.Kill($true) }
+        catch { throw "Timed-out process could not be terminated: $FilePath. $($_.Exception.Message)" }
+        if (-not $process.WaitForExit(5000)) {
+            throw "Timed-out process tree did not exit within the bounded cleanup window: $FilePath"
+        }
+    }
+    if (-not $stdoutTask.Wait(5000)) { throw "Standard output did not drain within the bounded cleanup window: $FilePath" }
+    if (-not $stderrTask.Wait(5000)) { throw "Standard error did not drain within the bounded cleanup window: $FilePath" }
     $stdout = $stdoutTask.GetAwaiter().GetResult(); $stderr = $stderrTask.GetAwaiter().GetResult()
     [pscustomobject]@{
         ExitCode = if ($timedOut) { 124 } else { $process.ExitCode }
@@ -60,8 +68,8 @@ function ConvertTo-ProofWslPath {
     [CmdletBinding()]
     param([string]$WindowsPath)
     $resolved = [IO.Path]::GetFullPath($WindowsPath)
-    if ($resolved -notmatch '^(?<drive>[A-Za-z]):\\(?<rest>.*)$') { throw "Only drive-letter paths can be mapped to WSL: $resolved" }
-    "/mnt/$($Matches.drive.ToLowerInvariant())/$($Matches.rest -replace '\\','/')"
+    if ($resolved -notmatch '^(?<drive>[A-Za-z]):\(?<rest>.*)$') { throw "Only drive-letter paths can be mapped to WSL: $resolved" }
+    "/mnt/$($Matches.drive.ToLowerInvariant())/$($Matches.rest -replace '\','/')"
 }
 
 function Find-ProofWezTermCli {
