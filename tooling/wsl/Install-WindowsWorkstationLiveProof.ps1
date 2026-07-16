@@ -43,7 +43,7 @@ if ($sourceRepoExit -ne 0 -or -not $sourceRepo) {
     throw "SourceRoot is not inside an AgentSwitchboard Git checkout: $SourceRoot"
 }
 $sourceRepoPath = ([string]$sourceRepo[0]).Trim()
-$sourceStatus = @(& git -C $sourceRepoPath status --porcelain=v1 2>&1)
+$sourceStatus = @(& git -C $sourceRepoPath status --short 2>&1)
 $sourceStatusExit = $LASTEXITCODE
 $sourceStatus = @($sourceStatus | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
 if ($sourceStatusExit -ne 0 -or $sourceStatus.Count -gt 0) {
