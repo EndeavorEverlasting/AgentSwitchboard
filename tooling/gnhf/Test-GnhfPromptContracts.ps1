@@ -52,6 +52,7 @@ function Invoke-FixtureMutation {
 }
 
 $modulePath = Join-Path $PSScriptRoot "GnhfPromptContracts.psm1"
+$runtimePath = Join-Path $PSScriptRoot "Invoke-ChatGPTDesktopGnhfSprint.ps1"
 $schemaRoot = Join-Path $PSScriptRoot "schemas"
 $fixtureRoot = Join-Path $PSScriptRoot "fixtures"
 
@@ -59,6 +60,17 @@ $tokens = $null
 $parseErrors = $null
 [void][Management.Automation.Language.Parser]::ParseFile($modulePath, [ref]$tokens, [ref]$parseErrors)
 Assert-Contract ($parseErrors.Count -eq 0) "GnhfPromptContracts.psm1 must parse. $($parseErrors -join '; ')"
+
+$tokens = $null
+$parseErrors = $null
+[void][Management.Automation.Language.Parser]::ParseFile($runtimePath, [ref]$tokens, [ref]$parseErrors)
+Assert-Contract ($parseErrors.Count -eq 0) "Invoke-ChatGPTDesktopGnhfSprint.ps1 must parse. $($parseErrors -join '; ')"
+$runtimeText = Get-Content -LiteralPath $runtimePath -Raw
+Assert-Contract ($runtimeText.Contains('$validationSummary.baseClean = $proof.baseClean')) "Runtime evidence must report the same final base-clean observation in both artifacts."
+Assert-Contract ($runtimeText.Contains('$handoffProofLevel = if ($handoffIsRuntimeResult)')) "Operator handoff must use the versioned runtime result proof level."
+Assert-Contract ($runtimeText.Contains('gnhf_removed_failed_worktree_branch_retained_for_review')) "Failed-worktree cleanup by GNHF must be recorded as an explicit preservation gap."
+Assert-Contract ($runtimeText.Contains('provider error')) "A zero-token provider failure must classify as a route preflight blocker."
+Assert-Contract ($runtimeText.Contains('Expected exactly one changed GNHF branch')) "Runtime success must independently require branch, artifact, nonce, commit, and worktree proof."
 
 Import-Module $modulePath -Force
 

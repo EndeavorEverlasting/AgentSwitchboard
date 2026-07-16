@@ -43,6 +43,7 @@ $baseBranch = $null
 $baseCommit = $null
 $workstationPlan = $null
 $processResult = $null
+$beforeHeads = @{}
 $proof = [ordered]@{
     branch = $null
     worktree = $null
@@ -56,6 +57,9 @@ $proof = [ordered]@{
     baseClean = $false
     worktreeClean = $false
     sourceClean = $false
+    failedBranches = @()
+    failedWorktreePreserved = $null
+    preservationGap = $null
 }
 $launchResult = [ordered]@{
     schemaVersion = 1
@@ -462,7 +466,7 @@ try {
         if ($processResult.Stderr) { Write-Warning $processResult.Stderr }
         if ($processResult.ExitCode -ne 0) {
             if ($processResult.Output -match '(?i)(quota|usage limit|tokens? remaining|rate.?limit)') { $script:failureClassification = "quota-exhausted-blocker" }
-            elseif ($processResult.Output -match '(?i)(spawn|not found|unavailable|not ready|ENOENT)') { $script:failureClassification = "spawn-preflight-blocker" }
+            elseif ($processResult.Output -match '(?i)(spawn|provider error|not found|unavailable|not ready|ENOENT)') { $script:failureClassification = "spawn-preflight-blocker" }
             elseif ($processResult.TimedOut) { $script:failureClassification = "bounded-timeout" }
             else { $script:failureClassification = "gnhf-nonzero" }
             throw "The canonical GNHF launcher failed with exit code $($processResult.ExitCode)."
@@ -512,6 +516,42 @@ catch {
 }
 finally {
     $launchResult.completedAt = (Get-Date).ToString("o")
+    if ($resolvedTargetRepo -and (Test-Path -LiteralPath $resolvedTargetRepo -PathType Container)) {
+        try {
+            $finalBaseStatus = Invoke-Git -Repository $resolvedTargetRepo -Arguments @("status", "--short") -AllowFailure
+            $proof.baseClean = ($finalBaseStatus.ExitCode -eq 0 -and [string]::IsNullOrWhiteSpace($finalBaseStatus.Stdout))
+            $validationSummary.baseClean = $proof.baseClean
+            $launchResult.baseClean = $proof.baseClean
+            $finalSourceStatus = Invoke-Git -Repository $sourceRoot -Arguments @("status", "--short") -AllowFailure
+            $proof.sourceClean = ($finalSourceStatus.ExitCode -eq 0 -and [string]::IsNullOrWhiteSpace($finalSourceStatus.Stdout))
+
+            if ($Run -and $exitCode -ne 0) {
+                $failedBranches = [Collections.Generic.List[object]]::new()
+                $afterFailureHeads = Get-GnhfBranchHeads -Repository $resolvedTargetRepo
+                foreach ($failedBranch in $afterFailureHeads.Keys) {
+                    if ($beforeHeads.ContainsKey($failedBranch) -and $beforeHeads[$failedBranch] -eq $afterFailureHeads[$failedBranch]) { continue }
+                    $failedWorktree = Get-WorktreeForBranch -Repository $resolvedTargetRepo -Branch $failedBranch
+                    [void]$failedBranches.Add([pscustomobject][ordered]@{
+                        branch = $failedBranch
+                        headCommit = $afterFailureHeads[$failedBranch]
+                        atBaseCommit = ($afterFailureHeads[$failedBranch] -eq $baseCommit)
+                        worktree = $failedWorktree
+                        worktreePreserved = [bool]$failedWorktree
+                    })
+                }
+                $proof.failedBranches = @($failedBranches)
+                if ($failedBranches.Count -gt 0) {
+                    $proof.failedWorktreePreserved = @($failedBranches | Where-Object worktreePreserved).Count -gt 0
+                    if (-not $proof.failedWorktreePreserved) {
+                        $proof.preservationGap = "gnhf_removed_failed_worktree_branch_retained_for_review"
+                    }
+                }
+            }
+        }
+        catch {
+            if (-not $proof.preservationGap) { $proof.preservationGap = "failed_run_state_inspection_error: $($_.Exception.Message)" }
+        }
+    }
     $nextCommand = if ($compiledDocument -and $compiledDocument.PSObject.Properties.Name -contains "nextCommand") {
         [string]$compiledDocument.nextCommand
     }
@@ -590,18 +630,25 @@ finally {
     Write-AtomicJson -Value $proof -Path $worktreeProofPath
     Write-AtomicJson -Value $validationSummary -Path $validationSummaryPath
     Write-AtomicJson -Value $evidenceResult -Path $launchResultPath
+    $handoffIsRuntimeResult = $evidenceResult.kind -eq "desktop-gnhf-runtime-result"
+    $handoffStatus = if ($handoffIsRuntimeResult) { [string]$evidenceResult.status } else { "planned" }
+    $handoffProofLevel = if ($handoffIsRuntimeResult) { [string]$evidenceResult.proofLevel } else { "contract-validation" }
+    $handoffProofCeiling = if ($handoffIsRuntimeResult) { [string]$evidenceResult.proofCeiling } else { [string]$compiledDocument.proofCeiling }
+    $handoffBranch = if ($handoffIsRuntimeResult) { [string]$evidenceResult.commitProof.branch } else { "" }
+    $handoffCommit = if ($handoffIsRuntimeResult) { [string]$evidenceResult.commitProof.headCommit } else { "" }
     $handoff = @(
         "AgentSwitchboard ChatGPT Desktop GNHF sprint",
-        "status: $($launchResult.status)",
+        "status: $handoffStatus",
         "classification: $($launchResult.classification)",
         "mode: $executionMode",
         "target: $resolvedTargetRepo",
         "evidence: $evidenceDirectory",
-        "branch: $($launchResult.branch)",
-        "worktree: $($launchResult.worktree)",
-        "commit: $($launchResult.commit)",
-        "proof level: $($launchResult.proofLevel)",
-        "proof ceiling: $($launchResult.proofCeiling)",
+        "branch: $handoffBranch",
+        "worktree: $($proof.worktree)",
+        "commit: $handoffCommit",
+        "proof level: $handoffProofLevel",
+        "proof ceiling: $handoffProofCeiling",
+        "failed worktree preservation gap: $($proof.preservationGap)",
         "next command: $nextCommand"
     ) -join [Environment]::NewLine
     Set-Content -LiteralPath $operatorHandoffPath -Value $handoff -Encoding utf8NoBOM
