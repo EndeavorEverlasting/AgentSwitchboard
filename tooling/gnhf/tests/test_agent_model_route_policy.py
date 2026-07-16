@@ -6,6 +6,7 @@ import re
 ROOT = pathlib.Path(__file__).resolve().parents[3]
 POLICY = ROOT / "tooling" / "gnhf" / "model-route-policy.example.json"
 ROUTER = ROOT / "tooling" / "gnhf" / "Start-AutoRoutedGnhfSprint.ps1"
+SPRINT = ROOT / "tooling" / "gnhf" / "Start-GnhfSprint.ps1"
 INSTALLER = ROOT / "tooling" / "gnhf" / "Install-AgentModelRouter.ps1"
 BRIDGE = ROOT / "tooling" / "gnhf" / "Invoke-AgyPiBridge.ps1"
 DOC = ROOT / "docs" / "workstation" / "cost-aware-agent-model-routing.md"
@@ -52,6 +53,7 @@ def main() -> None:
     assert pricing["source"] == "https://api-docs.deepseek.com/quick_start/pricing/"
 
     router_text = ROUTER.read_text(encoding="utf-8")
+    sprint_text = SPRINT.read_text(encoding="utf-8")
     installer_text = INSTALLER.read_text(encoding="utf-8")
     bridge_text = BRIDGE.read_text(encoding="utf-8")
     doc_text = DOC.read_text(encoding="utf-8")
@@ -62,9 +64,22 @@ def main() -> None:
     assert "OPENCODE_CONFIG_CONTENT" in router_text
     assert "route-compatibility.json" in router_text
     assert "time-windows" in router_text
+
+    assert "Invoke-AgyQuotaPreflight" in sprint_text
+    assert "AGY_ROUTER_PREFLIGHT_READY" in sprint_text
+    assert "Individual quota" not in sprint_text
+    assert "individual\\s+quota" in sprint_text
+    assert "Test-GnhfCommitProof" in sprint_text
+    assert "no-commit-proof" in sprint_text
+    assert "GNHF returned exit code 0 without producing a new commit" in sprint_text
+
     assert "agent-switchboard-auto.cmd" in installer_text
+    assert "agent-switchboard-auto.ps1" in installer_text
+    assert "Start-GnhfSprint.ps1" in installer_text
     assert "agy-pi-bridge" in installer_text
     assert "Preserved customized model route policy" in installer_text
+    assert "Use the PowerShell launcher for -Prompt values" in installer_text
+
     assert "quota-exhausted" in bridge_text
     assert "individual\\s+quota" in bridge_text
     assert "quota\\s*(is\\s*)?(reached|exhausted|exceeded)" in bridge_text
@@ -77,6 +92,7 @@ def main() -> None:
     combined = "\n".join(
         (
             router_text,
+            sprint_text,
             installer_text,
             bridge_text,
             doc_text,
