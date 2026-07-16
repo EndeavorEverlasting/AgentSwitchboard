@@ -67,7 +67,7 @@ try {
     if ($validation.ExitCode -ne 0) { throw "Targeted runtime proof contracts failed. $($validation.Output)" }
     foreach ($required in @($startScript,$statusScript)) {
         if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Required installed workspace script is missing: $required" }
-        $tokens=$null;$errors=$null;[void][Management.Automation.Language.Parser]::ParseFile($required,[ref]$tokens,[ref]$errors)
+        $tokens=$null;$errors=$null;[void][System.Management.Automation.Language.Parser]::ParseFile($required,[ref]$tokens,[ref]$errors)
         if ($errors.Count) { throw "Installed workspace script does not parse: $required" }
     }
     $runtime.targetedValidation=$true; Add-ProofEvent -Events $events -Step targeted-validation -State PASS -Message runtime_and_installed_launcher_contracts_passed

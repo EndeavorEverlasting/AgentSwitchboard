@@ -79,7 +79,8 @@ catch {
 }
 
 if ((Test-Path -LiteralPath $proofPath -PathType Leaf) -and (Test-Path -LiteralPath $commonPath -PathType Leaf) -and (Test-Path -LiteralPath $sessionPath -PathType Leaf) -and (Test-Path -LiteralPath $gnhfPath -PathType Leaf)) {
-    $runtime = @($proofPath, $commonPath, $sessionPath, $gnhfPath | ForEach-Object { Get-Content -LiteralPath $_ -Raw }) -join "`n"
+    $runtime = @($proofPath, $commonPath, $sessionPath, $gnhfPath) | ForEach-Object { Get-Content -LiteralPath $_ -Raw }
+    $runtime = $runtime -join "`n"
     foreach ($token in @(
         "'status','--short'",
         "'diff','--check'",
