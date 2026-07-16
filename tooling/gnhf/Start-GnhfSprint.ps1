@@ -163,7 +163,7 @@ function Invoke-AgyQuotaPreflight {
     if ($probeText -match '(?i)(individual\s+quota\s+(has\s+been\s+)?reached|quota\s*(is\s*)?(reached|exhausted|exceeded)|usage\s+limit\s+(reached|exceeded)|free\s+(token|credit)s?\s+(are\s+)?(exhausted|used\s+up)|no\s+(free\s+)?tokens?\s+remaining|token\s+allowance\s+(is\s+)?exhausted)') {
         return [pscustomobject]@{
             Classification = "quota-exhausted"
-            ExitCode = if ($probeExitCode -eq 0) { 75 } else { $probeExitCode }
+            ExitCode = 75
             Summary = $probeText
         }
     }
@@ -171,7 +171,7 @@ function Invoke-AgyQuotaPreflight {
     if ($probeText -match '(?i)(429|too many requests|rate.?limit)') {
         return [pscustomobject]@{
             Classification = "rate-limited"
-            ExitCode = if ($probeExitCode -eq 0) { 76 } else { $probeExitCode }
+            ExitCode = 76
             Summary = $probeText
         }
     }
@@ -179,14 +179,14 @@ function Invoke-AgyQuotaPreflight {
     if ($probeText -match '(?i)(unauthorized|forbidden|authentication|login required|sign in)') {
         return [pscustomobject]@{
             Classification = "authentication-required"
-            ExitCode = if ($probeExitCode -eq 0) { 77 } else { $probeExitCode }
+            ExitCode = 77
             Summary = $probeText
         }
     }
 
     return [pscustomobject]@{
         Classification = "agent-error"
-        ExitCode = if ($probeExitCode -eq 0) { 78 } else { $probeExitCode }
+        ExitCode = 78
         Summary = if ($probeText) { $probeText } else { "AGY preflight returned no usable response." }
     }
 }
@@ -269,6 +269,7 @@ $summary = [ordered]@{
     pushBranch = [bool]$PushBranch
     recentCommits = @($recentCommits)
     agyPreflightClassification = $null
+    gnhfInvoked = $false
     commitProofBranch = $null
     commitProofCount = 0
     outcome = $null
@@ -299,6 +300,7 @@ if ($PushBranch) {
 
 $env:GNHF_TELEMETRY = "0"
 $exitCode = 1
+$shouldInvokeGnhf = $true
 $transcriptStarted = $false
 $oldLocation = Get-Location
 
@@ -329,13 +331,15 @@ try {
             Write-Warning "AGY preflight stopped before GNHF: $($agyPreflight.Classification)."
             $summary.outcome = "agy-preflight-$($agyPreflight.Classification)"
             $exitCode = if ($agyPreflight.ExitCode -eq 0) { 75 } else { $agyPreflight.ExitCode }
+            $shouldInvokeGnhf = $false
         }
         else {
             Remove-Item -LiteralPath $env:AGENTSWITCHBOARD_AGY_STATUS_PATH -Force -ErrorAction SilentlyContinue
         }
     }
 
-    if ($exitCode -eq 1) {
+    if ($shouldInvokeGnhf) {
+        $summary.gnhfInvoked = $true
         Set-Location -LiteralPath $RepoPath
         $objective | & $gnhfPath @gnhfArguments
         $exitCode = $LASTEXITCODE

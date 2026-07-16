@@ -10,6 +10,7 @@ SPRINT = ROOT / "tooling" / "gnhf" / "Start-GnhfSprint.ps1"
 INSTALLER = ROOT / "tooling" / "gnhf" / "Install-AgentModelRouter.ps1"
 BRIDGE = ROOT / "tooling" / "gnhf" / "Invoke-AgyPiBridge.ps1"
 DOC = ROOT / "docs" / "workstation" / "cost-aware-agent-model-routing.md"
+RUNTIME_TEST = ROOT / "tooling" / "gnhf" / "tests" / "Test-GnhfFailFastRuntime.ps1"
 
 
 def main() -> None:
@@ -57,6 +58,7 @@ def main() -> None:
     installer_text = INSTALLER.read_text(encoding="utf-8")
     bridge_text = BRIDGE.read_text(encoding="utf-8")
     doc_text = DOC.read_text(encoding="utf-8")
+    runtime_test_text = RUNTIME_TEST.read_text(encoding="utf-8")
     policy_text = POLICY.read_text(encoding="utf-8")
 
     assert "AGY quota is exhausted and no mutation was observed" in router_text
@@ -73,6 +75,18 @@ def main() -> None:
     assert "Test-GnhfCommitProof" in sprint_text
     assert "no-commit-proof" in sprint_text
     assert "GNHF returned exit code 0 without producing a new commit" in sprint_text
+    assert "$shouldInvokeGnhf = $true" in sprint_text
+    assert "$shouldInvokeGnhf = $false" in sprint_text
+    assert "if ($shouldInvokeGnhf)" in sprint_text
+    assert "if ($exitCode -eq 1)" not in sprint_text
+    assert "gnhfInvoked = $false" in sprint_text
+    assert 'Classification = "quota-exhausted"' in sprint_text
+    assert "ExitCode = 75" in sprint_text
+
+    assert "Individual quota reached" in runtime_test_text
+    assert "GNHF was invoked during the failed AGY preflight" in runtime_test_text
+    assert "AGY quota is exhausted and no mutation was observed" in runtime_test_text
+    assert "gnhf/fallback-proof" in runtime_test_text
 
     assert "agent-switchboard-auto.cmd" in installer_text
     assert "agent-switchboard-auto.ps1" in installer_text
