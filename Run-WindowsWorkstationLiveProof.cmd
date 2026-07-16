@@ -18,6 +18,28 @@ if not exist "%ROOT%Setup-TmuxGnhfWorkspace.cmd" (
   exit /b 2
 )
 
+where git.exe >nul 2>&1
+if errorlevel 1 (
+  echo [FAIL] Git for Windows is required.
+  pause >nul
+  exit /b 2
+)
+
+for /f "delims=" %%B in ('git -C "%ROOT%" branch --show-current 2^>nul') do set "_branch=%%B"
+if not defined _branch (
+  echo [FAIL] The AgentSwitchboard checkout is detached or not a Git worktree.
+  pause >nul
+  exit /b 2
+)
+for /f "delims=" %%S in ('git -C "%ROOT%" status --porcelain=v1 2^>nul') do set "_dirty=1"
+if defined _dirty (
+  echo [FAIL] The AgentSwitchboard checkout is dirty. Preserve existing work and
+  echo        rerun this launcher from a clean attached worktree.
+  git -C "%ROOT%" status --short
+  pause >nul
+  exit /b 2
+)
+
 echo ============================================================
 echo  AgentSwitchboard Windows workstation deployment + proof
 echo ============================================================
