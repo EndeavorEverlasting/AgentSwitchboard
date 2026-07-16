@@ -32,6 +32,7 @@ def main() -> int:
         "manifest": WSL / "tmux-gnhf-workstation.example.json",
         "schema": WSL / "schemas" / "windows-workstation-live-proof.schema.json",
         "guide": ROOT / "docs" / "workstation" / "windows-workstation-live-proof.md",
+        "domain_guide": ROOT / "docs" / "workstation" / "cross-domain-gnhf-runtime.md",
         "workflow": ROOT / ".github" / "workflows" / "windows-workstation-live-proof-contracts.yml",
     }
     for name, path in paths.items():
@@ -79,10 +80,25 @@ def main() -> int:
         "readyForSysAdminSuiteTandem",
         "destructive_stop_skipped_persistent_session_reuse_is_repo_doctrine",
         "no pixel-level GUI rendering claim",
+        "Get-ProofWslNativeGnhfToolchain",
+        "Get-ProofTmuxRuntimeGeometry",
+        "Unsupported cross-domain GNHF toolchain detected",
+        "Windows PATH inheritance is not a substitute for a WSL-native runtime",
+        "^/mnt/[a-z]/",
+        "Unusable tmux pane geometry detected",
+        "Unusable WezTerm/tmux client geometry detected",
+        "captured-log-noninteractive",
+        "no_terminal_spawn_or_filesystem_backend_error_observed",
     ):
         require(token in proof, f"runtime proof missing contract token: {token}")
     for forbidden in ("Read-Host", "System.Windows.Forms.SendKeys", "--push", "reset --hard", "wsl --unregister"):
         require(forbidden not in proof, f"runtime proof contains forbidden behavior: {forbidden}")
+
+    gnhf = text(paths["gnhf"])
+    require("$paneWidth -lt 80" in gnhf and "$paneHeight -lt 24" in gnhf, "minimum terminal geometry gate is missing")
+    require("$paneWidth -gt 1000" in gnhf and "$paneHeight -gt 500" in gnhf, "absurd terminal geometry gate is missing")
+    require("terminal/create" in gnhf and "spawn\\s+[^\\r\\n]*ENOENT" in gnhf, "backend error detection is missing")
+    require("despite process exit zero" in gnhf, "exit-zero backend failure rejection is missing")
 
     installer = text(paths["installer"])
     for token in (
@@ -124,6 +140,18 @@ def main() -> int:
         "Reboot and resume",
     ):
         require(token in guide, f"operator guide missing section/token: {token}")
+
+    domain_guide = text(paths["domain_guide"])
+    for token in (
+        "Supported execution domains",
+        "WezTerm → WSL Ubuntu → tmux → WSL-native",
+        "WezTerm → native Windows PowerShell",
+        "WSL tmux → Windows-mounted GNHF",
+        "blocked before GNHF starts",
+        "No commit means no successful sprint",
+        "SysAdminSuite",
+    ):
+        require(token in domain_guide, f"cross-domain guide missing section/token: {token}")
 
     for path in paths.values():
         raw = path.read_bytes()
