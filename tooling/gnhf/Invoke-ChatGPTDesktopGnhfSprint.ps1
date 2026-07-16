@@ -340,10 +340,10 @@ try {
     if ([string]$compiledDocument.gitExecution.mode -ne "worktree") {
         throw "The desktop GNHF v1 runtime delegates to Start-GnhfSprint.ps1 and therefore requires gitExecution.mode=worktree."
     }
-    if ([string]$compiledDocument.bounds.preventSleep -ne "on") {
-        throw "The desktop GNHF v1 launcher requires bounds.preventSleep=on to match Start-GnhfSprint.ps1."
+    if ($compiledDocument.bounds.preventSleep -ne $true) {
+        throw "The desktop GNHF v1 launcher requires bounds.preventSleep=true to match Start-GnhfSprint.ps1."
     }
-    if ($CreateDisposableProofRepo -and [string]$compiledDocument.pushContract.mode -ne "disabled") {
+    if ($CreateDisposableProofRepo -and [string]$compiledDocument.pushContract.mode -ne "none") {
         throw "Disposable proof repositories cannot be pushed."
     }
 
@@ -425,7 +425,7 @@ try {
             "-MaxTokens", [string]$compiledDocument.bounds.maxTokens,
             "-StopWhen", [string]$compiledDocument.stopCondition
         )
-        if ([string]$compiledDocument.pushContract.mode -eq "branch") { $launcherArguments += "-PushBranch" }
+        if ([string]$compiledDocument.pushContract.mode -eq "manual") { $launcherArguments += "-PushBranch" }
 
         $ack = "AGENTSWITCHBOARD_GNHF_DESKTOP_STARTED:$runId"
         Write-Host $ack -ForegroundColor Cyan
