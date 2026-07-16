@@ -1,0 +1,520 @@
+[CmdletBinding(DefaultParameterSetName = "Plan")]
+param(
+    [Parameter(Mandatory)][string]$RequestPath,
+    [Parameter(Mandatory)][string]$CompiledPromptPath,
+    [string]$TargetRepo,
+    [Parameter(ParameterSetName = "Plan")][switch]$PlanOnly,
+    [Parameter(Mandatory, ParameterSetName = "Run")][switch]$Run,
+    [switch]$CreateDisposableProofRepo
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+$sourceRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))
+$runtimeRoot = Join-Path $env:LOCALAPPDATA "AgentSwitchboard\GnhfDesktop"
+$runId = "{0}-{1}" -f (Get-Date -Format "yyyyMMdd-HHmmss-fff"), ([guid]::NewGuid().ToString("N").Substring(0, 8))
+$evidenceDirectory = Join-Path $runtimeRoot $runId
+$latestRunPath = Join-Path $runtimeRoot "latest-run.txt"
+$transcriptPath = Join-Path $evidenceDirectory "terminal-transcript.txt"
+$regularEvidencePath = Join-Path $evidenceDirectory "regular-request.txt"
+$compiledEvidencePath = Join-Path $evidenceDirectory "compiled-gnhf-prompt.txt"
+$promptValidationPath = Join-Path $evidenceDirectory "prompt-validation.json"
+$launchResultPath = Join-Path $evidenceDirectory "launch-result.json"
+$worktreeProofPath = Join-Path $evidenceDirectory "worktree-proof.json"
+$validationSummaryPath = Join-Path $evidenceDirectory "validation-summary.json"
+$operatorHandoffPath = Join-Path $evidenceDirectory "operator-handoff.txt"
+
+New-Item -ItemType Directory -Path $evidenceDirectory -Force | Out-Null
+Set-Content -LiteralPath $latestRunPath -Value $evidenceDirectory -Encoding utf8NoBOM
+
+$script:failureClassification = $null
+$script:transcriptStarted = $false
+$exitCode = 1
+$executionMode = if ($Run) { "run" } else { "plan" }
+$nonce = [guid]::NewGuid().ToString("N")
+$requestDocument = $null
+$compiledDocument = $null
+$renderedPrompt = $null
+$resolvedTargetRepo = $null
+$baseBranch = $null
+$baseCommit = $null
+$workstationPlan = $null
+$processResult = $null
+$proof = [ordered]@{
+    branch = $null
+    worktree = $null
+    commit = $null
+    commitsAhead = 0
+    commitMessage = $null
+    expectedArtifacts = @()
+    changedFiles = @()
+    artifactProof = $false
+    nonce = $nonce
+    baseClean = $false
+    worktreeClean = $false
+    sourceClean = $false
+}
+$launchResult = [ordered]@{
+    schemaVersion = 1
+    kind = "gnhf-desktop-runtime-result"
+    runId = $runId
+    executionMode = $executionMode
+    status = "starting"
+    classification = "not-started"
+    startedAt = (Get-Date).ToString("o")
+    completedAt = $null
+    sourceRoot = $sourceRoot
+    targetRepo = $null
+    evidenceDirectory = $evidenceDirectory
+    canonicalLauncher = Join-Path $PSScriptRoot "Start-GnhfSprint.ps1"
+    workstationPlanEntrypoint = Join-Path $sourceRoot "tooling\wsl\Start-TmuxGnhfWorkspaceSetup.ps1"
+    startAcknowledged = $false
+    processExitCode = $null
+    processTimedOut = $false
+    proofLevel = "contract-validation"
+    proofCeiling = "Prompt contracts and a local workstation plan can be observed; provider response and repository mutation require a successful bounded run."
+    branch = $null
+    worktree = $null
+    commit = $null
+    artifactProof = $false
+    baseClean = $false
+    error = $null
+}
+$validationSummary = [ordered]@{
+    schemaVersion = 1
+    runId = $runId
+    requestValid = $false
+    compiledPromptValid = $false
+    sourceClean = $false
+    targetClean = $false
+    targetAttached = $false
+    workstationPlanPassed = $false
+    visiblePromptEmitted = $false
+    gnhfStartAcknowledged = $false
+    processExitedZero = $false
+    branchAhead = $false
+    expectedArtifactsCommitted = $false
+    exactChangedFiles = $false
+    worktreeClean = $false
+    baseClean = $false
+}
+
+function Write-AtomicJson {
+    param([Parameter(Mandatory)]$Value, [Parameter(Mandatory)][string]$Path)
+    $parent = Split-Path -Parent $Path
+    if ($parent) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }
+    $temporaryPath = "$Path.$([guid]::NewGuid().ToString('N')).tmp"
+    $Value | ConvertTo-Json -Depth 40 | Set-Content -LiteralPath $temporaryPath -Encoding utf8NoBOM
+    Move-Item -LiteralPath $temporaryPath -Destination $Path -Force
+}
+
+function Get-Sha256 {
+    param([Parameter(Mandatory)][string]$Text)
+    $bytes = [Text.Encoding]::UTF8.GetBytes($Text)
+    $hash = [Security.Cryptography.SHA256]::HashData($bytes)
+    [Convert]::ToHexString($hash).ToLowerInvariant()
+}
+
+function Invoke-BoundedProcess {
+    param(
+        [Parameter(Mandatory)][string]$FilePath,
+        [string[]]$ArgumentList = @(),
+        [ValidateRange(1, 7200)][int]$TimeoutSeconds = 30,
+        [string]$WorkingDirectory
+    )
+
+    $startInfo = [Diagnostics.ProcessStartInfo]::new()
+    $startInfo.FileName = $FilePath
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $true
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    if ($WorkingDirectory) { $startInfo.WorkingDirectory = $WorkingDirectory }
+    foreach ($argument in $ArgumentList) { [void]$startInfo.ArgumentList.Add($argument) }
+
+    $process = [Diagnostics.Process]::new()
+    $process.StartInfo = $startInfo
+    [void]$process.Start()
+    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+    $stderrTask = $process.StandardError.ReadToEndAsync()
+    $timedOut = -not $process.WaitForExit($TimeoutSeconds * 1000)
+    if ($timedOut) {
+        try { $process.Kill($true) }
+        catch { throw "Timed-out process could not be terminated: $FilePath. $($_.Exception.Message)" }
+        if (-not $process.WaitForExit(5000)) {
+            throw "Timed-out process tree did not exit within five seconds: $FilePath"
+        }
+    }
+    if (-not $stdoutTask.Wait(5000) -or -not $stderrTask.Wait(5000)) {
+        throw "Process output did not drain within five seconds: $FilePath"
+    }
+    $stdout = $stdoutTask.GetAwaiter().GetResult().Trim()
+    $stderr = $stderrTask.GetAwaiter().GetResult().Trim()
+    [pscustomobject]@{
+        ExitCode = if ($timedOut) { 124 } else { $process.ExitCode }
+        TimedOut = $timedOut
+        Stdout = $stdout
+        Stderr = $stderr
+        Output = (($stdout, $stderr) -join [Environment]::NewLine).Trim()
+    }
+}
+
+function Invoke-Git {
+    param(
+        [Parameter(Mandatory)][string]$Repository,
+        [Parameter(Mandatory)][string[]]$Arguments,
+        [int]$TimeoutSeconds = 30,
+        [switch]$AllowFailure
+    )
+    $git = Get-Command git.exe -ErrorAction SilentlyContinue
+    if (-not $git) { $git = Get-Command git -ErrorAction Stop }
+    $result = Invoke-BoundedProcess -FilePath $git.Source -ArgumentList (@("-C", $Repository) + $Arguments) -TimeoutSeconds $TimeoutSeconds
+    if (-not $AllowFailure -and $result.ExitCode -ne 0) {
+        throw "git $($Arguments -join ' ') failed in '$Repository'. $($result.Output)"
+    }
+    $result
+}
+
+function Get-GnhfBranchHeads {
+    param([Parameter(Mandatory)][string]$Repository)
+    $heads = @{}
+    $result = Invoke-Git -Repository $Repository -Arguments @("for-each-ref", "--format=%(refname:short)|%(objectname)", "refs/heads/gnhf")
+    foreach ($line in @($result.Stdout -split "\r?\n")) {
+        if ($line -match '^([^|]+)\|([0-9a-f]{40})$') { $heads[$Matches[1]] = $Matches[2] }
+    }
+    $heads
+}
+
+function Get-WorktreeForBranch {
+    param([Parameter(Mandatory)][string]$Repository, [Parameter(Mandatory)][string]$Branch)
+    $listing = Invoke-Git -Repository $Repository -Arguments @("worktree", "list", "--porcelain")
+    $candidate = $null
+    foreach ($line in @($listing.Stdout -split "\r?\n")) {
+        if ($line.StartsWith("worktree ")) { $candidate = $line.Substring(9) }
+        elseif ($line -eq "branch refs/heads/$Branch") { return $candidate }
+        elseif ([string]::IsNullOrWhiteSpace($line)) { $candidate = $null }
+    }
+    $null
+}
+
+function New-DisposableRepository {
+    param([Parameter(Mandatory)][string]$Path)
+    if (Test-Path -LiteralPath $Path) { throw "Disposable proof repository path already exists: $Path" }
+    New-Item -ItemType Directory -Path $Path -Force | Out-Null
+    $git = Get-Command git.exe -ErrorAction SilentlyContinue
+    if (-not $git) { $git = Get-Command git -ErrorAction Stop }
+    foreach ($arguments in @(
+        @("init", "-b", "main", $Path),
+        @("-C", $Path, "config", "user.name", "AgentSwitchboard Disposable Proof"),
+        @("-C", $Path, "config", "user.email", "agentswitchboard-proof@invalid.local")
+    )) {
+        $result = Invoke-BoundedProcess -FilePath $git.Source -ArgumentList $arguments -TimeoutSeconds 30
+        if ($result.ExitCode -ne 0) { throw "Disposable repository initialization failed. $($result.Output)" }
+    }
+    Set-Content -LiteralPath (Join-Path $Path "README.md") -Value "# AgentSwitchboard disposable GNHF proof`n" -Encoding utf8NoBOM
+    foreach ($arguments in @(
+        @("-C", $Path, "add", "README.md"),
+        @("-C", $Path, "commit", "-m", "test: initialize disposable proof repository")
+    )) {
+        $result = Invoke-BoundedProcess -FilePath $git.Source -ArgumentList $arguments -TimeoutSeconds 30
+        if ($result.ExitCode -ne 0) { throw "Disposable repository baseline commit failed. $($result.Output)" }
+    }
+    [IO.Path]::GetFullPath($Path)
+}
+
+function Resolve-TargetRepository {
+    param($Request, $Compiled)
+    if ($CreateDisposableProofRepo) {
+        if ($TargetRepo) { throw "-TargetRepo and -CreateDisposableProofRepo are mutually exclusive." }
+        return New-DisposableRepository -Path (Join-Path $evidenceDirectory "disposable-repo")
+    }
+    $candidate = if ($TargetRepo) { $TargetRepo } elseif ($Compiled.repository.localPath) { [string]$Compiled.repository.localPath } else { [string]$Request.repository.localPath }
+    if ([string]::IsNullOrWhiteSpace($candidate) -or $candidate -match '^(__|\{\{|<).*TARGET_REPO') {
+        throw "A concrete -TargetRepo is required when the request uses a portable target placeholder."
+    }
+    [IO.Path]::GetFullPath([Environment]::ExpandEnvironmentVariables($candidate))
+}
+
+function Render-CompiledPrompt {
+    param([Parameter(Mandatory)][string]$PromptText, [Parameter(Mandatory)][string]$Repository, [Parameter(Mandatory)][string]$ProofNonce)
+    $rendered = $PromptText
+    foreach ($placeholder in @("{{TARGET_REPO}}", "__TARGET_REPO__", "<TARGET_REPO>")) { $rendered = $rendered.Replace($placeholder, $Repository) }
+    foreach ($placeholder in @("{{PROOF_NONCE}}", "__PROOF_NONCE__", "<PROOF_NONCE>")) { $rendered = $rendered.Replace($placeholder, $ProofNonce) }
+    if (-not $rendered.Contains($Repository)) { throw "The compiled prompt does not contain the concrete target repository path." }
+    if ($CreateDisposableProofRepo -and -not $rendered.Contains($ProofNonce)) { throw "The disposable proof prompt does not contain the generated nonce." }
+    $rendered
+}
+
+function Get-ChangedGnhfProof {
+    param(
+        [Parameter(Mandatory)][string]$Repository,
+        [Parameter(Mandatory)][string]$Base,
+        [Parameter(Mandatory)]$BeforeHeads,
+        [Parameter(Mandatory)][string[]]$ExpectedArtifacts,
+        [Parameter(Mandatory)][string]$ExpectedNonce,
+        [Parameter(Mandatory)][string]$ExpectedCommitMessage
+    )
+    $candidates = [Collections.Generic.List[object]]::new()
+    $afterHeads = Get-GnhfBranchHeads -Repository $Repository
+    foreach ($branch in $afterHeads.Keys) {
+        if ($BeforeHeads.ContainsKey($branch) -and $BeforeHeads[$branch] -eq $afterHeads[$branch]) { continue }
+        $aheadResult = Invoke-Git -Repository $Repository -Arguments @("rev-list", "--count", "$Base..$branch")
+        $ahead = [int]$aheadResult.Stdout.Trim()
+        if ($ahead -le 0) { continue }
+        $changedResult = Invoke-Git -Repository $Repository -Arguments @("diff", "--name-only", "$Base...$branch")
+        $changed = @($changedResult.Stdout -split "\r?\n" | Where-Object { $_ } | Sort-Object -Unique)
+        $expected = @($ExpectedArtifacts | ForEach-Object { $_ -replace '\\', '/' } | Sort-Object -Unique)
+        $exactFiles = (($changed -join "`n") -ceq ($expected -join "`n"))
+        $artifactProof = $true
+        foreach ($artifact in $expected) {
+            $content = Invoke-Git -Repository $Repository -Arguments @("show", "${branch}:$artifact") -AllowFailure
+            if ($content.ExitCode -ne 0 -or -not $content.Stdout.Contains($ExpectedNonce)) { $artifactProof = $false }
+        }
+        $message = (Invoke-Git -Repository $Repository -Arguments @("log", "-1", "--format=%s", $branch)).Stdout.Trim()
+        $worktree = Get-WorktreeForBranch -Repository $Repository -Branch $branch
+        $worktreeClean = $false
+        if ($worktree -and (Test-Path -LiteralPath $worktree -PathType Container)) {
+            $worktreeClean = [string]::IsNullOrWhiteSpace((Invoke-Git -Repository $worktree -Arguments @("status", "--short")).Stdout)
+        }
+        [void]$candidates.Add([pscustomobject]@{
+            Branch = $branch
+            Commit = $afterHeads[$branch]
+            CommitsAhead = $ahead
+            ChangedFiles = $changed
+            ExactFiles = $exactFiles
+            ArtifactProof = $artifactProof
+            CommitMessage = $message
+            CommitMessageExact = ($message -ceq $ExpectedCommitMessage)
+            Worktree = $worktree
+            WorktreeClean = $worktreeClean
+        })
+    }
+    $valid = @($candidates | Where-Object { $_.ExactFiles -and $_.ArtifactProof -and $_.CommitMessageExact -and $_.WorktreeClean })
+    if ($valid.Count -ne 1) {
+        throw "Expected exactly one changed GNHF branch with exact artifact, nonce, commit message, and clean worktree proof; found $($valid.Count)."
+    }
+    $valid[0]
+}
+
+try {
+    Start-Transcript -LiteralPath $transcriptPath -Force | Out-Null
+    $script:transcriptStarted = $true
+
+    Write-Host "=== CHATGPT DESKTOP -> GNHF SPRINT ===" -ForegroundColor Cyan
+    Write-Host "Mode:     $executionMode"
+    Write-Host "Evidence: $evidenceDirectory"
+
+    foreach ($requiredPath in @(
+        $sourceRoot,
+        (Join-Path $PSScriptRoot "GnhfPromptContracts.psm1"),
+        (Join-Path $PSScriptRoot "Start-GnhfSprint.ps1"),
+        (Join-Path $sourceRoot "tooling\wsl\Start-TmuxGnhfWorkspaceSetup.ps1")
+    )) {
+        if (-not (Test-Path -LiteralPath $requiredPath)) { throw "Required AgentSwitchboard runtime file is missing: $requiredPath" }
+    }
+
+    $RequestPath = [IO.Path]::GetFullPath($RequestPath)
+    $CompiledPromptPath = [IO.Path]::GetFullPath($CompiledPromptPath)
+    Import-Module (Join-Path $PSScriptRoot "GnhfPromptContracts.psm1") -Force
+    $requestValidation = Test-GnhfPromptContractFile -Path $RequestPath -ExpectedKind "regular-sprint-request"
+    $compiledValidation = Test-GnhfPromptContractFile -Path $CompiledPromptPath -ExpectedKind "compiled-gnhf-prompt-result"
+    $validationSummary.requestValid = [bool]$requestValidation.Valid
+    $validationSummary.compiledPromptValid = [bool]$compiledValidation.Valid
+    if (-not $requestValidation.Valid) { throw "Regular request contract failed: $($requestValidation.Errors -join '; ')" }
+    if (-not $compiledValidation.Valid) { throw "Compiled prompt contract failed: $($compiledValidation.Errors -join '; ')" }
+
+    $requestText = Get-Content -LiteralPath $RequestPath -Raw
+    $compiledText = Get-Content -LiteralPath $CompiledPromptPath -Raw
+    Set-Content -LiteralPath $regularEvidencePath -Value $requestText -Encoding utf8NoBOM
+    $requestDocument = $requestText | ConvertFrom-Json -Depth 50
+    $compiledDocument = $compiledText | ConvertFrom-Json -Depth 50
+
+    if ([string]$requestDocument.repository.name -cne [string]$compiledDocument.repository.name -or
+        [string]$requestDocument.repository.remote -cne [string]$compiledDocument.repository.remote) {
+        throw "The regular request and compiled prompt identify different repositories."
+    }
+    if ([string]$requestDocument.desiredProofLevel -cne [string]$compiledDocument.proofLevel) {
+        throw "The compiled proof level exceeds or differs from the operator's requested proof level."
+    }
+    if ([string]$compiledDocument.gitExecution.mode -ne "worktree") {
+        throw "The desktop GNHF v1 runtime delegates to Start-GnhfSprint.ps1 and therefore requires gitExecution.mode=worktree."
+    }
+    if ([string]$compiledDocument.bounds.preventSleep -ne "on") {
+        throw "The desktop GNHF v1 launcher requires bounds.preventSleep=on to match Start-GnhfSprint.ps1."
+    }
+    if ($CreateDisposableProofRepo -and [string]$compiledDocument.pushContract.mode -ne "disabled") {
+        throw "Disposable proof repositories cannot be pushed."
+    }
+
+    $sourceStatus = Invoke-Git -Repository $sourceRoot -Arguments @("status", "--short")
+    if (-not [string]::IsNullOrWhiteSpace($sourceStatus.Stdout)) {
+        throw "The AgentSwitchboard source checkout must be clean before desktop runtime execution."
+    }
+    $validationSummary.sourceClean = $true
+    $proof.sourceClean = $true
+
+    $resolvedTargetRepo = Resolve-TargetRepository -Request $requestDocument -Compiled $compiledDocument
+    $launchResult.targetRepo = $resolvedTargetRepo
+    if (-not (Test-Path -LiteralPath $resolvedTargetRepo -PathType Container)) { throw "Target repository does not exist: $resolvedTargetRepo" }
+    $inside = Invoke-Git -Repository $resolvedTargetRepo -Arguments @("rev-parse", "--is-inside-work-tree")
+    if ($inside.Stdout.Trim() -ne "true") { throw "Target is not a Git worktree: $resolvedTargetRepo" }
+    $targetStatus = Invoke-Git -Repository $resolvedTargetRepo -Arguments @("status", "--short")
+    if (-not [string]::IsNullOrWhiteSpace($targetStatus.Stdout)) { throw "Target repository must be clean before launch." }
+    $validationSummary.targetClean = $true
+    $baseBranch = (Invoke-Git -Repository $resolvedTargetRepo -Arguments @("branch", "--show-current")).Stdout.Trim()
+    if ([string]::IsNullOrWhiteSpace($baseBranch)) { throw "Detached target repositories cannot be launched." }
+    if ([string]$compiledDocument.gitExecution.baseBranch -cne $baseBranch) {
+        throw "Compiled base branch '$($compiledDocument.gitExecution.baseBranch)' does not match target branch '$baseBranch'."
+    }
+    $validationSummary.targetAttached = $true
+    $baseCommit = (Invoke-Git -Repository $resolvedTargetRepo -Arguments @("rev-parse", "HEAD")).Stdout.Trim()
+
+    $renderedPrompt = Render-CompiledPrompt -PromptText ([string]$compiledDocument.prompt) -Repository $resolvedTargetRepo -ProofNonce $nonce
+    Set-Content -LiteralPath $compiledEvidencePath -Value $renderedPrompt -Encoding utf8NoBOM
+    $promptValidation = [ordered]@{
+        schemaVersion = 1
+        request = [ordered]@{ kind=$requestValidation.Kind; valid=$requestValidation.Valid; sha256=(Get-Sha256 $requestText); errors=@($requestValidation.Errors) }
+        compiledPrompt = [ordered]@{ kind=$compiledValidation.Kind; valid=$compiledValidation.Valid; sourceSha256=(Get-Sha256 $compiledText); renderedPromptSha256=(Get-Sha256 $renderedPrompt); errors=@($compiledValidation.Errors) }
+        targetRepo = $resolvedTargetRepo
+        nonce = $nonce
+    }
+    Write-AtomicJson -Value $promptValidation -Path $promptValidationPath
+
+    Write-Host "`n=== COMPILED GNHF PROMPT (EXACT) ===" -ForegroundColor Yellow
+    Write-Host $renderedPrompt
+    Write-Host "=== END COMPILED GNHF PROMPT ===`n" -ForegroundColor Yellow
+    $validationSummary.visiblePromptEmitted = $true
+
+    $pwsh = Get-Command pwsh.exe -ErrorAction Stop
+    $workstationPlanPath = Join-Path $sourceRoot "tooling\wsl\Start-TmuxGnhfWorkspaceSetup.ps1"
+    $workstationPlanRoot = Join-Path $evidenceDirectory "workstation-plan"
+    $workstationPlan = Invoke-BoundedProcess -FilePath $pwsh.Source -ArgumentList @(
+        "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $workstationPlanPath,
+        "-Mode", "Plan", "-RunRoot", $workstationPlanRoot
+    ) -TimeoutSeconds 600 -WorkingDirectory $sourceRoot
+    if ($workstationPlan.Output) { Write-Host $workstationPlan.Output }
+    if ($workstationPlan.ExitCode -ne 0) {
+        $script:failureClassification = "workstation-plan-blocker"
+        throw "The existing workstation Plan workflow failed with exit code $($workstationPlan.ExitCode)."
+    }
+    $validationSummary.workstationPlanPassed = $true
+
+    $expectedArtifacts = @($compiledDocument.expectedArtifacts | ForEach-Object { [string]$_.path })
+    $proof.expectedArtifacts = $expectedArtifacts
+    $proof.baseClean = $true
+    if (-not $Run) {
+        $launchResult.status = "planned"
+        $launchResult.classification = "plan-complete"
+        $launchResult.proofLevel = "contract-validation"
+        $launchResult.proofCeiling = [string]$compiledDocument.proofCeiling
+        $launchResult.baseClean = $true
+        $validationSummary.baseClean = $true
+        $exitCode = 0
+    }
+    else {
+        $beforeHeads = Get-GnhfBranchHeads -Repository $resolvedTargetRepo
+        $launcherPath = Join-Path $PSScriptRoot "Start-GnhfSprint.ps1"
+        $launcherArguments = @(
+            "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $launcherPath,
+            "-RepoPath", $resolvedTargetRepo,
+            "-Agent", [string]$compiledDocument.agentRoute.agent,
+            "-PromptPath", $compiledEvidencePath,
+            "-Name", "chatgpt-desktop-$runId",
+            "-MaxIterations", [string]$compiledDocument.bounds.maxIterations,
+            "-MaxTokens", [string]$compiledDocument.bounds.maxTokens,
+            "-StopWhen", [string]$compiledDocument.stopCondition
+        )
+        if ([string]$compiledDocument.pushContract.mode -eq "branch") { $launcherArguments += "-PushBranch" }
+
+        $ack = "AGENTSWITCHBOARD_GNHF_DESKTOP_STARTED:$runId"
+        Write-Host $ack -ForegroundColor Cyan
+        $launchResult.startAcknowledged = $true
+        $validationSummary.gnhfStartAcknowledged = $true
+        $processResult = Invoke-BoundedProcess -FilePath $pwsh.Source -ArgumentList $launcherArguments -TimeoutSeconds ([int]$compiledDocument.bounds.timeoutSeconds) -WorkingDirectory $resolvedTargetRepo
+        $launchResult.processExitCode = $processResult.ExitCode
+        $launchResult.processTimedOut = $processResult.TimedOut
+        if ($processResult.Stdout) { Write-Host $processResult.Stdout }
+        if ($processResult.Stderr) { Write-Warning $processResult.Stderr }
+        if ($processResult.ExitCode -ne 0) {
+            if ($processResult.Output -match '(?i)(quota|usage limit|tokens? remaining|rate.?limit)') { $script:failureClassification = "quota-exhausted-blocker" }
+            elseif ($processResult.Output -match '(?i)(spawn|not found|unavailable|not ready|ENOENT)') { $script:failureClassification = "spawn-preflight-blocker" }
+            elseif ($processResult.TimedOut) { $script:failureClassification = "bounded-timeout" }
+            else { $script:failureClassification = "gnhf-nonzero" }
+            throw "The canonical GNHF launcher failed with exit code $($processResult.ExitCode)."
+        }
+        $validationSummary.processExitedZero = $true
+
+        $changedProof = Get-ChangedGnhfProof -Repository $resolvedTargetRepo -Base $baseCommit -BeforeHeads $beforeHeads -ExpectedArtifacts $expectedArtifacts -ExpectedNonce $nonce -ExpectedCommitMessage ([string]$compiledDocument.commitContract.message)
+        $proof.branch = $changedProof.Branch
+        $proof.worktree = $changedProof.Worktree
+        $proof.commit = $changedProof.Commit
+        $proof.commitsAhead = $changedProof.CommitsAhead
+        $proof.commitMessage = $changedProof.CommitMessage
+        $proof.changedFiles = $changedProof.ChangedFiles
+        $proof.artifactProof = $changedProof.ArtifactProof
+        $proof.worktreeClean = $changedProof.WorktreeClean
+        $validationSummary.branchAhead = ($changedProof.CommitsAhead -gt 0)
+        $validationSummary.expectedArtifactsCommitted = $changedProof.ArtifactProof
+        $validationSummary.exactChangedFiles = $changedProof.ExactFiles
+        $validationSummary.worktreeClean = $changedProof.WorktreeClean
+
+        $baseStatusAfter = Invoke-Git -Repository $resolvedTargetRepo -Arguments @("status", "--short")
+        $sourceStatusAfter = Invoke-Git -Repository $sourceRoot -Arguments @("status", "--short")
+        $proof.baseClean = [string]::IsNullOrWhiteSpace($baseStatusAfter.Stdout)
+        $proof.sourceClean = [string]::IsNullOrWhiteSpace($sourceStatusAfter.Stdout)
+        if (-not $proof.baseClean) { throw "The disposable base checkout was changed by the proof." }
+        if (-not $proof.sourceClean) { throw "The AgentSwitchboard source checkout changed during the proof." }
+        $validationSummary.baseClean = $true
+
+        $launchResult.status = "succeeded"
+        $launchResult.classification = "disposable-runtime-proof-succeeded"
+        $launchResult.proofLevel = [string]$compiledDocument.proofLevel
+        $launchResult.proofCeiling = [string]$compiledDocument.proofCeiling
+        $launchResult.branch = $changedProof.Branch
+        $launchResult.worktree = $changedProof.Worktree
+        $launchResult.commit = $changedProof.Commit
+        $launchResult.artifactProof = $changedProof.ArtifactProof
+        $launchResult.baseClean = $true
+        $exitCode = 0
+    }
+}
+catch {
+    $launchResult.status = if ($script:failureClassification -and $script:failureClassification.EndsWith("blocker")) { "blocked" } else { "failed" }
+    $launchResult.classification = if ($script:failureClassification) { $script:failureClassification } else { "runtime-validation-failed" }
+    $launchResult.error = $_.Exception.Message
+    Write-Error -ErrorRecord $_ -ErrorAction Continue
+    $exitCode = 1
+}
+finally {
+    $launchResult.completedAt = (Get-Date).ToString("o")
+    Write-AtomicJson -Value $proof -Path $worktreeProofPath
+    Write-AtomicJson -Value $validationSummary -Path $validationSummaryPath
+    Write-AtomicJson -Value $launchResult -Path $launchResultPath
+    $nextCommand = if ($compiledDocument -and $compiledDocument.PSObject.Properties.Name -contains "nextCommand") {
+        [string]$compiledDocument.nextCommand
+    }
+    else {
+        "Review $launchResultPath"
+    }
+    $handoff = @(
+        "AgentSwitchboard ChatGPT Desktop GNHF sprint",
+        "status: $($launchResult.status)",
+        "classification: $($launchResult.classification)",
+        "mode: $executionMode",
+        "target: $resolvedTargetRepo",
+        "evidence: $evidenceDirectory",
+        "branch: $($launchResult.branch)",
+        "worktree: $($launchResult.worktree)",
+        "commit: $($launchResult.commit)",
+        "proof level: $($launchResult.proofLevel)",
+        "proof ceiling: $($launchResult.proofCeiling)",
+        "next command: $nextCommand"
+    ) -join [Environment]::NewLine
+    Set-Content -LiteralPath $operatorHandoffPath -Value $handoff -Encoding utf8NoBOM
+    Write-Host "`nLocal evidence: $evidenceDirectory" -ForegroundColor Cyan
+    Write-Host "Operator handoff: $operatorHandoffPath" -ForegroundColor Cyan
+    if ($script:transcriptStarted) { Stop-Transcript | Out-Null }
+}
+
+exit $exitCode

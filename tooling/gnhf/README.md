@@ -2,6 +2,18 @@
 
 Windows-first launchers for bounded unattended GNHF sprints.
 
+## ChatGPT Desktop compiled-prompt entrypoint
+
+`Invoke-ChatGPTDesktopGnhfSprint.ps1` is the canonical regular-request to compiled-prompt runtime surface. It validates the versioned request and compiled prompt, runs the existing workstation setup in read-only Plan mode, prints the entire rendered prompt, and then delegates an explicit `-Run` to `Start-GnhfSprint.ps1`.
+
+Use the committed disposable fixture to prove prompt visibility, worktree isolation, exact artifact content, and commit evidence without a remote:
+
+```powershell
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tooling\gnhf\Invoke-ChatGPTDesktopGnhfSprint.ps1 -RequestPath .\tooling\gnhf\fixtures\desktop-gnhf-proof.request.md -CompiledPromptPath .\tooling\gnhf\fixtures\desktop-gnhf-proof.compiled.txt -CreateDisposableProofRepo -Run
+```
+
+Plan is the default when `-Run` is absent. Local evidence is written below `%LOCALAPPDATA%\AgentSwitchboard\GnhfDesktop`, and the full safety and proof contract is documented in [the desktop runtime guide](../../docs/workstation/chatgpt-desktop-gnhf-sprint.md).
+
 ## Safety contract
 
 - GNHF runs in isolated Git worktrees.
