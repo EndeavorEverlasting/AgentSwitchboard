@@ -1,13 +1,22 @@
 {
-  "schemaVersion": 1,
-  "selectionMode": "first-ready",
+  "schemaVersion": 2,
+  "selectionMode": "quota-preserving",
   "costOrder": [
+    "natural-free",
     "limited-free",
     "free",
     "paid"
   ],
   "timezone": "America/New_York",
   "allowPaidFallback": true,
+  "fallbackPolicy": {
+    "defaultAction": "stop",
+    "allowedClassifications": [
+      "quota-exhausted"
+    ],
+    "requireNoMutation": true,
+    "note": "A route switch is allowed only after confirmed quota exhaustion and a clean no-mutation check. Generic agent, network, validation, or repository failures stop for review."
+  },
   "pricingPolicies": {
     "deepseek-api": {
       "mode": "flat",
@@ -19,32 +28,32 @@
   },
   "routes": [
     {
-      "id": "opencode-zen-deepseek-v4-flash-free",
+      "id": "agy-natural-free",
       "enabled": true,
       "priority": 10,
+      "costClass": "natural-free",
+      "command": "agy",
+      "agentSpec": "pi",
+      "integration": "agy-pi-shim",
+      "modelMode": "agy-default",
+      "configurationOwner": "agy",
+      "gnhfCompatibility": "bridge-ready",
+      "fallbackOn": [
+        "quota-exhausted"
+      ],
+      "reason": "Use AGY's own naturally free token pool first without permanently pinning a model. AgentSwitchboard presents AGY to GNHF through a local Pi-compatible JSONL bridge and switches only after AGY explicitly reports quota exhaustion and no mutation is present."
+    },
+    {
+      "id": "opencode-zen-deepseek-v4-flash-free",
+      "enabled": true,
+      "priority": 20,
       "costClass": "limited-free",
       "command": "opencode",
       "agentSpec": "opencode",
       "integration": "opencode-model",
       "model": "opencode/deepseek-v4-flash-free",
       "gnhfCompatibility": "runtime-proof-required",
-      "reason": "Use this limited free OpenCode route first after a green GNHF compatibility proof. A direct OpenCode model call is not sufficient proof because GNHF uses OpenCode server sessions and structured output."
-    },
-    {
-      "id": "agy-deepseek-free",
-      "enabled": true,
-      "priority": 20,
-      "costClass": "free",
-      "command": "agy",
-      "agentSpec": "acp:agy acp",
-      "integration": "acp",
-      "probeArgs": [
-        "acp",
-        "--help"
-      ],
-      "configurationOwner": "agy",
-      "gnhfCompatibility": "capability-gated",
-      "reason": "AGY owns its selected free DeepSeek model and authentication. AgentSwitchboard only verifies the ACP launch surface."
+      "reason": "Use the limited-time OpenCode free route after AGY quota exhaustion, but only after a green GNHF server-session compatibility proof. A direct OpenCode model call is not sufficient proof."
     },
     {
       "id": "gemini-cli-free",
@@ -59,7 +68,7 @@
       ],
       "configurationOwner": "gemini",
       "gnhfCompatibility": "ready",
-      "reason": "GNHF ships ACP registry support for Gemini. Gemini owns login and quota state."
+      "reason": "GNHF ships ACP registry support for Gemini. Gemini owns login and free quota state."
     },
     {
       "id": "goose-free-provider",
