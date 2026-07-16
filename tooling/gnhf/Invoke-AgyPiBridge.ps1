@@ -46,7 +46,7 @@ function Get-Classification {
         return "success"
     }
 
-    if ($Text -match '(?i)(quota\s*(is\s*)?(exhausted|exceeded)|usage\s+limit\s+(reached|exceeded)|free\s+(token|credit)s?\s+(are\s+)?(exhausted|used\s+up)|no\s+(free\s+)?tokens?\s+remaining|insufficient\s+(credit|balance)|credit\s+balance\s+(is\s+)?(empty|exhausted)|token\s+allowance\s+(is\s+)?exhausted)') {
+    if ($Text -match '(?i)(individual\s+quota\s+(has\s+been\s+)?reached|quota\s*(is\s*)?(reached|exhausted|exceeded)|usage\s+limit\s+(reached|exceeded)|free\s+(token|credit)s?\s+(are\s+)?(exhausted|used\s+up)|no\s+(free\s+)?tokens?\s+remaining|insufficient\s+(credit|balance)|credit\s+balance\s+(is\s+)?(empty|exhausted)|token\s+allowance\s+(is\s+)?exhausted)') {
         return "quota-exhausted"
     }
 
