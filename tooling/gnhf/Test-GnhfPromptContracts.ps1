@@ -53,6 +53,7 @@ function Invoke-FixtureMutation {
 
 $modulePath = Join-Path $PSScriptRoot "GnhfPromptContracts.psm1"
 $runtimePath = Join-Path $PSScriptRoot "Invoke-ChatGPTDesktopGnhfSprint.ps1"
+$rootCmdPath = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) "Run-ChatGPTDesktopGnhfSprint.cmd"
 $schemaRoot = Join-Path $PSScriptRoot "schemas"
 $fixtureRoot = Join-Path $PSScriptRoot "fixtures"
 
@@ -71,6 +72,13 @@ Assert-Contract ($runtimeText.Contains('$handoffProofLevel = if ($handoffIsRunti
 Assert-Contract ($runtimeText.Contains('gnhf_removed_failed_worktree_branch_retained_for_review')) "Failed-worktree cleanup by GNHF must be recorded as an explicit preservation gap."
 Assert-Contract ($runtimeText.Contains('provider error')) "A zero-token provider failure must classify as a route preflight blocker."
 Assert-Contract ($runtimeText.Contains('Expected exactly one changed GNHF branch')) "Runtime success must independently require branch, artifact, nonce, commit, and worktree proof."
+foreach ($evidenceName in @("regular-request.txt", "compiled-gnhf-prompt.txt", "prompt-validation.json", "terminal-transcript.txt", "launch-result.json", "worktree-proof.json", "validation-summary.json", "operator-handoff.txt")) {
+    Assert-Contract ($runtimeText.Contains($evidenceName)) "Runtime must declare local evidence artifact $evidenceName."
+}
+$rootCmdText = Get-Content -LiteralPath $rootCmdPath -Raw
+Assert-Contract ($rootCmdText.Contains('pwsh.exe -NoLogo -NoProfile')) "Root desktop launcher must require PowerShell 7 without profile side effects."
+Assert-Contract ($rootCmdText.Contains('set "RESULT=%ERRORLEVEL%"') -and $rootCmdText.Contains('exit /b %RESULT%')) "Root desktop launcher must preserve the PowerShell exit code."
+Assert-Contract ($rootCmdText.Contains('latest-run.txt')) "Root desktop launcher failures must point to exact local evidence."
 
 Import-Module $modulePath -Force
 
