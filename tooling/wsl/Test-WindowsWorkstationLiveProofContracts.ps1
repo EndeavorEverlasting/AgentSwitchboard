@@ -152,10 +152,17 @@ if (-not $InstalledMode -and (Test-Path -LiteralPath $installerPath -PathType Le
 if (Test-Path -LiteralPath $cmdPath -PathType Leaf) {
     $cmd = Get-Content -LiteralPath $cmdPath -Raw
     Test-Contract ($cmd.Contains("pwsh.exe -NoLogo -NoProfile")) "cmd/pwsh7"
-    Test-Contract ($cmd.Contains("Setup-TmuxGnhfWorkspace.cmd") -and $cmd.Contains(" apply")) "cmd/deploys-core-first"
-    Test-Contract ($cmd.Contains('branch --show-current') -and $cmd.Contains('status --porcelain=v1')) 'cmd/repo-floor-before-deploy'
-    Test-Contract ($cmd.Contains("Install-WindowsWorkstationLiveProof.ps1")) "cmd/installs-proof-lane"
-    Test-Contract ($cmd.Contains('if "%_setup_code%"=="30"')) "cmd/reboot-resume-gate"
+    if ($InstalledMode) {
+        Test-Contract ($cmd.Contains("Invoke-WindowsWorkstationLiveProof.ps1")) "cmd/installed-proof-entrypoint"
+        Test-Contract (-not $cmd.Contains("Setup-TmuxGnhfWorkspace.cmd")) "cmd/installed-does-not-redeploy-core"
+    }
+    else {
+        Test-Contract ($cmd.Contains("Setup-TmuxGnhfWorkspace.cmd") -and $cmd.Contains(" apply")) "cmd/deploys-core-first"
+        Test-Contract ($cmd.Contains('branch --show-current') -and $cmd.Contains('status --porcelain=v1')) 'cmd/repo-floor-before-deploy'
+        Test-Contract ($cmd.Contains('tmux-gnhf-workstation.local.json') -and $cmd.Contains('WORKSTATION_MANIFEST')) 'cmd/reuses-local-manifest'
+        Test-Contract ($cmd.Contains("Install-WindowsWorkstationLiveProof.ps1")) "cmd/installs-proof-lane"
+        Test-Contract ($cmd.Contains('if "%_setup_code%"=="30"')) "cmd/reboot-resume-gate"
+    }
     Test-Contract ($cmd.Contains("pause >nul")) "cmd/failure-visible"
 }
 
