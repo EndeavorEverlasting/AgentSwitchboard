@@ -75,6 +75,6 @@ A zero process exit is insufficient. Runtime success additionally requires:
 - the exact worktree path and a clean worktree;
 - a clean disposable base and unchanged AgentSwitchboard source checkout.
 
-Failed worktrees remain available for review. A quota, rate-limit, or route-spawn failure is recorded as a blocker rather than retried indefinitely.
+Failed branch and requested-worktree state is recorded for review, and AgentSwitchboard does not delete it. GNHF 0.1.41 may still remove its worktree after a provider failure while retaining the branch; the operator handoff reports that preservation gap instead of claiming a preserved worktree. A quota, rate-limit, or route-spawn failure is recorded as a blocker rather than retried indefinitely.
 
 The highest proof is one observed ChatGPT Desktop-initiated local run on the current workstation. It does not prove every provider, future quota, model quality, unattended overnight completion, production deployment, or operator acceptance.
