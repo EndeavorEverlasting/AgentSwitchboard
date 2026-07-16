@@ -16,7 +16,6 @@ on:
       - "tooling/gnhf/schemas/gnhf-handoff-input.schema.json"
       - "tooling/gnhf/schemas/gnhf-handoff-result.schema.json"
       - "tooling/gnhf/MODEL_CATALOG_AND_TANDEM.md"
-      - "tooling/gnhf/Install-GnhfBimodalScheduler.ps1"
       - ".github/workflows/gnhf-model-catalog-tandem-contracts.yml"
   workflow_dispatch:
 

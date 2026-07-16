@@ -30,7 +30,7 @@ foreach ($relative in $requiredFiles) { Test-Contract (Test-Path -LiteralPath (J
 
 foreach ($relative in @("Get-GnhfModelCatalog.ps1", "New-GnhfTandemPlan.ps1", "Invoke-GnhfTandem.ps1", "Install-GnhfModelCatalogTandem.ps1")) {
     $tokens = $null; $errors = $null
-    [void][Management.Automation.Language.Parser]::ParseFile((Join-Path $RootPath $relative), [ref]$tokens, [ref]$errors)
+    [void][System.Management.Automation.Language.Parser]::ParseFile((Join-Path $RootPath $relative), [ref]$tokens, [ref]$errors)
     Test-Contract ($errors.Count -eq 0) "parse/$relative" (($errors | ForEach-Object Message) -join "; ")
 }
 
@@ -59,15 +59,15 @@ Test-Contract (-not $catalogText.Contains('DEEPSEEK_API_KEY') -and -not $catalog
 Test-Contract ($tandemPlanText.Contains('same repository path') -and $tandemPlanText.Contains('dirty')) "plan/worktree-collision-guards"
 Test-Contract ($tandemPlanText.Contains('preferredModels') -and $tandemPlanText.Contains('preferredProviders')) "plan/model-preferences"
 Test-Contract ($tandemPlanText.Contains('MaxCatalogAgeMinutes') -and $tandemPlanText.Contains('authenticationStatus')) "plan/fresh-authenticated-catalog"
-Test-Contract ($tandemPlanText.Contains("executionObjectivePath") -and $tandemPlanText.Contains("originalObjectivePath")) "plan/generated-objective-handoff"
-Test-Contract ($tandemPlanText.Contains("handoff-input/v1") -and $tandemPlanText.Contains("expectedResultPath")) "plan/clear-handoffs"
-Test-Contract ($tandemRunText.Contains("Start-GnhfSprint.ps1")) "runtime/reuses-repo-launcher"
-Test-Contract ($tandemRunText.Contains("MaxParallelRepos") -and $tandemRunText.Contains("Start-TandemLane")) "runtime/parallel-orchestration"
-Test-Contract ($tandemRunText.Contains("dependsOn") -and $tandemRunText.Contains("blocked-by-dependency")) "runtime/dependency-handoffs"
-Test-Contract ($tandemRunText.Contains("AGENTSWITCHBOARD_HANDOFF_INPUT") -and $tandemRunText.Contains("AGENTSWITCHBOARD_HANDOFF_RESULT")) "runtime/handoff-environment"
-Test-Contract ($tandemRunText.Contains("OPENCODE_CONFIG_CONTENT") -and $tandemRunText.Contains("small_model")) "runtime/exact-opencode-model-application"
-Test-Contract ($tandemRunText.Contains("runtimeModelConfiguration")) "runtime/model-configuration-evidence"
-Test-Contract ($tandemRunText.Contains("automaticPush = $false") -and $tandemRunText.Contains("automaticMerge = $false")) "runtime/no-automatic-integration"
+Test-Contract ($tandemPlanText.Contains('executionObjectivePath') -and $tandemPlanText.Contains('originalObjectivePath')) "plan/generated-objective-handoff"
+Test-Contract ($tandemPlanText.Contains('handoff-input/v1') -and $tandemPlanText.Contains('expectedResultPath')) "plan/clear-handoffs"
+Test-Contract ($tandemRunText.Contains('Start-GnhfSprint.ps1')) "runtime/reuses-repo-launcher"
+Test-Contract ($tandemRunText.Contains('MaxParallelRepos') -and $tandemRunText.Contains('Start-TandemLane')) "runtime/parallel-orchestration"
+Test-Contract ($tandemRunText.Contains('dependsOn') -and $tandemRunText.Contains('blocked-by-dependency')) "runtime/dependency-handoffs"
+Test-Contract ($tandemRunText.Contains('AGENTSWITCHBOARD_HANDOFF_INPUT') -and $tandemRunText.Contains('AGENTSWITCHBOARD_HANDOFF_RESULT')) "runtime/handoff-environment"
+Test-Contract ($tandemRunText.Contains('OPENCODE_CONFIG_CONTENT') -and $tandemRunText.Contains('small_model')) "runtime/exact-opencode-model-application"
+Test-Contract ($tandemRunText.Contains('runtimeModelConfiguration')) "runtime/model-configuration-evidence"
+Test-Contract ($tandemRunText.Contains('automaticPush = $false') -and $tandemRunText.Contains('automaticMerge = $false')) "runtime/no-automatic-integration"
 Test-Contract ($tandemRunText.Contains('process.Kill($true)')) "runtime/bounded-process-tree"
 
 $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("AgentSwitchboard-TandemContracts-" + [guid]::NewGuid().ToString("N"))
@@ -95,8 +95,8 @@ try {
         maxParallelRepos = 2
         providerPreference = @("deepseek", "openai")
         repositories = @(
-            [ordered]@{ id = "sysadminsuite"; enabled = $true; repository = "EndeavorEverlasting/SysAdminSuite"; path = (Join-Path $tempRoot "sas"); objectivePath = (Join-Path $tempRoot "sas.md"); agent = "opencode"; preferredProviders = @("deepseek"); preferredModels = @("deepseek/deepseek-v4-pro"); maxIterations = 2; maxTokens = 50000; timeoutMintes = 30; stopWhen = "committed and validated"; dependsOn = @(); ownedScope = @("tests"); forbiddenScope = @("credentials")},
-            [ordered]@{ id = "foundry"; enabled = $true; repository = "EndeavorEverlasting/foundry"; path = (Join-Path $tempRoot "foundry"); objectivePath = (Join-Path $tempRoot "foundry.md"); agent = "opencode"; preferredProviders = @("openai"); preferredModels = @(); maxIterations = 2; maxTokens = 50000; timeoutMintes = 30; stopWhen = "committed and validated"; dependsOn = @("sysadminsuite"); ownedScope = @("analysis"); forbiddenScope = @("credentials")}
+            [ordered]@{ id = "sysadminsuite"; enabled = $true; repository = "EndeavorEverlasting/SysAdminSuite"; path = (Join-Path $tempRoot "sas"); objectivePath = (Join-Path $tempRoot "sas.md"); agent = "opencode"; preferredProviders = @("deepseek"); preferredModels = @("deepseek/deepseek-v4-pro"); maxIterations = 2; maxTokens = 50000; timeoutMinutes = 30; stopWhen = "committed and validated"; dependsOn = @(); ownedScope = @("tests"); forbiddenScope = @("credentials") },
+            [ordered]@{ id = "foundry"; enabled = $true; repository = "EndeavorEverlasting/foundry"; path = (Join-Path $tempRoot "foundry"); objectivePath = (Join-Path $tempRoot "foundry.md"); agent = "opencode"; preferredProviders = @("openai"); preferredModels = @(); maxIterations = 2; maxTokens = 50000; timeoutMinutes = 30; stopWhen = "committed and validated"; dependsOn = @("sysadminsuite"); ownedScope = @("analysis"); forbiddenScope = @("credentials") }
         )
     } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $manifestPath -Encoding utf8NoBOM
     & (Join-Path $RootPath "New-GnhfTandemPlan.ps1") -CatalogPath $catalogPath -RepositoriesPath $manifestPath -OutputPath $planPath -SkipRepositoryValidation
