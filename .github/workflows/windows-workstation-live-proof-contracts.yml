@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "Run-WindowsWorkstationLiveProof.cmd"
+      - "tooling/wsl/tmux-gnhf-workstation.example.json"
       - "tooling/wsl/Invoke-WindowsWorkstationLiveProof.ps1"
       - "tooling/wsl/WindowsWorkstationLiveProof.Common.psm1"
       - "tooling/wsl/Invoke-WindowsWorkstationSessionProof.ps1"
