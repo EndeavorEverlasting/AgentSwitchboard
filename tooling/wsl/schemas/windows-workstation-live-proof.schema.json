@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/wsl/schemas/windows-workstation-live-proof.schema.json",
+  "title": "AgentSwitchboard Windows workstation live runtime proof",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "completedAt",
+    "status",
+    "proofLevel",
+    "proofCeiling",
+    "failureReason",
+    "runtimeState",
+    "proof",
+    "handoff",
+    "events"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "agentswitchboard-windows-workstation-live-proof/v1"
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "enum": ["completed", "failed"]
+    },
+    "proofLevel": {
+      "enum": [
+        "preflight-only",
+        "targeted-static-validation",
+        "launcher-and-command-ack",
+        "live-wezterm-wsl-tmux-session-persistence",
+        "live-windows-wsl-tmux-gnhf-behavior-observed"
+      ]
+    },
+    "proofCeiling": {
+      "type": "string",
+      "minLength": 1
+    },
+    "failureReason": {
+      "type": ["string", "null"]
+    },
+    "runtimeState": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "distribution",
+        "managedSessionName",
+        "proofSessionName",
+        "sourceRepoPath",
+        "sourceBranch",
+        "sourceHead",
+        "workspaceInstallRoot",
+        "artifactRoot",
+        "selectedAgent",
+        "selectedModel",
+        "disposableRepositoryPath",
+        "gnhfProofBranch",
+        "gnhfProofCommit"
+      ],
+      "properties": {
+        "distribution": { "type": "string", "minLength": 1 },
+        "managedSessionName": { "type": "string", "minLength": 1 },
+        "proofSessionName": { "type": ["string", "null"] },
+        "sourceRepoPath": { "type": ["string", "null"] },
+        "sourceBranch": { "type": ["string", "null"] },
+        "sourceHead": {
+          "type": ["string", "null"],
+          "pattern": "^([0-9a-fA-F]{40})?$"
+        },
+        "workspaceInstallRoot": { "type": "string", "minLength": 1 },
+        "artifactRoot": { "type": "string", "minLength": 1 },
+        "selectedAgent": { "type": ["string", "null"] },
+        "selectedModel": { "type": ["string", "null"] },
+        "disposableRepositoryPath": { "type": ["string", "null"] },
+        "gnhfProofBranch": { "type": ["string", "null"] },
+        "gnhfProofCommit": {
+          "type": ["string", "null"],
+          "pattern": "^([0-9a-fA-F]{40})?$"
+        }
+      }
+    },
+    "proof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "floorSafe",
+        "targetedValidation",
+        "destructiveStopSkippedByDoctrine",
+        "safeStart",
+        "launcherAttached",
+        "targetSurfaceReady",
+        "commandIssued",
+        "commandAckObserved",
+        "behaviorObserved",
+        "detachObserved",
+        "persistenceObserved",
+        "reattachObserved",
+        "runtimeArtifactCollected",
+        "finalGitClean",
+        "liveRuntime"
+      ],
+      "properties": {
+        "floorSafe": { "type": "boolean" },
+        "targetedValidation": { "type": "boolean" },
+        "destructiveStopSkippedByDoctrine": { "type": "boolean" },
+        "safeStart": { "type": "boolean" },
+        "launcherAttached": { "type": "boolean" },
+        "targetSurfaceReady": { "type": "boolean" },
+        "commandIssued": { "type": "boolean" },
+        "commandAckObserved": { "type": "boolean" },
+        "behaviorObserved": { "type": "boolean" },
+        "detachObserved": { "type": "boolean" },
+        "persistenceObserved": { "type": "boolean" },
+        "reattachObserved": { "type": "boolean" },
+        "runtimeArtifactCollected": { "type": "boolean" },
+        "finalGitClean": { "type": "boolean" },
+        "liveRuntime": { "type": "boolean" }
+      }
+    },
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "readyForAutomatedAgents",
+        "readyForSysAdminSuiteTandem",
+        "proofPath",
+        "eventLogPath",
+        "gnhfLogPath",
+        "agent",
+        "model",
+        "branch",
+        "commit"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "agentswitchboard-workstation-runtime-handoff/v1"
+        },
+        "readyForAutomatedAgents": { "type": "boolean" },
+        "readyForSysAdminSuiteTandem": { "type": "boolean" },
+        "proofPath": { "type": "string", "minLength": 1 },
+        "eventLogPath": { "type": "string", "minLength": 1 },
+        "gnhfLogPath": { "type": ["string", "null"] },
+        "agent": { "type": ["string", "null"] },
+        "model": { "type": ["string", "null"] },
+        "branch": { "type": ["string", "null"] },
+        "commit": {
+          "type": ["string", "null"],
+          "pattern": "^([0-9a-fA-F]{40})?$"
+        }
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["at", "step", "state", "message", "data"],
+        "properties": {
+          "at": { "type": "string", "format": "date-time" },
+          "step": { "type": "string", "minLength": 1 },
+          "state": { "enum": ["PASS", "SKIP", "FAIL", "INFO"] },
+          "message": { "type": "string", "minLength": 1 },
+          "data": { "type": "object" }
+        }
+      }
+    }
+  }
+}

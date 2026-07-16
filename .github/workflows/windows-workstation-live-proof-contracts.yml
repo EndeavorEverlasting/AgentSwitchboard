@@ -1,0 +1,96 @@
+name: Windows workstation live-proof contracts
+
+on:
+  pull_request:
+    paths:
+      - "Run-WindowsWorkstationLiveProof.cmd"
+      - "tooling/wsl/Invoke-WindowsWorkstationLiveProof.ps1"
+      - "tooling/wsl/WindowsWorkstationLiveProof.Common.psm1"
+      - "tooling/wsl/Invoke-WindowsWorkstationSessionProof.ps1"
+      - "tooling/wsl/Invoke-WindowsWorkstationGnhfProof.ps1"
+      - "tooling/wsl/Install-WindowsWorkstationLiveProof.ps1"
+      - "tooling/wsl/Test-WindowsWorkstationLiveProofContracts.ps1"
+      - "tooling/wsl/schemas/windows-workstation-live-proof.schema.json"
+      - "tooling/wsl/tests/test_windows_workstation_live_proof_contracts.py"
+      - "docs/workstation/windows-workstation-live-proof.md"
+      - ".github/workflows/windows-workstation-live-proof-contracts.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run dependency-free static contracts
+        run: python3 tooling/wsl/tests/test_windows_workstation_live_proof_contracts.py
+      - name: Check repository hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${GITHUB_BASE_REF:-}" ]]; then
+            git diff --check "origin/${GITHUB_BASE_REF}...HEAD"
+          else
+            git diff --check HEAD^
+          fi
+          test -z "$(git status --short)"
+
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Parse PowerShell files
+        shell: pwsh
+        run: |
+          $files = @(
+            'tooling/wsl/Invoke-WindowsWorkstationLiveProof.ps1',
+            'tooling/wsl/WindowsWorkstationLiveProof.Common.psm1',
+            'tooling/wsl/Invoke-WindowsWorkstationSessionProof.ps1',
+            'tooling/wsl/Invoke-WindowsWorkstationGnhfProof.ps1',
+            'tooling/wsl/Install-WindowsWorkstationLiveProof.ps1',
+            'tooling/wsl/Test-WindowsWorkstationLiveProofContracts.ps1'
+          )
+          foreach ($file in $files) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($file, [ref]$tokens, [ref]$errors)
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object { Write-Error "${file}: $($_.Message)" }
+              exit 1
+            }
+          }
+      - name: Run PowerShell contracts
+        shell: pwsh
+        run: |
+          ./tooling/wsl/Test-WindowsWorkstationLiveProofContracts.ps1 |
+            Tee-Object -FilePath windows-live-proof-contracts.log
+      - name: Run installer plan
+        shell: pwsh
+        run: |
+          ./tooling/wsl/Install-WindowsWorkstationLiveProof.ps1 `
+            -SourceRoot ./tooling/wsl `
+            -ManifestPath ./tooling/wsl/tmux-gnhf-workstation.example.json |
+            Tee-Object -FilePath windows-live-proof-install-plan.log
+      - name: Verify clean checkout
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_BASE_REF) {
+            git diff --check "origin/$env:GITHUB_BASE_REF...HEAD"
+          }
+          else {
+            git diff --check HEAD^
+          }
+          if (git status --short) { throw 'Checkout is dirty after validation.' }
+      - name: Upload contract logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-workstation-live-proof-contracts
+          path: |
+            windows-live-proof-contracts.log
+            windows-live-proof-install-plan.log
