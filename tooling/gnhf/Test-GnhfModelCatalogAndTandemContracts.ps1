@@ -52,6 +52,7 @@ Test-Contract ([int]$linked.maxParallelRepos -ge 2) "linked/tandem-cap"
 $catalogText = Get-Content -LiteralPath (Join-Path $RootPath "Get-GnhfModelCatalog.ps1") -Raw
 $tandemPlanText = Get-Content -LiteralPath (Join-Path $RootPath "New-GnhfTandemPlan.ps1") -Raw
 $tandemRunText = Get-Content -LiteralPath (Join-Path $RootPath "Invoke-GnhfTandem.ps1") -Raw
+$installerText = Get-Content -LiteralPath (Join-Path $RootPath "Install-GnhfModelCatalogTandem.ps1") -Raw
 Test-Contract ($catalogText.Contains('opencode') -and $catalogText.Contains('models') -and $catalogText.Contains('--refresh')) "catalog/runtime-refresh"
 Test-Contract ($catalogText.Contains('auth') -and $catalogText.Contains('list')) "catalog/auth-inventory"
 Test-Contract ($catalogText.Contains('Move-Item') -and $catalogText.Contains('.tmp')) "catalog/atomic-write"
@@ -69,6 +70,8 @@ Test-Contract ($tandemRunText.Contains('OPENCODE_CONFIG_CONTENT') -and $tandemRu
 Test-Contract ($tandemRunText.Contains('runtimeModelConfiguration')) "runtime/model-configuration-evidence"
 Test-Contract ($tandemRunText.Contains('automaticPush = $false') -and $tandemRunText.Contains('automaticMerge = $false')) "runtime/no-automatic-integration"
 Test-Contract ($tandemRunText.Contains('process.Kill($true)')) "runtime/bounded-process-tree"
+Test-Contract ($installerText.Contains('Start-GnhfSprint.ps1') -and $installerText.Contains('GnhfFleet.Paths.ps1') -and $installerText.Contains('GnhfModelActivation.ps1')) "installer/core-launcher-dependencies"
+Test-Contract ($installerText.Contains('Core GNHF fleet state not found') -and $installerText.Contains('state.json')) "installer/core-state-gate"
 
 $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("AgentSwitchboard-TandemContracts-" + [guid]::NewGuid().ToString("N"))
 try {

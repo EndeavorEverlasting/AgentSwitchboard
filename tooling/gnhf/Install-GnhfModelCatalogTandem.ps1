@@ -15,6 +15,9 @@ if (-not (Test-Path -LiteralPath $pathsPath -PathType Leaf)) { throw "Path helpe
 $SourceRoot = Resolve-GnhfFleetDirectory -Path $SourceRoot -Description "model catalog and tandem source root"
 $InstallRoot = Get-GnhfFleetAbsolutePath -Path $InstallRoot
 $files = @(
+    "GnhfFleet.Paths.ps1",
+    "GnhfModelActivation.ps1",
+    "Start-GnhfSprint.ps1",
     "Get-GnhfModelCatalog.ps1",
     "New-GnhfTandemPlan.ps1",
     "Invoke-GnhfTandem.ps1",
@@ -29,7 +32,8 @@ $schemas = @(
     "gnhf-linked-repositories.schema.json",
     "gnhf-tandem-plan.schema.json",
     "gnhf-handoff-input.schema.json",
-    "gnhf-handoff-result.schema.json"
+    "gnhf-handoff-result.schema.json",
+    "gnhf-model-activation.schema.json"
 )
 foreach ($file in $files) { [void](Resolve-GnhfFleetFile -Path (Join-Path $SourceRoot $file) -Description "model catalog source '$file'") }
 foreach ($schema in $schemas) { [void](Resolve-GnhfFleetFile -Path (Join-Path $SourceRoot "schemas\$schema") -Description "model catalog schema '$schema'") }
@@ -45,6 +49,8 @@ $plan = [ordered]@{
     installRoot = $InstallRoot
     files = $files
     schemas = $schemas
+    requiredCoreStatePath = Join-Path $InstallRoot "state.json"
+    bundledLauncherDependencies = @("GnhfFleet.Paths.ps1", "GnhfModelActivation.ps1", "Start-GnhfSprint.ps1")
     preservesLinkedRepositoryManifest = $true
     automaticAuthentication = $false
     automaticPush = $false
@@ -57,11 +63,17 @@ if (-not $Apply) {
 }
 if (-not $PSCmdlet.ShouldProcess($InstallRoot, "Install AgentSwitchboard model catalog and tandem orchestration")) { exit 0 }
 
+$coreStatePath = Join-Path $InstallRoot "state.json"
+if (-not (Test-Path -LiteralPath $coreStatePath -PathType Leaf)) {
+    throw "Core GNHF fleet state not found: $coreStatePath. Run the core AgentSwitchboard fleet installer before applying the tandem add-on."
+}
+
 [void](Ensure-GnhfFleetDirectory -Path $InstallRoot)
 $schemasRoot = Ensure-GnhfFleetDirectory -Path (Join-Path $InstallRoot "schemas")
 [void](Ensure-GnhfFleetDirectory -Path (Join-Path $InstallRoot "tandem"))
 foreach ($file in $files) { [void](Copy-GnhfFleetFile -Source (Join-Path $SourceRoot $file) -Destination (Join-Path $InstallRoot $file)) }
-foreach ($schema in $schemas) { [void](Copy-GnhfFleetFile -Source (Join-Path $SourceRoot "schemas\$schema") -Destination (Join-Path $schemasRoot $schema)) }
+foreach ($schema in $schemas) { [void](Copy-GnhfFleetFile -Source (Join-Path $SourceRoot "schemas\$schema") -Destination (Join-Path $schemasRoot $schema))
+}
 
 $linkedExample = Join-Path $InstallRoot "linked-repositories.example.json"
 $linkedActive = Join-Path $InstallRoot "linked-repositories.json"
@@ -109,6 +121,8 @@ $summary = [ordered]@{
     tandemPlanPath = Join-Path $InstallRoot "tandem\plan.json"
     launchers = $launchers
     operatorGuidePath = Join-Path $InstallRoot "MODEL_CATALOG_AND_TANDEM.md"
+    coreStatePath = $coreStatePath
+    bundledLauncherDependencies = @("GnhfFleet.Paths.ps1", "GnhfModelActivation.ps1", "Start-GnhfSprint.ps1")
     automaticAuthentication = $false
     automaticPush = $false
     automaticMerge = $false
