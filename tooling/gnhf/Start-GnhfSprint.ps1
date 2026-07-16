@@ -60,6 +60,137 @@ function Resolve-AgentSpec {
     return [string]$agentRecord.agentSpec
 }
 
+function Get-GnhfBranchHeads {
+    $heads = @{}
+    foreach ($line in @(Invoke-Git -Arguments @("for-each-ref", "--format=%(refname:short)|%(objectname)", "refs/heads/gnhf"))) {
+        if ($line -match '^([^|]+)\|([0-9a-f]+)$') {
+            $heads[$Matches[1]] = $Matches[2]
+        }
+    }
+    return $heads
+}
+
+function Test-GnhfCommitProof {
+    param(
+        [Parameter(Mandatory)][string]$BaseCommit,
+        [Parameter(Mandatory)]$BeforeBranches
+    )
+
+    foreach ($line in @(Invoke-Git -Arguments @("for-each-ref", "--format=%(refname:short)|%(objectname)", "refs/heads/gnhf"))) {
+        if ($line -notmatch '^([^|]+)\|([0-9a-f]+)$') {
+            continue
+        }
+
+        $branchName = $Matches[1]
+        $branchHead = $Matches[2]
+        if ($BeforeBranches.ContainsKey($branchName) -and $BeforeBranches[$branchName] -eq $branchHead) {
+            continue
+        }
+
+        $ahead = [int]((Invoke-Git -Arguments @("rev-list", "--count", "$BaseCommit..$branchName") | Select-Object -First 1).Trim())
+        if ($ahead -gt 0) {
+            return [pscustomobject]@{
+                Passed = $true
+                Branch = $branchName
+                CommitsAhead = $ahead
+            }
+        }
+    }
+
+    return [pscustomobject]@{
+        Passed = $false
+        Branch = $null
+        CommitsAhead = 0
+    }
+}
+
+function Write-AgyRouteStatus {
+    param(
+        [Parameter(Mandatory)][string]$Classification,
+        [Parameter(Mandatory)][int]$ExitCode,
+        [Parameter(Mandatory)][string]$Summary
+    )
+
+    $statusPath = $env:AGENTSWITCHBOARD_AGY_STATUS_PATH
+    if ([string]::IsNullOrWhiteSpace($statusPath)) {
+        return
+    }
+
+    $parent = Split-Path -Parent $statusPath
+    if ($parent) {
+        New-Item -ItemType Directory -Path $parent -Force | Out-Null
+    }
+
+    [ordered]@{
+        schemaVersion = 1
+        completedAt = (Get-Date).ToString("o")
+        classification = $Classification
+        exitCode = $ExitCode
+        modelMode = "agy-default"
+        model = $null
+        summary = $Summary
+        source = "preflight"
+    } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $statusPath -Encoding utf8NoBOM
+}
+
+function Invoke-AgyQuotaPreflight {
+    $agy = Get-Command agy -ErrorAction SilentlyContinue
+    if (-not $agy) {
+        return [pscustomobject]@{
+            Classification = "agent-error"
+            ExitCode = 127
+            Summary = "AGY command was not found on PATH."
+        }
+    }
+
+    $probeOutput = @(
+        & $agy.Source `
+            --mode plan `
+            --print `
+            "Return exactly this text and nothing else: AGY_ROUTER_PREFLIGHT_READY" 2>&1
+    )
+    $probeExitCode = $LASTEXITCODE
+    $probeText = ($probeOutput -join [Environment]::NewLine).Trim()
+
+    if ($probeExitCode -eq 0 -and $probeText -match 'AGY_ROUTER_PREFLIGHT_READY') {
+        return [pscustomobject]@{
+            Classification = "ready"
+            ExitCode = 0
+            Summary = "AGY natural allocation accepted the bounded plan-mode preflight."
+        }
+    }
+
+    if ($probeText -match '(?i)(individual\s+quota\s+(has\s+been\s+)?reached|quota\s*(is\s*)?(reached|exhausted|exceeded)|usage\s+limit\s+(reached|exceeded)|free\s+(token|credit)s?\s+(are\s+)?(exhausted|used\s+up)|no\s+(free\s+)?tokens?\s+remaining|token\s+allowance\s+(is\s+)?exhausted)') {
+        return [pscustomobject]@{
+            Classification = "quota-exhausted"
+            ExitCode = if ($probeExitCode -eq 0) { 75 } else { $probeExitCode }
+            Summary = $probeText
+        }
+    }
+
+    if ($probeText -match '(?i)(429|too many requests|rate.?limit)') {
+        return [pscustomobject]@{
+            Classification = "rate-limited"
+            ExitCode = if ($probeExitCode -eq 0) { 76 } else { $probeExitCode }
+            Summary = $probeText
+        }
+    }
+
+    if ($probeText -match '(?i)(unauthorized|forbidden|authentication|login required|sign in)') {
+        return [pscustomobject]@{
+            Classification = "authentication-required"
+            ExitCode = if ($probeExitCode -eq 0) { 77 } else { $probeExitCode }
+            Summary = $probeText
+        }
+    }
+
+    return [pscustomobject]@{
+        Classification = "agent-error"
+        ExitCode = if ($probeExitCode -eq 0) { 78 } else { $probeExitCode }
+        Summary = if ($probeText) { $probeText } else { "AGY preflight returned no usable response." }
+    }
+}
+
 $RepoPath = Resolve-GnhfFleetDirectory -Path $RepoPath -Description "target repository"
 $InstallRoot = Get-GnhfFleetAbsolutePath -Path $InstallRoot
 $statePath = Resolve-GnhfFleetFile -Path (Join-Path $InstallRoot "state.json") -Description "fleet state"
@@ -97,6 +228,8 @@ if ($branch.StartsWith("gnhf/")) {
     throw "Launch worktree mode from a non-GNHF base branch. Current branch: $branch"
 }
 
+$baseCommit = (Invoke-Git -Arguments @("rev-parse", "HEAD") | Select-Object -First 1).Trim()
+$gnhfBranchesBefore = Get-GnhfBranchHeads
 $recentCommits = Invoke-Git -Arguments @("log", "--oneline", "--decorate", "-5")
 $configuredGnhfPath = [string]$state.gnhf.commandPath
 $gnhfPath = $null
@@ -122,11 +255,12 @@ $transcriptPath = Join-Path $runLogDir "launcher-transcript.txt"
 $summaryPath = Join-Path $runLogDir "launcher-summary.json"
 
 $summary = [ordered]@{
-    schemaVersion = 1
+    schemaVersion = 2
     name = $Name
     startedAt = (Get-Date).ToString("o")
     repoPath = $RepoPath
     baseBranch = $branch
+    baseCommit = $baseCommit
     agentRequested = $Agent
     agentSpec = $agentSpec
     maxIterations = $MaxIterations
@@ -134,6 +268,10 @@ $summary = [ordered]@{
     stopWhen = $StopWhen
     pushBranch = [bool]$PushBranch
     recentCommits = @($recentCommits)
+    agyPreflightClassification = $null
+    commitProofBranch = $null
+    commitProofCount = 0
+    outcome = $null
     exitCode = $null
     completedAt = $null
     launcherLog = $transcriptPath
@@ -179,12 +317,49 @@ try {
     Write-Host "`nRecent commits:"
     $recentCommits | ForEach-Object { Write-Host "  $_" }
 
-    Set-Location -LiteralPath $RepoPath
-    $objective | & $gnhfPath @gnhfArguments
-    $exitCode = $LASTEXITCODE
+    $isAgyBridgeRun = $agentSpec -eq "pi" -and -not [string]::IsNullOrWhiteSpace($env:AGENTSWITCHBOARD_AGY_STATUS_PATH)
+    if ($isAgyBridgeRun) {
+        Write-Host "`nChecking AGY natural allocation before opening GNHF..." -ForegroundColor Cyan
+        $agyPreflight = Invoke-AgyQuotaPreflight
+        $summary.agyPreflightClassification = $agyPreflight.Classification
+
+        if ($agyPreflight.Classification -ne "ready") {
+            $sanitized = $agyPreflight.Summary -replace '(?i)(sk-[A-Za-z0-9_-]+)', '[redacted]'
+            Write-AgyRouteStatus -Classification $agyPreflight.Classification -ExitCode $agyPreflight.ExitCode -Summary $sanitized
+            Write-Warning "AGY preflight stopped before GNHF: $($agyPreflight.Classification)."
+            $summary.outcome = "agy-preflight-$($agyPreflight.Classification)"
+            $exitCode = if ($agyPreflight.ExitCode -eq 0) { 75 } else { $agyPreflight.ExitCode }
+        }
+        else {
+            Remove-Item -LiteralPath $env:AGENTSWITCHBOARD_AGY_STATUS_PATH -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    if ($exitCode -eq 1) {
+        Set-Location -LiteralPath $RepoPath
+        $objective | & $gnhfPath @gnhfArguments
+        $exitCode = $LASTEXITCODE
+
+        $commitProof = Test-GnhfCommitProof -BaseCommit $baseCommit -BeforeBranches $gnhfBranchesBefore
+        $summary.commitProofBranch = $commitProof.Branch
+        $summary.commitProofCount = $commitProof.CommitsAhead
+
+        if ($exitCode -eq 0 -and -not $commitProof.Passed) {
+            Write-Warning "GNHF returned exit code 0 without producing a new commit. Treating the route as failed."
+            $summary.outcome = "no-commit-proof"
+            $exitCode = 79
+        }
+        elseif ($exitCode -eq 0) {
+            $summary.outcome = "committed"
+        }
+        else {
+            $summary.outcome = "gnhf-nonzero"
+        }
+    }
 }
 catch {
     Write-Error -ErrorRecord $_ -ErrorAction Continue
+    $summary.outcome = "launcher-error"
     $exitCode = 1
 }
 finally {

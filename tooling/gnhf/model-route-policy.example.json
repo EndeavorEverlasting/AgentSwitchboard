@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 2,
+  "selectionMode": "quota-preserving",
+  "costOrder": [
+    "natural-free",
+    "limited-free",
+    "free",
+    "paid"
+  ],
+  "timezone": "America/New_York",
+  "allowPaidFallback": true,
+  "fallbackPolicy": {
+    "defaultAction": "stop",
+    "allowedClassifications": [
+      "quota-exhausted"
+    ],
+    "requireNoMutation": true,
+    "note": "A route switch is allowed only after confirmed quota exhaustion and a clean no-mutation check. Generic agent, network, validation, or repository failures stop for review."
+  },
+  "pricingPolicies": {
+    "deepseek-api": {
+      "mode": "flat",
+      "source": "https://api-docs.deepseek.com/quick_start/pricing/",
+      "verifiedAt": "2026-07-16T00:00:00Z",
+      "windowsUtc": [],
+      "note": "Current official DeepSeek pricing lists flat per-token prices and no active time-of-day multiplier. Add a local verified override only when the official provider publishes one."
+    }
+  },
+  "routes": [
+    {
+      "id": "agy-natural-free",
+      "enabled": true,
+      "priority": 10,
+      "costClass": "natural-free",
+      "command": "agy",
+      "agentSpec": "pi",
+      "integration": "agy-pi-shim",
+      "modelMode": "agy-default",
+      "configurationOwner": "agy",
+      "gnhfCompatibility": "bridge-ready",
+      "fallbackOn": [
+        "quota-exhausted"
+      ],
+      "reason": "Use AGY's own naturally free token pool first without permanently pinning a model. AgentSwitchboard presents AGY to GNHF through a local Pi-compatible JSONL bridge and switches only after AGY explicitly reports quota exhaustion and no mutation is present."
+    },
+    {
+      "id": "opencode-zen-deepseek-v4-flash-free",
+      "enabled": true,
+      "priority": 20,
+      "costClass": "limited-free",
+      "command": "opencode",
+      "agentSpec": "opencode",
+      "integration": "opencode-model",
+      "model": "opencode/deepseek-v4-flash-free",
+      "gnhfCompatibility": "runtime-proof-required",
+      "reason": "Use the limited-time OpenCode free route after AGY quota exhaustion, but only after a green GNHF server-session compatibility proof. A direct OpenCode model call is not sufficient proof."
+    },
+    {
+      "id": "gemini-cli-free",
+      "enabled": true,
+      "priority": 30,
+      "costClass": "free",
+      "command": "gemini",
+      "agentSpec": "acp:gemini",
+      "integration": "acp-registry",
+      "probeArgs": [
+        "--version"
+      ],
+      "configurationOwner": "gemini",
+      "gnhfCompatibility": "ready",
+      "reason": "GNHF ships ACP registry support for Gemini. Gemini owns login and free quota state."
+    },
+    {
+      "id": "goose-free-provider",
+      "enabled": true,
+      "priority": 40,
+      "costClass": "free",
+      "command": "goose",
+      "agentSpec": "acp:goose acp",
+      "integration": "acp",
+      "probeArgs": [
+        "acp",
+        "--help"
+      ],
+      "configurationOwner": "goose",
+      "gnhfCompatibility": "capability-gated",
+      "reason": "Goose owns provider selection, including any configured free provider."
+    },
+    {
+      "id": "deepseek-v4-flash-paid",
+      "enabled": true,
+      "priority": 100,
+      "costClass": "paid",
+      "command": "opencode",
+      "agentSpec": "opencode",
+      "integration": "opencode-model",
+      "model": "deepseek/deepseek-v4-flash",
+      "pricingPolicy": "deepseek-api",
+      "gnhfCompatibility": "runtime-proof-required",
+      "reason": "The direct paid DeepSeek model call is usable, but the GNHF/OpenCode structured-session path requires its own green proof."
+    },
+    {
+      "id": "codex-chatgpt-or-openai",
+      "enabled": true,
+      "priority": 110,
+      "costClass": "paid",
+      "command": "codex",
+      "agentSpec": "codex",
+      "integration": "native",
+      "probeArgs": [
+        "--version"
+      ],
+      "configurationOwner": "codex",
+      "gnhfCompatibility": "ready",
+      "reason": "Codex may use ChatGPT login or OpenAI API billing; Codex owns that authentication choice."
+    },
+    {
+      "id": "claude-code",
+      "enabled": true,
+      "priority": 120,
+      "costClass": "paid",
+      "command": "claude",
+      "agentSpec": "claude",
+      "integration": "native",
+      "probeArgs": [
+        "--version"
+      ],
+      "configurationOwner": "claude",
+      "gnhfCompatibility": "ready",
+      "reason": "Claude Code is a native GNHF agent when installed and signed in."
+    },
+    {
+      "id": "github-copilot-cli",
+      "enabled": true,
+      "priority": 130,
+      "costClass": "paid",
+      "command": "copilot",
+      "agentSpec": "copilot",
+      "integration": "native",
+      "probeArgs": [
+        "--version"
+      ],
+      "configurationOwner": "copilot",
+      "gnhfCompatibility": "ready",
+      "reason": "Copilot CLI is a native GNHF agent. Subscription and quota state remain provider-owned."
+    },
+    {
+      "id": "augment-code",
+      "enabled": true,
+      "priority": 140,
+      "costClass": "paid",
+      "command": "augment",
+      "agentSpec": null,
+      "integration": "cli-only",
+      "probeArgs": [
+        "--version"
+      ],
+      "configurationOwner": "augment",
+      "gnhfCompatibility": "blocked",
+      "reason": "Augment Code is inventoried but is not launched by GNHF until a native or ACP adapter is proven."
+    }
+  ]
+}
