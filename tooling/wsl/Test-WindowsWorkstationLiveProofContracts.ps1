@@ -146,6 +146,9 @@ if (-not $InstalledMode -and (Test-Path -LiteralPath $installerPath -PathType Le
         Test-Contract ($installer.Contains($token)) "installer/token/$token"
     }
     Test-Contract ($installer.Contains('status --short')) "installer/clean-source-gate"
+    Test-Contract ($installer.Contains('detached-plan-only')) "installer/detached-plan-supported"
+    Test-Contract ($installer.Contains('Detached source checkout is not allowed when applying')) "installer/detached-apply-rejected"
+    Test-Contract ($installer.Contains('sourceAttached = $sourceAttached')) "installer/attachment-state-recorded"
     Test-Contract (-not $installer.Contains('Remove-Item -Recurse')) "installer/no-broad-delete"
 }
 

@@ -54,9 +54,13 @@ if ($LASTEXITCODE -ne 0 -or -not $sourceHeadOutput) { throw "Unable to read the 
 $sourceHead = ([string]$sourceHeadOutput[0]).Trim()
 if ($sourceHead -notmatch '^[0-9a-fA-F]{40}$') { throw "Source HEAD is not a valid 40-character Git commit: '$sourceHead'." }
 $sourceBranchOutput = @(& git -C $sourceRepoPath branch --show-current 2>&1)
-if ($LASTEXITCODE -ne 0 -or -not $sourceBranchOutput) { throw "Unable to read the source branch." }
-$sourceBranch = ([string]$sourceBranchOutput[0]).Trim()
-if (-not $sourceBranch) { throw "Detached source checkout is not allowed." }
+if ($LASTEXITCODE -ne 0) { throw "Unable to read the source branch." }
+$sourceBranch = if ($sourceBranchOutput.Count -gt 0) { ([string]$sourceBranchOutput[0]).Trim() } else { "" }
+$sourceAttached = -not [string]::IsNullOrWhiteSpace($sourceBranch)
+if (-not $sourceAttached) {
+    if ($Apply) { throw "Detached source checkout is not allowed when applying the runtime proof add-on." }
+    $sourceBranch = "detached-plan-only"
+}
 
 $sourceFiles = [ordered]@{
     proofScript = Join-Path $SourceRoot "Invoke-WindowsWorkstationLiveProof.ps1"
@@ -89,6 +93,7 @@ $plan = [ordered]@{
     operation = if ($Apply) { "apply" } else { "plan" }
     sourceRepoPath = $sourceRepoPath
     sourceBranch = $sourceBranch
+    sourceAttached = $sourceAttached
     sourceHead = $sourceHead
     manifestPath = $ManifestPath
     workspaceInstallRoot = $workspaceInstallRoot

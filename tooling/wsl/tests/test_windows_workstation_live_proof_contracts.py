@@ -96,6 +96,9 @@ def main() -> int:
         "windows-workstation-live-proof.config.json",
         "Run-WindowsWorkstationLiveProof.cmd",
         "-PlanOnly",
+        "detached-plan-only",
+        "Detached source checkout is not allowed when applying",
+        "sourceAttached = $sourceAttached",
         "automaticAuthentication = $false",
         "automaticPush = $false",
     ):
