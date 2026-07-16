@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/gnhf/schemas/gnhf-handoff-result.schema.json",
+  "title": "AgentSwitchboard GNHF tandem handoff result",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schemaVersion", "recordedAt", "laneId", "repository", "status", "automaticPush", "automaticMerge"],
+  "properties": {
+    "schemaVersion": {"const": "agentswitchboard-gnhf-handoff-result/v1"},
+    "recordedAt": {"type": "string", "format": "date-time"},
+    "laneId": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+    "repository": {"type": "string", "pattern": "^[^/]+/[^/]+$"},
+    "status": {"enum": ["completed", "failed", "timed-out", "blocked-by-dependency"]},
+    "exitCode": {"type": "integer"},
+    "timedOut": {"type": "boolean"},
+    "agent": {"type": "string"},
+    "modelProfileId": {"type": "string"},
+    "modelId": {"type": "string", "pattern": "^[^/]+/.+$"},
+    "modelActivationState": {"type": "string"},
+    "runtimeModelConfiguration": {"enum": ["applied", "not-managed"]},
+    "proofLevel": {"enum": ["provider-response-observed", "launcher-exit-observed", "launcher-failure-observed"]},
+    "changedBaseCheckout": {"type": "boolean"},
+    "automaticPush": {"const": false},
+    "automaticMerge": {"const": false}
+  }
+}

@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/gnhf/schemas/gnhf-tandem-plan.schema.json",
+  "title": "AgentSwitchboard tandem GNHF plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "createdAt",
+    "mode",
+    "maxParallelRepos",
+    "catalogHash",
+    "catalogCapturedAt",
+    "catalogAgeMinutes",
+    "allowUnauthenticatedModels",
+    "lanes"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "agentswitchboard-gnhf-tandem-plan/v1"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "mode": {
+      "enum": [
+        "maximize-sprint-completion",
+        "maximize-token-efficiency"
+      ]
+    },
+    "maxParallelRepos": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16
+    },
+    "catalogHash": {
+      "type": "string",
+      "pattern": "^[A-Fa-f0-9]{64}$"
+    },
+    "lanes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "laneId",
+          "repositoryId",
+          "repository",
+          "repoPath",
+          "originalObjectivePath",
+          "objectivePath",
+          "agent",
+          "modelProfileId",
+          "modelId",
+          "maxIterations",
+          "maxTokens",
+          "timeoutMinutes",
+          "stopWhen",
+          "dependsOn",
+          "ownedScope",
+          "forbiddenScope",
+          "handoff"
+        ],
+        "properties": {
+          "laneId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "repositoryId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "repository": {
+            "type": "string",
+            "pattern": "^[^/]+/[^/]+$"
+          },
+          "repoPath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "objectivePath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "agent": {
+            "type": "string",
+            "minLength": 1
+          },
+          "modelProfileId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "modelId": {
+            "type": "string",
+            "pattern": "^[^/]+/.+$"
+          },
+          "maxIterations": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "maxTokens": {
+            "type": "integer",
+            "minimum": 1000
+          },
+          "timeoutMinutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "stopWhen": {
+            "type": "string",
+            "minLength": 1
+          },
+          "dependsOn": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string"
+            }
+          },
+          "ownedScope": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "forbiddenScope": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "handoff": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "inputPath",
+              "resultPath",
+              "summaryPath"
+            ],
+            "properties": {
+              "inputPath": {
+                "type": "string",
+                "minLength": 1
+              },
+              "resultPath": {
+                "type": "string",
+                "minLength": 1
+              },
+              "summaryPath": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "originalObjectivePath": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "catalogCapturedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "catalogAgeMinutes": {
+      "type": "number",
+      "minimum": -5
+    },
+    "allowUnauthenticatedModels": {
+      "type": "boolean"
+    }
+  }
+}

@@ -1,0 +1,464 @@
+{
+  "schemaVersion": "agentswitchboard-opencode-provider-directory/v1",
+  "source": {
+    "kind": "official-documentation",
+    "url": "https://opencode.ai/docs/providers/",
+    "verifiedOn": "2026-07-16",
+    "note": "OpenCode states that Models.dev backs 75+ providers. This tracked directory covers every provider named in the official provider page plus OpenCode Go; runtime discovery remains authoritative for exact provider/model IDs."
+  },
+  "discovery": {
+    "command": "opencode models --refresh",
+    "outputFormat": "provider/model",
+    "authoritativeForExactModels": true
+  },
+  "providers": [
+    {
+      "id": "302-ai",
+      "displayName": "302.AI",
+      "opencodeIdHints": [
+        "302ai",
+        "302-ai"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "amazon-bedrock",
+      "displayName": "Amazon Bedrock",
+      "opencodeIdHints": [
+        "amazon-bedrock",
+        "bedrock"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "anthropic",
+      "displayName": "Anthropic",
+      "opencodeIdHints": [
+        "anthropic"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "atomic-chat",
+      "displayName": "Atomic Chat",
+      "opencodeIdHints": [
+        "atomic-chat"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "azure-openai",
+      "displayName": "Azure OpenAI",
+      "opencodeIdHints": [
+        "azure",
+        "azure-openai"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "azure-cognitive-services",
+      "displayName": "Azure Cognitive Services",
+      "opencodeIdHints": [
+        "azure-cognitive-services"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "baseten",
+      "displayName": "Baseten",
+      "opencodeIdHints": [
+        "baseten"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "cerebras",
+      "displayName": "Cerebras",
+      "opencodeIdHints": [
+        "cerebras"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "cloudflare-ai-gateway",
+      "displayName": "Cloudflare AI Gateway",
+      "opencodeIdHints": [
+        "cloudflare-ai-gateway"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "cloudflare-workers-ai",
+      "displayName": "Cloudflare Workers AI",
+      "opencodeIdHints": [
+        "cloudflare-workers-ai"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "cortecs",
+      "displayName": "Cortecs",
+      "opencodeIdHints": [
+        "cortecs"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "deepseek",
+      "displayName": "DeepSeek",
+      "opencodeIdHints": [
+        "deepseek"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "deepinfra",
+      "displayName": "Deep Infra",
+      "opencodeIdHints": [
+        "deepinfra",
+        "deep-infra"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "digitalocean",
+      "displayName": "DigitalOcean",
+      "opencodeIdHints": [
+        "digitalocean"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "frogbot",
+      "displayName": "FrogBot",
+      "opencodeIdHints": [
+        "frogbot"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "fireworks-ai",
+      "displayName": "Fireworks AI",
+      "opencodeIdHints": [
+        "fireworks-ai",
+        "fireworks"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "gitlab-duo",
+      "displayName": "GitLab Duo",
+      "opencodeIdHints": [
+        "gitlab-duo"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "github-copilot",
+      "displayName": "GitHub Copilot",
+      "opencodeIdHints": [
+        "github-copilot",
+        "copilot"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "gmi-cloud",
+      "displayName": "GMI Cloud",
+      "opencodeIdHints": [
+        "gmi-cloud"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "google-vertex",
+      "displayName": "Google Vertex AI",
+      "opencodeIdHints": [
+        "google-vertex",
+        "vertex"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "groq",
+      "displayName": "Groq",
+      "opencodeIdHints": [
+        "groq"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "huggingface",
+      "displayName": "Hugging Face",
+      "opencodeIdHints": [
+        "huggingface",
+        "hugging-face"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "helicone",
+      "displayName": "Helicone",
+      "opencodeIdHints": [
+        "helicone"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "llama-cpp",
+      "displayName": "llama.cpp",
+      "opencodeIdHints": [
+        "llama-cpp",
+        "llama.cpp"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "io-net",
+      "displayName": "IO.NET",
+      "opencodeIdHints": [
+        "io-net",
+        "ionet"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "lmstudio",
+      "displayName": "LM Studio",
+      "opencodeIdHints": [
+        "lmstudio",
+        "lm-studio"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "moonshotai",
+      "displayName": "Moonshot AI",
+      "opencodeIdHints": [
+        "moonshotai",
+        "moonshot"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "minimax",
+      "displayName": "MiniMax",
+      "opencodeIdHints": [
+        "minimax"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "nvidia",
+      "displayName": "NVIDIA",
+      "opencodeIdHints": [
+        "nvidia"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "nebius",
+      "displayName": "Nebius Token Factory",
+      "opencodeIdHints": [
+        "nebius"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "ollama",
+      "displayName": "Ollama",
+      "opencodeIdHints": [
+        "ollama"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "ollama-cloud",
+      "displayName": "Ollama Cloud",
+      "opencodeIdHints": [
+        "ollama-cloud"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "openai",
+      "displayName": "OpenAI",
+      "opencodeIdHints": [
+        "openai"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "opencode-zen",
+      "displayName": "OpenCode Zen",
+      "opencodeIdHints": [
+        "opencode",
+        "opencode-zen"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "opencode-go",
+      "displayName": "OpenCode Go",
+      "opencodeIdHints": [
+        "opencode-go"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "openrouter",
+      "displayName": "OpenRouter",
+      "opencodeIdHints": [
+        "openrouter"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "llm-gateway",
+      "displayName": "LLM Gateway",
+      "opencodeIdHints": [
+        "llm-gateway"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "sap-ai-core",
+      "displayName": "SAP AI Core",
+      "opencodeIdHints": [
+        "sap-ai-core"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "stackit",
+      "displayName": "STACKIT",
+      "opencodeIdHints": [
+        "stackit"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "ovhcloud",
+      "displayName": "OVHcloud AI Endpoints",
+      "opencodeIdHints": [
+        "ovhcloud"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "scaleway",
+      "displayName": "Scaleway",
+      "opencodeIdHints": [
+        "scaleway"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "snowflake-cortex",
+      "displayName": "Snowflake Cortex",
+      "opencodeIdHints": [
+        "snowflake-cortex",
+        "snowflake"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "together-ai",
+      "displayName": "Together AI",
+      "opencodeIdHints": [
+        "together-ai",
+        "together"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "venice",
+      "displayName": "Venice AI",
+      "opencodeIdHints": [
+        "venice"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "vercel-ai-gateway",
+      "displayName": "Vercel AI Gateway",
+      "opencodeIdHints": [
+        "vercel-ai-gateway"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "xai",
+      "displayName": "xAI",
+      "opencodeIdHints": [
+        "xai"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "zai",
+      "displayName": "Z.AI",
+      "opencodeIdHints": [
+        "zai",
+        "z-ai"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    },
+    {
+      "id": "zenmux",
+      "displayName": "ZenMux",
+      "opencodeIdHints": [
+        "zenmux"
+      ],
+      "documented": true,
+      "runtimeDiscovery": "global-model-list"
+    }
+  ]
+}

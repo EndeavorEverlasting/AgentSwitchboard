@@ -1,0 +1,71 @@
+name: GNHF model catalog and tandem contracts
+
+on:
+  pull_request:
+    paths:
+      - "tooling/gnhf/Get-GnhfModelCatalog.ps1"
+      - "tooling/gnhf/New-GnhfTandemPlan.ps1"
+      - "tooling/gnhf/Invoke-GnhfTandem.ps1"
+      - "tooling/gnhf/Install-GnhfModelCatalogTandem.ps1"
+      - "tooling/gnhf/Test-GnhfModelCatalogAndTandemContracts.ps1"
+      - "tooling/gnhf/opencode-provider-directory.json"
+      - "tooling/gnhf/linked-repositories.example.json"
+      - "tooling/gnhf/schemas/gnhf-model-catalog.schema.json"
+      - "tooling/gnhf/schemas/gnhf-linked-repositories.schema.json"
+      - "tooling/gnhf/schemas/gnhf-tandem-plan.schema.json"
+      - "tooling/gnhf/schemas/gnhf-handoff-input.schema.json"
+      - "tooling/gnhf/schemas/gnhf-handoff-result.schema.json"
+      - "tooling/gnhf/MODEL_CATALOG_AND_TANDEM.md"
+      - ".github/workflows/gnhf-model-catalog-tandem-contracts.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate model catalog and tandem contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfModelCatalogAndTandemContracts.ps1
+
+  linux-hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Parse JSON and enforce hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          paths = [
+              Path('tooling/gnhf/opencode-provider-directory.json'),
+              Path('tooling/gnhf/linked-repositories.example.json'),
+              Path('tooling/gnhf/schemas/gnhf-model-catalog.schema.json'),
+              Path('tooling/gnhf/schemas/gnhf-linked-repositories.schema.json'),
+              Path('tooling/gnhf/schemas/gnhf-tandem-plan.schema.json'),
+              Path('tooling/gnhf/schemas/gnhf-handoff-input.schema.json'),
+              Path('tooling/gnhf/schemas/gnhf-handoff-result.schema.json'),
+          ]
+          for path in paths:
+              json.loads(path.read_text(encoding='utf-8'))
+          provider_count = len(json.loads(paths[0].read_text())['providers'])
+          assert provider_count >= 48, provider_count
+          PY
+          ! grep -R -n -E 'DEEPSEEK_API_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY|sk-[A-Za-z0-9_-]{12,}' \
+            tooling/gnhf/Get-GnhfModelCatalog.ps1 \
+            tooling/gnhf/New-GnhfTandemPlan.ps1 \
+            tooling/gnhf/Invoke-GnhfTandem.ps1 \
+            tooling/gnhf/linked-repositories.example.json
+          if git ls-files | grep -E '(^|/)(model-catalog|tandem|handoffs)(/|\.|$)' | grep -v -E '(example|schema|MODEL_CATALOG_AND_TANDEM|Get-GnhfModelCatalog|New-GnhfTandemPlan|Invoke-GnhfTandem|Test-GnhfModelCatalogAndTandemContracts)'; then
+            echo 'Committed runtime evidence detected.' >&2
+            exit 1
+          fi
+          git diff --check "origin/${GITHUB_BASE_REF}...HEAD"
+          test -z "$(git status --short)"

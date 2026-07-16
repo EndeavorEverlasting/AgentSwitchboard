@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/gnhf/schemas/gnhf-handoff-input.schema.json",
+  "title": "AgentSwitchboard GNHF tandem handoff input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "createdAt",
+    "laneId",
+    "repository",
+    "repoPath",
+    "originalObjectivePath",
+    "executionObjectivePath",
+    "agent",
+    "modelProfileId",
+    "modelId",
+    "dependsOn",
+    "ownedScope",
+    "forbiddenScope",
+    "expectedResultPath",
+    "expectedSummaryPath"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "agentswitchboard-gnhf-handoff-input/v1"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "laneId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "repository": {
+      "type": "string",
+      "pattern": "^[^/]+/[^/]+$"
+    },
+    "repoPath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "agent": {
+      "type": "string",
+      "minLength": 1
+    },
+    "modelProfileId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "modelId": {
+      "type": "string",
+      "pattern": "^[^/]+/.+$"
+    },
+    "dependsOn": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "ownedScope": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "forbiddenScope": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "expectedResultPath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expectedSummaryPath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "originalObjectivePath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "executionObjectivePath": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

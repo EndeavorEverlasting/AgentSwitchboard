@@ -1,0 +1,190 @@
+{
+  "schemaVersion": "agentswitchboard-linked-repositories/v1",
+  "maxParallelRepos": 2,
+  "providerPreference": [
+    "deepseek",
+    "openai",
+    "anthropic",
+    "google-vertex",
+    "github-copilot",
+    "openrouter",
+    "xai",
+    "moonshotai",
+    "minimax",
+    "zai",
+    "cerebras",
+    "groq"
+  ],
+  "repositories": [
+    {
+      "id": "sysadminsuite",
+      "enabled": true,
+      "repository": "EndeavorEverlasting/SysAdminSuite",
+      "path": "__SYSADMINSUITE_PATH__",
+      "objectivePath": "__SYSADMINSUITE_OBJECTIVE__",
+      "agent": "opencode",
+      "preferredProviders": [
+        "deepseek",
+        "openai",
+        "anthropic"
+      ],
+      "maxIterations": 3,
+      "maxTokens": 180000,
+      "timeoutMinutes": 120,
+      "stopWhen": "The bounded SysAdminSuite objective is implemented, targeted validators pass, useful commits exist in the GNHF worktree, the result handoff is written, and no unrelated mutation occurred.",
+      "dependsOn": [],
+      "ownedScope": [
+        "repo-local harness, tests, validators, scripts, docs, and schemas named by the objective"
+      ],
+      "forbiddenScope": [
+        "credentials or provider authentication",
+        "live workstation or production mutation",
+        "default-branch writes",
+        "automatic push, merge, deployment, or release",
+        "shared dirty worktrees",
+        "generated runtime evidence"
+      ],
+      "preferredModels": [
+        "deepseek/deepseek-v4-pro",
+        "deepseek/deepseek-chat",
+        "deepseek/deepseek-reasoner"
+      ]
+    },
+    {
+      "id": "agentswitchboard",
+      "enabled": false,
+      "repository": "EndeavorEverlasting/AgentSwitchboard",
+      "path": "__AGENTSWITCHBOARD_PATH__",
+      "objectivePath": "__AGENTSWITCHBOARD_OBJECTIVE__",
+      "agent": "opencode",
+      "preferredProviders": [
+        "deepseek",
+        "openai",
+        "anthropic"
+      ],
+      "maxIterations": 3,
+      "maxTokens": 150000,
+      "timeoutMinutes": 90,
+      "stopWhen": "The bounded AgentSwitchboard objective is committed and validated with explicit proof boundaries.",
+      "dependsOn": [],
+      "ownedScope": [
+        "tooling/gnhf and directly related contracts"
+      ],
+      "forbiddenScope": [
+        "provider credential mutation",
+        "default-branch writes",
+        "automatic merge or deployment",
+        "shared dirty worktrees"
+      ],
+      "preferredModels": []
+    },
+    {
+      "id": "continuum",
+      "enabled": false,
+      "repository": "EndeavorEverlasting/Continuum",
+      "path": "__CONTINUUM_PATH__",
+      "objectivePath": "__CONTINUUM_OBJECTIVE__",
+      "agent": "opencode",
+      "preferredProviders": [
+        "deepseek",
+        "anthropic",
+        "openai"
+      ],
+      "maxIterations": 3,
+      "maxTokens": 140000,
+      "timeoutMinutes": 90,
+      "stopWhen": "The bounded Continuum objective is committed, validated, and handed off.",
+      "dependsOn": [],
+      "ownedScope": [
+        "objective-defined repository scope"
+      ],
+      "forbiddenScope": [
+        "runtime authority transfer",
+        "credentials",
+        "automatic merge or deployment"
+      ],
+      "preferredModels": []
+    },
+    {
+      "id": "foundry",
+      "enabled": false,
+      "repository": "EndeavorEverlasting/foundry",
+      "path": "__FOUNDRY_PATH__",
+      "objectivePath": "__FOUNDRY_OBJECTIVE__",
+      "agent": "opencode",
+      "preferredProviders": [
+        "deepseek",
+        "openai",
+        "anthropic"
+      ],
+      "maxIterations": 3,
+      "maxTokens": 140000,
+      "timeoutMinutes": 90,
+      "stopWhen": "The bounded repository-intelligence objective is committed, validated, and handed off.",
+      "dependsOn": [],
+      "ownedScope": [
+        "objective-defined repository intelligence scope"
+      ],
+      "forbiddenScope": [
+        "security claims beyond evidence",
+        "credentials",
+        "automatic merge or deployment"
+      ],
+      "preferredModels": []
+    },
+    {
+      "id": "blacksmithguild",
+      "enabled": false,
+      "repository": "EndeavorEverlasting/BlacksmithGuild",
+      "path": "__BLACKSMITHGUILD_PATH__",
+      "objectivePath": "__BLACKSMITHGUILD_OBJECTIVE__",
+      "agent": "opencode",
+      "preferredProviders": [
+        "deepseek",
+        "anthropic",
+        "openai"
+      ],
+      "maxIterations": 3,
+      "maxTokens": 120000,
+      "timeoutMinutes": 90,
+      "stopWhen": "The bounded BlacksmithGuild objective is committed, validated, and handed off.",
+      "dependsOn": [],
+      "ownedScope": [
+        "objective-defined repository scope"
+      ],
+      "forbiddenScope": [
+        "personal save mutation",
+        "live game mutation",
+        "automatic merge or deployment"
+      ],
+      "preferredModels": []
+    },
+    {
+      "id": "web-excel-repair-triage",
+      "enabled": false,
+      "repository": "EndeavorEverlasting/web-excel-repair-triage",
+      "path": "__WEB_EXCEL_TRIAGE_PATH__",
+      "objectivePath": "__WEB_EXCEL_TRIAGE_OBJECTIVE__",
+      "agent": "opencode",
+      "preferredProviders": [
+        "deepseek",
+        "openai",
+        "anthropic"
+      ],
+      "maxIterations": 3,
+      "maxTokens": 120000,
+      "timeoutMinutes": 90,
+      "stopWhen": "The bounded Web Excel Triage objective is committed, validated, and handed off.",
+      "dependsOn": [],
+      "ownedScope": [
+        "objective-defined repository scope"
+      ],
+      "forbiddenScope": [
+        "customer data mutation",
+        "credentials",
+        "automatic merge or deployment"
+      ],
+      "preferredModels": []
+    }
+  ]
+}
