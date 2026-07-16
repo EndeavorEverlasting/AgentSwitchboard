@@ -184,12 +184,15 @@ Write-Host "Manifest:     $resolvedManifestPath"
 Write-Host "Install root: $installRoot"
 
 Write-Section "WSL and tmux bootstrap"
-$wslArguments = @("-ManifestPath", $wslManifestPath, "-WslExe", $WslExe)
+$wslArguments = @{
+    ManifestPath = $wslManifestPath
+    WslExe = $WslExe
+}
 if ($planMode) {
-    $wslArguments += "-PlanOnly"
+    $wslArguments.PlanOnly = $true
 }
 if ($ForceRebootAck) {
-    $wslArguments += "-ForceRebootAck"
+    $wslArguments.ForceRebootAck = $true
 }
 & $wslInstallerPath @wslArguments
 

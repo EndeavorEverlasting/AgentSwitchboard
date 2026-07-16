@@ -93,6 +93,7 @@ def main() -> int:
     ps_script = (WSL / "Install-TmuxGnhfWorkspace.ps1").read_text(encoding="utf-8")
     require("[switch]$Apply" in ps_script, "apply must be explicit")
     require("$planMode = -not $Apply" in ps_script, "plan must be the default")
+    require("$wslArguments = @{" in ps_script and "$wslArguments.PlanOnly = $true" in ps_script, "nested WSL setup must use named PowerShell splatting")
     require("Install-AgentSwitchboardWsl.ps1" in ps_script, "existing WSL bootstrap must be reused")
     require("wezterm-gui.exe" in ps_script, "daily launcher must target the GUI executable")
     require("keepAliveProcessName" in ps_script and "sleep infinity" in ps_script, "persistent WSL lifecycle must be owned")

@@ -119,6 +119,7 @@ else {
 
 $installer = Get-Content -LiteralPath (Join-Path $repoRoot "tooling/wsl/Install-TmuxGnhfWorkspace.ps1") -Raw
 Assert-Contract -Condition ($installer -match '\$planMode = -not \$Apply') -Message "plan mode is default"
+Assert-Contract -Condition ($installer -match '\$wslArguments = @\{' -and $installer -match '\$wslArguments\.PlanOnly = \$true') -Message "nested WSL setup uses named PowerShell splatting"
 Assert-Contract -Condition ($installer -match 'wezterm-gui\.exe') -Message "launcher targets WezTerm GUI"
 Assert-Contract -Condition ($installer -match 'ConfirmImpact = ''High''') -Message "Stop is high-impact and confirmed"
 Assert-Contract -Condition ($installer -notmatch '--unregister') -Message "no WSL unregister"
