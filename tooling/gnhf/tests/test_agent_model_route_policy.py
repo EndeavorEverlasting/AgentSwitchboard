@@ -66,6 +66,8 @@ def main() -> None:
     assert "agy-pi-bridge" in installer_text
     assert "Preserved customized model route policy" in installer_text
     assert "quota-exhausted" in bridge_text
+    assert "individual\\s+quota" in bridge_text
+    assert "quota\\s*(is\\s*)?(reached|exhausted|exceeded)" in bridge_text
     assert "--print" in bridge_text and "accept-edits" in bridge_text
     assert "AGY" in doc_text and "Pi-compatible" in doc_text
     assert "acp:agy acp" not in doc_text
