@@ -88,7 +88,7 @@ def main() -> int:
     for token in (
         "[switch]$Apply",
         "[switch]$RunAfterInstall",
-        "status --porcelain=v1",
+        "status --short",
         "Core workstation dependency is missing",
         "Start-TmuxGnhfWorkspace.ps1",
         "Get-TmuxGnhfWorkspaceStatus.ps1",
