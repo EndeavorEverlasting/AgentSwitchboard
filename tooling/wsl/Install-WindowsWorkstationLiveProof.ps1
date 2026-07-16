@@ -52,6 +52,7 @@ if ($sourceStatusExit -ne 0 -or $sourceStatus.Count -gt 0) {
 $sourceHeadOutput = @(& git -C $sourceRepoPath rev-parse HEAD 2>&1)
 if ($LASTEXITCODE -ne 0 -or -not $sourceHeadOutput) { throw "Unable to read the source HEAD." }
 $sourceHead = ([string]$sourceHeadOutput[0]).Trim()
+if ($sourceHead -notmatch '^[0-9a-fA-F]{40}$') { throw "Source HEAD is not a valid 40-character Git commit: '$sourceHead'." }
 $sourceBranchOutput = @(& git -C $sourceRepoPath branch --show-current 2>&1)
 if ($LASTEXITCODE -ne 0 -or -not $sourceBranchOutput) { throw "Unable to read the source branch." }
 $sourceBranch = ([string]$sourceBranchOutput[0]).Trim()
@@ -92,6 +93,13 @@ $plan = [ordered]@{
     manifestPath = $ManifestPath
     workspaceInstallRoot = $workspaceInstallRoot
     requiredCoreFiles = @($coreStart, $coreStatus, $coreSummary)
+    requiredCoreSummary = [ordered]@{
+        schemaVersion = 1
+        status = "completed"
+        distribution = [string]$manifest.distribution
+        sessionName = [string]$manifest.workspace.sessionName
+        installRoot = $workspaceInstallRoot
+    }
     installedFiles = @(
         "Invoke-WindowsWorkstationLiveProof.ps1",
         "WindowsWorkstationLiveProof.Common.psm1",
@@ -120,6 +128,23 @@ foreach ($required in @($coreStart, $coreStatus, $coreSummary)) {
     if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
         throw "Core workstation dependency is missing: $required. Run Setup-TmuxGnhfWorkspace.cmd before installing this proof lane."
     }
+}
+
+try {
+    $coreSetup = Get-Content -LiteralPath $coreSummary -Raw | ConvertFrom-Json -Depth 20
+    $summaryInstallRoot = Get-AbsolutePath ([string]$coreSetup.installRoot)
+    $trimChars = [char[]]@([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+    $expectedInstallRoot = $workspaceInstallRoot.TrimEnd($trimChars)
+    $actualInstallRoot = $summaryInstallRoot.TrimEnd($trimChars)
+    if ($coreSetup.schemaVersion -ne 1) { throw "schemaVersion must be 1" }
+    if ([string]$coreSetup.status -ne "completed") { throw "status must be completed" }
+    if ([string]$coreSetup.distribution -ne [string]$manifest.distribution) { throw "distribution does not match the local workstation manifest" }
+    if ([string]$coreSetup.sessionName -ne [string]$manifest.workspace.sessionName) { throw "sessionName does not match the local workstation manifest" }
+    if (-not $actualInstallRoot.Equals($expectedInstallRoot, [StringComparison]::OrdinalIgnoreCase)) { throw "installRoot does not match the local workstation manifest" }
+    if ($coreSetup.validation.keepAliveRunning -ne $true -or $coreSetup.validation.sessionAvailable -ne $true) { throw "core validation did not prove keepalive and session readiness" }
+}
+catch {
+    throw "Core workstation setup summary is stale, failed, or belongs to a different workspace: $coreSummary. $($_.Exception.Message)"
 }
 
 New-Item -ItemType Directory -Path $workspaceInstallRoot -Force | Out-Null
@@ -189,6 +214,7 @@ $summary = [ordered]@{
     sourceBranch = $sourceBranch
     sourceHead = $sourceHead
     workspaceInstallRoot = $workspaceInstallRoot
+    coreSetupSummaryPath = $coreSummary
     proofScript = $installedProof
     launcher = $installedCmd
     configPath = $configPath
