@@ -123,6 +123,8 @@ if ((Test-Path -LiteralPath $proofPath -PathType Leaf) -and (Test-Path -LiteralP
     Test-Contract (-not $runtime.Contains('wsl --unregister')) 'runtime/no-wsl-reset'
     Test-Contract ($runtime.Contains('destructive_stop_skipped_persistent_session_reuse_is_repo_doctrine')) 'runtime/stop-doctrine'
     Test-Contract ($runtime.Contains('$runtime.runtimeArtifactCollected=$true')) 'runtime/artifact-proof'
+    Test-Contract ($runtime.Contains('$runtime.commandAckObserved -and $runtime.behaviorObserved')) 'runtime/full-live-requires-behavior'
+    Test-Contract ($runtime.Contains('Stop-Process -Id $proofPid -Force')) 'runtime/proof-wezterm-cleanup'
     Test-Contract ($runtime.Contains('failureReason=$failureReason')) 'runtime/failure-capture'
 }
 
@@ -151,6 +153,7 @@ if (Test-Path -LiteralPath $cmdPath -PathType Leaf) {
     $cmd = Get-Content -LiteralPath $cmdPath -Raw
     Test-Contract ($cmd.Contains("pwsh.exe -NoLogo -NoProfile")) "cmd/pwsh7"
     Test-Contract ($cmd.Contains("Setup-TmuxGnhfWorkspace.cmd") -and $cmd.Contains(" apply")) "cmd/deploys-core-first"
+    Test-Contract ($cmd.Contains('branch --show-current') -and $cmd.Contains('status --porcelain=v1')) 'cmd/repo-floor-before-deploy'
     Test-Contract ($cmd.Contains("Install-WindowsWorkstationLiveProof.ps1")) "cmd/installs-proof-lane"
     Test-Contract ($cmd.Contains('if "%_setup_code%"=="30"')) "cmd/reboot-resume-gate"
     Test-Contract ($cmd.Contains("pause >nul")) "cmd/failure-visible"
