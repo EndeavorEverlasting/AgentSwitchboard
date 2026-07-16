@@ -87,20 +87,41 @@ exec bash --noprofile --norc
     $branches = Invoke-ProofWslBash -WslExe $WslExe -Distribution $Distribution -Command "git -C $quotedRepo for-each-ref --format='%(refname:short)|%(objectname)' refs/heads/gnhf" -TimeoutSeconds 30
     $proofBranch=$null; $proofCommit=$null
     foreach ($line in @($branches.Stdout -split '\r?\n' | Where-Object { $_ })) {
-        if ($line -notmatch '^([^|]+)\|([0-9a-f]+)$') { continue }
+        if ($line -notmatch '^([^|]+)\|([0-9a-f]{40})$') { continue }
         $branch=$Matches[1]; $commit=$Matches[2]
         $show = Invoke-ProofWslBash -WslExe $WslExe -Distribution $Distribution -Command "git -C $quotedRepo show $(ConvertTo-ProofBashSingleQuoted "${branch}:agent-runtime-proof.json") 2>/dev/null || true" -TimeoutSeconds 30
         if (-not $show.Stdout) { continue }
         try { $payload=$show.Stdout | ConvertFrom-Json } catch { continue }
+        $propertyNames = @($payload.PSObject.Properties.Name | Sort-Object)
+        $expectedPropertyNames = @('behavior','nonce','safeState','schemaVersion')
+        $hasExactProperties = ($propertyNames.Count -eq $expectedPropertyNames.Count -and @(Compare-Object -ReferenceObject $expectedPropertyNames -DifferenceObject $propertyNames).Count -eq 0)
         $diff = Invoke-ProofWslBash -WslExe $WslExe -Distribution $Distribution -Command "git -C $quotedRepo diff --name-only main...$(ConvertTo-ProofBashSingleQuoted $branch)" -TimeoutSeconds 30
         $changed=@($diff.Stdout -split '\r?\n' | Where-Object { $_ })
-        if ($payload.schemaVersion -eq 1 -and $payload.nonce -eq $Nonce -and $payload.behavior -eq 'gnhf-agent-created-and-committed' -and $payload.safeState -eq $true -and $changed.Count -eq 1 -and $changed[0] -eq 'agent-runtime-proof.json') {
+        if ($hasExactProperties -and $payload.schemaVersion -eq 1 -and $payload.nonce -eq $Nonce -and $payload.behavior -eq 'gnhf-agent-created-and-committed' -and $payload.safeState -eq $true -and $changed.Count -eq 1 -and $changed[0] -eq 'agent-runtime-proof.json') {
             $proofBranch=$branch; $proofCommit=$commit; break
         }
     }
-    if (-not $proofBranch) { throw 'No GNHF branch contained the exact committed proof payload with an isolated one-file diff.' }
+    if (-not $proofBranch) { throw 'No GNHF branch contained the exact four-property committed proof payload with an isolated one-file diff.' }
+
+    $worktreeList = Invoke-ProofWslBash -WslExe $WslExe -Distribution $Distribution -Command "git -C $quotedRepo worktree list --porcelain" -TimeoutSeconds 30
+    if ($worktreeList.ExitCode -ne 0) { throw "Unable to enumerate GNHF worktrees. $($worktreeList.Output)" }
+    $proofWorktreePath = $null
+    $currentWorktreePath = $null
+    foreach ($worktreeLine in @($worktreeList.Stdout -split '\r?\n')) {
+        if ($worktreeLine.StartsWith('worktree ')) { $currentWorktreePath = $worktreeLine.Substring(9) }
+        elseif ($worktreeLine -eq "branch refs/heads/$proofBranch") { $proofWorktreePath = $currentWorktreePath; break }
+        elseif ([string]::IsNullOrWhiteSpace($worktreeLine)) { $currentWorktreePath = $null }
+    }
+    if (-not $proofWorktreePath) { throw "The worktree backing proof branch '$proofBranch' was not found." }
+    $quotedProofWorktree = ConvertTo-ProofBashSingleQuoted $proofWorktreePath
+    $proofWorktreeStatus = Invoke-ProofWslBash -WslExe $WslExe -Distribution $Distribution -Command "git -C $quotedProofWorktree status --porcelain=v1" -TimeoutSeconds 30
+    $proofWorktreeDiff = Invoke-ProofWslBash -WslExe $WslExe -Distribution $Distribution -Command "git -C $quotedProofWorktree diff --check" -TimeoutSeconds 30
+    if ($proofWorktreeStatus.ExitCode -ne 0 -or $proofWorktreeStatus.Stdout -or $proofWorktreeDiff.ExitCode -ne 0) {
+        throw "The GNHF proof worktree is not clean: $proofWorktreePath"
+    }
+
     $baseStatus = Invoke-ProofWslBash -WslExe $WslExe -Distribution $Distribution -Command "git -C $quotedRepo status --porcelain=v1" -TimeoutSeconds 30
     if ($baseStatus.ExitCode -ne 0 -or $baseStatus.Stdout) { throw 'Disposable base repository was mutated by the GNHF proof.' }
-    Add-ProofEvent -Events $Events -Step 'behavior-observed' -State PASS -Message 'gnhf_agent_created_and_committed_exact_proof_artifact' -Data @{agent='opencode';model=$model.ModelId;branch=$proofBranch;commit=$proofCommit;proofFile='agent-runtime-proof.json';proofNonce=$Nonce}
-    [pscustomobject]@{ Agent='opencode';Model=$model.ModelId;Branch=$proofBranch;Commit=$proofCommit;LogPath=$logPath;RepositoryPath=$repoPath }
+    Add-ProofEvent -Events $Events -Step 'behavior-observed' -State PASS -Message 'gnhf_agent_created_and_committed_exact_proof_artifact' -Data @{agent='opencode';model=$model.ModelId;branch=$proofBranch;commit=$proofCommit;proofFile='agent-runtime-proof.json';proofNonce=$Nonce;proofWorktreePath=$proofWorktreePath;proofWorktreeClean=$true}
+    [pscustomobject]@{ Agent='opencode';Model=$model.ModelId;Branch=$proofBranch;Commit=$proofCommit;LogPath=$logPath;RepositoryPath=$repoPath;WorktreePath=$proofWorktreePath }
 }
