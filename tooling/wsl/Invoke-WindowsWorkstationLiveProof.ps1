@@ -102,7 +102,16 @@ try {
 catch { $failureReason=$_.Exception.Message; Add-ProofEvent -Events $events -Step runtime-proof -State FAIL -Message $failureReason }
 finally {
     if ($proofSessionName) { try { [void](Invoke-ProofWslBash -WslExe $WslExe -Distribution $distribution -Command "tmux kill-session -t $(ConvertTo-ProofBashSingleQuoted $proofSessionName) 2>/dev/null || true" -TimeoutSeconds 20) } catch {} }
-    $runtime.liveRuntime=($runtime.floorSafe -and $runtime.targetedValidation -and $runtime.destructiveStopSkippedByDoctrine -and $runtime.safeStart -and $runtime.launcherAttached -and $runtime.targetSurfaceReady -and $runtime.commandIssued -and $runtime.commandAckObserved -and ($runtime.behaviorObserved -or $SkipGnhfBehaviorProof) -and $runtime.detachObserved -and $runtime.persistenceObserved -and $runtime.reattachObserved -and $runtime.finalGitClean)
+    if ($sessionResult -and $sessionResult.ProcessIds) {
+        foreach ($proofPid in @($sessionResult.ProcessIds)) {
+            try {
+                $proofProcess = Get-Process -Id $proofPid -ErrorAction SilentlyContinue
+                if ($proofProcess -and -not $proofProcess.WaitForExit(5000)) { Stop-Process -Id $proofPid -Force -ErrorAction SilentlyContinue }
+            }
+            catch {}
+        }
+    }
+    $runtime.liveRuntime=($runtime.floorSafe -and $runtime.targetedValidation -and $runtime.destructiveStopSkippedByDoctrine -and $runtime.safeStart -and $runtime.launcherAttached -and $runtime.targetSurfaceReady -and $runtime.commandIssued -and $runtime.commandAckObserved -and $runtime.behaviorObserved -and $runtime.detachObserved -and $runtime.persistenceObserved -and $runtime.reattachObserved -and $runtime.finalGitClean)
     $proofLevel = if ($runtime.liveRuntime -and $runtime.behaviorObserved) {'live-windows-wsl-tmux-gnhf-behavior-observed'} elseif ($runtime.launcherAttached -and $runtime.persistenceObserved -and $runtime.reattachObserved) {'live-wezterm-wsl-tmux-session-persistence'} elseif ($runtime.commandAckObserved) {'launcher-and-command-ack'} elseif ($runtime.targetedValidation) {'targeted-static-validation'} else {'preflight-only'}
     $runtime.runtimeArtifactCollected=$true
     $result=[ordered]@{
