@@ -4,6 +4,17 @@ on:
   pull_request:
     paths:
       - "Run-WindowsWorkstationLiveProof.cmd"
+      - "Run-ChatGPTDesktopGnhfSprint.cmd"
+      - "Run-CursorGnhfSprint.cmd"
+      - "tooling/gnhf/GnhfPromptContracts.psm1"
+      - "tooling/gnhf/GnhfPromptIngestion.psm1"
+      - "tooling/gnhf/Convert-GnhfPromptToContracts.ps1"
+      - "tooling/gnhf/Invoke-ChatGPTDesktopGnhfSprint.ps1"
+      - "tooling/gnhf/Invoke-CursorGnhfSprint.ps1"
+      - "tooling/gnhf/Test-GnhfPromptContracts.ps1"
+      - "tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1"
+      - "tooling/gnhf/fixtures/**"
+      - "tooling/gnhf/schemas/**"
       - "tooling/wsl/tmux-gnhf-workstation.example.json"
       - "tooling/wsl/Invoke-WindowsWorkstationLiveProof.ps1"
       - "tooling/wsl/WindowsWorkstationLiveProof.Common.psm1"
@@ -14,6 +25,7 @@ on:
       - "tooling/wsl/schemas/windows-workstation-live-proof.schema.json"
       - "tooling/wsl/tests/test_windows_workstation_live_proof_contracts.py"
       - "docs/workstation/windows-workstation-live-proof.md"
+      - "docs/workstation/gnhf-prompt-ingestion.md"
       - ".github/workflows/windows-workstation-live-proof-contracts.yml"
   workflow_dispatch:
 
@@ -27,8 +39,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Run dependency-free static contracts
+      - name: Run dependency-free workstation contracts
         run: python3 tooling/wsl/tests/test_windows_workstation_live_proof_contracts.py
+      - name: Run GNHF prompt contracts
+        shell: pwsh
+        run: |
+          ./tooling/gnhf/Test-GnhfPromptContracts.ps1
+          ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1
       - name: Check repository hygiene
         shell: bash
         run: |
@@ -50,6 +67,13 @@ jobs:
         shell: pwsh
         run: |
           $files = @(
+            'tooling/gnhf/GnhfPromptContracts.psm1',
+            'tooling/gnhf/GnhfPromptIngestion.psm1',
+            'tooling/gnhf/Convert-GnhfPromptToContracts.ps1',
+            'tooling/gnhf/Invoke-ChatGPTDesktopGnhfSprint.ps1',
+            'tooling/gnhf/Invoke-CursorGnhfSprint.ps1',
+            'tooling/gnhf/Test-GnhfPromptContracts.ps1',
+            'tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1',
             'tooling/wsl/Invoke-WindowsWorkstationLiveProof.ps1',
             'tooling/wsl/WindowsWorkstationLiveProof.Common.psm1',
             'tooling/wsl/Invoke-WindowsWorkstationSessionProof.ps1',
@@ -69,6 +93,10 @@ jobs:
       - name: Run PowerShell contracts
         shell: pwsh
         run: |
+          ./tooling/gnhf/Test-GnhfPromptContracts.ps1 |
+            Tee-Object -FilePath "$env:RUNNER_TEMP\gnhf-prompt-contracts.log"
+          ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 |
+            Tee-Object -FilePath "$env:RUNNER_TEMP\gnhf-prompt-ingestion-contracts.log"
           ./tooling/wsl/Test-WindowsWorkstationLiveProofContracts.ps1 |
             Tee-Object -FilePath "$env:RUNNER_TEMP\windows-live-proof-contracts.log"
       - name: Run installer plan
@@ -93,5 +121,7 @@ jobs:
         with:
           name: windows-workstation-live-proof-contracts
           path: |
+            ${{ runner.temp }}/gnhf-prompt-contracts.log
+            ${{ runner.temp }}/gnhf-prompt-ingestion-contracts.log
             ${{ runner.temp }}/windows-live-proof-contracts.log
             ${{ runner.temp }}/windows-live-proof-install-plan.log
