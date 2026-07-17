@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "registryId": "agentswitchboard.repository-family-artifacts.v1",
+  "artifacts": [
+    {
+      "artifactId": "repository-family-run-context",
+      "artifactType": "run-context",
+      "fileName": "run-context.json",
+      "schema": ".ai/harness/schemas/run-context.schema.json",
+      "tracked": false,
+      "sensitivity": "local-operational",
+      "retention": "operator-controlled temporary evidence",
+      "proofCeiling": "read-only repository intake"
+    },
+    {
+      "artifactId": "repository-family-status",
+      "artifactType": "status-report",
+      "fileName": "repository-family-status.json",
+      "schema": ".ai/harness/schemas/repository-family-status.schema.json",
+      "tracked": false,
+      "sensitivity": "local-operational",
+      "retention": "operator-controlled temporary evidence",
+      "proofCeiling": "read-only repository intake"
+    },
+    {
+      "artifactId": "repository-family-operator-report",
+      "artifactType": "operator-report",
+      "fileName": "operator-report.md",
+      "schema": null,
+      "tracked": false,
+      "sensitivity": "local-operational",
+      "retention": "operator-controlled temporary evidence",
+      "proofCeiling": "English rendering of repository intake only"
+    },
+    {
+      "artifactId": "repository-family-final-handoff",
+      "artifactType": "final-handoff",
+      "fileName": "final-handoff.json",
+      "schema": ".ai/harness/schemas/final-handoff.schema.json",
+      "tracked": false,
+      "sensitivity": "local-operational",
+      "retention": "operator-controlled temporary evidence",
+      "proofCeiling": "compressed continuation record; receiving agents must re-inspect state"
+    }
+  ]
+}
