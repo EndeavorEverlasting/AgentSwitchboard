@@ -80,7 +80,7 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            git diff --check HEAD^1...HEAD^2
+            git diff --check HEAD^1 HEAD^2
           else
             git diff --check HEAD^
           fi
@@ -166,7 +166,7 @@ jobs:
         shell: pwsh
         run: |
           if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
-            git diff --check 'HEAD^1...HEAD^2'
+            git diff --check HEAD^1 HEAD^2
           }
           else {
             git diff --check HEAD^
