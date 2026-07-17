@@ -38,7 +38,8 @@ if (Test-IngestionStage 'Parse') {
         $tokens = $null
         $errors = $null
         [void][System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
-        Assert-IngestionContract ($errors.Count -eq 0) "$path must parse. $($errors.Message -join '; ')"
+        $parseMessages = (($errors | ForEach-Object { $_.Message }) -join '; ')
+        Assert-IngestionContract (@($errors).Count -eq 0) "$path must parse. $parseMessages"
     }
     if ($Stage -eq 'Parse') {
         Write-Host "PASS: AgentSwitchboard GNHF prompt ingestion stage 'Parse'."
