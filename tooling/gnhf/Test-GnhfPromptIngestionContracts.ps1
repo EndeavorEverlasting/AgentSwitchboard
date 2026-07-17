@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('All', 'Parse', 'Command', 'RegularJson', 'Sectioned', 'Rejections', 'Cursor', 'Converter')]
+    [ValidateSet('All', 'Parse', 'Module', 'CommandMetadata', 'CommandConversion', 'CommandValidation', 'RegularJson', 'Sectioned', 'Rejections', 'Cursor', 'Converter')]
     [string]$Stage = 'All'
 )
 
@@ -49,6 +49,13 @@ if (Test-IngestionStage 'Parse') {
 
 Import-Module $modulePath -Force
 Import-Module $contractPath -Force
+if ($Stage -eq 'Module') {
+    foreach ($commandName in @('ConvertTo-GnhfPromptContracts', 'Get-GnhfCommandPromptMetadata', 'Test-GnhfPromptContract')) {
+        Assert-IngestionContract ($null -ne (Get-Command $commandName -ErrorAction SilentlyContinue)) "Imported module command is missing: $commandName"
+    }
+    Write-Host "PASS: AgentSwitchboard GNHF prompt ingestion stage 'Module'."
+    exit 0
+}
 
 $repository = [ordered]@{
     RepositoryName = 'prompt-ingestion-fixture'
@@ -59,9 +66,20 @@ $repository = [ordered]@{
     ExecutionIntent = 'local_execute'
     DesiredProofLevel = 'committed-repository-work'
 }
+$commandText = Get-Content -LiteralPath (Join-Path $fixtureRoot 'valid.canonical-gnhf-command.txt') -Raw
 
-if (Test-IngestionStage 'Command') {
-    $commandText = Get-Content -LiteralPath (Join-Path $fixtureRoot 'valid.canonical-gnhf-command.txt') -Raw
+if (Test-IngestionStage 'CommandMetadata') {
+    $metadata = Get-GnhfCommandPromptMetadata -Text $commandText
+    Assert-IngestionContract ($metadata.sourceKind -eq 'gnhf-command') 'Canonical command metadata must classify as gnhf-command.'
+    Assert-IngestionContract ($metadata.agent -eq 'opencode') 'Canonical command metadata must recover the agent.'
+    Assert-IngestionContract ($metadata.gitMode -eq 'worktree') 'Canonical command metadata must recover worktree mode.'
+    Assert-IngestionContract ($metadata.maxIterations -eq 4) 'Canonical command metadata must recover maxIterations.'
+    Assert-IngestionContract ($metadata.maxTokens -eq 120000) 'Canonical command metadata must recover maxTokens.'
+    Assert-IngestionContract ($metadata.preventSleep -eq $true) 'Canonical command metadata must recover prevent-sleep.'
+    Assert-IngestionContract ($metadata.promptBody -match '(?im)^Repo:\s*xyz_repo_or_path') 'Canonical command metadata must recover the quoted objective body.'
+}
+
+if (Test-IngestionStage 'CommandConversion') {
     $commandResult = ConvertTo-GnhfPromptContracts -PromptText $commandText @repository
     Assert-IngestionContract ($commandResult.sourceKind -eq 'gnhf-command') 'Canonical command must classify as gnhf-command.'
     Assert-IngestionContract ($commandResult.compiledPrompt.agentRoute.agent -eq 'opencode') 'Canonical command must populate the exact agent.'
@@ -69,6 +87,10 @@ if (Test-IngestionStage 'Command') {
     Assert-IngestionContract ($commandResult.compiledPrompt.bounds.maxTokens -eq 120000) 'Canonical command must populate maxTokens.'
     Assert-IngestionContract ($commandResult.compiledPrompt.gitExecution.mode -eq 'worktree') 'Canonical command must populate worktree mode.'
     Assert-IngestionContract ($commandResult.artifactPaths -contains 'proof/gnhf-ingestion-command.txt') 'Canonical command must recover the expected artifact path.'
+}
+
+if (Test-IngestionStage 'CommandValidation') {
+    $commandResult = ConvertTo-GnhfPromptContracts -PromptText $commandText @repository
     Assert-GeneratedContracts -Conversion $commandResult -Label 'Canonical command'
 }
 
