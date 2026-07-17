@@ -11,5 +11,8 @@
   "forbiddenScope": ["All other paths"],
   "expectedArtifacts": ["Committed proof artifact"],
   "safetyConstraints": ["Do not push, merge, deploy, or handle credentials"],
-  "desiredProofLevel": "local-workstation-observed"
+  "desiredProofLevel": "local-workstation-observed",
+  "executionIntent": "local_execute",
+  "readFirst": ["tooling/gnhf/README.md"],
+  "validators": ["tooling/gnhf/Test-GnhfPromptContracts.ps1"]
 }

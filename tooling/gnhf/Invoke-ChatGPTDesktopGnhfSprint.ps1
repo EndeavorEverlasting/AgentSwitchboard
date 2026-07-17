@@ -5,14 +5,15 @@ param(
     [string]$TargetRepo,
     [Parameter(ParameterSetName = "Plan")][switch]$PlanOnly,
     [Parameter(Mandatory, ParameterSetName = "Run")][switch]$Run,
-    [switch]$CreateDisposableProofRepo
+    [switch]$CreateDisposableProofRepo,
+    [ValidateSet("Desktop", "Cursor")][string]$RuntimeFamily = "Desktop"
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $sourceRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))
-$runtimeRoot = Join-Path $env:LOCALAPPDATA "AgentSwitchboard\GnhfDesktop"
+$runtimeRoot = Join-Path $env:LOCALAPPDATA ("AgentSwitchboard\Gnhf{0}" -f $RuntimeFamily)
 $runId = "{0}-{1}" -f (Get-Date -Format "yyyyMMdd-HHmmss-fff"), ([guid]::NewGuid().ToString("N").Substring(0, 8))
 $evidenceDirectory = Join-Path $runtimeRoot $runId
 $latestRunPath = Join-Path $runtimeRoot "latest-run.txt"
@@ -308,7 +309,9 @@ try {
     Start-Transcript -LiteralPath $transcriptPath -Force | Out-Null
     $script:transcriptStarted = $true
 
-    Write-Host "=== CHATGPT DESKTOP -> GNHF SPRINT ===" -ForegroundColor Cyan
+    $bannerTitle = if ($RuntimeFamily -eq "Cursor") { "CURSOR LOCAL -> GNHF SPRINT" } else { "CHATGPT DESKTOP -> GNHF SPRINT" }
+    Write-Host "=== $bannerTitle ===" -ForegroundColor Cyan
+    Write-Host "Family:   $RuntimeFamily"
     Write-Host "Mode:     $executionMode"
     Write-Host "Evidence: $evidenceDirectory"
 
@@ -352,6 +355,17 @@ try {
     }
     if ($CreateDisposableProofRepo -and [string]$compiledDocument.pushContract.mode -ne "none") {
         throw "Disposable proof repositories cannot be pushed."
+    }
+
+    $executionIntent = [string]$requestDocument.executionIntent
+    if ($Run -and $executionIntent -eq "compile_only") {
+        throw "executionIntent=compile_only rejects -Run. Use Plan mode or change the request intent to local_execute."
+    }
+    if ($Run -and $executionIntent -notin @("local_execute", "registered_workflow_execute")) {
+        throw "executionIntent='$executionIntent' does not authorize local GNHF execution."
+    }
+    if ($executionIntent -eq "environment_configure" -and $Run) {
+        throw "executionIntent=environment_configure authorizes workstation Plan/Apply only; use the existing setup entrypoints instead of -Run."
     }
 
     $sourceStatus = Invoke-Git -Repository $sourceRoot -Arguments @("status", "--short")
@@ -448,14 +462,14 @@ try {
             "-RepoPath", $resolvedTargetRepo,
             "-Agent", [string]$compiledDocument.agentRoute.agent,
             "-PromptPath", $compiledEvidencePath,
-            "-Name", "chatgpt-desktop-$runId",
+            "-Name", ("{0}-{1}" -f ($(if ($RuntimeFamily -eq "Cursor") { "cursor-local" } else { "chatgpt-desktop" }), $runId)),
             "-MaxIterations", [string]$compiledDocument.bounds.maxIterations,
             "-MaxTokens", [string]$compiledDocument.bounds.maxTokens,
             "-StopWhen", [string]$compiledDocument.stopCondition
         )
         if ([string]$compiledDocument.pushContract.mode -eq "manual") { $launcherArguments += "-PushBranch" }
 
-        $ack = "AGENTSWITCHBOARD_GNHF_DESKTOP_STARTED:$runId"
+        $ack = "AGENTSWITCHBOARD_GNHF_{0}_STARTED:{1}" -f $RuntimeFamily.ToUpperInvariant(), $runId
         Write-Host $ack -ForegroundColor Cyan
         $launchResult.startAcknowledged = $true
         $validationSummary.gnhfStartAcknowledged = $true
@@ -636,10 +650,17 @@ finally {
     $handoffProofCeiling = if ($handoffIsRuntimeResult) { [string]$evidenceResult.proofCeiling } else { [string]$compiledDocument.proofCeiling }
     $handoffBranch = if ($handoffIsRuntimeResult) { [string]$evidenceResult.commitProof.branch } else { "" }
     $handoffCommit = if ($handoffIsRuntimeResult) { [string]$evidenceResult.commitProof.headCommit } else { "" }
+    $handoffLabel = if ($RuntimeFamily -eq "Cursor") {
+        "AgentSwitchboard Cursor local GNHF sprint"
+    }
+    else {
+        "AgentSwitchboard ChatGPT Desktop GNHF sprint"
+    }
     $handoff = @(
-        "AgentSwitchboard ChatGPT Desktop GNHF sprint",
+        $handoffLabel,
         "status: $handoffStatus",
         "classification: $($launchResult.classification)",
+        "family: $RuntimeFamily",
         "mode: $executionMode",
         "target: $resolvedTargetRepo",
         "evidence: $evidenceDirectory",

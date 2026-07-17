@@ -20,14 +20,11 @@
   ],
   "safetyConstraints": [
     "Keep the disposable base checkout clean",
-    "Do not push, merge, deploy, authenticate providers, or handle secrets",
-    "Treat process exit without an observed commit and artifact as failure"
+    "Do not push, merge, deploy, authenticate providers, or handle secrets"
   ],
   "desiredProofLevel": "local-workstation-observed",
-  "executionIntent": "local_execute",
   "readFirst": [
-    "tooling/gnhf/README.md",
-    "tooling/gnhf/Start-GnhfSprint.ps1"
+    "tooling/gnhf/README.md"
   ],
   "validators": [
     "tooling/gnhf/Test-GnhfPromptContracts.ps1"

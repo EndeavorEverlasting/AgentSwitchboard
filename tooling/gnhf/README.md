@@ -2,17 +2,19 @@
 
 Windows-first launchers for bounded unattended GNHF sprints.
 
-## ChatGPT Desktop compiled-prompt entrypoint
+## ChatGPT Desktop and Cursor compiled-prompt entrypoints
 
 `Invoke-ChatGPTDesktopGnhfSprint.ps1` is the canonical regular-request to compiled-prompt runtime surface. It validates the versioned request and compiled prompt, runs the existing workstation setup in read-only Plan mode, prints the entire rendered prompt, and then delegates an explicit `-Run` to `Start-GnhfSprint.ps1`.
+
+`Invoke-CursorGnhfSprint.ps1` and root `Run-CursorGnhfSprint.cmd` are the Cursor-local aliases for the same runtime. They reuse the canonical engine with `-RuntimeFamily Cursor` and write evidence under `%LOCALAPPDATA%\AgentSwitchboard\GnhfCursor`. Regular requests must declare an `executionIntent` of `compile_only`, `local_execute`, `environment_configure`, or `registered_workflow_execute`.
 
 Use the committed disposable fixture to prove prompt visibility, worktree isolation, exact artifact content, and commit evidence without a remote:
 
 ```powershell
-pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tooling\gnhf\Invoke-ChatGPTDesktopGnhfSprint.ps1 -RequestPath .\tooling\gnhf\fixtures\desktop-gnhf-proof.request.md -CompiledPromptPath .\tooling\gnhf\fixtures\desktop-gnhf-proof.compiled.txt -CreateDisposableProofRepo -Run
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tooling\gnhf\Invoke-CursorGnhfSprint.ps1 -RequestPath .\tooling\gnhf\fixtures\desktop-gnhf-proof.request.md -CompiledPromptPath .\tooling\gnhf\fixtures\desktop-gnhf-proof.compiled.txt -CreateDisposableProofRepo -Run
 ```
 
-Plan is the default when `-Run` is absent. Local evidence is written below `%LOCALAPPDATA%\AgentSwitchboard\GnhfDesktop`, and the full safety and proof contract is documented in [the desktop runtime guide](../../docs/workstation/chatgpt-desktop-gnhf-sprint.md).
+Plan is the default when `-Run` is absent. ChatGPT Desktop evidence remains under `%LOCALAPPDATA%\AgentSwitchboard\GnhfDesktop`. The full safety and proof contract is documented in [the desktop runtime guide](../../docs/workstation/chatgpt-desktop-gnhf-sprint.md).
 
 ## Safety contract
 

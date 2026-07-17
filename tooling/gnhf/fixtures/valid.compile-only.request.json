@@ -1,7 +1,7 @@
 {
   "kind": "regular-sprint-request",
   "schemaVersion": 1,
-  "objective": "Create one disposable proof artifact containing the supplied nonce, commit it, validate the exact content, and stop.",
+  "objective": "Compile one complete AgentSwitchboard-compatible GNHF prompt for a bounded disposable proof sprint without executing it.",
   "repository": {
     "name": "desktop-gnhf-disposable-proof",
     "remote": "https://github.com/EndeavorEverlasting/AgentSwitchboard",
@@ -16,18 +16,18 @@
     "Remote pushes, merges, deployments, credentials, and provider authentication"
   ],
   "expectedArtifacts": [
-    "One committed proof/gnhf-desktop-proof.txt containing the exact runtime nonce"
+    "One validated compiled GNHF prompt result document"
   ],
   "safetyConstraints": [
-    "Keep the disposable base checkout clean",
+    "Do not launch GNHF",
     "Do not push, merge, deploy, authenticate providers, or handle secrets",
-    "Treat process exit without an observed commit and artifact as failure"
+    "Treat process exit without validated prompt contracts as failure"
   ],
-  "desiredProofLevel": "local-workstation-observed",
-  "executionIntent": "local_execute",
+  "desiredProofLevel": "contract-only",
+  "executionIntent": "compile_only",
   "readFirst": [
     "tooling/gnhf/README.md",
-    "tooling/gnhf/Start-GnhfSprint.ps1"
+    "tooling/gnhf/schemas/compiled-gnhf-prompt-result.v1.schema.json"
   ],
   "validators": [
     "tooling/gnhf/Test-GnhfPromptContracts.ps1"

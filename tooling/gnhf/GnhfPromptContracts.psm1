@@ -73,7 +73,7 @@ function Test-GnhfRegularSprintRequest {
         }
     }
 
-    foreach ($name in @("ownedScope", "forbiddenScope", "expectedArtifacts", "safetyConstraints")) {
+    foreach ($name in @("ownedScope", "forbiddenScope", "expectedArtifacts", "safetyConstraints", "readFirst", "validators")) {
         if (-not (Test-GnhfContractProperty $Document $name) -or
             -not (Test-GnhfNonEmptyArray $Document.$name)) {
             Add-GnhfContractError $Errors "regular.$name"
@@ -84,6 +84,17 @@ function Test-GnhfRegularSprintRequest {
     if (-not (Test-GnhfContractProperty $Document "desiredProofLevel") -or
         $proofLevels -notcontains [string]$Document.desiredProofLevel) {
         Add-GnhfContractError $Errors "regular.desiredProofLevel"
+    }
+
+    $executionIntents = @(
+        "compile_only",
+        "local_execute",
+        "environment_configure",
+        "registered_workflow_execute"
+    )
+    if (-not (Test-GnhfContractProperty $Document "executionIntent") -or
+        $executionIntents -notcontains [string]$Document.executionIntent) {
+        Add-GnhfContractError $Errors "regular.executionIntent"
     }
 }
 
