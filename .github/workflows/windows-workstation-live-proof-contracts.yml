@@ -48,9 +48,18 @@ jobs:
       - name: Ingestion parse contracts
         shell: pwsh
         run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Parse
-      - name: Ingestion canonical command contracts
+      - name: Ingestion module contracts
         shell: pwsh
-        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Command
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Module
+      - name: Ingestion command metadata contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage CommandMetadata
+      - name: Ingestion command conversion contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage CommandConversion
+      - name: Ingestion command validation contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage CommandValidation
       - name: Ingestion regular JSON contracts
         shell: pwsh
         run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage RegularJson
@@ -117,9 +126,18 @@ jobs:
       - name: Ingestion parse contracts
         shell: pwsh
         run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Parse
-      - name: Ingestion canonical command contracts
+      - name: Ingestion module contracts
         shell: pwsh
-        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Command
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Module
+      - name: Ingestion command metadata contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage CommandMetadata
+      - name: Ingestion command conversion contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage CommandConversion
+      - name: Ingestion command validation contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage CommandValidation
       - name: Ingestion regular JSON contracts
         shell: pwsh
         run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage RegularJson
