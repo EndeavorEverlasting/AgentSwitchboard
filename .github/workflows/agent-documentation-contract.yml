@@ -1,0 +1,100 @@
+name: Agent documentation contract
+
+on:
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - "CLAUDE.md"
+      - "SKILLS.md"
+      - "CAPABILITIES.md"
+      - "TRIGGERS.md"
+      - ".ai/**"
+      - "docs/governance/**"
+      - "templates/repository-agent-contract/**"
+      - "scripts/Test-AgentDocumentationContract.ps1"
+      - ".github/workflows/agent-documentation-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Parse contract JSON
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          for path in (
+              Path('.ai/agent-contract.json'),
+              Path('templates/repository-agent-contract/.ai/agent-contract.json'),
+          ):
+              json.loads(path.read_text(encoding='utf-8-sig'))
+              print(f'PASS: {path}')
+          PY
+      - name: Run documentation contract
+        shell: pwsh
+        run: ./scripts/Test-AgentDocumentationContract.ps1
+      - name: Check repository hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${GITHUB_BASE_REF:-}" ]]; then
+            git diff --check "origin/${GITHUB_BASE_REF}...HEAD"
+          else
+            git diff --check HEAD^
+          fi
+          test -z "$(git status --short)"
+
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Parse PowerShell validator
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+            'scripts/Test-AgentDocumentationContract.ps1',
+            [ref]$tokens,
+            [ref]$errors
+          )
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+      - name: Run documentation contract
+        shell: pwsh
+        run: |
+          ./scripts/Test-AgentDocumentationContract.ps1 2>&1 |
+            Tee-Object -FilePath "$env:RUNNER_TEMP\agent-documentation-contract.log"
+      - name: Verify clean checkout
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_BASE_REF) {
+            git diff --check "origin/$env:GITHUB_BASE_REF...HEAD"
+          }
+          else {
+            git diff --check HEAD^
+          }
+          if (git status --short) {
+            throw 'Checkout is dirty after validation.'
+          }
+      - name: Upload contract diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-documentation-contract
+          path: ${{ runner.temp }}/agent-documentation-contract.log
+          if-no-files-found: ignore
