@@ -38,15 +38,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 2
+          show-progress: false
       - name: Run dependency-free workstation contracts
         run: python3 tooling/wsl/tests/test_windows_workstation_live_proof_contracts.py
-      - name: Run GNHF prompt contracts
+      - name: Run existing GNHF prompt contracts
         shell: pwsh
         run: |
           ./tooling/gnhf/Test-GnhfPromptContracts.ps1 2>&1 |
             Tee-Object -FilePath "$env:RUNNER_TEMP/gnhf-prompt-contracts.log"
           if ($LASTEXITCODE -ne 0) { throw 'Existing GNHF prompt contracts failed.' }
+      - name: Run GNHF prompt ingestion contracts
+        shell: pwsh
+        run: |
           ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 2>&1 |
             Tee-Object -FilePath "$env:RUNNER_TEMP/gnhf-prompt-ingestion-contracts.log"
           if ($LASTEXITCODE -ne 0) { throw 'GNHF prompt ingestion contracts failed.' }
@@ -54,8 +58,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ -n "${GITHUB_BASE_REF:-}" ]]; then
-            git diff --check "origin/${GITHUB_BASE_REF}...HEAD"
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git diff --check HEAD^1...HEAD^2
           else
             git diff --check HEAD^
           fi
@@ -75,7 +79,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 2
+          show-progress: false
       - name: Parse PowerShell files
         shell: pwsh
         run: |
@@ -103,15 +108,21 @@ jobs:
               exit 1
             }
           }
-      - name: Run PowerShell contracts
+      - name: Run existing GNHF prompt contracts
         shell: pwsh
         run: |
           ./tooling/gnhf/Test-GnhfPromptContracts.ps1 2>&1 |
             Tee-Object -FilePath "$env:RUNNER_TEMP\gnhf-prompt-contracts.log"
           if ($LASTEXITCODE -ne 0) { throw 'Existing GNHF prompt contracts failed.' }
+      - name: Run GNHF prompt ingestion contracts
+        shell: pwsh
+        run: |
           ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 2>&1 |
             Tee-Object -FilePath "$env:RUNNER_TEMP\gnhf-prompt-ingestion-contracts.log"
           if ($LASTEXITCODE -ne 0) { throw 'GNHF prompt ingestion contracts failed.' }
+      - name: Run workstation contracts
+        shell: pwsh
+        run: |
           ./tooling/wsl/Test-WindowsWorkstationLiveProofContracts.ps1 2>&1 |
             Tee-Object -FilePath "$env:RUNNER_TEMP\windows-live-proof-contracts.log"
           if ($LASTEXITCODE -ne 0) { throw 'Windows workstation live-proof contracts failed.' }
@@ -125,8 +136,8 @@ jobs:
       - name: Verify clean checkout
         shell: pwsh
         run: |
-          if ($env:GITHUB_BASE_REF) {
-            git diff --check "origin/$env:GITHUB_BASE_REF...HEAD"
+          if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
+            git diff --check 'HEAD^1...HEAD^2'
           }
           else {
             git diff --check HEAD^
