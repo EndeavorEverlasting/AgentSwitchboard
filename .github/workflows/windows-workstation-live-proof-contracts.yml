@@ -44,14 +44,28 @@ jobs:
         run: python3 tooling/wsl/tests/test_windows_workstation_live_proof_contracts.py
       - name: Run existing GNHF prompt contracts
         shell: pwsh
-        run: |
-          ./tooling/gnhf/Test-GnhfPromptContracts.ps1 2>&1 |
-            Tee-Object -FilePath "$env:RUNNER_TEMP/gnhf-prompt-contracts.log"
-      - name: Run GNHF prompt ingestion contracts
+        run: ./tooling/gnhf/Test-GnhfPromptContracts.ps1
+      - name: Ingestion parse contracts
         shell: pwsh
-        run: |
-          ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 2>&1 |
-            Tee-Object -FilePath "$env:RUNNER_TEMP/gnhf-prompt-ingestion-contracts.log"
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Parse
+      - name: Ingestion canonical command contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Command
+      - name: Ingestion regular JSON contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage RegularJson
+      - name: Ingestion sectioned prompt contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Sectioned
+      - name: Ingestion rejection contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Rejections
+      - name: Ingestion Cursor wiring contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Cursor
+      - name: Ingestion temporary-repository contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Converter
       - name: Check repository hygiene
         shell: bash
         run: |
@@ -62,15 +76,6 @@ jobs:
             git diff --check HEAD^
           fi
           test -z "$(git status --short)"
-      - name: Upload Linux prompt diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gnhf-prompt-contracts-linux
-          path: |
-            ${{ runner.temp }}/gnhf-prompt-contracts.log
-            ${{ runner.temp }}/gnhf-prompt-ingestion-contracts.log
-          if-no-files-found: ignore
 
   windows-contracts:
     runs-on: windows-latest
@@ -108,26 +113,37 @@ jobs:
           }
       - name: Run existing GNHF prompt contracts
         shell: pwsh
-        run: |
-          ./tooling/gnhf/Test-GnhfPromptContracts.ps1 2>&1 |
-            Tee-Object -FilePath "$env:RUNNER_TEMP\gnhf-prompt-contracts.log"
-      - name: Run GNHF prompt ingestion contracts
+        run: ./tooling/gnhf/Test-GnhfPromptContracts.ps1
+      - name: Ingestion parse contracts
         shell: pwsh
-        run: |
-          ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 2>&1 |
-            Tee-Object -FilePath "$env:RUNNER_TEMP\gnhf-prompt-ingestion-contracts.log"
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Parse
+      - name: Ingestion canonical command contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Command
+      - name: Ingestion regular JSON contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage RegularJson
+      - name: Ingestion sectioned prompt contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Sectioned
+      - name: Ingestion rejection contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Rejections
+      - name: Ingestion Cursor wiring contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Cursor
+      - name: Ingestion temporary-repository contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Converter
       - name: Run workstation contracts
         shell: pwsh
-        run: |
-          ./tooling/wsl/Test-WindowsWorkstationLiveProofContracts.ps1 2>&1 |
-            Tee-Object -FilePath "$env:RUNNER_TEMP\windows-live-proof-contracts.log"
+        run: ./tooling/wsl/Test-WindowsWorkstationLiveProofContracts.ps1
       - name: Run installer plan
         shell: pwsh
         run: |
           ./tooling/wsl/Install-WindowsWorkstationLiveProof.ps1 `
             -SourceRoot ./tooling/wsl `
-            -ManifestPath ./tooling/wsl/tmux-gnhf-workstation.example.json |
-            Tee-Object -FilePath "$env:RUNNER_TEMP\windows-live-proof-install-plan.log"
+            -ManifestPath ./tooling/wsl/tmux-gnhf-workstation.example.json
       - name: Verify clean checkout
         shell: pwsh
         run: |
@@ -138,14 +154,3 @@ jobs:
             git diff --check HEAD^
           }
           if (git status --short) { throw 'Checkout is dirty after validation.' }
-      - name: Upload contract logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-workstation-live-proof-contracts
-          path: |
-            ${{ runner.temp }}/gnhf-prompt-contracts.log
-            ${{ runner.temp }}/gnhf-prompt-ingestion-contracts.log
-            ${{ runner.temp }}/windows-live-proof-contracts.log
-            ${{ runner.temp }}/windows-live-proof-install-plan.log
-          if-no-files-found: ignore
