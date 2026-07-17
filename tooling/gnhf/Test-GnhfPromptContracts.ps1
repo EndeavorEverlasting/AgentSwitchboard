@@ -54,6 +54,7 @@ function Invoke-FixtureMutation {
 $modulePath = Join-Path $PSScriptRoot "GnhfPromptContracts.psm1"
 $runtimePath = Join-Path $PSScriptRoot "Invoke-ChatGPTDesktopGnhfSprint.ps1"
 $cursorRuntimePath = Join-Path $PSScriptRoot "Invoke-CursorGnhfSprint.ps1"
+$queueContractPath = Join-Path $PSScriptRoot "Test-GnhfPromptQueueContracts.ps1"
 $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $rootCmdPath = Join-Path $repoRoot "Run-ChatGPTDesktopGnhfSprint.cmd"
 $cursorRootCmdPath = Join-Path $repoRoot "Run-CursorGnhfSprint.cmd"
@@ -180,4 +181,7 @@ $allFixtureText = Get-ChildItem -LiteralPath $fixtureRoot -File |
 Assert-Contract ($allFixtureText -notmatch '(?i)C:\\Users\\[^\\]+') "Fixtures must not contain a machine-local Windows user path."
 Assert-Contract ($allFixtureText -notmatch '(?i)(gh[pousr]_[A-Za-z0-9]{12,}|AKIA[0-9A-Z]{12,}|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY)') "Fixtures must not contain credential material."
 
-Write-Host "PASS: AgentSwitchboard GNHF prompt contract schemas, classification, fixtures, and rejection cases"
+Assert-Contract (Test-Path -LiteralPath $queueContractPath -PathType Leaf) "Prompt queue contract validator is missing."
+& $queueContractPath -Stage All
+
+Write-Host "PASS: AgentSwitchboard GNHF prompt contract schemas, classification, fixtures, queue orchestration, and rejection cases"
