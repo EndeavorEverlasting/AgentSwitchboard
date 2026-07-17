@@ -19,6 +19,7 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | `repo.new-or-unknown` | unfamiliar repo, placeholder path, stale handoff, uncertain branch | `repo-intake` |
 | `repo.dirty-or-conflicted` | unowned changes, conflict markers, detached or unsafe state | preserve/isolate; then `repo-intake` |
 | `sprint.execute` | scoped request with safe owned files | `bounded-sprint` |
+| `gnhf.prompt-request` | explicit “GNHF prompt,” “Good Night, Have Fun prompt,” or “compile this sprint for GNHF” request | `gnhf-prompt-compilation`; output a copy-ready `gnhf` launch command, not generic sprint prose |
 | `review.findings` | unresolved PR comments or deterministic failures | `evidence-validation` |
 | `validation.requested` | proof gap, skipped checks, contract drift | `evidence-validation` |
 | `integration.requested` | stacked PRs, consumed commits, branch convergence | `pr-integration` |
@@ -29,6 +30,14 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | `secret-or-personal-data` | credentials, tokens, customer data, private evidence | stop, sanitize, and escalate |
 | `live-target-mutation` | external machine, service, deployment, save, or customer target | require explicit authority and runtime-proof boundary |
 | `repeated-repair-failure` | bounded retries exhausted | checkpoint and escalate |
+
+## GNHF routing invariant
+
+The `gnhf.prompt-request` trigger is an artifact-type selector. It requires the canonical `.ai/skills/gnhf-prompt-compilation/SKILL.md` format even when the underlying objective is also a bounded sprint.
+
+Do not route a GNHF prompt request to a sprint map, launch pack, plan-only response, ordinary repo-agent prompt, or explanatory essay.
+
+When the exact agent cannot be proven launchable in the intended execution domain, the selected skill produces the bounded spawnability probe before repository work.
 
 ## Trigger payload
 
