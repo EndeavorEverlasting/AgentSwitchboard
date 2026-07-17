@@ -44,8 +44,12 @@ jobs:
       - name: Run GNHF prompt contracts
         shell: pwsh
         run: |
-          ./tooling/gnhf/Test-GnhfPromptContracts.ps1
-          ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1
+          ./tooling/gnhf/Test-GnhfPromptContracts.ps1 2>&1 |
+            Tee-Object -FilePath "$env:RUNNER_TEMP/gnhf-prompt-contracts.log"
+          if ($LASTEXITCODE -ne 0) { throw 'Existing GNHF prompt contracts failed.' }
+          ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 2>&1 |
+            Tee-Object -FilePath "$env:RUNNER_TEMP/gnhf-prompt-ingestion-contracts.log"
+          if ($LASTEXITCODE -ne 0) { throw 'GNHF prompt ingestion contracts failed.' }
       - name: Check repository hygiene
         shell: bash
         run: |
@@ -56,6 +60,15 @@ jobs:
             git diff --check HEAD^
           fi
           test -z "$(git status --short)"
+      - name: Upload Linux prompt diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gnhf-prompt-contracts-linux
+          path: |
+            ${{ runner.temp }}/gnhf-prompt-contracts.log
+            ${{ runner.temp }}/gnhf-prompt-ingestion-contracts.log
+          if-no-files-found: ignore
 
   windows-contracts:
     runs-on: windows-latest
@@ -93,12 +106,15 @@ jobs:
       - name: Run PowerShell contracts
         shell: pwsh
         run: |
-          ./tooling/gnhf/Test-GnhfPromptContracts.ps1 |
+          ./tooling/gnhf/Test-GnhfPromptContracts.ps1 2>&1 |
             Tee-Object -FilePath "$env:RUNNER_TEMP\gnhf-prompt-contracts.log"
-          ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 |
+          if ($LASTEXITCODE -ne 0) { throw 'Existing GNHF prompt contracts failed.' }
+          ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 2>&1 |
             Tee-Object -FilePath "$env:RUNNER_TEMP\gnhf-prompt-ingestion-contracts.log"
-          ./tooling/wsl/Test-WindowsWorkstationLiveProofContracts.ps1 |
+          if ($LASTEXITCODE -ne 0) { throw 'GNHF prompt ingestion contracts failed.' }
+          ./tooling/wsl/Test-WindowsWorkstationLiveProofContracts.ps1 2>&1 |
             Tee-Object -FilePath "$env:RUNNER_TEMP\windows-live-proof-contracts.log"
+          if ($LASTEXITCODE -ne 0) { throw 'Windows workstation live-proof contracts failed.' }
       - name: Run installer plan
         shell: pwsh
         run: |
@@ -117,6 +133,7 @@ jobs:
           }
           if (git status --short) { throw 'Checkout is dirty after validation.' }
       - name: Upload contract logs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: windows-workstation-live-proof-contracts
@@ -125,3 +142,4 @@ jobs:
             ${{ runner.temp }}/gnhf-prompt-ingestion-contracts.log
             ${{ runner.temp }}/windows-live-proof-contracts.log
             ${{ runner.temp }}/windows-live-proof-install-plan.log
+          if-no-files-found: ignore
