@@ -46,13 +46,26 @@ jobs:
       - name: Check repository hygiene
         shell: bash
         run: |
-          set -euo pipefail
-          if [[ -n "${GITHUB_BASE_REF:-}" ]]; then
-            git diff --check "origin/${GITHUB_BASE_REF}...HEAD"
-          else
-            git diff --check HEAD^
-          fi
-          test -z "$(git status --short)"
+          set -o pipefail
+          log="$RUNNER_TEMP/agent-documentation-linux-hygiene.log"
+          {
+            set -x
+            if [[ -n "${GITHUB_BASE_REF:-}" ]]; then
+              git diff --check "origin/${GITHUB_BASE_REF}...HEAD"
+            else
+              git diff --check HEAD^
+            fi
+            status="$(git status --short)"
+            printf 'git status --short:\n%s\n' "$status"
+            test -z "$status"
+          } 2>&1 | tee "$log"
+      - name: Upload Linux diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-documentation-linux-contract
+          path: ${{ runner.temp }}/agent-documentation-linux-hygiene.log
+          if-no-files-found: ignore
 
   windows-contracts:
     runs-on: windows-latest
