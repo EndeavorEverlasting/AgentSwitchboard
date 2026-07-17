@@ -150,7 +150,8 @@ foreach ($skill in $expectedSkills) {
 $gnhfSkillText = Get-RequiredText -RelativePath ".ai/skills/gnhf-prompt-compilation/SKILL.md"
 if ($null -ne $gnhfSkillText) {
     foreach ($token in @(
-        "gnhf `",
+        "Canonical command shape:",
+        "gnhf",
         "--agent",
         "--worktree",
         "--max-iterations",
