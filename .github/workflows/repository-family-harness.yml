@@ -1,0 +1,186 @@
+name: Repository family harness
+
+on:
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - "README.md"
+      - "CODEBASE_MAP.md"
+      - ".ai/agent-contract.json"
+      - ".ai/harness/**"
+      - "docs/governance/repository-family*.md"
+      - "scripts/Get-RepositoryFamilyHarnessStatus.ps1"
+      - "scripts/Test-RepositoryFamilyHarness.ps1"
+      - "scripts/Test-AgentDocumentationContract.ps1"
+      - ".github/workflows/repository-family-harness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Parse harness JSON
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          paths = [
+              Path('.ai/harness/manifest.json'),
+              Path('.ai/harness/repository-family.registry.json'),
+              Path('.ai/harness/artifact-registry.json'),
+              Path('.ai/harness/workflows/repository-family-intake.workflow.json'),
+              *sorted(Path('.ai/harness/schemas').glob('*.json')),
+          ]
+          for path in paths:
+              json.loads(path.read_text(encoding='utf-8-sig'))
+              print(f'PASS: {path}')
+          PY
+      - name: Run canonical documentation contract
+        shell: pwsh
+        run: ./scripts/Test-AgentDocumentationContract.ps1
+      - name: Run repository-family harness contract
+        shell: pwsh
+        run: ./scripts/Test-RepositoryFamilyHarness.ps1
+      - name: Run read-only family probe
+        shell: pwsh
+        run: |
+          ./scripts/Get-RepositoryFamilyHarnessStatus.ps1 `
+            -OutputRoot "$env:RUNNER_TEMP/repository-family-status" |
+            Out-Null
+      - name: Validate generated evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ['RUNNER_TEMP']) / 'repository-family-status'
+          expected = {
+              'run-context.json',
+              'repository-family-status.json',
+              'operator-report.md',
+              'final-handoff.json',
+          }
+          actual = {p.name for p in root.iterdir() if p.is_file()}
+          if actual != expected:
+              raise SystemExit(f'unexpected artifact set: {actual}')
+          status = json.loads((root / 'repository-family-status.json').read_text(encoding='utf-8-sig'))
+          handoff = json.loads((root / 'final-handoff.json').read_text(encoding='utf-8-sig'))
+          assert status['summary']['total'] == 4
+          assert len(status['repositories']) == 4
+          assert status['proofLevel'] == 'read-only-repository-intake'
+          assert handoff['receivingAgentMustReinspectState'] is True
+          combined = '\n'.join(p.read_text(encoding='utf-8-sig') for p in root.iterdir() if p.is_file())
+          assert '/home/runner/' not in combined
+          print('PASS: generated family evidence')
+          PY
+      - name: Check repository hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${GITHUB_BASE_REF:-}" ]]; then
+            git diff --check "origin/${GITHUB_BASE_REF}...HEAD"
+          else
+            git diff --check HEAD^
+          fi
+          test -z "$(git status --short)"
+      - name: Upload family evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-family-harness-linux
+          path: ${{ runner.temp }}/repository-family-status
+          if-no-files-found: ignore
+
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Parse PowerShell entrypoints
+        shell: pwsh
+        run: |
+          foreach ($file in @(
+            'scripts/Get-RepositoryFamilyHarnessStatus.ps1',
+            'scripts/Test-RepositoryFamilyHarness.ps1',
+            'scripts/Test-AgentDocumentationContract.ps1'
+          )) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              $file,
+              [ref]$tokens,
+              [ref]$errors
+            )
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object { Write-Error "${file}: $($_.Message)" }
+              exit 1
+            }
+          }
+      - name: Run canonical documentation contract
+        shell: pwsh
+        run: ./scripts/Test-AgentDocumentationContract.ps1
+      - name: Run repository-family harness contract
+        shell: pwsh
+        run: ./scripts/Test-RepositoryFamilyHarness.ps1
+      - name: Run read-only family probe
+        shell: pwsh
+        run: |
+          ./scripts/Get-RepositoryFamilyHarnessStatus.ps1 `
+            -OutputRoot "$env:RUNNER_TEMP\repository-family-status" |
+            Out-Null
+      - name: Validate generated evidence
+        shell: pwsh
+        run: |
+          $root = Join-Path $env:RUNNER_TEMP 'repository-family-status'
+          $expected = @('final-handoff.json', 'operator-report.md', 'repository-family-status.json', 'run-context.json')
+          $actual = @(Get-ChildItem -LiteralPath $root -File | Sort-Object Name | ForEach-Object Name)
+          if (($actual -join '|') -ne ($expected -join '|')) {
+            throw "Unexpected artifact set: $($actual -join ', ')"
+          }
+          $status = Get-Content -LiteralPath (Join-Path $root 'repository-family-status.json') -Raw | ConvertFrom-Json
+          $handoff = Get-Content -LiteralPath (Join-Path $root 'final-handoff.json') -Raw | ConvertFrom-Json
+          if ($status.summary.total -ne 4 -or @($status.repositories).Count -ne 4) {
+            throw 'Family status must contain exactly four repositories.'
+          }
+          if ($status.proofLevel -ne 'read-only-repository-intake') {
+            throw 'Unexpected proof level.'
+          }
+          if ($handoff.receivingAgentMustReinspectState -ne $true) {
+            throw 'Handoff must require state reinspection.'
+          }
+          $combined = Get-ChildItem -LiteralPath $root -File | Get-Content -Raw | Out-String
+          if ($combined -match '(?i)C:\\Users\\runneradmin') {
+            throw 'Generated evidence leaked the hosted runner user path.'
+          }
+      - name: Verify clean checkout
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_BASE_REF) {
+            git diff --check "origin/$env:GITHUB_BASE_REF...HEAD"
+          }
+          else {
+            git diff --check HEAD^
+          }
+          if (git status --short) {
+            throw 'Checkout is dirty after validation.'
+          }
+      - name: Upload family evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-family-harness-windows
+          path: ${{ runner.temp }}/repository-family-status
+          if-no-files-found: ignore
