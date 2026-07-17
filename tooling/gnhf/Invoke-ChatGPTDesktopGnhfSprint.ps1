@@ -473,7 +473,40 @@ try {
         Write-Host $ack -ForegroundColor Cyan
         $launchResult.startAcknowledged = $true
         $validationSummary.gnhfStartAcknowledged = $true
-        $processResult = Invoke-BoundedProcess -FilePath $pwsh.Source -ArgumentList $launcherArguments -TimeoutSeconds ([int]$compiledDocument.bounds.timeoutSeconds) -WorkingDirectory $resolvedTargetRepo
+
+        # Reuse the auto-router's OpenCode DeepSeek config shape so disposable proofs do not
+        # launch a bare opencode agent without a model/provider timeout envelope.
+        $previousOpenCodeConfig = $env:OPENCODE_CONFIG_CONTENT
+        $agentName = [string]$compiledDocument.agentRoute.agent
+        if ($agentName -eq "opencode") {
+            $openCodeRuntimeConfig = [ordered]@{
+                '$schema' = "https://opencode.ai/config.json"
+                model = "deepseek/deepseek-v4-flash"
+                share = "disabled"
+                provider = [ordered]@{
+                    deepseek = [ordered]@{
+                        options = [ordered]@{
+                            timeout = 600000
+                            chunkTimeout = 60000
+                        }
+                    }
+                }
+            }
+            $env:OPENCODE_CONFIG_CONTENT = $openCodeRuntimeConfig | ConvertTo-Json -Depth 10 -Compress
+        }
+
+        try {
+            $processResult = Invoke-BoundedProcess -FilePath $pwsh.Source -ArgumentList $launcherArguments -TimeoutSeconds ([int]$compiledDocument.bounds.timeoutSeconds) -WorkingDirectory $resolvedTargetRepo
+        }
+        finally {
+            if ($null -eq $previousOpenCodeConfig) {
+                Remove-Item Env:OPENCODE_CONFIG_CONTENT -ErrorAction SilentlyContinue
+            }
+            else {
+                $env:OPENCODE_CONFIG_CONTENT = $previousOpenCodeConfig
+            }
+        }
+
         $launchResult.processExitCode = $processResult.ExitCode
         $launchResult.processTimedOut = $processResult.TimedOut
         if ($processResult.Stdout) { Write-Host $processResult.Stdout }
@@ -632,7 +665,9 @@ finally {
     }
     if (Get-Command Test-GnhfPromptContract -ErrorAction SilentlyContinue) {
         $expectedResultKind = if ($evidenceResult.kind -eq "desktop-gnhf-launch-request") { "desktop-gnhf-launch-request" } else { "desktop-gnhf-runtime-result" }
-        $resultValidation = Test-GnhfPromptContract -Document ([pscustomobject]$evidenceResult) -ExpectedKind $expectedResultKind
+        # Normalize nested ordered hashtables through JSON so contract property checks see real objects.
+        $resultDocument = ($evidenceResult | ConvertTo-Json -Depth 40 | ConvertFrom-Json -Depth 40)
+        $resultValidation = Test-GnhfPromptContract -Document $resultDocument -ExpectedKind $expectedResultKind
         $validationSummary.resultContractValid = [bool]$resultValidation.Valid
         if (-not $resultValidation.Valid) {
             $launchResult.status = "failed"
