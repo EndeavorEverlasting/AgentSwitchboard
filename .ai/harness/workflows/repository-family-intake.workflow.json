@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "repository-family-intake",
+  "title": "Read-only repository-family intake",
+  "authorityRef": ".ai/agent-contract.json",
+  "registryRef": ".ai/harness/repository-family.registry.json",
+  "artifactRegistryRef": ".ai/harness/artifact-registry.json",
+  "entrypoint": "scripts/Get-RepositoryFamilyHarnessStatus.ps1",
+  "inputs": [
+    {
+      "name": "WorkspaceRoot",
+      "required": false,
+      "description": "Parent directory containing sibling local clones. Defaults to the parent of the AgentSwitchboard checkout."
+    },
+    {
+      "name": "OutputRoot",
+      "required": false,
+      "description": "Untracked output directory. Defaults to the operating-system temporary directory."
+    }
+  ],
+  "steps": [
+    "Resolve and verify the AgentSwitchboard repository root.",
+    "Load the exact four-repository family registry.",
+    "Find local clones by registered directory names without cloning or fetching.",
+    "Inspect Git identity, branch, HEAD, dirty state, and required harness paths read-only.",
+    "Classify each repository as ready, partial, blocked, or not_present.",
+    "Emit run context, machine-readable status, English operator report, and compressed final handoff.",
+    "Return exact validator or clone commands without executing child validators."
+  ],
+  "forbidden": [
+    "clone",
+    "fetch",
+    "pull",
+    "checkout",
+    "switch",
+    "reset",
+    "clean",
+    "stash",
+    "commit",
+    "push",
+    "merge",
+    "deployment",
+    "provider invocation",
+    "child validator execution",
+    "live target mutation"
+  ],
+  "stopConditions": [
+    "The registry is malformed or does not contain exactly the supported four repositories.",
+    "The requested output directory is inside any inspected repository.",
+    "The AgentSwitchboard checkout cannot be identified safely.",
+    "Git is unavailable."
+  ],
+  "proofLevel": "read-only-repository-intake",
+  "proofCeiling": "Local clone presence, Git identity, current local branch and HEAD, dirty-state observation, and required-path readiness only. No child validation, network freshness, provider, runtime, merge, deployment, or product proof."
+}
