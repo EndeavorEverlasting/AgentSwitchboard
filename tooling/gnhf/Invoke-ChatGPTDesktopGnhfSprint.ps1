@@ -456,29 +456,44 @@ try {
     }
     else {
         $beforeHeads = Get-GnhfBranchHeads -Repository $resolvedTargetRepo
-        $launcherPath = Join-Path $PSScriptRoot "Start-GnhfSprint.ps1"
+        # Disposable proofs prefer the auto-router so free/natural routes can satisfy the
+        # artifact+commit gate when a pinned opencode provider is unhealthy. Explicit
+        # non-disposable runs keep the compiled prompt's agent route via Start-GnhfSprint.
+        $useAutoRouter = [bool]$CreateDisposableProofRepo
+        $launcherPath = if ($useAutoRouter) {
+            Join-Path $PSScriptRoot "Start-AutoRoutedGnhfSprint.ps1"
+        }
+        else {
+            Join-Path $PSScriptRoot "Start-GnhfSprint.ps1"
+        }
         $launcherArguments = @(
             "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $launcherPath,
             "-RepoPath", $resolvedTargetRepo,
-            "-Agent", [string]$compiledDocument.agentRoute.agent,
             "-PromptPath", $compiledEvidencePath,
             "-Name", ("{0}-{1}" -f ($(if ($RuntimeFamily -eq "Cursor") { "cursor-local" } else { "chatgpt-desktop" }), $runId)),
             "-MaxIterations", [string]$compiledDocument.bounds.maxIterations,
             "-MaxTokens", [string]$compiledDocument.bounds.maxTokens,
             "-StopWhen", [string]$compiledDocument.stopCondition
         )
-        if ([string]$compiledDocument.pushContract.mode -eq "manual") { $launcherArguments += "-PushBranch" }
+        if (-not $useAutoRouter) {
+            $launcherArguments += @("-Agent", [string]$compiledDocument.agentRoute.agent)
+        }
+        if ((-not $useAutoRouter) -and [string]$compiledDocument.pushContract.mode -eq "manual") {
+            $launcherArguments += "-PushBranch"
+        }
 
         $ack = "AGENTSWITCHBOARD_GNHF_{0}_STARTED:{1}" -f $RuntimeFamily.ToUpperInvariant(), $runId
         Write-Host $ack -ForegroundColor Cyan
+        if ($useAutoRouter) {
+            Write-Host "Disposable proof launcher: Start-AutoRoutedGnhfSprint.ps1" -ForegroundColor Cyan
+        }
         $launchResult.startAcknowledged = $true
         $validationSummary.gnhfStartAcknowledged = $true
 
-        # Reuse the auto-router's OpenCode DeepSeek config shape so disposable proofs do not
-        # launch a bare opencode agent without a model/provider timeout envelope.
+        # For pinned opencode routes, reuse the auto-router DeepSeek config envelope.
         $previousOpenCodeConfig = $env:OPENCODE_CONFIG_CONTENT
         $agentName = [string]$compiledDocument.agentRoute.agent
-        if ($agentName -eq "opencode") {
+        if ((-not $useAutoRouter) -and $agentName -eq "opencode") {
             $openCodeRuntimeConfig = [ordered]@{
                 '$schema' = "https://opencode.ai/config.json"
                 model = "deepseek/deepseek-v4-flash"

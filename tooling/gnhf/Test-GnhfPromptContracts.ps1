@@ -83,6 +83,7 @@ Assert-Contract ($runtimeText.Contains('ValidateSet("Desktop", "Cursor")')) "Can
 Assert-Contract ($runtimeText.Contains('executionIntent=compile_only rejects -Run')) "Canonical runtime must reject -Run for compile_only intents."
 Assert-Contract ($runtimeText.Contains('Gnhf{0}')) "Canonical runtime must write evidence under GnhfDesktop or GnhfCursor."
 Assert-Contract ($runtimeText.Contains('OPENCODE_CONFIG_CONTENT')) "Canonical runtime must supply OpenCode model config for opencode routes."
+Assert-Contract ($runtimeText.Contains('Start-AutoRoutedGnhfSprint.ps1')) "Disposable proofs must prefer the auto-router launcher."
 Assert-Contract ($runtimeText.Contains('ConvertFrom-Json -Depth 40')) "Canonical runtime must normalize result contracts through JSON before validation."
 foreach ($evidenceName in @("regular-request.txt", "compiled-gnhf-prompt.txt", "prompt-validation.json", "terminal-transcript.txt", "launch-result.json", "worktree-proof.json", "validation-summary.json", "operator-handoff.txt")) {
     Assert-Contract ($runtimeText.Contains($evidenceName)) "Runtime must declare local evidence artifact $evidenceName."
