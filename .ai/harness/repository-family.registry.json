@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "registryId": "agentswitchboard.repository-family.v1",
+  "canonicalRepository": "EndeavorEverlasting/AgentSwitchboard",
+  "defaultBranchAuthorityRequired": true,
+  "repositories": [
+    {
+      "id": "agent-switchboard",
+      "fullName": "EndeavorEverlasting/AgentSwitchboard",
+      "role": "canonical-root",
+      "cloneUrl": "https://github.com/EndeavorEverlasting/AgentSwitchboard.git",
+      "directoryNames": ["AgentSwitchboard"],
+      "authorityBoundary": "Owns shared agent policy, GNHF contracts, workstation orchestration, and family-level read-only intake; it must re-inspect itself before mutation.",
+      "requiredPaths": ["AGENTS.md", "CLAUDE.md", "SKILLS.md", "CAPABILITIES.md", "TRIGGERS.md", "CODEBASE_MAP.md", ".ai/agent-contract.json", ".ai/harness/manifest.json", ".ai/harness/repository-family.registry.json", ".ai/harness/artifact-registry.json", ".ai/harness/workflows/repository-family-intake.workflow.json", "scripts/Test-AgentDocumentationContract.ps1", "scripts/Test-RepositoryFamilyHarness.ps1"],
+      "entrypoints": {
+        "agentRules": ["AGENTS.md", "CLAUDE.md"],
+        "codebaseMap": "CODEBASE_MAP.md",
+        "skillRoots": [".ai/skills"],
+        "workflowRoots": [".ai/harness/workflows", "tooling/gnhf"],
+        "runContextAuthorities": [".ai/harness/schemas/run-context.schema.json"],
+        "artifactRegistryAuthorities": [".ai/harness/artifact-registry.json"],
+        "validatorEntrypoints": ["scripts/Test-AgentDocumentationContract.ps1", "scripts/Test-RepositoryFamilyHarness.ps1"],
+        "operatorReportAuthorities": [".ai/harness/operator-report.template.md"],
+        "handoffAuthorities": [".ai/harness/schemas/final-handoff.schema.json"],
+        "readOnlyIntelligence": [".ai/agent-contract.json", ".ai/harness/manifest.json", ".ai/harness/repository-family.registry.json"]
+      },
+      "validationCommands": ["pwsh -NoLogo -NoProfile -File ./scripts/Test-AgentDocumentationContract.ps1", "pwsh -NoLogo -NoProfile -File ./scripts/Test-RepositoryFamilyHarness.ps1"],
+      "generatedOutputPolicy": {
+        "tracked": false,
+        "defaultRoot": "operating-system temporary directory/AgentSwitchboard/repository-family",
+        "commitPolicy": "Local status and operator evidence must remain untracked."
+      },
+      "proofCeiling": "Repository-family registry, local-clone discovery, and contract validation only."
+    },
+    {
+      "id": "blacksmith-guild",
+      "fullName": "EndeavorEverlasting/BlacksmithGuild",
+      "role": "child",
+      "cloneUrl": "https://github.com/EndeavorEverlasting/BlacksmithGuild.git",
+      "directoryNames": ["BlacksmithGuild"],
+      "authorityBoundary": "Retains gameplay, Bannerlord process, build, install, command, evidence, save-safety, and runtime authority.",
+      "requiredPaths": ["AGENTS.md", "CLAUDE.md", "CODEBASE_MAP.md", ".tbg/skills/manifest.json", ".tbg/harness/manifest.json", ".tbg/workflows/end-to-end-validation.contract.json", ".tbg/workflows/tbg-sprint-capsule.contract.json", "scripts/tbg/Invoke-TbgEndToEndValidation.ps1", "scripts/tbg/Test-TbgEndToEndHarness.ps1", "scripts/tbg/New-TbgSprintCapsule.ps1"],
+      "entrypoints": {
+        "agentRules": ["AGENTS.md", "CLAUDE.md"],
+        "codebaseMap": "CODEBASE_MAP.md",
+        "skillRoots": [".tbg/skills"],
+        "workflowRoots": [".tbg/workflows"],
+        "runContextAuthorities": [".tbg/harness/e2e/profiles.json", ".tbg/workflows/end-to-end-validation.contract.json"],
+        "artifactRegistryAuthorities": [".tbg/harness/e2e-artifact-types.registry.json", ".tbg/harness/consumer-handoffs.registry.json"],
+        "validatorEntrypoints": ["scripts/tbg/Invoke-TbgEndToEndValidation.ps1", "scripts/tbg/Test-TbgEndToEndHarness.ps1", "scripts/tbg/Test-TbgSkillRouting.ps1"],
+        "operatorReportAuthorities": [".tbg/workflows/end-to-end-validation.contract.json"],
+        "handoffAuthorities": [".tbg/workflows/tbg-sprint-capsule.contract.json", "scripts/tbg/New-TbgSprintCapsule.ps1"],
+        "readOnlyIntelligence": [".tbg/skills/manifest.json", ".tbg/harness/manifest.json", "artifacts/latest/tbg-chat-packet.json"]
+      },
+      "validationCommands": ["powershell -NoProfile -File scripts/tbg/Invoke-TbgEndToEndValidation.ps1 -Profile default-static", "powershell -NoProfile -File scripts/test-powershell-utf8-bom-contract.ps1"],
+      "generatedOutputPolicy": {
+        "tracked": false,
+        "defaultRoot": ".local/tbg-e2e-runs",
+        "commitPolicy": "Raw game and machine-local evidence remains ignored; only sanitized contracts and fixtures are tracked."
+      },
+      "proofCeiling": "AgentSwitchboard may prove repository intake and declared static workflow routing only."
+    },
+    {
+      "id": "web-excel-repair-triage",
+      "fullName": "EndeavorEverlasting/web-excel-repair-triage",
+      "role": "child",
+      "cloneUrl": "https://github.com/EndeavorEverlasting/web-excel-repair-triage.git",
+      "directoryNames": ["web-excel-repair-triage"],
+      "authorityBoundary": "Retains workbook semantics, OOXML repair, accepted artifact identity, source immutability, output allocation, privacy, Excel acceptance, and delivery authority.",
+      "requiredPaths": ["AGENTS.md", "CODEBASE_MAP.md", ".ai/artifact-registry.json", ".ai/workflow-registry.json", ".ai/schemas/run-context.json", ".ai/schemas/validation-report.json", "triage/harness/cli.py", "triage/harness/output_policy.py", "tests/test_harness_cli.py", "tests/test_output_policy.py"],
+      "entrypoints": {
+        "agentRules": ["AGENTS.md"],
+        "codebaseMap": "CODEBASE_MAP.md",
+        "skillRoots": [".ai/skills"],
+        "workflowRoots": [".ai/workflow-registry.json", "triage/harness"],
+        "runContextAuthorities": [".ai/schemas/run-context.json", "triage/harness/context.py"],
+        "artifactRegistryAuthorities": [".ai/artifact-registry.json"],
+        "validatorEntrypoints": ["triage/harness/cli.py", "tests/test_harness_cli.py", "tests/test_output_policy.py"],
+        "operatorReportAuthorities": [".ai/schemas/validation-report.json"],
+        "handoffAuthorities": [".ai/schemas/validation-report.json"],
+        "readOnlyIntelligence": [".ai/workflow-registry.json", ".ai/artifact-registry.json", "AGENTS.md"]
+      },
+      "validationCommands": ["python -m triage.harness.cli doctor", "python -m pytest tests/test_harness_cli.py tests/test_ai_schemas.py tests/test_output_policy.py -q", "python -m triage.gitignore_hygiene"],
+      "generatedOutputPolicy": {
+        "tracked": false,
+        "defaultRoot": "Outputs",
+        "commitPolicy": "Operator inputs remain read-only; generated workbooks and reports belong under Outputs."
+      },
+      "proofCeiling": "AgentSwitchboard may prove repository and harness readiness only."
+    },
+    {
+      "id": "sysadmin-suite",
+      "fullName": "EndeavorEverlasting/SysAdminSuite",
+      "role": "child",
+      "cloneUrl": "https://github.com/EndeavorEverlasting/SysAdminSuite.git",
+      "directoryNames": ["SysAdminSuite"],
+      "authorityBoundary": "Retains survey, deployment, package, workstation, target-mutation, field-workflow, and proof authority.",
+      "requiredPaths": ["AGENTS.md", "CLAUDE.md", "CODEBASE_MAP.md", "docs/AI_HARNESS_ENTRYPOINT.md", "harness/api/agent-capability-manifest.json", "harness/api/agent-routing-manifest.json", "scripts/SasRunContext.psm1", "schemas/harness/artifact-registry.schema.json", "harness/workflows/agent-sprint-capsule.yaml", "tools/New-SasSprintCapsule.ps1", "tools/validate-ai-layer.ps1", "scripts/Invoke-SasHarnessContracts.ps1"],
+      "entrypoints": {
+        "agentRules": ["AGENTS.md", "CLAUDE.md"],
+        "codebaseMap": "CODEBASE_MAP.md",
+        "skillRoots": [".claude/skills", ".claude/capabilities"],
+        "workflowRoots": ["harness/workflows", "harness/e2e"],
+        "runContextAuthorities": ["scripts/SasRunContext.psm1"],
+        "artifactRegistryAuthorities": ["schemas/harness/artifact-registry.schema.json", "harness/api/agent-capability-manifest.json"],
+        "validatorEntrypoints": ["tools/validate-ai-layer.ps1", "scripts/Invoke-SasHarnessContracts.ps1", "scripts/Invoke-SasEndToEndValidation.ps1"],
+        "operatorReportAuthorities": ["docs/ENGLISH_LOG_ARTIFACT_CONTRACT.md", "docs/AI_HARNESS_ENTRYPOINT.md"],
+        "handoffAuthorities": ["harness/workflows/agent-sprint-capsule.yaml", "tools/New-SasSprintCapsule.ps1"],
+        "readOnlyIntelligence": ["harness/api/agent-routing-manifest.json", "harness/api/agent-capability-manifest.json", "Config/operational-posture.json"]
+      },
+      "validationCommands": ["pwsh -NoProfile -ExecutionPolicy Bypass -File tools/validate-ai-layer.ps1", "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/Invoke-SasHarnessContracts.ps1", "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/Invoke-SasEndToEndValidation.ps1"],
+      "generatedOutputPolicy": {
+        "tracked": false,
+        "defaultRoot": "repository-declared ignored run and evidence roots",
+        "commitPolicy": "Operational evidence remains untracked; only sanitized fixtures, schemas, policies, and explicit reports are tracked."
+      },
+      "proofCeiling": "AgentSwitchboard may prove route and contract compatibility only."
+    }
+  ]
+}
