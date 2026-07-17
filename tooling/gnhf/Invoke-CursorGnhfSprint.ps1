@@ -5,7 +5,8 @@ param(
     [string]$TargetRepo,
     [Parameter(ParameterSetName = "Plan")][switch]$PlanOnly,
     [Parameter(Mandatory, ParameterSetName = "Run")][switch]$Run,
-    [switch]$CreateDisposableProofRepo
+    [switch]$CreateDisposableProofRepo,
+    [switch]$LocalHarnessProof
 )
 
 Set-StrictMode -Version Latest
@@ -32,6 +33,9 @@ if ($Run) {
 }
 if ($CreateDisposableProofRepo) {
     $forward.CreateDisposableProofRepo = $true
+}
+if ($LocalHarnessProof) {
+    $forward.LocalHarnessProof = $true
 }
 
 & $canonicalEntrypoint @forward

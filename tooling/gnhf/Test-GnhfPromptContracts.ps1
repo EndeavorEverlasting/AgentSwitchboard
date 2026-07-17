@@ -84,6 +84,7 @@ Assert-Contract ($runtimeText.Contains('executionIntent=compile_only rejects -Ru
 Assert-Contract ($runtimeText.Contains('Gnhf{0}')) "Canonical runtime must write evidence under GnhfDesktop or GnhfCursor."
 Assert-Contract ($runtimeText.Contains('OPENCODE_CONFIG_CONTENT')) "Canonical runtime must supply OpenCode model config for opencode routes."
 Assert-Contract ($runtimeText.Contains('Start-AutoRoutedGnhfSprint.ps1')) "Disposable proofs must prefer the auto-router launcher."
+Assert-Contract ($runtimeText.Contains('Invoke-LocalHarnessDisposableProof')) "Canonical runtime must support provider-independent local harness disposable proof."
 Assert-Contract ($runtimeText.Contains('ConvertFrom-Json -Depth 40')) "Canonical runtime must normalize result contracts through JSON before validation."
 foreach ($evidenceName in @("regular-request.txt", "compiled-gnhf-prompt.txt", "prompt-validation.json", "terminal-transcript.txt", "launch-result.json", "worktree-proof.json", "validation-summary.json", "operator-handoff.txt")) {
     Assert-Contract ($runtimeText.Contains($evidenceName)) "Runtime must declare local evidence artifact $evidenceName."
@@ -91,6 +92,7 @@ foreach ($evidenceName in @("regular-request.txt", "compiled-gnhf-prompt.txt", "
 $cursorRuntimeText = Get-Content -LiteralPath $cursorRuntimePath -Raw
 Assert-Contract ($cursorRuntimeText.Contains('RuntimeFamily = "Cursor"')) "Cursor entrypoint must select the Cursor runtime family."
 Assert-Contract ($cursorRuntimeText.Contains('Invoke-ChatGPTDesktopGnhfSprint.ps1')) "Cursor entrypoint must reuse the canonical runtime instead of inventing a second engine."
+Assert-Contract ($cursorRuntimeText.Contains('LocalHarnessProof')) "Cursor entrypoint must forward -LocalHarnessProof."
 $rootCmdText = Get-Content -LiteralPath $rootCmdPath -Raw
 Assert-Contract ($rootCmdText.Contains('pwsh.exe -NoLogo -NoProfile')) "Root desktop launcher must require PowerShell 7 without profile side effects."
 Assert-Contract ($rootCmdText.Contains('set "RESULT=%ERRORLEVEL%"') -and $rootCmdText.Contains('exit /b %RESULT%')) "Root desktop launcher must preserve the PowerShell exit code."

@@ -14,6 +14,12 @@ Use the committed disposable fixture to prove prompt visibility, worktree isolat
 pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tooling\gnhf\Invoke-CursorGnhfSprint.ps1 -RequestPath .\tooling\gnhf\fixtures\desktop-gnhf-proof.request.md -CompiledPromptPath .\tooling\gnhf\fixtures\desktop-gnhf-proof.compiled.txt -CreateDisposableProofRepo -Run
 ```
 
+When provider routes are unhealthy, prove the Cursor validation and commit-verification chain without inventing a second GNHF engine:
+
+```powershell
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tooling\gnhf\Invoke-CursorGnhfSprint.ps1 -RequestPath .\tooling\gnhf\fixtures\desktop-gnhf-proof.request.md -CompiledPromptPath .\tooling\gnhf\fixtures\desktop-gnhf-proof.compiled.txt -CreateDisposableProofRepo -LocalHarnessProof -Run
+```
+
 Plan is the default when `-Run` is absent. ChatGPT Desktop evidence remains under `%LOCALAPPDATA%\AgentSwitchboard\GnhfDesktop`. The full safety and proof contract is documented in [the desktop runtime guide](../../docs/workstation/chatgpt-desktop-gnhf-sprint.md).
 
 ## Safety contract

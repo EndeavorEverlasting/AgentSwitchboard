@@ -6,6 +6,7 @@ param(
     [Parameter(ParameterSetName = "Plan")][switch]$PlanOnly,
     [Parameter(Mandatory, ParameterSetName = "Run")][switch]$Run,
     [switch]$CreateDisposableProofRepo,
+    [switch]$LocalHarnessProof,
     [ValidateSet("Desktop", "Cursor")][string]$RuntimeFamily = "Desktop"
 )
 
@@ -254,6 +255,53 @@ function Render-CompiledPrompt {
     $rendered
 }
 
+function Invoke-LocalHarnessDisposableProof {
+    param(
+        [Parameter(Mandatory)][string]$Repository,
+        [Parameter(Mandatory)][string]$BaseBranch,
+        [Parameter(Mandatory)][string[]]$ExpectedArtifacts,
+        [Parameter(Mandatory)][string]$ExpectedNonce,
+        [Parameter(Mandatory)][string]$ExpectedCommitMessage,
+        [Parameter(Mandatory)][string]$RunId
+    )
+
+    $branch = ("gnhf/cursor-local-harness-{0}" -f $RunId.Substring([Math]::Max(0, $RunId.Length - 12))).ToLowerInvariant()
+    $worktree = Join-Path $Repository ("..\{0}-gnhf-worktrees\{1}" -f (Split-Path -Leaf $Repository), $branch.Replace("gnhf/", ""))
+    $worktree = [IO.Path]::GetFullPath($worktree)
+    if (Test-Path -LiteralPath $worktree) {
+        throw "Local harness worktree already exists: $worktree"
+    }
+    New-Item -ItemType Directory -Path (Split-Path -Parent $worktree) -Force | Out-Null
+    $add = Invoke-Git -Repository $Repository -Arguments @("worktree", "add", "-b", $branch, $worktree, $BaseBranch)
+    if ($add.ExitCode -ne 0) { throw "Local harness worktree creation failed. $($add.Output)" }
+
+    foreach ($artifact in $ExpectedArtifacts) {
+        $relative = $artifact -replace '/', [IO.Path]::DirectorySeparatorChar
+        $full = Join-Path $worktree $relative
+        $parent = Split-Path -Parent $full
+        if ($parent) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }
+        Set-Content -LiteralPath $full -Value $ExpectedNonce -Encoding utf8NoBOM -NoNewline
+        $addFile = Invoke-Git -Repository $worktree -Arguments @("add", "--", $artifact)
+        if ($addFile.ExitCode -ne 0) { throw "Local harness failed to stage '$artifact'. $($addFile.Output)" }
+    }
+
+    $commit = Invoke-Git -Repository $worktree -Arguments @("commit", "-m", $ExpectedCommitMessage)
+    if ($commit.ExitCode -ne 0) { throw "Local harness commit failed. $($commit.Output)" }
+    $status = Invoke-Git -Repository $worktree -Arguments @("status", "--short")
+    if (-not [string]::IsNullOrWhiteSpace($status.Stdout)) {
+        throw "Local harness left a dirty worktree."
+    }
+
+    Write-Host "AGENTSWITCHBOARD_GNHF_LOCAL_HARNESS_COMMITTED:$branch" -ForegroundColor Green
+    [pscustomobject]@{
+        ExitCode = 0
+        TimedOut = $false
+        Stdout = "Local harness disposable proof committed on $branch"
+        Stderr = ""
+        Output = "Local harness disposable proof committed on $branch"
+    }
+}
+
 function Get-ChangedGnhfProof {
     param(
         [Parameter(Mandatory)][string]$Repository,
@@ -455,70 +503,86 @@ try {
         $exitCode = 0
     }
     else {
-        $beforeHeads = Get-GnhfBranchHeads -Repository $resolvedTargetRepo
-        # Disposable proofs prefer the auto-router so free/natural routes can satisfy the
-        # artifact+commit gate when a pinned opencode provider is unhealthy. Explicit
-        # non-disposable runs keep the compiled prompt's agent route via Start-GnhfSprint.
-        $useAutoRouter = [bool]$CreateDisposableProofRepo
-        $launcherPath = if ($useAutoRouter) {
-            Join-Path $PSScriptRoot "Start-AutoRoutedGnhfSprint.ps1"
-        }
-        else {
-            Join-Path $PSScriptRoot "Start-GnhfSprint.ps1"
-        }
-        $launcherArguments = @(
-            "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $launcherPath,
-            "-RepoPath", $resolvedTargetRepo,
-            "-PromptPath", $compiledEvidencePath,
-            "-Name", ("{0}-{1}" -f ($(if ($RuntimeFamily -eq "Cursor") { "cursor-local" } else { "chatgpt-desktop" }), $runId)),
-            "-MaxIterations", [string]$compiledDocument.bounds.maxIterations,
-            "-MaxTokens", [string]$compiledDocument.bounds.maxTokens,
-            "-StopWhen", [string]$compiledDocument.stopCondition
-        )
-        if (-not $useAutoRouter) {
-            $launcherArguments += @("-Agent", [string]$compiledDocument.agentRoute.agent)
-        }
-        if ((-not $useAutoRouter) -and [string]$compiledDocument.pushContract.mode -eq "manual") {
-            $launcherArguments += "-PushBranch"
+        if ($LocalHarnessProof -and -not $CreateDisposableProofRepo) {
+            throw "-LocalHarnessProof requires -CreateDisposableProofRepo."
         }
 
+        $beforeHeads = Get-GnhfBranchHeads -Repository $resolvedTargetRepo
         $ack = "AGENTSWITCHBOARD_GNHF_{0}_STARTED:{1}" -f $RuntimeFamily.ToUpperInvariant(), $runId
         Write-Host $ack -ForegroundColor Cyan
-        if ($useAutoRouter) {
-            Write-Host "Disposable proof launcher: Start-AutoRoutedGnhfSprint.ps1" -ForegroundColor Cyan
-        }
         $launchResult.startAcknowledged = $true
         $validationSummary.gnhfStartAcknowledged = $true
 
-        # For pinned opencode routes, reuse the auto-router DeepSeek config envelope.
-        $previousOpenCodeConfig = $env:OPENCODE_CONFIG_CONTENT
-        $agentName = [string]$compiledDocument.agentRoute.agent
-        if ((-not $useAutoRouter) -and $agentName -eq "opencode") {
-            $openCodeRuntimeConfig = [ordered]@{
-                '$schema' = "https://opencode.ai/config.json"
-                model = "deepseek/deepseek-v4-flash"
-                share = "disabled"
-                provider = [ordered]@{
-                    deepseek = [ordered]@{
-                        options = [ordered]@{
-                            timeout = 600000
-                            chunkTimeout = 60000
+        if ($LocalHarnessProof) {
+            Write-Host "Disposable proof launcher: local harness (provider-independent)" -ForegroundColor Cyan
+            $processResult = Invoke-LocalHarnessDisposableProof `
+                -Repository $resolvedTargetRepo `
+                -BaseBranch $baseBranch `
+                -ExpectedArtifacts $expectedArtifacts `
+                -ExpectedNonce $nonce `
+                -ExpectedCommitMessage ([string]$compiledDocument.commitContract.message) `
+                -RunId $runId
+        }
+        else {
+            # Disposable proofs prefer the auto-router so free/natural routes can satisfy the
+            # artifact+commit gate when a pinned opencode provider is unhealthy. Explicit
+            # non-disposable runs keep the compiled prompt's agent route via Start-GnhfSprint.
+            $useAutoRouter = [bool]$CreateDisposableProofRepo
+            $launcherPath = if ($useAutoRouter) {
+                Join-Path $PSScriptRoot "Start-AutoRoutedGnhfSprint.ps1"
+            }
+            else {
+                Join-Path $PSScriptRoot "Start-GnhfSprint.ps1"
+            }
+            $launcherArguments = @(
+                "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $launcherPath,
+                "-RepoPath", $resolvedTargetRepo,
+                "-PromptPath", $compiledEvidencePath,
+                "-Name", ("{0}-{1}" -f ($(if ($RuntimeFamily -eq "Cursor") { "cursor-local" } else { "chatgpt-desktop" }), $runId)),
+                "-MaxIterations", [string]$compiledDocument.bounds.maxIterations,
+                "-MaxTokens", [string]$compiledDocument.bounds.maxTokens,
+                "-StopWhen", [string]$compiledDocument.stopCondition
+            )
+            if (-not $useAutoRouter) {
+                $launcherArguments += @("-Agent", [string]$compiledDocument.agentRoute.agent)
+            }
+            if ((-not $useAutoRouter) -and [string]$compiledDocument.pushContract.mode -eq "manual") {
+                $launcherArguments += "-PushBranch"
+            }
+            if ($useAutoRouter) {
+                Write-Host "Disposable proof launcher: Start-AutoRoutedGnhfSprint.ps1" -ForegroundColor Cyan
+            }
+
+            # For pinned opencode routes, reuse the auto-router DeepSeek config envelope.
+            $previousOpenCodeConfig = $env:OPENCODE_CONFIG_CONTENT
+            $agentName = [string]$compiledDocument.agentRoute.agent
+            if ((-not $useAutoRouter) -and $agentName -eq "opencode") {
+                $openCodeRuntimeConfig = [ordered]@{
+                    '$schema' = "https://opencode.ai/config.json"
+                    model = "deepseek/deepseek-v4-flash"
+                    share = "disabled"
+                    provider = [ordered]@{
+                        deepseek = [ordered]@{
+                            options = [ordered]@{
+                                timeout = 600000
+                                chunkTimeout = 60000
+                            }
                         }
                     }
                 }
+                $env:OPENCODE_CONFIG_CONTENT = $openCodeRuntimeConfig | ConvertTo-Json -Depth 10 -Compress
             }
-            $env:OPENCODE_CONFIG_CONTENT = $openCodeRuntimeConfig | ConvertTo-Json -Depth 10 -Compress
-        }
 
-        try {
-            $processResult = Invoke-BoundedProcess -FilePath $pwsh.Source -ArgumentList $launcherArguments -TimeoutSeconds ([int]$compiledDocument.bounds.timeoutSeconds) -WorkingDirectory $resolvedTargetRepo
-        }
-        finally {
-            if ($null -eq $previousOpenCodeConfig) {
-                Remove-Item Env:OPENCODE_CONFIG_CONTENT -ErrorAction SilentlyContinue
+            try {
+                $processResult = Invoke-BoundedProcess -FilePath $pwsh.Source -ArgumentList $launcherArguments -TimeoutSeconds ([int]$compiledDocument.bounds.timeoutSeconds) -WorkingDirectory $resolvedTargetRepo
             }
-            else {
-                $env:OPENCODE_CONFIG_CONTENT = $previousOpenCodeConfig
+            finally {
+                if ($null -eq $previousOpenCodeConfig) {
+                    Remove-Item Env:OPENCODE_CONFIG_CONTENT -ErrorAction SilentlyContinue
+                }
+                else {
+                    $env:OPENCODE_CONFIG_CONTENT = $previousOpenCodeConfig
+                }
             }
         }
 
