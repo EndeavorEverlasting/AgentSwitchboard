@@ -85,6 +85,12 @@ try {
     foreach ($repository in $expectedRepositories) {
         Add-Result -Passed ($registered -contains $repository) -Name "contract/repository/$repository" -FailureMessage "repository is not registered"
     }
+
+    $contractSkills = @($contract.canonicalSkills | ForEach-Object { [string]$_ })
+    Add-Result `
+        -Passed ($contractSkills -contains "gnhf-prompt-compilation") `
+        -Name "contract/skill/gnhf-prompt-compilation" `
+        -FailureMessage "canonical GNHF prompt compilation skill is not registered"
 }
 catch {
     [void]$failures.Add("contract/json`: $($_.Exception.Message)")
@@ -93,9 +99,9 @@ catch {
 $entrypointExpectations = @{
     "AGENTS.md" = @("CLAUDE.md", "SKILLS.md", "CAPABILITIES.md", "TRIGGERS.md", ".ai/agent-contract.json")
     "CLAUDE.md" = @("AGENTS.md", "proof")
-    "SKILLS.md" = @(".ai/skills", "repo-intake", "bounded-sprint", "evidence-validation", "pr-integration", "runtime-proof")
+    "SKILLS.md" = @(".ai/skills", "repo-intake", "bounded-sprint", "gnhf-prompt-compilation", "evidence-validation", "pr-integration", "runtime-proof")
     "CAPABILITIES.md" = @("Capabilities describe", "verified")
-    "TRIGGERS.md" = @("Triggers", "repo.dirty-or-conflicted", "live-target-mutation")
+    "TRIGGERS.md" = @("Triggers", "repo.dirty-or-conflicted", "gnhf.prompt-request", "live-target-mutation")
 }
 
 foreach ($file in $entrypointExpectations.Keys) {
@@ -112,6 +118,7 @@ foreach ($file in $entrypointExpectations.Keys) {
 $expectedSkills = @(
     "repo-intake",
     "bounded-sprint",
+    "gnhf-prompt-compilation",
     "evidence-validation",
     "pr-integration",
     "runtime-proof"
@@ -137,6 +144,28 @@ foreach ($skill in $expectedSkills) {
     Add-Result -Passed ($text.Contains("status: canonical")) -Name "skill/$skill/status" -FailureMessage "skill is not canonical"
     foreach ($section in $requiredSkillSections) {
         Add-Result -Passed ($text.Contains($section)) -Name "skill/$skill/$section" -FailureMessage "required section is missing"
+    }
+}
+
+$gnhfSkillText = Get-RequiredText -RelativePath ".ai/skills/gnhf-prompt-compilation/SKILL.md"
+if ($null -ne $gnhfSkillText) {
+    foreach ($token in @(
+        "gnhf `",
+        "--agent",
+        "--worktree",
+        "--max-iterations",
+        "--max-tokens",
+        "--prevent-sleep on",
+        "--stop-when",
+        "positive, observable",
+        "one repository per GNHF process",
+        "Process exit code zero alone is not delivery proof",
+        "not a sprint map"
+    )) {
+        Add-Result `
+            -Passed ($gnhfSkillText.Contains($token)) `
+            -Name "skill/gnhf-prompt-compilation/format/$token" `
+            -FailureMessage "canonical GNHF format token is missing"
     }
 }
 
