@@ -40,6 +40,10 @@ if (Test-IngestionStage 'Parse') {
         [void][System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
         Assert-IngestionContract ($errors.Count -eq 0) "$path must parse. $($errors.Message -join '; ')"
     }
+    if ($Stage -eq 'Parse') {
+        Write-Host "PASS: AgentSwitchboard GNHF prompt ingestion stage 'Parse'."
+        exit 0
+    }
 }
 
 Import-Module $modulePath -Force
