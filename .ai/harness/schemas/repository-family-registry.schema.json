@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/.ai/harness/schemas/repository-family-registry.schema.json",
+  "title": "AgentSwitchboard Repository Family Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "registryId",
+    "canonicalRepository",
+    "defaultBranchAuthorityRequired",
+    "repositories"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "registryId": {
+      "const": "agentswitchboard.repository-family.v1"
+    },
+    "canonicalRepository": {
+      "const": "EndeavorEverlasting/AgentSwitchboard"
+    },
+    "defaultBranchAuthorityRequired": {
+      "const": true
+    },
+    "repositories": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/repository"
+      }
+    }
+  },
+  "$defs": {
+    "stringArray": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "entrypoints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agentRules",
+        "codebaseMap",
+        "skillRoots",
+        "workflowRoots",
+        "runContextAuthorities",
+        "artifactRegistryAuthorities",
+        "validatorEntrypoints",
+        "operatorReportAuthorities",
+        "handoffAuthorities",
+        "readOnlyIntelligence"
+      ],
+      "properties": {
+        "agentRules": { "$ref": "#/$defs/stringArray" },
+        "codebaseMap": { "type": "string", "minLength": 1 },
+        "skillRoots": { "$ref": "#/$defs/stringArray" },
+        "workflowRoots": { "$ref": "#/$defs/stringArray" },
+        "runContextAuthorities": { "$ref": "#/$defs/stringArray" },
+        "artifactRegistryAuthorities": { "$ref": "#/$defs/stringArray" },
+        "validatorEntrypoints": { "$ref": "#/$defs/stringArray" },
+        "operatorReportAuthorities": { "$ref": "#/$defs/stringArray" },
+        "handoffAuthorities": { "$ref": "#/$defs/stringArray" },
+        "readOnlyIntelligence": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "generatedOutputPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tracked", "defaultRoot", "commitPolicy"],
+      "properties": {
+        "tracked": { "const": false },
+        "defaultRoot": { "type": "string", "minLength": 1 },
+        "commitPolicy": { "type": "string", "minLength": 1 }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "fullName",
+        "role",
+        "cloneUrl",
+        "directoryNames",
+        "authorityBoundary",
+        "requiredPaths",
+        "entrypoints",
+        "validationCommands",
+        "generatedOutputPolicy",
+        "proofCeiling"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "fullName": {
+          "type": "string",
+          "pattern": "^EndeavorEverlasting/[A-Za-z0-9._-]+$"
+        },
+        "role": {
+          "enum": ["canonical-root", "child"]
+        },
+        "cloneUrl": {
+          "type": "string",
+          "pattern": "^https://github.com/EndeavorEverlasting/[A-Za-z0-9._-]+\\.git$"
+        },
+        "directoryNames": { "$ref": "#/$defs/stringArray" },
+        "authorityBoundary": { "type": "string", "minLength": 20 },
+        "requiredPaths": { "$ref": "#/$defs/stringArray" },
+        "entrypoints": { "$ref": "#/$defs/entrypoints" },
+        "validationCommands": { "$ref": "#/$defs/stringArray" },
+        "generatedOutputPolicy": { "$ref": "#/$defs/generatedOutputPolicy" },
+        "proofCeiling": { "type": "string", "minLength": 10 }
+      }
+    }
+  }
+}
