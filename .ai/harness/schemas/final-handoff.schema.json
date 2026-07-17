@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/.ai/harness/schemas/final-handoff.schema.json",
+  "title": "AgentSwitchboard Repository Family Final Handoff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "runId",
+    "completed",
+    "blocked",
+    "risks",
+    "proofLevel",
+    "proofCeiling",
+    "receivingAgentMustReinspectState",
+    "nextCommand"
+  ],
+  "properties": {
+    "schema": {
+      "const": "agentswitchboard.repository-family-handoff.v1"
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "completed": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "blocked": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "risks": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "proofLevel": {
+      "const": "read-only-repository-intake"
+    },
+    "proofCeiling": {
+      "type": "string",
+      "minLength": 20
+    },
+    "receivingAgentMustReinspectState": {
+      "const": true
+    },
+    "nextCommand": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}
