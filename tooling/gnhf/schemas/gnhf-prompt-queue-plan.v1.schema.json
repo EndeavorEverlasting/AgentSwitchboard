@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentswitchboard.local/schemas/gnhf-prompt-queue-plan.v1.schema.json",
+  "title": "AgentSwitchboard GNHF prompt queue plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "queueId",
+    "createdAt",
+    "sourceQueueHash",
+    "outputRoot",
+    "maxParallel",
+    "batches",
+    "lanes",
+    "automaticPush",
+    "automaticMerge"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "agentswitchboard-gnhf-prompt-queue-plan/v1"
+    },
+    "queueId": {
+      "type": "string",
+      "minLength": 3
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sourceQueueHash": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    },
+    "outputRoot": {
+      "type": "string",
+      "minLength": 1
+    },
+    "maxParallel": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16
+    },
+    "batches": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "batchId",
+          "sequence",
+          "wave",
+          "laneIds"
+        ],
+        "properties": {
+          "batchId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "wave": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "laneIds": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          }
+        }
+      }
+    },
+    "lanes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "laneId",
+          "batchId",
+          "batchSequence",
+          "wave",
+          "dependsOn",
+          "runtimeFamily",
+          "agentProfileId",
+          "gnhfAgent",
+          "repository",
+          "prompt",
+          "contracts",
+          "result"
+        ],
+        "properties": {
+          "laneId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "batchId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "batchSequence": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "wave": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "dependsOn": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "runtimeFamily": {
+            "const": "Cursor"
+          },
+          "agentProfileId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "gnhfAgent": {
+            "type": "string",
+            "minLength": 1
+          },
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "repository": {
+            "type": "object"
+          },
+          "prompt": {
+            "type": "object"
+          },
+          "contracts": {
+            "type": "object"
+          },
+          "result": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "automaticPush": {
+      "const": false
+    },
+    "automaticMerge": {
+      "const": false
+    }
+  }
+}
