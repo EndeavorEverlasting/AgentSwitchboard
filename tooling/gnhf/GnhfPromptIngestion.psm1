@@ -48,7 +48,10 @@ function Get-GnhfCommandPromptMetadata {
     $tokens = $null
     $errors = $null
     $ast = [System.Management.Automation.Language.Parser]::ParseInput($Text, [ref]$tokens, [ref]$errors)
-    if ($errors.Count) { throw "The GNHF PowerShell command does not parse: $($errors.Message -join '; ')" }
+    if (@($errors).Count) {
+        $messages = (($errors | ForEach-Object { $_.Message }) -join '; ')
+        throw "The GNHF PowerShell command does not parse: $messages"
+    }
     $commands = @($ast.FindAll({
         param($node)
         $node -is [System.Management.Automation.Language.CommandAst] -and
@@ -100,9 +103,10 @@ function Get-GnhfArtifactPaths {
         }
         if ($value.Trim() -match '^[A-Za-z0-9_.-]+\.[A-Za-z0-9]{1,12}$') { [void]$paths.Add($value.Trim()) }
     }
+    $trimCharacters = [char[]]@([char]0x60, [char]0x22, [char]0x27, [char]0x2C, [char]0x3B)
     $result = [Collections.Generic.List[string]]::new()
     foreach ($path in @($paths | Select-Object -Unique)) {
-        $candidate = ([string]$path).Trim('`','"',"'",',',';').Replace('\','/')
+        $candidate = ([string]$path).Trim($trimCharacters).Replace('\','/')
         if ([IO.Path]::IsPathRooted($candidate) -or $candidate.StartsWith('/') -or $candidate -match '(^|/)\.\.(/|$)' -or $candidate.Contains('*')) {
             throw "Expected artifact paths must be exact repository-relative files: $candidate"
         }
@@ -152,7 +156,7 @@ function ConvertTo-GnhfPromptContracts {
     $forbidden = if ($regular) { @($regular.forbiddenScope | ForEach-Object { [string]$_ }) } else { Get-GnhfPromptSection $sections @('Forbidden scope') }
     $artifactDescriptions = if ($regular) { @($regular.expectedArtifacts | ForEach-Object { [string]$_ }) } else { Get-GnhfPromptSection $sections @('Expected artifacts','Required deliverable','Expected artifact') }
     $artifacts = Get-GnhfArtifactPaths (@($artifactDescriptions) + @($owned)) $ExpectedArtifactPath
-    if (-not $artifacts.Count) { throw 'No exact repository-relative artifact paths were found. Add concrete paths or pass -ExpectedArtifactPath.' }
+    if (-not @($artifacts).Count) { throw 'No exact repository-relative artifact paths were found. Add concrete paths or pass -ExpectedArtifactPath.' }
     $owned = @($owned | Where-Object { $_ -and -not (Test-GnhfPromptPlaceholder $_) } | Select-Object -Unique)
     if (-not $owned.Count) { $owned = @($artifacts) }
     $forbidden = @($forbidden | Where-Object { $_ -and -not (Test-GnhfPromptPlaceholder $_) } | Select-Object -Unique)
