@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "agentswitchboard-gnhf-prompt-queue/v1",
+  "queueId": "replace-with-local-queue-id",
+  "maxParallel": 2,
+  "agents": [
+    {
+      "id": "cursor-opencode",
+      "runtimeFamily": "Cursor",
+      "gnhfAgent": "opencode",
+      "provider": null,
+      "enabled": true
+    },
+    {
+      "id": "cursor-goose",
+      "runtimeFamily": "Cursor",
+      "gnhfAgent": "goose",
+      "provider": null,
+      "enabled": true
+    }
+  ],
+  "lanes": [
+    {
+      "laneId": "first-repository-sprint",
+      "promptPath": "__PROMPT_A__",
+      "repositoryPath": "__REPOSITORY_A__",
+      "repositoryName": null,
+      "repositoryRemote": null,
+      "baseBranch": null,
+      "pullRequestNumber": null,
+      "dependsOn": [],
+      "expectedArtifactPaths": [
+        "path/to/required-artifact-a.json"
+      ],
+      "executionIntent": "local_execute",
+      "desiredProofLevel": "committed-repository-work",
+      "timeoutSeconds": 3600
+    },
+    {
+      "laneId": "dependent-repository-sprint",
+      "promptPath": "__PROMPT_B__",
+      "repositoryPath": "__REPOSITORY_B__",
+      "repositoryName": null,
+      "repositoryRemote": null,
+      "baseBranch": null,
+      "pullRequestNumber": null,
+      "dependsOn": [
+        "first-repository-sprint"
+      ],
+      "expectedArtifactPaths": [
+        "path/to/required-artifact-b.json"
+      ],
+      "executionIntent": "local_execute",
+      "desiredProofLevel": "committed-repository-work",
+      "timeoutSeconds": 3600
+    }
+  ]
+}
