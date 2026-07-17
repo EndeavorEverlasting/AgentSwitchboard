@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/.ai/harness/schemas/run-context.schema.json",
+  "title": "AgentSwitchboard Repository Family Run Context",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "runId",
+    "generatedUtc",
+    "producer",
+    "workflowId",
+    "workspaceRootSupplied",
+    "networkAllowed",
+    "mutationAllowed",
+    "proofTarget"
+  ],
+  "properties": {
+    "schema": {
+      "const": "agentswitchboard.repository-family-run-context.v1"
+    },
+    "runId": {
+      "type": "string",
+      "pattern": "^[0-9]{8}T[0-9]{6}Z-[a-f0-9]{8}$"
+    },
+    "generatedUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "producer": {
+      "const": "EndeavorEverlasting/AgentSwitchboard"
+    },
+    "workflowId": {
+      "const": "repository-family-intake"
+    },
+    "workspaceRootSupplied": {
+      "type": "boolean"
+    },
+    "networkAllowed": {
+      "const": false
+    },
+    "mutationAllowed": {
+      "const": false
+    },
+    "proofTarget": {
+      "const": "read-only-repository-intake"
+    }
+  }
+}
