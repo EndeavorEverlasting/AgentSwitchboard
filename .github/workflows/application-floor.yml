@@ -1,0 +1,115 @@
+name: AgentSwitchboard application floor
+
+on:
+  pull_request:
+    paths:
+      - "Setup-AgentSwitchboard.cmd"
+      - "README.md"
+      - "tooling/gnhf/**"
+      - ".github/workflows/application-floor.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-core:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Parse GNHF PowerShell surface
+        shell: pwsh
+        run: |
+          $failures = [System.Collections.Generic.List[string]]::new()
+          Get-ChildItem -LiteralPath tooling/gnhf -Recurse -File -Filter *.ps1 | ForEach-Object {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              $_.FullName,
+              [ref]$tokens,
+              [ref]$errors
+            )
+            foreach ($error in @($errors)) {
+              $failures.Add("$($_.FullName): $($error.Message)")
+            }
+          }
+          if ($failures.Count -gt 0) {
+            $failures | ForEach-Object { Write-Error $_ }
+            exit 1
+          }
+
+      - name: Run fleet contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfFleetContracts.ps1
+
+      - name: Run Hermes setup contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-HermesSetupContracts.ps1
+
+      - name: Verify root setup routing
+        shell: pwsh
+        run: |
+          $root = Get-Content -LiteralPath Setup-AgentSwitchboard.cmd -Raw
+          if ($root -notmatch 'tooling\\gnhf\\Setup-AgentSwitchboard\.cmd') {
+            throw 'Root setup entrypoint does not route to the owned GNHF setup wrapper.'
+          }
+          foreach ($path in @(
+            'tooling/gnhf/Setup-AgentSwitchboard.cmd',
+            'tooling/gnhf/Setup-AgentSwitchboard.ps1',
+            'tooling/gnhf/Install-AgentSwitchboardGnhf.ps1',
+            'tooling/gnhf/Start-AgentSwitchboard.ps1',
+            'tooling/gnhf/Start-GnhfSprint.ps1',
+            'tooling/gnhf/Start-GnhfFleet.ps1',
+            'tooling/gnhf/Get-GnhfFleetStatus.ps1'
+          )) {
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+              throw "Missing application-floor file: $path"
+            }
+          }
+
+      - name: Verify clean checkout
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_BASE_REF) {
+            git diff --check "origin/$env:GITHUB_BASE_REF...HEAD"
+          }
+          if (git status --short) {
+            throw 'Checkout is dirty after application-floor validation.'
+          }
+
+  linux-hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Parse tracked JSON
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          for path in Path('.').rglob('*.json'):
+              if any(part in {'.git', '.gnhf', 'node_modules'} for part in path.parts):
+                  continue
+              json.loads(path.read_text(encoding='utf-8-sig'))
+              print(f'PASS: {path}')
+          PY
+
+      - name: Check shell and repository hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          find tooling -type f -name '*.sh' -print0 | while IFS= read -r -d '' file; do
+            bash -n "$file"
+          done
+          if [[ -n "${GITHUB_BASE_REF:-}" ]]; then
+            git diff --check "origin/${GITHUB_BASE_REF}...HEAD"
+          fi
+          test -z "$(git status --short)"
