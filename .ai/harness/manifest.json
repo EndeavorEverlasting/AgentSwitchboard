@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "harnessId": "agentswitchboard.repository-family-harness.v1",
+  "canonicalRepository": "EndeavorEverlasting/AgentSwitchboard",
+  "authorityRef": ".ai/agent-contract.json",
+  "entrypoints": {
+    "agentRules": "AGENTS.md",
+    "codebaseMap": "CODEBASE_MAP.md",
+    "skillsCatalog": "SKILLS.md",
+    "familyRegistry": ".ai/harness/repository-family.registry.json",
+    "artifactRegistry": ".ai/harness/artifact-registry.json",
+    "workflow": ".ai/harness/workflows/repository-family-intake.workflow.json",
+    "statusProbe": "scripts/Get-RepositoryFamilyHarnessStatus.ps1",
+    "validator": "scripts/Test-RepositoryFamilyHarness.ps1",
+    "operatorReportTemplate": ".ai/harness/operator-report.template.md",
+    "finalHandoffSchema": ".ai/harness/schemas/final-handoff.schema.json"
+  },
+  "schemas": [
+    ".ai/harness/schemas/repository-family-registry.schema.json",
+    ".ai/harness/schemas/run-context.schema.json",
+    ".ai/harness/schemas/repository-family-status.schema.json",
+    ".ai/harness/schemas/final-handoff.schema.json"
+  ],
+  "proofLevels": [
+    "contract",
+    "read-only-repository-intake",
+    "child-validator",
+    "child-build",
+    "child-runtime"
+  ],
+  "generatedEvidence": {
+    "tracked": false,
+    "defaultRoot": "operating-system temporary directory/AgentSwitchboard/repository-family",
+    "artifacts": [
+      "run-context.json",
+      "repository-family-status.json",
+      "operator-report.md",
+      "final-handoff.json"
+    ]
+  },
+  "localHooks": {
+    "enabled": false,
+    "reason": "The first slice uses explicit CI and operator commands. No implicit local hook is justified until adoption and failure behavior are proven."
+  },
+  "proofCeiling": "This harness proves family registration, read-only local clone discovery, Git identity, required-path readiness, and deterministic contract validation only."
+}

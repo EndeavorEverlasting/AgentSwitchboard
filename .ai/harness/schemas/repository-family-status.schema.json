@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/.ai/harness/schemas/repository-family-status.schema.json",
+  "title": "AgentSwitchboard Repository Family Status",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "runContext",
+    "summary",
+    "repositories",
+    "artifacts",
+    "proofLevel",
+    "proofCeiling",
+    "nextCommand"
+  ],
+  "properties": {
+    "schema": {
+      "const": "agentswitchboard.repository-family-status.v1"
+    },
+    "runContext": {
+      "$ref": "run-context.schema.json"
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "ready", "partial", "blocked", "notPresent"],
+      "properties": {
+        "total": { "const": 4 },
+        "ready": { "type": "integer", "minimum": 0, "maximum": 4 },
+        "partial": { "type": "integer", "minimum": 0, "maximum": 4 },
+        "blocked": { "type": "integer", "minimum": 0, "maximum": 4 },
+        "notPresent": { "type": "integer", "minimum": 0, "maximum": 4 }
+      }
+    },
+    "repositories": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "fullName",
+          "status",
+          "directoryName",
+          "git",
+          "missingRequiredPaths",
+          "validatorCommands",
+          "proofLevel",
+          "proofCeiling",
+          "exactNextCommand"
+        ],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "fullName": { "type": "string", "minLength": 1 },
+          "status": {
+            "enum": ["ready", "partial", "blocked", "not_present"]
+          },
+          "directoryName": { "type": ["string", "null"] },
+          "git": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["isRepository", "remoteMatches", "branch", "head", "dirty"],
+            "properties": {
+              "isRepository": { "type": "boolean" },
+              "remoteMatches": { "type": "boolean" },
+              "branch": { "type": ["string", "null"] },
+              "head": { "type": ["string", "null"] },
+              "dirty": { "type": ["boolean", "null"] }
+            }
+          },
+          "missingRequiredPaths": {
+            "type": "array",
+            "items": { "type": "string" },
+            "uniqueItems": true
+          },
+          "validatorCommands": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "proofLevel": {
+            "const": "read-only-repository-intake"
+          },
+          "proofCeiling": { "type": "string", "minLength": 10 },
+          "exactNextCommand": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["artifactId", "artifactType", "path", "tracked", "sensitivity"],
+        "properties": {
+          "artifactId": { "type": "string", "minLength": 1 },
+          "artifactType": { "type": "string", "minLength": 1 },
+          "path": { "type": "string", "minLength": 1 },
+          "tracked": { "const": false },
+          "sensitivity": { "const": "local-operational" }
+        }
+      }
+    },
+    "proofLevel": {
+      "const": "read-only-repository-intake"
+    },
+    "proofCeiling": {
+      "type": "string",
+      "minLength": 20
+    },
+    "nextCommand": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

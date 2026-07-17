@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "defaults": {
+    "maxIterations": 6,
+    "maxTokens": 500000
+  },
+  "sprints": [
+    {
+      "name": "opencode-implementation",
+      "enabled": true,
+      "agent": "opencode",
+      "repoPath": "__REPO_PATH__",
+      "promptPath": "prompts/opencode-implementation.md",
+      "stopWhen": "The bounded implementation is committed, targeted validation passes, no unrelated files changed, and the branch contains at least one useful commit."
+    },
+    {
+      "name": "goose-validation",
+      "enabled": false,
+      "agent": "goose",
+      "repoPath": "__REPO_PATH__",
+      "promptPath": "prompts/goose-validation.md",
+      "maxIterations": 4,
+      "maxTokens": 300000,
+      "stopWhen": "The validation artifact is committed, every claim names its evidence, and no product implementation files were changed."
+    },
+    {
+      "name": "agy-architecture",
+      "enabled": false,
+      "agent": "agy",
+      "repoPath": "__REPO_PATH__",
+      "promptPath": "prompts/agy-architecture.md",
+      "maxIterations": 5,
+      "maxTokens": 400000,
+      "stopWhen": "The architecture documentation and Mermaid diagram are committed, renderable, evidence-based, and contain no unsupported runtime claims."
+    },
+    {
+      "name": "copilot-tests",
+      "enabled": false,
+      "agent": "copilot",
+      "repoPath": "__REPO_PATH__",
+      "promptPath": "prompts/copilot-tests.md",
+      "maxIterations": 4,
+      "maxTokens": 250000,
+      "stopWhen": "The bounded tests or validator are committed and pass, with no application behavior changes."
+    }
+  ]
+}
