@@ -1,6 +1,6 @@
 # Agent Operating Contract
 
-Canonical source: `EndeavorEverlasting/AgentSwitchboard`  
+Canonical source: `EndeavorEverlasting/AgentSwitchboard`
 Pinned contract version: `REPLACE_CONTRACT_VERSION`
 
 ## Repository mission
