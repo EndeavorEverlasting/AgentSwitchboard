@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "policyId": "agentswitchboard.harness-doctrine.v1",
+  "canonicalRepository": "EndeavorEverlasting/AgentSwitchboard",
+  "canonicalSource": "AGENTS.md",
+  "requiredSprintFields": ["repository", "branchOrWorktree", "prOrSprint", "lane", "ownedScope", "forbiddenScope", "expectedArtifacts", "validationOrder"],
+  "executableLoop": ["request", "evidence-review", "bounded-decision", "repository-or-git-or-github-mutation", "artifacts", "validation", "report", "next-decision"],
+  "actionCommitment": {"requiresTrackedMutation": true, "requiresValidationEvidence": true, "requiresCommitOrGitHubEvidence": true, "forbidAcknowledgmentOnly": true, "forbidPlanSubstitution": true},
+  "gnhfTestOnly": {"maxWallClockSeconds": 30, "maxIterationSeconds": 30, "defaultMaxIterations": 1, "requireProcessTreeTermination": true},
+  "deepseekUsageGate": {
+    "mode": "known-nonpremium-window-only",
+    "allowedRateClasses": ["standard", "discounted"],
+    "blockedRateClasses": ["double-usage", "premium-multiplier", "unknown"],
+    "maximumAllowedMultiplier": 1.0,
+    "defaultAction": "deny",
+    "requireVerifiedSchedule": true,
+    "operatorSchedulePath": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\deepseek-usage-windows.json"
+  },
+  "localRulesMayStrengthen": true,
+  "localRulesMayWeaken": false
+}
