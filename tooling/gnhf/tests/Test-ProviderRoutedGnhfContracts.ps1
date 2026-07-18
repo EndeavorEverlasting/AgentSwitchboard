@@ -43,7 +43,7 @@ Check ($launcherText.Contains('GNHF 0.1.42 or newer is required')) "launcher/gnh
 Check ($launcherText.Contains('"--model", $Model')) "launcher/explicit-model" "GNHF does not receive the exact provider/model"
 Check ($launcherText.Contains('$evidence.sprintInvoked = $true')) "launcher/invocation-evidence" "GNHF invocation state is not recorded"
 Check ($launcherText.Contains('Process exit zero is not delivery proof')) "launcher/commit-proof" "exit code can be mistaken for delivery"
-Check ($launcherText.Contains('provider probe failed; GNHF was not started')) "launcher/provider-fail-fast" "provider failure can fall through into GNHF retries"
+Check ($launcherText.Contains('DeepSeek provider probe failed; GNHF was not started')) "launcher/provider-fail-fast" "provider failure can fall through into GNHF retries"
 Check (-not $launcherText.Contains('DEEPSEEK_API_KEY')) "launcher/no-secret" "provider key handling is embedded"
 Check (-not $launcherText.Contains('"--push"')) "launcher/no-push" "unattended provider route enables push"
 
