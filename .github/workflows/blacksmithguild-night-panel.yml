@@ -1,0 +1,98 @@
+name: BlacksmithGuild GNHF Night Panel
+
+on:
+  pull_request:
+    paths:
+      - 'Install-BlacksmithGuildNightPanel.cmd'
+      - 'tooling/gnhf/Start-AgentSwitchboard.ps1'
+      - 'tooling/gnhf/Start-BlacksmithGuildNightShift.ps1'
+      - 'tooling/gnhf/Install-BlacksmithGuildNightPanel.ps1'
+      - 'tooling/gnhf/Test-BlacksmithGuildNightPanelContracts.ps1'
+      - 'tooling/gnhf/templates/wezterm-blacksmithguild-night.lua'
+      - 'tooling/gnhf/BLACKSMITHGUILD_NIGHT_PANEL.md'
+      - '.github/workflows/blacksmithguild-night-panel.yml'
+  push:
+    paths:
+      - 'Install-BlacksmithGuildNightPanel.cmd'
+      - 'tooling/gnhf/Start-AgentSwitchboard.ps1'
+      - 'tooling/gnhf/Start-BlacksmithGuildNightShift.ps1'
+      - 'tooling/gnhf/Install-BlacksmithGuildNightPanel.ps1'
+      - 'tooling/gnhf/Test-BlacksmithGuildNightPanelContracts.ps1'
+      - 'tooling/gnhf/templates/wezterm-blacksmithguild-night.lua'
+      - 'tooling/gnhf/BLACKSMITHGUILD_NIGHT_PANEL.md'
+      - '.github/workflows/blacksmithguild-night-panel.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cross-platform-contracts:
+    name: PowerShell Core panel contracts
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate panel contracts
+        shell: pwsh
+        run: |
+          $diagnosticRoot = './artifacts/night-panel'
+          $diagnosticPath = Join-Path $diagnosticRoot 'validator.log'
+          New-Item -ItemType Directory -Path $diagnosticRoot -Force | Out-Null
+          try {
+            ./tooling/gnhf/Test-BlacksmithGuildNightPanelContracts.ps1 *>&1 | Tee-Object -FilePath $diagnosticPath
+          }
+          catch {
+            $_ | Out-String | Tee-Object -FilePath $diagnosticPath -Append | Write-Host
+            throw
+          }
+      - name: Upload panel validator diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blacksmithguild-night-panel-${{ matrix.os }}-${{ github.run_id }}
+          path: artifacts/night-panel/validator.log
+          if-no-files-found: error
+          retention-days: 14
+      - name: Validate existing GNHF fleet contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfFleetContracts.ps1
+      - name: Check diff hygiene
+        shell: pwsh
+        run: |
+          if (Test-Path -LiteralPath './artifacts/night-panel') {
+            Remove-Item -LiteralPath './artifacts/night-panel' -Recurse -Force
+          }
+          git diff --check
+          $dirty = @(git status --porcelain=v1)
+          if ($dirty.Count -gt 0) { throw "Validation changed the checkout: $($dirty -join '; ')" }
+
+  windows-installer-parser:
+    name: Windows launcher and parser checks
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse panel PowerShell
+        shell: pwsh
+        run: |
+          $paths = @(
+            '.\tooling\gnhf\Start-BlacksmithGuildNightShift.ps1',
+            '.\tooling\gnhf\Install-BlacksmithGuildNightPanel.ps1',
+            '.\tooling\gnhf\Test-BlacksmithGuildNightPanelContracts.ps1'
+          )
+          foreach ($path in $paths) {
+            $tokens = $null
+            $errors = $null
+            [Management.Automation.Language.Parser]::ParseFile((Resolve-Path $path), [ref]$tokens, [ref]$errors) | Out-Null
+            if (@($errors).Count -gt 0) { throw "$path does not parse: $(@($errors | ForEach-Object { $_.Message }) -join '; ')" }
+          }
+      - name: Verify root CMD routing
+        shell: powershell
+        run: |
+          $text = Get-Content -LiteralPath '.\Install-BlacksmithGuildNightPanel.cmd' -Raw
+          if (-not $text.Contains('Install-BlacksmithGuildNightPanel.ps1')) { throw 'Root CMD does not route to the installer.' }
+          if (-not $text.Contains('-Apply')) { throw 'Root CMD does not explicitly select apply mode.' }
+          if (-not $text.Contains('pause')) { throw 'Root CMD does not preserve technician visibility.' }
