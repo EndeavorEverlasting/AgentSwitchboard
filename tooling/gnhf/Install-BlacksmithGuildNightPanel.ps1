@@ -155,9 +155,11 @@ New-Item -ItemType Directory -Path (Split-Path -Parent $WezTermConfigPath) -Forc
 # Install or repair the shared provider route first. The default dependency pins a
 # model-aware GNHF runtime and installs shell-correct OpenCode dispatch plus
 # commit-delivery proof. Tests may inject a deterministic fixture installer.
-& $sourceProviderInstaller -Apply -InstallRoot $InstallRoot -RequiredGnhfVersion '0.1.42'
-if ($LASTEXITCODE -ne 0) {
-    throw "Provider-routed GNHF installation failed with exit code $LASTEXITCODE."
+try {
+    & $sourceProviderInstaller -Apply -InstallRoot $InstallRoot -RequiredGnhfVersion '0.1.42'
+}
+catch {
+    throw "Provider-routed GNHF installation failed: $($_.Exception.Message)"
 }
 
 Copy-Item -LiteralPath $sourceControlLauncher -Destination $destinationControlLauncher -Force
