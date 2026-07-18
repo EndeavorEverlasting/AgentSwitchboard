@@ -57,6 +57,7 @@ Stop only after git status is clean and the file exists in HEAD.
     }
     $selectedProviderModelId = ($model.ModelId -split '/', 2)[1]
     if ($model.ProviderId -eq 'opencode') {
+        # provider.opencode is constrained to the exact selected free model for this process.
         $runtimeConfig.provider = [ordered]@{
             opencode = [ordered]@{ whitelist = @($selectedProviderModelId) }
         }
