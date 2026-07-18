@@ -30,12 +30,14 @@ $RepoPath = [IO.Path]::GetFullPath($RepoPath)
 $WezTermConfigPath = [IO.Path]::GetFullPath($WezTermConfigPath)
 $InstallRoot = [IO.Path]::GetFullPath($InstallRoot)
 
-$sourceLauncher = Join-Path $PSScriptRoot 'Start-BlacksmithGuildNightShift.ps1'
+$sourceControlLauncher = Join-Path $PSScriptRoot 'Start-AgentSwitchboard.ps1'
+$sourceNightLauncher = Join-Path $PSScriptRoot 'Start-BlacksmithGuildNightShift.ps1'
 $sourceInclude = Join-Path $PSScriptRoot 'templates\wezterm-blacksmithguild-night.lua'
-$destinationLauncher = Join-Path $InstallRoot 'Start-BlacksmithGuildNightShift.ps1'
+$destinationControlLauncher = Join-Path $InstallRoot 'Start-AgentSwitchboard.ps1'
+$destinationNightLauncher = Join-Path $InstallRoot 'Start-BlacksmithGuildNightShift.ps1'
 $destinationInclude = Join-Path (Split-Path -Parent $WezTermConfigPath) $includeFileName
 
-foreach ($source in @($sourceLauncher, $sourceInclude)) {
+foreach ($source in @($sourceControlLauncher, $sourceNightLauncher, $sourceInclude)) {
     if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
         throw "Required source file is missing: $source"
     }
@@ -46,10 +48,12 @@ $plan = [ordered]@{
     apply = [bool]$Apply
     repoPath = $RepoPath
     wezTermConfigPath = $WezTermConfigPath
-    installedLauncher = $destinationLauncher
+    installedControlLauncher = $destinationControlLauncher
+    installedNightLauncher = $destinationNightLauncher
     installedInclude = $destinationInclude
     configExists = Test-Path -LiteralPath $WezTermConfigPath -PathType Leaf
     managedBlockPresent = $false
+    backupPath = $null
     action = 'plan_only'
 }
 
@@ -65,13 +69,14 @@ if ($plan.configExists) {
 }
 
 Write-Host "`n=== BLACKSMITHGUILD NIGHT PANEL INSTALL PLAN ===" -ForegroundColor Cyan
-Write-Host "Repository:     $RepoPath"
-Write-Host "WezTerm config: $WezTermConfigPath"
-Write-Host "Launcher:       $destinationLauncher"
-Write-Host "Lua include:    $destinationInclude"
-Write-Host "Config exists:  $($plan.configExists)"
-Write-Host "Already wired:  $($plan.managedBlockPresent)"
-Write-Host "Apply:          $([bool]$Apply)"
+Write-Host "Repository:       $RepoPath"
+Write-Host "WezTerm config:   $WezTermConfigPath"
+Write-Host "Control launcher: $destinationControlLauncher"
+Write-Host "Night launcher:   $destinationNightLauncher"
+Write-Host "Lua include:      $destinationInclude"
+Write-Host "Config exists:    $($plan.configExists)"
+Write-Host "Already wired:    $($plan.managedBlockPresent)"
+Write-Host "Apply:            $([bool]$Apply)"
 
 if (-not $Apply) {
     Write-Host "`nManaged block that will be inserted before the final 'return config':" -ForegroundColor Yellow
@@ -82,7 +87,8 @@ if (-not $Apply) {
 
 New-Item -ItemType Directory -Path $InstallRoot -Force | Out-Null
 New-Item -ItemType Directory -Path (Split-Path -Parent $WezTermConfigPath) -Force | Out-Null
-Copy-Item -LiteralPath $sourceLauncher -Destination $destinationLauncher -Force
+Copy-Item -LiteralPath $sourceControlLauncher -Destination $destinationControlLauncher -Force
+Copy-Item -LiteralPath $sourceNightLauncher -Destination $destinationNightLauncher -Force
 Copy-Item -LiteralPath $sourceInclude -Destination $destinationInclude -Force
 
 if (-not $plan.configExists) {
@@ -97,11 +103,17 @@ return config
     Set-Content -LiteralPath $WezTermConfigPath -Value $configText -Encoding utf8NoBOM
     $plan.action = 'created_config_and_installed_panel'
 }
-elif (-not $plan.managedBlockPresent) {
+elseif (-not $plan.managedBlockPresent) {
     $matches = [regex]::Matches($configText, '(?m)^\s*return\s+config\s*$')
     if ($matches.Count -ne 1) {
-        throw "Expected exactly one standalone 'return config' line in $WezTermConfigPath, found $($matches.Count). Installed files were preserved, but the config was not modified."
+        throw "Expected exactly one standalone 'return config' line in $WezTermConfigPath, found $($matches.Count). Installed launcher files were preserved, but the config was not modified."
     }
+
+    $backupRoot = Join-Path $InstallRoot 'panel-install\backups'
+    New-Item -ItemType Directory -Path $backupRoot -Force | Out-Null
+    $backupPath = Join-Path $backupRoot ('.wezterm.lua.{0}.bak' -f (Get-Date -Format 'yyyyMMdd-HHmmss-fff'))
+    Copy-Item -LiteralPath $WezTermConfigPath -Destination $backupPath
+    $plan.backupPath = $backupPath
 
     $managedBlock = (Get-ManagedBlock).TrimEnd()
     $match = $matches[0]
@@ -117,8 +129,15 @@ $verificationText = Get-Content -LiteralPath $WezTermConfigPath -Raw
 if (-not $verificationText.Contains($beginMarker) -or -not $verificationText.Contains($endMarker)) {
     throw 'The managed WezTerm panel block was not observed after installation.'
 }
-if (-not (Test-Path -LiteralPath $destinationLauncher -PathType Leaf) -or -not (Test-Path -LiteralPath $destinationInclude -PathType Leaf)) {
-    throw 'One or more installed panel files are missing after installation.'
+foreach ($installed in @($destinationControlLauncher, $destinationNightLauncher, $destinationInclude)) {
+    if (-not (Test-Path -LiteralPath $installed -PathType Leaf)) {
+        throw "Installed panel file is missing: $installed"
+    }
+}
+
+$installedControlText = Get-Content -LiteralPath $destinationControlLauncher -Raw
+if ($installedControlText -notmatch 'ValidateSet\("opencode",\s*"deepseek"') {
+    throw 'The installed AgentSwitchboard launcher does not contain the explicit DeepSeek route. Refresh AgentSwitchboard main and rerun this installer.'
 }
 
 $evidenceRoot = Join-Path $InstallRoot 'panel-install'
@@ -128,4 +147,7 @@ $plan | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $evidenceR
 
 Write-Host "`nInstalled. In WezTerm, open the launch menu and select:" -ForegroundColor Green
 Write-Host '  BlacksmithGuild — GNHF Night Shift' -ForegroundColor Green
-Write-Host "The Auto stage starts at queue compilation when no night queue exists, repair when ready items exist, and closeout when none remain." -ForegroundColor Cyan
+Write-Host 'The Auto stage starts at queue compilation when no night queue exists, repair when ready items exist, and closeout when none remain.' -ForegroundColor Cyan
+if ($plan.backupPath) {
+    Write-Host "WezTerm config backup: $($plan.backupPath)" -ForegroundColor Cyan
+}
