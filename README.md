@@ -25,6 +25,8 @@ After setup, list READY and BLOCKED agents:
 
 See the [GNHF fleet guide](tooling/gnhf/README.md) for bounded sprint and parallel-fleet commands.
 
+For DeepSeek-first runs, use the [DeepSeek GNHF route](tooling/gnhf/DEEPSEEK.md). AgentSwitchboard keeps `opencode` as the truthful native GNHF adapter, pins the selected `deepseek/provider-model` at runtime, and fails before repository work unless the exact model passes a bounded spawnability probe.
+
 ## Agent operating contract
 
 AgentSwitchboard is the canonical policy source for the EndeavorEverlasting repository family.
