@@ -39,10 +39,11 @@ if ([string]$triggerSnapshot.application.id -cne $env:AGENTSWITCHBOARD_APPLICATI
     [string]$triggerSnapshot.flaggingPhase -cne "pre-agent-launch") {
     throw "Fixture runtime trigger snapshot does not satisfy the application awareness contract."
 }
-$compiledText = Get-Content -LiteralPath $CompiledPromptPath -Raw
-if (-not $compiledText.Contains($triggerPath) -or
-    -not $compiledText.Contains($triggerHash) -or
-    -not $compiledText.Contains("Before completing repository analysis or producing any awareness assessment")) {
+$compiled = Get-Content -LiteralPath $CompiledPromptPath -Raw | ConvertFrom-Json -Depth 50
+if (-not ([string]$compiled.prompt).Contains($triggerPath) -or
+    -not ([string]$compiled.prompt).Contains($triggerHash) -or
+    -not ([string]$compiled.prompt).Contains("Before completing repository analysis or producing any awareness assessment") -or
+    -not (@($compiled.readFirst) -contains $triggerPath)) {
     throw "Fixture runtime compiled prompt lacks the pre-awareness trigger instruction."
 }
 
