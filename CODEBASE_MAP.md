@@ -27,9 +27,20 @@ Load only the smallest surface required by the selected skill, workflow, or repo
 - `.ai/skills/repo-intake/SKILL.md` — recover repository truth and select safe work.
 - `.ai/skills/bounded-sprint/SKILL.md` — execute one bounded tracked change.
 - `.ai/skills/gnhf-prompt-compilation/SKILL.md` — compile the copy-ready bounded `gnhf` PowerShell artifact.
+- `.ai/skills/prompt-kit-selection/SKILL.md` — select and render the pinned V38 prompt registry without crossing execution surfaces.
 - `.ai/skills/evidence-validation/SKILL.md` — build honest proof and repair validation gaps.
 - `.ai/skills/pr-integration/SKILL.md` — reconcile stacked or parallel branches.
 - `.ai/skills/runtime-proof/SKILL.md` — advance from static evidence to observed behavior without proof inflation.
+
+## AI Harness prompt registry
+
+- `.ai/prompt-kits/v38/prompt-registry.v1.json.gz.b64` — vendored offline gzip/base64 JSON bundle for the P00-P44 registry.
+- `.ai/prompt-kits/v38/source.json` — canonical producer commit, PR, workbook hash, and snapshot hash.
+- `Select-AgentSwitchboardPrompt.cmd` — Windows operator entrypoint.
+- `tooling/prompts/Select-AgentSwitchboardPrompt.ps1` — list, search, show, and exact-variable render implementation.
+- `tooling/prompts/Test-AgentSwitchboardPromptRegistry.ps1` — Windows execution-surface and rendering contracts.
+- `tests/test_prompt_registry_snapshot.py` — cross-platform provenance, hash, ID, variable, and static safety contract.
+- `docs/prompt-kits/v38.md` — usage, ownership, update, validation, and proof ceiling.
 
 ## GNHF control plane
 
@@ -54,6 +65,7 @@ Load only the smallest surface required by the selected skill, workflow, or repo
 
 - `scripts/Test-AgentDocumentationContract.ps1` — root contract, canonical skills, triggers, and template checks.
 - `scripts/Test-RepositoryFamilyHarness.ps1` — family profile and harness checks.
+- `tooling/prompts/Test-AgentSwitchboardPromptRegistry.ps1` — V38 selector and renderer checks.
 - `tooling/gnhf/Test-GnhfFleetContracts.ps1` and more specific downstream validators — GNHF implementation checks on branches that contain those surfaces.
 
 ## Generated evidence and reports
@@ -67,6 +79,8 @@ Expected outputs from the family status probe:
 - `operator-report.md`
 - `final-handoff.json`
 
+Rendered prompts should be written to an operator-selected path outside `.ai/prompt-kits/v38/`; they may contain task context and must not be committed blindly.
+
 ## Proof boundary
 
-A valid family profile proves that AgentSwitchboard knows how to enter and inspect a repository. It does not prove that a child checkout is present, current, clean, validated, or safe to mutate. The status probe earns only read-only repository-intake proof; every child validator and runtime authority remains local to that child repository.
+A valid family profile proves that AgentSwitchboard knows how to enter and inspect a repository. It does not prove that a child checkout is present, current, clean, validated, or safe to mutate. The prompt registry proves a pinned content snapshot and deterministic render path; it does not prove prompt quality, model availability, GNHF execution, or repository delivery. Every child validator and runtime authority remains local to that child repository.
