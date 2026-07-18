@@ -1,0 +1,7 @@
+{
+  "description": "Upstream source package.json may label 0.1.42 while npm latest remains 0.1.41. Source version is not publication proof.",
+  "upstreamSourceVersion": "0.1.42",
+  "npmLatest": "0.1.41",
+  "installedVersion": "0.1.41",
+  "decision": "prefer-npm-published-when-capabilities-satisfied"
+}

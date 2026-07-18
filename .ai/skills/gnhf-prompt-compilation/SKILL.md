@@ -1,6 +1,6 @@
 ---
 id: gnhf-prompt-compilation
-version: 1.1.1
+version: 1.2.0
 status: canonical
 ---
 
@@ -55,22 +55,28 @@ A repository-owned launcher may derive the root from `$PSScriptRoot`. A CMD laun
 
 ## Provider route contract
 
-GNHF selects an agent adapter. A provider/model is selected inside that adapter or through GNHF's reviewed model option.
+GNHF selects an agent adapter. Provider/model selection belongs to that adapter (OpenCode) or another proven surface. Do not invent GNHF CLI flags or npm package versions.
 
 For DeepSeek the truthful route is:
 
 ```text
 operator route: DeepSeek
 GNHF adapter:   OpenCode
-provider/model: deepseek/<exact-model-id>
+provider/model: deepseek/<exact-model-id> via OpenCode
+control plane:  AgentSwitchboard installed capability document
 ```
 
-Never invent `--agent deepseek` as a native GNHF adapter.
+Never invent `--agent deepseek` as a native GNHF adapter. Never require `gnhf --model` unless the exact installed GNHF binary independently exposes that flag. Never treat an unpublished source `package.json` version as an npm publication fact.
 
 When AgentSwitchboard is available, use its provider-routed launcher rather than bypassing preflight:
 
 ```powershell
+$Capability = Join-Path $env:LOCALAPPDATA "AgentSwitchboard\GnhfFleet\gnhf-runtime-capability.json"
 $Launcher = Join-Path $env:LOCALAPPDATA "AgentSwitchboard\GnhfFleet\Start-ProviderRoutedGnhfSprint.ps1"
+
+if (-not (Test-Path -LiteralPath $Capability -PathType Leaf)) {
+    throw "Provider-route capability document missing. Repair AgentSwitchboard with Repair-ProviderRoutedGnhf.cmd first."
+}
 
 & $Launcher `
   -RepoPath $RepoPath `
@@ -82,7 +88,7 @@ $Launcher = Join-Path $env:LOCALAPPDATA "AgentSwitchboard\GnhfFleet\Start-Provid
   -StopWhen "One bounded repair or exact blocker report is committed and the generated worktree is clean."
 ```
 
-The reviewed provider launcher must verify Windows command-shim dispatch, GNHF model support, the exact model response, and local commit delivery. A failed preflight stops before GNHF; it must not consume three identical GNHF failures.
+The reviewed provider launcher must verify Windows command-shim dispatch, the installed capability document, OpenCode model selection (`OPENCODE_CONFIG_CONTENT` and a bounded `opencode run --model` marker), and local commit delivery. A failed preflight stops before GNHF; it must not consume three identical GNHF failures. Process exit zero with zero new commits is not delivery.
 
 ## Procedure
 
@@ -168,9 +174,10 @@ A valid launch artifact must:
 - No default push.
 - No multiple repositories in one process.
 - No fictional DeepSeek GNHF adapter.
+- No invented GNHF `--model` requirement or unpublished npm version pin.
 - No direct-provider bypass when AgentSwitchboard is the control plane.
 - No silent provider fallback.
-- No success claim based only on configuration or process exit.
+- No success claim based only on configuration, provider marker, or process exit.
 
 ## Stop and escalate
 

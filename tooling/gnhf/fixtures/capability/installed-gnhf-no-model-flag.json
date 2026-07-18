@@ -1,0 +1,6 @@
+{
+  "commandPath": "C:\\fixture\\gnhf.cmd",
+  "version": "0.1.41",
+  "versionOutput": "0.1.41",
+  "helpText": "Usage: gnhf [options] [prompt]\nOptions:\n  --agent <agent>          Agent to use (claude, codex, rovodev, opencode,\n  --max-iterations <n>     Abort after N total iterations\n  --max-tokens <n>         Abort after N total input+output tokens\n  --stop-when <condition>  End when the agent reports this condition\n  --prevent-sleep <mode>   Prevent system sleep during the run\n  --worktree               Run in a separate git worktree\n  --push                   Push after each successful iteration\n"
+}

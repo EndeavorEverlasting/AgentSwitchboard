@@ -19,13 +19,18 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
 }
 
 $processHelpers = Join-Path $PSScriptRoot "Gnhf.Process.ps1"
+$capabilityHelpers = Join-Path $PSScriptRoot "Gnhf.Capability.ps1"
 if (-not (Test-Path -LiteralPath $processHelpers -PathType Leaf)) {
     $processHelpers = Join-Path $InstallRoot "Gnhf.Process.ps1"
 }
-if (-not (Test-Path -LiteralPath $processHelpers -PathType Leaf)) {
-    throw "Windows-safe process helpers not found. Run Install-ProviderRoutedGnhf.ps1 first."
+if (-not (Test-Path -LiteralPath $capabilityHelpers -PathType Leaf)) {
+    $capabilityHelpers = Join-Path $InstallRoot "Gnhf.Capability.ps1"
+}
+if (-not (Test-Path -LiteralPath $processHelpers -PathType Leaf) -or -not (Test-Path -LiteralPath $capabilityHelpers -PathType Leaf)) {
+    throw "Windows-safe process/capability helpers not found. Run Install-ProviderRoutedGnhf.ps1 -Apply first."
 }
 . $processHelpers
+. $capabilityHelpers
 
 $RepoPath = [IO.Path]::GetFullPath($RepoPath)
 if (-not (Test-Path -LiteralPath $RepoPath -PathType Container)) {
@@ -56,10 +61,18 @@ if (-not $branch) {
 $baseSha = (git rev-parse HEAD).Trim()
 
 $statePath = Join-Path $InstallRoot "state.json"
+$capabilityPath = Join-Path $InstallRoot "gnhf-runtime-capability.json"
 if (-not (Test-Path -LiteralPath $statePath -PathType Leaf)) {
     throw "AgentSwitchboard fleet state not found: $statePath"
 }
+if (-not (Test-Path -LiteralPath $capabilityPath -PathType Leaf)) {
+    throw "Installed GNHF runtime capability document not found: $capabilityPath. Run Install-ProviderRoutedGnhf.ps1 -Apply."
+}
 $state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
+$capability = Get-Content -LiteralPath $capabilityPath -Raw | ConvertFrom-Json
+if ($capability.schema -ne "agentswitchboard.gnhf-runtime-capability.v1" -or -not $capability.ready) {
+    throw "Installed capability document is not ready for provider-routed launch. Repair with Install-ProviderRoutedGnhf.ps1 -Apply. Missing: $((@($capability.missingCapabilities) -join ', '))"
+}
 
 $logsRoot = Join-Path $InstallRoot "logs\provider-routes"
 [void](New-Item -ItemType Directory -Path $logsRoot -Force)
@@ -70,20 +83,25 @@ $evidencePath = Join-Path $logsRoot "$stamp-$safeName.json"
 $transcriptPath = Join-Path $logsRoot "$stamp-$safeName.txt"
 
 $evidence = [ordered]@{
-    schemaVersion = 2
+    schemaVersion = 3
     route = "deepseek-through-opencode-through-gnhf"
     status = "preflight"
     repository = $RepoPath
     baseBranch = $branch
     baseSha = $baseSha
     model = $Model
+    modelSelectionAuthority = "opencode"
     maxIterations = $MaxIterations
     maxTokens = $MaxTokens
     probeTimeoutSeconds = $ProbeTimeoutSeconds
+    capabilityDocument = $capabilityPath
     gnhfVersion = $null
-    gnhfModelFlag = $false
+    gnhfModelFlag = [bool]$capability.modelSelection.gnhfCliModelFlag
     openCodeVersion = $null
     openCodeDispatch = $null
+    openCodeNativePath = $null
+    openCodeServePreflightMs = $null
+    gnhfOpenCodePathOverride = $null
     providerMarker = $null
     sprintInvoked = $false
     sprintExitCode = $null
@@ -135,19 +153,31 @@ try {
     }
     $gnhfVersion = [version]$versionMatch.Groups[1].Value
     $evidence.gnhfVersion = $gnhfVersion.ToString()
-    if ($gnhfVersion -lt [version]"0.1.42") {
-        throw "GNHF 0.1.42 or newer is required for explicit provider/model routing. Detected $gnhfVersion. Run Install-ProviderRoutedGnhf.ps1 -Apply."
-    }
 
     $gnhfHelpProbe = Invoke-GnhfBoundedCommand -FilePath $gnhfPath -ArgumentList @("--help") -WorkingDirectory $RepoPath -TimeoutSeconds 15
-    $evidence.gnhfModelFlag = ($gnhfHelpProbe.exitCode -eq 0 -and $gnhfHelpProbe.output -match '(?m)^\s*(-m,\s*)?--model\b')
-    if (-not $evidence.gnhfModelFlag) {
-        throw "The installed GNHF does not expose the required --model option. Run Install-ProviderRoutedGnhf.ps1 -Apply."
+    $liveFlags = Get-GnhfCliFlagMap -HelpText $gnhfHelpProbe.output
+    $evidence.gnhfModelFlag = [bool]$liveFlags.model
+    foreach ($requiredFlag in @("worktree", "max-iterations", "max-tokens", "prevent-sleep", "stop-when")) {
+        if (-not $liveFlags.$requiredFlag) {
+            throw "Installed GNHF is missing required CLI capability --$requiredFlag. Run Install-ProviderRoutedGnhf.ps1 -Apply."
+        }
     }
+    if ($gnhfHelpProbe.output -notmatch '(?i)\bopencode\b') {
+        throw "Installed GNHF does not advertise the opencode agent adapter."
+    }
+    # Exact model selection is enforced by OpenCode preflight and OPENCODE_CONFIG_CONTENT.
+    # Pass --model to GNHF only when that CLI option independently exists on the installed binary.
 
     $openCodePath = Get-CommandPathFromState -Name "opencode"
-    $versionProbe = Invoke-GnhfBoundedCommand -FilePath $openCodePath -ArgumentList @("--version") -WorkingDirectory $RepoPath -TimeoutSeconds $ProbeTimeoutSeconds
-    $evidence.openCodeDispatch = $versionProbe.dispatch
+    $openCodeNative = Resolve-OpenCodeNativeExecutable -PreferredPath $openCodePath
+    $evidence.openCodeNativePath = $openCodeNative
+    $pathOverride = Set-GnhfOpenCodeNativePathOverride -OpenCodeExePath $openCodeNative
+    $evidence.gnhfOpenCodePathOverride = $pathOverride.configPath
+    Write-Host "OpenCode native: $openCodeNative"
+    Write-Host "GNHF path pin:   $($pathOverride.configPath) ($($pathOverride.action))"
+
+    $versionProbe = Invoke-GnhfBoundedCommand -FilePath $openCodeNative -ArgumentList @("--version") -WorkingDirectory $RepoPath -TimeoutSeconds $ProbeTimeoutSeconds
+    $evidence.openCodeDispatch = "native-exe"
     if ($versionProbe.timedOut -or $versionProbe.exitCode -ne 0) {
         throw "OpenCode version probe failed: $($versionProbe.output)"
     }
@@ -161,7 +191,7 @@ try {
         throw "OpenCode 1.14.24 or newer is required. Detected $openCodeVersion."
     }
 
-    $modelsProbe = Invoke-GnhfBoundedCommand -FilePath $openCodePath -ArgumentList @("models", "deepseek") -WorkingDirectory $RepoPath -TimeoutSeconds $ProbeTimeoutSeconds
+    $modelsProbe = Invoke-GnhfBoundedCommand -FilePath $openCodeNative -ArgumentList @("models", "deepseek") -WorkingDirectory $RepoPath -TimeoutSeconds $ProbeTimeoutSeconds
     if ($modelsProbe.timedOut -or $modelsProbe.exitCode -ne 0) {
         throw "OpenCode could not enumerate DeepSeek models: $($modelsProbe.output)"
     }
@@ -171,7 +201,7 @@ try {
 
     $marker = "AGENT_SWITCHBOARD_MODEL_READY"
     $markerPrompt = "Return exactly $marker. Do not inspect files, call tools, or modify state."
-    $providerProbe = Invoke-GnhfBoundedCommand -FilePath $openCodePath -ArgumentList @("run", "--model", $Model, "--format", "json", $markerPrompt) -WorkingDirectory $RepoPath -TimeoutSeconds $ProbeTimeoutSeconds
+    $providerProbe = Invoke-GnhfBoundedCommand -FilePath $openCodeNative -ArgumentList @("run", "--model", $Model, "--format", "json", $markerPrompt) -WorkingDirectory $RepoPath -TimeoutSeconds $ProbeTimeoutSeconds
     if ($providerProbe.timedOut) {
         throw "DeepSeek provider probe timed out after $ProbeTimeoutSeconds seconds; GNHF was not started."
     }
@@ -179,6 +209,11 @@ try {
         throw "DeepSeek provider probe failed; GNHF was not started. $($providerProbe.output)"
     }
     $evidence.providerMarker = $marker
+
+    $serveProbe = Test-OpenCodeServeReady -OpenCodeExePath $openCodeNative -WorkingDirectory $RepoPath -TimeoutSeconds $ProbeTimeoutSeconds
+    $evidence.openCodeServePreflightMs = $serveProbe.elapsedMs
+    Write-Host ("OpenCode serve preflight: healthy on port {0} in {1} ms" -f $serveProbe.port, $serveProbe.elapsedMs)
+
     $evidence.status = "provider-ready"
     Save-Evidence
 
@@ -196,8 +231,12 @@ try {
     }
 
     $gnhfArguments = @(
-        "--agent", "opencode",
-        "--model", $Model,
+        "--agent", "opencode"
+    )
+    if ($evidence.gnhfModelFlag) {
+        $gnhfArguments += @("--model", $Model)
+    }
+    $gnhfArguments += @(
         "--worktree",
         "--max-iterations", [string]$MaxIterations,
         "--max-tokens", [string]$MaxTokens,
@@ -209,7 +248,7 @@ try {
     Write-Host "Repo:       $RepoPath"
     Write-Host "Base:       $branch @ $baseSha"
     Write-Host "Agent:      opencode"
-    Write-Host "Model:      $Model"
+    Write-Host "Model:      $Model (OpenCode authority; GNHF --model=$($evidence.gnhfModelFlag))"
     Write-Host "Iterations: $MaxIterations"
     Write-Host "Token cap:  $MaxTokens"
     Write-Host "Evidence:   $evidencePath"

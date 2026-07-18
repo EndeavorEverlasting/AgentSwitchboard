@@ -60,3 +60,15 @@ When a capability is missing:
 ## Provider and agent separation
 
 Record executor, provider, model, subscription, and local compute separately. A harness being available does not prove a provider is authenticated, a model is reachable, or quota remains.
+
+## Provider-routed GNHF capabilities
+
+AgentSwitchboard splits the provider route into independently classifiable operations:
+
+1. `discover-gnhf-runtime` — npm dist-tags/versions, installed binary, CLI flags, and optional upstream source facts;
+2. `install-or-select-gnhf-runtime` — transactional install/selection against a capability matrix, not a guessed version;
+3. `prove-provider-route` — shell-correct OpenCode dispatch and bounded model marker;
+4. `launch-bounded-gnhf` — start GNHF only after provider proof;
+5. `verify-committed-delivery` — require a commit ahead of the base; reject zero-exit/no-commit.
+
+Child repositories consume the installed capability document at `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\gnhf-runtime-capability.json` (`agentswitchboard.gnhf-runtime-capability.v1`). They must not guess npm versions, invent GNHF flags, or call source-tree installers during normal launch.

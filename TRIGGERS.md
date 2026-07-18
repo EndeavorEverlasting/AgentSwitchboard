@@ -26,6 +26,8 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | `runtime.requested` | launcher, installer, behavior, harness, or environment proof | `runtime-proof` |
 | `docs.contract-change` | AGENTS, skills, capabilities, triggers, schemas | `bounded-sprint` plus documentation-contract validator |
 | `tool.missing-or-unhealthy` | command absent or bounded probe fails | reuse, repair, install, skip, or block according to scope |
+| `gnhf.runtime-repair-required` | required provider-route capabilities absent (executable, agent adapter, worktree, caps, launchers, OpenCode model selection) | repair via `Repair-ProviderRoutedGnhf.cmd` / capability installer; do not trigger solely because an unpublished source version is newer |
+| `gnhf.model-selection-required` | provider-backed run names an exact `provider/model` | route model selection through OpenCode (`OPENCODE_CONFIG_CONTENT` / `opencode run --model`); pass GNHF `--model` only when the installed binary exposes that flag |
 | `scope.collision` | two writers own overlapping paths | stop one lane or create a new isolation boundary |
 | `secret-or-personal-data` | credentials, tokens, customer data, private evidence | stop, sanitize, and escalate |
 | `live-target-mutation` | external machine, service, deployment, save, or customer target | require explicit authority and runtime-proof boundary |
