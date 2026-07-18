@@ -30,6 +30,17 @@ Agents must not infer `verified` from command presence, prior sessions, document
 | `secrets.access` | credentials or secret stores are reachable | blocked by default; never persist in Git |
 | `destructive.git` | force-push, reset, branch deletion | blocked unless explicit recovery authorization |
 
+## Harness doctrine capabilities
+
+| Capability | Activation and output | Guardrail and proof |
+|---|---|---|
+| `harness.doctrine.validate` | AGENTS, doctrine policy, skills, templates, or action prompts change; returns pass/fail findings | run `scripts/Test-HarnessDoctrineContract.ps1`; contract proof only |
+| `gnhf.test-timeout.enforce` | run profile is test, smoke, probe, fixture, or contract-only; returns completion or timeout evidence | maximum 30 seconds wall clock and 30 seconds per iteration; terminate the process tree |
+| `deepseek.usage-window.evaluate` | a DeepSeek route is requested; returns allowed rate class or blocked reason | permit only fresh verified `standard` or `discounted` state with multiplier no greater than 1.0; unknown blocks |
+| `action.commitment.validate` | a prompt claims install, setup, build, execute, repair, configure, upgrade, deploy, merge, or release | reject acknowledgment-only or plan-substitution contracts; require mutation, validation, and commit or GitHub proof |
+
+The machine-readable limits and default-deny rules are in `.ai/harness/harness-doctrine.policy.json`.
+
 ## Verification requirements
 
 A capability probe must be:
