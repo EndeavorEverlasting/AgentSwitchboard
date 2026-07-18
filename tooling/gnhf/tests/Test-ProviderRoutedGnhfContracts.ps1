@@ -36,6 +36,10 @@ Check ($processText.Contains('EndsWith(".ps1"')) "dispatch/ps1-detected" "PowerS
 Check ($processText.Contains('"-NonInteractive"')) "dispatch/pwsh-noninteractive" "pwsh dispatch is not noninteractive"
 Check ($processText.Contains('EndsWith(".cmd"')) "dispatch/cmd-detected" "CMD shims are not detected"
 Check ($processText.Contains('WaitForExit(5000)')) "dispatch/bounded-post-kill" "timeout cleanup can block indefinitely"
+Check ($processText.Contains('function Resolve-OpenCodeNativeExecutable')) "opencode/native-resolve" "native OpenCode resolver missing"
+Check ($processText.Contains('function Set-GnhfOpenCodeNativePathOverride')) "opencode/gnhf-path-pin" "GNHF agentPathOverride pin missing"
+Check ($processText.Contains('function Test-OpenCodeServeReady')) "opencode/serve-preflight" "OpenCode serve preflight missing"
+Check ($processText.Contains('/global/health')) "opencode/health-endpoint" "serve health probe missing"
 
 $launcherText = Get-Content -LiteralPath (Join-Path $RootPath "Start-ProviderRoutedGnhfSprint.ps1") -Raw
 Check ($launcherText.Contains('Set-Location -LiteralPath $RepoPath')) "launcher/directory-first" "repository is not entered before runtime logic"
@@ -43,6 +47,9 @@ Check ($launcherText.Contains('GNHF 0.1.42 or newer is required')) "launcher/gnh
 Check ($launcherText.Contains('@("run", "--model", $Model, "--format", "json", $markerPrompt)')) "launcher/explicit-model" "OpenCode preflight does not require the exact provider/model"
 Check ($launcherText.Contains('OPENCODE_CONFIG_CONTENT')) "launcher/opencode-model-pin" "GNHF spawn does not pin the model through OpenCode config"
 Check ($launcherText.Contains('if ($evidence.gnhfModelFlag)')) "launcher/optional-gnhf-model-flag" "launcher always passes unsupported GNHF --model"
+Check ($launcherText.Contains('Resolve-OpenCodeNativeExecutable')) "launcher/native-opencode" "launcher does not resolve native OpenCode exe"
+Check ($launcherText.Contains('Test-OpenCodeServeReady')) "launcher/serve-preflight" "launcher does not preflight opencode serve"
+Check ($launcherText.Contains('Set-GnhfOpenCodeNativePathOverride')) "launcher/gnhf-path-override" "launcher does not pin GNHF agentPathOverride"
 Check ($launcherText.Contains('$evidence.sprintInvoked = $true')) "launcher/invocation-evidence" "GNHF invocation state is not recorded"
 Check ($launcherText.Contains('Process exit zero is not delivery proof')) "launcher/commit-proof" "exit code can be mistaken for delivery"
 Check ($launcherText.Contains('DeepSeek provider probe failed; GNHF was not started')) "launcher/provider-fail-fast" "provider failure can fall through into GNHF retries"

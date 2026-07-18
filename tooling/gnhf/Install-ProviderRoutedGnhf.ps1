@@ -208,6 +208,21 @@ Clone https://github.com/kunchenguid/gnhf (release $required or newer) under '$D
     }
 }
 
+# Pin GNHF to the native OpenCode executable so Windows shell:true serve spawn works.
+$processHelpers = Join-Path $PSScriptRoot "Gnhf.Process.ps1"
+. $processHelpers
+$openCodeNative = $null
+$gnhfPathPin = $null
+try {
+    $openCodeNative = Resolve-OpenCodeNativeExecutable
+    $gnhfPathPin = Set-GnhfOpenCodeNativePathOverride -OpenCodeExePath $openCodeNative
+    Write-Host "OpenCode native: $openCodeNative"
+    Write-Host "GNHF path pin:   $($gnhfPathPin.configPath) ($($gnhfPathPin.action))"
+}
+catch {
+    Write-Host "OpenCode native path pin skipped: $($_.Exception.Message)" -ForegroundColor Yellow
+}
+
 [void](New-Item -ItemType Directory -Path $InstallRoot -Force)
 foreach ($file in @("Gnhf.Process.ps1", "Start-ProviderRoutedGnhfSprint.ps1")) {
     $source = Join-Path $PSScriptRoot $file
@@ -256,6 +271,23 @@ if (Test-Path -LiteralPath $statePath -PathType Leaf) {
         }
         else {
             $state.gnhf.sourceRepoPath = $resolvedSource
+        }
+    }
+    if ($openCodeNative -and $state.agents -and $state.agents.opencode) {
+        $state.agents.opencode.commandPath = $openCodeNative
+        if (-not $state.agents.opencode.PSObject.Properties["nativeExecutable"]) {
+            $state.agents.opencode | Add-Member -NotePropertyName nativeExecutable -NotePropertyValue $true
+        }
+        else {
+            $state.agents.opencode.nativeExecutable = $true
+        }
+    }
+    if ($gnhfPathPin) {
+        if (-not $state.PSObject.Properties["gnhfOpenCodePathOverride"]) {
+            $state | Add-Member -NotePropertyName gnhfOpenCodePathOverride -NotePropertyValue $gnhfPathPin.configPath
+        }
+        else {
+            $state.gnhfOpenCodePathOverride = $gnhfPathPin.configPath
         }
     }
     $state | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $statePath -Encoding utf8NoBOM

@@ -84,6 +84,9 @@ $evidence = [ordered]@{
     gnhfModelFlag = $false
     openCodeVersion = $null
     openCodeDispatch = $null
+    openCodeNativePath = $null
+    openCodeServePreflightMs = $null
+    gnhfOpenCodePathOverride = $null
     providerMarker = $null
     sprintInvoked = $false
     sprintExitCode = $null
@@ -145,8 +148,15 @@ try {
     # Pass --model to GNHF only when that CLI option exists; current upstream 0.1.42 does not expose it.
 
     $openCodePath = Get-CommandPathFromState -Name "opencode"
-    $versionProbe = Invoke-GnhfBoundedCommand -FilePath $openCodePath -ArgumentList @("--version") -WorkingDirectory $RepoPath -TimeoutSeconds $ProbeTimeoutSeconds
-    $evidence.openCodeDispatch = $versionProbe.dispatch
+    $openCodeNative = Resolve-OpenCodeNativeExecutable -PreferredPath $openCodePath
+    $evidence.openCodeNativePath = $openCodeNative
+    $pathOverride = Set-GnhfOpenCodeNativePathOverride -OpenCodeExePath $openCodeNative
+    $evidence.gnhfOpenCodePathOverride = $pathOverride.configPath
+    Write-Host "OpenCode native: $openCodeNative"
+    Write-Host "GNHF path pin:   $($pathOverride.configPath) ($($pathOverride.action))"
+
+    $versionProbe = Invoke-GnhfBoundedCommand -FilePath $openCodeNative -ArgumentList @("--version") -WorkingDirectory $RepoPath -TimeoutSeconds $ProbeTimeoutSeconds
+    $evidence.openCodeDispatch = 'native-exe'
     if ($versionProbe.timedOut -or $versionProbe.exitCode -ne 0) {
         throw "OpenCode version probe failed: $($versionProbe.output)"
     }
@@ -160,7 +170,7 @@ try {
         throw "OpenCode 1.14.24 or newer is required. Detected $openCodeVersion."
     }
 
-    $modelsProbe = Invoke-GnhfBoundedCommand -FilePath $openCodePath -ArgumentList @("models", "deepseek") -WorkingDirectory $RepoPath -TimeoutSeconds $ProbeTimeoutSeconds
+    $modelsProbe = Invoke-GnhfBoundedCommand -FilePath $openCodeNative -ArgumentList @("models", "deepseek") -WorkingDirectory $RepoPath -TimeoutSeconds $ProbeTimeoutSeconds
     if ($modelsProbe.timedOut -or $modelsProbe.exitCode -ne 0) {
         throw "OpenCode could not enumerate DeepSeek models: $($modelsProbe.output)"
     }
@@ -170,7 +180,7 @@ try {
 
     $marker = "AGENT_SWITCHBOARD_MODEL_READY"
     $markerPrompt = "Return exactly $marker. Do not inspect files, call tools, or modify state."
-    $providerProbe = Invoke-GnhfBoundedCommand -FilePath $openCodePath -ArgumentList @("run", "--model", $Model, "--format", "json", $markerPrompt) -WorkingDirectory $RepoPath -TimeoutSeconds $ProbeTimeoutSeconds
+    $providerProbe = Invoke-GnhfBoundedCommand -FilePath $openCodeNative -ArgumentList @("run", "--model", $Model, "--format", "json", $markerPrompt) -WorkingDirectory $RepoPath -TimeoutSeconds $ProbeTimeoutSeconds
     if ($providerProbe.timedOut) {
         throw "DeepSeek provider probe timed out after $ProbeTimeoutSeconds seconds; GNHF was not started."
     }
@@ -178,6 +188,13 @@ try {
         throw "DeepSeek provider probe failed; GNHF was not started. $($providerProbe.output)"
     }
     $evidence.providerMarker = $marker
+
+    # GNHF spawns `opencode serve` with shell:true. Prove the native exe becomes healthy
+    # before handing control to GNHF, otherwise the sprint stalls in serve backoff.
+    $serveProbe = Test-OpenCodeServeReady -OpenCodeExePath $openCodeNative -WorkingDirectory $RepoPath -TimeoutSeconds $ProbeTimeoutSeconds
+    $evidence.openCodeServePreflightMs = $serveProbe.elapsedMs
+    Write-Host ("OpenCode serve preflight: healthy on port {0} in {1} ms" -f $serveProbe.port, $serveProbe.elapsedMs)
+
     $evidence.status = "provider-ready"
     Save-Evidence
 
