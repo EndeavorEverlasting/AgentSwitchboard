@@ -10,6 +10,8 @@ Use this loop:
 
 `request -> evidence review -> bounded decision -> repo or Git or GitHub mutation -> artifacts -> validation -> report -> next decision`
 
+## Action-commitment rule
+
 Evidence precedes confidence. Preserve existing work before cleanup. Reuse existing contracts before invention. An action claim requires the corresponding mutation, validation, and commit or GitHub evidence; acknowledgment, advice, a plan, summary, or handoff is not a substitute.
 
 A GNHF run used only as a test, smoke check, provider probe, fixture, or contract exercise is limited to 30 seconds wall clock and 30 seconds per iteration, with one iteration by default. A repository-owned wrapper terminates the process tree when the CLI cannot enforce both limits.
