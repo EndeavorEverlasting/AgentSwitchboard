@@ -19,7 +19,7 @@ function Convert-WindowsPathToWsl {
     param([Parameter(Mandatory)][string]$WindowsPath)
 
     $resolved = [IO.Path]::GetFullPath($WindowsPath)
-    if ($resolved -notmatch '^(?<drive>[A-Za-z]):\(?<rest>.*)$') {
+    if ($resolved -notmatch '^(?<drive>[A-Za-z]):\\(?<rest>.*)$') {
         throw "Only drive-letter Windows paths can be mapped to WSL: $resolved"
     }
 
@@ -72,6 +72,10 @@ $distribution = [string]$manifest.distribution
 if ($distribution -notmatch '^[A-Za-z0-9._-]+$') {
     throw "Unsafe WSL distribution name: $distribution"
 }
+$configPath = [string]$manifest.opencode.configPath
+if ($configPath -notmatch '^~/[A-Za-z0-9._/-]+$') {
+    throw "Unsafe or unsupported WSL OpenCode config path: $configPath"
+}
 
 $configurator = Join-Path $PSScriptRoot "scripts\configure-opencode-free-defaults.sh"
 if (-not (Test-Path -LiteralPath $configurator -PathType Leaf)) {
@@ -86,7 +90,7 @@ $command = "printf '%s' '$config64' | base64 -d | bash '$configuratorWsl'$modeAr
 
 Write-Host "Repo-root manifest: $resolvedManifest"
 Write-Host "WSL distribution:   $distribution"
-Write-Host "OpenCode config:    $($manifest.opencode.configPath)"
+Write-Host "OpenCode config:    $configPath"
 Write-Host "Default model:      $($manifest.opencode.defaultModel)"
 Write-Host "Small model:        $($manifest.opencode.smallModel)"
 Write-Host "Mode:               $(if ($PlanOnly) { 'PLAN' } else { 'APPLY' })"
@@ -104,19 +108,22 @@ if ($PlanOnly) {
         status = "plan-only"
         distribution = $distribution
         manifestPath = $resolvedManifest
+        configPath = $configPath
         defaultModel = [string]$manifest.opencode.defaultModel
         smallModel = [string]$manifest.opencode.smallModel
     }
 }
 
-$inspectCommand = @'
+$configSuffix = $configPath.Substring(2)
+$configSuffix64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($configSuffix))
+$inspectCommand = @"
 set -euo pipefail
-config="$HOME/.config/opencode/opencode.json"
-summary="$HOME/.local/state/agent-switchboard/tmux-gnhf/opencode-free-defaults-summary.json"
-test -f "$config"
-test -f "$summary"
-jq -c '{model,small_model,share,whitelist:.provider.opencode.whitelist}' "$config"
-'@
+config="`$HOME/`$(printf '%s' '$configSuffix64' | base64 -d)"
+summary="`$HOME/.local/state/agent-switchboard/tmux-gnhf/opencode-free-defaults-summary.json"
+test -f "`$config"
+test -f "`$summary"
+jq -c '{model,small_model,share,whitelist:.provider.opencode.whitelist}' "`$config"
+"@
 $inspection = Invoke-BoundedProcess -FilePath $WslExe -ArgumentList @(
     "-d", $distribution, "-e", "bash", "-lc", $inspectCommand
 ) -TimeoutSeconds 30
@@ -138,7 +145,7 @@ if (
 [pscustomobject]@{
     status = "installed-and-verified"
     distribution = $distribution
-    configPath = [string]$manifest.opencode.configPath
+    configPath = $configPath
     defaultModel = [string]$installed.model
     smallModel = [string]$installed.small_model
     freeModelIds = $actualModels
