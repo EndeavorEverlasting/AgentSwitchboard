@@ -65,7 +65,8 @@ Assert-True ($controlText.Contains('AGENT_SWITCHBOARD_MODEL_READY')) 'DeepSeek r
 foreach ($required in @(
     "label = 'BlacksmithGuild — GNHF Night Shift'",
     "'pwsh.exe'",
-    "'Start-BlacksmithGuildNightShift.ps1'",
+    'Start-BlacksmithGuildNightShift.ps1',
+    'launcher,',
     "'Auto'",
     "'deepseek'",
     'config.launch_menu'
@@ -81,7 +82,7 @@ foreach ($required in @(
     "'.wezterm.lua.{0}.bak'",
     "Copy-Item -LiteralPath `$sourceControlLauncher",
     "Copy-Item -LiteralPath `$sourceNightLauncher",
-    "installedControlText -notmatch"
+    'installedControlText -notmatch'
 )) {
     Assert-True ($installerText.Contains($required)) "Installer is missing required preservation or readiness text: $required"
 }
