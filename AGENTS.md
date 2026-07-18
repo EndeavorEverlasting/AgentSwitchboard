@@ -4,6 +4,10 @@ This file is the universal repository entry point for coding agents, review agen
 
 AgentSwitchboard is the **canonical policy source** for the EndeavorEverlasting repository family. It publishes the baseline contract, repository-family profiles, and adoption templates. Every child repository remains the source of truth for its own product behavior, safety boundaries, artifacts, validators, and proof promotion.
 
+## Canonical harness doctrine
+
+Read `docs/governance/harness-doctrine.md` and `.ai/harness/harness-doctrine.policy.json` before compiling or executing repository work. They define the commit-required execution loop, required PR or sprint identity, validation order, test-only GNHF time bounds, and the fail-closed DeepSeek usage gate. Task-specific execution rules override generic closeout behavior while remaining subject to higher-priority safety and repository law.
+
 ## Required reading order
 
 Before proposing or changing work, read in this order:
@@ -52,12 +56,13 @@ Do not treat filenames, timestamps, stale handoffs, open PR content, or remember
 Every writing sprint must establish:
 
 - repository and branch;
+- PR or sprint;
 - lane and mission;
 - owned scope;
 - forbidden scope;
 - dependencies and collision risks;
 - expected tracked artifacts;
-- validation commands;
+- validation order when specified;
 - proof ceiling;
 - commit and PR expectation.
 
