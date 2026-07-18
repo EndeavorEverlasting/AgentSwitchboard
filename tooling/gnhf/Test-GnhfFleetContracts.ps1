@@ -179,6 +179,19 @@ if ($null -ne $operatorLauncher) {
     Add-CheckResult -Passed ($operatorLauncher.Contains('Get-Clipboard -Raw')) -Name "operator/external-prompt-guidance" -FailureMessage "external repos do not receive actionable prompt guidance"
     Add-CheckResult -Passed ($operatorLauncher.Contains('Ensure-GnhfFleetDirectory')) -Name "operator/idempotent-runtime-directories" -FailureMessage "operator directories do not use shared idempotent handling"
     Add-CheckResult -Passed (-not $operatorLauncher.Contains('PushBranch = $true')) -Name "operator/no-default-push" -FailureMessage "branch push is enabled by default"
+    Add-CheckResult -Passed ($operatorLauncher.Contains('ValidateSet("opencode", "deepseek"')) -Name "operator/deepseek-alias" -FailureMessage "DeepSeek is not exposed as an operator route"
+    Add-CheckResult -Passed ($operatorLauncher.Contains('$stateAgentName = if ($Agent -eq "deepseek") { "opencode" }')) -Name "operator/deepseek-uses-opencode-readiness" -FailureMessage "DeepSeek readiness is not derived from the OpenCode adapter"
+    Add-CheckResult -Passed ($operatorLauncher.Contains('function Assert-DeepSeekRouteReady')) -Name "operator/deepseek-route-gate" -FailureMessage "DeepSeek has no deterministic runtime gate"
+    Add-CheckResult -Passed ($operatorLauncher.Contains('[version]"1.14.24"')) -Name "operator/opencode-version-floor" -FailureMessage "DeepSeek-compatible OpenCode version is not enforced"
+    Add-CheckResult -Passed ($operatorLauncher.Contains('@("models", "deepseek")')) -Name "operator/deepseek-model-discovery" -FailureMessage "exact DeepSeek models are not enumerated before launch"
+    Add-CheckResult -Passed ($operatorLauncher.Contains('@("run", "--model", $Model, "--format", "json", $spawnPrompt)')) -Name "operator/exact-model-spawn-probe" -FailureMessage "the exact DeepSeek model is not spawned during preflight"
+    Add-CheckResult -Passed ($operatorLauncher.Contains('AGENT_SWITCHBOARD_MODEL_READY')) -Name "operator/positive-spawn-marker" -FailureMessage "spawnability does not require a positive success marker"
+    Add-CheckResult -Passed ($operatorLauncher.Contains('OPENCODE_CONFIG_CONTENT')) -Name "operator/runtime-model-pin" -FailureMessage "the GNHF child does not inherit the selected OpenCode model"
+    Add-CheckResult -Passed ($operatorLauncher.Contains('logs\provider-routes')) -Name "operator/provider-route-evidence" -FailureMessage "provider route evidence is not recorded outside the repository"
+    Add-CheckResult -Passed ($operatorLauncher.Contains('gnhfAgent = "opencode"')) -Name "operator/truthful-gnhf-adapter" -FailureMessage "route evidence does not record OpenCode as the GNHF adapter"
+    Add-CheckResult -Passed ($operatorLauncher.Contains('"-Agent", $(if ($Agent -eq "deepseek") { "opencode" } else { $Agent })')) -Name "operator/deepseek-routes-to-opencode" -FailureMessage "DeepSeek is not translated to the native OpenCode adapter"
+    Add-CheckResult -Passed (-not $operatorLauncher.Contains('"-Agent", "deepseek"')) -Name "operator/no-fictional-gnhf-agent" -FailureMessage "DeepSeek is incorrectly passed as a native GNHF adapter"
+    Add-CheckResult -Passed (-not $operatorLauncher.Contains('DEEPSEEK_API_KEY')) -Name "operator/no-provider-secret-contract" -FailureMessage "provider credentials are embedded in the launcher"
 }
 
 $sprintLauncher = Get-FileText "Start-GnhfSprint.ps1"
@@ -188,6 +201,7 @@ if ($null -ne $sprintLauncher) {
     Add-CheckResult -Passed ($sprintLauncher.Contains('Write-Error -ErrorRecord $_ -ErrorAction Continue')) -Name "sprint/controlled-error-path" -FailureMessage "catch block can terminate before the explicit exit path"
     Add-CheckResult -Passed ($sprintLauncher.Contains('Ensure-GnhfFleetDirectory -Path (Join-Path $InstallRoot "logs")')) -Name "sprint/recreates-log-directory" -FailureMessage "log directory is not recreated"
     Add-CheckResult -Passed ($sprintLauncher.Contains('Resolve-GnhfFleetDirectory -Path $RepoPath')) -Name "sprint/requires-repo-directory" -FailureMessage "repo path type is not validated"
+    Add-CheckResult -Passed (-not $sprintLauncher.Contains('Assert-DeepSeekRouteReady')) -Name "sprint/no-deepseek-router-collision" -FailureMessage "explicit DeepSeek routing leaked into the shared sprint core and collides with the stacked automatic router"
 }
 
 $fleetLauncher = Get-FileText "Start-GnhfFleet.ps1"
