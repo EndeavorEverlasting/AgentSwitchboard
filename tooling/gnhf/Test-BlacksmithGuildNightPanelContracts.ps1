@@ -114,7 +114,7 @@ try {
     Assert-True ([regex]::Matches($firstText, 'BEGIN AgentSwitchboard BlacksmithGuild GNHF Night Panel').Count -eq 1) 'Installer must insert exactly one managed block.'
     Assert-True ($firstText -notmatch '(?<!\r)\n') 'Installer did not preserve CRLF line endings.'
 
-    $backupFiles = @(Get-ChildItem -LiteralPath (Join-Path $installRoot 'panel-install\backups') -File -ErrorAction Stop)
+    $backupFiles = @(Get-ChildItem -LiteralPath (Join-Path $installRoot 'panel-install\backups') -File -Force -ErrorAction Stop)
     Assert-True ($backupFiles.Count -eq 1) 'Installer must create one backup before the first config mutation.'
     Assert-True (Test-Path -LiteralPath (Join-Path $installRoot 'Start-AgentSwitchboard.ps1') -PathType Leaf) 'Installed DeepSeek-aware control launcher is missing.'
     Assert-True (Test-Path -LiteralPath (Join-Path $installRoot 'Start-BlacksmithGuildNightShift.ps1') -PathType Leaf) 'Installed BlacksmithGuild night launcher is missing.'
@@ -124,7 +124,7 @@ try {
     $secondBytes = [IO.File]::ReadAllBytes($configPath)
     $secondText = [Text.UTF8Encoding]::new($true).GetString($secondBytes, 3, $secondBytes.Length - 3)
     Assert-True ([regex]::Matches($secondText, 'BEGIN AgentSwitchboard BlacksmithGuild GNHF Night Panel').Count -eq 1) 'Repeated installation duplicated the managed block.'
-    $backupFilesAfterRepeat = @(Get-ChildItem -LiteralPath (Join-Path $installRoot 'panel-install\backups') -File -ErrorAction Stop)
+    $backupFilesAfterRepeat = @(Get-ChildItem -LiteralPath (Join-Path $installRoot 'panel-install\backups') -File -Force -ErrorAction Stop)
     Assert-True ($backupFilesAfterRepeat.Count -eq 1) 'Repeated installation should not create a second backup when the managed block already exists.'
 }
 finally {
