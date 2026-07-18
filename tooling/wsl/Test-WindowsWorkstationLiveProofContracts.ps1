@@ -28,6 +28,8 @@ $commonPath = Join-Path $RootPath "WindowsWorkstationLiveProof.Common.psm1"
 $sessionPath = Join-Path $RootPath "Invoke-WindowsWorkstationSessionProof.ps1"
 $gnhfPath = Join-Path $RootPath "Invoke-WindowsWorkstationGnhfProof.ps1"
 $installerPath = Join-Path $RootPath "Install-WindowsWorkstationLiveProof.ps1"
+$freeInstallerPath = Join-Path $RootPath "Set-OpenCodeFreeDefaults.ps1"
+$freeConfiguratorPath = Join-Path $RootPath "scripts\configure-opencode-free-defaults.sh"
 $validatorPath = Join-Path $RootPath "Test-WindowsWorkstationLiveProofContracts.ps1"
 $manifestPath = if ($InstalledMode) {
     Join-Path $RootPath "tmux-gnhf-workstation.json"
@@ -43,13 +45,15 @@ else {
     Join-Path ([IO.Path]::GetFullPath((Join-Path $RootPath "..\.."))) "Run-WindowsWorkstationLiveProof.cmd"
 }
 
-$required = @($proofPath, $commonPath, $sessionPath, $gnhfPath, $validatorPath, $manifestPath, $schemaPath, $cmdPath)
+$required = @($proofPath, $commonPath, $sessionPath, $gnhfPath, $freeInstallerPath, $freeConfiguratorPath, $validatorPath, $manifestPath, $schemaPath, $cmdPath)
 if (-not $InstalledMode) { $required += $installerPath }
 foreach ($path in $required) {
     Test-Contract (Test-Path -LiteralPath $path -PathType Leaf) "required/$([IO.Path]::GetFileName($path))"
 }
 
-foreach ($path in @($proofPath, $commonPath, $sessionPath, $gnhfPath, $validatorPath) + $(if (-not $InstalledMode) { @($installerPath) } else { @() })) {
+$parsePaths = @($proofPath, $commonPath, $sessionPath, $gnhfPath, $freeInstallerPath, $validatorPath)
+if (-not $InstalledMode) { $parsePaths += $installerPath }
+foreach ($path in $parsePaths) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { continue }
     $tokens = $null
     $errors = $null
@@ -62,6 +66,13 @@ try {
     Test-Contract ($manifest.schemaVersion -eq 1) "manifest/schema"
     Test-Contract ([string]$manifest.distribution -match '^[A-Za-z0-9._-]+$') "manifest/distribution"
     Test-Contract ([string]$manifest.workspace.sessionName -match '^[A-Za-z0-9_-]+$') "manifest/session"
+    Test-Contract ([bool]$manifest.opencode.enabled) "manifest/opencode-enabled"
+    Test-Contract ([string]$manifest.opencode.configPath -eq '~/.config/opencode/opencode.json') "manifest/opencode-global-path"
+    Test-Contract ([string]$manifest.opencode.defaultModel -eq 'opencode/deepseek-v4-flash-free') "manifest/opencode-free-default"
+    Test-Contract ([string]$manifest.opencode.smallModel -eq 'opencode/deepseek-v4-flash-free') "manifest/opencode-free-small-model"
+    Test-Contract ([string]$manifest.opencode.share -eq 'disabled') "manifest/opencode-sharing-disabled"
+    Test-Contract ([bool]$manifest.opencode.restrictZenToFreeModels) "manifest/opencode-free-whitelist-enabled"
+    Test-Contract (-not ((@($manifest.opencode.freeModelIds) -join ' ') -match 'deepseek-v4-pro')) "manifest/no-paid-v4-pro"
 }
 catch {
     Test-Contract $false "manifest/json" $_.Exception.Message
@@ -95,10 +106,14 @@ if ((Test-Path -LiteralPath $proofPath -PathType Leaf) -and (Test-Path -LiteralP
         'command -v git && command -v gnhf && command -v opencode',
         'opencode auth list',
         'opencode models --refresh',
-        'deepseek/deepseek-v4-pro',
-        'WSL OpenCode did not report authenticated DeepSeek credentials',
+        'Resolve-ProofOpenCodeModel',
+        'opencode/deepseek-v4-flash-free',
+        'No verified free OpenCode model was reported',
         'OPENCODE_CONFIG_CONTENT',
-        "share='disabled'",
+        "share = 'disabled'",
+        'provider.opencode',
+        'whitelist',
+        'CostClass',
         'GNHF_TELEMETRY=0',
         '--worktree',
         '--max-iterations',
@@ -116,6 +131,8 @@ if ((Test-Path -LiteralPath $proofPath -PathType Leaf) -and (Test-Path -LiteralP
         'readyForSysAdminSuiteTandem',
         'no pixel-level GUI rendering claim'
     )) { Test-Contract ($runtime.Contains($token)) "runtime/token/$token" }
+    Test-Contract (-not $runtime.Contains('Resolve-ProofDeepSeekModel')) 'runtime/no-paid-first-resolver'
+    Test-Contract (-not $runtime.Contains('deepseek/deepseek-v4-pro')) 'runtime/no-paid-v4-pro-default'
     Test-Contract (-not $runtime.Contains('Read-Host')) 'runtime/no-operator-attestation'
     Test-Contract (-not $runtime.Contains('System.Windows.Forms.SendKeys')) 'runtime/no-focus-sendkeys'
     Test-Contract (-not $runtime.Contains('--push')) 'runtime/no-push'
@@ -126,6 +143,37 @@ if ((Test-Path -LiteralPath $proofPath -PathType Leaf) -and (Test-Path -LiteralP
     Test-Contract ($runtime.Contains('$runtime.commandAckObserved -and $runtime.behaviorObserved')) 'runtime/full-live-requires-behavior'
     Test-Contract ($runtime.Contains('Stop-Process -Id $proofPid -Force')) 'runtime/proof-wezterm-cleanup'
     Test-Contract ($runtime.Contains('failureReason=$failureReason')) 'runtime/failure-capture'
+}
+
+if (Test-Path -LiteralPath $freeInstallerPath -PathType Leaf) {
+    $freeInstaller = Get-Content -LiteralPath $freeInstallerPath -Raw
+    foreach ($token in @(
+        'tmux-gnhf-workstation.example.json',
+        'configure-opencode-free-defaults.sh',
+        '$process.Kill($true)',
+        'Installed OpenCode configuration does not match the manifest',
+        'paidDefaultAllowed = $false'
+    )) {
+        Test-Contract ($freeInstaller.Contains($token)) "free-installer/token/$token"
+    }
+    Test-Contract (-not $freeInstaller.Contains('deepseek/deepseek-v4-pro')) 'free-installer/no-paid-default'
+}
+
+if (Test-Path -LiteralPath $freeConfiguratorPath -PathType Leaf) {
+    $freeConfigurator = Get-Content -LiteralPath $freeConfiguratorPath -Raw
+    foreach ($token in @(
+        '~/.config/opencode/opencode.json',
+        '.model = $model',
+        '.small_model = $smallModel',
+        '.provider.opencode.whitelist = $freeModels',
+        'chmod 0600',
+        'credentialsChanged: false'
+    )) {
+        Test-Contract ($freeConfigurator.Contains($token)) "free-configurator/token/$token"
+    }
+    Test-Contract (-not $freeConfigurator.Contains('deepseek/deepseek-v4-pro')) 'free-configurator/no-paid-default'
+    Test-Contract (-not $freeConfigurator.Contains('api_key')) 'free-configurator/no-api-key'
+    Test-Contract (-not $freeConfigurator.Contains('access_token')) 'free-configurator/no-access-token'
 }
 
 if (-not $InstalledMode -and (Test-Path -LiteralPath $installerPath -PathType Leaf)) {
@@ -169,7 +217,7 @@ if (Test-Path -LiteralPath $cmdPath -PathType Leaf) {
     Test-Contract ($cmd.Contains("pause >nul")) "cmd/failure-visible"
 }
 
-$scanPaths = @($proofPath, $commonPath, $sessionPath, $gnhfPath, $manifestPath, $schemaPath, $cmdPath)
+$scanPaths = @($proofPath, $commonPath, $sessionPath, $gnhfPath, $freeInstallerPath, $freeConfiguratorPath, $manifestPath, $schemaPath, $cmdPath)
 if (-not $InstalledMode) { $scanPaths += $installerPath }
 $allText = @()
 foreach ($path in $scanPaths) {
