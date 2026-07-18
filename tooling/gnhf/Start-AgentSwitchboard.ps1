@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$RepoPath = (Get-Location).Path,
-    [ValidateSet("opencode", "goose", "agy", "copilot", "hermes")]
+    [ValidateSet("opencode", "deepseek", "goose", "agy", "copilot", "hermes")]
     [string]$Agent = "opencode",
     [string]$PromptPath,
     [string]$Prompt,
@@ -11,6 +11,10 @@ param(
     [ValidateRange(1, 1000000000)]
     [int]$MaxTokens = 250000,
     [string]$StopWhen = "The bounded sprint is committed in the isolated worktree, targeted validation passes, and no unrelated files changed.",
+    [ValidatePattern('^deepseek/[^\s/]+$')]
+    [string]$DeepSeekModel = "deepseek/deepseek-v4-pro",
+    [ValidateRange(5, 120)]
+    [int]$ProbeTimeoutSeconds = 20,
     [string]$InstallRoot = "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet",
     [switch]$Bootstrap,
     [switch]$InstallOpenCodeAndCopilot,
@@ -37,8 +41,9 @@ function Show-AgentReadiness {
     param([Parameter(Mandatory)]$State)
 
     Write-Host "Agent readiness:" -ForegroundColor Cyan
-    foreach ($agentName in @("opencode", "goose", "agy", "copilot", "hermes")) {
-        $property = $State.agents.PSObject.Properties[$agentName]
+    foreach ($agentName in @("opencode", "deepseek", "goose", "agy", "copilot", "hermes")) {
+        $stateName = if ($agentName -eq "deepseek") { "opencode" } else { $agentName }
+        $property = $State.agents.PSObject.Properties[$stateName]
         if (-not $property) {
             Write-Host ("  {0,-9} UNKNOWN  no state record" -f $agentName) -ForegroundColor Yellow
             continue
@@ -47,7 +52,16 @@ function Show-AgentReadiness {
         $record = $property.Value
         $status = if ($record.available) { "READY" } else { "BLOCKED" }
         $color = if ($record.available) { "Green" } else { "Yellow" }
-        Write-Host ("  {0,-9} {1,-7} {2}" -f $agentName, $status, $record.evidence) -ForegroundColor $color
+        $evidence = if ($agentName -eq "deepseek" -and $record.available) {
+            "OpenCode adapter is ready; exact DeepSeek provider/model authentication is probed at launch."
+        }
+        elseif ($agentName -eq "deepseek") {
+            "DeepSeek route is blocked because OpenCode is not ready. $($record.evidence)"
+        }
+        else {
+            [string]$record.evidence
+        }
+        Write-Host ("  {0,-9} {1,-7} {2}" -f $agentName, $status, $evidence) -ForegroundColor $color
     }
 }
 
@@ -127,7 +141,8 @@ if ($ListAgents) {
     return
 }
 
-$agentProperty = $state.agents.PSObject.Properties[$Agent]
+$stateAgentName = if ($Agent -eq "deepseek") { "opencode" } else { $Agent }
+$agentProperty = $state.agents.PSObject.Properties[$stateAgentName]
 if (-not $agentProperty) {
     throw "Agent '$Agent' has no adapter record in $statePath. Rerun with -Bootstrap -ListAgents to refresh detection."
 }
@@ -139,6 +154,7 @@ if (-not $agentRecord.available) {
 
 $defaultPromptByAgent = @{
     opencode = "opencode-implementation.md"
+    deepseek = "opencode-implementation.md"
     goose = "goose-validation.md"
     agy = "agy-architecture.md"
     copilot = "copilot-tests.md"
@@ -181,7 +197,8 @@ if (-not $Name) {
     $Name = "$repoName-$Agent"
 }
 
-$sprintLauncher = Resolve-GnhfFleetFile -Path (Join-Path $InstallRoot "Start-GnhfSprint.ps1") -Description "bounded sprint launcher"
+$launcherName = if ($Agent -eq "deepseek") { "Start-DeepSeekGnhfSprint.ps1" } else { "Start-GnhfSprint.ps1" }
+$sprintLauncher = Resolve-GnhfFleetFile -Path (Join-Path $InstallRoot $launcherName) -Description "bounded sprint launcher"
 $arguments = [System.Collections.Generic.List[string]]::new()
 foreach ($argument in @(
     "-NoLogo",
@@ -189,7 +206,6 @@ foreach ($argument in @(
     "-ExecutionPolicy", "Bypass",
     "-File", $sprintLauncher,
     "-RepoPath", $RepoPath,
-    "-Agent", $Agent,
     "-PromptPath", $PromptPath,
     "-Name", $Name,
     "-MaxIterations", [string]$MaxIterations,
@@ -198,6 +214,18 @@ foreach ($argument in @(
 )) {
     [void]$arguments.Add($argument)
 }
+if ($Agent -eq "deepseek") {
+    foreach ($argument in @(
+        "-DeepSeekModel", $DeepSeekModel,
+        "-ProbeTimeoutSeconds", [string]$ProbeTimeoutSeconds
+    )) {
+        [void]$arguments.Add($argument)
+    }
+}
+else {
+    [void]$arguments.Add("-Agent")
+    [void]$arguments.Add($Agent)
+}
 if ($PushBranch) {
     [void]$arguments.Add("-PushBranch")
 }
@@ -205,6 +233,10 @@ if ($PushBranch) {
 Write-Section "Launch coding sprint"
 Write-Host "Repo:       $RepoPath"
 Write-Host "Agent:      $Agent"
+if ($Agent -eq "deepseek") {
+    Write-Host "Provider:   DeepSeek through OpenCode"
+    Write-Host "Model:      $DeepSeekModel"
+}
 Write-Host "Prompt:     $PromptPath"
 Write-Host "Iterations: $MaxIterations"
 Write-Host "Token cap:  $MaxTokens"
