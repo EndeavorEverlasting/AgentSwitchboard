@@ -3,6 +3,7 @@ param(
     [string]$RepoPath = "$env:USERPROFILE\Desktop\dev\Mods\Bannerlord\BlacksmithGuild",
     [string]$WezTermConfigPath = "$env:USERPROFILE\.wezterm.lua",
     [string]$InstallRoot = "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet",
+    [string]$ProviderInstallerPath = (Join-Path $PSScriptRoot 'Install-ProviderRoutedGnhf.ps1'),
     [switch]$Apply
 )
 
@@ -80,10 +81,11 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
 $RepoPath = [IO.Path]::GetFullPath($RepoPath)
 $WezTermConfigPath = [IO.Path]::GetFullPath($WezTermConfigPath)
 $InstallRoot = [IO.Path]::GetFullPath($InstallRoot)
+$ProviderInstallerPath = [IO.Path]::GetFullPath($ProviderInstallerPath)
 
 $sourceControlLauncher = Join-Path $PSScriptRoot 'Start-AgentSwitchboard.ps1'
 $sourceNightLauncher = Join-Path $PSScriptRoot 'Start-BlacksmithGuildNightShift.ps1'
-$sourceProviderInstaller = Join-Path $PSScriptRoot 'Install-ProviderRoutedGnhf.ps1'
+$sourceProviderInstaller = $ProviderInstallerPath
 $sourceInclude = Join-Path $PSScriptRoot 'templates\wezterm-blacksmithguild-night.lua'
 $destinationControlLauncher = Join-Path $InstallRoot 'Start-AgentSwitchboard.ps1'
 $destinationNightLauncher = Join-Path $InstallRoot 'Start-BlacksmithGuildNightShift.ps1'
@@ -102,6 +104,7 @@ $plan = [ordered]@{
     apply = [bool]$Apply
     repoPath = $RepoPath
     wezTermConfigPath = $WezTermConfigPath
+    providerInstallerPath = $sourceProviderInstaller
     installedControlLauncher = $destinationControlLauncher
     installedNightLauncher = $destinationNightLauncher
     installedProviderLauncher = $destinationProviderLauncher
@@ -149,8 +152,9 @@ if (-not $Apply) {
 New-Item -ItemType Directory -Path $InstallRoot -Force | Out-Null
 New-Item -ItemType Directory -Path (Split-Path -Parent $WezTermConfigPath) -Force | Out-Null
 
-# Install or repair the shared provider route first. This pins a model-aware GNHF
-# runtime and installs shell-correct OpenCode dispatch plus commit-delivery proof.
+# Install or repair the shared provider route first. The default dependency pins a
+# model-aware GNHF runtime and installs shell-correct OpenCode dispatch plus
+# commit-delivery proof. Tests may inject a deterministic fixture installer.
 & $sourceProviderInstaller -Apply -InstallRoot $InstallRoot -RequiredGnhfVersion '0.1.42'
 if ($LASTEXITCODE -ne 0) {
     throw "Provider-routed GNHF installation failed with exit code $LASTEXITCODE."
