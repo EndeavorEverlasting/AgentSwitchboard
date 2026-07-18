@@ -59,9 +59,29 @@ WezTerm -> pwsh -> Start-BlacksmithGuildNightShift.ps1 -Stage Compile
 
 Compile is the bounded smoke profile (2 iterations / 180k tokens) from the BlacksmithGuild night-shift contract.
 
+## Observed 2026-07-18 live cert
+
+| Surface | Result |
+| --- | --- |
+| Model matrix | 4/4 DeepSeek models ready (`v4-pro`, `v4-flash`, `chat`, `reasoner`) |
+| Windows dispatch | `pwsh-file` for OpenCode `.ps1` shim during matrix probes |
+| WezTerm Compile launch | Opened; provider marker observed; GNHF sprint invoked |
+| Compile delivery | **Blocked exit 79** — GNHF reported success with zero commits ahead of `6b61877` |
+| Delivery gate | Harness correctly refused to treat process exit zero as proof |
+
+Tracked sanitized matrix: `tooling/gnhf/fixtures/live-cert/model-route-matrix.observed.json`.
+
+Operator-local evidence:
+
+```text
+%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\logs\live-cert\
+%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\logs\provider-routes\*-blacksmithguild-night-compile.json
+```
+
 ## Proof ceiling
 
 - Model matrix proves authenticated marker response and Windows shim dispatch.
 - WezTerm launch proves the operator-visible control surface started.
-- Blacksmith delivery still requires a commit ahead of the base, queue/report artifacts, and Blacksmith validation.
+- Fail-closed exit 79 proves the commit-ahead-of-base delivery gate under live conditions.
+- Blacksmith Compile still does **not** prove a committed queue/report until a later sprint repairs that objective or runtime.
 - Excel for Web opening of the V39 workbook remains a separate field gate.
