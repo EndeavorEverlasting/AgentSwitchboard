@@ -15,7 +15,10 @@ Pinned contract version: `REPLACE_CONTRACT_VERSION`
 4. tool adapter such as `CLAUDE.md`;
 5. `SKILLS.md`, `CAPABILITIES.md`, and `TRIGGERS.md`;
 6. selected `.ai/skills/*/SKILL.md`;
-7. current plans, tests, validators, PRs, and Git history.
+7. `docs/governance/harness-doctrine.md` and `.ai/harness/harness-doctrine.policy.json`;
+8. current plans, tests, validators, PRs, and Git history.
+
+The inherited harness doctrine requires the commit-backed execution loop, repository and branch or worktree, PR or sprint, lane, owned and forbidden scope, expected artifacts, and validation order. It also enforces 30-second test-only GNHF wall-clock and iteration limits and a fail-closed DeepSeek standard-or-discounted usage gate. Task-specific execution rules override generic closeout behavior while remaining subject to higher-priority safety and repository law.
 
 ## Entry points
 
@@ -33,4 +36,4 @@ Pinned contract version: `REPLACE_CONTRACT_VERSION`
 
 ## Delivery contract
 
-Use isolated branches and worktrees for concurrent writers. Reuse healthy existing tools and directories. Make bounded tracked changes, run repository-native checks, commit, push when authorized, and report exact proof and gaps.
+Use isolated branches and worktrees for concurrent writers. Reuse healthy existing tools and directories. Make bounded tracked changes, run repository-native checks, commit, push when authorized, and report exact proof and gaps. A request that claims installation, setup, build, execution, repair, configuration, upgrade, deployment, merge, or release is invalid when it permits acknowledgment or plan substitution instead of the corresponding mutation and proof.
