@@ -1,0 +1,88 @@
+name: prompt-registry
+
+on:
+  pull_request:
+    paths:
+      - '.ai/prompt-kits/**'
+      - '.ai/skills/prompt-kit-selection/**'
+      - 'Select-AgentSwitchboardPrompt.cmd'
+      - 'tooling/prompts/**'
+      - 'tests/test_prompt_registry_snapshot.py'
+      - 'docs/prompt-kits/**'
+      - 'SKILLS.md'
+      - 'CAPABILITIES.md'
+      - 'TRIGGERS.md'
+      - '.ai/agent-contract.json'
+      - 'scripts/Test-AgentDocumentationContract.ps1'
+      - 'CODEBASE_MAP.md'
+      - '.github/workflows/prompt-registry.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.ai/prompt-kits/**'
+      - '.ai/skills/prompt-kit-selection/**'
+      - 'Select-AgentSwitchboardPrompt.cmd'
+      - 'tooling/prompts/**'
+      - 'tests/test_prompt_registry_snapshot.py'
+      - 'docs/prompt-kits/**'
+      - 'SKILLS.md'
+      - 'CAPABILITIES.md'
+      - 'TRIGGERS.md'
+      - '.ai/agent-contract.json'
+      - 'scripts/Test-AgentDocumentationContract.ps1'
+      - 'CODEBASE_MAP.md'
+      - '.github/workflows/prompt-registry.yml'
+
+jobs:
+  linux-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate prompt snapshot
+        run: python tests/test_prompt_registry_snapshot.py
+      - name: Parse JSON
+        run: |
+          python -m json.tool .ai/prompt-kits/v38/source.json >/dev/null
+      - name: Repository hygiene
+        run: |
+          git diff --check
+          test -z "$(git status --porcelain)"
+
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse PowerShell
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+          [void][Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path '.\tooling\prompts\Select-AgentSwitchboardPrompt.ps1'),
+            [ref]$tokens,
+            [ref]$parseErrors
+          )
+          if ($parseErrors.Count -gt 0) { throw ($parseErrors | Out-String) }
+
+          $tokens = $null
+          $parseErrors = $null
+          [void][Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path '.\tooling\prompts\Test-AgentSwitchboardPromptRegistry.ps1'),
+            [ref]$tokens,
+            [ref]$parseErrors
+          )
+          if ($parseErrors.Count -gt 0) { throw ($parseErrors | Out-String) }
+      - name: Prompt registry contracts
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File .\tooling\prompts\Test-AgentSwitchboardPromptRegistry.ps1
+      - name: Agent documentation contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File .\scripts\Test-AgentDocumentationContract.ps1
+      - name: Final checkout hygiene
+        shell: pwsh
+        run: |
+          git diff --check
+          if (git status --porcelain) { throw 'Workflow changed the checkout.' }
