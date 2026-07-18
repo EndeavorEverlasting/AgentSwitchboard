@@ -203,7 +203,7 @@ $plan | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $evidenceR
 
 Write-Host "`nInstalled. In WezTerm, open the launch menu and select:" -ForegroundColor Green
 Write-Host '  BlacksmithGuild — GNHF Night Shift' -ForegroundColor Green
-Write-Host 'The Auto stage starts at queue compilation when no night queue exists, repair when ready items exist, and closeout when none remain.' -ForegroundColor Cyan
+Write-Host 'The Auto stage starts the full queue-checkpoint, bounded-repair, and closeout chain in one isolated GNHF worktree when no committed night queue exists.' -ForegroundColor Cyan
 if ($plan.backupPath) {
     Write-Host "WezTerm config backup: $($plan.backupPath)" -ForegroundColor Cyan
 }
