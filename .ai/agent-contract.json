@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contractVersion": "1.1.0",
+  "contractVersion": "1.2.0",
   "canonicalRepository": "EndeavorEverlasting/AgentSwitchboard",
   "canonicalRefPolicy": "merged-default-branch",
   "entrypoints": {
@@ -65,6 +65,7 @@
     "repo-intake",
     "bounded-sprint",
     "gnhf-prompt-compilation",
+    "prompt-kit-selection",
     "evidence-validation",
     "pr-integration",
     "runtime-proof"
