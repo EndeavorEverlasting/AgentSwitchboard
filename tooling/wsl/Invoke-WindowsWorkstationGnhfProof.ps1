@@ -10,8 +10,14 @@ function Invoke-WindowsWorkstationGnhfProof {
     if ($toolCheck.ExitCode -ne 0) { throw "WSL GNHF toolchain is incomplete. $($toolCheck.Output)" }
     Add-ProofEvent -Events $Events -Step 'wsl-toolchain' -State PASS -Message 'git_gnhf_and_opencode_acknowledged'
 
-    $model = Resolve-ProofDeepSeekModel -WslExe $WslExe -Distribution $Distribution -RequestedModel $RequestedModel
-    Add-ProofEvent -Events $Events -Step 'model-selection' -State PASS -Message 'exact_wsl_opencode_model_selected' -Data @{model=$model.ModelId;modelCount=$model.ModelCount;deepSeekAuthReported=$true}
+    $model = Resolve-ProofOpenCodeModel -WslExe $WslExe -Distribution $Distribution -RequestedModel $RequestedModel
+    Add-ProofEvent -Events $Events -Step 'model-selection' -State PASS -Message 'exact_wsl_opencode_model_selected' -Data @{
+        model = $model.ModelId
+        modelCount = $model.ModelCount
+        provider = $model.ProviderId
+        providerAuthReported = $model.ProviderAuthReported
+        costClass = $model.CostClass
+    }
 
     $repoPath = Join-Path $ArtifactRoot 'disposable-repo'; $promptPath = Join-Path $ArtifactRoot 'gnhf-objective.md'
     $runnerPath = Join-Path $ArtifactRoot 'run-gnhf-proof.sh'; $logPath = Join-Path $ArtifactRoot 'gnhf-runtime.log'
@@ -44,9 +50,23 @@ Stop only after git status is clean and the file exists in HEAD.
 "@ | Set-Content -LiteralPath $promptPath -Encoding utf8NoBOM
 
     $runtimeConfig = [ordered]@{
-        '$schema'='https://opencode.ai/config.json'; model=$model.ModelId; small_model=$model.ModelId; share='disabled'
-        provider=[ordered]@{deepseek=[ordered]@{options=[ordered]@{timeout=600000;chunkTimeout=60000}}}
+        '$schema' = 'https://opencode.ai/config.json'
+        model = $model.ModelId
+        small_model = $model.ModelId
+        share = 'disabled'
     }
+    $selectedProviderModelId = ($model.ModelId -split '/', 2)[1]
+    if ($model.ProviderId -eq 'opencode') {
+        $runtimeConfig.provider = [ordered]@{
+            opencode = [ordered]@{ whitelist = @($selectedProviderModelId) }
+        }
+    }
+    elseif ($model.ProviderId -eq 'deepseek') {
+        $runtimeConfig.provider = [ordered]@{
+            deepseek = [ordered]@{ options = [ordered]@{ timeout = 600000; chunkTimeout = 60000 } }
+        }
+    }
+
     $config64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(($runtimeConfig | ConvertTo-Json -Depth 10 -Compress)))
     $stopWhen = "agent-runtime-proof.json is committed with nonce $Nonce, git status is clean, and no other file changed."
     @"
@@ -71,7 +91,7 @@ exec bash --noprofile --norc
     $target = ConvertTo-ProofBashSingleQuoted "${SessionName}:"
     $window = Invoke-ProofWslBash -WslExe $WslExe -Distribution $Distribution -Command "tmux new-window -d -P -F '#{window_id}' -t $target -n gnhf-proof $(ConvertTo-ProofBashSingleQuoted "bash $(ConvertTo-ProofBashSingleQuoted $wslRunner)")" -TimeoutSeconds 30
     if ($window.ExitCode -ne 0 -or -not $window.Stdout) { throw "Unable to launch GNHF proof window. $($window.Output)" }
-    Add-ProofEvent -Events $Events -Step 'gnhf-trigger' -State PASS -Message 'bounded_gnhf_command_issued' -Data @{windowId=$window.Stdout.Trim();model=$model.ModelId}
+    Add-ProofEvent -Events $Events -Step 'gnhf-trigger' -State PASS -Message 'bounded_gnhf_command_issued' -Data @{windowId=$window.Stdout.Trim();model=$model.ModelId;costClass=$model.CostClass}
 
     if (-not (Wait-ProofCondition -TimeoutSeconds 60 -Condition { (Test-Path -LiteralPath $logPath) -and ((Get-Content -LiteralPath $logPath -Raw) -match "AGENTSWITCHBOARD_GNHF_STARTED:$Nonce") })) {
         throw 'The GNHF command was issued but its start ACK was not observed.'
@@ -122,6 +142,6 @@ exec bash --noprofile --norc
 
     $baseStatus = Invoke-ProofWslBash -WslExe $WslExe -Distribution $Distribution -Command "git -C $quotedRepo status --porcelain=v1" -TimeoutSeconds 30
     if ($baseStatus.ExitCode -ne 0 -or $baseStatus.Stdout) { throw 'Disposable base repository was mutated by the GNHF proof.' }
-    Add-ProofEvent -Events $Events -Step 'behavior-observed' -State PASS -Message 'gnhf_agent_created_and_committed_exact_proof_artifact' -Data @{agent='opencode';model=$model.ModelId;branch=$proofBranch;commit=$proofCommit;proofFile='agent-runtime-proof.json';proofNonce=$Nonce;proofWorktreePath=$proofWorktreePath;proofWorktreeClean=$true}
-    [pscustomobject]@{ Agent='opencode';Model=$model.ModelId;Branch=$proofBranch;Commit=$proofCommit;LogPath=$logPath;RepositoryPath=$repoPath;WorktreePath=$proofWorktreePath }
+    Add-ProofEvent -Events $Events -Step 'behavior-observed' -State PASS -Message 'gnhf_agent_created_and_committed_exact_proof_artifact' -Data @{agent='opencode';model=$model.ModelId;costClass=$model.CostClass;branch=$proofBranch;commit=$proofCommit;proofFile='agent-runtime-proof.json';proofNonce=$Nonce;proofWorktreePath=$proofWorktreePath;proofWorktreeClean=$true}
+    [pscustomobject]@{ Agent='opencode';Model=$model.ModelId;CostClass=$model.CostClass;Branch=$proofBranch;Commit=$proofCommit;LogPath=$logPath;RepositoryPath=$repoPath;WorktreePath=$proofWorktreePath }
 }
