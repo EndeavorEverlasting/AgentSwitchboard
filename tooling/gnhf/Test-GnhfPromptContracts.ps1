@@ -55,6 +55,7 @@ $modulePath = Join-Path $PSScriptRoot "GnhfPromptContracts.psm1"
 $runtimePath = Join-Path $PSScriptRoot "Invoke-ChatGPTDesktopGnhfSprint.ps1"
 $cursorRuntimePath = Join-Path $PSScriptRoot "Invoke-CursorGnhfSprint.ps1"
 $queueContractPath = Join-Path $PSScriptRoot "Test-GnhfPromptQueueContracts.ps1"
+$awarenessContractPath = Join-Path $PSScriptRoot "Test-GnhfAwarenessTriggerContracts.ps1"
 $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $rootCmdPath = Join-Path $repoRoot "Run-ChatGPTDesktopGnhfSprint.cmd"
 $cursorRootCmdPath = Join-Path $repoRoot "Run-CursorGnhfSprint.cmd"
@@ -182,6 +183,8 @@ Assert-Contract ($allFixtureText -notmatch '(?i)C:\\Users\\[^\\]+') "Fixtures mu
 Assert-Contract ($allFixtureText -notmatch '(?i)(gh[pousr]_[A-Za-z0-9]{12,}|AKIA[0-9A-Z]{12,}|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY)') "Fixtures must not contain credential material."
 
 Assert-Contract (Test-Path -LiteralPath $queueContractPath -PathType Leaf) "Prompt queue contract validator is missing."
+Assert-Contract (Test-Path -LiteralPath $awarenessContractPath -PathType Leaf) "Awareness trigger contract validator is missing."
 & $queueContractPath -Stage All
+& $awarenessContractPath
 
-Write-Host "PASS: AgentSwitchboard GNHF prompt contract schemas, classification, fixtures, queue orchestration, and rejection cases"
+Write-Host "PASS: AgentSwitchboard GNHF prompt, queue, and pre-awareness trigger contracts"
