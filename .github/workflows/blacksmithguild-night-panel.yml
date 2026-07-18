@@ -63,6 +63,9 @@ jobs:
       - name: Check diff hygiene
         shell: pwsh
         run: |
+          if (Test-Path -LiteralPath './artifacts/night-panel') {
+            Remove-Item -LiteralPath './artifacts/night-panel' -Recurse -Force
+          }
           git diff --check
           $dirty = @(git status --porcelain=v1)
           if ($dirty.Count -gt 0) { throw "Validation changed the checkout: $($dirty -join '; ')" }
