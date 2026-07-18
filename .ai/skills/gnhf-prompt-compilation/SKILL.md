@@ -1,6 +1,6 @@
 ---
 id: gnhf-prompt-compilation
-version: 1.1.1
+version: 1.2.0
 status: canonical
 ---
 
@@ -18,9 +18,10 @@ This literal trigger takes precedence over generic prompt writing. The requested
 - one bounded sprint objective;
 - execution domain and shell, normally PowerShell 7 on Windows;
 - reviewed agent and model route;
-- run profile: `SMOKE`, `NAP`, `OVERNIGHT`, or `EXTENDED`;
+- run profile: `TEST`, `SMOKE`, `NAP`, `OVERNIGHT`, or `EXTENDED`;
 - exactly one Git execution mode;
 - iteration and token caps;
+- wall-clock and per-iteration time caps when the run is test-only;
 - positive, observable stop condition;
 - owned scope, forbidden scope, deliverable, validation, and proof ceiling.
 
@@ -82,19 +83,35 @@ $Launcher = Join-Path $env:LOCALAPPDATA "AgentSwitchboard\GnhfFleet\Start-Provid
   -StopWhen "One bounded repair or exact blocker report is committed and the generated worktree is clean."
 ```
 
-The reviewed provider launcher must verify Windows command-shim dispatch, GNHF model support, the exact model response, and local commit delivery. A failed preflight stops before GNHF; it must not consume three identical GNHF failures.
+The reviewed provider launcher must verify Windows command-shim dispatch, runtime capability, the exact model response, and local commit delivery. A failed preflight stops before GNHF; it must not consume three identical GNHF failures.
+
+## Test-only timing contract
+
+A `TEST`, `SMOKE`, provider probe, fixture, or contract-only GNHF launch must be bounded to **30 seconds wall clock** and **30 seconds per iteration**. Use one iteration by default.
+
+When the installed GNHF CLI cannot enforce both time bounds, the launch artifact must use a repository-owned wrapper that terminates the full process tree at 30 seconds and records timeout evidence. Token and iteration caps do not replace time bounds. A test-only launch that can run longer than 30 seconds is invalid.
+
+## DeepSeek rate-window contract
+
+Before selecting DeepSeek, load the verified operator schedule from `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\deepseek-usage-windows.json` or the repository-reviewed equivalent.
+
+DeepSeek is eligible only during a verified `standard` or `discounted` rate class with an effective multiplier no greater than `1.0`. Block `double-usage`, premium-multiplier, missing, expired, unverified, or stale schedules. **An unknown or stale schedule state blocks DeepSeek.** Do not infer current operating hours from remembered or historical promotions.
+
+The schedule gate controls launch eligibility; it does not perform authentication, read provider credentials, or claim provider availability.
 
 ## Procedure
 
 1. Identify the shell and execution domain.
 2. Resolve and enter the repository before all other logic.
 3. Verify the exact agent or AgentSwitchboard launch form.
-4. Produce one executable launch artifact with bounded controls.
-5. Default to `--worktree` isolation and no push.
-6. Supply one compact runtime objective, not the full source conversation.
-7. Require a tracked local deliverable, normally a commit ahead of the base.
-8. Preserve interrupted worktrees, branches, logs, notes, and review commands.
-9. Return the copy-ready launch artifact directly.
+4. Apply the DeepSeek rate-window gate before a DeepSeek provider probe or sprint.
+5. For test-only work, apply the 30-second wall-clock and per-iteration caps before launch.
+6. Produce one executable launch artifact with bounded controls.
+7. Default to `--worktree` isolation and no push.
+8. Supply one compact runtime objective, not the full source conversation.
+9. Require a tracked local deliverable, normally a commit ahead of the base.
+10. Preserve interrupted worktrees, branches, logs, notes, and review commands.
+11. Return the copy-ready launch artifact directly.
 
 Canonical command shape:
 
@@ -135,7 +152,7 @@ Process exit code zero alone is not delivery proof. Stop text and an uncommitted
 
 - one copy-ready executable launch artifact;
 - one compact runtime objective, embedded or referenced;
-- explicit directory, route, caps, stop condition, deliverable, validation, proof ceiling, and recovery behavior;
+- explicit directory, route, time and usage gates, caps, stop condition, deliverable, validation, proof ceiling, and recovery behavior;
 - a preflight result instead of repository work when the route is blocked.
 
 ## Deterministic validation
@@ -155,6 +172,8 @@ A valid launch artifact must:
 - include no-progress and operational-failure handling;
 - require a tracked deliverable or exact blocker report;
 - include validation and a proof ceiling;
+- enforce 30-second wall-clock and per-iteration limits for test-only runs;
+- reject DeepSeek when the verified rate class is not standard or discounted;
 - disable push, merge, deployment, and live mutation by default;
 - reject a regular AI prompt or prose-only objective masquerading as the launcher.
 
@@ -165,6 +184,8 @@ A valid launch artifact must:
 - No hardcoded workstation username.
 - No inherited-directory assumption.
 - No unlimited command or missing caps.
+- No test-only GNHF run over 30 seconds.
+- No DeepSeek launch during double-usage or unknown schedule state.
 - No default push.
 - No multiple repositories in one process.
 - No fictional DeepSeek GNHF adapter.
@@ -174,4 +195,4 @@ A valid launch artifact must:
 
 ## Stop and escalate
 
-Stop with the smallest exact blocker when the repository, objective, execution domain, or reviewed launch form is missing. Run only preflight when the route is unproven. Preserve evidence when the runtime is blocked.
+Stop with the smallest exact blocker when the repository, objective, execution domain, reviewed launch form, required test timeout, or verified DeepSeek schedule is missing. Run only preflight when the route is unproven. Preserve evidence when the runtime is blocked.
