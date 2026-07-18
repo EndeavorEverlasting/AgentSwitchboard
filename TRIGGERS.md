@@ -20,6 +20,7 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | `repo.dirty-or-conflicted` | unowned changes, conflict markers, detached or unsafe state | preserve/isolate; then `repo-intake` |
 | `sprint.execute` | scoped request with safe owned files | `bounded-sprint` |
 | `gnhf.prompt-request` | explicit “GNHF prompt,” “Good Night, Have Fun prompt,” or “compile this sprint for GNHF” request | `gnhf-prompt-compilation`; output a copy-ready `gnhf` launch command, not generic sprint prose |
+| `prompt.kit-request` | explicit request to browse, select, show, generate, or render an AI Harness Prompt Kit prompt | `prompt-kit-selection`; verify the pinned snapshot and requested execution surface before rendering |
 | `review.findings` | unresolved PR comments or deterministic failures | `evidence-validation` |
 | `validation.requested` | proof gap, skipped checks, contract drift | `evidence-validation` |
 | `integration.requested` | stacked PRs, consumed commits, branch convergence | `pr-integration` |
@@ -39,6 +40,12 @@ Do not route a GNHF prompt request to a sprint map, launch pack, plan-only respo
 
 When the exact agent cannot be proven launchable in the intended execution domain, the selected skill produces the bounded spawnability probe before repository work.
 
+## Prompt-kit routing invariant
+
+The `prompt.kit-request` trigger selects content from the pinned offline registry. It does not authorize execution of that content.
+
+A requested `regular_ai_prompt` may not return a `gnhf_launch_artifact`, and a GNHF artifact request may not return ordinary sprint prose. Selection must fail closed when provenance, hashes, prompt ID, required variables, or execution surface cannot be verified.
+
 ## Trigger payload
 
 A routed workflow should receive:
@@ -52,6 +59,8 @@ A routed workflow should receive:
 - iteration, token, time, and mutation limits;
 - required evidence and completion gate.
 
+Prompt-kit workflows additionally receive kit version, prompt ID or search query, expected execution surface, variable values, and output path when applicable.
+
 ## Automatic stop triggers
 
 Stop or escalate when:
@@ -62,8 +71,9 @@ Stop or escalate when:
 - a deterministic gate exposes a security or data-loss risk;
 - the next step requires merge, deployment, secrets, destructive Git, or live mutation without explicit authority;
 - repeated repair attempts exceed the workflow limit;
-- evidence contradicts the plan.
+- evidence contradicts the plan;
+- the prompt registry or selected prompt fails integrity validation.
 
 ## No implicit authority
 
-The presence of a trigger never authorizes installation, push, merge, release, deployment, target mutation, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.
+The presence of a trigger never authorizes installation, push, merge, release, deployment, target mutation, secret access, prompt execution, or destructive cleanup unless the task and repository contract explicitly allow it.

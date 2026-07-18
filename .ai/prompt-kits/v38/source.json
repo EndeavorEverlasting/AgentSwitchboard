@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "agentswitchboard-prompt-kit-source/v1",
+  "kitVersion": "v38",
+  "sourceRepository": "EndeavorEverlasting/web-excel-repair-triage",
+  "sourceBranch": "feat/v38-machine-readable-prompt-registry",
+  "sourceCommit": "98bf5c6580bcf167f030324dca45c367f80d0a7b",
+  "sourcePullRequest": "https://github.com/EndeavorEverlasting/web-excel-repair-triage/pull/87",
+  "sourceWorkbook": "AI_Harness_Prompt_Kit_v38.xlsx",
+  "sourceWorkbookSha256": "a9fc45b05669afc94e154f53759a723a5bf5827862fb1e38194926cc8ab3ef5a",
+  "registrySchemaVersion": "ai-harness-prompt-registry/v1",
+  "snapshotPath": ".ai/prompt-kits/v38/prompt-registry.v1.json.gz.b64",
+  "snapshotSha256": "3022dd23158986d2546591c1872aca51866328520acaa67615ce605ee49bf3ea",
+  "promptCount": 45,
+  "promptIdRange": "P00-P44",
+  "ownershipBoundary": "Web Excel Repair Triage owns extraction and canonical prompt content. AgentSwitchboard owns offline selection, variable rendering, execution-surface enforcement, and consumer validation."
+}

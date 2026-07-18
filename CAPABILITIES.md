@@ -20,6 +20,8 @@ Agents must not infer `verified` from command presence, prior sessions, document
 | `repository.write` | tracked files can be modified | task-scoped |
 | `command.execute` | local deterministic commands run | task-scoped |
 | `network.read` | public or connected sources can be queried | task-scoped |
+| `prompt.registry.read` | pinned registry and source hashes validate | allowed, read-only |
+| `prompt.render` | exact prompt variables render without unresolved required fields | task-scoped, output only |
 | `dependency.install` | package manager or installer works | explicit setup/repair scope |
 | `git.commit` | commits can be created | allowed for bounded sprint |
 | `git.push` | branch can be pushed | explicit task or repo contract |
@@ -39,6 +41,8 @@ A capability probe must be:
 - recorded with command, result, and limitation;
 - repeated when the environment or credentials may have changed.
 
+For prompt-kit capabilities, verification additionally requires the vendored snapshot SHA, every selected prompt text hash, variable closure, and the regular-AI versus GNHF execution-surface boundary.
+
 ## Authority formula
 
 An action is permitted only when:
@@ -56,6 +60,8 @@ When a capability is missing:
 - record a precise skip or blocker;
 - continue independent safe lanes;
 - never claim success from a fallback that provides lower proof.
+
+Prompt selection must not fall back to remembered text or fetch a newer registry silently when the local snapshot fails integrity validation.
 
 ## Provider and agent separation
 
