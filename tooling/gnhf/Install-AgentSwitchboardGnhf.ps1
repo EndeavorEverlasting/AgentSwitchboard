@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [string]$GnhfRepoPath,
     [string]$DevRoot = "$HOME\Desktop\dev",

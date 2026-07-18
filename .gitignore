@@ -1,0 +1,9 @@
+# Python test and build artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Generated local operational evidence (harness policy: untracked)
+.local/
+*.local/
