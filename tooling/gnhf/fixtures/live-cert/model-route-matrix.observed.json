@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "kind": "agentswitchboard.live-cert.model-route-matrix.fixture",
+  "capturedAt": "2026-07-18T05:23:51.2505877-04:00",
+  "promptKit": "AI_Harness_Prompt_Kit_v39",
+  "relatedPrompts": [
+    "P37",
+    "P45",
+    "P47",
+    "P48",
+    "P49"
+  ],
+  "openCodeDispatchHint": "pwsh-file",
+  "gnhfVersion": "0.1.42",
+  "gnhfCliModelFlag": false,
+  "modelPinAuthority": "opencode-preflight-plus-OPENCODE_CONFIG_CONTENT",
+  "listedDeepSeekModels": [
+    "deepseek/deepseek-chat",
+    "deepseek/deepseek-reasoner",
+    "deepseek/deepseek-v4-flash",
+    "deepseek/deepseek-v4-pro"
+  ],
+  "readyModels": [
+    "deepseek/deepseek-v4-pro",
+    "deepseek/deepseek-v4-flash",
+    "deepseek/deepseek-chat",
+    "deepseek/deepseek-reasoner"
+  ],
+  "recommendedDefault": "deepseek/deepseek-v4-pro",
+  "probed": [
+    {
+      "model": "deepseek/deepseek-v4-pro",
+      "listed": true,
+      "dispatch": "pwsh-file",
+      "exitCode": 0,
+      "timedOut": false,
+      "markerObserved": true,
+      "elapsedMs": 6862,
+      "classification": "ready",
+      "why": "Exact model listed and returned AGENT_SWITCHBOARD_MODEL_READY through Windows-safe dispatch."
+    },
+    {
+      "model": "deepseek/deepseek-v4-flash",
+      "listed": true,
+      "dispatch": "pwsh-file",
+      "exitCode": 0,
+      "timedOut": false,
+      "markerObserved": true,
+      "elapsedMs": 5919,
+      "classification": "ready",
+      "why": "Exact model listed and returned AGENT_SWITCHBOARD_MODEL_READY through Windows-safe dispatch."
+    },
+    {
+      "model": "deepseek/deepseek-chat",
+      "listed": true,
+      "dispatch": "pwsh-file",
+      "exitCode": 0,
+      "timedOut": false,
+      "markerObserved": true,
+      "elapsedMs": 6081,
+      "classification": "ready",
+      "why": "Exact model listed and returned AGENT_SWITCHBOARD_MODEL_READY through Windows-safe dispatch."
+    },
+    {
+      "model": "deepseek/deepseek-reasoner",
+      "listed": true,
+      "dispatch": "pwsh-file",
+      "exitCode": 0,
+      "timedOut": false,
+      "markerObserved": true,
+      "elapsedMs": 6808,
+      "classification": "ready",
+      "why": "Exact model listed and returned AGENT_SWITCHBOARD_MODEL_READY through Windows-safe dispatch."
+    }
+  ],
+  "proofCeiling": "Local authenticated model marker proof and Windows dispatch classification only. Does not prove GNHF mutation, BlacksmithGuild delivery, Excel for Web, or production behavior.",
+  "note": "Sanitized fixture from a live Windows cert. Operator-local paths and raw provider payloads are omitted."
+}

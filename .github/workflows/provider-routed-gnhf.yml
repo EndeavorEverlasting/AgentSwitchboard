@@ -26,6 +26,7 @@ jobs:
         run: |
           Set-Location -LiteralPath $env:GITHUB_WORKSPACE
           pwsh -NoLogo -NoProfile -File .\tooling\gnhf\tests\Test-ProviderRoutedGnhfContracts.ps1
+          pwsh -NoLogo -NoProfile -File .\tooling\gnhf\tests\Test-LiveCertContracts.ps1
 
   linux-static-floor:
     runs-on: ubuntu-latest
@@ -42,6 +43,8 @@ jobs:
             tooling/gnhf/Gnhf.Process.ps1
             tooling/gnhf/Start-ProviderRoutedGnhfSprint.ps1
             tooling/gnhf/Install-ProviderRoutedGnhf.ps1
+            tooling/gnhf/Start-LiveCertModelRouteProof.ps1
+            tooling/gnhf/Start-LiveCertWezTermSprint.ps1
             Repair-ProviderRoutedGnhf.cmd
           )
           ! grep -InE 'C:\\Users\\[^$%{<]' "${runtime_files[@]}"
