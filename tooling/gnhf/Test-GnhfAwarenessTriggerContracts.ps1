@@ -32,8 +32,9 @@ function New-AwarenessFixturePlan {
         "-SkipPullRequestDiscovery"
     )
     Assert-QueueContract ($planRun.ExitCode -eq 0) "Trigger fixture planning failed: $($planRun.Text)"
-    $fixture | Add-Member PlanPath (Join-Path $fixture.OutputRoot "queue-plan.json")
-    $fixture | Add-Member Plan (Get-Content -LiteralPath $fixture.PlanPath -Raw | ConvertFrom-Json -Depth 50)
+    $planPath = Join-Path $fixture.OutputRoot "queue-plan.json"
+    $fixture | Add-Member -NotePropertyName PlanPath -NotePropertyValue $planPath
+    $fixture | Add-Member -NotePropertyName Plan -NotePropertyValue (Get-Content -LiteralPath $planPath -Raw | ConvertFrom-Json -Depth 50)
     return $fixture
 }
 
