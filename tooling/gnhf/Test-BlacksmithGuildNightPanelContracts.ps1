@@ -15,7 +15,8 @@ function Assert-PowerShellParses {
     $errors = $null
     [Management.Automation.Language.Parser]::ParseFile($Path, [ref]$tokens, [ref]$errors) | Out-Null
     if (@($errors).Count -gt 0) {
-        throw "$Path does not parse: $(@($errors | ForEach-Object Message) -join '; ')"
+        $messages = @($errors | ForEach-Object { $_.Message }) -join '; '
+        throw "$Path does not parse: $messages"
     }
 }
 
@@ -44,12 +45,13 @@ $cmdText = Get-Content -LiteralPath $cmdPath -Raw
 $controlText = Get-Content -LiteralPath $controlPath -Raw
 
 foreach ($required in @(
-    "ValidateSet('Auto', 'Compile', 'Repair', 'Closeout')",
+    "ValidateSet('Auto', 'Night', 'Compile', 'Repair', 'Closeout')",
     "[string]`$Agent = 'deepseek'",
-    "deepseek/deepseek-v4-pro",
+    'deepseek/deepseek-v4-pro',
     'gnhf-night-shift.contract.json',
-    "queue.items | Where-Object { [string]`$_.state -eq 'ready' }",
-    'WezTerm -> native Windows PowerShell 7 -> AgentSwitchboard -> GNHF',
+    "`$queue.items | Where-Object { [string]`$_.state -eq 'ready' }",
+    "`$selectedStage = 'night'",
+    'WezTerm -> native Windows PowerShell 7 -> AgentSwitchboard -> DeepSeek/OpenCode -> GNHF',
     "PromptPath = `$promptPath",
     "MaxIterations = [int]`$stageRecord.maxIterations",
     "MaxTokens = [int]`$stageRecord.maxTokens"
@@ -78,7 +80,8 @@ foreach ($required in @(
     'BEGIN AgentSwitchboard BlacksmithGuild GNHF Night Panel',
     "'.wezterm.lua.{0}.bak'",
     "Copy-Item -LiteralPath `$sourceControlLauncher",
-    "ValidateSet\\\(\\\"opencode\\\",\\s\\\*\\\"deepseek\\\""
+    "Copy-Item -LiteralPath `$sourceNightLauncher",
+    "installedControlText -notmatch"
 )) {
     Assert-True ($installerText.Contains($required)) "Installer is missing required preservation or readiness text: $required"
 }
@@ -129,4 +132,4 @@ finally {
     }
 }
 
-Write-Host 'PASS: BlacksmithGuild WezTerm night panel preserves config, selects the repo-owned stage, and routes DeepSeek through native Windows AgentSwitchboard.' -ForegroundColor Green
+Write-Host 'PASS: BlacksmithGuild WezTerm panel preserves config and starts one native-Windows DeepSeek/GNHF night chain.' -ForegroundColor Green
