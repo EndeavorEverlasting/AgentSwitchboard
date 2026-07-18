@@ -19,7 +19,8 @@
     ".ai/harness/schemas/repository-family-registry.schema.json",
     ".ai/harness/schemas/run-context.schema.json",
     ".ai/harness/schemas/repository-family-status.schema.json",
-    ".ai/harness/schemas/final-handoff.schema.json"
+    ".ai/harness/schemas/final-handoff.schema.json",
+    ".ai/harness/schemas/gnhf-runtime-capability.schema.json"
   ],
   "proofLevels": [
     "contract",

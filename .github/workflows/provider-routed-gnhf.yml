@@ -5,6 +5,9 @@ on:
     paths:
       - "tooling/gnhf/**"
       - ".ai/skills/gnhf-prompt-compilation/**"
+      - ".ai/harness/schemas/gnhf-runtime-capability.schema.json"
+      - ".ai/harness/artifact-registry.json"
+      - ".ai/harness/manifest.json"
       - "Repair-ProviderRoutedGnhf.cmd"
       - ".github/workflows/provider-routed-gnhf.yml"
   push:
@@ -12,6 +15,9 @@ on:
     paths:
       - "tooling/gnhf/**"
       - ".ai/skills/gnhf-prompt-compilation/**"
+      - ".ai/harness/schemas/gnhf-runtime-capability.schema.json"
+      - ".ai/harness/artifact-registry.json"
+      - ".ai/harness/manifest.json"
       - "Repair-ProviderRoutedGnhf.cmd"
 
 jobs:
@@ -40,6 +46,7 @@ jobs:
           cd "$GITHUB_WORKSPACE"
           runtime_files=(
             tooling/gnhf/Gnhf.Process.ps1
+            tooling/gnhf/Gnhf.Capability.ps1
             tooling/gnhf/Start-ProviderRoutedGnhfSprint.ps1
             tooling/gnhf/Install-ProviderRoutedGnhf.ps1
             Repair-ProviderRoutedGnhf.cmd

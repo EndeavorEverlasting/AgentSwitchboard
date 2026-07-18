@@ -41,6 +41,26 @@
       "sensitivity": "local-operational",
       "retention": "operator-controlled temporary evidence",
       "proofCeiling": "compressed continuation record; receiving agents must re-inspect state"
+    },
+    {
+      "artifactId": "gnhf-runtime-capability",
+      "artifactType": "capability-document",
+      "fileName": "gnhf-runtime-capability.json",
+      "schema": ".ai/harness/schemas/gnhf-runtime-capability.schema.json",
+      "tracked": false,
+      "sensitivity": "local-operational",
+      "retention": "fleet root under %LOCALAPPDATA%/AgentSwitchboard/GnhfFleet",
+      "proofCeiling": "distribution discovery and launcher presence only; not provider delivery or deployment"
+    },
+    {
+      "artifactId": "provider-route-install-result",
+      "artifactType": "install-result",
+      "fileName": "provider-route-install-result.json",
+      "schema": null,
+      "tracked": false,
+      "sensitivity": "local-operational",
+      "retention": "fleet root under %LOCALAPPDATA%/AgentSwitchboard/GnhfFleet",
+      "proofCeiling": "transactional installer outcome and rollback pointer"
     }
   ]
 }

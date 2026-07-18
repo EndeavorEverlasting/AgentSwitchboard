@@ -34,8 +34,14 @@ Load only the smallest surface required by the selected skill, workflow, or repo
 ## GNHF control plane
 
 - `tooling/gnhf/` — fleet install, routing, bounded sprint launch, contracts, prompts, schemas, fixtures, and runtime evidence.
+- `tooling/gnhf/Gnhf.Capability.ps1` — distribution discovery and provider-route capability matrix.
+- `tooling/gnhf/Install-ProviderRoutedGnhf.ps1` — transactional capability-driven installer.
+- `tooling/gnhf/Start-ProviderRoutedGnhfSprint.ps1` — provider-preflight + bounded GNHF launcher.
+- `Repair-ProviderRoutedGnhf.cmd` — operator front door for provider-route repair.
+- `.ai/harness/schemas/gnhf-runtime-capability.schema.json` — versioned installed capability contract.
 - `Setup-AgentSwitchboard.cmd` — one-click Windows setup front door.
 - `Run-ChatGPTDesktopGnhfSprint.cmd` — desktop GNHF runtime entrypoint when present on the selected integration branch.
+- `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\gnhf-runtime-capability.json` — installed machine-readable capability document for child repos.
 - `%LOCALAPPDATA%\AgentSwitchboard\` — installed runtime state and logs; never treat it as tracked repository authority.
 
 ## Workstation and terminal integration

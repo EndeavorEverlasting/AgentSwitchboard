@@ -1,0 +1,9 @@
+{
+  "npmDistTags": { "latest": "0.1.41" },
+  "npmLatest": "0.1.41",
+  "npmPublishedVersions": ["0.1.38", "0.1.39", "0.1.40", "0.1.41"],
+  "querySucceeded": true,
+  "queryError": null,
+  "requestedNpmVersion": "0.1.42",
+  "expectedFailureClass": "BLOCKED_DISTRIBUTION_UNAVAILABLE"
+}

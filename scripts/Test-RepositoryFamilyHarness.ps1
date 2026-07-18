@@ -63,6 +63,7 @@ $requiredFiles = @(
     '.ai/harness/schemas/run-context.schema.json',
     '.ai/harness/schemas/repository-family-status.schema.json',
     '.ai/harness/schemas/final-handoff.schema.json',
+    '.ai/harness/schemas/gnhf-runtime-capability.schema.json',
     'scripts/Get-RepositoryFamilyHarnessStatus.ps1',
     'scripts/Test-RepositoryFamilyHarness.ps1'
 )
@@ -171,7 +172,17 @@ if ($null -ne $registry) {
 if ($null -ne $artifactRegistry) {
     Add-Result ($artifactRegistry.schemaVersion -eq 1) 'artifacts/schema-version' 'expected schemaVersion 1'
     $artifacts = @($artifactRegistry.artifacts)
-    Add-Result ($artifacts.Count -eq 4) 'artifacts/count' 'exactly four family artifact roles are required'
+    $artifactIds = @($artifacts | ForEach-Object { [string]$_.artifactId })
+    foreach ($requiredArtifactId in @(
+        'repository-family-run-context',
+        'repository-family-status',
+        'repository-family-operator-report',
+        'repository-family-final-handoff',
+        'gnhf-runtime-capability',
+        'provider-route-install-result'
+    )) {
+        Add-Result ($artifactIds -contains $requiredArtifactId) "artifacts/required/${requiredArtifactId}" 'required artifact role is missing'
+    }
     foreach ($artifact in $artifacts) {
         Add-Result ($artifact.tracked -eq $false) "artifacts/$($artifact.artifactId)/untracked" 'family run evidence must remain untracked'
         Add-Result ($artifact.sensitivity -eq 'local-operational') "artifacts/$($artifact.artifactId)/sensitivity" 'unexpected sensitivity class'
@@ -191,7 +202,8 @@ $schemaPaths = @(
     '.ai/harness/schemas/repository-family-registry.schema.json',
     '.ai/harness/schemas/run-context.schema.json',
     '.ai/harness/schemas/repository-family-status.schema.json',
-    '.ai/harness/schemas/final-handoff.schema.json'
+    '.ai/harness/schemas/final-handoff.schema.json',
+    '.ai/harness/schemas/gnhf-runtime-capability.schema.json'
 )
 foreach ($schemaPath in $schemaPaths) {
     $schema = Read-JsonFile $schemaPath

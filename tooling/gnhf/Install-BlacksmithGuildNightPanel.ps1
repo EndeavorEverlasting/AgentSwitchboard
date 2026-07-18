@@ -110,7 +110,7 @@ $plan = [ordered]@{
     installedProviderLauncher = $destinationProviderLauncher
     installedProviderProcess = $destinationProviderProcess
     installedInclude = $destinationInclude
-    requiredGnhfVersion = '0.1.42'
+    requiredCapabilitySchema = 'agentswitchboard.gnhf-runtime-capability.v1'
     configExists = Test-Path -LiteralPath $WezTermConfigPath -PathType Leaf
     managedBlockPresent = $false
     backupPath = $null
@@ -136,7 +136,7 @@ Write-Host "WezTerm config:   $WezTermConfigPath"
 Write-Host "Control launcher: $destinationControlLauncher"
 Write-Host "Night launcher:   $destinationNightLauncher"
 Write-Host "Provider route:   $destinationProviderLauncher"
-Write-Host "Required GNHF:    $($plan.requiredGnhfVersion) with --model"
+Write-Host "Provider route:   capability-driven (OpenCode model authority)"
 Write-Host "Lua include:      $destinationInclude"
 Write-Host "Config exists:    $($plan.configExists)"
 Write-Host "Already wired:    $($plan.managedBlockPresent)"
@@ -152,11 +152,11 @@ if (-not $Apply) {
 New-Item -ItemType Directory -Path $InstallRoot -Force | Out-Null
 New-Item -ItemType Directory -Path (Split-Path -Parent $WezTermConfigPath) -Force | Out-Null
 
-# Install or repair the shared provider route first. The default dependency pins a
-# model-aware GNHF runtime and installs shell-correct OpenCode dispatch plus
-# commit-delivery proof. Tests may inject a deterministic fixture installer.
+# Install or repair the shared provider route first. The dependency is the
+# installed capability contract (not a guessed npm version or fictional GNHF
+# --model flag). Tests may inject a deterministic fixture installer.
 try {
-    & $sourceProviderInstaller -Apply -InstallRoot $InstallRoot -RequiredGnhfVersion '0.1.42'
+    & $sourceProviderInstaller -Apply -InstallRoot $InstallRoot
 }
 catch {
     throw "Provider-routed GNHF installation failed: $($_.Exception.Message)"
@@ -223,7 +223,8 @@ $installedProviderText = Get-Content -LiteralPath $destinationProviderLauncher -
 foreach ($required in @(
     'Process exit zero is not delivery proof',
     'DeepSeek provider probe failed; GNHF was not started',
-    '"--model", $Model'
+    'OPENCODE_CONFIG_CONTENT',
+    'gnhf-runtime-capability.json'
 )) {
     if (-not $installedProviderText.Contains($required)) {
         throw "Installed provider launcher is missing strict delivery contract text: $required"
@@ -237,7 +238,7 @@ $plan | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $evidenceR
 
 Write-Host "`nInstalled. In WezTerm, open the launch menu and select:" -ForegroundColor Green
 Write-Host '  BlacksmithGuild — GNHF Night Shift' -ForegroundColor Green
-Write-Host 'DeepSeek now uses the strict provider route: shell-correct OpenCode dispatch, GNHF 0.1.42+ model support, provider preflight, and committed-delivery proof.' -ForegroundColor Cyan
+Write-Host 'DeepSeek now uses the strict provider route: shell-correct OpenCode dispatch, capability-driven GNHF selection, OpenCode model authority, provider preflight, and committed-delivery proof.' -ForegroundColor Cyan
 if ($plan.backupPath) {
     Write-Host "WezTerm config backup: $($plan.backupPath)" -ForegroundColor Cyan
 }

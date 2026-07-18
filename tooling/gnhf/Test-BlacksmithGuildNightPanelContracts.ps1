@@ -83,7 +83,9 @@ foreach ($required in @(
 Assert-True ($launcherText -notmatch '(?i)PushBranch|--push|wsl\.exe|tmux') 'Night launcher must not push automatically or route through WSL/tmux.'
 Assert-True ($providerLauncherText.Contains('Process exit zero is not delivery proof')) 'Strict provider route must reject zero-exit, zero-commit runs.'
 Assert-True ($providerLauncherText.Contains('DeepSeek provider probe failed; GNHF was not started')) 'Strict provider route must fail before GNHF when provider preflight fails.'
-Assert-True ($providerLauncherText.Contains('"--model", $Model')) 'Strict provider route must pass the exact model to GNHF.'
+Assert-True ($providerLauncherText.Contains('OPENCODE_CONFIG_CONTENT')) 'Strict provider route must pin the exact model through OpenCode.'
+Assert-True ($providerLauncherText.Contains('gnhf-runtime-capability.json')) 'Strict provider route must consume the installed capability document.'
+Assert-True ($providerLauncherText.Contains('if ($evidence.gnhfModelFlag)')) 'Strict provider route must pass GNHF --model only when that CLI flag exists.'
 
 foreach ($required in @(
     "label = 'BlacksmithGuild — GNHF Night Shift'",
@@ -104,13 +106,15 @@ foreach ($required in @(
     'BEGIN AgentSwitchboard BlacksmithGuild GNHF Night Panel',
     "'.wezterm.lua.{0}.bak'",
     'ProviderInstallerPath',
-    "-RequiredGnhfVersion '0.1.42'",
+    'agentswitchboard.gnhf-runtime-capability.v1',
     'Start-ProviderRoutedGnhfSprint.ps1',
     'Gnhf.Process.ps1',
-    'Process exit zero is not delivery proof'
+    'Process exit zero is not delivery proof',
+    'OPENCODE_CONFIG_CONTENT'
 )) {
     Assert-True ($installerText.Contains($required)) "Installer is missing required preservation or provider-route text: $required"
 }
+Assert-True ($installerText -notmatch "RequiredGnhfVersion '0\.1\.42'") 'Installer must not hardcode unpublished gnhf@0.1.42.'
 Assert-True ($cmdText.Contains('Install-BlacksmithGuildNightPanel.ps1')) 'Root CMD must invoke the strict installer.'
 Assert-True ($cmdText.Contains('-Apply')) 'Root CMD must explicitly select apply mode.'
 Assert-True ($cmdText.Contains('pause')) 'Root CMD must keep the technician-visible window open.'
@@ -128,14 +132,16 @@ try {
 param(
     [switch]`$Apply,
     [string]`$InstallRoot,
-    [string]`$RequiredGnhfVersion
+    [string]`$RequestedNpmVersion
 )
 if (-not `$Apply) { throw 'fixture requires apply' }
 New-Item -ItemType Directory -Path `$InstallRoot -Force | Out-Null
 Set-Content -LiteralPath (Join-Path `$InstallRoot 'Start-ProviderRoutedGnhfSprint.ps1') -Encoding utf8NoBOM -Value @(
     'Process exit zero is not delivery proof',
     'DeepSeek provider probe failed; GNHF was not started',
-    '"--model", `$Model'
+    'OPENCODE_CONFIG_CONTENT',
+    'gnhf-runtime-capability.json',
+    'if (`$evidence.gnhfModelFlag)'
 )
 Set-Content -LiteralPath (Join-Path `$InstallRoot 'Gnhf.Process.ps1') -Encoding utf8NoBOM -Value 'fixture provider process'
 "@

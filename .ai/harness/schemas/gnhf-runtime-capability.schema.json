@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/.ai/harness/schemas/gnhf-runtime-capability.schema.json",
+  "title": "AgentSwitchboard GNHF Runtime Capability",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schemaVersion",
+    "generatedUtc",
+    "installRoot",
+    "distribution",
+    "cliFlags",
+    "requiredCapabilities",
+    "observedCapabilities",
+    "modelSelection",
+    "launchers",
+    "ready",
+    "proofCeiling"
+  ],
+  "properties": {
+    "schema": {
+      "const": "agentswitchboard.gnhf-runtime-capability.v1"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "generatedUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "installRoot": {
+      "type": "string",
+      "minLength": 1
+    },
+    "distribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "npmLatest",
+        "npmPublishedVersions",
+        "installedVersion",
+        "installedCommandPath",
+        "selectedSource",
+        "selectedPackageSpec"
+      ],
+      "properties": {
+        "npmDistTags": {
+          "type": ["object", "null"]
+        },
+        "npmLatest": {
+          "type": ["string", "null"]
+        },
+        "npmPublishedVersions": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "installedVersion": {
+          "type": ["string", "null"]
+        },
+        "installedCommandPath": {
+          "type": ["string", "null"]
+        },
+        "upstreamSourceVersion": {
+          "type": ["string", "null"]
+        },
+        "upstreamSourceCommit": {
+          "type": ["string", "null"]
+        },
+        "selectedSource": {
+          "type": "string",
+          "enum": [
+            "installed-existing",
+            "npm-published",
+            "source-build",
+            "none",
+            "plan-only"
+          ]
+        },
+        "selectedPackageSpec": {
+          "type": ["string", "null"]
+        },
+        "provenanceNote": {
+          "type": "string"
+        }
+      }
+    },
+    "cliFlags": {
+      "type": "object",
+      "additionalProperties": { "type": "boolean" }
+    },
+    "requiredCapabilities": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "observedCapabilities": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["state"],
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": ["verified", "available", "absent", "blocked", "unknown", "required"]
+          },
+          "evidence": { "type": "string" }
+        }
+      }
+    },
+    "modelSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority", "mechanisms", "gnhfCliModelFlag"],
+      "properties": {
+        "authority": {
+          "const": "opencode"
+        },
+        "mechanisms": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "gnhfCliModelFlag": {
+          "type": "boolean"
+        }
+      }
+    },
+    "launchers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["providerCmd", "providerPs1", "processHelpers", "capabilityDocument"],
+      "properties": {
+        "providerCmd": { "type": "string" },
+        "providerPs1": { "type": "string" },
+        "processHelpers": { "type": "string" },
+        "capabilityDocument": { "type": "string" }
+      }
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "missingCapabilities": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "failureClass": {
+      "type": ["string", "null"]
+    },
+    "rollbackInstructions": {
+      "type": ["string", "null"]
+    },
+    "proofCeiling": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

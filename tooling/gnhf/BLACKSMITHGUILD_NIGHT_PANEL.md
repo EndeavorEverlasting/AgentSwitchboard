@@ -52,7 +52,8 @@ Install-BlacksmithGuildNightPanel.cmd
 The installer:
 
 - installs or repairs the strict provider-routed launcher;
-- requires GNHF `0.1.42` or newer and verifies `--model` support;
+- depends on the installed AgentSwitchboard GNHF capability document (not a guessed npm version);
+- selects models through OpenCode (`OPENCODE_CONFIG_CONTENT`), not a fictional GNHF `--model` flag;
 - installs shell-correct `.ps1`, `.cmd`/`.bat`, and native executable dispatch;
 - refreshes the installed AgentSwitchboard control launcher;
 - installs the BlacksmithGuild night launcher under `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet`;
