@@ -12,10 +12,33 @@ The queue owns orchestration, not repository policy.
 - A canonical `gnhf` command keeps its explicit `--agent`; the queue must contain a matching unused profile for that batch.
 - Sectioned prompts and `regular-sprint-request` JSON receive the assigned profile's GNHF agent.
 - Dependencies are converted into ordered batches. A failed or blocked lane prevents its dependents from starting.
+- Every enabled application must be assigned to a lane and must register at least one enabled trigger.
+- Application triggers are evaluated during planning, before any Cursor process starts.
 - Success requires the canonical Cursor runtime result, a commit ahead of base, every expected artifact observed, and at least one passed validation.
 - Automatic push and merge are always false.
 
-The queue does not authenticate providers, copy credentials, merge branches, deploy software, or treat process exit as delivery proof.
+The queue does not authenticate providers, copy credentials, merge branches, deploy software, or treat process exit as delivery proof. App-owned trigger doctrine remains authoritative; the queue registry is an orchestration-time adapter that makes those conditions visible before analysis completes.
+
+## Application trigger registry
+
+Each local queue declares `applications`. A lane references exactly one application with `applicationId`.
+
+Supported deterministic trigger kinds are:
+
+- `always` — register an unconditional awareness item;
+- `repository-path-exists` — flag when one exact repository-relative path exists;
+- `repository-text-contains` — perform a bounded literal-text check against one exact repository-relative file;
+- `prompt-text-contains` — perform a literal-text check against the source prompt.
+
+Triggers also declare `info`, `warning`, or `critical` severity. Paths cannot be rooted, contain traversal, or use wildcards. Repository text reads are capped at 1 MiB. Trigger checks never use regular expressions supplied by the manifest and never mutate the target repository.
+
+During planning AgentSwitchboard writes, hashes, and binds this file for every lane:
+
+```text
+lanes/<lane-id>/trigger-flags.json
+```
+
+The compiled prompt receives the exact snapshot path and SHA-256, adds the snapshot to `readFirst`, and requires the agent to reconcile every active flag before completing repository analysis or producing an awareness assessment. The executor verifies the snapshot, hash, application identity, counts, and compiled instruction before `PlanOnly` succeeds or a Cursor process starts.
 
 ## Prepare a local queue
 
@@ -23,6 +46,7 @@ Copy `tooling/gnhf/prompt-queue.example.json` to an operator-owned local path an
 
 Each lane supplies:
 
+- one application registry ID;
 - one prompt path;
 - one repository path;
 - exact expected artifact paths;
@@ -50,7 +74,7 @@ pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass `
   -PlanOnly
 ```
 
-Planning writes one validated regular request, compiled prompt, and repository-intelligence packet per lane. It does not start an agent or mutate a target repository.
+Planning writes one trigger snapshot, validated regular request, compiled prompt, and repository-intelligence packet per lane. It does not start an agent or mutate a target repository.
 
 ## Execute
 
@@ -64,6 +88,7 @@ Batches run in dependency order. Independent lanes inside one batch may run conc
 
 ```text
 queue-plan.json
+lanes/<lane-id>/trigger-flags.json
 lanes/<lane-id>/regular-request.json
 lanes/<lane-id>/compiled-gnhf-prompt.json
 lanes/<lane-id>/repository-intelligence.json
@@ -74,14 +99,13 @@ queue-summary.json
 queue-summary.md
 ```
 
-Generated queue state belongs outside Git. Review every target branch, worktree, commit, artifact, validation result, and blocker before any separate push or integration action.
+Lane results retain application identity, trigger counts, snapshot path and hash, and whether the awareness gate was satisfied. Generated queue state belongs outside Git. Review every target branch, worktree, commit, artifact, validation result, trigger flag, and blocker before any separate push or integration action.
 
 ## Validation
 
 ```powershell
 pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass `
-  -File .\tooling\gnhf\Test-GnhfPromptQueueContracts.ps1 `
-  -Stage All
+  -File .\tooling\gnhf\Test-GnhfPromptContracts.ps1
 ```
 
-The deterministic harness creates temporary Git repositories, verifies prompt compilation, distinct concurrent assignments, dependency batches, runtime-result consumption, downstream blocking, and zero target-repository mutation. It does not prove a hosted provider response or live GNHF quality.
+The canonical validator runs the queue suite and focused awareness-trigger suite. The deterministic harness creates temporary Git repositories and proves prompt compilation, distinct concurrent assignments, dependency batches, trigger evaluation, snapshot hashing, prompt injection, runtime handoff, modified-evidence rejection, downstream blocking, and zero target-repository mutation. It does not prove a hosted provider response or live GNHF quality.
