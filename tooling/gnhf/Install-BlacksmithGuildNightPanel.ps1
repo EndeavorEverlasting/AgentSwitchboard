@@ -3,7 +3,6 @@ param(
     [string]$RepoPath = "$env:USERPROFILE\Desktop\dev\Mods\Bannerlord\BlacksmithGuild",
     [string]$WezTermConfigPath = "$env:USERPROFILE\.wezterm.lua",
     [string]$InstallRoot = "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet",
-    [string]$ProviderInstallerPath = (Join-Path $PSScriptRoot 'Install-ProviderRoutedGnhf.ps1'),
     [switch]$Apply
 )
 
@@ -81,36 +80,28 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
 $RepoPath = [IO.Path]::GetFullPath($RepoPath)
 $WezTermConfigPath = [IO.Path]::GetFullPath($WezTermConfigPath)
 $InstallRoot = [IO.Path]::GetFullPath($InstallRoot)
-$ProviderInstallerPath = [IO.Path]::GetFullPath($ProviderInstallerPath)
 
 $sourceControlLauncher = Join-Path $PSScriptRoot 'Start-AgentSwitchboard.ps1'
 $sourceNightLauncher = Join-Path $PSScriptRoot 'Start-BlacksmithGuildNightShift.ps1'
-$sourceProviderInstaller = $ProviderInstallerPath
 $sourceInclude = Join-Path $PSScriptRoot 'templates\wezterm-blacksmithguild-night.lua'
 $destinationControlLauncher = Join-Path $InstallRoot 'Start-AgentSwitchboard.ps1'
 $destinationNightLauncher = Join-Path $InstallRoot 'Start-BlacksmithGuildNightShift.ps1'
-$destinationProviderLauncher = Join-Path $InstallRoot 'Start-ProviderRoutedGnhfSprint.ps1'
-$destinationProviderProcess = Join-Path $InstallRoot 'Gnhf.Process.ps1'
 $destinationInclude = Join-Path (Split-Path -Parent $WezTermConfigPath) $includeFileName
 
-foreach ($source in @($sourceControlLauncher, $sourceNightLauncher, $sourceProviderInstaller, $sourceInclude)) {
+foreach ($source in @($sourceControlLauncher, $sourceNightLauncher, $sourceInclude)) {
     if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
         throw "Required source file is missing: $source"
     }
 }
 
 $plan = [ordered]@{
-    schema = 'agentswitchboard.blacksmithguild-night-panel.install-plan.v2'
+    schema = 'agentswitchboard.blacksmithguild-night-panel.install-plan.v1'
     apply = [bool]$Apply
     repoPath = $RepoPath
     wezTermConfigPath = $WezTermConfigPath
-    providerInstallerPath = $sourceProviderInstaller
     installedControlLauncher = $destinationControlLauncher
     installedNightLauncher = $destinationNightLauncher
-    installedProviderLauncher = $destinationProviderLauncher
-    installedProviderProcess = $destinationProviderProcess
     installedInclude = $destinationInclude
-    requiredGnhfVersion = '0.1.42'
     configExists = Test-Path -LiteralPath $WezTermConfigPath -PathType Leaf
     managedBlockPresent = $false
     backupPath = $null
@@ -135,8 +126,6 @@ Write-Host "Repository:       $RepoPath"
 Write-Host "WezTerm config:   $WezTermConfigPath"
 Write-Host "Control launcher: $destinationControlLauncher"
 Write-Host "Night launcher:   $destinationNightLauncher"
-Write-Host "Provider route:   $destinationProviderLauncher"
-Write-Host "Required GNHF:    $($plan.requiredGnhfVersion) with --model"
 Write-Host "Lua include:      $destinationInclude"
 Write-Host "Config exists:    $($plan.configExists)"
 Write-Host "Already wired:    $($plan.managedBlockPresent)"
@@ -151,17 +140,6 @@ if (-not $Apply) {
 
 New-Item -ItemType Directory -Path $InstallRoot -Force | Out-Null
 New-Item -ItemType Directory -Path (Split-Path -Parent $WezTermConfigPath) -Force | Out-Null
-
-# Install or repair the shared provider route first. The default dependency pins a
-# model-aware GNHF runtime and installs shell-correct OpenCode dispatch plus
-# commit-delivery proof. Tests may inject a deterministic fixture installer.
-try {
-    & $sourceProviderInstaller -Apply -InstallRoot $InstallRoot -RequiredGnhfVersion '0.1.42'
-}
-catch {
-    throw "Provider-routed GNHF installation failed: $($_.Exception.Message)"
-}
-
 Copy-Item -LiteralPath $sourceControlLauncher -Destination $destinationControlLauncher -Force
 Copy-Item -LiteralPath $sourceNightLauncher -Destination $destinationNightLauncher -Force
 Copy-Item -LiteralPath $sourceInclude -Destination $destinationInclude -Force
@@ -178,7 +156,7 @@ if (-not $plan.configExists) {
         ''
     ) -join $newline
     Write-TextFilePreservingEncoding -Path $WezTermConfigPath -Text $configText -Encoding ([Text.UTF8Encoding]::new($false)) -Preamble ([byte[]]@())
-    $plan.action = 'created_config_and_installed_strict_panel'
+    $plan.action = 'created_config_and_installed_panel'
 }
 elseif (-not $plan.managedBlockPresent) {
     $matches = [regex]::Matches($configText, '(?m)^\s*return\s+config\s*$')
@@ -197,37 +175,25 @@ elseif (-not $plan.managedBlockPresent) {
     $match = $matches[0]
     $newConfig = $configText.Substring(0, $match.Index).TrimEnd() + $newline + $newline + $managedBlock + $newline + $newline + $configText.Substring($match.Index)
     Write-TextFilePreservingEncoding -Path $WezTermConfigPath -Text $newConfig -Encoding $configFile.Encoding -Preamble $configFile.Preamble
-    $plan.action = 'installed_strict_panel_and_patched_config'
+    $plan.action = 'installed_panel_and_patched_config'
 }
 else {
-    $plan.action = 'refreshed_strict_runtime_and_preserved_existing_config_wiring'
+    $plan.action = 'refreshed_installed_files_existing_config_wiring_preserved'
 }
 
 $verificationText = (Read-TextFilePreservingEncoding -Path $WezTermConfigPath).Text
 if (-not $verificationText.Contains($beginMarker) -or -not $verificationText.Contains($endMarker)) {
     throw 'The managed WezTerm panel block was not observed after installation.'
 }
-foreach ($installed in @(
-    $destinationControlLauncher,
-    $destinationNightLauncher,
-    $destinationProviderLauncher,
-    $destinationProviderProcess,
-    $destinationInclude
-)) {
+foreach ($installed in @($destinationControlLauncher, $destinationNightLauncher, $destinationInclude)) {
     if (-not (Test-Path -LiteralPath $installed -PathType Leaf)) {
         throw "Installed panel file is missing: $installed"
     }
 }
 
-$installedProviderText = Get-Content -LiteralPath $destinationProviderLauncher -Raw
-foreach ($required in @(
-    'Process exit zero is not delivery proof',
-    'DeepSeek provider probe failed; GNHF was not started',
-    '"--model", $Model'
-)) {
-    if (-not $installedProviderText.Contains($required)) {
-        throw "Installed provider launcher is missing strict delivery contract text: $required"
-    }
+$installedControlText = Get-Content -LiteralPath $destinationControlLauncher -Raw
+if ($installedControlText -notmatch 'ValidateSet\("opencode",\s*"deepseek"') {
+    throw 'The installed AgentSwitchboard launcher does not contain the explicit DeepSeek route. Refresh AgentSwitchboard main and rerun this installer.'
 }
 
 $evidenceRoot = Join-Path $InstallRoot 'panel-install'
@@ -237,7 +203,7 @@ $plan | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $evidenceR
 
 Write-Host "`nInstalled. In WezTerm, open the launch menu and select:" -ForegroundColor Green
 Write-Host '  BlacksmithGuild — GNHF Night Shift' -ForegroundColor Green
-Write-Host 'DeepSeek now uses the strict provider route: shell-correct OpenCode dispatch, GNHF 0.1.42+ model support, provider preflight, and committed-delivery proof.' -ForegroundColor Cyan
+Write-Host 'The Auto stage starts the full queue-checkpoint, bounded-repair, and closeout chain in one isolated GNHF worktree when no committed night queue exists.' -ForegroundColor Cyan
 if ($plan.backupPath) {
     Write-Host "WezTerm config backup: $($plan.backupPath)" -ForegroundColor Cyan
 }

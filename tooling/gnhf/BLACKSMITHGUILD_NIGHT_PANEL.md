@@ -15,16 +15,11 @@ The execution chain is:
 ```text
 WezTerm
   -> native Windows PowerShell 7
-  -> BlacksmithGuild panel launcher
-  -> strict AgentSwitchboard provider route
-  -> shell-correct OpenCode dispatch
-  -> exact DeepSeek model probe
-  -> model-aware GNHF isolated worktree
+  -> installed AgentSwitchboard
+  -> exact DeepSeek model discovery and bounded response probe through OpenCode
+  -> GNHF isolated worktree
   -> BlacksmithGuild one-click night objective
-  -> committed-delivery verification
 ```
-
-The default model is `deepseek/deepseek-v4-pro`. GNHF uses the truthful `opencode` adapter and receives the exact model separately. DeepSeek is not represented as a fictional native GNHF agent.
 
 ## One-click V38 sequence
 
@@ -51,10 +46,7 @@ Install-BlacksmithGuildNightPanel.cmd
 
 The installer:
 
-- installs or repairs the strict provider-routed launcher;
-- requires GNHF `0.1.42` or newer and verifies `--model` support;
-- installs shell-correct `.ps1`, `.cmd`/`.bat`, and native executable dispatch;
-- refreshes the installed AgentSwitchboard control launcher;
+- refreshes the installed DeepSeek-aware AgentSwitchboard control launcher;
 - installs the BlacksmithGuild night launcher under `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet`;
 - installs `%USERPROFILE%\.wezterm-blacksmithguild-night.lua`;
 - inserts one managed block before the single `return config` in `%USERPROFILE%\.wezterm.lua`;
@@ -102,8 +94,8 @@ Set `TBG_REPO_PATH` before launching WezTerm to override it without editing the 
 
 - The BlacksmithGuild source checkout must be clean and attached to a non-`gnhf/*` branch.
 - BlacksmithGuild main must contain `.tbg/workflows/gnhf-night-shift.contract.json` and its tracked prompts.
-- AgentSwitchboard fleet state must exist under `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet`.
-- OpenCode must be ready. An npm-installed `opencode.ps1` or `opencode.cmd` shim is dispatched through the correct Windows shell rather than passed to `.NET Process.Start()` as a native executable.
+- AgentSwitchboard setup must have produced fleet state under `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet`.
+- OpenCode must be ready.
 - The exact configured DeepSeek model must be listed and must return `AGENT_SWITCHBOARD_MODEL_READY` during the bounded launch probe.
 - Provider login is interactive and external to this installer. No credential values are read or stored.
 
@@ -113,24 +105,16 @@ The panel stops before repository mutation when:
 
 - the source checkout is dirty or detached;
 - the night contract or prompt is missing;
-- the required provider launcher or model-aware GNHF runtime is missing;
 - OpenCode or the exact DeepSeek model is unavailable;
 - the bounded provider probe fails;
 - the source is already a generated `gnhf/*` branch;
 - AgentSwitchboard fleet state is missing.
 
-After GNHF starts, all of the following are operational failures rather than delivery:
-
-- provider error or timeout;
-- repeated failed iterations with zero token activity;
-- exit code zero with no new commit ahead of the starting SHA;
-- configured stop text without queue, repair, and closeout commits.
-
-The panel exits nonzero for those conditions. It does not print a success message, silently switch providers, or delete the generated worktree. Preserve the worktree, run log, notes, provider-route evidence, and launcher summary for diagnosis.
+The panel does not silently switch providers after an operational failure. It preserves generated worktrees and operator-local evidence for review.
 
 ## Evidence and morning review
 
-AgentSwitchboard stores provider and launcher evidence under:
+AgentSwitchboard stores launcher evidence under:
 
 ```text
 %LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\logs
@@ -150,4 +134,4 @@ Review the generated worktree and commits before any push or pull request. Push,
 pwsh -NoLogo -NoProfile -File .\tooling\gnhf\Test-BlacksmithGuildNightPanelContracts.ps1
 ```
 
-This reaches repository/static and temporary-filesystem installer proof. It does not prove the user's local WezTerm process, provider account, quota, network, a real DeepSeek response, a completed GNHF worktree, or BlacksmithGuild runtime behavior.
+This reaches repository/static and temporary-filesystem installer proof. It does not prove the user's local WezTerm process, authenticated DeepSeek response, GNHF worktree completion, or BlacksmithGuild code quality at runtime.

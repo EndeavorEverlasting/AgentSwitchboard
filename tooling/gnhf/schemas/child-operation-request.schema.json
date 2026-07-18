@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/gnhf/schemas/child-operation-request.schema.json",
+  "title": "GNHF Child Operation Request",
+  "description": "Request from AgentSwitchboard to a child repository to run a registered operation within its authority boundary.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "requestId", "generatedUtc", "consumerId", "targetRepository", "operationId", "inputs", "authorityBoundary"],
+  "properties": {
+    "schema": {
+      "const": "agentswitchboard.gnhf.child-operation-request.v1"
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "generatedUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "consumerId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "targetRepository": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "authorityBoundary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "proofCeiling": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sprint": {
+      "type": "string",
+      "minLength": 1
+    },
+    "lane": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceQueueId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourcePlanId": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

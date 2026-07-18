@@ -48,25 +48,6 @@ The window stays open after success or failure. The launcher:
 4. probes OpenCode, Goose, AGY, Copilot, and Hermes;
 5. persists Hermes as the ACP adapter `acp:hermes acp` only when its version and ACP probes succeed;
 6. runs the core fleet and Hermes-specific contract validators;
-7. writes a transcript and machine-readable summary even when setup fails.
-
-Setup evidence is stored in a timestamped directory:
-
-```text
-%LOCALAPPDATA%\AgentSwitchboard\setup-logs\<timestamp>\
-  setup-transcript.txt
-  setup-summary.json
-```
-
-The setup can also be run from PowerShell:
-
-```powershell
-pwsh -NoLogo -NoProfile -File .\tooling\gnhf\Setup-AgentSwitchboard.ps1 `
-  -DefaultRepoPath "C:\Users\Cheex\Desktop\dev\SysAdminSuite" `
-  -InstallOpenCodeAndCopilot
-```
-
-Use `-SkipHermesInstall` to probe an existing Hermes command without downloading or repairing it.
 
 ## Start here: launch an agent and code
 
@@ -91,7 +72,8 @@ cd "C:\Users\Cheex\Desktop\dev\SysAdminSuite"
   -Agent hermes `
   -Prompt (Get-Clipboard -Raw) `
   -MaxIterations 4 `
-  -MaxTokens 250000
+  -MaxTokens 250000 `
+  -StopWhen "The scoped validation is complete, evidence is recorded, and no implementation files changed."
 ```
 
 Change `hermes` to `opencode`, `goose`, `agy`, or `copilot` when that adapter reports `READY`.
@@ -277,3 +259,45 @@ Do not launch multiple agents against the same files. Good parallel lanes:
 - validation/reporting: `validators/`, `reports/templates/`
 
 Each prompt must name owned scope, forbidden scope, validation, and an observable stop condition.
+
+## Orchestration contracts (P00)
+
+The `tooling/gnhf/schemas` directory defines the P00 mainline orchestration surface:
+
+| Schema | Purpose |
+|---|---|
+| `prompt-queue.schema.json` | Ordered, dependency-aware queue of bounded GNHF prompts. |
+| `queue-plan.schema.json` | Deterministic compilation of a prompt queue into a stage plan. |
+| `lane-result.schema.json` | Evidence record for one executed stage. |
+| `child-operation-request.schema.json` | Typed request from AgentSwitchboard to a child repository operation. |
+| `child-operation-result.schema.json` | Result returned by a child repository operation. |
+| `trigger-snapshot.schema.json` | Immutable snapshot of the external trigger that started a run. |
+
+Compile a prompt queue into a plan:
+
+```powershell
+pwsh -NoLogo -NoProfile -File .\tooling\gnhf\Compile-GnhfPromptQueue.ps1 `
+  -QueuePath .\tooling\gnhf\tests\fixtures\example-prompt-queue.json `
+  -OutputPath .local\gnhf-plans\example-plan.json
+```
+
+Validate a child operation request against the registry without executing it:
+
+```powershell
+pwsh -NoLogo -NoProfile -File .\tooling\gnhf\Invoke-GnhfChildOperation.ps1 `
+  -RequestPath .\tooling\gnhf\tests\fixtures\example-child-operation-request.json `
+  -OutputPath .local\gnhf-results\example-result.json `
+  -ValidateOnly
+```
+
+Validate the P00 contracts on Linux or Windows without launching agents:
+
+```bash
+python3 tooling/gnhf/tests/validate_orchestration_contracts.py
+```
+
+```powershell
+pwsh -NoLogo -NoProfile -File .\tooling\gnhf\Test-GnhfOrchestrationContracts.ps1
+```
+
+These validators only prove schema, registry, and parse correctness. They do not prove PowerShell runtime behavior, child repository execution, provider readiness, or GNHF worktree completion.

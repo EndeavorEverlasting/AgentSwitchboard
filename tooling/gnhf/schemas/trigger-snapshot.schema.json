@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/gnhf/schemas/trigger-snapshot.schema.json",
+  "title": "GNHF Trigger Snapshot",
+  "description": "Immutable snapshot of an external trigger that initiated a GNHF orchestration run.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "triggerId", "generatedUtc", "source", "eventType"],
+  "properties": {
+    "schema": {
+      "const": "agentswitchboard.gnhf.trigger-snapshot.v1"
+    },
+    "triggerId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "generatedUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "eventType": {
+      "type": "string",
+      "minLength": 1
+    },
+    "payloadHash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "payloadSummary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authorized": {
+      "type": "boolean",
+      "default": false
+    },
+    "authorityBoundary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sprint": {
+      "type": "string",
+      "minLength": 1
+    },
+    "lane": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

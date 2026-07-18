@@ -8,7 +8,7 @@ param(
     [ValidatePattern('^deepseek/[^\s/]+$')]
     [string]$DeepSeekModel = 'deepseek/deepseek-v4-pro',
     [ValidateRange(5, 120)]
-    [int]$ProbeTimeoutSeconds = 30,
+    [int]$ProbeTimeoutSeconds = 20,
     [string]$InstallRoot = "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet"
 )
 
@@ -86,15 +86,9 @@ if (-not (Test-Path -LiteralPath $promptPath -PathType Leaf)) {
     throw "Stage prompt is missing: $promptPath"
 }
 
-$legacyLauncherPath = Join-Path $InstallRoot 'Start-AgentSwitchboard.ps1'
-$providerLauncherPath = Join-Path $InstallRoot 'Start-ProviderRoutedGnhfSprint.ps1'
-if ($Agent -eq 'deepseek') {
-    if (-not (Test-Path -LiteralPath $providerLauncherPath -PathType Leaf)) {
-        throw "Strict provider-routed launcher is missing: $providerLauncherPath. Rerun Install-BlacksmithGuildNightPanel.cmd from current AgentSwitchboard main."
-    }
-}
-elseif (-not (Test-Path -LiteralPath $legacyLauncherPath -PathType Leaf)) {
-    throw "Installed AgentSwitchboard launcher is missing: $legacyLauncherPath. Run Setup-AgentSwitchboard.cmd first."
+$agentSwitchboardPath = Join-Path $InstallRoot 'Start-AgentSwitchboard.ps1'
+if (-not (Test-Path -LiteralPath $agentSwitchboardPath -PathType Leaf)) {
+    throw "Installed AgentSwitchboard launcher is missing: $agentSwitchboardPath. Run Setup-AgentSwitchboard.cmd first."
 }
 
 Write-Host "`n=== BLACKSMITHGUILD GNHF NIGHT SHIFT ===" -ForegroundColor Cyan
@@ -108,34 +102,24 @@ Write-Host "Iterations: $($stageRecord.maxIterations)"
 Write-Host "Token cap:  $($stageRecord.maxTokens)"
 Write-Host 'Push:       false'
 
+$parameters = @{
+    RepoPath = $RepoPath
+    Agent = $Agent
+    PromptPath = $promptPath
+    Name = "blacksmithguild-night-$selectedStage"
+    MaxIterations = [int]$stageRecord.maxIterations
+    MaxTokens = [int]$stageRecord.maxTokens
+    StopWhen = [string]$stageRecord.stopWhen
+    InstallRoot = $InstallRoot
+}
 if ($Agent -eq 'deepseek') {
-    Write-Host 'Route:      strict provider-routed launcher'
-    & $providerLauncherPath `
-        -RepoPath $RepoPath `
-        -PromptPath $promptPath `
-        -Name "blacksmithguild-night-$selectedStage" `
-        -Model $DeepSeekModel `
-        -MaxIterations ([int]$stageRecord.maxIterations) `
-        -MaxTokens ([int]$stageRecord.maxTokens) `
-        -ProbeTimeoutSeconds $ProbeTimeoutSeconds `
-        -StopWhen ([string]$stageRecord.stopWhen) `
-        -InstallRoot $InstallRoot
-}
-else {
-    Write-Host 'Route:      standard AgentSwitchboard launcher'
-    & $legacyLauncherPath `
-        -RepoPath $RepoPath `
-        -Agent $Agent `
-        -PromptPath $promptPath `
-        -Name "blacksmithguild-night-$selectedStage" `
-        -MaxIterations ([int]$stageRecord.maxIterations) `
-        -MaxTokens ([int]$stageRecord.maxTokens) `
-        -StopWhen ([string]$stageRecord.stopWhen) `
-        -InstallRoot $InstallRoot
+    $parameters.DeepSeekModel = $DeepSeekModel
+    $parameters.ProbeTimeoutSeconds = $ProbeTimeoutSeconds
 }
 
+& $agentSwitchboardPath @parameters
 if ($LASTEXITCODE -ne 0) {
-    throw "BlacksmithGuild night stage '$selectedStage' failed with exit code $LASTEXITCODE. Preserve its worktree and review operator-local evidence under '$InstallRoot\logs'."
+    throw "BlacksmithGuild night stage '$selectedStage' failed. Review operator-local AgentSwitchboard logs under '$InstallRoot\logs'."
 }
 
-Write-Host "`nNight stage '$selectedStage' produced committed delivery evidence. Review the generated GNHF worktree and commits before pushing or opening a PR." -ForegroundColor Green
+Write-Host "`nNight stage '$selectedStage' completed. Review the generated GNHF worktree, ordered commits, and closeout evidence before pushing or opening a PR." -ForegroundColor Green
