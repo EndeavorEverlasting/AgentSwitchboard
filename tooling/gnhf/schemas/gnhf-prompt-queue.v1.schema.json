@@ -4,59 +4,57 @@
   "title": "AgentSwitchboard GNHF prompt queue",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "schemaVersion",
-    "queueId",
-    "maxParallel",
-    "agents",
-    "lanes"
-  ],
+  "required": ["schemaVersion", "queueId", "maxParallel", "agents", "applications", "lanes"],
   "properties": {
-    "schemaVersion": {
-      "const": "agentswitchboard-gnhf-prompt-queue/v1"
-    },
-    "queueId": {
-      "type": "string",
-      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,127}$"
-    },
-    "maxParallel": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 16
-    },
+    "schemaVersion": { "const": "agentswitchboard-gnhf-prompt-queue/v1" },
+    "queueId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,127}$" },
+    "maxParallel": { "type": "integer", "minimum": 1, "maximum": 16 },
     "agents": {
       "type": "array",
       "minItems": 1,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "id",
-          "runtimeFamily",
-          "gnhfAgent",
-          "provider",
-          "enabled"
-        ],
+        "required": ["id", "runtimeFamily", "gnhfAgent", "provider", "enabled"],
         "properties": {
-          "id": {
-            "type": "string",
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{1,63}$"
-          },
-          "runtimeFamily": {
-            "const": "Cursor"
-          },
-          "gnhfAgent": {
-            "type": "string",
-            "minLength": 1
-          },
-          "provider": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "enabled": {
-            "type": "boolean"
+          "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{1,63}$" },
+          "runtimeFamily": { "const": "Cursor" },
+          "gnhfAgent": { "type": "string", "minLength": 1 },
+          "provider": { "type": ["string", "null"] },
+          "enabled": { "type": "boolean" }
+        }
+      }
+    },
+    "applications": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "displayName", "repositoryName", "enabled", "triggers"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{1,63}$" },
+          "displayName": { "type": "string", "minLength": 1 },
+          "repositoryName": { "type": ["string", "null"] },
+          "enabled": { "type": "boolean" },
+          "triggers": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "description", "severity", "kind", "path", "value", "caseSensitive", "enabled"],
+              "properties": {
+                "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{1,63}$" },
+                "description": { "type": "string", "minLength": 1 },
+                "severity": { "enum": ["info", "warning", "critical"] },
+                "kind": { "enum": ["always", "repository-path-exists", "repository-text-contains", "prompt-text-contains"] },
+                "path": { "type": ["string", "null"] },
+                "value": { "type": ["string", "null"] },
+                "caseSensitive": { "type": "boolean" },
+                "enabled": { "type": "boolean" }
+              }
+            }
           }
         }
       }
@@ -67,92 +65,26 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "laneId",
-          "promptPath",
-          "repositoryPath",
-          "repositoryName",
-          "repositoryRemote",
-          "baseBranch",
-          "pullRequestNumber",
-          "dependsOn",
-          "expectedArtifactPaths",
-          "executionIntent",
-          "desiredProofLevel",
-          "timeoutSeconds"
-        ],
+        "required": ["laneId", "applicationId", "promptPath", "repositoryPath", "repositoryName", "repositoryRemote", "baseBranch", "pullRequestNumber", "dependsOn", "expectedArtifactPaths", "executionIntent", "desiredProofLevel", "timeoutSeconds"],
         "properties": {
-          "laneId": {
-            "type": "string",
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{1,63}$"
-          },
-          "promptPath": {
-            "type": "string",
-            "minLength": 1
-          },
-          "repositoryPath": {
-            "type": "string",
-            "minLength": 1
-          },
-          "repositoryName": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "repositoryRemote": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "baseBranch": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "pullRequestNumber": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 1
-          },
-          "dependsOn": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1
-            },
-            "uniqueItems": true
-          },
+          "laneId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{1,63}$" },
+          "applicationId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{1,63}$" },
+          "promptPath": { "type": "string", "minLength": 1 },
+          "repositoryPath": { "type": "string", "minLength": 1 },
+          "repositoryName": { "type": ["string", "null"] },
+          "repositoryRemote": { "type": ["string", "null"] },
+          "baseBranch": { "type": ["string", "null"] },
+          "pullRequestNumber": { "type": ["integer", "null"], "minimum": 1 },
+          "dependsOn": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
           "expectedArtifactPaths": {
             "type": "array",
             "minItems": 1,
-            "items": {
-              "type": "string",
-              "pattern": "^(?![A-Za-z]:|[/\\\\]).+"
-            },
+            "items": { "type": "string", "pattern": "^(?![A-Za-z]:|[/\\]).+" },
             "uniqueItems": true
           },
-          "executionIntent": {
-            "enum": [
-              "local_execute",
-              "registered_workflow_execute"
-            ]
-          },
-          "desiredProofLevel": {
-            "enum": [
-              "local-workstation-observed",
-              "committed-repository-work"
-            ]
-          },
-          "timeoutSeconds": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 86400
-          }
+          "executionIntent": { "enum": ["local_execute", "registered_workflow_execute"] },
+          "desiredProofLevel": { "enum": ["local-workstation-observed", "committed-repository-work"] },
+          "timeoutSeconds": { "type": "integer", "minimum": 1, "maximum": 86400 }
         }
       }
     }
