@@ -12,6 +12,16 @@
     "triggers": "TRIGGERS.md"
   },
   "skillRoot": ".ai/skills",
+  "harnessDoctrine": {
+    "policy": ".ai/harness/harness-doctrine.policy.json",
+    "documentation": "docs/governance/harness-doctrine.md",
+    "validator": "scripts/Test-HarnessDoctrineContract.ps1",
+    "actionCommitmentRequired": true,
+    "testOnlyGnhfMaxWallClockSeconds": 30,
+    "testOnlyGnhfMaxIterationSeconds": 30,
+    "deepSeekAllowedRateClasses": ["standard", "discounted"],
+    "deepSeekDefaultAction": "deny"
+  },
   "localRulesMayStrengthen": true,
   "localRulesMayWeaken": false
 }
