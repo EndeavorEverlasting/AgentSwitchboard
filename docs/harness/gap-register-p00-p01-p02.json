@@ -1,0 +1,473 @@
+{
+  "schema": "agentswitchboard.harness-gap-register.v1",
+  "registryId": "gap-register-p00-p01-p02",
+  "generatedAt": "2026-07-18T05:45:00Z",
+  "repositories": [
+    "EndeavorEverlasting/AgentSwitchboard",
+    "EndeavorEverlasting/BlacksmithGuild"
+  ],
+  "sourceArtifact": "/root/.augment/uploads/88d89f6b-34de-4e4b-8770-0bdb14798f7c/pasted.txt",
+  "sourceArtifactDescription": "AgentSwitchboard × BlacksmithGuild Sprint Map and Executable Launch Pack (P00, P01, P02)",
+  "baseState": {
+    "AgentSwitchboard": {
+      "branch": "main",
+      "head": "0e09c00",
+      "headMessage": "feat(wezterm): add one-click BlacksmithGuild GNHF night panel (#22)",
+      "worktreeClean": true,
+      "requiredFloor": "864e373",
+      "descendsFromRequiredFloor": true
+    },
+    "BlacksmithGuild": {
+      "branch": "main",
+      "head": "e58e47f",
+      "headMessage": "feat(harness): reconstruct visible-trade proof on current main (#86)",
+      "worktreeClean": true,
+      "requiredFloor": "956ac2b7",
+      "descendsFromRequiredFloor": true
+    }
+  },
+  "gaps": [
+    {
+      "panel": "P00",
+      "repo": "EndeavorEverlasting/AgentSwitchboard",
+      "category": "schema",
+      "id": "p00-missing-prompt-queue-schema",
+      "severity": "blocking",
+      "description": "No versioned prompt-queue schema exists for multi-prompt ingestion.",
+      "requiredBy": "P00 numbered task 'Rebuild prompt ingestion on current main'",
+      "expectedPath": "tooling/gnhf/schemas/prompt-queue.schema.json",
+      "exists": false,
+      "relatedFiles": ["tooling/gnhf/README.md", "tooling/gnhf/Start-GnhfSprint.ps1"]
+    },
+    {
+      "panel": "P00",
+      "repo": "EndeavorEverlasting/AgentSwitchboard",
+      "category": "schema",
+      "id": "p00-missing-queue-plan-schema",
+      "severity": "blocking",
+      "description": "No versioned queue-plan schema exists for dependency-aware batch planning.",
+      "requiredBy": "P00 numbered task 'Rebuild the queue and trigger spine'",
+      "expectedPath": "tooling/gnhf/schemas/queue-plan.schema.json",
+      "exists": false,
+      "relatedFiles": []
+    },
+    {
+      "panel": "P00",
+      "repo": "EndeavorEverlasting/AgentSwitchboard",
+      "category": "schema",
+      "id": "p00-missing-lane-result-schema",
+      "severity": "blocking",
+      "description": "No versioned lane-result schema exists for per-lane runtime evidence.",
+      "requiredBy": "P00 expected artifacts list",
+      "expectedPath": "tooling/gnhf/schemas/lane-result.schema.json",
+      "exists": false,
+      "relatedFiles": []
+    },
+    {
+      "panel": "P00",
+      "repo": "EndeavorEverlasting/AgentSwitchboard",
+      "category": "schema",
+      "id": "p00-missing-child-operation-request-schema",
+      "severity": "blocking",
+      "description": "No versioned child-operation request schema exists for mutation-required and read-only lanes.",
+      "requiredBy": "P00 'Create the child-operation integration seam'",
+      "expectedPath": "tooling/gnhf/schemas/child-operation-request.schema.json",
+      "exists": false,
+      "relatedFiles": []
+    },
+    {
+      "panel": "P00",
+      "repo": "EndeavorEverlasting/AgentSwitchboard",
+      "category": "schema",
+      "id": "p00-missing-child-operation-result-schema",
+      "severity": "blocking",
+      "description": "No versioned child-operation result schema exists for consuming child repository evidence.",
+      "requiredBy": "P00 'Create the child-operation integration seam'",
+      "expectedPath": "tooling/gnhf/schemas/child-operation-result.schema.json",
+      "exists": false,
+      "relatedFiles": []
+    },
+    {
+      "panel": "P00",
+      "repo": "EndeavorEverlasting/AgentSwitchboard",
+      "category": "schema",
+      "id": "p00-missing-trigger-snapshot-schema",
+      "severity": "blocking",
+      "description": "No versioned trigger-snapshot schema exists for pre-awareness application triggers.",
+      "requiredBy": "P00 'Rebuild the queue and trigger spine'",
+      "expectedPath": "tooling/gnhf/schemas/trigger-snapshot.schema.json",
+      "exists": false,
+      "relatedFiles": []
+    },
+    {
+      "panel": "P00",
+      "repo": "EndeavorEverlasting/AgentSwitchboard",
+      "category": "registry",
+      "id": "p00-missing-application-trigger-registry",
+      "severity": "blocking",
+      "description": "No deterministic application-trigger registry exists.",
+      "requiredBy": "P00 'Rebuild the queue and trigger spine'",
+      "expectedPath": "tooling/gnhf/application-trigger.registry.json",
+      "exists": false,
+      "relatedFiles": []
+    },
+    {
+      "panel": "P00",
+      "repo": "EndeavorEverlasting/AgentSwitchboard",
+      "category": "script",
+      "id": "p00-missing-queue-planner",
+      "severity": "blocking",
+      "description": "No script implements dependency-aware queue planning with unique-repository collision rejection.",
+      "requiredBy": "P00 numbered task 'Rebuild the queue and trigger spine'",
+      "expectedPath": "tooling/gnhf/Compile-GnhfPromptQueue.ps1",
+      "exists": false,
+      "relatedFiles": ["tooling/gnhf/Start-GnhfSprint.ps1", "tooling/gnhf/Start-GnhfFleet.ps1"]
+    },
+    {
+      "panel": "P00",
+      "repo": "EndeavorEverlasting/AgentSwitchboard",
+      "category": "script",
+      "id": "p00-missing-child-operation-dispatcher",
+      "severity": "blocking",
+      "description": "No script dispatches child workflow operations while preserving child proof ceilings.",
+      "requiredBy": "P00 'Create the child-operation integration seam'",
+      "expectedPath": "tooling/gnhf/Invoke-GnhfChildOperation.ps1",
+      "exists": false,
+      "relatedFiles": []
+    },
+    {
+      "panel": "P00",
+      "repo": "EndeavorEverlasting/AgentSwitchboard",
+      "category": "fixture",
+      "id": "p00-missing-fixtures",
+      "severity": "blocking",
+      "description": "Missing fixtures for success, blocked dependencies, trigger tampering, duplicate repo paths, unknown apps, read-only child operations, and process-exit-only rejection.",
+      "requiredBy": "P00 expected artifacts and validation order",
+      "expectedPath": "tooling/gnhf/tests/fixtures/",
+      "exists": false,
+      "relatedFiles": []
+    },
+    {
+      "panel": "P00",
+      "repo": "EndeavorEverlasting/AgentSwitchboard",
+      "category": "documentation",
+      "id": "p00-missing-source-value-map",
+      "severity": "blocking",
+      "description": "Missing docs/recovery/mainline-orchestration-value-map.md recording keep/rebuild/retire decisions for PRs #17 and #20.",
+      "requiredBy": "P00 expected artifacts",
+      "expectedPath": "docs/recovery/mainline-orchestration-value-map.md",
+      "exists": false,
+      "relatedFiles": []
+    },
+    {
+      "panel": "P00",
+      "repo": "EndeavorEverlasting/AgentSwitchboard",
+      "category": "contract",
+      "id": "p00-missing-powershell-bom-contract",
+      "severity": "warning",
+      "description": "All tracked .ps1 files lack a UTF-8 BOM. BlacksmithGuild requires BOM for every tracked PowerShell file.",
+      "requiredBy": "Cross-repo PowerShell encoding discipline; BlacksmithGuild AGENTS.md PowerShell encoding rule",
+      "expectedPath": "scripts/test-powershell-utf8-bom-contract.ps1",
+      "exists": false,
+      "relatedFiles": [
+        "tooling/gnhf/Install-BlacksmithGuildNightPanel.ps1",
+        "tooling/gnhf/Start-AgentSwitchboard.ps1",
+        "tooling/gnhf/Start-BlacksmithGuildNightShift.ps1",
+        "tooling/gnhf/Test-BlacksmithGuildNightPanelContracts.ps1",
+        "tooling/gnhf/Test-GnhfFleetContracts.ps1",
+        "tooling/gnhf/Test-HermesSetupContracts.ps1",
+        "tooling/gnhf/Install-AgentSwitchboardGnhf.ps1",
+        "tooling/gnhf/Start-GnhfFleet.ps1",
+        "tooling/gnhf/Start-GnhfSprint.ps1",
+        "tooling/gnhf/Get-GnhfFleetStatus.ps1",
+        "tooling/gnhf/Setup-AgentSwitchboard.ps1",
+        "tooling/gnhf/GnhfFleet.Paths.ps1",
+        "scripts/Test-AgentDocumentationContract.ps1",
+        "scripts/Get-RepositoryFamilyHarnessStatus.ps1",
+        "scripts/Test-RepositoryFamilyHarness.ps1"
+      ]
+    },
+    {
+      "panel": "P01",
+      "repo": "EndeavorEverlasting/BlacksmithGuild",
+      "category": "schema",
+      "id": "p01-missing-operation-request-schema",
+      "severity": "blocking",
+      "description": "No versioned AgentSwitchboard operation-request schema exists.",
+      "requiredBy": "P01 expected artifacts",
+      "expectedPath": ".tbg/harness/schemas/agentswitchboard-operation-request.schema.json",
+      "exists": false,
+      "relatedFiles": [".tbg/harness/api/operations.json"]
+    },
+    {
+      "panel": "P01",
+      "repo": "EndeavorEverlasting/BlacksmithGuild",
+      "category": "schema",
+      "id": "p01-missing-operation-result-schema",
+      "severity": "blocking",
+      "description": "No versioned BlacksmithGuild operation-result schema exists.",
+      "requiredBy": "P01 expected artifacts",
+      "expectedPath": ".tbg/harness/schemas/agentswitchboard-operation-result.schema.json",
+      "exists": false,
+      "relatedFiles": [".tbg/harness/api/operations.json"]
+    },
+    {
+      "panel": "P01",
+      "repo": "EndeavorEverlasting/BlacksmithGuild",
+      "category": "schema",
+      "id": "p01-missing-application-trigger-export-schema",
+      "severity": "blocking",
+      "description": "No application-trigger export schema exists for pre-awareness trigger import.",
+      "requiredBy": "P01 expected artifacts",
+      "expectedPath": ".tbg/harness/schemas/application-trigger-export.schema.json",
+      "exists": false,
+      "relatedFiles": []
+    },
+    {
+      "panel": "P01",
+      "repo": "EndeavorEverlasting/BlacksmithGuild",
+      "category": "registry",
+      "id": "p01-missing-trigger-export-registry",
+      "severity": "blocking",
+      "description": "No exported trigger registry exists for AgentSwitchboard pre-awareness trigger import.",
+      "requiredBy": "P01 factor 'external-orchestration-request trigger' and P02 trigger-import adapter",
+      "expectedPath": ".tbg/harness/triggers/external-orchestration-request.trigger.json",
+      "exists": false,
+      "relatedFiles": []
+    },
+    {
+      "panel": "P01",
+      "repo": "EndeavorEverlasting/BlacksmithGuild",
+      "category": "registry",
+      "id": "p01-missing-capability-registry-entry",
+      "severity": "blocking",
+      "description": "No capability registry entry exists for agentswitchboard-operation-dispatch.",
+      "requiredBy": "P01 factor 'agentswitchboard-operation-dispatch capability'",
+      "expectedPath": ".tbg/harness/capabilities/agentswitchboard-operation-dispatch.capability.json or registry update",
+      "exists": false,
+      "relatedFiles": [".tbg/harness/manifest.json"]
+    },
+    {
+      "panel": "P01",
+      "repo": "EndeavorEverlasting/BlacksmithGuild",
+      "category": "registry",
+      "id": "p01-operations-incomplete",
+      "severity": "blocking",
+      "description": ".tbg/harness/api/operations.json does not list the six P01 supported operations.",
+      "requiredBy": "P01 supported initial operations list",
+      "expectedPath": ".tbg/harness/api/operations.json",
+      "exists": true,
+      "relatedFiles": [".tbg/harness/api/operations.json"],
+      "currentValue": [
+        "validate-end-to-end-harness",
+        "run-end-to-end-profile",
+        "generate-sprint-capsule"
+      ],
+      "requiredValue": [
+        "inspect-harness",
+        "run-default-static",
+        "run-local-build",
+        "refresh-read-only-runtime",
+        "generate-sprint-capsule",
+        "prepare-runtime-plan"
+      ]
+    },
+    {
+      "panel": "P01",
+      "repo": "EndeavorEverlasting/BlacksmithGuild",
+      "category": "script",
+      "id": "p01-missing-operation-dispatcher",
+      "severity": "blocking",
+      "description": "No dispatcher script invokes existing BlacksmithGuild authorities from an AgentSwitchboard request.",
+      "requiredBy": "P01 expected artifacts and numbered tasks",
+      "expectedPath": "scripts/tbg/Invoke-TbgAgentSwitchboardOperation.ps1",
+      "exists": false,
+      "relatedFiles": [
+        "scripts/tbg/Invoke-TbgEndToEndValidation.ps1",
+        "scripts/tbg/New-TbgSprintCapsule.ps1",
+        "scripts/tbg/Test-TbgEndToEndHarness.ps1"
+      ]
+    },
+    {
+      "panel": "P01",
+      "repo": "EndeavorEverlasting/BlacksmithGuild",
+      "category": "fixture",
+      "id": "p01-missing-operation-fixtures",
+      "severity": "blocking",
+      "description": "Missing fixtures for valid default-static, local-build, read-only-runtime requests; stale HEAD; dirty repo; unknown operation; unauthorized consumer; runtime operation without authority; path leakage; proof-ceiling promotion; missing trigger export.",
+      "requiredBy": "P01 numbered tasks",
+      "expectedPath": ".tbg/harness/fixtures/agentswitchboard-operation.fixtures.json",
+      "exists": false,
+      "relatedFiles": []
+    },
+    {
+      "panel": "P01",
+      "repo": "EndeavorEverlasting/BlacksmithGuild",
+      "category": "validator",
+      "id": "p01-missing-operation-contract-validator",
+      "severity": "blocking",
+      "description": "No dedicated validator exists for the new AgentSwitchboard operation contracts.",
+      "requiredBy": "P01 validation order",
+      "expectedPath": "scripts/tbg/Test-TbgAgentSwitchboardOperationContract.ps1",
+      "exists": false,
+      "relatedFiles": ["scripts/tbg/Test-TbgEndToEndHarness.ps1"]
+    },
+    {
+      "panel": "P01",
+      "repo": "EndeavorEverlasting/BlacksmithGuild",
+      "category": "documentation",
+      "id": "p01-missing-consumer-contract-docs",
+      "severity": "warning",
+      "description": "No dedicated operator documentation exists for the AgentSwitchboard consumer contract.",
+      "requiredBy": "P01 expected artifacts",
+      "expectedPath": "docs/harness/agentswitchboard-consumer-contract.md",
+      "exists": false,
+      "relatedFiles": [".tbg/harness/consumer-handoffs.registry.json"]
+    },
+    {
+      "panel": "P02",
+      "repo": "EndeavorEverlasting/AgentSwitchboard",
+      "category": "profile",
+      "id": "p02-missing-blacksmithguild-application-profile",
+      "severity": "blocking",
+      "description": "No BlacksmithGuild application profile exists in AgentSwitchboard.",
+      "requiredBy": "P02 owned scope 'BlacksmithGuild application profile'",
+      "expectedPath": "tooling/gnhf/profiles/blacksmithguild.profile.json",
+      "exists": false,
+      "relatedFiles": ["tooling/gnhf/gnhf-fleet.example.json"]
+    },
+    {
+      "panel": "P02",
+      "repo": "EndeavorEverlasting/AgentSwitchboard",
+      "category": "adapter",
+      "id": "p02-missing-trigger-import-adapter",
+      "severity": "blocking",
+      "description": "No trigger-import adapter reads BlacksmithGuild's exported trigger registry and binds snapshot/hash into the execution contract.",
+      "requiredBy": "P02 numbered task 'Build trigger import and pre-awareness flagging'",
+      "expectedPath": "tooling/gnhf/Import-TbgTriggerSnapshot.ps1",
+      "exists": false,
+      "relatedFiles": []
+    },
+    {
+      "panel": "P02",
+      "repo": "EndeavorEverlasting/AgentSwitchboard",
+      "category": "launcher",
+      "id": "p02-missing-one-command-launcher",
+      "severity": "blocking",
+      "description": "No installed one-command BlacksmithGuild launcher exists (agent-switchboard-blacksmithguild.cmd or equivalent).",
+      "requiredBy": "P02 expected artifacts and EXACT NEXT COMMAND",
+      "expectedPath": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\agent-switchboard-blacksmithguild.cmd",
+      "exists": false,
+      "relatedFiles": [
+        "tooling/gnhf/Install-BlacksmithGuildNightPanel.ps1",
+        "tooling/gnhf/Start-BlacksmithGuildNightShift.ps1"
+      ]
+    },
+    {
+      "panel": "P02",
+      "repo": "EndeavorEverlasting/AgentSwitchboard",
+      "category": "script",
+      "id": "p02-missing-operation-entrypoint",
+      "severity": "blocking",
+      "description": "No PowerShell entrypoint supports -RepoPath, -PromptPath, -Operation, -Agent, -PlanOnly, -Run for BlacksmithGuild.",
+      "requiredBy": "P02 expected artifacts",
+      "expectedPath": "tooling/gnhf/Start-BlacksmithGuildOperation.ps1",
+      "exists": false,
+      "relatedFiles": []
+    },
+    {
+      "panel": "P02",
+      "repo": "EndeavorEverlasting/AgentSwitchboard",
+      "category": "test",
+      "id": "p02-missing-fake-runtime-tests",
+      "severity": "blocking",
+      "description": "Missing deterministic fake-runtime tests proving trigger snapshot before launch, child request/result round trip, no receiver daemon, dependency blocking, process-exit-only rejection, and no target mutation in PlanOnly/read-only modes.",
+      "requiredBy": "P02 validation order",
+      "expectedPath": "tooling/gnhf/tests/Test-BlacksmithGuildFakeRuntime.ps1",
+      "exists": false,
+      "relatedFiles": []
+    },
+    {
+      "panel": "P02",
+      "repo": "EndeavorEverlasting/AgentSwitchboard",
+      "category": "test",
+      "id": "p02-missing-cross-repo-contract-tests",
+      "severity": "blocking",
+      "description": "Missing cross-repo contract tests validating P00/P01 schema agreement.",
+      "requiredBy": "P02 validation order",
+      "expectedPath": "tooling/gnhf/tests/Test-BlacksmithGuildAgentSwitchboardContract.ps1",
+      "exists": false,
+      "relatedFiles": []
+    },
+    {
+      "panel": "P02",
+      "repo": "EndeavorEverlasting/AgentSwitchboard",
+      "category": "documentation",
+      "id": "p02-missing-operator-guide",
+      "severity": "warning",
+      "description": "Missing operator guide distinguishing setup, list operations, PlanOnly, static child workflow, AI sprint, and optional read-only Bannerlord proof.",
+      "requiredBy": "P02 expected artifacts",
+      "expectedPath": "docs/harness/blacksmithguild-activation-guide.md",
+      "exists": false,
+      "relatedFiles": []
+    },
+    {
+      "panel": "P02",
+      "repo": "EndeavorEverlasting/AgentSwitchboard",
+      "category": "documentation",
+      "id": "p02-missing-convergence-report",
+      "severity": "warning",
+      "description": "Missing convergence/disposition report for historical AgentSwitchboard PRs #11-#20.",
+      "requiredBy": "P02 expected artifacts and numbered tasks",
+      "expectedPath": "docs/historical-prs/agentswitchboard-pr11-pr20-disposition.md",
+      "exists": false,
+      "relatedFiles": []
+    },
+    {
+      "panel": "cross-repo",
+      "repo": "EndeavorEverlasting/AgentSwitchboard,EndeavorEverlasting/BlacksmithGuild",
+      "category": "branch",
+      "id": "p00-p01-p02-branches-missing",
+      "severity": "blocking",
+      "description": "No feature branches or PRs exist for P00, P01, or P02.",
+      "requiredBy": "P00/P01/P02 commit, push, and PR contract",
+      "expectedBranches": [
+        "feat/mainline-gnhf-orchestration-convergence",
+        "feat/agentswitchboard-callable-contract",
+        "feat/blacksmithguild-one-command-activation"
+      ],
+      "exists": false,
+      "relatedFiles": []
+    }
+  ],
+  "existingRelatedSurfaces": {
+    "AgentSwitchboard": [
+      "tooling/gnhf/BLACKSMITHGUILD_NIGHT_PANEL.md (PR #22) — direct WezTerm/GNHF night panel, not the P00/P01/P02 callable contract",
+      "tooling/gnhf/Start-BlacksmithGuildNightShift.ps1 — direct night shift launcher",
+      "tooling/gnhf/templates/wezterm-blacksmithguild-night.lua — WezTerm menu entry"
+    ],
+    "BlacksmithGuild": [
+      ".tbg/workflows/gnhf-night-shift.contract.json — P38 night objective contract",
+      ".tbg/harness/consumer-handoffs.registry.json — declares agent-switchboard as coordination-only consumer",
+      ".tbg/harness/api/operations.json — existing operations, not P01 operation set",
+      "scripts/tbg/Invoke-TbgEndToEndValidation.ps1 — existing E2E runner",
+      "scripts/tbg/New-TbgSprintCapsule.ps1 — existing capsule generator"
+    ]
+  },
+  "validationRun": {
+    "commands": [
+      "python3 tests/harness/test_tbg_end_to_end_harness.py",
+      "python3 schema parse checks on .ai/harness and .tbg/harness core JSON",
+      "git diff --check in both repos",
+      "PowerShell BOM inspection on both repos"
+    ],
+    "results": {
+      "blacksmithguild_static_e2e": "PASS",
+      "core_json_validity": "PASS",
+      "git_diff_check": "PASS",
+      "blacksmithguild_ps1_bom": "PASS",
+      "agentswitchboard_ps1_bom": "FAIL — all 15 tracked .ps1 files lack UTF-8 BOM"
+    }
+  },
+  "proofCeiling": "read-only repository inspection + static contract validation + gap register committed to a branch. No live runtime, no provider execution, no Bannerlord launch, no Windows-only PowerShell execution."
+}
