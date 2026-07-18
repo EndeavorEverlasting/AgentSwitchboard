@@ -187,7 +187,7 @@ Before completing repository analysis or producing any awareness assessment, rea
     $Conversion.regularRequest.readFirst = @($SnapshotPath) + @($Conversion.regularRequest.readFirst | Where-Object { [string]$_ -cne $SnapshotPath })
     $Conversion.compiledPrompt.readFirst = @($SnapshotPath) + @($Conversion.compiledPrompt.readFirst | Where-Object { [string]$_ -cne $SnapshotPath })
     $safety = 'Pre-awareness trigger flags must remain available and unchanged until the lane finishes.'
-    $Conversion.regularRequest.safetyConstraints = @($Conversion.regularRequest.safetyConstraints) + @($safety)
+    $Conversion.regularRequest.safetyConstraints = @(@($Conversion.regularRequest.safetyConstraints) + @($safety) | Select-Object -Unique)
     return $Conversion
 }
 
@@ -224,10 +224,11 @@ function Test-QueueTriggerGate {
         [int]$snapshot.criticalTriggerCount -ne @($flags | Where-Object { $_.active -eq $true -and $_.severity -eq 'critical' }).Count) {
         throw "Lane '$($Lane.laneId)' trigger snapshot counts are inconsistent."
     }
-    $compiledText = Get-Content -LiteralPath ([string]$Lane.contracts.compiledPromptPath) -Raw
-    if (-not $compiledText.Contains($path) -or
-        -not $compiledText.Contains($actualHash) -or
-        -not $compiledText.Contains('Before completing repository analysis or producing any awareness assessment')) {
+    $compiled = Get-Content -LiteralPath ([string]$Lane.contracts.compiledPromptPath) -Raw | ConvertFrom-Json -Depth 50
+    if (-not ([string]$compiled.prompt).Contains($path) -or
+        -not ([string]$compiled.prompt).Contains($actualHash) -or
+        -not ([string]$compiled.prompt).Contains('Before completing repository analysis or producing any awareness assessment') -or
+        -not (@($compiled.readFirst) -contains $path)) {
         throw "Lane '$($Lane.laneId)' compiled prompt is missing its pre-awareness trigger contract."
     }
     return $snapshot
