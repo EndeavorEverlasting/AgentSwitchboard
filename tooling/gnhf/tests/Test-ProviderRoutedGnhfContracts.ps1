@@ -40,7 +40,9 @@ Check ($processText.Contains('WaitForExit(5000)')) "dispatch/bounded-post-kill" 
 $launcherText = Get-Content -LiteralPath (Join-Path $RootPath "Start-ProviderRoutedGnhfSprint.ps1") -Raw
 Check ($launcherText.Contains('Set-Location -LiteralPath $RepoPath')) "launcher/directory-first" "repository is not entered before runtime logic"
 Check ($launcherText.Contains('GNHF 0.1.42 or newer is required')) "launcher/gnhf-floor" "GNHF compatibility floor missing"
-Check ($launcherText.Contains('"--model", $Model')) "launcher/explicit-model" "GNHF does not receive the exact provider/model"
+Check ($launcherText.Contains('@("run", "--model", $Model, "--format", "json", $markerPrompt)')) "launcher/explicit-model" "OpenCode preflight does not require the exact provider/model"
+Check ($launcherText.Contains('OPENCODE_CONFIG_CONTENT')) "launcher/opencode-model-pin" "GNHF spawn does not pin the model through OpenCode config"
+Check ($launcherText.Contains('if ($evidence.gnhfModelFlag)')) "launcher/optional-gnhf-model-flag" "launcher always passes unsupported GNHF --model"
 Check ($launcherText.Contains('$evidence.sprintInvoked = $true')) "launcher/invocation-evidence" "GNHF invocation state is not recorded"
 Check ($launcherText.Contains('Process exit zero is not delivery proof')) "launcher/commit-proof" "exit code can be mistaken for delivery"
 Check ($launcherText.Contains('DeepSeek provider probe failed; GNHF was not started')) "launcher/provider-fail-fast" "provider failure can fall through into GNHF retries"
@@ -50,6 +52,7 @@ Check (-not $launcherText.Contains('"--push"')) "launcher/no-push" "unattended p
 $installerText = Get-Content -LiteralPath (Join-Path $RootPath "Install-ProviderRoutedGnhf.ps1") -Raw
 Check ($installerText.Contains('Set-Location -LiteralPath $RepoRoot')) "installer/directory-first" "installer does not enter AgentSwitchboard first"
 Check ($installerText.Contains('"gnhf@$required"')) "installer/pinned-gnhf" "installer uses an unpinned GNHF package"
+Check ($installerText.Contains('falling back to a local GNHF source clone')) "installer/local-source-fallback" "installer has no local fallback when npm lacks the pin"
 Check ($installerText.Contains('modelFlagVerified')) "installer/model-capability-state" "installed state does not record model capability"
 
 $temp = Join-Path ([IO.Path]::GetTempPath()) ("agentswitchboard-shim-contract-{0}" -f [guid]::NewGuid().ToString("N"))

@@ -136,14 +136,13 @@ try {
     $gnhfVersion = [version]$versionMatch.Groups[1].Value
     $evidence.gnhfVersion = $gnhfVersion.ToString()
     if ($gnhfVersion -lt [version]"0.1.42") {
-        throw "GNHF 0.1.42 or newer is required for explicit provider/model routing. Detected $gnhfVersion. Run Install-ProviderRoutedGnhf.ps1 -Apply."
+        throw "GNHF 0.1.42 or newer is required for recovered OpenCode JSON output on the provider route. Detected $gnhfVersion. Run Install-ProviderRoutedGnhf.ps1 -Apply."
     }
 
     $gnhfHelpProbe = Invoke-GnhfBoundedCommand -FilePath $gnhfPath -ArgumentList @("--help") -WorkingDirectory $RepoPath -TimeoutSeconds 15
     $evidence.gnhfModelFlag = ($gnhfHelpProbe.exitCode -eq 0 -and $gnhfHelpProbe.output -match '(?m)^\s*(-m,\s*)?--model\b')
-    if (-not $evidence.gnhfModelFlag) {
-        throw "The installed GNHF does not expose the required --model option. Run Install-ProviderRoutedGnhf.ps1 -Apply."
-    }
+    # Exact model selection is enforced by the OpenCode preflight below and OPENCODE_CONFIG_CONTENT.
+    # Pass --model to GNHF only when that CLI option exists; current upstream 0.1.42 does not expose it.
 
     $openCodePath = Get-CommandPathFromState -Name "opencode"
     $versionProbe = Invoke-GnhfBoundedCommand -FilePath $openCodePath -ArgumentList @("--version") -WorkingDirectory $RepoPath -TimeoutSeconds $ProbeTimeoutSeconds
@@ -196,8 +195,12 @@ try {
     }
 
     $gnhfArguments = @(
-        "--agent", "opencode",
-        "--model", $Model,
+        "--agent", "opencode"
+    )
+    if ($evidence.gnhfModelFlag) {
+        $gnhfArguments += @("--model", $Model)
+    }
+    $gnhfArguments += @(
         "--worktree",
         "--max-iterations", [string]$MaxIterations,
         "--max-tokens", [string]$MaxTokens,
