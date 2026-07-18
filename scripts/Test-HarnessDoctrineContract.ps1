@@ -85,6 +85,7 @@ function Test-DeepSeekRateGate {
 
 $policyText = Get-RequiredText -RelativePath ".ai/harness/harness-doctrine.policy.json"
 $templatePolicyText = Get-RequiredText -RelativePath "templates/repository-agent-contract/.ai/harness/harness-doctrine.policy.json"
+$doctrineText = Get-RequiredText -RelativePath "docs/governance/harness-doctrine.md"
 $agentsText = Get-RequiredText -RelativePath "AGENTS.md"
 $templateAgentsText = Get-RequiredText -RelativePath "templates/repository-agent-contract/AGENTS.md"
 $gnhfSkillText = Get-RequiredText -RelativePath ".ai/skills/gnhf-prompt-compilation/SKILL.md"
@@ -165,11 +166,23 @@ if ($null -ne $templatePolicyText) {
     }
 }
 
-$requiredDoctrineTokens = @(
-    "request -> evidence review -> bounded decision -> repo or Git or GitHub mutation -> artifacts -> validation -> report -> next decision",
-    "Action-commitment rule",
-    "Test-only GNHF timing rule",
-    "DeepSeek usage-window rule",
+if ($null -ne $doctrineText) {
+    foreach ($token in @(
+        "request -> evidence review -> bounded decision -> repo or Git or GitHub mutation -> artifacts -> validation -> report -> next decision",
+        "Action-commitment rule",
+        "Test-only GNHF timing rule",
+        "DeepSeek usage-window rule",
+        "30 seconds",
+        "double-usage",
+        "standard",
+        "discounted"
+    )) {
+        Add-Result -Passed ($doctrineText.Contains($token)) -Name "doctrine/content/$token" -FailureMessage "required doctrine content missing"
+    }
+}
+
+$entrypointTokens = @(
+    "docs/governance/harness-doctrine.md",
     ".ai/harness/harness-doctrine.policy.json",
     "PR or sprint",
     "validation order"
@@ -181,8 +194,8 @@ foreach ($document in @(
     if ($null -eq $document.Text) {
         continue
     }
-    foreach ($token in $requiredDoctrineTokens) {
-        Add-Result -Passed ($document.Text.Contains($token)) -Name "doctrine/$($document.Name)/$token" -FailureMessage "required doctrine token missing"
+    foreach ($token in $entrypointTokens) {
+        Add-Result -Passed ($document.Text.Contains($token)) -Name "entrypoint/$($document.Name)/$token" -FailureMessage "doctrine reference missing"
     }
 }
 
