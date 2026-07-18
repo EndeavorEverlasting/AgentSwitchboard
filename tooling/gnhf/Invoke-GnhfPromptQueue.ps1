@@ -155,9 +155,14 @@ foreach ($batch in @($plan.batches | Sort-Object sequence)) {
 
 $orderedResults = @($plan.lanes | ForEach-Object { $results[[string]$_.laneId] })
 $failed = @($orderedResults | Where-Object { $_.status -ne "succeeded" })
-$registeredTriggers = @($plan.lanes | Measure-Object -Property { [int]$_.triggerFlags.registeredCount } -Sum).Sum
-$activeTriggers = @($plan.lanes | Measure-Object -Property { [int]$_.triggerFlags.activeCount } -Sum).Sum
-$criticalTriggers = @($plan.lanes | Measure-Object -Property { [int]$_.triggerFlags.criticalCount } -Sum).Sum
+$registeredTriggers = 0
+$activeTriggers = 0
+$criticalTriggers = 0
+foreach ($lane in @($plan.lanes)) {
+    $registeredTriggers += [int]$lane.triggerFlags.registeredCount
+    $activeTriggers += [int]$lane.triggerFlags.activeCount
+    $criticalTriggers += [int]$lane.triggerFlags.criticalCount
+}
 $summary = [pscustomobject][ordered]@{
     schemaVersion = "agentswitchboard-gnhf-prompt-queue-summary/v1"
     queueId = [string]$plan.queueId
