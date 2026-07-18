@@ -18,9 +18,68 @@
       "enabled": true
     }
   ],
+  "applications": [
+    {
+      "id": "first-application",
+      "displayName": "First Application",
+      "repositoryName": null,
+      "enabled": true,
+      "triggers": [
+        {
+          "id": "repo-agent-rules-present",
+          "description": "Repository-specific agent rules exist and must inform the awareness assessment.",
+          "severity": "warning",
+          "kind": "repository-path-exists",
+          "path": "AGENTS.md",
+          "value": null,
+          "caseSensitive": false,
+          "enabled": true
+        },
+        {
+          "id": "runtime-proof-requested",
+          "description": "The prompt requests runtime or live behavior proof.",
+          "severity": "critical",
+          "kind": "prompt-text-contains",
+          "path": null,
+          "value": "runtime proof",
+          "caseSensitive": false,
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "id": "dependent-application",
+      "displayName": "Dependent Application",
+      "repositoryName": null,
+      "enabled": true,
+      "triggers": [
+        {
+          "id": "dependency-awareness",
+          "description": "The app depends on an upstream lane and must reconcile that handoff before final analysis.",
+          "severity": "warning",
+          "kind": "always",
+          "path": null,
+          "value": null,
+          "caseSensitive": false,
+          "enabled": true
+        },
+        {
+          "id": "local-trigger-doctrine",
+          "description": "The app contains repo-owned trigger doctrine.",
+          "severity": "info",
+          "kind": "repository-path-exists",
+          "path": "TRIGGERS.md",
+          "value": null,
+          "caseSensitive": false,
+          "enabled": true
+        }
+      ]
+    }
+  ],
   "lanes": [
     {
       "laneId": "first-repository-sprint",
+      "applicationId": "first-application",
       "promptPath": "__PROMPT_A__",
       "repositoryPath": "__REPOSITORY_A__",
       "repositoryName": null,
@@ -37,6 +96,7 @@
     },
     {
       "laneId": "dependent-repository-sprint",
+      "applicationId": "dependent-application",
       "promptPath": "__PROMPT_B__",
       "repositoryPath": "__REPOSITORY_B__",
       "repositoryName": null,
