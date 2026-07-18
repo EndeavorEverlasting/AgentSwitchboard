@@ -183,7 +183,14 @@ PRE-AWARENESS TRIGGER FLAGS (generated before agent launch)
 Before completing repository analysis or producing any awareness assessment, read the exact snapshot and explicitly reconcile every active trigger. The snapshot is evidence, not authorization. Do not modify or delete it.
 "@
 
-    $Conversion.compiledPrompt.prompt = ($instruction.Trim() + [Environment]::NewLine + [Environment]::NewLine + [string]$Conversion.compiledPrompt.prompt)
+    $originalPrompt = [string]$Conversion.compiledPrompt.prompt
+    $firstBreak = $originalPrompt.IndexOf([Environment]::NewLine, [StringComparison]::Ordinal)
+    if ($firstBreak -lt 0) {
+        throw 'Compiled prompt has no executable opening line.'
+    }
+    $opening = $originalPrompt.Substring(0, $firstBreak)
+    $remainder = $originalPrompt.Substring($firstBreak + [Environment]::NewLine.Length).TrimStart()
+    $Conversion.compiledPrompt.prompt = $opening + [Environment]::NewLine + [Environment]::NewLine + $instruction.Trim() + [Environment]::NewLine + [Environment]::NewLine + $remainder
     $Conversion.regularRequest.readFirst = @($SnapshotPath) + @($Conversion.regularRequest.readFirst | Where-Object { [string]$_ -cne $SnapshotPath })
     $Conversion.compiledPrompt.readFirst = @($SnapshotPath) + @($Conversion.compiledPrompt.readFirst | Where-Object { [string]$_ -cne $SnapshotPath })
     $safety = 'Pre-awareness trigger flags must remain available and unchanged until the lane finishes.'
