@@ -11,6 +11,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 WSL = ROOT / "tooling" / "wsl"
 SUPPORTED_GNHF_VERSION = "0.1.42"
+FREE_OPENCODE_MODELS = [
+    "deepseek-v4-flash-free",
+    "mimo-v2.5-free",
+    "north-mini-code-free",
+    "nemotron-3-ultra-free",
+]
+DEFAULT_FREE_MODEL = "opencode/deepseek-v4-flash-free"
 
 
 def require(condition: bool, message: str) -> None:
@@ -25,11 +32,20 @@ def load_json(path: Path) -> dict:
 
 def validate_manifest(data: dict, *, valid: bool) -> None:
     gnhf = data.get("gnhf", {})
+    opencode = data.get("opencode", {})
     conditions = [
         data.get("schemaVersion") == 1,
         isinstance(data.get("distribution"), str) and bool(data["distribution"]),
         data.get("workspace", {}).get("sessionName") == "dev",
         data.get("node", {}).get("minimumMajor", 0) >= 20,
+        opencode.get("enabled") is True,
+        opencode.get("configPath") == "~/.config/opencode/opencode.json",
+        opencode.get("defaultModel") == DEFAULT_FREE_MODEL,
+        opencode.get("smallModel") == DEFAULT_FREE_MODEL,
+        opencode.get("share") == "disabled",
+        opencode.get("restrictZenToFreeModels") is True,
+        opencode.get("freeModelIds") == FREE_OPENCODE_MODELS,
+        "deepseek-v4-pro" not in " ".join(opencode.get("freeModelIds", [])),
         gnhf.get("upstreamRepository") == "https://github.com/kunchenguid/gnhf.git",
         gnhf.get("supportedVersion") == SUPPORTED_GNHF_VERSION,
         gnhf.get("npmPackage") == f"gnhf@{SUPPORTED_GNHF_VERSION}",
@@ -48,15 +64,18 @@ def main() -> int:
         WSL / "Start-TmuxGnhfWorkspaceSetup.ps1",
         WSL / "Install-TmuxGnhfWorkspace.ps1",
         WSL / "Invoke-TmuxGnhfRuntimeProof.ps1",
+        WSL / "Set-OpenCodeFreeDefaults.ps1",
         WSL / "tmux-gnhf-workstation.example.json",
         WSL / "wsl-tmux-gnhf-base.example.json",
         WSL / "scripts" / "bootstrap-agent-workstation.sh",
         WSL / "scripts" / "configure-gnhf-workspace.sh",
+        WSL / "scripts" / "configure-opencode-free-defaults.sh",
         WSL / "templates" / "wezterm-tmux.lua",
         WSL / "fixtures" / "tmux-gnhf-manifest.valid.json",
         WSL / "fixtures" / "tmux-gnhf-manifest.invalid.json",
         ROOT / "docs" / "workstation" / "tmux-gnhf-other-computer.md",
         ROOT / "docs" / "workstation" / "tmux-gnhf-technician-quickstart.md",
+        ROOT / "docs" / "workstation" / "opencode-free-model-defaults.md",
     ]
     for path in required:
         require(path.is_file(), f"missing required file: {path.relative_to(ROOT)}")
@@ -76,8 +95,31 @@ def main() -> int:
     require("npm install --global --prefix" in bash_script, "GNHF must install into a user-owned prefix")
     require("GNHF_TELEMETRY=0" in bash_script, "telemetry-off posture must be explicit")
     require("--worktree" in bash_script and "--max-iterations" in bash_script and "--max-tokens" in bash_script, "safe wrapper must be bounded and isolated")
+    require("configure-opencode-free-defaults.sh" in bash_script, "workspace setup must apply OpenCode free defaults")
+    require("--plan-only" in bash_script, "workspace plan must include the OpenCode free-default plan")
+    require("opencode-free-defaults-summary.json" in bash_script, "workspace summary must consume OpenCode configuration evidence")
+    require("paidDefaultAllowed" in bash_script, "workspace summary must state that paid defaults are disabled")
     require("curl |" not in bash_script and "curl -fsSL |" not in bash_script, "pipe-to-shell installation is forbidden")
     require("login" not in bash_script.lower() and "oauth" not in bash_script.lower(), "bootstrap must not authenticate")
+
+    opencode_script = (WSL / "scripts" / "configure-opencode-free-defaults.sh").read_text(encoding="utf-8")
+    for token in (
+        "set -euo pipefail",
+        "~/.config/opencode/opencode.json",
+        ".model = $model",
+        ".small_model = $smallModel",
+        '.share = $share',
+        ".provider.opencode.whitelist = $freeModels",
+        'select(. != "opencode")',
+        "agent-switchboard-backup",
+        "chmod 0600",
+        "opencode-free-defaults-summary.json",
+        "paidDefaultAllowed: false",
+        "credentialsChanged: false",
+    ):
+        require(token in opencode_script, f"OpenCode configurator missing contract token: {token}")
+    require("deepseek/deepseek-v4-pro" not in opencode_script, "OpenCode configurator must not pin the paid DeepSeek model")
+    require("api_key" not in opencode_script.lower() and "access_token" not in opencode_script.lower(), "OpenCode configurator must not collect credentials")
 
     user_bootstrap = (WSL / "scripts" / "bootstrap-agent-workstation.sh").read_text(encoding="utf-8")
     require("skipPackageInstallation" in user_bootstrap, "guided root package phase must be able to suppress duplicate sudo work")
@@ -87,6 +129,7 @@ def main() -> int:
         for script in (
             WSL / "scripts" / "bootstrap-agent-workstation.sh",
             WSL / "scripts" / "configure-gnhf-workspace.sh",
+            WSL / "scripts" / "configure-opencode-free-defaults.sh",
         ):
             subprocess.run(["bash", "-n", script.as_posix()], check=True)
 
@@ -101,17 +144,30 @@ def main() -> int:
     require("ConfirmImpact = 'High'" in ps_script, "Stop must be explicitly destructive")
     require("--unregister" not in ps_script and "reset --hard" not in ps_script, "destructive reset is forbidden")
 
+    free_defaults_ps = (WSL / "Set-OpenCodeFreeDefaults.ps1").read_text(encoding="utf-8")
+    for token in (
+        'Join-Path $PSScriptRoot "tmux-gnhf-workstation.example.json"',
+        'Join-Path $PSScriptRoot "scripts\\configure-opencode-free-defaults.sh"',
+        "Set-Location" if False else "Resolve-Path -LiteralPath $ManifestPath",
+        "$process.Kill($true)",
+        "OpenCode free-default configuration failed",
+        "Installed OpenCode configuration does not match the manifest",
+        "paidDefaultAllowed = $false",
+    ):
+        require(token in free_defaults_ps, f"OpenCode PowerShell installer missing contract token: {token}")
+    require("deepseek/deepseek-v4-pro" not in free_defaults_ps, "targeted installer must not choose the paid DeepSeek model")
+
     guided = (WSL / "Start-TmuxGnhfWorkspaceSetup.ps1").read_text(encoding="utf-8")
     for token in (
         'ValidateSet("Guided", "Plan", "Apply")',
         'Read-Host "Confirmation"',
         'Start-Process -FilePath "dism.exe" -Verb RunAs',
-        '-u root',
-        'skipPackageInstallation',
-        'setup-runs',
-        'operator-summary.json',
-        'Get-TmuxGnhfWorkspaceStatus.ps1',
-        'Replace([string][char]0, [string]::Empty)',
+        "-u root",
+        "skipPackageInstallation",
+        "setup-runs",
+        "operator-summary.json",
+        "Get-TmuxGnhfWorkspaceStatus.ps1",
+        "Replace([string][char]0, [string]::Empty)",
     ):
         require(token in guided, f"guided setup is missing contract token: {token}")
     require("--unregister" not in guided and "--push" not in guided and "git.exe push" not in guided.lower(), "guided setup must not reset WSL or execute Git push")
@@ -154,6 +210,19 @@ def main() -> int:
         "Routing evidence",
     ):
         require(label in guide, f"guide is missing execution-context or integration label: {label}")
+
+    free_guide = (ROOT / "docs" / "workstation" / "opencode-free-model-defaults.md").read_text(encoding="utf-8")
+    for token in (
+        '$RepoPath = Join-Path $HOME "Desktop\\dev\\AgentSwitchboard"',
+        "Set-Location -LiteralPath $RepoPath",
+        "Set-OpenCodeFreeDefaults.ps1",
+        "~/.config/opencode/opencode.json",
+        DEFAULT_FREE_MODEL,
+        "OPENCODE_CONFIG_CONTENT",
+        "--model",
+        "limited-time",
+    ):
+        require(token in free_guide, f"free-model guide missing directory or override token: {token}")
 
     quickstart = (ROOT / "docs" / "workstation" / "tmux-gnhf-technician-quickstart.md").read_text(encoding="utf-8")
     for token in ("Setup-TmuxGnhfWorkspace.cmd", "type INSTALL", "same CMD", "operator-summary.json", "Technician completion checklist"):
