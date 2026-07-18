@@ -1,0 +1,42 @@
+name: Provider-routed GNHF contracts
+
+on:
+  pull_request:
+    paths:
+      - "tooling/gnhf/**"
+      - ".ai/skills/gnhf-prompt-compilation/**"
+      - "Repair-ProviderRoutedGnhf.cmd"
+      - ".github/workflows/provider-routed-gnhf.yml"
+  push:
+    branches: [main]
+    paths:
+      - "tooling/gnhf/**"
+      - ".ai/skills/gnhf-prompt-compilation/**"
+      - "Repair-ProviderRoutedGnhf.cmd"
+
+jobs:
+  windows-provider-route:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate provider-routed GNHF contracts
+        shell: pwsh
+        run: |
+          Set-Location -LiteralPath $env:GITHUB_WORKSPACE
+          pwsh -NoLogo -NoProfile -File .\tooling\gnhf\tests\Test-ProviderRoutedGnhfContracts.ps1
+
+  linux-static-floor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Reject machine-specific and secret-shaped content
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE"
+          ! grep -RInE 'C:\\Users\\[^$%{]' tooling/gnhf .ai/skills/gnhf-prompt-compilation Repair-ProviderRoutedGnhf.cmd
+          ! grep -RInE 'DEEPSEEK_API_KEY|sk-[A-Za-z0-9_-]{16,}' tooling/gnhf .ai/skills/gnhf-prompt-compilation Repair-ProviderRoutedGnhf.cmd
