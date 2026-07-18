@@ -13,6 +13,38 @@ if (-not $Run) { throw "The queue fixture runtime requires -Run." }
 foreach ($required in @($RequestPath, $CompiledPromptPath, $TargetRepo)) {
     if (-not (Test-Path -LiteralPath $required)) { throw "Fixture runtime input missing: $required" }
 }
+foreach ($requiredEnvironment in @(
+    "AGENTSWITCHBOARD_APPLICATION_ID",
+    "AGENTSWITCHBOARD_TRIGGER_FLAGS",
+    "AGENTSWITCHBOARD_TRIGGER_FLAGS_SHA256",
+    "AGENTSWITCHBOARD_AWARENESS_GATE"
+)) {
+    $value = [Environment]::GetEnvironmentVariable($requiredEnvironment)
+    if ([string]::IsNullOrWhiteSpace($value)) { throw "Fixture runtime environment is missing $requiredEnvironment." }
+}
+if ($env:AGENTSWITCHBOARD_AWARENESS_GATE -cne "satisfied") {
+    throw "Fixture runtime did not receive a satisfied pre-awareness gate."
+}
+$triggerPath = [IO.Path]::GetFullPath($env:AGENTSWITCHBOARD_TRIGGER_FLAGS)
+if (-not (Test-Path -LiteralPath $triggerPath -PathType Leaf)) {
+    throw "Fixture runtime trigger snapshot is missing: $triggerPath"
+}
+$triggerHash = (Get-FileHash -LiteralPath $triggerPath -Algorithm SHA256).Hash
+if ($triggerHash -cne $env:AGENTSWITCHBOARD_TRIGGER_FLAGS_SHA256) {
+    throw "Fixture runtime trigger snapshot hash mismatch."
+}
+$triggerSnapshot = Get-Content -LiteralPath $triggerPath -Raw | ConvertFrom-Json -Depth 40
+if ([string]$triggerSnapshot.application.id -cne $env:AGENTSWITCHBOARD_APPLICATION_ID -or
+    $triggerSnapshot.awarenessGate.satisfied -ne $true -or
+    [string]$triggerSnapshot.flaggingPhase -cne "pre-agent-launch") {
+    throw "Fixture runtime trigger snapshot does not satisfy the application awareness contract."
+}
+$compiledText = Get-Content -LiteralPath $CompiledPromptPath -Raw
+if (-not $compiledText.Contains($triggerPath) -or
+    -not $compiledText.Contains($triggerHash) -or
+    -not $compiledText.Contains("Before completing repository analysis or producing any awareness assessment")) {
+    throw "Fixture runtime compiled prompt lacks the pre-awareness trigger instruction."
+}
 
 $laneRoot = Split-Path -Parent $RequestPath
 $laneId = Split-Path -Leaf $laneRoot
@@ -69,6 +101,8 @@ $result = [pscustomobject][ordered]@{
 $resultPath = Join-Path $evidenceRoot "launch-result.json"
 $result | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $resultPath -Encoding utf8NoBOM
 Write-Host "AGENTSWITCHBOARD_QUEUE_FIXTURE_LANE:$laneId"
+Write-Host "AGENTSWITCHBOARD_QUEUE_FIXTURE_APPLICATION:$($env:AGENTSWITCHBOARD_APPLICATION_ID)"
+Write-Host "AGENTSWITCHBOARD_QUEUE_FIXTURE_ACTIVE_TRIGGERS:$($triggerSnapshot.activeTriggerCount)"
 Write-Host "Local evidence: $evidenceRoot"
 if ($success) { exit 0 }
 exit 1
