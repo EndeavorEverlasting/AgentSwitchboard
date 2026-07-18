@@ -136,23 +136,55 @@ function Get-ProofSourceRepository {
     [pscustomobject]@{ Root=$root.Stdout.Trim(); Git=$git.Source }
 }
 
-function Resolve-ProofDeepSeekModel {
+function Resolve-ProofOpenCodeModel {
     param([string]$WslExe, [string]$Distribution, [string]$RequestedModel)
+
     $auth = Invoke-ProofWslBash -WslExe $WslExe -Distribution $Distribution -Command 'opencode auth list' -TimeoutSeconds 45
     $modelsResult = Invoke-ProofWslBash -WslExe $WslExe -Distribution $Distribution -Command 'opencode models --refresh' -TimeoutSeconds 120
     if ($modelsResult.ExitCode -ne 0) { throw "WSL OpenCode model discovery failed. $($modelsResult.Output)" }
+
     $ansi = [regex]'\x1B\[[0-?]*[ -/]*[@-~]'
     $models = @($modelsResult.Stdout -split '\r?\n' | ForEach-Object { $ansi.Replace($_,'').Trim() } | Where-Object { $_ -match '^[A-Za-z0-9._-]+/[A-Za-z0-9][A-Za-z0-9._:/-]*$' } | Sort-Object -Unique)
-    if ($auth.ExitCode -ne 0 -or $auth.Output -notmatch '(?i)deepseek') { throw 'WSL OpenCode did not report authenticated DeepSeek credentials. Authenticate inside Ubuntu, then rerun.' }
+    $freeOrder = @(
+        'opencode/deepseek-v4-flash-free',
+        'opencode/mimo-v2.5-free',
+        'opencode/north-mini-code-free',
+        'opencode/nemotron-3-ultra-free'
+    )
+
     if ($RequestedModel) {
         if ($models -notcontains $RequestedModel) { throw "Requested model '$RequestedModel' was not reported by WSL OpenCode." }
         $selected = $RequestedModel
-    } else {
-        $selected = @('deepseek/deepseek-v4-pro','deepseek/deepseek-chat','deepseek/deepseek-reasoner') | Where-Object { $models -contains $_ } | Select-Object -First 1
-        if (-not $selected) { $selected = $models | Where-Object { $_ -like 'deepseek/*' } | Select-Object -First 1 }
+        $costClass = if ($freeOrder -contains $selected) { 'free' } else { 'explicit' }
     }
-    if (-not $selected) { throw 'No DeepSeek provider/model identifier was reported by WSL OpenCode.' }
-    [pscustomobject]@{ ModelId=$selected; ModelCount=$models.Count; DeepSeekAuthReported=$true }
+    else {
+        $configured = Invoke-ProofWslBash -WslExe $WslExe -Distribution $Distribution -Command 'if [ -f "$HOME/.config/opencode/opencode.json" ]; then jq -r ''.model // empty'' "$HOME/.config/opencode/opencode.json" 2>/dev/null || true; fi' -TimeoutSeconds 15
+        $configuredModel = $configured.Stdout.Trim()
+        if ($configuredModel -and $freeOrder -contains $configuredModel -and $models -contains $configuredModel) {
+            $selected = $configuredModel
+        }
+        else {
+            $selected = $freeOrder | Where-Object { $models -contains $_ } | Select-Object -First 1
+        }
+        if (-not $selected) {
+            throw 'No verified free OpenCode model was reported. Refresh the managed OpenCode config before running workstation proof.'
+        }
+        $costClass = 'free'
+    }
+
+    $providerId = ($selected -split '/', 2)[0]
+    $authPattern = if ($providerId -eq 'opencode') { '(?i)(opencode|zen)' } else { '(?i)' + [regex]::Escape($providerId) }
+    if ($auth.ExitCode -ne 0 -or $auth.Output -notmatch $authPattern) {
+        throw "WSL OpenCode did not report authentication for provider '$providerId'. Connect that provider inside Ubuntu, then rerun."
+    }
+
+    [pscustomobject]@{
+        ModelId = $selected
+        ModelCount = $models.Count
+        ProviderId = $providerId
+        ProviderAuthReported = $true
+        CostClass = $costClass
+    }
 }
 
 Export-ModuleMember -Function *-Proof*
