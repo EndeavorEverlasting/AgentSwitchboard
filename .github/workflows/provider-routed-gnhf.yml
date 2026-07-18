@@ -38,5 +38,5 @@ jobs:
         run: |
           set -euo pipefail
           cd "$GITHUB_WORKSPACE"
-          ! grep -RInE 'C:\\Users\\[^$%{]' tooling/gnhf .ai/skills/gnhf-prompt-compilation Repair-ProviderRoutedGnhf.cmd
+          ! grep -RInE 'C:\\Users\\[^$%{<]' tooling/gnhf .ai/skills/gnhf-prompt-compilation Repair-ProviderRoutedGnhf.cmd
           ! grep -RInE 'DEEPSEEK_API_KEY|sk-[A-Za-z0-9_-]{16,}' tooling/gnhf .ai/skills/gnhf-prompt-compilation Repair-ProviderRoutedGnhf.cmd
