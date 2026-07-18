@@ -75,8 +75,8 @@ if ($null -ne $setupCmd) {
 }
 
 if ($null -ne $operator) {
-    Add-Check -Passed ($operator.Contains('[ValidateSet("opencode", "goose", "agy", "copilot", "hermes")]')) -Name "operator/hermes-allowed" -FailureMessage "operator ValidateSet does not include Hermes"
-    Add-Check -Passed ($operator.Contains('@("opencode", "goose", "agy", "copilot", "hermes")')) -Name "operator/hermes-readiness" -FailureMessage "readiness output omits Hermes"
+    Add-Check -Passed ($operator.Contains('[ValidateSet("opencode", "deepseek", "goose", "agy", "copilot", "hermes")]')) -Name "operator/hermes-allowed" -FailureMessage "operator ValidateSet does not preserve Hermes while adding provider aliases"
+    Add-Check -Passed ($operator.Contains('@("opencode", "deepseek", "goose", "agy", "copilot", "hermes")')) -Name "operator/hermes-readiness" -FailureMessage "readiness output omits Hermes"
     Add-Check -Passed ($operator.Contains('hermes = "hermes-implementation.md"')) -Name "operator/hermes-prompt" -FailureMessage "Hermes default prompt mapping is missing"
     Add-Check -Passed ($operator.Contains('Setup-AgentSwitchboard.ps1')) -Name "operator/bootstrap-delegates-to-robust-setup" -FailureMessage "bootstrap bypasses the robust setup and can erase Hermes state"
     Add-Check -Passed ($operator.Contains('Setup logs:')) -Name "operator/setup-log-discovery" -FailureMessage "readiness output does not reveal setup log location"
