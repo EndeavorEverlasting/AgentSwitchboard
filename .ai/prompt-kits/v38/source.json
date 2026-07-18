@@ -3,7 +3,7 @@
   "kitVersion": "v38",
   "sourceRepository": "EndeavorEverlasting/web-excel-repair-triage",
   "sourceBranch": "feat/v38-machine-readable-prompt-registry",
-  "sourceCommit": "c260888c20b97abdb6f219a68176d89937971bdc",
+  "sourceCommit": "98bf5c6580bcf167f030324dca45c367f80d0a7b",
   "sourcePullRequest": "https://github.com/EndeavorEverlasting/web-excel-repair-triage/pull/87",
   "sourceWorkbook": "AI_Harness_Prompt_Kit_v38.xlsx",
   "sourceWorkbookSha256": "a9fc45b05669afc94e154f53759a723a5bf5827862fb1e38194926cc8ab3ef5a",
