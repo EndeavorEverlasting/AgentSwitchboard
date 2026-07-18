@@ -158,9 +158,86 @@ Process exit alone is failure; success requires artifact and commit proof."
                 enabled = $true
             }
         )
+        applications = @(
+            [pscustomobject][ordered]@{
+                id = "fixture-app-a"
+                displayName = "Fixture App A"
+                repositoryName = "FixtureOrg/QueueRepoA"
+                enabled = $true
+                triggers = @(
+                    [pscustomobject][ordered]@{
+                        id = "readme-present"
+                        description = "The application repository has its primary readme."
+                        severity = "info"
+                        kind = "repository-path-exists"
+                        path = "README.md"
+                        value = $null
+                        caseSensitive = $false
+                        enabled = $true
+                    },
+                    [pscustomobject][ordered]@{
+                        id = "deterministic-request"
+                        description = "The sprint requests deterministic fixture behavior."
+                        severity = "warning"
+                        kind = "prompt-text-contains"
+                        path = $null
+                        value = "deterministic fixture"
+                        caseSensitive = $false
+                        enabled = $true
+                    },
+                    [pscustomobject][ordered]@{
+                        id = "risk-register-present"
+                        description = "An explicit risk register exists and requires awareness."
+                        severity = "critical"
+                        kind = "repository-path-exists"
+                        path = "RISK.md"
+                        value = $null
+                        caseSensitive = $false
+                        enabled = $true
+                    }
+                )
+            },
+            [pscustomobject][ordered]@{
+                id = "fixture-app-b"
+                displayName = "Fixture App B"
+                repositoryName = "FixtureOrg/QueueRepoB"
+                enabled = $true
+                triggers = @(
+                    [pscustomobject][ordered]@{
+                        id = "dependency-awareness"
+                        description = "Dependent work must reconcile its upstream lane result."
+                        severity = "warning"
+                        kind = "always"
+                        path = $null
+                        value = $null
+                        caseSensitive = $false
+                        enabled = $true
+                    }
+                )
+            },
+            [pscustomobject][ordered]@{
+                id = "fixture-app-c"
+                displayName = "Fixture App C"
+                repositoryName = "FixtureOrg/QueueRepoC"
+                enabled = $true
+                triggers = @(
+                    [pscustomobject][ordered]@{
+                        id = "fixture-marker"
+                        description = "The repository contains its fixture marker."
+                        severity = "info"
+                        kind = "repository-text-contains"
+                        path = "README.md"
+                        value = "fixture"
+                        caseSensitive = $true
+                        enabled = $true
+                    }
+                )
+            }
+        )
         lanes = @(
             [pscustomobject][ordered]@{
                 laneId = "lane-a"
+                applicationId = "fixture-app-a"
                 promptPath = $promptA
                 repositoryPath = $repoA
                 repositoryName = "FixtureOrg/QueueRepoA"
@@ -175,6 +252,7 @@ Process exit alone is failure; success requires artifact and commit proof."
             },
             [pscustomobject][ordered]@{
                 laneId = "lane-c"
+                applicationId = "fixture-app-c"
                 promptPath = $promptC
                 repositoryPath = $repoC
                 repositoryName = "FixtureOrg/QueueRepoC"
@@ -189,6 +267,7 @@ Process exit alone is failure; success requires artifact and commit proof."
             },
             [pscustomobject][ordered]@{
                 laneId = "lane-b"
+                applicationId = "fixture-app-b"
                 promptPath = $promptB
                 repositoryPath = $repoB
                 repositoryName = "FixtureOrg/QueueRepoB"
@@ -203,7 +282,7 @@ Process exit alone is failure; success requires artifact and commit proof."
             }
         )
     }
-    $queue | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $queuePath -Encoding utf8NoBOM
+    $queue | ConvertTo-Json -Depth 40 | Set-Content -LiteralPath $queuePath -Encoding utf8NoBOM
 
     [pscustomobject][ordered]@{
         Root = $fixtureRoot
