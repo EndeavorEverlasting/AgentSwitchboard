@@ -30,6 +30,17 @@ Agents must not infer `verified` from command presence, prior sessions, document
 | `secrets.access` | credentials or secret stores are reachable | blocked by default; never persist in Git |
 | `destructive.git` | force-push, reset, branch deletion | blocked unless explicit recovery authorization |
 
+## Harness doctrine capabilities
+
+| Capability | Activation and output | Guardrail and proof |
+|---|---|---|
+| `harness.doctrine.validate` | instruction, doctrine, skill, template, or action-contract change; returns findings | run `scripts/Test-HarnessDoctrineContract.ps1`; contract proof only |
+| `action.commitment.validate` | request claims installation, setup, build, execution, repair, configuration, upgrade, deployment, merge, or release | reject acknowledgment-only and plan-substitution contracts; require mutation, validation, and commit or GitHub proof |
+| `gnhf.test-timeout.enforce` | test, smoke, provider probe, fixture, or contract-only GNHF run | maximum 30 seconds wall clock and 30 seconds per iteration; terminate the process tree |
+| `deepseek.usage-window.evaluate` | selected provider model uses `deepseek/*` | permit only a fresh verified `standard` or `discounted` state with multiplier no greater than 1.0; unknown blocks |
+
+The machine-readable limits and default-deny rules are in `.ai/harness/harness-doctrine.policy.json`.
+
 ## Verification requirements
 
 A capability probe must be:
@@ -68,7 +79,7 @@ AgentSwitchboard splits the provider route into independently classifiable opera
 1. `discover-gnhf-runtime` — npm dist-tags/versions, installed binary, CLI flags, and optional upstream source facts;
 2. `install-or-select-gnhf-runtime` — transactional install/selection against a capability matrix, not a guessed version;
 3. `prove-provider-route` — shell-correct OpenCode dispatch and bounded model marker;
-4. `launch-bounded-gnhf` — start GNHF only after provider proof;
+4. `launch-bounded-gnhf` — start GNHF only after provider proof and usage-window eligibility;
 5. `verify-committed-delivery` — require a commit ahead of the base; reject zero-exit/no-commit.
 
 Child repositories consume the installed capability document at `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\gnhf-runtime-capability.json` (`agentswitchboard.gnhf-runtime-capability.v1`). They must not guess npm versions, invent GNHF flags, or call source-tree installers during normal launch.
