@@ -29,6 +29,7 @@ function Write-QueueLaneResult {
         [AllowNull()][string]$Blocker
     )
 
+    [void](Test-QueueTriggerGate -Lane $Lane -QueueId $QueueId)
     $result = [pscustomobject][ordered]@{
         schemaVersion = "agentswitchboard-gnhf-prompt-queue-lane-result/v1"
         queueId = $QueueId
@@ -39,9 +40,16 @@ function Write-QueueLaneResult {
         runtimeFamily = [string]$Lane.runtimeFamily
         agentProfileId = [string]$Lane.agentProfileId
         gnhfAgent = [string]$Lane.gnhfAgent
+        applicationId = [string]$Lane.application.id
         repoPath = [string]$Lane.repository.path
         requestPath = [string]$Lane.contracts.requestPath
         compiledPromptPath = [string]$Lane.contracts.compiledPromptPath
+        triggerFlagsPath = [string]$Lane.triggerFlags.path
+        triggerFlagsSha256 = [string]$Lane.triggerFlags.sha256
+        registeredTriggerCount = [int]$Lane.triggerFlags.registeredCount
+        activeTriggerCount = [int]$Lane.triggerFlags.activeCount
+        criticalTriggerCount = [int]$Lane.triggerFlags.criticalCount
+        awarenessGateSatisfied = $true
         runtimeEvidencePath = $RuntimeEvidencePath
         runtimeResultPath = $RuntimeResultPath
         processExitCode = if ($null -eq $ProcessExitCode) { $null } else { [int]$ProcessExitCode }
@@ -71,12 +79,14 @@ function Start-QueueLane {
     foreach ($required in @(
         [string]$Lane.contracts.requestPath,
         [string]$Lane.contracts.compiledPromptPath,
-        [string]$Lane.repository.path
+        [string]$Lane.repository.path,
+        [string]$Lane.triggerFlags.path
     )) {
         if (-not (Test-Path -LiteralPath $required)) {
             throw "Lane '$($Lane.laneId)' required path is missing: $required"
         }
     }
+    $triggerSnapshot = Test-QueueTriggerGate -Lane $Lane -QueueId $QueueId
     $compiled = Get-Content -LiteralPath ([string]$Lane.contracts.compiledPromptPath) -Raw | ConvertFrom-Json -Depth 50
     if ([string]$compiled.agentRoute.agent -cne [string]$Lane.gnhfAgent) {
         throw "Lane '$($Lane.laneId)' compiled agent route no longer matches the queue plan."
@@ -110,6 +120,10 @@ function Start-QueueLane {
     $startInfo.Environment["AGENTSWITCHBOARD_QUEUE_ID"] = $QueueId
     $startInfo.Environment["AGENTSWITCHBOARD_QUEUE_LANE"] = [string]$Lane.laneId
     $startInfo.Environment["AGENTSWITCHBOARD_AGENT_PROFILE"] = [string]$Lane.agentProfileId
+    $startInfo.Environment["AGENTSWITCHBOARD_APPLICATION_ID"] = [string]$Lane.application.id
+    $startInfo.Environment["AGENTSWITCHBOARD_TRIGGER_FLAGS"] = [string]$Lane.triggerFlags.path
+    $startInfo.Environment["AGENTSWITCHBOARD_TRIGGER_FLAGS_SHA256"] = [string]$Lane.triggerFlags.sha256
+    $startInfo.Environment["AGENTSWITCHBOARD_AWARENESS_GATE"] = if ($triggerSnapshot.awarenessGate.satisfied -eq $true) { "satisfied" } else { "blocked" }
 
     $process = [Diagnostics.Process]::new()
     $process.StartInfo = $startInfo
