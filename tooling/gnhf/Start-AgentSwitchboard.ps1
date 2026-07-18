@@ -197,8 +197,7 @@ if (-not $Name) {
     $Name = "$repoName-$Agent"
 }
 
-$launcherName = if ($Agent -eq "deepseek") { "Start-DeepSeekGnhfSprint.ps1" } else { "Start-GnhfSprint.ps1" }
-$sprintLauncher = Resolve-GnhfFleetFile -Path (Join-Path $InstallRoot $launcherName) -Description "bounded sprint launcher"
+$sprintLauncher = Resolve-GnhfFleetFile -Path (Join-Path $InstallRoot "Start-GnhfSprint.ps1") -Description "bounded sprint launcher"
 $arguments = [System.Collections.Generic.List[string]]::new()
 foreach ($argument in @(
     "-NoLogo",
@@ -216,7 +215,9 @@ foreach ($argument in @(
 }
 if ($Agent -eq "deepseek") {
     foreach ($argument in @(
-        "-DeepSeekModel", $DeepSeekModel,
+        "-Agent", "opencode",
+        "-OpenCodeModel", $DeepSeekModel,
+        "-RequireOpenCodeModelProbe",
         "-ProbeTimeoutSeconds", [string]$ProbeTimeoutSeconds
     )) {
         [void]$arguments.Add($argument)
