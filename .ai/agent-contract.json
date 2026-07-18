@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contractVersion": "1.1.0",
+  "contractVersion": "1.2.0",
   "canonicalRepository": "EndeavorEverlasting/AgentSwitchboard",
   "canonicalRefPolicy": "merged-default-branch",
   "entrypoints": {
@@ -13,15 +13,28 @@
   "requiredReadOrder": [
     "AGENTS.md",
     "nearest nested AGENTS.md",
+    "CODEBASE_MAP.md",
     "README.md and repository operating docs",
     "tool adapter",
     "SKILLS.md",
     "CAPABILITIES.md",
     "TRIGGERS.md",
     "selected .ai/skills/*/SKILL.md",
+    "docs/governance/harness-doctrine.md",
+    ".ai/harness/harness-doctrine.policy.json",
     "current plans, validators, PRs, and Git history"
   ],
   "skillRoot": ".ai/skills",
+  "harnessDoctrine": {
+    "policy": ".ai/harness/harness-doctrine.policy.json",
+    "documentation": "docs/governance/harness-doctrine.md",
+    "validator": "scripts/Test-HarnessDoctrineContract.ps1",
+    "actionCommitmentRequired": true,
+    "testOnlyGnhfMaxWallClockSeconds": 30,
+    "testOnlyGnhfMaxIterationSeconds": 30,
+    "deepSeekAllowedRateClasses": ["standard", "discounted"],
+    "deepSeekDefaultAction": "deny"
+  },
   "inheritance": {
     "mode": "pinned-copy-with-repository-specialization",
     "templateRoot": "templates/repository-agent-contract",
@@ -30,51 +43,13 @@
     "propagation": "reviewable-pull-request"
   },
   "registeredRepositories": [
-    {
-      "fullName": "EndeavorEverlasting/AgentSwitchboard",
-      "relation": "canonical-root",
-      "status": "canonical"
-    },
-    {
-      "fullName": "EndeavorEverlasting/Continuum",
-      "relation": "child",
-      "status": "registered"
-    },
-    {
-      "fullName": "EndeavorEverlasting/foundry",
-      "relation": "child",
-      "status": "registered"
-    },
-    {
-      "fullName": "EndeavorEverlasting/BlacksmithGuild",
-      "relation": "child",
-      "status": "registered"
-    },
-    {
-      "fullName": "EndeavorEverlasting/SysAdminSuite",
-      "relation": "child",
-      "status": "registered"
-    },
-    {
-      "fullName": "EndeavorEverlasting/web-excel-repair-triage",
-      "relation": "child",
-      "status": "registered"
-    }
+    {"fullName": "EndeavorEverlasting/AgentSwitchboard", "relation": "canonical-root", "status": "canonical"},
+    {"fullName": "EndeavorEverlasting/Continuum", "relation": "child", "status": "registered"},
+    {"fullName": "EndeavorEverlasting/foundry", "relation": "child", "status": "registered"},
+    {"fullName": "EndeavorEverlasting/BlacksmithGuild", "relation": "child", "status": "registered"},
+    {"fullName": "EndeavorEverlasting/SysAdminSuite", "relation": "child", "status": "registered"},
+    {"fullName": "EndeavorEverlasting/web-excel-repair-triage", "relation": "child", "status": "registered"}
   ],
-  "canonicalSkills": [
-    "repo-intake",
-    "bounded-sprint",
-    "gnhf-prompt-compilation",
-    "evidence-validation",
-    "pr-integration",
-    "runtime-proof"
-  ],
-  "proofLevels": [
-    "contract",
-    "static-test",
-    "build",
-    "harness",
-    "runtime",
-    "live-target"
-  ]
+  "canonicalSkills": ["repo-intake", "bounded-sprint", "gnhf-prompt-compilation", "evidence-validation", "pr-integration", "runtime-proof"],
+  "proofLevels": ["contract", "static-test", "build", "harness", "runtime", "live-target"]
 }
