@@ -33,7 +33,7 @@ expand_home_path() {
   fi
 }
 
-OPENCODE_ENABLED=$(jq -r '.opencode.enabled // false' <<<"$CONFIG_JSON")
+OPENCODE_ENABLED=$(jq -r '.opencode.enabled // true' <<<"$CONFIG_JSON")
 if [[ "$OPENCODE_ENABLED" != true ]]; then
   echo "[SKIP] OpenCode free-default configuration is disabled in the manifest."
   exit 0
@@ -44,7 +44,7 @@ DEFAULT_MODEL=$(jq -r '.opencode.defaultModel // "opencode/deepseek-v4-flash-fre
 SMALL_MODEL=$(jq -r '.opencode.smallModel // .opencode.defaultModel // "opencode/deepseek-v4-flash-free"' <<<"$CONFIG_JSON")
 SHARE_MODE=$(jq -r '.opencode.share // "disabled"' <<<"$CONFIG_JSON")
 RESTRICT_FREE=$(jq -r '.opencode.restrictZenToFreeModels // true' <<<"$CONFIG_JSON")
-FREE_MODEL_IDS=$(jq -c '.opencode.freeModelIds // ["deepseek-v4-flash-free"]' <<<"$CONFIG_JSON")
+FREE_MODEL_IDS=$(jq -c '.opencode.freeModelIds // ["deepseek-v4-flash-free","mimo-v2.5-free","north-mini-code-free","nemotron-3-ultra-free"]' <<<"$CONFIG_JSON")
 STATE_DIR="$HOME/.local/state/agent-switchboard/tmux-gnhf"
 SUMMARY_PATH="$STATE_DIR/opencode-free-defaults-summary.json"
 
