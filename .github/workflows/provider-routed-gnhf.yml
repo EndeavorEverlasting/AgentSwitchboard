@@ -33,10 +33,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Reject machine-specific and secret-shaped content
+      - name: Reject machine-specific and secret-shaped runtime content
         shell: bash
         run: |
           set -euo pipefail
           cd "$GITHUB_WORKSPACE"
-          ! grep -RInE 'C:\\Users\\[^$%{<]' tooling/gnhf .ai/skills/gnhf-prompt-compilation Repair-ProviderRoutedGnhf.cmd
-          ! grep -RInE 'DEEPSEEK_API_KEY|sk-[A-Za-z0-9_-]{16,}' tooling/gnhf .ai/skills/gnhf-prompt-compilation Repair-ProviderRoutedGnhf.cmd
+          runtime_files=(
+            tooling/gnhf/Gnhf.Process.ps1
+            tooling/gnhf/Start-ProviderRoutedGnhfSprint.ps1
+            tooling/gnhf/Install-ProviderRoutedGnhf.ps1
+            Repair-ProviderRoutedGnhf.cmd
+          )
+          ! grep -InE 'C:\\Users\\[^$%{<]' "${runtime_files[@]}"
+          ! grep -InE 'DEEPSEEK_API_KEY|sk-[A-Za-z0-9_-]{16,}' "${runtime_files[@]}"
+          git diff --check
