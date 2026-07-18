@@ -22,6 +22,57 @@ $endMarker
 "@
 }
 
+function Read-TextFilePreservingEncoding {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    $bytes = [IO.File]::ReadAllBytes($Path)
+    $encoding = [Text.UTF8Encoding]::new($false)
+    $preamble = [byte[]]@()
+    $offset = 0
+
+    if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
+        $encoding = [Text.UTF8Encoding]::new($true)
+        $preamble = [byte[]]@(0xEF, 0xBB, 0xBF)
+        $offset = 3
+    }
+    elseif ($bytes.Length -ge 2 -and $bytes[0] -eq 0xFF -and $bytes[1] -eq 0xFE) {
+        $encoding = [Text.UnicodeEncoding]::new($false, $true)
+        $preamble = [byte[]]@(0xFF, 0xFE)
+        $offset = 2
+    }
+    elseif ($bytes.Length -ge 2 -and $bytes[0] -eq 0xFE -and $bytes[1] -eq 0xFF) {
+        $encoding = [Text.UnicodeEncoding]::new($true, $true)
+        $preamble = [byte[]]@(0xFE, 0xFF)
+        $offset = 2
+    }
+
+    $text = $encoding.GetString($bytes, $offset, $bytes.Length - $offset)
+    $newline = if ($text.Contains("`r`n")) { "`r`n" } else { "`n" }
+    return [pscustomobject]@{
+        Text = $text
+        Encoding = $encoding
+        Preamble = $preamble
+        Newline = $newline
+    }
+}
+
+function Write-TextFilePreservingEncoding {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)][string]$Text,
+        [Parameter(Mandatory = $true)][Text.Encoding]$Encoding,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][byte[]]$Preamble
+    )
+
+    $body = $Encoding.GetBytes($Text)
+    $output = [byte[]]::new($Preamble.Length + $body.Length)
+    if ($Preamble.Length -gt 0) {
+        [Array]::Copy($Preamble, 0, $output, 0, $Preamble.Length)
+    }
+    [Array]::Copy($body, 0, $output, $Preamble.Length, $body.Length)
+    [IO.File]::WriteAllBytes($Path, $output)
+}
+
 if ($PSVersionTable.PSVersion.Major -lt 7) {
     throw 'The BlacksmithGuild night-panel installer requires PowerShell 7 (pwsh).'
 }
@@ -57,9 +108,11 @@ $plan = [ordered]@{
     action = 'plan_only'
 }
 
+$configFile = $null
 $configText = ''
 if ($plan.configExists) {
-    $configText = Get-Content -LiteralPath $WezTermConfigPath -Raw
+    $configFile = Read-TextFilePreservingEncoding -Path $WezTermConfigPath
+    $configText = $configFile.Text
     $hasBegin = $configText.Contains($beginMarker)
     $hasEnd = $configText.Contains($endMarker)
     if ($hasBegin -xor $hasEnd) {
@@ -92,15 +145,17 @@ Copy-Item -LiteralPath $sourceNightLauncher -Destination $destinationNightLaunch
 Copy-Item -LiteralPath $sourceInclude -Destination $destinationInclude -Force
 
 if (-not $plan.configExists) {
-    $configText = @"
-local wezterm = require 'wezterm'
-local config = wezterm.config_builder()
-
-$(Get-ManagedBlock)
-
-return config
-"@
-    Set-Content -LiteralPath $WezTermConfigPath -Value $configText -Encoding utf8NoBOM
+    $newline = "`r`n"
+    $configText = @(
+        "local wezterm = require 'wezterm'",
+        'local config = wezterm.config_builder()',
+        '',
+        ((Get-ManagedBlock) -replace "`r?`n", $newline).TrimEnd(),
+        '',
+        'return config',
+        ''
+    ) -join $newline
+    Write-TextFilePreservingEncoding -Path $WezTermConfigPath -Text $configText -Encoding ([Text.UTF8Encoding]::new($false)) -Preamble ([byte[]]@())
     $plan.action = 'created_config_and_installed_panel'
 }
 elseif (-not $plan.managedBlockPresent) {
@@ -115,17 +170,18 @@ elseif (-not $plan.managedBlockPresent) {
     Copy-Item -LiteralPath $WezTermConfigPath -Destination $backupPath
     $plan.backupPath = $backupPath
 
-    $managedBlock = (Get-ManagedBlock).TrimEnd()
+    $newline = $configFile.Newline
+    $managedBlock = ((Get-ManagedBlock) -replace "`r?`n", $newline).TrimEnd()
     $match = $matches[0]
-    $newConfig = $configText.Substring(0, $match.Index).TrimEnd() + "`r`n`r`n" + $managedBlock + "`r`n`r`n" + $configText.Substring($match.Index)
-    Set-Content -LiteralPath $WezTermConfigPath -Value $newConfig -Encoding utf8NoBOM
+    $newConfig = $configText.Substring(0, $match.Index).TrimEnd() + $newline + $newline + $managedBlock + $newline + $newline + $configText.Substring($match.Index)
+    Write-TextFilePreservingEncoding -Path $WezTermConfigPath -Text $newConfig -Encoding $configFile.Encoding -Preamble $configFile.Preamble
     $plan.action = 'installed_panel_and_patched_config'
 }
 else {
     $plan.action = 'refreshed_installed_files_existing_config_wiring_preserved'
 }
 
-$verificationText = Get-Content -LiteralPath $WezTermConfigPath -Raw
+$verificationText = (Read-TextFilePreservingEncoding -Path $WezTermConfigPath).Text
 if (-not $verificationText.Contains($beginMarker) -or -not $verificationText.Contains($endMarker)) {
     throw 'The managed WezTerm panel block was not observed after installation.'
 }
