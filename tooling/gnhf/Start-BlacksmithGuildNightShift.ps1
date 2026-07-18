@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$RepoPath = "$env:USERPROFILE\Desktop\dev\Mods\Bannerlord\BlacksmithGuild",
-    [ValidateSet('Auto', 'Compile', 'Repair', 'Closeout')]
+    [ValidateSet('Auto', 'Night', 'Compile', 'Repair', 'Closeout')]
     [string]$Stage = 'Auto',
     [ValidateSet('deepseek', 'opencode', 'goose', 'agy', 'copilot', 'hermes')]
     [string]$Agent = 'deepseek',
@@ -59,7 +59,7 @@ $queuePath = Join-Path $RepoPath (([string]$contract.paths.queue) -replace '/', 
 $selectedStage = $Stage.ToLowerInvariant()
 if ($Stage -eq 'Auto') {
     if (-not (Test-Path -LiteralPath $queuePath -PathType Leaf)) {
-        $selectedStage = 'compile'
+        $selectedStage = 'night'
     }
     else {
         try {
@@ -92,7 +92,7 @@ if (-not (Test-Path -LiteralPath $agentSwitchboardPath -PathType Leaf)) {
 }
 
 Write-Host "`n=== BLACKSMITHGUILD GNHF NIGHT SHIFT ===" -ForegroundColor Cyan
-Write-Host "Execution:  WezTerm -> native Windows PowerShell 7 -> AgentSwitchboard -> GNHF"
+Write-Host 'Execution:  WezTerm -> native Windows PowerShell 7 -> AgentSwitchboard -> DeepSeek/OpenCode -> GNHF'
 Write-Host "Repository: $RepoPath"
 Write-Host "Base:       $branch"
 Write-Host "Stage:      $selectedStage"
@@ -100,7 +100,7 @@ Write-Host "Agent:      $Agent"
 Write-Host "Prompt:     $promptPath"
 Write-Host "Iterations: $($stageRecord.maxIterations)"
 Write-Host "Token cap:  $($stageRecord.maxTokens)"
-Write-Host "Push:       false"
+Write-Host 'Push:       false'
 
 $parameters = @{
     RepoPath = $RepoPath
@@ -122,4 +122,4 @@ if ($LASTEXITCODE -ne 0) {
     throw "BlacksmithGuild night stage '$selectedStage' failed. Review operator-local AgentSwitchboard logs under '$InstallRoot\logs'."
 }
 
-Write-Host "`nNight stage '$selectedStage' completed. Review the generated GNHF worktree and commit evidence before another stage." -ForegroundColor Green
+Write-Host "`nNight stage '$selectedStage' completed. Review the generated GNHF worktree, ordered commits, and closeout evidence before pushing or opening a PR." -ForegroundColor Green
