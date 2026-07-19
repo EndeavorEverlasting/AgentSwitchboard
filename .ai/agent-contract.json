@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contractVersion": "1.2.0",
+  "contractVersion": "1.3.0",
   "canonicalRepository": "EndeavorEverlasting/AgentSwitchboard",
   "canonicalRefPolicy": "merged-default-branch",
   "entrypoints": {
@@ -8,7 +8,9 @@
     "claude": "CLAUDE.md",
     "skills": "SKILLS.md",
     "capabilities": "CAPABILITIES.md",
-    "triggers": "TRIGGERS.md"
+    "triggers": "TRIGGERS.md",
+    "plans": "plans/plan-registry.json",
+    "startupReadiness": "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1"
   },
   "requiredReadOrder": [
     "AGENTS.md",
@@ -20,11 +22,13 @@
     "CAPABILITIES.md",
     "TRIGGERS.md",
     "selected .ai/skills/*/SKILL.md",
+    "plans/plan-registry.json and selected public plan",
     "docs/governance/harness-doctrine.md",
     ".ai/harness/harness-doctrine.policy.json",
-    "current plans, validators, PRs, and Git history"
+    "current validators, PRs, and Git history"
   ],
   "skillRoot": ".ai/skills",
+  "planRoot": "plans",
   "harnessDoctrine": {
     "policy": ".ai/harness/harness-doctrine.policy.json",
     "documentation": "docs/governance/harness-doctrine.md",
@@ -34,6 +38,21 @@
     "testOnlyGnhfMaxIterationSeconds": 30,
     "deepSeekAllowedRateClasses": ["standard", "discounted"],
     "deepSeekDefaultAction": "deny"
+  },
+  "publicPlans": {
+    "registry": "plans/plan-registry.json",
+    "schema": "plans/schemas/public-plan.schema.json",
+    "validator": "scripts/Test-PublicPlanContracts.ps1",
+    "planIsNotPullRequest": true,
+    "machineReadableRequired": true,
+    "publicDataOnly": true
+  },
+  "startupReadiness": {
+    "launcher": "AgentSwitchboard.cmd",
+    "reporter": "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
+    "schema": "tooling/gnhf/schemas/agent-startup-readiness.schema.json",
+    "generatedOutputTracked": false,
+    "proofLevel": "local-adapter-readiness"
   },
   "inheritance": {
     "mode": "pinned-copy-with-repository-specialization",
@@ -50,6 +69,6 @@
     {"fullName": "EndeavorEverlasting/SysAdminSuite", "relation": "child", "status": "registered"},
     {"fullName": "EndeavorEverlasting/web-excel-repair-triage", "relation": "child", "status": "registered"}
   ],
-  "canonicalSkills": ["repo-intake", "bounded-sprint", "gnhf-prompt-compilation", "powershell-interactive-execution", "evidence-validation", "pr-integration", "runtime-proof"],
+  "canonicalSkills": ["repo-intake", "bounded-sprint", "public-plan-coordination", "gnhf-prompt-compilation", "powershell-interactive-execution", "evidence-validation", "pr-integration", "runtime-proof"],
   "proofLevels": ["contract", "static-test", "build", "harness", "runtime", "live-target"]
 }
