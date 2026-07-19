@@ -18,10 +18,10 @@ on:
       - "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1"
       - "tooling/gnhf/schemas/agent-startup-readiness.schema.json"
       - "tooling/gnhf/fixtures/startup-readiness/**"
+      - "scripts/Test-AgentDocumentationContract.ps1"
       - "scripts/Test-PublicPlanContracts.ps1"
       - "tests/test_public_plan_contracts.py"
-      - "templates/repository-agent-contract/plans/**"
-      - "templates/repository-agent-contract/.ai/agent-contract.json"
+      - "templates/repository-agent-contract/**"
       - ".github/workflows/public-plan-contracts.yml"
   push:
     branches:
@@ -31,14 +31,18 @@ on:
       - ".ai/skills/public-plan-coordination/**"
       - "AgentSwitchboard.cmd"
       - "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1"
+      - "scripts/Test-AgentDocumentationContract.ps1"
       - "scripts/Test-PublicPlanContracts.ps1"
       - "tests/test_public_plan_contracts.py"
+      - "templates/repository-agent-contract/**"
 
 jobs:
   linux-contracts:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Validate public plans and startup structure
         run: python tests/test_public_plan_contracts.py
       - name: Parse tracked JSON
@@ -52,19 +56,27 @@ jobs:
       - name: Repository hygiene
         shell: bash
         run: |
-          git diff --check
+          set -euo pipefail
+          if [[ -n "${GITHUB_BASE_REF:-}" ]]; then
+            git diff --check "origin/${GITHUB_BASE_REF}...HEAD"
+          else
+            git diff --check
+          fi
           test -z "$(git status --short)"
 
   windows-contracts:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Parse PowerShell
         shell: pwsh
         run: |
           $failed = $false
           foreach ($path in @(
             "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
+            "scripts/Test-AgentDocumentationContract.ps1",
             "scripts/Test-PublicPlanContracts.ps1"
           )) {
             $tokens = $null
@@ -92,5 +104,10 @@ jobs:
       - name: Repository hygiene
         shell: pwsh
         run: |
-          git diff --check
+          if ($env:GITHUB_BASE_REF) {
+            git diff --check "origin/$env:GITHUB_BASE_REF...HEAD"
+          }
+          else {
+            git diff --check
+          }
           if (git status --short) { throw "Checkout is dirty after validation." }
