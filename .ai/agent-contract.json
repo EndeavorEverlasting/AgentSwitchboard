@@ -50,6 +50,6 @@
     {"fullName": "EndeavorEverlasting/SysAdminSuite", "relation": "child", "status": "registered"},
     {"fullName": "EndeavorEverlasting/web-excel-repair-triage", "relation": "child", "status": "registered"}
   ],
-  "canonicalSkills": ["repo-intake", "bounded-sprint", "gnhf-prompt-compilation", "evidence-validation", "pr-integration", "runtime-proof"],
+  "canonicalSkills": ["repo-intake", "bounded-sprint", "gnhf-prompt-compilation", "powershell-interactive-execution", "evidence-validation", "pr-integration", "runtime-proof"],
   "proofLevels": ["contract", "static-test", "build", "harness", "runtime", "live-target"]
 }
