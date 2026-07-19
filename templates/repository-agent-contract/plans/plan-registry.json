@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "registryId": "REPLACE_REPOSITORY.public-plans.v1",
+  "schemaPath": "plans/schemas/public-plan.schema.json",
+  "policy": {
+    "visibility": "public",
+    "planIsNotPullRequest": true,
+    "machineReadableRequired": true,
+    "secretsForbidden": true,
+    "localRuntimeEvidenceForbidden": true,
+    "materialCoordinationChangesRequireSameBranchUpdate": true
+  },
+  "plans": []
+}
