@@ -78,7 +78,7 @@ def main() -> int:
         "final-handoff.json",
         "Set-OpenCodeFreeDefaults.ps1",
         "Independent OpenCode configuration inspection",
-        "%LOCALAPPDATA%",
+        "$env:LOCALAPPDATA",
     ):
         require(token in orchestrator, f"orchestrator missing token: {token}")
 
@@ -96,16 +96,16 @@ def main() -> int:
 
     agents = text(paths["agents"])
     skill = text(paths["skill"])
+    combined = (agents + "\n" + skill).lower()
     for token in (
-        "repo agent rules",
+        "subtree authority",
         "isolated detached worktree",
         "run context",
         "artifact registry",
-        "English operator report",
+        "english operator report",
         "compressed final handoff",
     ):
-        combined = (agents + "\n" + skill).lower()
-        require(token.lower() in combined, f"agent guidance missing harness concept: {token}")
+        require(token in combined, f"agent guidance missing harness concept: {token}")
 
     status = text(paths["status"])
     require("git status --short" in status, "status probe must inspect Git read-only")
