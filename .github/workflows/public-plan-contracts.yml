@@ -1,0 +1,96 @@
+name: Public plan and startup readiness contracts
+
+on:
+  pull_request:
+    paths:
+      - "plans/**"
+      - ".ai/skills/public-plan-coordination/**"
+      - ".ai/agent-contract.json"
+      - ".ai/harness/manifest.json"
+      - ".ai/harness/artifact-registry.json"
+      - "AGENTS.md"
+      - "README.md"
+      - "SKILLS.md"
+      - "CAPABILITIES.md"
+      - "TRIGGERS.md"
+      - "CODEBASE_MAP.md"
+      - "AgentSwitchboard.cmd"
+      - "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1"
+      - "tooling/gnhf/schemas/agent-startup-readiness.schema.json"
+      - "tooling/gnhf/fixtures/startup-readiness/**"
+      - "scripts/Test-PublicPlanContracts.ps1"
+      - "tests/test_public_plan_contracts.py"
+      - "templates/repository-agent-contract/plans/**"
+      - "templates/repository-agent-contract/.ai/agent-contract.json"
+      - ".github/workflows/public-plan-contracts.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "plans/**"
+      - ".ai/skills/public-plan-coordination/**"
+      - "AgentSwitchboard.cmd"
+      - "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1"
+      - "scripts/Test-PublicPlanContracts.ps1"
+      - "tests/test_public_plan_contracts.py"
+
+jobs:
+  linux-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate public plans and startup structure
+        run: python tests/test_public_plan_contracts.py
+      - name: Parse tracked JSON
+        shell: bash
+        run: |
+          python -m json.tool plans/plan-registry.json >/dev/null
+          python -m json.tool plans/schemas/public-plan.schema.json >/dev/null
+          python -m json.tool plans/active/ASB-2026-07-public-plans-startup-readiness.plan.json >/dev/null
+          python -m json.tool tooling/gnhf/schemas/agent-startup-readiness.schema.json >/dev/null
+          python -m json.tool tooling/gnhf/fixtures/startup-readiness/state.partial.json >/dev/null
+      - name: Repository hygiene
+        shell: bash
+        run: |
+          git diff --check
+          test -z "$(git status --short)"
+
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse PowerShell
+        shell: pwsh
+        run: |
+          $failed = $false
+          foreach ($path in @(
+            "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
+            "scripts/Test-PublicPlanContracts.ps1"
+          )) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $path),
+              [ref]$tokens,
+              [ref]$errors
+            )
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object { Write-Error "$path`: $($_.Message)" }
+              $failed = $true
+            }
+          }
+          if ($failed) { exit 1 }
+      - name: Validate public plans and startup readiness
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File ./scripts/Test-PublicPlanContracts.ps1
+      - name: Validate agent documentation
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File ./scripts/Test-AgentDocumentationContract.ps1
+      - name: Validate harness doctrine
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File ./scripts/Test-HarnessDoctrineContract.ps1
+      - name: Repository hygiene
+        shell: pwsh
+        run: |
+          git diff --check
+          if (git status --short) { throw "Checkout is dirty after validation." }
