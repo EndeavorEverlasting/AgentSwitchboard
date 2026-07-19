@@ -61,6 +61,26 @@
       "sensitivity": "local-operational",
       "retention": "fleet root under %LOCALAPPDATA%/AgentSwitchboard/GnhfFleet",
       "proofCeiling": "transactional installer outcome and rollback pointer"
+    },
+    {
+      "artifactId": "agent-startup-readiness",
+      "artifactType": "status-report",
+      "fileName": "agent-startup-readiness-<timestamp>.json",
+      "schema": "tooling/gnhf/schemas/agent-startup-readiness.schema.json",
+      "tracked": false,
+      "sensitivity": "local-operational",
+      "retention": "fleet reports/startup under %LOCALAPPDATA%/AgentSwitchboard/GnhfFleet",
+      "proofCeiling": "local fleet-state and adapter readiness only; not provider authentication, quota, response, or delivery"
+    },
+    {
+      "artifactId": "agent-startup-readiness-operator-report",
+      "artifactType": "operator-report",
+      "fileName": "agent-startup-readiness-<timestamp>.md",
+      "schema": null,
+      "tracked": false,
+      "sensitivity": "local-operational",
+      "retention": "fleet reports/startup under %LOCALAPPDATA%/AgentSwitchboard/GnhfFleet",
+      "proofCeiling": "English rendering of local adapter readiness and configuration guidance only"
     }
   ]
 }
