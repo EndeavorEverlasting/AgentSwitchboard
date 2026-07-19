@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/gnhf/schemas/agent-startup-readiness.schema.json",
+  "title": "AgentSwitchboard Startup Readiness Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "generatedAt", "installRoot", "statePath", "stateObserved", "overallStatus", "agents", "proofLevel", "proofCeiling"],
+  "properties": {
+    "schema": { "const": "agentswitchboard.agent-startup-readiness.v1" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "installRoot": { "type": "string" },
+    "statePath": { "type": "string" },
+    "stateObserved": { "type": "boolean" },
+    "overallStatus": { "enum": ["ready", "partial", "blocked", "not-configured"] },
+    "agents": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["agentId", "displayName", "adapter", "status", "available", "configurationKnown", "commandPath", "version", "evidence", "nextSteps", "commands"],
+        "properties": {
+          "agentId": { "enum": ["opencode", "deepseek", "goose", "agy", "copilot", "hermes"] },
+          "displayName": { "type": "string" },
+          "adapter": { "type": "string" },
+          "status": { "enum": ["adapter-ready", "verification-required", "blocked", "not-configured", "unknown"] },
+          "available": { "type": "boolean" },
+          "configurationKnown": { "type": "boolean" },
+          "commandPath": { "type": ["string", "null"] },
+          "version": { "type": ["string", "null"] },
+          "evidence": { "type": "string" },
+          "nextSteps": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "commands": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "proofLevel": { "const": "local-adapter-readiness" },
+    "proofCeiling": { "type": "string", "minLength": 20 }
+  }
+}
