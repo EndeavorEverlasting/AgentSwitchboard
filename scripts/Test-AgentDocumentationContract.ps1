@@ -87,10 +87,12 @@ try {
     }
 
     $contractSkills = @($contract.canonicalSkills | ForEach-Object { [string]$_ })
-    Add-Result `
-        -Passed ($contractSkills -contains "gnhf-prompt-compilation") `
-        -Name "contract/skill/gnhf-prompt-compilation" `
-        -FailureMessage "canonical GNHF prompt compilation skill is not registered"
+    foreach ($skill in @("gnhf-prompt-compilation", "powershell-interactive-execution")) {
+        Add-Result `
+            -Passed ($contractSkills -contains $skill) `
+            -Name "contract/skill/$skill" `
+            -FailureMessage "canonical skill is not registered"
+    }
 }
 catch {
     [void]$failures.Add("contract/json`: $($_.Exception.Message)")
@@ -99,9 +101,9 @@ catch {
 $entrypointExpectations = @{
     "AGENTS.md" = @("CLAUDE.md", "SKILLS.md", "CAPABILITIES.md", "TRIGGERS.md", ".ai/agent-contract.json")
     "CLAUDE.md" = @("AGENTS.md", "proof")
-    "SKILLS.md" = @(".ai/skills", "repo-intake", "bounded-sprint", "gnhf-prompt-compilation", "evidence-validation", "pr-integration", "runtime-proof")
+    "SKILLS.md" = @(".ai/skills", "repo-intake", "bounded-sprint", "gnhf-prompt-compilation", "powershell-interactive-execution", "evidence-validation", "pr-integration", "runtime-proof")
     "CAPABILITIES.md" = @("Capabilities describe", "verified")
-    "TRIGGERS.md" = @("Triggers", "repo.dirty-or-conflicted", "gnhf.prompt-request", "live-target-mutation")
+    "TRIGGERS.md" = @("Triggers", "repo.dirty-or-conflicted", "powershell.interactive-snippet", "gnhf.prompt-request", "live-target-mutation")
 }
 
 foreach ($file in $entrypointExpectations.Keys) {
@@ -119,6 +121,7 @@ $expectedSkills = @(
     "repo-intake",
     "bounded-sprint",
     "gnhf-prompt-compilation",
+    "powershell-interactive-execution",
     "evidence-validation",
     "pr-integration",
     "runtime-proof"
@@ -167,6 +170,23 @@ if ($null -ne $gnhfSkillText) {
             -Passed ($gnhfSkillText.Contains($token)) `
             -Name "skill/gnhf-prompt-compilation/format/$token" `
             -FailureMessage "canonical GNHF format token is missing"
+    }
+}
+
+$powerShellSkillText = Get-RequiredText -RelativePath ".ai/skills/powershell-interactive-execution/SKILL.md"
+if ($null -ne $powerShellSkillText) {
+    foreach ($token in @(
+        "Set-Location -LiteralPath",
+        "guard clause",
+        "same syntactic submission",
+        "Never instruct the operator to submit a closing",
+        "No standalone `else`, `elseif`, `catch`, or `finally` command",
+        "hardcoded workstation username"
+    )) {
+        Add-Result `
+            -Passed ($powerShellSkillText.Contains($token)) `
+            -Name "skill/powershell-interactive-execution/$token" `
+            -FailureMessage "interactive PowerShell safety token is missing"
     }
 }
 
