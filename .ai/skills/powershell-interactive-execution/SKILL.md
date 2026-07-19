@@ -1,6 +1,6 @@
 ---
 id: powershell-interactive-execution
-version: 1.0.0
+version: 1.0.1
 status: canonical
 ---
 
@@ -22,7 +22,7 @@ Use whenever PowerShell commands are intended to be pasted or entered interactiv
 
 1. Resolve, validate, and enter the intended directory before Git, installation, validation, or implementation logic.
 2. For interactive snippets, avoid `else`, `elseif`, `catch`, and `finally` when a guard clause or second independent condition is clear.
-3. When a compound construct is necessary, emit it as one complete submission. Keep `} else {`, `} elseif (...) {`, `} catch {`, and `} finally {` attached to the preceding block. Prefer wrapping the entire runnable snippet in `& { ... }` so the operator pastes it once.
+3. When a compound construct is necessary, emit it in the same syntactic submission as the block it continues. Keep `} else {`, `} elseif (...) {`, `} catch {`, and `} finally {` attached to the preceding block. Prefer wrapping the entire runnable snippet in `& { ... }` so the operator pastes it once.
 4. Never instruct the operator to submit a closing `}` and then paste `else {` as a later command. PowerShell executes the completed first statement immediately, leaving the later keyword syntactically orphaned.
 5. Prefer guard clauses:
 
