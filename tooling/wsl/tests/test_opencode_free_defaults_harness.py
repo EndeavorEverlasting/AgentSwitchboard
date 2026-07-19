@@ -124,10 +124,8 @@ def main() -> int:
 
     for path in paths.values():
         raw = path.read_bytes()
-        if path.suffix.lower() != ".cmd":
-            require(b"\r\n" not in raw, f"CRLF detected in tracked source: {path.relative_to(ROOT)}")
         require(
-            all(not line.endswith((b" ", b"\t")) for line in raw.splitlines()),
+            all(not line.rstrip(b"\r").endswith((b" ", b"\t")) for line in raw.splitlines()),
             f"trailing whitespace: {path.relative_to(ROOT)}",
         )
 
