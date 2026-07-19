@@ -29,9 +29,10 @@ Every canonical skill must define:
 
 1. A task explicitly names a valid skill.
 2. A literal request for a **Good Night, Have Fun prompt**, **GNHF prompt**, or to **compile a sprint for Good Night, Have Fun** selects `gnhf-prompt-compilation`. It must not fall through to generic sprint prose.
-3. `TRIGGERS.md` maps repository evidence to a skill.
-4. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
-5. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
+3. Interactive PowerShell selects `powershell-interactive-execution`. Continuation keywords must remain in the same submitted statement as the block they continue.
+4. `TRIGGERS.md` maps repository evidence to a skill.
+5. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
+6. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
 
 ## Canonical skills
 
@@ -40,6 +41,7 @@ Every canonical skill must define:
 | [`repo-intake`](.ai/skills/repo-intake/SKILL.md) | Recover repository truth and select safe work | new repository, stale context, unknown branch state |
 | [`bounded-sprint`](.ai/skills/bounded-sprint/SKILL.md) | Execute one scoped tracked change through commit/PR | explicit implementation request, ranked sprint selected |
 | [`gnhf-prompt-compilation`](.ai/skills/gnhf-prompt-compilation/SKILL.md) | Compile one copy-ready bounded `gnhf` PowerShell launch command | “GNHF prompt,” “Good Night, Have Fun prompt,” compile sprint for GNHF |
+| [`powershell-interactive-execution`](.ai/skills/powershell-interactive-execution/SKILL.md) | Produce directory-first PowerShell safe for interactive submission | PowerShell snippet, console steps, interactive command |
 | [`evidence-validation`](.ai/skills/evidence-validation/SKILL.md) | Build honest proof and repair validation gaps | failing checks, review findings, proof request |
 | [`pr-integration`](.ai/skills/pr-integration/SKILL.md) | Reconcile stacked or parallel branches safely | merge request, stacked PRs, consumed upstream work |
 | [`runtime-proof`](.ai/skills/runtime-proof/SKILL.md) | Move from static confidence to observed behavior | launcher, installer, harness, or live-runtime request |
@@ -57,6 +59,10 @@ It is not:
 - a description of how GNHF works.
 
 The detailed canonical format and validation rules live in `.ai/skills/gnhf-prompt-compilation/SKILL.md`.
+
+## PowerShell interactive distinction
+
+Once an interactive `if` statement is submitted, a later standalone continuation keyword is invalid. Prefer guard clauses. When a compound statement is required, submit the whole statement together and keep each continuation keyword attached to the preceding closing brace.
 
 ## Authoring rules
 
