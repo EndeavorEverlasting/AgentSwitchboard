@@ -15,17 +15,6 @@ if ($env:OS -ne "Windows_NT") {
     throw "This installer configures the WSL OpenCode instance from Windows."
 }
 
-function Convert-WindowsPathToWsl {
-    param([Parameter(Mandatory)][string]$WindowsPath)
-
-    $resolved = [IO.Path]::GetFullPath($WindowsPath)
-    if ($resolved -notmatch '^(?<drive>[A-Za-z]):\\(?<rest>.*)$') {
-        throw "Only drive-letter Windows paths can be mapped to WSL: $resolved"
-    }
-
-    "/mnt/$($Matches.drive.ToLowerInvariant())/$($Matches.rest -replace '\\','/')"
-}
-
 function Invoke-BoundedProcess {
     param(
         [Parameter(Mandatory)][string]$FilePath,
@@ -84,9 +73,24 @@ if (-not (Test-Path -LiteralPath $configurator -PathType Leaf)) {
 
 $manifestJson = $manifest | ConvertTo-Json -Depth 12 -Compress
 $config64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($manifestJson))
-$configuratorWsl = Convert-WindowsPathToWsl -WindowsPath $configurator
+
+# Never execute a Windows-mounted shell script directly. Git may check it out
+# with CRLF even when the repository blob is LF, which makes Bash parse
+# `set -euo pipefail` as an invalid option. Normalize and stage the script in
+# WSL before execution so local core.autocrlf settings cannot break setup.
+$configuratorText = Get-Content -LiteralPath $configurator -Raw
+$configuratorText = $configuratorText -replace "`r`n", "`n"
+$configuratorText = $configuratorText -replace "`r", "`n"
+$configurator64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($configuratorText))
 $modeArgument = if ($PlanOnly) { " --plan-only" } else { "" }
-$command = "printf '%s' '$config64' | base64 -d | bash '$configuratorWsl'$modeArgument"
+$command = @"
+set -euo pipefail
+script=`$(mktemp)
+trap 'rm -f "`$script"' EXIT
+printf '%s' '$configurator64' | base64 -d > "`$script"
+chmod 0700 "`$script"
+printf '%s' '$config64' | base64 -d | bash "`$script"$modeArgument
+"@
 
 Write-Host "Repo-root manifest: $resolvedManifest"
 Write-Host "WSL distribution:   $distribution"
