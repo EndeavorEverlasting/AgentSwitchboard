@@ -19,6 +19,8 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | `repo.new-or-unknown` | unfamiliar repo, placeholder path, stale handoff, uncertain branch | `repo-intake` |
 | `repo.dirty-or-conflicted` | unowned changes, conflict markers, detached or unsafe state | preserve/isolate; then `repo-intake` |
 | `sprint.execute` | scoped request with safe owned files | `bounded-sprint` |
+| `plan.coordination-request` | multi-agent, multi-session, multi-wave, cross-PR, sprint-map, launch-pack, or material plan-state request | `public-plan-coordination`; read or update `plans/` and keep coordination distinct from PR delivery |
+| `startup.readiness-request` | AgentSwitchboard starts or the operator asks what agents are available/configured | `startup.readiness.report`; read local fleet state and emit bounded guidance without installation or provider calls |
 | `action.claimed` | prompt claims install, setup, build, execute, repair, configure, upgrade, deploy, merge, or release | `action.commitment.validate`; require mutation, validation, and commit or GitHub proof |
 | `powershell.interactive-snippet` | PowerShell intended for interactive copy/paste or stepwise console entry | `powershell-interactive-execution`; use directory-first commands and never detach a continuation keyword from its preceding block |
 | `gnhf.prompt-request` | explicit “GNHF prompt,” “Good Night, Have Fun prompt,” or “compile this sprint for GNHF” request | `gnhf-prompt-compilation`; output a copy-ready `gnhf` launch command, not generic sprint prose |
@@ -36,6 +38,16 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | `secret-or-personal-data` | credentials, tokens, customer data, private evidence | stop, sanitize, and escalate |
 | `live-target-mutation` | external machine, service, deployment, save, or customer target | require explicit authority and runtime-proof boundary |
 | `repeated-repair-failure` | bounded retries exhausted | checkpoint and escalate |
+
+## Public plan routing invariant
+
+`plan.coordination-request` selects the public coordination artifact and procedure. It does not convert a plan into product logic or grant authority. Material task, ownership, dependency, collision, proof, or handoff changes must be reflected in a schema-valid plan, normally in the same branch or PR as the implementation.
+
+A PR may implement plan tasks, but its description must not become the only durable coordination record.
+
+## Startup readiness invariant
+
+`startup.readiness-request` is read-only. It may inspect existing AgentSwitchboard fleet state and emit local JSON and English guidance. It must not install tools, authenticate providers, read credentials, contact a hosted model, mutate a repository, or claim that an available adapter proves provider readiness.
 
 ## Doctrine routing invariant
 
@@ -61,6 +73,7 @@ A routed workflow should receive:
 
 - repository and branch or worktree;
 - PR or sprint;
+- public plan and task when applicable;
 - trigger ID and evidence;
 - lane;
 - owned and forbidden scope;
@@ -79,6 +92,7 @@ Stop or escalate when:
 - the task would overwrite unowned dirty work;
 - a required capability is unknown or blocked;
 - a path crosses forbidden scope;
+- two active plans or agents claim the same shared surface;
 - a deterministic gate exposes a security or data-loss risk;
 - the next step requires merge, deployment, secrets, destructive Git, or live mutation without explicit authority;
 - repeated repair attempts exceed the workflow limit;
@@ -89,4 +103,4 @@ Stop or escalate when:
 
 ## No implicit authority
 
-The presence of a trigger never authorizes installation, push, merge, release, deployment, target mutation, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.
+The presence of a trigger, public plan, startup report, or capability never authorizes installation, push, merge, release, deployment, target mutation, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.
