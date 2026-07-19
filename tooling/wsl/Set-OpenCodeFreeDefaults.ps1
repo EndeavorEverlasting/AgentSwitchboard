@@ -51,6 +51,13 @@ function Invoke-BoundedProcess {
     }
 }
 
+function ConvertTo-LfText {
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$Text)
+
+    $Text = $Text -replace "`r`n", "`n"
+    $Text -replace "`r", "`n"
+}
+
 $resolvedManifest = (Resolve-Path -LiteralPath $ManifestPath -ErrorAction Stop).Path
 $manifest = Get-Content -LiteralPath $resolvedManifest -Raw | ConvertFrom-Json
 if ($manifest.schemaVersion -ne 1 -or -not $manifest.opencode.enabled) {
@@ -78,9 +85,7 @@ $config64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($manifestJs
 # with CRLF even when the repository blob is LF, which makes Bash parse
 # `set -euo pipefail` as an invalid option. Normalize and stage the script in
 # WSL before execution so local core.autocrlf settings cannot break setup.
-$configuratorText = Get-Content -LiteralPath $configurator -Raw
-$configuratorText = $configuratorText -replace "`r`n", "`n"
-$configuratorText = $configuratorText -replace "`r", "`n"
+$configuratorText = ConvertTo-LfText -Text (Get-Content -LiteralPath $configurator -Raw)
 $configurator64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($configuratorText))
 $modeArgument = if ($PlanOnly) { " --plan-only" } else { "" }
 $command = @"
@@ -91,6 +96,7 @@ printf '%s' '$configurator64' | base64 -d > "`$script"
 chmod 0700 "`$script"
 printf '%s' '$config64' | base64 -d | bash "`$script"$modeArgument
 "@
+$command = ConvertTo-LfText -Text $command
 
 Write-Host "Repo-root manifest: $resolvedManifest"
 Write-Host "WSL distribution:   $distribution"
@@ -128,6 +134,7 @@ test -f "`$config"
 test -f "`$summary"
 jq -c '{model,small_model,share,whitelist:.provider.opencode.whitelist}' "`$config"
 "@
+$inspectCommand = ConvertTo-LfText -Text $inspectCommand
 $inspection = Invoke-BoundedProcess -FilePath $WslExe -ArgumentList @(
     "-d", $distribution, "-e", "bash", "-lc", $inspectCommand
 ) -TimeoutSeconds 30
