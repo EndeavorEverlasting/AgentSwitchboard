@@ -180,7 +180,7 @@ if ($null -ne $powerShellSkillText) {
         "guard clause",
         "same syntactic submission",
         "Never instruct the operator to submit a closing",
-        "No standalone `else`, `elseif`, `catch`, or `finally` command",
+        "No standalone",
         "hardcoded workstation username"
     )) {
         Add-Result `
