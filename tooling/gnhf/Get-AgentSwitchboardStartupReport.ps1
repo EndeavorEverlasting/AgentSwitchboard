@@ -32,6 +32,9 @@ function New-ReadinessRecord {
         [string[]]$Commands = @()
     )
 
+    $normalizedCommandPath = Get-NullableText -Value $CommandPath
+    $normalizedVersion = Get-NullableText -Value $Version
+
     return [pscustomobject][ordered]@{
         agentId = $AgentId
         displayName = $DisplayName
@@ -39,8 +42,8 @@ function New-ReadinessRecord {
         status = $Status
         available = $Available
         configurationKnown = $ConfigurationKnown
-        commandPath = Get-NullableText -Value $CommandPath
-        version = Get-NullableText -Value $Version
+        commandPath = $normalizedCommandPath
+        version = $normalizedVersion
         evidence = $Evidence
         nextSteps = @($NextSteps)
         commands = @($Commands)
@@ -266,7 +269,8 @@ if (-not $NoWrite) {
 
 Write-Host ""
 Write-Host "AgentSwitchboard startup readiness" -ForegroundColor Cyan
-Write-Host ("Overall: {0}" -f $overallStatus) -ForegroundColor $(if ($overallStatus -eq "ready") { "Green" } elseif ($overallStatus -eq "not-configured") { "Yellow" } else { "Yellow" })
+$overallColor = if ($overallStatus -eq "ready") { "Green" } else { "Yellow" }
+Write-Host ("Overall: {0}" -f $overallStatus) -ForegroundColor $overallColor
 $records | Select-Object displayName, adapter, status, evidence | Format-Table -AutoSize -Wrap
 
 Write-Host "Guidance:" -ForegroundColor Cyan
