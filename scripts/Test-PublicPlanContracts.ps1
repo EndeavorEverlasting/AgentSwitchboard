@@ -41,6 +41,9 @@ function Get-Json {
 }
 
 $requiredFiles = @(
+    ".ai/agent-contract.json",
+    ".ai/harness/manifest.json",
+    ".ai/harness/artifact-registry.json",
     "plans/README.md",
     "plans/plan-registry.json",
     "plans/schemas/public-plan.schema.json",
@@ -52,6 +55,12 @@ $requiredFiles = @(
     "tooling/gnhf/fixtures/startup-readiness/state.partial.json",
     "AgentSwitchboard.cmd",
     "tests/test_public_plan_contracts.py",
+    "templates/repository-agent-contract/AGENTS.md",
+    "templates/repository-agent-contract/SKILLS.md",
+    "templates/repository-agent-contract/CAPABILITIES.md",
+    "templates/repository-agent-contract/TRIGGERS.md",
+    "templates/repository-agent-contract/.ai/agent-contract.json",
+    "templates/repository-agent-contract/.ai/skills/public-plan-coordination/SKILL.md",
     "templates/repository-agent-contract/plans/README.md",
     "templates/repository-agent-contract/plans/plan-registry.json",
     "templates/repository-agent-contract/plans/schemas/public-plan.schema.json"
@@ -60,11 +69,40 @@ foreach ($relativePath in $requiredFiles) {
     Add-Result -Passed (Test-Path -LiteralPath (Join-Path $RootPath $relativePath) -PathType Leaf) -Name "required/$relativePath" -FailureMessage "file is missing"
 }
 
+$contract = Get-Json -RelativePath ".ai/agent-contract.json"
+$manifest = Get-Json -RelativePath ".ai/harness/manifest.json"
+$artifactRegistry = Get-Json -RelativePath ".ai/harness/artifact-registry.json"
 $registry = Get-Json -RelativePath "plans/plan-registry.json"
 $schema = Get-Json -RelativePath "plans/schemas/public-plan.schema.json"
 $startupSchema = Get-Json -RelativePath "tooling/gnhf/schemas/agent-startup-readiness.schema.json"
 $fixturePath = Join-Path $RootPath "tooling/gnhf/fixtures/startup-readiness/state.partial.json"
 $fixture = Get-Json -RelativePath "tooling/gnhf/fixtures/startup-readiness/state.partial.json"
+
+if ($contract) {
+    Add-Result -Passed ($contract.contractVersion -eq "1.3.0") -Name "contract/version" -FailureMessage "expected contract 1.3.0"
+    Add-Result -Passed ($contract.entrypoints.plans -eq "plans/plan-registry.json") -Name "contract/plans-entrypoint" -FailureMessage "public plan entrypoint is missing"
+    Add-Result -Passed ($contract.entrypoints.startupReadiness -eq "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1") -Name "contract/startup-entrypoint" -FailureMessage "startup entrypoint is missing"
+    Add-Result -Passed (@($contract.canonicalSkills) -contains "public-plan-coordination") -Name "contract/public-plan-skill" -FailureMessage "public plan skill is not registered"
+}
+
+if ($manifest) {
+    Add-Result -Passed ($manifest.entrypoints.publicPlanRegistry -eq "plans/plan-registry.json") -Name "manifest/plan-registry" -FailureMessage "public plan registry is not wired"
+    Add-Result -Passed ($manifest.entrypoints.publicPlanValidator -eq "scripts/Test-PublicPlanContracts.ps1") -Name "manifest/plan-validator" -FailureMessage "public plan validator is not wired"
+    Add-Result -Passed ($manifest.entrypoints.startupLauncher -eq "AgentSwitchboard.cmd") -Name "manifest/startup-launcher" -FailureMessage "startup launcher is not wired"
+    Add-Result -Passed ($manifest.startupReadiness.tracked -eq $false) -Name "manifest/startup-untracked" -FailureMessage "startup reports must remain untracked"
+    Add-Result -Passed ($manifest.publicPlans.tracked -eq $true) -Name "manifest/plans-tracked" -FailureMessage "public plans must be tracked"
+}
+
+if ($artifactRegistry) {
+    $artifactIds = @($artifactRegistry.artifacts | ForEach-Object { [string]$_.artifactId })
+    foreach ($artifactId in @("agent-startup-readiness", "agent-startup-readiness-operator-report")) {
+        Add-Result -Passed ($artifactIds -contains $artifactId) -Name "artifacts/$artifactId" -FailureMessage "startup artifact is not registered"
+    }
+    foreach ($artifact in @($artifactRegistry.artifacts | Where-Object { $_.artifactId -like "agent-startup-readiness*" })) {
+        Add-Result -Passed ($artifact.tracked -eq $false) -Name "artifacts/$($artifact.artifactId)/untracked" -FailureMessage "startup evidence must remain untracked"
+        Add-Result -Passed ($artifact.sensitivity -eq "local-operational") -Name "artifacts/$($artifact.artifactId)/sensitivity" -FailureMessage "unexpected sensitivity"
+    }
+}
 
 if ($registry) {
     Add-Result -Passed ($registry.schemaVersion -eq 1) -Name "registry/schema-version" -FailureMessage "expected schemaVersion 1"
@@ -81,6 +119,7 @@ if ($registry) {
             Add-Result -Passed (@($plan.tasks).Count -gt 0) -Name "plan/tasks/$($entry.planId)" -FailureMessage "plan has no tasks"
             Add-Result -Passed (@($plan.forbiddenScope).Count -gt 0) -Name "plan/forbidden/$($entry.planId)" -FailureMessage "forbidden scope is empty"
             Add-Result -Passed (-not [string]::IsNullOrWhiteSpace([string]$plan.proof.ceiling)) -Name "plan/proof-ceiling/$($entry.planId)" -FailureMessage "proof ceiling is missing"
+            Add-Result -Passed ($plan.delivery.pullRequest.number -eq 34) -Name "plan/pr/$($entry.planId)" -FailureMessage "plan is not bound to PR #34"
         }
     }
 }
@@ -106,7 +145,9 @@ if (Test-Path -LiteralPath $skillPath -PathType Leaf) {
         "## Deterministic validation",
         "## Forbidden scope",
         "## Stop and escalate",
-        "plan and pull request distinct"
+        "plan and pull request distinct",
+        "same branch or PR",
+        "product behavior in deterministic code"
     )) {
         Add-Result -Passed ($skill.Contains($token)) -Name "skill/$token" -FailureMessage "required public-plan skill token is missing"
     }
@@ -137,6 +178,7 @@ if ((Test-Path -LiteralPath $startupScript -PathType Leaf) -and $fixture) {
             $report = Get-Content -LiteralPath $reportPath.FullName -Raw | ConvertFrom-Json
             Add-Result -Passed ($report.schema -eq "agentswitchboard.agent-startup-readiness.v1") -Name "startup/schema" -FailureMessage "wrong report schema"
             Add-Result -Passed ($report.overallStatus -eq "partial") -Name "startup/partial" -FailureMessage "fixture should be partial"
+            Add-Result -Passed (@($report.agents).Count -eq 6) -Name "startup/agent-count" -FailureMessage "expected six agent rows"
             $openCode = @($report.agents | Where-Object { $_.agentId -eq "opencode" })[0]
             $deepSeek = @($report.agents | Where-Object { $_.agentId -eq "deepseek" })[0]
             $goose = @($report.agents | Where-Object { $_.agentId -eq "goose" })[0]
