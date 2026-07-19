@@ -21,6 +21,7 @@
     "smallModel": "opencode/deepseek-v4-flash-free",
     "share": "disabled",
     "restrictZenToFreeModels": true,
+    "autoInstallDependencies": true,
     "freeModelIds": [
       "deepseek-v4-flash-free",
       "mimo-v2.5-free",
