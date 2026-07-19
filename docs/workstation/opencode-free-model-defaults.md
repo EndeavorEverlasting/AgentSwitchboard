@@ -23,6 +23,48 @@ The OpenCode Zen picker is restricted to these provider-local IDs:
 
 These free endpoints are limited-time provider offerings. The manifest and installer provide a reviewed allowlist, but current availability still has to be confirmed by OpenCode. The installer does not authenticate, inspect credential values, or silently choose a paid model.
 
+## Preferred reusable repair workflow
+
+Run the repository-owned workflow instead of reconstructing recovery commands from chat history:
+
+```text
+Repair-OpenCodeFreeDefaults.cmd
+```
+
+The one-click entrypoint delegates to `tooling/wsl/Invoke-OpenCodeFreeDefaultsRepair.ps1`. The workflow:
+
+1. inspects the source checkout without rewriting it;
+2. fetches the reviewed remote branch;
+3. verifies an optional commit belongs to that branch;
+4. creates or safely reuses a clean isolated detached worktree;
+5. runs the managed installer from the validated worktree;
+6. independently reads back the effective OpenCode settings;
+7. writes run context, artifact registry, an English operator report, and a compressed handoff.
+
+Runtime evidence is stored outside Git under:
+
+```text
+%LOCALAPPDATA%\AgentSwitchboard\OpenCodeFreeDefaults\runs\<run-id>\
+```
+
+Read-only status:
+
+```powershell
+& {
+    $RepoPath = Join-Path $HOME "Desktop\dev\AgentSwitchboard"
+
+    if (-not (Test-Path -LiteralPath $RepoPath -PathType Container)) {
+        throw "AgentSwitchboard repository not found: $RepoPath"
+    }
+
+    Set-Location -LiteralPath $RepoPath
+
+    & pwsh -NoLogo -NoProfile -File .\tooling\wsl\Get-OpenCodeFreeDefaultsHarnessStatus.ps1
+}
+```
+
+The complete workflow contract is under `tooling/wsl/harness/opencode-free-defaults/`.
+
 ## Managed WSL dependency
 
 The configurator uses `jq` to preserve unrelated OpenCode settings while updating only the managed fields. When `jq` is absent and `opencode.autoInstallDependencies` is `true`, apply mode runs a bounded WSL-root `apt-get update` and installs only the Ubuntu `jq` package with `--no-install-recommends`.
@@ -31,9 +73,9 @@ Plan mode never installs packages. It reports whether `jq` is missing and whethe
 
 The installer normalizes its Bash configurator to LF, stages it inside WSL, and does not execute the Windows-mounted `.sh` file directly.
 
-## Apply from Windows PowerShell 7
+## Apply the lower-level installer directly
 
-Set the repository directory before running any script:
+The reusable repair workflow is preferred. The lower-level installer remains available for development and focused diagnostics.
 
 ```powershell
 & {
@@ -134,7 +176,7 @@ Expected core values:
 }
 ```
 
-The installer writes runtime evidence outside the repository:
+The lower-level installer also writes runtime evidence outside the repository:
 
 ```text
 ~/.local/state/agent-switchboard/tmux-gnhf/opencode-free-defaults-summary.json
