@@ -1,8 +1,8 @@
 # Public Plans and Startup Readiness
 
-**Plan ID:** `ASB-2026-07-PUBLIC-PLANS-STARTUP`  
-**Status:** active  
-**Branch:** `feat/public-plans-startup-readiness`
+- Plan ID: `ASB-2026-07-PUBLIC-PLANS-STARTUP`
+- Status: active
+- Branch: `feat/public-plans-startup-readiness`
 
 ## Mission
 
