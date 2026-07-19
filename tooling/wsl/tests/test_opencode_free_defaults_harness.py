@@ -111,10 +111,12 @@ def main() -> int:
     require("git status --short" in status, "status probe must inspect Git read-only")
     require('cat "$HOME/.config/opencode/opencode.json"' in status, "status probe must inspect config without jq")
     require("Set-OpenCodeFreeDefaults.ps1" in status, "status inventory must track the lower-level installer")
+    require("Invoke-OpenCodeFreeDefaultsRepair.ps1" in status, "status inventory must track the orchestrator")
     for mutation_token in (
         "& pwsh -NoLogo -NoProfile -File $InstallerPath",
+        "& $InstallerPath",
+        "& $OrchestratorPath",
         "Start-Process",
-        "Invoke-OpenCodeFreeDefaultsRepair.ps1",
         "apt-get install",
         "worktree add",
     ):
