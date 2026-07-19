@@ -110,7 +110,15 @@ def main() -> int:
     status = text(paths["status"])
     require("git status --short" in status, "status probe must inspect Git read-only")
     require('cat "$HOME/.config/opencode/opencode.json"' in status, "status probe must inspect config without jq")
-    require("Set-OpenCodeFreeDefaults.ps1" not in status, "status probe must not invoke the installer")
+    require("Set-OpenCodeFreeDefaults.ps1" in status, "status inventory must track the lower-level installer")
+    for mutation_token in (
+        "& pwsh -NoLogo -NoProfile -File $InstallerPath",
+        "Start-Process",
+        "Invoke-OpenCodeFreeDefaultsRepair.ps1",
+        "apt-get install",
+        "worktree add",
+    ):
+        require(mutation_token not in status, f"status probe contains mutation path: {mutation_token}")
 
     for path in paths.values():
         raw = path.read_bytes()
