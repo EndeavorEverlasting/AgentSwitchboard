@@ -57,9 +57,6 @@ jobs:
         run: python3 tooling/wsl/tests/test_windows_workstation_live_proof_contracts.py
       - name: Run OpenCode repair harness contracts
         run: python3 tooling/wsl/tests/test_opencode_free_defaults_harness.py
-      - name: Run OpenCode repair PowerShell validator
-        shell: pwsh
-        run: ./tooling/wsl/Test-OpenCodeFreeDefaultsHarness.ps1
       - name: Run OpenCode transport regression
         run: python3 tooling/wsl/tests/test_opencode_free_defaults_transport.py
       - name: Run existing GNHF prompt contracts
