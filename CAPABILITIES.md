@@ -30,6 +30,16 @@ Agents must not infer `verified` from command presence, prior sessions, document
 | `secrets.access` | credentials or secret stores are reachable | blocked by default; never persist in Git |
 | `destructive.git` | force-push, reset, branch deletion | blocked unless explicit recovery authorization |
 
+## Public plan and startup capabilities
+
+| Capability | Activation and output | Guardrail and proof |
+|---|---|---|
+| `plan.registry.read` | repository coordination or resume request; returns the public plan registry and selected plan | read-only; registry presence does not prove freshness or authorize work |
+| `plan.contract.validate` | plan creation or material ownership, dependency, task, proof, or handoff change; returns deterministic findings | run `scripts/Test-PublicPlanContracts.ps1`; contract proof only |
+| `startup.readiness.report` | AgentSwitchboard startup or explicit readiness request; returns console, JSON, and English local adapter-readiness evidence | read-only; no install, authentication, provider call, repository mutation, or hosted-response claim |
+
+Public plans coordinate work. They do not grant branch, provider, merge, deployment, target-mutation, secret, or destructive-Git authority.
+
 ## Harness doctrine capabilities
 
 | Capability | Activation and output | Guardrail and proof |
