@@ -1,0 +1,123 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-07-PUBLIC-PLANS-STARTUP",
+  "title": "Public plan coordination and startup agent readiness",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "active",
+  "priority": "high",
+  "createdUtc": "2026-07-19T18:00:00Z",
+  "updatedUtc": "2026-07-19T18:00:00Z",
+  "mission": "Make repository plans a public machine-readable coordination surface and show actionable local agent readiness whenever AgentSwitchboard starts.",
+  "owner": {
+    "surface": "plans and startup readiness",
+    "role": "AgentSwitchboard harness owner",
+    "agent": null
+  },
+  "delivery": {
+    "branch": "feat/public-plans-startup-readiness",
+    "pullRequest": null,
+    "baseRef": "docs/commit-required-harness-doctrine-v2",
+    "commitRequired": true
+  },
+  "wave": "Harness completion",
+  "lane": "public coordination and workstation readiness",
+  "dependencies": [
+    "AgentSwitchboard PR #33 doctrine head is the branch floor",
+    "Existing GNHF fleet state remains the local readiness evidence source"
+  ],
+  "safeParallelWork": [
+    "Provider runtime repair that does not edit public plan or startup readiness files",
+    "Child-repository feature work using separate branches and worktrees"
+  ],
+  "ownedScope": [
+    "plans/**",
+    ".ai/skills/public-plan-coordination/**",
+    "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
+    "tooling/gnhf/schemas/agent-startup-readiness.schema.json",
+    "tooling/gnhf/fixtures/startup-readiness/**",
+    "AgentSwitchboard.cmd",
+    "scripts/Test-PublicPlanContracts.ps1",
+    "tests/test_public_plan_contracts.py",
+    ".github/workflows/public-plan-contracts.yml",
+    "canonical instruction, harness registry, artifact registry, and template wiring"
+  ],
+  "forbiddenScope": [
+    "Provider authentication or credential access",
+    "Installing agents from the startup report",
+    "Live provider calls from repository validation",
+    "Automatic push, merge, deployment, or target mutation",
+    "Committing machine-local readiness reports"
+  ],
+  "expectedArtifacts": [
+    "Public plan registry and schema",
+    "Canonical public-plan coordination skill, capability, and trigger",
+    "Read-only agent startup readiness JSON and English report",
+    "Repository startup launcher",
+    "Windows and Linux contract validation",
+    "Child-repository public-plan template"
+  ],
+  "tasks": [
+    {
+      "taskId": "PLAN-01",
+      "title": "Build public plan contract",
+      "status": "completed",
+      "owner": "public plan harness",
+      "dependencies": [],
+      "inputs": ["Agent operating contract", "Harness doctrine", "Existing artifact registry"],
+      "outputs": ["plans/README.md", "plans/plan-registry.json", "plans/schemas/public-plan.schema.json"],
+      "acceptanceCriteria": ["Plans are distinct from pull requests", "Registry paths resolve", "Public data and proof boundaries are explicit"],
+      "evidence": ["Tracked schema, registry, documentation, validator, and CI workflow"]
+    },
+    {
+      "taskId": "READY-01",
+      "title": "Build startup readiness report",
+      "status": "completed",
+      "owner": "GNHF control plane",
+      "dependencies": ["PLAN-01"],
+      "inputs": ["%LOCALAPPDATA%/AgentSwitchboard/GnhfFleet/state.json"],
+      "outputs": ["agent-startup-readiness.json", "agent-startup-readiness.md", "console readiness table"],
+      "acceptanceCriteria": ["Report identifies ready, blocked, and verification-required agents", "Every blocked state has actionable guidance", "No install, authentication, provider, or mutation action occurs"],
+      "evidence": ["Fixture-driven PowerShell validator and Linux structural test"]
+    },
+    {
+      "taskId": "START-01",
+      "title": "Add canonical repository startup launcher",
+      "status": "completed",
+      "owner": "operator launcher",
+      "dependencies": ["READY-01"],
+      "inputs": ["AgentSwitchboard.cmd arguments", "Startup readiness report"],
+      "outputs": ["AgentSwitchboard.cmd"],
+      "acceptanceCriteria": ["Readiness is displayed before delegated sprint launch", "No-argument startup exits after orientation", "Exit codes are preserved"],
+      "evidence": ["Launcher contract checks"]
+    },
+    {
+      "taskId": "ROLLOUT-01",
+      "title": "Propagate public plans through child-repository PRs",
+      "status": "ready",
+      "owner": "repository-family adoption owners",
+      "dependencies": ["PLAN-01"],
+      "inputs": ["templates/repository-agent-contract/plans/**"],
+      "outputs": ["Repo-local plans directories in registered child repositories"],
+      "acceptanceCriteria": ["Each child adopts through its own reviewable PR", "Local product authority and plan specialization are preserved"],
+      "evidence": []
+    }
+  ],
+  "validation": [
+    "python tests/test_public_plan_contracts.py",
+    "pwsh -NoLogo -NoProfile -File ./scripts/Test-PublicPlanContracts.ps1",
+    "pwsh -NoLogo -NoProfile -File ./scripts/Test-AgentDocumentationContract.ps1",
+    "pwsh -NoLogo -NoProfile -File ./scripts/Test-HarnessDoctrineContract.ps1",
+    "git diff --check"
+  ],
+  "proof": {
+    "target": "repository contract, fixture harness, startup launcher composition, and cross-platform CI",
+    "achieved": "pending exact-head CI",
+    "ceiling": "Does not prove provider authentication, model availability, quota, a hosted response, child-repository adoption, or operator acceptance."
+  },
+  "handoff": {
+    "nextOwner": "repository-family adoption owners",
+    "nextCommand": "pwsh -NoLogo -NoProfile -File ./scripts/Test-PublicPlanContracts.ps1",
+    "notes": ["Reinspect this plan, Git state, and open PRs before taking ROLLOUT-01.", "Use one child-repository PR per adoption lane."]
+  }
+}
