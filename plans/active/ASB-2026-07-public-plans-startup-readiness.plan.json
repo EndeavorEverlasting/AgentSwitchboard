@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-07-19T18:00:00Z",
-  "updatedUtc": "2026-07-19T18:00:00Z",
+  "updatedUtc": "2026-07-19T18:10:00Z",
   "mission": "Make repository plans a public machine-readable coordination surface and show actionable local agent readiness whenever AgentSwitchboard starts.",
   "owner": {
     "surface": "plans and startup readiness",
@@ -16,7 +16,11 @@
   },
   "delivery": {
     "branch": "feat/public-plans-startup-readiness",
-    "pullRequest": null,
+    "pullRequest": {
+      "number": 34,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/34",
+      "state": "open"
+    },
     "baseRef": "docs/commit-required-harness-doctrine-v2",
     "commitRequired": true
   },
@@ -67,7 +71,7 @@
       "inputs": ["Agent operating contract", "Harness doctrine", "Existing artifact registry"],
       "outputs": ["plans/README.md", "plans/plan-registry.json", "plans/schemas/public-plan.schema.json"],
       "acceptanceCriteria": ["Plans are distinct from pull requests", "Registry paths resolve", "Public data and proof boundaries are explicit"],
-      "evidence": ["Tracked schema, registry, documentation, validator, and CI workflow"]
+      "evidence": ["Tracked schema, registry, documentation, validator, and CI workflow", "PR #34 carries the implementation and review evidence"]
     },
     {
       "taskId": "READY-01",
@@ -78,7 +82,7 @@
       "inputs": ["%LOCALAPPDATA%/AgentSwitchboard/GnhfFleet/state.json"],
       "outputs": ["agent-startup-readiness.json", "agent-startup-readiness.md", "console readiness table"],
       "acceptanceCriteria": ["Report identifies ready, blocked, and verification-required agents", "Every blocked state has actionable guidance", "No install, authentication, provider, or mutation action occurs"],
-      "evidence": ["Fixture-driven PowerShell validator and Linux structural test"]
+      "evidence": ["Fixture-driven PowerShell validator and Linux structural test", "PR #34 exact-head CI is the proof gate"]
     },
     {
       "taskId": "START-01",
@@ -89,15 +93,15 @@
       "inputs": ["AgentSwitchboard.cmd arguments", "Startup readiness report"],
       "outputs": ["AgentSwitchboard.cmd"],
       "acceptanceCriteria": ["Readiness is displayed before delegated sprint launch", "No-argument startup exits after orientation", "Exit codes are preserved"],
-      "evidence": ["Launcher contract checks"]
+      "evidence": ["Launcher contract checks", "PR #34 exact-head CI is the proof gate"]
     },
     {
       "taskId": "ROLLOUT-01",
       "title": "Propagate public plans through child-repository PRs",
       "status": "ready",
       "owner": "repository-family adoption owners",
-      "dependencies": ["PLAN-01"],
-      "inputs": ["templates/repository-agent-contract/plans/**"],
+      "dependencies": ["PLAN-01", "PR #34 exact-head validation and landing"],
+      "inputs": ["templates/repository-agent-contract/plans/**", "templates/repository-agent-contract/.ai/skills/public-plan-coordination/SKILL.md"],
       "outputs": ["Repo-local plans directories in registered child repositories"],
       "acceptanceCriteria": ["Each child adopts through its own reviewable PR", "Local product authority and plan specialization are preserved"],
       "evidence": []
@@ -112,12 +116,12 @@
   ],
   "proof": {
     "target": "repository contract, fixture harness, startup launcher composition, and cross-platform CI",
-    "achieved": "pending exact-head CI",
+    "achieved": "pending PR #34 exact-head CI",
     "ceiling": "Does not prove provider authentication, model availability, quota, a hosted response, child-repository adoption, or operator acceptance."
   },
   "handoff": {
     "nextOwner": "repository-family adoption owners",
-    "nextCommand": "pwsh -NoLogo -NoProfile -File ./scripts/Test-PublicPlanContracts.ps1",
-    "notes": ["Reinspect this plan, Git state, and open PRs before taking ROLLOUT-01.", "Use one child-repository PR per adoption lane."]
+    "nextCommand": "gh pr view 34 --repo EndeavorEverlasting/AgentSwitchboard --web",
+    "notes": ["Wait for PR #34 exact-head validation and landing before taking ROLLOUT-01.", "Reinspect this plan, Git state, and open PRs before work.", "Use one child-repository PR per adoption lane."]
   }
 }
