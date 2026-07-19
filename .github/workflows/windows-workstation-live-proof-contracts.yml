@@ -3,6 +3,7 @@ name: Windows workstation live-proof contracts
 on:
   pull_request:
     paths:
+      - ".gitattributes"
       - "Run-WindowsWorkstationLiveProof.cmd"
       - "Run-ChatGPTDesktopGnhfSprint.cmd"
       - "Run-CursorGnhfSprint.cmd"
@@ -21,9 +22,12 @@ on:
       - "tooling/wsl/Invoke-WindowsWorkstationSessionProof.ps1"
       - "tooling/wsl/Invoke-WindowsWorkstationGnhfProof.ps1"
       - "tooling/wsl/Install-WindowsWorkstationLiveProof.ps1"
+      - "tooling/wsl/Set-OpenCodeFreeDefaults.ps1"
       - "tooling/wsl/Test-WindowsWorkstationLiveProofContracts.ps1"
+      - "tooling/wsl/scripts/configure-opencode-free-defaults.sh"
       - "tooling/wsl/schemas/windows-workstation-live-proof.schema.json"
       - "tooling/wsl/tests/test_windows_workstation_live_proof_contracts.py"
+      - "tooling/wsl/tests/test_opencode_free_defaults_transport.py"
       - "docs/workstation/windows-workstation-live-proof.md"
       - "docs/workstation/gnhf-prompt-ingestion.md"
       - ".github/workflows/windows-workstation-live-proof-contracts.yml"
@@ -42,6 +46,8 @@ jobs:
           show-progress: false
       - name: Run dependency-free workstation contracts
         run: python3 tooling/wsl/tests/test_windows_workstation_live_proof_contracts.py
+      - name: Run OpenCode transport regression
+        run: python3 tooling/wsl/tests/test_opencode_free_defaults_transport.py
       - name: Run existing GNHF prompt contracts
         shell: pwsh
         run: ./tooling/gnhf/Test-GnhfPromptContracts.ps1
@@ -109,6 +115,7 @@ jobs:
             'tooling/wsl/Invoke-WindowsWorkstationSessionProof.ps1',
             'tooling/wsl/Invoke-WindowsWorkstationGnhfProof.ps1',
             'tooling/wsl/Install-WindowsWorkstationLiveProof.ps1',
+            'tooling/wsl/Set-OpenCodeFreeDefaults.ps1',
             'tooling/wsl/Test-WindowsWorkstationLiveProofContracts.ps1'
           )
           foreach ($file in $files) {
@@ -120,6 +127,8 @@ jobs:
               exit 1
             }
           }
+      - name: Run OpenCode transport regression
+        run: python tooling/wsl/tests/test_opencode_free_defaults_transport.py
       - name: Run existing GNHF prompt contracts
         shell: pwsh
         run: ./tooling/gnhf/Test-GnhfPromptContracts.ps1
