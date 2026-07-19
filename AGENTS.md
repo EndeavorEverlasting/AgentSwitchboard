@@ -21,7 +21,8 @@ Before proposing or changing work, read in this order:
 7. `CAPABILITIES.md`
 8. `TRIGGERS.md`
 9. the specific skill under `.ai/skills/` selected by the trigger
-10. current plans, handoffs, tests, validators, open PRs, and recent Git history relevant to the task
+10. `plans/plan-registry.json` and the selected public plan
+11. current handoffs, tests, validators, open PRs, and recent Git history relevant to the task
 
 For work involving AgentSwitchboard, BlacksmithGuild, Web Excel Repair Triage, or SysAdminSuite, load `.ai/harness/repository-family.registry.json` and the target repository's profile before assuming paths, validators, artifacts, or authority.
 
@@ -41,6 +42,7 @@ Do not treat filenames, timestamps, stale handoffs, open PR content, or remember
 - **Evidence before action.** Inspect the repository, current Git state, relevant contracts, and existing patterns before inventing.
 - **Floor before furniture.** Repair unsafe repository state and shared contract gaps before dependent features.
 - **Bound the sprint.** State owned scope, forbidden scope, expected artifacts, validation, and proof ceiling.
+- **Publish coordination.** Material multi-agent or multi-session work belongs in `plans/` as a public machine-readable plan; a PR description is delivery evidence, not the only coordination record.
 - **Isolate writers.** One branch and worktree per active writing lane. Never share uncommitted state between agents.
 - **Reuse before replacing.** Existing healthy tools, directories, helpers, contracts, and artifacts should be used. Missing items may be created or installed only when authorized.
 - **Separate skills from code.** Skills describe procedures and judgment. Deterministic behavior belongs in scripts, modules, validators, schemas, registries, and workflows.
@@ -67,6 +69,18 @@ Every writing sprint must establish:
 - commit and PR expectation.
 
 If the worktree is dirty and the lane does not own the dirt, preserve it and use an isolated worktree. Do not reset or discard another lane's work.
+
+## Public plan coordination
+
+`plans/plan-registry.json` is the public index for work that must survive chat boundaries or coordinate multiple agents, waves, branches, or pull requests.
+
+- A plan records intent, ownership, dependencies, collision boundaries, artifacts, validation, proof, and handoff.
+- A branch or PR transports reviewed changes and may implement one or more plan tasks.
+- Update the machine-readable plan in the same delivery branch when task state, ownership, dependencies, proof, or handoff changes materially.
+- Never put secrets, customer data, private hostnames, machine-local paths, raw runtime evidence, provider state, or credentials in a public plan.
+- Never infer authority from a plan. Merge, deployment, target mutation, authentication, and destructive Git still require explicit authority.
+
+Use `.ai/skills/public-plan-coordination/SKILL.md` and validate with `scripts/Test-PublicPlanContracts.ps1`.
 
 ## Capability and authority rule
 
