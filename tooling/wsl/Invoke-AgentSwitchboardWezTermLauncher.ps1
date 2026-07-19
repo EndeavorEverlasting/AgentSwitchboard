@@ -5,6 +5,13 @@
     Queries WezTerm mux state before deciding whether to activate an existing
     managed workspace pane or start a new managed GUI window. This is the single
     authoritative launcher consumed by SysAdminSuite and desktop shortcuts.
+
+    DOCTRINE: This launcher must NEVER use --always-new-process. That flag
+    bypasses WezTerm's delegation to an existing GUI and deliberately starts
+    another GUI process, causing duplicate windows. The correct pattern is:
+    inventory first, decide second. Query WezTerm's own mux state via
+    'wezterm cli list --format json' and 'wezterm cli list-clients --format json'
+    before any launch decision.
 .PARAMETER Workspace
     The managed WezTerm workspace name. Default: 'agent-switchboard'.
 .PARAMETER Distro
