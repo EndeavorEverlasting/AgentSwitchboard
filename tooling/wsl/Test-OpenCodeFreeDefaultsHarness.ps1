@@ -16,7 +16,7 @@ function Add-Result {
     param(
         [Parameter(Mandatory)][bool]$Passed,
         [Parameter(Mandatory)][string]$Name,
-        [Parameter(Mandatory)][string]$FailureMessage
+        [Parameter(Mandatory)][AllowEmptyString()][string]$FailureMessage
     )
 
     if ($Passed) {
@@ -71,8 +71,9 @@ foreach ($relativePath in $powerShellFiles) {
     }
     $tokens = $null
     $errors = $null
-    [void][Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
-    Add-Result -Passed (@($errors).Count -eq 0) -Name "powershell/$relativePath" -FailureMessage ((@($errors | ForEach-Object { $_.Message }) -join "; "))
+    [void][System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
+    $errorText = (@($errors | ForEach-Object { $_.Message }) -join "; ")
+    Add-Result -Passed (@($errors).Count -eq 0) -Name "powershell/$relativePath" -FailureMessage $errorText
 }
 
 $jsonFiles = @(
@@ -96,14 +97,14 @@ foreach ($relativePath in $jsonFiles) {
     }
 }
 
-$workflow = (Get-Content -LiteralPath (Join-Path $resolvedRepo "tooling/wsl/harness/opencode-free-defaults/workflow.json") -Raw | ConvertFrom-Json)
+$workflow = Get-Content -LiteralPath (Join-Path $resolvedRepo "tooling/wsl/harness/opencode-free-defaults/workflow.json") -Raw | ConvertFrom-Json
 Add-Result -Passed ($workflow.workflowId -eq "opencode-free-defaults-repair") -Name "workflow/id" -FailureMessage "unexpected workflow ID"
 Add-Result -Passed ($workflow.entrypoints.oneClick -eq "Repair-OpenCodeFreeDefaults.cmd") -Name "workflow/one-click" -FailureMessage "root launcher is not registered"
 Add-Result -Passed ($workflow.entrypoints.orchestrator -eq "tooling/wsl/Invoke-OpenCodeFreeDefaultsRepair.ps1") -Name "workflow/orchestrator" -FailureMessage "orchestrator is not registered"
 Add-Result -Passed (@($workflow.validators).Count -ge 4) -Name "workflow/validators" -FailureMessage "focused and broad validators are incomplete"
 Add-Result -Passed (-not [bool]$workflow.localHooks.installedByDefault) -Name "workflow/hook-boundary" -FailureMessage "mutating workflow must not install a default local hook"
 
-$catalog = (Get-Content -LiteralPath (Join-Path $resolvedRepo "tooling/wsl/harness/opencode-free-defaults/artifact-catalog.json") -Raw | ConvertFrom-Json)
+$catalog = Get-Content -LiteralPath (Join-Path $resolvedRepo "tooling/wsl/harness/opencode-free-defaults/artifact-catalog.json") -Raw | ConvertFrom-Json
 $roles = @($catalog.artifacts | ForEach-Object { [string]$_.role })
 foreach ($role in @("run-context", "artifact-registry", "effective-config", "operator-report", "final-handoff")) {
     Add-Result -Passed ($roles -contains $role) -Name "artifact/$role" -FailureMessage "artifact role missing"
@@ -112,9 +113,9 @@ Add-Result -Passed (-not [bool]$catalog.tracked) -Name "artifact/untracked" -Fai
 
 $orchestratorText = Read-RequiredText -RelativePath "tooling/wsl/Invoke-OpenCodeFreeDefaultsRepair.ps1"
 $requiredTokens = @(
-    "git\" -ArgumentList @(\"fetch\"",
-    "merge-base\", \"--is-ancestor\"",
-    "worktree\", \"add\", \"--detach\"",
+    '-FilePath "git" -ArgumentList @("fetch"',
+    '"merge-base", "--is-ancestor"',
+    '"worktree", "add", "--detach"',
     "run-context.json",
     "artifact-registry.json",
     "operator-report.md",
@@ -131,11 +132,11 @@ foreach ($token in $requiredTokens) {
 $forbiddenTokens = @(
     "reset --hard",
     "git clean",
-    "force-push",
+    "git push --force",
     "DEEPSEEK_API_KEY",
     "OPENAI_API_KEY",
     "ANTHROPIC_API_KEY",
-    "C:\\Users\\Cheex",
+    "C:\Users\Cheex",
     "deepseek/deepseek-v4-pro"
 )
 $scannedText = @(
