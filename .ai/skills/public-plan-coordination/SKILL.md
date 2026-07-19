@@ -1,6 +1,6 @@
 ---
 id: public-plan-coordination
-version: 1.0.1
+version: 1.0.2
 status: canonical
 ---
 
@@ -50,6 +50,8 @@ Deterministic triggers:
 - bounded next-agent handoff
 
 ## Deterministic validation
+
+Repository-relative validator: `scripts/Test-PublicPlanContracts.ps1`.
 
 Run:
 
