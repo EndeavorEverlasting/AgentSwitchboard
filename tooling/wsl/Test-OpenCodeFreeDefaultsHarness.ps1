@@ -101,8 +101,10 @@ $workflow = Get-Content -LiteralPath (Join-Path $resolvedRepo "tooling/wsl/harne
 Add-Result -Passed ($workflow.workflowId -eq "opencode-free-defaults-repair") -Name "workflow/id" -FailureMessage "unexpected workflow ID"
 Add-Result -Passed ($workflow.entrypoints.oneClick -eq "Repair-OpenCodeFreeDefaults.cmd") -Name "workflow/one-click" -FailureMessage "root launcher is not registered"
 Add-Result -Passed ($workflow.entrypoints.orchestrator -eq "tooling/wsl/Invoke-OpenCodeFreeDefaultsRepair.ps1") -Name "workflow/orchestrator" -FailureMessage "orchestrator is not registered"
+Add-Result -Passed ($workflow.entrypoints.status -eq "tooling/wsl/Get-OpenCodeFreeDefaultsHarnessStatus.ps1") -Name "workflow/status" -FailureMessage "read-only status probe is not registered"
 Add-Result -Passed (@($workflow.validators).Count -ge 4) -Name "workflow/validators" -FailureMessage "focused and broad validators are incomplete"
 Add-Result -Passed (-not [bool]$workflow.localHooks.installedByDefault) -Name "workflow/hook-boundary" -FailureMessage "mutating workflow must not install a default local hook"
+Add-Result -Passed (-not [bool]$workflow.outputPolicy.tracked) -Name "workflow/output-policy" -FailureMessage "runtime artifacts must remain outside Git"
 
 $catalog = Get-Content -LiteralPath (Join-Path $resolvedRepo "tooling/wsl/harness/opencode-free-defaults/artifact-catalog.json") -Raw | ConvertFrom-Json
 $roles = @($catalog.artifacts | ForEach-Object { [string]$_.role })
@@ -112,24 +114,24 @@ foreach ($role in @("run-context", "artifact-registry", "effective-config", "ope
 Add-Result -Passed (-not [bool]$catalog.tracked) -Name "artifact/untracked" -FailureMessage "runtime artifacts must remain outside Git"
 
 $orchestratorText = Read-RequiredText -RelativePath "tooling/wsl/Invoke-OpenCodeFreeDefaultsRepair.ps1"
-$requiredTokens = @(
-    '-FilePath "git" -ArgumentList @("fetch"',
-    '"merge-base", "--is-ancestor"',
-    '"worktree", "add", "--detach"',
-    "run-context.json",
-    "artifact-registry.json",
-    "operator-report.md",
-    "final-handoff.json",
-    "effective-opencode-config.json",
-    "Set-OpenCodeFreeDefaults.ps1",
-    "Independent OpenCode configuration inspection",
-    "No provider authentication, free-model availability, hosted response, push, merge, or deployment proof."
+$operationTokens = @(
+    '$sourceStatus = Invoke-BoundedNative',
+    '$fetch = Invoke-BoundedNative',
+    '$ancestorProbe = Invoke-BoundedNative',
+    '$add = Invoke-BoundedNative',
+    '$installer = Invoke-BoundedNative',
+    '$inspection = Invoke-BoundedNative',
+    'run-context.json',
+    'artifact-registry.json',
+    'operator-report.md',
+    'final-handoff.json',
+    'effective-opencode-config.json'
 )
-foreach ($token in $requiredTokens) {
-    Add-Result -Passed ($orchestratorText.Contains($token)) -Name "orchestrator/$token" -FailureMessage "required workflow behavior missing"
+foreach ($token in $operationTokens) {
+    Add-Result -Passed ($orchestratorText.Contains($token)) -Name "orchestrator/$token" -FailureMessage "required workflow operation or artifact is missing"
 }
 
-$forbiddenTokens = @(
+$orchestratorForbidden = @(
     "reset --hard",
     "git clean",
     "git push --force",
@@ -139,14 +141,22 @@ $forbiddenTokens = @(
     "C:\Users\Cheex",
     "deepseek/deepseek-v4-pro"
 )
-$scannedText = @(
-    $orchestratorText,
-    (Read-RequiredText -RelativePath "Repair-OpenCodeFreeDefaults.cmd"),
-    (Read-RequiredText -RelativePath "tooling/wsl/AGENTS.md"),
-    (Read-RequiredText -RelativePath ".ai/skills/opencode-free-defaults-repair/SKILL.md")
-) -join "`n"
-foreach ($token in $forbiddenTokens) {
-    Add-Result -Passed (-not $scannedText.Contains($token)) -Name "forbidden/$token" -FailureMessage "forbidden token present"
+foreach ($token in $orchestratorForbidden) {
+    Add-Result -Passed (-not $orchestratorText.Contains($token)) -Name "orchestrator-forbidden/$token" -FailureMessage "forbidden workflow behavior is present"
+}
+
+$agentsText = Read-RequiredText -RelativePath "tooling/wsl/AGENTS.md"
+$skillText = Read-RequiredText -RelativePath ".ai/skills/opencode-free-defaults-repair/SKILL.md"
+$guidanceText = ($agentsText + "`n" + $skillText).ToLowerInvariant()
+foreach ($token in @("isolated detached worktree", "run context", "artifact registry", "operator report", "final handoff")) {
+    Add-Result -Passed ($guidanceText.Contains($token)) -Name "guidance/$token" -FailureMessage "required harness guidance is missing"
+}
+
+$statusText = Read-RequiredText -RelativePath "tooling/wsl/Get-OpenCodeFreeDefaultsHarnessStatus.ps1"
+Add-Result -Passed ($statusText.Contains("git status --short")) -Name "status/git" -FailureMessage "read-only Git inspection is missing"
+Add-Result -Passed ($statusText.Contains('cat "$HOME/.config/opencode/opencode.json"')) -Name "status/config" -FailureMessage "read-only configuration inspection is missing"
+foreach ($token in @("apt-get install", "worktree add", "Start-Process")) {
+    Add-Result -Passed (-not $statusText.Contains($token)) -Name "status-forbidden/$token" -FailureMessage "status probe contains mutation behavior"
 }
 
 $cmdText = Read-RequiredText -RelativePath "Repair-OpenCodeFreeDefaults.cmd"
@@ -154,11 +164,11 @@ Add-Result -Passed ($cmdText.Contains('cd /d "%~dp0"')) -Name "cmd/directory-fir
 Add-Result -Passed ($cmdText.Contains("Invoke-OpenCodeFreeDefaultsRepair.ps1")) -Name "cmd/delegation" -FailureMessage "root CMD does not delegate to the canonical orchestrator"
 
 Write-Host "OPENCODE FREE-DEFAULTS HARNESS CONTRACT" -ForegroundColor Cyan
-foreach ($pass in $passes) {
-    Write-Host "[PASS] $pass" -ForegroundColor Green
-}
 foreach ($failure in $failures) {
     Write-Host "[FAIL] $failure" -ForegroundColor Red
+}
+foreach ($pass in $passes) {
+    Write-Host "[PASS] $pass" -ForegroundColor Green
 }
 Write-Host ""
 Write-Host ("Result: {0} passed / {1} failed" -f $passes.Count, $failures.Count)
