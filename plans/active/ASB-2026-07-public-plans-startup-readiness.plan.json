@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-07-19T18:00:00Z",
-  "updatedUtc": "2026-07-19T18:10:00Z",
+  "updatedUtc": "2026-07-19T18:16:00Z",
   "mission": "Make repository plans a public machine-readable coordination surface and show actionable local agent readiness whenever AgentSwitchboard starts.",
   "owner": {
     "surface": "plans and startup readiness",
@@ -71,7 +71,12 @@
       "inputs": ["Agent operating contract", "Harness doctrine", "Existing artifact registry"],
       "outputs": ["plans/README.md", "plans/plan-registry.json", "plans/schemas/public-plan.schema.json"],
       "acceptanceCriteria": ["Plans are distinct from pull requests", "Registry paths resolve", "Public data and proof boundaries are explicit"],
-      "evidence": ["Tracked schema, registry, documentation, validator, and CI workflow", "PR #34 carries the implementation and review evidence"]
+      "evidence": [
+        "Tracked schema, registry, documentation, validator, and CI workflow",
+        "PR #34 carries the implementation and review evidence",
+        "Public plan and startup readiness contracts run 29698305146 passed on Windows and Linux at implementation head 1a22744107ca54f3d07190147e9fb1f89b159536",
+        "Agent documentation contract run 29698305147 and repository family harness run 29698305150 passed at the same implementation head"
+      ]
     },
     {
       "taskId": "READY-01",
@@ -82,7 +87,11 @@
       "inputs": ["%LOCALAPPDATA%/AgentSwitchboard/GnhfFleet/state.json"],
       "outputs": ["agent-startup-readiness.json", "agent-startup-readiness.md", "console readiness table"],
       "acceptanceCriteria": ["Report identifies ready, blocked, and verification-required agents", "Every blocked state has actionable guidance", "No install, authentication, provider, or mutation action occurs"],
-      "evidence": ["Fixture-driven PowerShell validator and Linux structural test", "PR #34 exact-head CI is the proof gate"]
+      "evidence": [
+        "Fixture-driven PowerShell validator and Linux structural test",
+        "Public plan and startup readiness contracts run 29698305146 passed all Windows fixture, missing-state, read-only, documentation, doctrine, and hygiene steps at implementation head 1a22744107ca54f3d07190147e9fb1f89b159536",
+        "Provider-routed GNHF contracts run 29698305156 and application floor run 29698305145 passed at the same implementation head"
+      ]
     },
     {
       "taskId": "START-01",
@@ -93,7 +102,10 @@
       "inputs": ["AgentSwitchboard.cmd arguments", "Startup readiness report"],
       "outputs": ["AgentSwitchboard.cmd"],
       "acceptanceCriteria": ["Readiness is displayed before delegated sprint launch", "No-argument startup exits after orientation", "Exit codes are preserved"],
-      "evidence": ["Launcher contract checks", "PR #34 exact-head CI is the proof gate"]
+      "evidence": [
+        "Launcher composition and exit-code contracts",
+        "AgentSwitchboard application floor run 29698305145 and public plan/startup run 29698305146 passed at implementation head 1a22744107ca54f3d07190147e9fb1f89b159536"
+      ]
     },
     {
       "taskId": "ROLLOUT-01",
@@ -116,12 +128,17 @@
   ],
   "proof": {
     "target": "repository contract, fixture harness, startup launcher composition, and cross-platform CI",
-    "achieved": "pending PR #34 exact-head CI",
+    "achieved": "Contract, fixture harness, startup launcher composition, and cross-platform CI passed at implementation head 1a22744107ca54f3d07190147e9fb1f89b159536: public plan and startup readiness run 29698305146, agent documentation run 29698305147, provider-routed GNHF run 29698305156, repository family run 29698305150, and application floor run 29698305145.",
     "ceiling": "Does not prove provider authentication, model availability, quota, a hosted response, child-repository adoption, or operator acceptance."
   },
   "handoff": {
     "nextOwner": "repository-family adoption owners",
     "nextCommand": "gh pr view 34 --repo EndeavorEverlasting/AgentSwitchboard --web",
-    "notes": ["Wait for PR #34 exact-head validation and landing before taking ROLLOUT-01.", "Reinspect this plan, Git state, and open PRs before work.", "Use one child-repository PR per adoption lane."]
+    "notes": [
+      "This evidence-only plan update requires its own exact-head public-plan contract before rollout.",
+      "Wait for PR #34 validation and landing before taking ROLLOUT-01.",
+      "Reinspect this plan, Git state, and open PRs before work.",
+      "Use one child-repository PR per adoption lane."
+    ]
   }
 }
