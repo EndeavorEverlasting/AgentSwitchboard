@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "registryId": "agentswitchboard.public-plans.v1",
+  "schemaPath": "plans/schemas/public-plan.schema.json",
+  "policy": {
+    "visibility": "public",
+    "planIsNotPullRequest": true,
+    "machineReadableRequired": true,
+    "secretsForbidden": true,
+    "localRuntimeEvidenceForbidden": true,
+    "materialCoordinationChangesRequireSameBranchUpdate": true
+  },
+  "plans": [
+    {
+      "planId": "ASB-2026-07-PUBLIC-PLANS-STARTUP",
+      "path": "plans/active/ASB-2026-07-public-plans-startup-readiness.plan.json",
+      "summaryPath": "plans/active/ASB-2026-07-public-plans-startup-readiness.md",
+      "status": "active",
+      "priority": "high",
+      "dependencies": []
+    }
+  ]
+}
