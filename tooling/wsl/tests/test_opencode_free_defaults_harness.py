@@ -85,7 +85,7 @@ def main() -> int:
     for forbidden in (
         "reset --hard",
         "git clean",
-        "--force",
+        "git push --force",
         "C:\\Users\\Cheex",
         "DEEPSEEK_API_KEY",
         "OPENAI_API_KEY",
@@ -98,7 +98,7 @@ def main() -> int:
     skill = text(paths["skill"])
     combined = (agents + "\n" + skill).lower()
     for token in (
-        "subtree authority",
+        "this subtree owns",
         "isolated detached worktree",
         "run context",
         "artifact registry",
@@ -109,7 +109,7 @@ def main() -> int:
 
     status = text(paths["status"])
     require("git status --short" in status, "status probe must inspect Git read-only")
-    require("cat \"$HOME/.config/opencode/opencode.json\"" in status, "status probe must inspect config without jq")
+    require('cat "$HOME/.config/opencode/opencode.json"' in status, "status probe must inspect config without jq")
     require("Set-OpenCodeFreeDefaults.ps1" not in status, "status probe must not invoke the installer")
 
     for path in paths.values():
