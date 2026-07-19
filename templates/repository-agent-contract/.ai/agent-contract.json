@@ -9,9 +9,19 @@
     "claude": "CLAUDE.md",
     "skills": "SKILLS.md",
     "capabilities": "CAPABILITIES.md",
-    "triggers": "TRIGGERS.md"
+    "triggers": "TRIGGERS.md",
+    "plans": "plans/plan-registry.json"
   },
   "skillRoot": ".ai/skills",
+  "planRoot": "plans",
+  "publicPlans": {
+    "registry": "plans/plan-registry.json",
+    "schema": "plans/schemas/public-plan.schema.json",
+    "validator": "REPLACE_PUBLIC_PLAN_VALIDATOR",
+    "planIsNotPullRequest": true,
+    "machineReadableRequired": true,
+    "publicDataOnly": true
+  },
   "harnessDoctrine": {
     "policy": ".ai/harness/harness-doctrine.policy.json",
     "documentation": "docs/governance/harness-doctrine.md",
