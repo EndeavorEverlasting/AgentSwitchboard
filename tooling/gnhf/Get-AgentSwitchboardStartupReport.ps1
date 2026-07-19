@@ -240,7 +240,7 @@ if (-not $NoWrite) {
     [void]$markdown.Add("")
     [void]$markdown.Add("- Overall status: **$overallStatus**")
     [void]$markdown.Add("- State observed: **$stateObserved**")
-    [void]$markdown.Add("- Proof level: `local-adapter-readiness`")
+    [void]$markdown.Add('- Proof level: `local-adapter-readiness`')
     [void]$markdown.Add("")
     [void]$markdown.Add("| Agent | Adapter | Status | Evidence |")
     [void]$markdown.Add("|---|---|---|---|")
