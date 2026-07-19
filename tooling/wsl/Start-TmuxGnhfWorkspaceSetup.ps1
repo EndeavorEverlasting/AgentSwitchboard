@@ -203,7 +203,7 @@ function Get-DistributionNames {
         return @()
     }
     return @($output | ForEach-Object {
-        ([string]$_).Replace([char]0, "").Trim()
+        ([string]$_).Replace([string][char]0, [string]::Empty).Trim()
     } | Where-Object { $_ })
 }
 

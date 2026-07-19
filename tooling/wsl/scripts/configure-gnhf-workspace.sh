@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+OPENCODE_CONFIGURATOR="$SCRIPT_DIR/configure-opencode-free-defaults.sh"
+
 PLAN_ONLY=false
 if [[ "${1:-}" == "--plan-only" ]]; then
   PLAN_ONLY=true
@@ -21,8 +24,12 @@ for required in jq curl tar sha256sum; do
     exit 3
   fi
 done
+if [[ ! -f "$OPENCODE_CONFIGURATOR" ]]; then
+  echo "ERROR: OpenCode free-default configurator is missing: $OPENCODE_CONFIGURATOR" >&2
+  exit 3
+fi
 
-jq -e '.schemaVersion == 1 and (.gnhf.enabled | type == "boolean")' \
+jq -e '.schemaVersion == 1 and (.gnhf.enabled | type == "boolean") and (.opencode.enabled | type == "boolean")' \
   >/dev/null <<<"$CONFIG_JSON" || {
   echo "ERROR: unsupported or malformed tmux/GNHF manifest." >&2
   exit 4
@@ -157,6 +164,10 @@ install_official_node_lts() {
 
 SCHEMA_VERSION=$(jq -r '.schemaVersion' <<<"$CONFIG_JSON")
 GNHF_ENABLED=$(jq -r '.gnhf.enabled' <<<"$CONFIG_JSON")
+OPENCODE_ENABLED=$(jq -r '.opencode.enabled' <<<"$CONFIG_JSON")
+OPENCODE_CONFIG_PATH=$(expand_home_path "$(jq -r '.opencode.configPath // "~/.config/opencode/opencode.json"' <<<"$CONFIG_JSON")")
+OPENCODE_DEFAULT_MODEL=$(jq -r '.opencode.defaultModel // "opencode/deepseek-v4-flash-free"' <<<"$CONFIG_JSON")
+OPENCODE_SMALL_MODEL=$(jq -r '.opencode.smallModel // .opencode.defaultModel // "opencode/deepseek-v4-flash-free"' <<<"$CONFIG_JSON")
 NODE_MINIMUM=$(jq -r '.node.minimumMajor // 20' <<<"$CONFIG_JSON")
 NODE_AUTO_INSTALL=$(jq -r '.node.autoInstallOfficialLts // false' <<<"$CONFIG_JSON")
 NODE_ROOT=$(expand_home_path "$(jq -r '.node.installRoot // "~/.local/agent-switchboard/node"' <<<"$CONFIG_JSON")")
@@ -181,6 +192,10 @@ if [[ "$GNHF_ENABLED" != true ]]; then
   log "[SKIP] GNHF configuration is disabled in the manifest."
   exit 0
 fi
+if [[ "$OPENCODE_ENABLED" != true ]]; then
+  echo "ERROR: the managed tmux workspace requires opencode.enabled=true." >&2
+  exit 5
+fi
 
 if [[ ! "$DEFAULT_AGENT" =~ ^[a-z0-9_-]+$ ]]; then
   echo "ERROR: unsafe defaultAgent value: $DEFAULT_AGENT" >&2
@@ -202,6 +217,7 @@ fi
 BIN_DIR="$HOME/.local/agent-switchboard/bin"
 NPM_PREFIX="$HOME/.local/agent-switchboard/npm"
 STATE_DIR="$HOME/.local/state/agent-switchboard/tmux-gnhf"
+OPENCODE_SUMMARY_PATH="$STATE_DIR/opencode-free-defaults-summary.json"
 mkdir -p "$BIN_DIR" "$STATE_DIR"
 export PATH="$BIN_DIR:$NPM_PREFIX/bin:$PATH"
 
@@ -209,6 +225,8 @@ log "=== AgentSwitchboard tmux + GNHF configuration ==="
 log "schemaVersion: $SCHEMA_VERSION"
 log "planOnly: $PLAN_ONLY"
 log "defaultAgent: $DEFAULT_AGENT"
+log "openCodeConfig: $OPENCODE_CONFIG_PATH"
+log "openCodeDefaultModel: $OPENCODE_DEFAULT_MODEL"
 
 CURRENT_NODE_MAJOR=$(node_major)
 if (( CURRENT_NODE_MAJOR < NODE_MINIMUM )); then
@@ -230,6 +248,7 @@ if [[ "$PLAN_ONLY" == true ]]; then
   if [[ "$INSTALL_DEFAULT_AGENT" == true ]]; then
     log "[PLAN] Install or reuse default agent package: $DEFAULT_AGENT_PACKAGE"
   fi
+  printf '%s' "$CONFIG_JSON" | bash "$OPENCODE_CONFIGURATOR" --plan-only
   log "[PLAN] Configure $GNHF_CONFIG_PATH, wrappers, telemetry, and bounded worktree defaults."
   exit 0
 fi
@@ -273,6 +292,12 @@ fi
   exit 8
 }
 log "[PASS] default agent ready: $($DEFAULT_AGENT_BIN --version 2>/dev/null | head -n 1 || printf 'detected')"
+
+printf '%s' "$CONFIG_JSON" | bash "$OPENCODE_CONFIGURATOR"
+[[ -f "$OPENCODE_SUMMARY_PATH" ]] || {
+  echo "ERROR: OpenCode free-default summary was not produced: $OPENCODE_SUMMARY_PATH" >&2
+  exit 9
+}
 
 AGENT_WRAPPER="$BIN_DIR/${DEFAULT_AGENT}-gnhf"
 cat >"$AGENT_WRAPPER" <<WRAPPER
@@ -327,6 +352,7 @@ TMUX_VERSION=$(tmux -V 2>/dev/null || true)
 NODE_VERSION=$(node --version 2>/dev/null || true)
 GNHF_VERSION=$($GNHF_BIN --version 2>/dev/null | head -n 1 || true)
 AGENT_VERSION=$($DEFAULT_AGENT_BIN --version 2>/dev/null | head -n 1 || true)
+OPENCODE_CONFIG_STATUS=$(jq -r '.status' "$OPENCODE_SUMMARY_PATH")
 SUMMARY_PATH="$STATE_DIR/setup-summary.json"
 
 jq -n \
@@ -339,6 +365,10 @@ jq -n \
   --arg configPath "$GNHF_CONFIG_PATH" \
   --arg safeWrapper "$SAFE_WRAPPER" \
   --arg tmuxVersion "$TMUX_VERSION" \
+  --arg openCodeConfigStatus "$OPENCODE_CONFIG_STATUS" \
+  --arg openCodeConfigPath "$OPENCODE_CONFIG_PATH" \
+  --arg openCodeDefaultModel "$OPENCODE_DEFAULT_MODEL" \
+  --arg openCodeSmallModel "$OPENCODE_SMALL_MODEL" \
   '{
     schemaVersion: 1,
     completedAt: $completedAt,
@@ -351,9 +381,16 @@ jq -n \
     configPath: $configPath,
     safeWrapper: $safeWrapper,
     tmuxVersion: $tmuxVersion,
+    openCode: {
+      configStatus: $openCodeConfigStatus,
+      configPath: $openCodeConfigPath,
+      defaultModel: $openCodeDefaultModel,
+      smallModel: $openCodeSmallModel,
+      paidDefaultAllowed: false
+    },
     proof: {
       install: true,
-      configuration: ($configStatus == "installed"),
+      configuration: ($configStatus == "installed" and $openCodeConfigStatus == "installed"),
       authentication: false,
       hostedAgentResponse: false,
       tmuxPersistence: false

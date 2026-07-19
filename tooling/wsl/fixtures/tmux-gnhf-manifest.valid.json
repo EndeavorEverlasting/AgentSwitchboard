@@ -14,6 +14,20 @@
     "autoInstallOfficialLts": true,
     "installRoot": "~/.local/agent-switchboard/node"
   },
+  "opencode": {
+    "enabled": true,
+    "configPath": "~/.config/opencode/opencode.json",
+    "defaultModel": "opencode/deepseek-v4-flash-free",
+    "smallModel": "opencode/deepseek-v4-flash-free",
+    "share": "disabled",
+    "restrictZenToFreeModels": true,
+    "freeModelIds": [
+      "deepseek-v4-flash-free",
+      "mimo-v2.5-free",
+      "north-mini-code-free",
+      "nemotron-3-ultra-free"
+    ]
+  },
   "gnhf": {
     "enabled": true,
     "upstreamRepository": "https://github.com/kunchenguid/gnhf.git",

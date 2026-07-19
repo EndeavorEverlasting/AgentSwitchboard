@@ -1,0 +1,202 @@
+name: Windows workstation live-proof contracts
+
+on:
+  pull_request:
+    paths:
+      - ".gitattributes"
+      - ".ai/skills/opencode-free-defaults-repair/**"
+      - "Repair-OpenCodeFreeDefaults.cmd"
+      - "Run-WindowsWorkstationLiveProof.cmd"
+      - "Run-ChatGPTDesktopGnhfSprint.cmd"
+      - "Run-CursorGnhfSprint.cmd"
+      - "tooling/gnhf/GnhfPromptContracts.psm1"
+      - "tooling/gnhf/GnhfPromptIngestion.psm1"
+      - "tooling/gnhf/Convert-GnhfPromptToContracts.ps1"
+      - "tooling/gnhf/Invoke-ChatGPTDesktopGnhfSprint.ps1"
+      - "tooling/gnhf/Invoke-CursorGnhfSprint.ps1"
+      - "tooling/gnhf/Test-GnhfPromptContracts.ps1"
+      - "tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1"
+      - "tooling/gnhf/fixtures/**"
+      - "tooling/gnhf/schemas/**"
+      - "tooling/wsl/AGENTS.md"
+      - "tooling/wsl/harness/opencode-free-defaults/**"
+      - "tooling/wsl/tmux-gnhf-workstation.example.json"
+      - "tooling/wsl/Invoke-WindowsWorkstationLiveProof.ps1"
+      - "tooling/wsl/WindowsWorkstationLiveProof.Common.psm1"
+      - "tooling/wsl/Invoke-WindowsWorkstationSessionProof.ps1"
+      - "tooling/wsl/Invoke-WindowsWorkstationGnhfProof.ps1"
+      - "tooling/wsl/Install-WindowsWorkstationLiveProof.ps1"
+      - "tooling/wsl/Invoke-OpenCodeFreeDefaultsRepair.ps1"
+      - "tooling/wsl/Get-OpenCodeFreeDefaultsHarnessStatus.ps1"
+      - "tooling/wsl/Set-OpenCodeFreeDefaults.ps1"
+      - "tooling/wsl/Test-OpenCodeFreeDefaultsHarness.ps1"
+      - "tooling/wsl/Test-WindowsWorkstationLiveProofContracts.ps1"
+      - "tooling/wsl/scripts/configure-opencode-free-defaults.sh"
+      - "tooling/wsl/schemas/**"
+      - "tooling/wsl/tests/test_windows_workstation_live_proof_contracts.py"
+      - "tooling/wsl/tests/test_opencode_free_defaults_transport.py"
+      - "tooling/wsl/tests/test_opencode_free_defaults_harness.py"
+      - "docs/workstation/windows-workstation-live-proof.md"
+      - "docs/workstation/gnhf-prompt-ingestion.md"
+      - "docs/workstation/opencode-free-model-defaults.md"
+      - ".github/workflows/windows-workstation-live-proof-contracts.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          show-progress: false
+      - name: Run dependency-free workstation contracts
+        run: python3 tooling/wsl/tests/test_windows_workstation_live_proof_contracts.py
+      - name: Run OpenCode repair harness contracts
+        run: python3 tooling/wsl/tests/test_opencode_free_defaults_harness.py
+      - name: Run OpenCode transport regression
+        run: python3 tooling/wsl/tests/test_opencode_free_defaults_transport.py
+      - name: Run existing GNHF prompt contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptContracts.ps1
+      - name: Ingestion parse contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Parse
+      - name: Ingestion module contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Module
+      - name: Ingestion command metadata contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage CommandMetadata
+      - name: Ingestion command conversion contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage CommandConversion
+      - name: Ingestion command validation contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage CommandValidation
+      - name: Ingestion regular JSON contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage RegularJson
+      - name: Ingestion sectioned prompt contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Sectioned
+      - name: Ingestion rejection contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Rejections
+      - name: Ingestion Cursor wiring contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Cursor
+      - name: Ingestion temporary-repository contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Converter
+      - name: Check repository hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git diff --check HEAD^1 HEAD^2
+          else
+            git diff --check HEAD^
+          fi
+          test -z "$(git status --short)"
+
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          show-progress: false
+      - name: Parse PowerShell files
+        shell: pwsh
+        run: |
+          $files = @(
+            'tooling/gnhf/GnhfPromptContracts.psm1',
+            'tooling/gnhf/GnhfPromptIngestion.psm1',
+            'tooling/gnhf/Convert-GnhfPromptToContracts.ps1',
+            'tooling/gnhf/Invoke-ChatGPTDesktopGnhfSprint.ps1',
+            'tooling/gnhf/Invoke-CursorGnhfSprint.ps1',
+            'tooling/gnhf/Test-GnhfPromptContracts.ps1',
+            'tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1',
+            'tooling/wsl/Invoke-WindowsWorkstationLiveProof.ps1',
+            'tooling/wsl/WindowsWorkstationLiveProof.Common.psm1',
+            'tooling/wsl/Invoke-WindowsWorkstationSessionProof.ps1',
+            'tooling/wsl/Invoke-WindowsWorkstationGnhfProof.ps1',
+            'tooling/wsl/Install-WindowsWorkstationLiveProof.ps1',
+            'tooling/wsl/Invoke-OpenCodeFreeDefaultsRepair.ps1',
+            'tooling/wsl/Get-OpenCodeFreeDefaultsHarnessStatus.ps1',
+            'tooling/wsl/Set-OpenCodeFreeDefaults.ps1',
+            'tooling/wsl/Test-OpenCodeFreeDefaultsHarness.ps1',
+            'tooling/wsl/Test-WindowsWorkstationLiveProofContracts.ps1'
+          )
+          foreach ($file in $files) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($file, [ref]$tokens, [ref]$errors)
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object { Write-Error "${file}: $($_.Message)" }
+              exit 1
+            }
+          }
+      - name: Run OpenCode repair harness contracts
+        run: python tooling/wsl/tests/test_opencode_free_defaults_harness.py
+      - name: Run OpenCode repair PowerShell validator
+        shell: pwsh
+        run: ./tooling/wsl/Test-OpenCodeFreeDefaultsHarness.ps1
+      - name: Run OpenCode transport regression
+        run: python tooling/wsl/tests/test_opencode_free_defaults_transport.py
+      - name: Run existing GNHF prompt contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptContracts.ps1
+      - name: Ingestion parse contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Parse
+      - name: Ingestion module contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Module
+      - name: Ingestion command metadata contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage CommandMetadata
+      - name: Ingestion command conversion contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage CommandConversion
+      - name: Ingestion command validation contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage CommandValidation
+      - name: Ingestion regular JSON contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage RegularJson
+      - name: Ingestion sectioned prompt contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Sectioned
+      - name: Ingestion rejection contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Rejections
+      - name: Ingestion Cursor wiring contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Cursor
+      - name: Ingestion temporary-repository contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1 -Stage Converter
+      - name: Run workstation contracts
+        shell: pwsh
+        run: ./tooling/wsl/Test-WindowsWorkstationLiveProofContracts.ps1
+      - name: Run installer plan
+        shell: pwsh
+        run: |
+          ./tooling/wsl/Install-WindowsWorkstationLiveProof.ps1 `
+            -SourceRoot ./tooling/wsl `
+            -ManifestPath ./tooling/wsl/tmux-gnhf-workstation.example.json
+      - name: Verify clean checkout
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
+            git diff --check HEAD^1 HEAD^2
+          }
+          else {
+            git diff --check HEAD^
+          }
+          if (git status --short) { throw 'Checkout is dirty after validation.' }

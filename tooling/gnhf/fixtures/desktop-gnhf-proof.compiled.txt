@@ -1,0 +1,68 @@
+{
+  "kind": "compiled-gnhf-prompt-result",
+  "schemaVersion": 1,
+  "repository": {
+    "name": "desktop-gnhf-disposable-proof",
+    "remote": "https://github.com/EndeavorEverlasting/AgentSwitchboard",
+    "localPath": "__TARGET_REPO__"
+  },
+  "prompt": "EXECUTE THIS BOUNDED GNHF SPRINT. Repository: {{TARGET_REPO}}. Use exactly worktree Git execution mode via --worktree from the clean main branch. Route to agent opencode with at most 2 iterations, 20000 tokens, sleep prevention on, and a 600 second timeout. Owned scope is only proof/gnhf-desktop-proof.txt; every other path is forbidden. Read README.md first. Create proof/gnhf-desktop-proof.txt containing exactly {{PROOF_NONCE}}. Validate the exact file content, git diff --check, and clean worktree state. Commit the artifact with message test: add desktop GNHF proof. Do not push, merge, or deploy. Stop only after the artifact is present in HEAD, the commit is ahead of base, validations pass, and no unrelated files changed. Success requires observed artifact and commit proof; process exit alone is failure. Report CONTEXT, WORK COMMITTED, VALIDATION, PROOF, GAPS, FINAL GIT STATE, and EXACT NEXT COMMAND. Exact next command: git status --short.",
+  "gitExecution": {
+    "mode": "worktree",
+    "baseBranch": "main"
+  },
+  "agentRoute": {
+    "agent": "opencode",
+    "routeId": "opencode-implementation"
+  },
+  "bounds": {
+    "maxIterations": 2,
+    "maxTokens": 20000,
+    "preventSleep": true,
+    "timeoutSeconds": 600
+  },
+  "ownedScope": [
+    "proof/gnhf-desktop-proof.txt"
+  ],
+  "forbiddenScope": [
+    "All paths outside proof/gnhf-desktop-proof.txt",
+    "Push, merge, deployment, credential, and authentication operations"
+  ],
+  "expectedArtifacts": [
+    {
+      "path": "proof/gnhf-desktop-proof.txt",
+      "proof": "File exists in HEAD and contains exactly {{PROOF_NONCE}}"
+    }
+  ],
+  "readFirst": [
+    "README.md"
+  ],
+  "validationOrder": [
+    "Verify exact proof artifact content",
+    "Run git diff --check",
+    "Verify the GNHF branch is ahead of base and clean"
+  ],
+  "commitContract": {
+    "required": true,
+    "message": "test: add desktop GNHF proof",
+    "proof": "HEAD contains the artifact commit and is ahead of the disposable base"
+  },
+  "pushContract": {
+    "mode": "none",
+    "merge": false,
+    "deploy": false
+  },
+  "stopCondition": "The exact artifact and nonce are committed, validations pass, and no unrelated files changed.",
+  "proofLevel": "local-workstation-observed",
+  "proofCeiling": "One observed local disposable-repository run; no provider, quota, production, merge, or deployment claim.",
+  "finalResponseContract": [
+    "CONTEXT",
+    "WORK COMMITTED",
+    "VALIDATION",
+    "PROOF",
+    "GAPS",
+    "FINAL GIT STATE",
+    "EXACT NEXT COMMAND"
+  ],
+  "nextCommand": "git status --short"
+}

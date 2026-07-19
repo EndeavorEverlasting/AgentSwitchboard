@@ -1,0 +1,15 @@
+{
+  "kind": "desktop-gnhf-runtime-result",
+  "schemaVersion": 1,
+  "status": "blocked",
+  "targetState": { "clean": true, "detached": false, "branch": "main", "baseCommit": "1111111" },
+  "spawn": { "acknowledged": false, "processId": null },
+  "process": { "exitCode": null },
+  "commitProof": { "required": true, "observed": false, "branch": null, "headCommit": null, "commitsAhead": 0 },
+  "artifacts": [],
+  "validation": [],
+  "blocker": { "code": "SPAWN_PREFLIGHT_BLOCKED", "evidence": "The configured GNHF executable did not pass readiness preflight." },
+  "proofLevel": "preflight-only",
+  "proofCeiling": "Launcher readiness preflight only; no GNHF process acknowledgement was observed.",
+  "exactNextCommand": "gnhf --version"
+}

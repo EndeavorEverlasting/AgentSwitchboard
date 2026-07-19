@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentswitchboard-opencode-free-defaults-handoff/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runId",
+    "workflowId",
+    "status",
+    "summary",
+    "artifacts",
+    "proofLevel",
+    "proofCeiling",
+    "nextAction"
+  ],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "runId": {"type": "string", "minLength": 8},
+    "workflowId": {"const": "opencode-free-defaults-repair"},
+    "status": {"enum": ["planned", "succeeded", "failed"]},
+    "summary": {"type": "string", "minLength": 1},
+    "targetHead": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "worktreePath": {"type": "string", "minLength": 1},
+    "artifacts": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "proofLevel": {"enum": ["contract", "local-plan", "local-configuration"]},
+    "proofCeiling": {"type": "string", "minLength": 1},
+    "blocker": {"type": ["string", "null"]},
+    "nextAction": {"type": "string", "minLength": 1}
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "kind": "desktop-gnhf-runtime-result",
+  "schemaVersion": 1,
+  "status": "succeeded",
+  "targetState": { "clean": true, "detached": false, "branch": "main", "baseCommit": "1111111" },
+  "spawn": { "acknowledged": true, "processId": 4242 },
+  "process": { "exitCode": 0 },
+  "commitProof": { "required": true, "observed": false, "branch": null, "headCommit": null, "commitsAhead": 0 },
+  "artifacts": [],
+  "validation": [],
+  "proofLevel": "process-observed",
+  "proofCeiling": "Process exit was observed without an artifact or commit and cannot prove successful repository work.",
+  "exactNextCommand": "git status --short"
+}

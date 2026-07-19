@@ -87,8 +87,17 @@ if ($bash) {
         "tooling/wsl/scripts/configure-gnhf-workspace.sh"
     )) {
         $bashScript = Join-Path $repoRoot $relativePath
-        & $bash.Source -n $bashScript
-        Assert-Contract -Condition ($LASTEXITCODE -eq 0) -Message "Bash syntax: $relativePath"
+        $bashExitCode = 1
+        if ($IsWindows) {
+            $normalizedBash = (Get-Content -LiteralPath $bashScript -Raw).Replace("`r`n", "`n")
+            $normalizedBash | & $bash.Source -n
+            $bashExitCode = if ($?) { 0 } else { 1 }
+        }
+        else {
+            & $bash.Source -n $bashScript
+            $bashExitCode = if ($?) { 0 } else { 1 }
+        }
+        Assert-Contract -Condition ($bashExitCode -eq 0) -Message "Bash syntax: $relativePath"
     }
 }
 else {
@@ -110,6 +119,7 @@ else {
 
 $installer = Get-Content -LiteralPath (Join-Path $repoRoot "tooling/wsl/Install-TmuxGnhfWorkspace.ps1") -Raw
 Assert-Contract -Condition ($installer -match '\$planMode = -not \$Apply') -Message "plan mode is default"
+Assert-Contract -Condition ($installer -match '\$wslArguments = @\{' -and $installer -match '\$wslArguments\.PlanOnly = \$true') -Message "nested WSL setup uses named PowerShell splatting"
 Assert-Contract -Condition ($installer -match 'wezterm-gui\.exe') -Message "launcher targets WezTerm GUI"
 Assert-Contract -Condition ($installer -match 'ConfirmImpact = ''High''') -Message "Stop is high-impact and confirmed"
 Assert-Contract -Condition ($installer -notmatch '--unregister') -Message "no WSL unregister"
@@ -123,6 +133,7 @@ Assert-Contract -Condition ($guided -match 'setup-runs' -and $guided -match 'ope
 Assert-Contract -Condition ($guided -match '"-u", "root"' -or $guided -match '-u root') -Message "Linux package preparation has a root-only phase"
 Assert-Contract -Condition ($guided -match 'skipPackageInstallation') -Message "user setup suppresses duplicate sudo package work"
 Assert-Contract -Condition ($guided -match 'Get-TmuxGnhfWorkspaceStatus\.ps1') -Message "guided apply validates the generated workspace"
+Assert-Contract -Condition ($guided -match 'Replace\(\[string\]\[char\]0, \[string\]::Empty\)') -Message "guided setup removes WSL NUL separators without ambiguous char replacement"
 Assert-Contract -Condition ($guided -notmatch '--unregister|reset --hard') -Message "guided setup forbids destructive WSL or Git reset"
 Assert-Contract -Condition ($guided -notmatch '(?im)^\s*(?:&\s*)?git(?:\.exe)?\s+push\b') -Message "guided setup does not execute Git push"
 Assert-Contract -Condition ($guided -notmatch 'api[_-]?key|access[_-]?token|refresh[_-]?token') -Message "guided setup does not collect authentication secrets"

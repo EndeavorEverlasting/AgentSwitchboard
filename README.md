@@ -18,6 +18,16 @@ Start with the [technician quick start](docs/workstation/tmux-gnhf-technician-qu
 
 The setup does not authenticate providers, collect tokens, call paid models during validation, push Git branches, unregister WSL, or claim live agent/runtime proof without observation.
 
+## ChatGPT Desktop to GNHF runtime
+
+The canonical desktop runtime keeps an operator's regular request separate from the compiled GNHF prompt, validates both contracts, prints the complete rendered prompt in the terminal, and delegates bounded worktree execution to the existing GNHF launcher. Plan mode is the default; the disposable proof requires an explicit `-Run`:
+
+```powershell
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tooling\gnhf\Invoke-ChatGPTDesktopGnhfSprint.ps1 -RequestPath .\tooling\gnhf\fixtures\desktop-gnhf-proof.request.md -CompiledPromptPath .\tooling\gnhf\fixtures\desktop-gnhf-proof.compiled.txt -CreateDisposableProofRepo -Run
+```
+
+See the [ChatGPT Desktop to GNHF runtime guide](docs/workstation/chatgpt-desktop-gnhf-sprint.md) for evidence, safety, and proof contracts.
+
 ## One-click Windows agent-fleet setup
 
 Double-click [`Setup-AgentSwitchboard.cmd`](Setup-AgentSwitchboard.cmd) from the repository root.

@@ -1,0 +1,32 @@
+{
+  "kind": "regular-sprint-request",
+  "schemaVersion": 1,
+  "objective": "Create one disposable proof artifact containing the supplied nonce, commit it, validate the exact content, and stop.",
+  "repository": {
+    "name": "desktop-gnhf-disposable-proof",
+    "remote": "https://github.com/EndeavorEverlasting/AgentSwitchboard",
+    "localPath": "__TARGET_REPO__",
+    "branchContext": "Use an isolated GNHF worktree based on the clean disposable repository branch."
+  },
+  "ownedScope": [
+    "proof/gnhf-desktop-proof.txt"
+  ],
+  "forbiddenScope": [
+    "All files outside proof/gnhf-desktop-proof.txt",
+    "Remote pushes, merges, deployments, credentials, and provider authentication"
+  ],
+  "expectedArtifacts": [
+    "One committed proof/gnhf-desktop-proof.txt containing the exact runtime nonce"
+  ],
+  "safetyConstraints": [
+    "Keep the disposable base checkout clean",
+    "Do not push, merge, deploy, authenticate providers, or handle secrets"
+  ],
+  "desiredProofLevel": "local-workstation-observed",
+  "readFirst": [
+    "tooling/gnhf/README.md"
+  ],
+  "validators": [
+    "tooling/gnhf/Test-GnhfPromptContracts.ps1"
+  ]
+}

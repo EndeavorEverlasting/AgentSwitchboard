@@ -1,0 +1,36 @@
+gnhf `
+  --agent "opencode" `
+  --worktree `
+  --max-iterations 4 `
+  --max-tokens 120000 `
+  --prevent-sleep on `
+  --stop-when "The prompt ingestion module and exact proof artifact are committed, validation passes, and the worktree is clean." `
+  "Repo: xyz_repo_or_path
+
+Sprint: Prove deterministic ingestion of a canonical GNHF command.
+Lane: prompt parsing, contract generation, and validation.
+
+Owned scope:
+- proof/gnhf-ingestion-command.txt
+
+Forbidden scope:
+- Credentials, provider authentication, pushes, merges, deployment, and unrelated files
+
+Objective:
+Create proof/gnhf-ingestion-command.txt and validate the generated AgentSwitchboard request and compiled-prompt contracts.
+
+Expected artifacts:
+- proof/gnhf-ingestion-command.txt
+
+Read first:
+- AGENTS.md
+- tooling/gnhf/README.md
+
+Validation:
+- pwsh -NoLogo -NoProfile -File tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1
+- git diff --check
+
+Commit message:
+- test: prove GNHF prompt ingestion
+
+Process exit alone is failure."

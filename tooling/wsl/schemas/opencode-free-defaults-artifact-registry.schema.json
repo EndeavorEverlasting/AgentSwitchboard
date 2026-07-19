@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentswitchboard-opencode-free-defaults-artifact-registry/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "runId", "workflowId", "artifacts"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "runId": {"type": "string", "minLength": 8},
+    "workflowId": {"const": "opencode-free-defaults-repair"},
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "path", "status", "tracked"],
+        "properties": {
+          "role": {"type": "string", "minLength": 1},
+          "path": {"type": "string", "minLength": 1},
+          "status": {"enum": ["planned", "created", "observed", "failed", "preserved"]},
+          "tracked": {"type": "boolean"},
+          "mediaType": {"type": ["string", "null"]},
+          "description": {"type": ["string", "null"]}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "kind": "desktop-gnhf-runtime-result",
+  "schemaVersion": 1,
+  "status": "succeeded",
+  "targetState": {
+    "clean": true,
+    "detached": false,
+    "branch": "main",
+    "baseCommit": "1111111"
+  },
+  "spawn": {
+    "acknowledged": true,
+    "processId": 4242
+  },
+  "process": {
+    "exitCode": 0
+  },
+  "commitProof": {
+    "required": true,
+    "observed": true,
+    "branch": "gnhf/desktop-proof",
+    "headCommit": "2222222",
+    "commitsAhead": 1
+  },
+  "artifacts": [
+    {
+      "path": "proof/gnhf-desktop-proof.txt",
+      "observed": true
+    }
+  ],
+  "validation": [
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "proofLevel": "local-workstation-observed",
+  "proofCeiling": "One disposable local repository run with an observed commit and proof artifact.",
+  "exactNextCommand": "git status --short"
+}

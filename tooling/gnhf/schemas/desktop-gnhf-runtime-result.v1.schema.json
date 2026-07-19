@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentswitchboard.local/schemas/desktop-gnhf-runtime-result.v1.schema.json",
+  "title": "AgentSwitchboard desktop GNHF runtime result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "schemaVersion",
+    "status",
+    "targetState",
+    "spawn",
+    "process",
+    "commitProof",
+    "artifacts",
+    "validation",
+    "proofLevel",
+    "proofCeiling",
+    "exactNextCommand"
+  ],
+  "properties": {
+    "kind": { "const": "desktop-gnhf-runtime-result" },
+    "schemaVersion": { "const": 1 },
+    "status": { "enum": ["succeeded", "blocked", "failed"] },
+    "targetState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["clean", "detached", "branch", "baseCommit"],
+      "properties": {
+        "clean": { "type": "boolean" },
+        "detached": { "type": "boolean" },
+        "branch": { "type": ["string", "null"] },
+        "baseCommit": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" }
+      }
+    },
+    "spawn": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["acknowledged"],
+      "properties": {
+        "acknowledged": { "type": "boolean" },
+        "processId": { "type": ["integer", "null"], "minimum": 1 }
+      }
+    },
+    "process": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exitCode"],
+      "properties": { "exitCode": { "type": ["integer", "null"] } }
+    },
+    "commitProof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "observed", "branch", "headCommit", "commitsAhead"],
+      "properties": {
+        "required": { "const": true },
+        "observed": { "type": "boolean" },
+        "branch": { "type": ["string", "null"] },
+        "headCommit": { "type": ["string", "null"], "pattern": "^[0-9a-f]{7,40}$" },
+        "commitsAhead": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "observed"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "observed": { "type": "boolean" }
+        }
+      }
+    },
+    "validation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command", "result"],
+        "properties": {
+          "command": { "type": "string", "minLength": 1 },
+          "result": { "enum": ["passed", "failed", "skipped"] }
+        }
+      }
+    },
+    "blocker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "evidence"],
+      "properties": {
+        "code": { "enum": ["DIRTY_TARGET", "DETACHED_HEAD", "SPAWN_PREFLIGHT_BLOCKED", "QUOTA_EXHAUSTED"] },
+        "evidence": { "type": "string", "minLength": 1 }
+      }
+    },
+    "proofLevel": { "enum": ["preflight-only", "process-observed", "local-workstation-observed"] },
+    "proofCeiling": { "type": "string", "minLength": 20 },
+    "exactNextCommand": { "type": "string", "minLength": 3 }
+  }
+}

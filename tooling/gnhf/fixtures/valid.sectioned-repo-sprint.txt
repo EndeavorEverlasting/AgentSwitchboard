@@ -1,0 +1,34 @@
+EXECUTE THE REPO SPRINT. DO NOT RETURN A PLAN ONLY.
+
+Repo: xyz_repo_or_path
+Sprint: Convert a sectioned repository sprint into AgentSwitchboard GNHF contracts.
+Lane: deterministic prompt ingestion and Cursor orchestration.
+
+Owned scope:
+- proof/gnhf-ingestion-sectioned.txt
+
+Forbidden scope:
+- Credentials, provider authentication, pushes, merges, deployment, live targets, and unrelated files
+
+Objective:
+Create the exact proof artifact and demonstrate that a non-command bounded sprint can populate the existing regular-request and compiled-prompt contracts.
+
+Expected artifacts:
+- proof/gnhf-ingestion-sectioned.txt
+
+Read first:
+- AGENTS.md
+- README.md
+
+Validation order:
+1. pwsh -NoLogo -NoProfile -File tooling/gnhf/Test-GnhfPromptIngestionContracts.ps1
+2. git diff --check
+3. git status --short
+
+Commit message:
+- test: prove sectioned GNHF prompt ingestion
+
+Stop condition:
+The required artifact is committed, validation passes, and the worktree is clean.
+
+Process exit alone is failure.

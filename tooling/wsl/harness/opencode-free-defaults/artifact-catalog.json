@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "opencode-free-defaults-repair-artifacts",
+  "outputRoot": "%LOCALAPPDATA%\\AgentSwitchboard\\OpenCodeFreeDefaults\\runs\\<run-id>",
+  "tracked": false,
+  "artifacts": [
+    {
+      "role": "run-context",
+      "path": "run-context.json",
+      "required": true,
+      "mediaType": "application/json",
+      "schema": "tooling/wsl/schemas/opencode-free-defaults-run-context.schema.json"
+    },
+    {
+      "role": "artifact-registry",
+      "path": "artifact-registry.json",
+      "required": true,
+      "mediaType": "application/json",
+      "schema": "tooling/wsl/schemas/opencode-free-defaults-artifact-registry.schema.json"
+    },
+    {
+      "role": "effective-config",
+      "path": "effective-opencode-config.json",
+      "requiredOn": "successful apply",
+      "mediaType": "application/json"
+    },
+    {
+      "role": "operator-report",
+      "path": "operator-report.md",
+      "required": true,
+      "mediaType": "text/markdown"
+    },
+    {
+      "role": "final-handoff",
+      "path": "final-handoff.json",
+      "required": true,
+      "mediaType": "application/json",
+      "schema": "tooling/wsl/schemas/opencode-free-defaults-handoff.schema.json"
+    }
+  ],
+  "retention": {
+    "latestPointer": "%LOCALAPPDATA%\\AgentSwitchboard\\OpenCodeFreeDefaults\\latest-run.txt",
+    "cleanup": "manual review only",
+    "preserveFailures": true
+  }
+}

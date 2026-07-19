@@ -1,0 +1,66 @@
+{
+  "baseFixture": "desktop-gnhf-proof.compiled.txt",
+  "cases": [
+    {
+      "name": "missing-caps",
+      "operation": "remove",
+      "path": "bounds.maxTokens",
+      "expectedError": "compiled.bounds.maxTokens"
+    },
+    {
+      "name": "conflicting-git-modes",
+      "operation": "append",
+      "path": "prompt",
+      "value": " Also execute in current-branch mode.",
+      "expectedError": "compiled.gitExecution.conflict"
+    },
+    {
+      "name": "absent-stop-condition",
+      "operation": "remove",
+      "path": "stopCondition",
+      "expectedError": "compiled.stopCondition"
+    },
+    {
+      "name": "absent-commit-proof",
+      "operation": "set",
+      "path": "commitContract.required",
+      "value": false,
+      "expectedError": "compiled.commitContract.required"
+    },
+    {
+      "name": "automatic-push",
+      "operation": "set",
+      "path": "pushContract.mode",
+      "value": "automatic",
+      "expectedError": "compiled.pushContract.mode"
+    },
+    {
+      "name": "automatic-merge",
+      "operation": "set",
+      "path": "pushContract.merge",
+      "value": true,
+      "expectedError": "compiled.pushContract.merge"
+    },
+    {
+      "name": "automatic-deploy",
+      "operation": "set",
+      "path": "pushContract.deploy",
+      "value": true,
+      "expectedError": "compiled.pushContract.deploy"
+    },
+    {
+      "name": "secret-like-content",
+      "operation": "append",
+      "path": "prompt",
+      "value": " Use placeholder credential sk-REDACTED-EXAMPLE.",
+      "expectedError": "document.secretLikeContent"
+    },
+    {
+      "name": "hidden-chat-history-dependence",
+      "operation": "append",
+      "path": "prompt",
+      "value": " Fill in missing requirements from the previous chat.",
+      "expectedError": "document.hiddenChatHistory"
+    }
+  ]
+}

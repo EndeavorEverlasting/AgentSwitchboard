@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentswitchboard.local/schemas/desktop-gnhf-launch-request.v1.schema.json",
+  "title": "AgentSwitchboard desktop GNHF launch request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "schemaVersion",
+    "requestPath",
+    "compiledPromptPath",
+    "targetRepo",
+    "executionMode",
+    "requireCleanTarget",
+    "visiblePromptEmission",
+    "timeoutSeconds"
+  ],
+  "properties": {
+    "kind": { "const": "desktop-gnhf-launch-request" },
+    "schemaVersion": { "const": 1 },
+    "requestPath": { "type": "string", "minLength": 1 },
+    "compiledPromptPath": { "type": "string", "minLength": 1 },
+    "targetRepo": { "type": "string", "minLength": 3 },
+    "executionMode": { "enum": ["plan", "run", "disposable-proof"] },
+    "requireCleanTarget": { "const": true },
+    "visiblePromptEmission": { "const": true },
+    "timeoutSeconds": { "type": "integer", "minimum": 1, "maximum": 86400 }
+  }
+}

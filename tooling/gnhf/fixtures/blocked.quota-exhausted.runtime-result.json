@@ -1,0 +1,15 @@
+{
+  "kind": "desktop-gnhf-runtime-result",
+  "schemaVersion": 1,
+  "status": "blocked",
+  "targetState": { "clean": true, "detached": false, "branch": "main", "baseCommit": "1111111" },
+  "spawn": { "acknowledged": false, "processId": null },
+  "process": { "exitCode": null },
+  "commitProof": { "required": true, "observed": false, "branch": null, "headCommit": null, "commitsAhead": 0 },
+  "artifacts": [],
+  "validation": [],
+  "blocker": { "code": "QUOTA_EXHAUSTED", "evidence": "Agent preflight classified quota exhaustion and observed no mutation." },
+  "proofLevel": "preflight-only",
+  "proofCeiling": "Quota preflight classification only; no provider response quality or future quota is claimed.",
+  "exactNextCommand": "git status --short"
+}
