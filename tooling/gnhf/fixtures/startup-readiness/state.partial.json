@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "installedAt": "2026-07-19T17:30:00Z",
+  "installRoot": "FIXTURE_INSTALL_ROOT",
+  "gnhf": {
+    "commandPath": "gnhf",
+    "sourceRepoPath": null,
+    "versionOutput": "0.1.41"
+  },
+  "agents": {
+    "opencode": {
+      "available": true,
+      "commandPath": "opencode",
+      "version": "1.18.1",
+      "agentSpec": "opencode",
+      "integration": "native",
+      "evidence": "Native adapter version probe passed."
+    },
+    "copilot": {
+      "available": false,
+      "commandPath": null,
+      "version": null,
+      "agentSpec": "copilot",
+      "integration": "native",
+      "evidence": "copilot command not found."
+    },
+    "goose": {
+      "available": false,
+      "commandPath": "goose",
+      "version": "1.41.0",
+      "agentSpec": "acp:goose acp",
+      "integration": "acp",
+      "evidence": "goose was found but ACP help failed."
+    },
+    "agy": {
+      "available": false,
+      "commandPath": "agy",
+      "version": "1.1.3",
+      "agentSpec": null,
+      "integration": "acp-capability-gated",
+      "evidence": "No verified ACP launch form."
+    },
+    "hermes": {
+      "available": true,
+      "commandPath": "hermes",
+      "version": "0.9.0",
+      "agentSpec": "acp:hermes acp",
+      "integration": "acp",
+      "evidence": "Hermes version and ACP probes passed."
+    }
+  },
+  "safety": {
+    "worktreeByDefault": true,
+    "pushByDefault": false,
+    "maxIterationsRequired": true,
+    "cleanTreeRequired": true,
+    "directMainWritesForbidden": true,
+    "preservesExistingManifest": true
+  }
+}
