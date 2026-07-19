@@ -73,9 +73,69 @@ if ($configPath -notmatch '^~/[A-Za-z0-9._/-]+$') {
     throw "Unsafe or unsupported WSL OpenCode config path: $configPath"
 }
 
+$autoInstallDependencies = $true
+$autoInstallProperty = $manifest.opencode.PSObject.Properties['autoInstallDependencies']
+if ($null -ne $autoInstallProperty) {
+    $autoInstallDependencies = [bool]$autoInstallProperty.Value
+}
+
 $configurator = Join-Path $PSScriptRoot "scripts\configure-opencode-free-defaults.sh"
 if (-not (Test-Path -LiteralPath $configurator -PathType Leaf)) {
     throw "OpenCode configurator is missing: $configurator"
+}
+
+Write-Host "Repo-root manifest: $resolvedManifest"
+Write-Host "WSL distribution:   $distribution"
+Write-Host "OpenCode config:    $configPath"
+Write-Host "Default model:      $($manifest.opencode.defaultModel)"
+Write-Host "Small model:        $($manifest.opencode.smallModel)"
+Write-Host "Mode:               $(if ($PlanOnly) { 'PLAN' } else { 'APPLY' })"
+
+$jqProbeCommand = ConvertTo-LfText -Text @"
+set -euo pipefail
+command -v jq >/dev/null 2>&1
+"@
+$jqProbe = Invoke-BoundedProcess -FilePath $WslExe -ArgumentList @(
+    "-d", $distribution, "-e", "bash", "-lc", $jqProbeCommand
+) -TimeoutSeconds 30
+$jqMissing = $jqProbe.ExitCode -ne 0
+
+if ($jqMissing -and $PlanOnly) {
+    Write-Host "[PLAN] Missing WSL dependency: jq"
+    Write-Host "[PLAN] Install through apt as WSL root: $autoInstallDependencies"
+    return [pscustomobject]@{
+        status = "plan-only"
+        distribution = $distribution
+        manifestPath = $resolvedManifest
+        configPath = $configPath
+        defaultModel = [string]$manifest.opencode.defaultModel
+        smallModel = [string]$manifest.opencode.smallModel
+        missingDependencies = @("jq")
+        wouldInstallDependencies = $autoInstallDependencies
+    }
+}
+
+if ($jqMissing -and -not $autoInstallDependencies) {
+    throw "Required WSL dependency is missing and automatic dependency installation is disabled: jq"
+}
+
+if ($jqMissing) {
+    Write-Host "[REPAIR] Installing WSL dependency through apt: jq"
+    $aptCommand = ConvertTo-LfText -Text @"
+set -euo pipefail
+command -v apt-get >/dev/null 2>&1
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y --no-install-recommends jq
+command -v jq >/dev/null 2>&1
+"@
+    $aptResult = Invoke-BoundedProcess -FilePath $WslExe -ArgumentList @(
+        "-d", $distribution, "-u", "root", "-e", "bash", "-lc", $aptCommand
+    ) -TimeoutSeconds 300
+    Write-Host $aptResult.Output
+    if ($aptResult.ExitCode -ne 0) {
+        throw "Unable to install jq in WSL through apt. Exit code: $($aptResult.ExitCode)."
+    }
 }
 
 $manifestJson = $manifest | ConvertTo-Json -Depth 12 -Compress
@@ -98,13 +158,6 @@ printf '%s' '$config64' | base64 -d | bash "`$script"$modeArgument
 "@
 $command = ConvertTo-LfText -Text $command
 
-Write-Host "Repo-root manifest: $resolvedManifest"
-Write-Host "WSL distribution:   $distribution"
-Write-Host "OpenCode config:    $configPath"
-Write-Host "Default model:      $($manifest.opencode.defaultModel)"
-Write-Host "Small model:        $($manifest.opencode.smallModel)"
-Write-Host "Mode:               $(if ($PlanOnly) { 'PLAN' } else { 'APPLY' })"
-
 $result = Invoke-BoundedProcess -FilePath $WslExe -ArgumentList @(
     "-d", $distribution, "-e", "bash", "-lc", $command
 ) -TimeoutSeconds 90
@@ -121,6 +174,8 @@ if ($PlanOnly) {
         configPath = $configPath
         defaultModel = [string]$manifest.opencode.defaultModel
         smallModel = [string]$manifest.opencode.smallModel
+        missingDependencies = @()
+        wouldInstallDependencies = $false
     }
 }
 
@@ -161,4 +216,5 @@ if (
     smallModel = [string]$installed.small_model
     freeModelIds = $actualModels
     paidDefaultAllowed = $false
+    dependenciesInstalled = @($jqMissing ? "jq" : @())
 }
