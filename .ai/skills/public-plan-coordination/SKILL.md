@@ -1,6 +1,6 @@
 ---
 id: public-plan-coordination
-version: 1.0.0
+version: 1.0.1
 status: canonical
 ---
 
@@ -34,8 +34,8 @@ Deterministic triggers:
    - the plan coordinates work and survives branch or PR replacement;
    - the branch and PR transport reviewed implementation changes.
 4. Select one plan task whose dependencies are satisfied and whose file ownership does not collide with another active writer.
-5. Update machine-readable task status, evidence, delivery references, handoff, and timestamps when coordination changes materially.
-6. Implement deterministic behavior in code, contracts, schemas, validators, and workflows. Do not hide product behavior in plan prose or prompts.
+5. Update machine-readable task status, evidence, delivery references, handoff, and timestamps when coordination changes materially. Update the plan in the same branch or PR as the implementation when safe.
+6. Keep product behavior in deterministic code, contracts, schemas, validators, and workflows. Do not hide product behavior in plan prose or prompts.
 7. Validate the plan and the owned repository change.
 8. Commit and push the plan update with the implementation when safe and authorized.
 9. Report exact commit, PR, artifact, validation, proof level, proof ceiling, and next command.
