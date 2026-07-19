@@ -23,52 +23,76 @@ The OpenCode Zen picker is restricted to these provider-local IDs:
 
 These free endpoints are limited-time provider offerings. The manifest and installer provide a reviewed allowlist, but current availability still has to be confirmed by OpenCode. The installer does not authenticate, inspect credential values, or silently choose a paid model.
 
+## Managed WSL dependency
+
+The configurator uses `jq` to preserve unrelated OpenCode settings while updating only the managed fields. When `jq` is absent and `opencode.autoInstallDependencies` is `true`, apply mode runs a bounded WSL-root `apt-get update` and installs only the Ubuntu `jq` package with `--no-install-recommends`.
+
+Plan mode never installs packages. It reports whether `jq` is missing and whether apply mode would install it. A failed or unavailable `apt` operation stops configuration before the OpenCode file is changed.
+
+The installer normalizes its Bash configurator to LF, stages it inside WSL, and does not execute the Windows-mounted `.sh` file directly.
+
 ## Apply from Windows PowerShell 7
 
 Set the repository directory before running any script:
 
 ```powershell
-$RepoPath = Join-Path $HOME "Desktop\dev\AgentSwitchboard"
+& {
+    $RepoPath = Join-Path $HOME "Desktop\dev\AgentSwitchboard"
 
-if (-not (Test-Path -LiteralPath $RepoPath -PathType Container)) {
-    throw "AgentSwitchboard repository not found: $RepoPath"
+    if (-not (Test-Path -LiteralPath $RepoPath -PathType Container)) {
+        throw "AgentSwitchboard repository not found: $RepoPath"
+    }
+
+    Set-Location -LiteralPath $RepoPath
+
+    $ManifestPath = Join-Path $RepoPath "tooling\wsl\tmux-gnhf-workstation.example.json"
+    $InstallerPath = Join-Path $RepoPath "tooling\wsl\Set-OpenCodeFreeDefaults.ps1"
+
+    & pwsh -NoLogo -NoProfile -File $InstallerPath -ManifestPath $ManifestPath
+    $InstallerExitCode = $LASTEXITCODE
+
+    if ($InstallerExitCode -ne 0) {
+        throw "OpenCode free-default installation failed with exit code $InstallerExitCode."
+    }
 }
-
-Set-Location -LiteralPath $RepoPath
-
-$ManifestPath = Join-Path $RepoPath "tooling\wsl\tmux-gnhf-workstation.example.json"
-$InstallerPath = Join-Path $RepoPath "tooling\wsl\Set-OpenCodeFreeDefaults.ps1"
-
-pwsh -NoLogo -NoProfile -File $InstallerPath `
-    -ManifestPath $ManifestPath
 ```
 
-Plan without changing the WSL config:
+Plan without changing WSL packages or the OpenCode config:
 
 ```powershell
-$RepoPath = Join-Path $HOME "Desktop\dev\AgentSwitchboard"
-Set-Location -LiteralPath $RepoPath
+& {
+    $RepoPath = Join-Path $HOME "Desktop\dev\AgentSwitchboard"
 
-$ManifestPath = Join-Path $RepoPath "tooling\wsl\tmux-gnhf-workstation.example.json"
-$InstallerPath = Join-Path $RepoPath "tooling\wsl\Set-OpenCodeFreeDefaults.ps1"
+    if (-not (Test-Path -LiteralPath $RepoPath -PathType Container)) {
+        throw "AgentSwitchboard repository not found: $RepoPath"
+    }
 
-pwsh -NoLogo -NoProfile -File $InstallerPath `
-    -ManifestPath $ManifestPath `
-    -PlanOnly
+    Set-Location -LiteralPath $RepoPath
+
+    $ManifestPath = Join-Path $RepoPath "tooling\wsl\tmux-gnhf-workstation.example.json"
+    $InstallerPath = Join-Path $RepoPath "tooling\wsl\Set-OpenCodeFreeDefaults.ps1"
+
+    & pwsh -NoLogo -NoProfile -File $InstallerPath -ManifestPath $ManifestPath -PlanOnly
+}
 ```
 
 The full WezTerm/tmux installer also applies this configuration during setup:
 
 ```powershell
-$RepoPath = Join-Path $HOME "Desktop\dev\AgentSwitchboard"
-Set-Location -LiteralPath $RepoPath
+& {
+    $RepoPath = Join-Path $HOME "Desktop\dev\AgentSwitchboard"
 
-$ManifestPath = Join-Path $RepoPath "tooling\wsl\tmux-gnhf-workstation.example.json"
-$WorkspaceInstaller = Join-Path $RepoPath "tooling\wsl\Install-TmuxGnhfWorkspace.ps1"
+    if (-not (Test-Path -LiteralPath $RepoPath -PathType Container)) {
+        throw "AgentSwitchboard repository not found: $RepoPath"
+    }
 
-pwsh -NoLogo -NoProfile -File $WorkspaceInstaller `
-    -ManifestPath $ManifestPath `
-    -Apply
+    Set-Location -LiteralPath $RepoPath
+
+    $ManifestPath = Join-Path $RepoPath "tooling\wsl\tmux-gnhf-workstation.example.json"
+    $WorkspaceInstaller = Join-Path $RepoPath "tooling\wsl\Install-TmuxGnhfWorkspace.ps1"
+
+    & pwsh -NoLogo -NoProfile -File $WorkspaceInstaller -ManifestPath $ManifestPath -Apply
+}
 ```
 
 ## Inspect the installed WSL configuration
@@ -76,11 +100,22 @@ pwsh -NoLogo -NoProfile -File $WorkspaceInstaller `
 From Windows PowerShell 7:
 
 ```powershell
-$RepoPath = Join-Path $HOME "Desktop\dev\AgentSwitchboard"
-Set-Location -LiteralPath $RepoPath
+& {
+    $RepoPath = Join-Path $HOME "Desktop\dev\AgentSwitchboard"
 
-wsl.exe -d Ubuntu -e bash -lc `
-    'jq "{model,small_model,share,whitelist:.provider.opencode.whitelist}" "$HOME/.config/opencode/opencode.json"'
+    if (-not (Test-Path -LiteralPath $RepoPath -PathType Container)) {
+        throw "AgentSwitchboard repository not found: $RepoPath"
+    }
+
+    Set-Location -LiteralPath $RepoPath
+
+    & wsl.exe -d Ubuntu -e bash -lc 'jq -e -c "{model,small_model,share,whitelist:.provider.opencode.whitelist}" "$HOME/.config/opencode/opencode.json"'
+    $InspectionExitCode = $LASTEXITCODE
+
+    if ($InspectionExitCode -ne 0) {
+        throw "OpenCode configuration inspection failed with exit code $InspectionExitCode."
+    }
+}
 ```
 
 Expected core values:
