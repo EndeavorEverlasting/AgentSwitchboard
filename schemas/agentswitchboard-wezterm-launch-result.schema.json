@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentswitchboard-wezterm-launch-result/v1",
+  "title": "AgentSwitchboard WezTerm Launch Result",
+  "description": "Versioned result contract emitted by the canonical WezTerm open-or-activate launcher.",
+  "type": "object",
+  "required": [
+    "schema_version", "launcher_id", "source_commit", "operation", "outcome",
+    "decision", "workspace", "distro", "tmux_session", "timestamp"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "agentswitchboard-wezterm-launch-result/v1"
+    },
+    "launcher_id": {
+      "type": "string",
+      "const": "agentswitchboard-wezterm-launcher"
+    },
+    "source_commit": {
+      "type": "string",
+      "description": "Git commit SHA of the launcher script."
+    },
+    "operation": {
+      "type": "string",
+      "const": "open-or-activate"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": ["success", "failure", "action-required"]
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "activated_existing",
+        "started_managed_window",
+        "started_new_gui",
+        "cli_unavailable",
+        "wezterm-gui-not-found",
+        "tmux-session-create-failed",
+        "action-required",
+        "would_start"
+      ],
+      "description": "The launcher's decision based on pre-state inventory."
+    },
+    "reason_codes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "message": {
+      "type": "string"
+    },
+    "workspace": {
+      "type": "string",
+      "description": "Managed WezTerm workspace name."
+    },
+    "distro": {
+      "type": "string",
+      "description": "WSL distribution."
+    },
+    "tmux_session": {
+      "type": "string",
+      "description": "tmux session name."
+    },
+    "target_pane_id": {
+      "type": "string",
+      "description": "Pane ID activated when decision is activated_existing."
+    },
+    "wezterm_version": {
+      "type": ["string", "null"]
+    },
+    "clients_before": { "type": "integer" },
+    "clients_after": { "type": "integer" },
+    "managed_windows_before": { "type": "integer" },
+    "managed_windows_after": { "type": "integer" },
+    "gui_processes_before": { "type": "integer" },
+    "gui_processes_after": { "type": "integer" },
+    "tmux_server_available": { "type": "boolean" },
+    "tmux_session_exists": { "type": "boolean" },
+    "tmux_attached_clients": { "type": "integer" },
+    "tmux_window_count": { "type": "integer" },
+    "duplicate_detected": { "type": "boolean" },
+    "tmux_sessions_preserved": { "type": "boolean" },
+    "new_gui_started": { "type": "boolean" },
+    "new_managed_window_started": { "type": "boolean" },
+    "existing_pane_activated": { "type": "boolean" },
+    "dry_run": { "type": "boolean" },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}
