@@ -18,15 +18,13 @@ def main() -> None:
     attributes = ATTRIBUTES.read_text(encoding="utf-8")
 
     for token in (
-        "Get-Content -LiteralPath $configurator -Raw",
-        '$configuratorText = $configuratorText -replace "`r`n", "`n"',
-        '$configuratorText = $configuratorText -replace "`r", "`n"',
+        "function ConvertTo-LfText",
+        "$configuratorText = ConvertTo-LfText",
+        "$command = ConvertTo-LfText -Text $command",
+        "$inspectCommand = ConvertTo-LfText -Text $inspectCommand",
         "$configurator64",
-        "script=`$(mktemp)",
-        "base64 -d >",
-        'bash "`$script"',
     ):
-        require(token in installer, f"missing CRLF-safe transport token: {token}")
+        require(token in installer, f"missing LF-normalization token: {token}")
 
     require(
         "Convert-WindowsPathToWsl -WindowsPath $configurator" not in installer,
@@ -41,7 +39,7 @@ def main() -> None:
         "repository must force LF for shell scripts in Windows worktrees",
     )
 
-    print("PASS: OpenCode free-default configurator uses CRLF-safe WSL transport")
+    print("PASS: OpenCode free-default configurator uses LF-normalized WSL transport")
 
 
 if __name__ == "__main__":
