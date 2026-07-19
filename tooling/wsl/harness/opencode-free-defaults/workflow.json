@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "opencode-free-defaults-repair",
+  "version": "1.0.0",
+  "status": "active",
+  "trigger": {
+    "phrases": [
+      "repair OpenCode free defaults",
+      "install OpenCode free defaults",
+      "reapply OpenCode free defaults",
+      "verify OpenCode free defaults",
+      "recover WezTerm tmux OpenCode"
+    ],
+    "forbiddenWhen": [
+      "the request is for an explicitly paid provider-routed sprint",
+      "the repository path cannot be resolved",
+      "the selected remote ref cannot be verified"
+    ]
+  },
+  "entrypoints": {
+    "oneClick": "Repair-OpenCodeFreeDefaults.cmd",
+    "orchestrator": "tooling/wsl/Invoke-OpenCodeFreeDefaultsRepair.ps1",
+    "status": "tooling/wsl/Get-OpenCodeFreeDefaultsHarnessStatus.ps1"
+  },
+  "readFirst": [
+    "tooling/wsl/AGENTS.md",
+    "tooling/wsl/harness/opencode-free-defaults/CODEBASE_MAP.md",
+    ".ai/skills/opencode-free-defaults-repair/SKILL.md",
+    "tooling/wsl/Set-OpenCodeFreeDefaults.ps1",
+    "tooling/wsl/tmux-gnhf-workstation.example.json"
+  ],
+  "ownedScope": [
+    "managed WSL OpenCode configuration",
+    "manifest-authorized jq dependency repair",
+    "isolated detached Git worktree",
+    "local run context and evidence artifacts"
+  ],
+  "forbiddenScope": [
+    "provider credential access or mutation",
+    "paid model fallback",
+    "destructive Git cleanup",
+    "push, merge, deployment, or release",
+    "hosted model response claims"
+  ],
+  "steps": [
+    "inspect source repository without modifying it",
+    "fetch and verify the selected remote branch",
+    "verify the selected commit belongs to that branch",
+    "create an isolated detached worktree",
+    "run the managed installer from the isolated worktree",
+    "independently read back effective OpenCode settings",
+    "write run context, artifact registry, operator report, and final handoff",
+    "run focused validators before repository closeout"
+  ],
+  "validators": [
+    "tooling/wsl/Test-OpenCodeFreeDefaultsHarness.ps1",
+    "tooling/wsl/tests/test_opencode_free_defaults_harness.py",
+    "tooling/wsl/tests/test_opencode_free_defaults_transport.py",
+    "tooling/wsl/Test-WindowsWorkstationLiveProofContracts.ps1"
+  ],
+  "artifacts": {
+    "catalog": "tooling/wsl/harness/opencode-free-defaults/artifact-catalog.json",
+    "runContext": "run-context.json",
+    "registry": "artifact-registry.json",
+    "effectiveConfig": "effective-opencode-config.json",
+    "operatorReport": "operator-report.md",
+    "handoff": "final-handoff.json",
+    "latestPointer": "%LOCALAPPDATA%\\AgentSwitchboard\\OpenCodeFreeDefaults\\latest-run.txt"
+  },
+  "outputPolicy": {
+    "root": "%LOCALAPPDATA%\\AgentSwitchboard\\OpenCodeFreeDefaults\\runs",
+    "tracked": false,
+    "containsSecrets": false
+  },
+  "localHooks": {
+    "installedByDefault": false,
+    "reason": "The workflow mutates WSL configuration and must remain an explicit operator action; CI and focused validators enforce repository contracts."
+  },
+  "proof": {
+    "static": "workflow shape, parser, schemas, artifact contracts, and safety boundaries",
+    "localApply": "dependency installation and effective OpenCode configuration",
+    "ceiling": "No provider authentication, free-model availability, hosted response, push, merge, or deployment proof."
+  }
+}
