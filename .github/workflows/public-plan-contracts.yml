@@ -70,28 +70,48 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Parse PowerShell
+      - name: Parse startup readiness reporter
         shell: pwsh
         run: |
-          $failed = $false
-          foreach ($path in @(
-            "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
-            "scripts/Test-AgentDocumentationContract.ps1",
-            "scripts/Test-PublicPlanContracts.ps1"
-          )) {
-            $tokens = $null
-            $errors = $null
-            [void][System.Management.Automation.Language.Parser]::ParseFile(
-              (Resolve-Path $path),
-              [ref]$tokens,
-              [ref]$errors
-            )
-            if ($errors.Count -gt 0) {
-              $errors | ForEach-Object { Write-Error "$path`: $($_.Message)" }
-              $failed = $true
-            }
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1"),
+            [ref]$tokens,
+            [ref]$errors
+          )
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
           }
-          if ($failed) { exit 1 }
+      - name: Parse public plan validator
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path "scripts/Test-PublicPlanContracts.ps1"),
+            [ref]$tokens,
+            [ref]$errors
+          )
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+      - name: Parse agent documentation validator
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path "scripts/Test-AgentDocumentationContract.ps1"),
+            [ref]$tokens,
+            [ref]$errors
+          )
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
       - name: Validate public plans and startup readiness
         shell: pwsh
         run: pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File ./scripts/Test-PublicPlanContracts.ps1
