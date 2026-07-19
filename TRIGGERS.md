@@ -20,6 +20,7 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | `repo.dirty-or-conflicted` | unowned changes, conflict markers, detached or unsafe state | preserve/isolate; then `repo-intake` |
 | `sprint.execute` | scoped request with safe owned files | `bounded-sprint` |
 | `action.claimed` | prompt claims install, setup, build, execute, repair, configure, upgrade, deploy, merge, or release | `action.commitment.validate`; require mutation, validation, and commit or GitHub proof |
+| `powershell.interactive-snippet` | PowerShell intended for interactive copy/paste or stepwise console entry | `powershell-interactive-execution`; use directory-first commands and never detach a continuation keyword from its preceding block |
 | `gnhf.prompt-request` | explicit “GNHF prompt,” “Good Night, Have Fun prompt,” or “compile this sprint for GNHF” request | `gnhf-prompt-compilation`; output a copy-ready `gnhf` launch command, not generic sprint prose |
 | `gnhf.test-only` | test, smoke, provider probe, fixture, or contract-only run | apply `gnhf.test-timeout.enforce`; one iteration by default and no more than 30 seconds wall clock or per iteration |
 | `provider.deepseek-request` | selected route uses a `deepseek/*` provider model | apply `deepseek.usage-window.evaluate` before provider proof; block double-usage, premium, unknown, missing, stale, or unverified state |
@@ -39,6 +40,8 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 ## Doctrine routing invariant
 
 The `action.claimed` trigger is fail-closed. A prompt that claims action but permits acknowledgment, advice, a plan, a summary, or a handoff instead of corresponding mutation and proof is invalid.
+
+The `powershell.interactive-snippet` trigger treats the operator's paste boundary as part of the syntax contract. A completed statement must not be followed by a standalone continuation keyword. Prefer guard clauses or submit the complete compound statement in one block.
 
 The `gnhf.test-only` trigger applies even when iteration and token caps exist. Those caps do not replace the 30-second wall-clock and per-iteration limits.
 
@@ -80,6 +83,7 @@ Stop or escalate when:
 - the next step requires merge, deployment, secrets, destructive Git, or live mutation without explicit authority;
 - repeated repair attempts exceed the workflow limit;
 - evidence contradicts the plan;
+- an interactive PowerShell continuation keyword would be submitted separately from its preceding block;
 - a test-only GNHF run exceeds 30 seconds;
 - DeepSeek rate class is double-usage, premium, unknown, missing, stale, or unverified.
 
