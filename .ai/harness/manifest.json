@@ -13,17 +13,27 @@
     "statusProbe": "scripts/Get-RepositoryFamilyHarnessStatus.ps1",
     "validator": "scripts/Test-RepositoryFamilyHarness.ps1",
     "operatorReportTemplate": ".ai/harness/operator-report.template.md",
-    "finalHandoffSchema": ".ai/harness/schemas/final-handoff.schema.json"
+    "finalHandoffSchema": ".ai/harness/schemas/final-handoff.schema.json",
+    "publicPlanRegistry": "plans/plan-registry.json",
+    "publicPlanSchema": "plans/schemas/public-plan.schema.json",
+    "publicPlanSkill": ".ai/skills/public-plan-coordination/SKILL.md",
+    "publicPlanValidator": "scripts/Test-PublicPlanContracts.ps1",
+    "startupLauncher": "AgentSwitchboard.cmd",
+    "startupReadinessReporter": "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1"
   },
   "schemas": [
     ".ai/harness/schemas/repository-family-registry.schema.json",
     ".ai/harness/schemas/run-context.schema.json",
     ".ai/harness/schemas/repository-family-status.schema.json",
     ".ai/harness/schemas/final-handoff.schema.json",
-    ".ai/harness/schemas/gnhf-runtime-capability.schema.json"
+    ".ai/harness/schemas/gnhf-runtime-capability.schema.json",
+    "plans/schemas/public-plan.schema.json",
+    "tooling/gnhf/schemas/agent-startup-readiness.schema.json"
   ],
   "proofLevels": [
     "contract",
+    "public-plan-coordination",
+    "local-adapter-readiness",
     "read-only-repository-intake",
     "child-validator",
     "child-build",
@@ -39,9 +49,27 @@
       "final-handoff.json"
     ]
   },
+  "startupReadiness": {
+    "tracked": false,
+    "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/GnhfFleet/reports/startup",
+    "artifacts": [
+      "agent-startup-readiness-<timestamp>.json",
+      "agent-startup-readiness-<timestamp>.md"
+    ],
+    "readOnly": true,
+    "proofCeiling": "local fleet-state and adapter readiness only"
+  },
+  "publicPlans": {
+    "tracked": true,
+    "root": "plans",
+    "registry": "plans/plan-registry.json",
+    "schema": "plans/schemas/public-plan.schema.json",
+    "publicDataOnly": true,
+    "planIsNotPullRequest": true
+  },
   "localHooks": {
     "enabled": false,
-    "reason": "The first slice uses explicit CI and operator commands. No implicit local hook is justified until adoption and failure behavior are proven."
+    "reason": "Explicit startup, CI, and operator commands own validation. No implicit local hook is justified until public-plan adoption and failure behavior are proven across child repositories."
   },
-  "proofCeiling": "This harness proves family registration, read-only local clone discovery, Git identity, required-path readiness, and deterministic contract validation only."
+  "proofCeiling": "This harness proves family registration, public coordination contract shape, local adapter-readiness reporting, read-only local clone discovery, Git identity, required-path readiness, and deterministic contract validation only."
 }
