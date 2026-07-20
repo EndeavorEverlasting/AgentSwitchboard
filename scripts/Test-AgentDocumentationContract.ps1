@@ -47,6 +47,7 @@ $requiredRootFiles = @(
     "plans/README.md",
     "plans/plan-registry.json",
     "plans/schemas/public-plan.schema.json",
+    ".ai/skills/project-end-to-end-testing/SKILL.md",
     ".ai/skills/public-plan-coordination/SKILL.md",
     "scripts/Test-PublicPlanContracts.ps1",
     "docs/governance/repository-family.md",
@@ -77,7 +78,7 @@ try {
     Add-Result -Passed (-not [string]::IsNullOrWhiteSpace([string]$contract.contractVersion)) -Name "contract/version" -FailureMessage "contractVersion is missing"
     Add-Result -Passed ($contract.canonicalRepository -eq "EndeavorEverlasting/AgentSwitchboard") -Name "contract/canonical-root" -FailureMessage "canonical repository is incorrect"
 
-    foreach ($entrypoint in @("universal", "claude", "skills", "capabilities", "triggers", "plans", "startupReadiness")) {
+    foreach ($entrypoint in @("universal", "claude", "skills", "capabilities", "triggers", "plans", "startupReadiness", "projectEndToEndTesting")) {
         $property = $contract.entrypoints.PSObject.Properties[$entrypoint]
         Add-Result -Passed ($null -ne $property -and -not [string]::IsNullOrWhiteSpace([string]$property.Value)) -Name "contract/entrypoint/$entrypoint" -FailureMessage "entrypoint is missing"
     }
@@ -85,6 +86,9 @@ try {
     Add-Result -Passed ($contract.publicPlans.planIsNotPullRequest -eq $true) -Name "contract/public-plans/plan-pr-distinction" -FailureMessage "plan and PR distinction is missing"
     Add-Result -Passed ($contract.publicPlans.machineReadableRequired -eq $true) -Name "contract/public-plans/machine-readable" -FailureMessage "machine-readable plans are not required"
     Add-Result -Passed ($contract.startupReadiness.generatedOutputTracked -eq $false) -Name "contract/startup/untracked" -FailureMessage "startup reports must remain untracked"
+    Add-Result -Passed ($contract.projectEndToEndTesting.focusedBeforeBroad -eq $true) -Name "contract/project-e2e/focused-before-broad" -FailureMessage "focused validation is not required before broader validation"
+    Add-Result -Passed ($contract.projectEndToEndTesting.runtimeAuthorityRequired -eq $true) -Name "contract/project-e2e/runtime-authority" -FailureMessage "runtime authority is not required"
+    Add-Result -Passed ($contract.projectEndToEndTesting.staticOrSyntheticCannotClaimRuntime -eq $true) -Name "contract/project-e2e/proof-boundary" -FailureMessage "static or synthetic proof can claim runtime"
 
     $expectedRepositories = @(
         "EndeavorEverlasting/AgentSwitchboard",
@@ -100,7 +104,7 @@ try {
     }
 
     $contractSkills = @($contract.canonicalSkills | ForEach-Object { [string]$_ })
-    foreach ($skill in @("public-plan-coordination", "gnhf-prompt-compilation", "powershell-interactive-execution")) {
+    foreach ($skill in @("project-end-to-end-testing", "public-plan-coordination", "gnhf-prompt-compilation", "powershell-interactive-execution")) {
         Add-Result `
             -Passed ($contractSkills -contains $skill) `
             -Name "contract/skill/$skill" `
@@ -112,11 +116,11 @@ catch {
 }
 
 $entrypointExpectations = @{
-    "AGENTS.md" = @("CLAUDE.md", "SKILLS.md", "CAPABILITIES.md", "TRIGGERS.md", ".ai/agent-contract.json", "plans/plan-registry.json", "public-plan-coordination")
+    "AGENTS.md" = @("CLAUDE.md", "SKILLS.md", "CAPABILITIES.md", "TRIGGERS.md", ".ai/agent-contract.json", "plans/plan-registry.json", "public-plan-coordination", "project-end-to-end-testing")
     "CLAUDE.md" = @("AGENTS.md", "proof")
-    "SKILLS.md" = @(".ai/skills", "repo-intake", "bounded-sprint", "public-plan-coordination", "gnhf-prompt-compilation", "powershell-interactive-execution", "evidence-validation", "pr-integration", "runtime-proof")
+    "SKILLS.md" = @(".ai/skills", "repo-intake", "bounded-sprint", "project-end-to-end-testing", "public-plan-coordination", "gnhf-prompt-compilation", "powershell-interactive-execution", "evidence-validation", "pr-integration", "runtime-proof")
     "CAPABILITIES.md" = @("Capabilities describe", "verified", "plan.registry.read", "startup.readiness.report")
-    "TRIGGERS.md" = @("Triggers", "repo.dirty-or-conflicted", "plan.coordination-request", "startup.readiness-request", "powershell.interactive-snippet", "gnhf.prompt-request", "live-target-mutation")
+    "TRIGGERS.md" = @("Triggers", "repo.dirty-or-conflicted", "validation.end-to-end-request", "plan.coordination-request", "startup.readiness-request", "powershell.interactive-snippet", "gnhf.prompt-request", "live-target-mutation")
 }
 
 foreach ($file in $entrypointExpectations.Keys) {
@@ -133,6 +137,7 @@ foreach ($file in $entrypointExpectations.Keys) {
 $expectedSkills = @(
     "repo-intake",
     "bounded-sprint",
+    "project-end-to-end-testing",
     "public-plan-coordination",
     "gnhf-prompt-compilation",
     "powershell-interactive-execution",
@@ -161,6 +166,26 @@ foreach ($skill in $expectedSkills) {
     Add-Result -Passed ($text.Contains("status: canonical")) -Name "skill/$skill/status" -FailureMessage "skill is not canonical"
     foreach ($section in $requiredSkillSections) {
         Add-Result -Passed ($text.Contains($section)) -Name "skill/$skill/$section" -FailureMessage "required section is missing"
+    }
+}
+
+$projectEndToEndSkillText = Get-RequiredText -RelativePath ".ai/skills/project-end-to-end-testing/SKILL.md"
+if ($null -ne $projectEndToEndSkillText) {
+    foreach ($token in @(
+        "focused checks before broader safe validation",
+        "Test-AppHarness.cmd",
+        "exact-head CI",
+        "Process exit code zero alone is not delivery proof",
+        "evidence-validation",
+        "runtime-proof",
+        "Static or synthetic proof does not establish runtime or live-target behavior",
+        "Do not weaken tests",
+        "Stop when repository state is unsafe or ambiguous"
+    )) {
+        Add-Result `
+            -Passed ($projectEndToEndSkillText.Contains($token)) `
+            -Name "skill/project-end-to-end-testing/$token" `
+            -FailureMessage "project end-to-end testing contract token is missing"
     }
 }
 
