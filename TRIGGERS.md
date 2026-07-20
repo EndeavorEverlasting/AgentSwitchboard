@@ -1,14 +1,14 @@
 # Trigger and Routing Contract
 
-Triggers convert repository evidence or explicit requests into a reviewed skill or AI Developer Workflow. A trigger selects procedure; it does not grant authority.
+Triggers convert repository evidence or explicit requests into a reviewed skill or workflow. A trigger selects procedure; it does not grant authority.
 
 ## Trigger precedence
 
 1. explicit owner instruction;
 2. repository safety state;
-3. active PR/review and failing validation;
+3. active PR, review, and failing validation;
 4. repository-local routing rules;
-5. canonical fallback mapping below.
+5. canonical fallback mapping.
 
 Safety triggers may narrow or stop work even when a feature trigger is present.
 
@@ -17,100 +17,70 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | Trigger | Evidence | Route |
 |---|---|---|
 | `repo.new-or-unknown` | unfamiliar repo, placeholder path, stale handoff, uncertain branch | `repo-intake` |
-| `repo.dirty-or-conflicted` | unowned changes, conflict markers, detached or unsafe state | preserve/isolate; then `repo-intake` |
+| `repo.dirty-or-conflicted` | unowned changes, conflicts, detached or unsafe state | preserve and isolate, then `repo-intake` |
 | `sprint.execute` | scoped request with safe owned files | `bounded-sprint` |
-| `plan.coordination-request` | multi-agent, multi-session, multi-wave, cross-PR, sprint-map, launch-pack, or material plan-state request | `public-plan-coordination`; read or update `plans/` and keep coordination distinct from PR delivery |
-| `startup.readiness-request` | AgentSwitchboard starts or the operator asks what agents are available/configured | `startup.readiness.report`; read local fleet state and emit bounded guidance without installation or provider calls |
-| `harness.proof-request` | one-command harness proof, end-to-end synthetic validation, event observer, composition graph, node/edge coverage, or PASS/SKIP/FAIL matrix request | `harness.proof.aggregate`; run the offline observer, validate registered event topology, and emit untracked JSON plus English evidence |
+| `plan.coordination-request` | multi-agent, multi-session, multi-wave, cross-PR, sprint-map, launch-pack, or material plan-state request | `public-plan-coordination`; update `plans/` and keep coordination distinct from PR delivery |
+| `startup.readiness-request` | startup or agent availability/configuration request | `startup.readiness.report`; read-only guidance without installation or provider calls |
+| `harness.proof-request` | one-command proof, synthetic validation, composition observer, node/edge coverage, or PASS/SKIP/FAIL request | `harness.proof.aggregate`; run the offline observer and emit untracked JSON plus English evidence |
+| `runtime.event-contract-change` | event envelope, source, observer, listener, handler, successor, sink, correlation, causation, or runtime topology contract changes | `runtime.event-contract.validate`; update deterministic contracts and run `scripts/Test-RuntimeEventContract.ps1` |
+| `runtime.event-cascade-request` | request claims an event listener works, a trigger cascades, or a source-to-sink handoff completes | use `runtime-proof` after contract validation; require correlated observed artifacts and explicit runtime authority |
 | `action.claimed` | prompt claims install, setup, build, execute, repair, configure, upgrade, deploy, merge, or release | `action.commitment.validate`; require mutation, validation, and commit or GitHub proof |
-| `powershell.interactive-snippet` | PowerShell intended for interactive copy/paste or stepwise console entry | `powershell-interactive-execution`; use directory-first commands and never detach a continuation keyword from its preceding block |
-| `gnhf.prompt-request` | explicit “GNHF prompt,” “Good Night, Have Fun prompt,” or “compile this sprint for GNHF” request | `gnhf-prompt-compilation`; output a copy-ready `gnhf` launch command, not generic sprint prose |
-| `gnhf.test-only` | test, smoke, provider probe, fixture, or contract-only run | apply `gnhf.test-timeout.enforce`; one iteration by default and no more than 30 seconds wall clock or per iteration |
-| `provider.deepseek-request` | selected route uses a `deepseek/*` provider model | apply `deepseek.usage-window.evaluate` before provider proof; block double-usage, premium, unknown, missing, stale, or unverified state |
-| `review.findings` | unresolved PR comments or deterministic failures | `evidence-validation` |
-| `validation.requested` | proof gap, skipped checks, contract drift | `evidence-validation` |
+| `powershell.interactive-snippet` | PowerShell intended for interactive copy/paste | `powershell-interactive-execution`; preserve complete syntax units |
+| `gnhf.prompt-request` | explicit GNHF prompt request | `gnhf-prompt-compilation`; output a copy-ready launch artifact |
+| `gnhf.test-only` | test, smoke, provider probe, fixture, or contract-only run | apply `gnhf.test-timeout.enforce`; one iteration and at most 30 seconds wall clock or per iteration |
+| `provider.deepseek-request` | selected route uses `deepseek/*` | apply `deepseek.usage-window.evaluate`; block premium, unknown, missing, stale, or unverified state |
+| `review.findings` or `validation.requested` | review findings, proof gap, skipped checks, or contract drift | `evidence-validation` |
 | `integration.requested` | stacked PRs, consumed commits, branch convergence | `pr-integration` |
 | `runtime.requested` | launcher, installer, behavior, harness, or environment proof | `runtime-proof` |
-| `docs.contract-change` | AGENTS, skills, capabilities, triggers, schemas | `bounded-sprint` plus harness-doctrine and documentation-contract validators |
+| `docs.contract-change` | AGENTS, skills, capabilities, triggers, schemas, governance | `bounded-sprint` plus doctrine and documentation validators |
 | `tool.missing-or-unhealthy` | command absent or bounded probe fails | reuse, repair, install, skip, or block according to scope |
-| `gnhf.runtime-repair-required` | required provider-route capabilities absent (executable, agent adapter, worktree, caps, launchers, OpenCode model selection) | repair via `Repair-ProviderRoutedGnhf.cmd` / capability installer; do not trigger solely because an unpublished source version is newer |
-| `gnhf.model-selection-required` | provider-backed run names an exact `provider/model` | route model selection through OpenCode (`OPENCODE_CONFIG_CONTENT` / `opencode run --model`); pass GNHF `--model` only when the installed binary exposes that flag |
-| `scope.collision` | two writers own overlapping paths | stop one lane or create a new isolation boundary |
-| `secret-or-personal-data` | credentials, tokens, customer data, private evidence | stop, sanitize, and escalate |
+| `gnhf.runtime-repair-required` | required provider-route capability absent | repair through the capability installer; do not react only to an unpublished version |
+| `gnhf.model-selection-required` | provider-backed run names an exact provider/model | route selection through OpenCode unless the installed GNHF binary exposes a verified model flag |
+| `scope.collision` | two writers own overlapping paths | stop one lane or create isolation |
+| `secret-or-personal-data` | credentials, tokens, customer data, or private evidence | stop, sanitize, and escalate |
 | `live-target-mutation` | external machine, service, deployment, save, or customer target | require explicit authority and runtime-proof boundary |
 | `repeated-repair-failure` | bounded retries exhausted | checkpoint and escalate |
 
-## Public plan routing invariant
+## Public plan invariant
 
-`plan.coordination-request` selects the public coordination artifact and procedure. It does not convert a plan into product logic or grant authority. Material task, ownership, dependency, collision, proof, or handoff changes must be reflected in a schema-valid plan, normally in the same branch or PR as the implementation.
-
-A PR may implement plan tasks, but its description must not become the only durable coordination record.
+`plan.coordination-request` selects a public coordination artifact, not product logic or authority. Material ownership, dependency, task, proof, or handoff changes belong in a schema-valid plan, normally in the implementation branch. PR prose must not become the only durable record.
 
 ## Startup readiness invariant
 
-`startup.readiness-request` is read-only. It may inspect existing AgentSwitchboard fleet state and emit local JSON and English guidance. It must not install tools, authenticate providers, read credentials, contact a hosted model, mutate a repository, or claim that an available adapter proves provider readiness.
+`startup.readiness-request` is read-only. It may inspect existing fleet state and emit local JSON and guidance. It must not install, authenticate, read credentials, contact a hosted model, mutate a repository, or claim adapter presence proves provider readiness.
 
 ## Synthetic harness observer invariant
 
-`harness.proof-request` routes to the repository-owned event observer in `scripts/Test-AppHarness.ps1`. The observer reads `.ai/harness/app-composition.graph.json`, verifies registered required nodes and declared edges, runs only graph-listed validators marked `safeOffline`, and emits untracked JSON and English matrix artifacts outside the repository.
+`harness.proof-request` routes to `scripts/Test-AppHarness.ps1`. The observer reads `.ai/harness/app-composition.graph.json`, verifies required nodes and edges, runs only graph-listed validators marked safe offline, and emits untracked JSON and English artifacts outside the repository.
 
-A required node with no required edge, a dangling edge, an ingress that cannot cascade into the observer, an observed or output node disconnected from the observer, or a broken required offline validator is a failure. Missing optional MCP/LSP readiness is a `SKIP` with a reason such as `lsp_project_not_loaded`.
+A required node without an edge, a dangling edge, a disconnected route, an unsafe validator, or a broken required validator is a failure. Missing optional MCP/LSP readiness is an honest skip. Static topology proves registered composition only.
 
-Static topology proves registered composition only. It does not prove live event dispatch, application runtime, launcher behavior, provider availability, target mutation, deployment, or an unregistered node or edge.
+## Runtime event invariant
 
-## Doctrine routing invariant
+`runtime.event-contract-change` requires the typed envelope, runtime topology, correlation and causation rules, artifact policy, doctrine references, and focused validator to remain coherent.
 
-The `action.claimed` trigger is fail-closed. A prompt that claims action but permits acknowledgment, advice, a plan, a summary, or a handoff instead of corresponding mutation and proof is invalid.
+`runtime.event-cascade-request` is a higher proof request. Before runtime execution it must name the registered source, observer, handler, successor or terminal event, and evidence sink. Root events use their event ID as correlation and no causation; successors inherit correlation, identify the immediate parent as causation, and advance sequence.
 
-The `powershell.interactive-snippet` trigger treats the operator's paste boundary as part of the syntax contract. A completed statement must not be followed by a standalone continuation keyword. Prefer guard clauses or submit the complete compound statement in one block.
+Contract and synthetic fixture success do not prove runtime delivery. A runtime completion claim requires correlated observed source, observer, handler, successor or terminal, and sink artifacts from an explicitly authorized runtime lane. Missing or contradictory chain evidence blocks completion.
 
-The `gnhf.test-only` trigger applies even when iteration and token caps exist. Those caps do not replace the 30-second wall-clock and per-iteration limits.
+## Doctrine invariant
 
-The `provider.deepseek-request` trigger permits only a fresh verified `standard` or `discounted` rate class with multiplier no greater than `1.0`. An unknown schedule blocks DeepSeek rather than guessing operating hours.
+`action.claimed` is fail-closed. A prompt that claims action but permits acknowledgment, advice, a plan, summary, or handoff instead of mutation and proof is invalid. An event-listener or cascade claim that permits architecture-only output is also invalid.
 
-## GNHF routing invariant
+The PowerShell trigger preserves compound syntax. Test-only GNHF limits apply even when token or iteration caps exist. DeepSeek requires a fresh verified standard or discounted rate state.
 
-The `gnhf.prompt-request` trigger is an artifact-type selector. It requires the canonical `.ai/skills/gnhf-prompt-compilation/SKILL.md` format even when the underlying objective is also a bounded sprint.
+## GNHF invariant
 
-Do not route a GNHF prompt request to a sprint map, launch pack, plan-only response, ordinary repo-agent prompt, or explanatory essay.
-
-When the exact agent cannot be proven launchable in the intended execution domain, the selected skill produces the bounded spawnability probe before repository work.
+A GNHF prompt request is an artifact-type selector and uses `.ai/skills/gnhf-prompt-compilation/SKILL.md`. Do not substitute a sprint map, plan-only response, ordinary repo-agent prompt, or essay. When spawnability is unknown, emit the bounded probe first.
 
 ## Trigger payload
 
-A routed workflow should receive:
-
-- repository and branch or worktree;
-- PR or sprint;
-- public plan and task when applicable;
-- trigger ID and evidence;
-- lane;
-- owned and forbidden scope;
-- expected artifacts;
-- acceptance criteria;
-- available capabilities and blockers;
-- selected skill or ADW;
-- iteration, token, time, and mutation limits;
-- validation order when specified;
-- required evidence and completion gate.
+A routed workflow receives repository and branch or worktree, PR or sprint, plan and task when applicable, trigger and evidence, lane, owned and forbidden scope, expected artifacts, acceptance criteria, capabilities and blockers, selected procedure, limits, validation order, evidence requirement, and completion gate.
 
 ## Automatic stop triggers
 
-Stop or escalate when:
-
-- the task would overwrite unowned dirty work;
-- a required capability is unknown or blocked;
-- a path crosses forbidden scope;
-- two active plans or agents claim the same shared surface;
-- a deterministic gate exposes a security or data-loss risk;
-- the next step requires merge, deployment, secrets, destructive Git, or live mutation without explicit authority;
-- repeated repair attempts exceed the workflow limit;
-- evidence contradicts the plan;
-- an interactive PowerShell continuation keyword would be submitted separately from its preceding block;
-- a test-only GNHF run exceeds 30 seconds;
-- DeepSeek rate class is double-usage, premium, unknown, missing, stale, or unverified;
-- the app composition graph contains a dangling required edge, disconnected required node, unsafe validator, or unregistered output cascade.
+Stop or escalate when work would overwrite unowned changes; a required capability is unknown; scope crosses a forbidden boundary; writers collide; a gate exposes security or data-loss risk; merge, deployment, secret, destructive Git, or live mutation lacks authority; retries are exhausted; evidence contradicts the plan; test timing or DeepSeek gates fail; the app graph is broken; or runtime event nodes, edges, correlation, causation, terminal evidence, or sink evidence are missing.
 
 ## No implicit authority
 
-The presence of a trigger, public plan, startup report, event observer, composition graph, or capability never authorizes installation, push, merge, release, deployment, target mutation, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.
+The presence of a trigger, plan, startup report, event observer, topology registry, or capability never authorizes installation, push, merge, release, deployment, target mutation, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.
