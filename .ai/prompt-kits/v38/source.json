@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "agentswitchboard-prompt-kit-source/v1",
+  "kitVersion": "v39",
+  "sourceRepository": "EndeavorEverlasting/AgentSwitchboard",
+  "sourceBranch": "feat/prompt-context-convergence",
+  "sourceWorkbook": "AI_Harness_Prompt_Kit_v39.xlsx",
+  "sourceWorkbookSha256": "45b5c6c96c51d4693718262a02ae4ead54ea6dc6be0ffafc59771f8da0c1a659",
+  "registrySchemaVersion": "ai-harness-prompt-registry/v1",
+  "snapshotPath": ".ai/prompt-kits/v38/prompt-registry.v1.json.gz.b64",
+  "snapshotSha256": "c5cedfe14ed24e0ee9ee3f49959385901de465f185f5d19dceaebf0e38e9ee7b",
+  "promptCount": 64,
+  "promptIdRange": "P00-P63",
+  "ownershipBoundary": "Web Excel Repair Triage owns canonical content origin. AgentSwitchboard owns extraction from the tracked v39 workbook, offline selection, variable rendering, execution-surface enforcement, and consumer validation. The prior v38 blob from PR #29 was corrupted and has been replaced with a fresh extraction."
+}

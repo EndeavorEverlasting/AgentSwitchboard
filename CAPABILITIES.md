@@ -20,6 +20,8 @@ Agents must not infer `verified` from command presence, prior sessions, document
 | `repository.write` | tracked files can be modified | task-scoped |
 | `command.execute` | local deterministic commands run | task-scoped |
 | `network.read` | public or connected sources can be queried | task-scoped |
+| `prompt.registry.read` | pinned registry and source hashes validate | allowed, read-only |
+| `prompt.render` | exact prompt variables render without unresolved required fields | task-scoped, output only |
 | `dependency.install` | package manager or installer works | explicit setup/repair scope |
 | `git.commit` | commits can be created | allowed for bounded sprint |
 | `git.push` | branch can be pushed | explicit task or repo contract |

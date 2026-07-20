@@ -29,6 +29,7 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | `profile.consumer-certification-request` | SysAdminSuite or another child claims profile consumption or certification | require a separate consumer PR that delegates to the exact canonical launcher and proves no competing lifecycle or raw frontend fallback |
 | `action.claimed` | prompt claims install, setup, build, execute, repair, configure, upgrade, deploy, merge, or release | `action.commitment.validate`; require mutation, validation, and commit or GitHub proof |
 | `powershell.interactive-snippet` | PowerShell intended for interactive copy/paste | `powershell-interactive-execution`; preserve complete syntax units |
+| `prompt.kit-request` | explicit request to browse, select, show, generate, or render an AI Harness Prompt Kit prompt | `prompt-kit-selection`; verify the pinned snapshot and requested execution surface before rendering |
 | `gnhf.prompt-request` | explicit GNHF prompt request | `gnhf-prompt-compilation`; output a copy-ready launch artifact |
 | `gnhf.test-only` | test, smoke, provider probe, fixture, or contract-only run | apply `gnhf.test-timeout.enforce`; one iteration and at most 30 seconds wall clock or per iteration |
 | `provider.deepseek-request` | selected route uses `deepseek/*` | apply `deepseek.usage-window.evaluate`; block premium, unknown, missing, stale, or unverified state |

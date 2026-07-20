@@ -139,6 +139,78 @@ def test_required_harness_files_and_registration() -> None:
     assert "workflow.app-output-context" in node_ids
 
 
+V39_REGISTRY = ROOT / ".ai" / "prompt-kits" / "v38" / "prompt-registry.v1.json.gz.b64"
+
+
+def load_v39_registry() -> dict:
+    engine = load_engine()
+    return engine.load_registry(V39_REGISTRY)
+
+
+def test_v39_registry_integrity_and_surfaces() -> None:
+    engine = load_engine()
+    registry = engine.load_registry(V39_REGISTRY)
+    assert registry["schemaVersion"] == "ai-harness-prompt-registry/v1"
+    assert registry["kitVersion"] == "v39"
+    assert len(registry["prompts"]) == 64
+    ids = [p["id"] for p in registry["prompts"]]
+    assert ids[0] == "P00"
+    assert ids[-1] == "P63"
+    surfaces = {p["executionSurface"] for p in registry["prompts"]}
+    assert surfaces == {"regular_ai_prompt", "gnhf_launch_artifact"}
+    regular = [p for p in registry["prompts"] if p["executionSurface"] == "regular_ai_prompt"]
+    gnhf = [p for p in registry["prompts"] if p["executionSurface"] == "gnhf_launch_artifact"]
+    assert len(regular) > 0
+    assert len(gnhf) > 0
+
+
+def test_context_engine_with_v39_registry_regular_surface() -> None:
+    engine = load_engine()
+    registry = load_v39_registry()
+    raw = json.dumps({"status": "error", "validation": "failed", "contract": "mismatch"})
+    packet = engine.contextualize(
+        raw, registry, source_app="test-app", surface="regular_ai_prompt", top=5
+    )
+    assert packet["schema"] == "agentswitchboard.app-output-context/v1"
+    assert packet["promptKit"]["kitVersion"] == "v39"
+    assert packet["promptKit"]["requestedExecutionSurface"] == "regular_ai_prompt"
+    assert packet["promptKit"]["crossSurfaceFallbackAllowed"] is False
+    if packet["promptKit"]["candidates"]:
+        for c in packet["promptKit"]["candidates"]:
+            assert c["executionSurface"] == "regular_ai_prompt"
+
+
+def test_context_engine_with_v39_registry_gnhf_surface() -> None:
+    engine = load_engine()
+    registry = load_v39_registry()
+    raw = "gnhf sprint bounded repair failure"
+    packet = engine.contextualize(
+        raw, registry, source_app="sprint-launcher", surface="gnhf_launch_artifact", top=5
+    )
+    assert packet["promptKit"]["requestedExecutionSurface"] == "gnhf_launch_artifact"
+    if packet["promptKit"]["candidates"]:
+        for c in packet["promptKit"]["candidates"]:
+            assert c["executionSurface"] == "gnhf_launch_artifact"
+
+
+def test_v39_surface_isolation_no_cross_leak() -> None:
+    engine = load_engine()
+    registry = load_v39_registry()
+    raw = "validation error needs repair"
+    regular = engine.contextualize(
+        raw, registry, source_app="test", surface="regular_ai_prompt", top=64
+    )
+    gnhf = engine.contextualize(
+        raw, registry, source_app="test", surface="gnhf_launch_artifact", top=64
+    )
+    regular_ids = {c["promptId"] for c in regular["promptKit"]["candidates"]}
+    gnhf_ids = {c["promptId"] for c in gnhf["promptKit"]["candidates"]}
+    registry_gnhf = {p["id"] for p in registry["prompts"] if p["executionSurface"] == "gnhf_launch_artifact"}
+    registry_regular = {p["id"] for p in registry["prompts"] if p["executionSurface"] == "regular_ai_prompt"}
+    assert regular_ids.issubset(registry_regular)
+    assert gnhf_ids.issubset(registry_gnhf)
+
+
 if __name__ == "__main__":
     test_redacts_and_ranks_failure_without_raw_output()
     test_json_input_and_execution_surface_boundary()
@@ -146,4 +218,8 @@ if __name__ == "__main__":
     test_no_match_is_honest()
     test_cli_writes_json_and_english_report()
     test_required_harness_files_and_registration()
+    test_v39_registry_integrity_and_surfaces()
+    test_context_engine_with_v39_registry_regular_surface()
+    test_context_engine_with_v39_registry_gnhf_surface()
+    test_v39_surface_isolation_no_cross_leak()
     print("PASS: AgentSwitchboard app-output context engine")

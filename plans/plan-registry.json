@@ -47,9 +47,17 @@
       "planId": "ASB-2026-07-APP-OUTPUT-CONTEXT-ENGINE",
       "path": "plans/active/ASB-2026-07-app-output-context-engine.plan.json",
       "summaryPath": "plans/active/ASB-2026-07-app-output-context-engine.md",
-      "status": "active",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["ASB-2026-07-WINDOWS-PROFILE-LAUNCHER-DOCTRINE"]
+    },
+    {
+      "planId": "ASB-2026-07-PROMPT-CONTEXT-CONVERGENCE",
+      "path": "plans/active/ASB-2026-07-prompt-context-convergence.plan.json",
+      "summaryPath": "plans/active/ASB-2026-07-prompt-context-convergence.md",
+      "status": "active",
+      "priority": "high",
+      "dependencies": ["ASB-2026-07-APP-OUTPUT-CONTEXT-ENGINE"]
     }
   ]
 }
