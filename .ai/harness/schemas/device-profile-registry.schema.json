@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/.ai/harness/schemas/device-profile-registry.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "registryId", "canonicalOwner", "profiles", "proofCeiling"],
+  "properties": {
+    "schema": {"const": "agentswitchboard.device-profile-registry.v1"},
+    "registryId": {"type": "string"},
+    "canonicalOwner": {"type": "string"},
+    "profiles": {"type": "array", "minItems": 3},
+    "proofCeiling": {"type": "string"}
+  }
+}
