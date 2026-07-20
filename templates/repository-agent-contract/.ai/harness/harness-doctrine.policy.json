@@ -22,6 +22,17 @@
     "validator": "scripts/Test-RuntimeEventContract.ps1",
     "contractOnly": true
   },
+  "deviceProfileLauncherContract": {
+    "policy": ".ai/harness/device-profile-launcher.policy.json",
+    "documentation": "docs/governance/device-profile-launcher-contract.md",
+    "validator": "scripts/Test-DeviceProfileLauncherContract.ps1",
+    "canonicalOwner": "EndeavorEverlasting/AgentSwitchboard",
+    "oneCanonicalLauncherPerProfile": true,
+    "consumerDelegateOnly": true,
+    "rawFallbackForbidden": true,
+    "separatePlatformImplementations": true,
+    "contractOnly": true
+  },
   "localRulesMayStrengthen": true,
   "localRulesMayWeaken": false
 }
