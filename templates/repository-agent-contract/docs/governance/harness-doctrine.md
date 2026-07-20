@@ -22,4 +22,8 @@ DeepSeek is eligible only in a fresh verified `standard` or `discounted` rate cl
 
 Event composition also follows `docs/governance/runtime-event-contract.md` and `.ai/harness/runtime-event-contract.policy.json`. Register every source, observer, handler, successor edge, and evidence sink. Preserve correlation and causation. Static topology does not prove runtime delivery. Validate with `scripts/Test-RuntimeEventContract.ps1`.
 
+## Device profile launcher contract
+
+Platform launch behavior also follows `docs/governance/device-profile-launcher-contract.md` and `.ai/harness/device-profile-launcher.policy.json`. AgentSwitchboard owns one canonical launcher per profile. Consumers and shortcuts delegate only. Windows uses `open-or-activate`; Linux and Android remain separate implementations, and Android configuration may differ. Contract-only proof does not prove a launcher exists or a workspace opened or activated. Validate with `scripts/Test-DeviceProfileLauncherContract.ps1`.
+
 Local rules may strengthen this doctrine. They may not weaken it.
