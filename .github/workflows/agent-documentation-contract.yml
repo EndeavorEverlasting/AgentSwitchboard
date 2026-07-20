@@ -12,6 +12,7 @@ on:
       - "docs/governance/**"
       - "templates/repository-agent-contract/**"
       - "scripts/Test-AgentDocumentationContract.ps1"
+      - "scripts/Test-AgentGovernanceDoctrine.ps1"
       - "scripts/Test-HarnessDoctrineContract.ps1"
       - ".github/workflows/agent-documentation-contract.yml"
   workflow_dispatch:
@@ -42,6 +43,9 @@ jobs:
               json.loads(path.read_text(encoding='utf-8-sig'))
               print(f'PASS: {path}')
           PY
+      - name: Run governance doctrine contract
+        shell: pwsh
+        run: ./scripts/Test-AgentGovernanceDoctrine.ps1
       - name: Run harness doctrine contract
         shell: pwsh
         run: ./scripts/Test-HarnessDoctrineContract.ps1
@@ -84,6 +88,7 @@ jobs:
           $failures = [System.Collections.Generic.List[string]]::new()
           foreach ($path in @(
             'scripts/Test-AgentDocumentationContract.ps1',
+            'scripts/Test-AgentGovernanceDoctrine.ps1',
             'scripts/Test-HarnessDoctrineContract.ps1'
           )) {
             $tokens = $null
@@ -95,6 +100,11 @@ jobs:
             $failures | ForEach-Object { Write-Error $_ }
             exit 1
           }
+      - name: Run governance doctrine contract
+        shell: pwsh
+        run: |
+          ./scripts/Test-AgentGovernanceDoctrine.ps1 2>&1 |
+            Tee-Object -FilePath "$env:RUNNER_TEMP\agent-governance-doctrine.log"
       - name: Run harness doctrine contract
         shell: pwsh
         run: |
@@ -117,6 +127,7 @@ jobs:
         with:
           name: agent-documentation-contract
           path: |
+            ${{ runner.temp }}/agent-governance-doctrine.log
             ${{ runner.temp }}/agent-documentation-contract.log
             ${{ runner.temp }}/harness-doctrine-contract.log
           if-no-files-found: ignore
