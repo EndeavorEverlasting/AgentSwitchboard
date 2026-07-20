@@ -4,7 +4,7 @@ AgentSwitchboard is the canonical policy source for the EndeavorEverlasting repo
 
 ## Canonical authority
 
-Read `docs/governance/harness-doctrine.md` and `.ai/harness/harness-doctrine.policy.json` before repository work. For event sources, observers, listeners, handlers, trigger cascades, successor events, or evidence sinks, also read `docs/governance/runtime-event-contract.md` and `.ai/harness/runtime-event-contract.policy.json`.
+Read `docs/governance/harness-doctrine.md` and `.ai/harness/harness-doctrine.policy.json` before repository work. For event sources, observers, listeners, handlers, trigger cascades, successor events, or evidence sinks, also read `docs/governance/runtime-event-contract.md` and `.ai/harness/runtime-event-contract.policy.json`. For platform profiles, terminal launchers, desktop shortcuts, open-or-activate behavior, or consumer certification, also read `docs/governance/device-profile-launcher-contract.md` and `.ai/harness/device-profile-launcher.policy.json`.
 
 Task-specific execution rules override generic closeout behavior while remaining subject to higher-priority platform, safety, and repository law.
 
@@ -54,6 +54,16 @@ All participating nodes, edges, and event types belong in `.ai/harness/runtime-e
 A claim that an event listener or cascade was built requires the corresponding deterministic implementation, topology update, validation, and commit or GitHub evidence. A runtime-success claim additionally requires correlated source, observer, handler, successor or terminal, and sink artifacts from an explicitly authorized runtime lane. Static topology and synthetic fixtures prove lower levels only.
 
 Validate the runtime-event-contract with `scripts/Test-RuntimeEventContract.ps1`, then validate registration in the wider harness with `Test-AppHarness.cmd`.
+
+## Device profiles and launcher ownership
+
+AgentSwitchboard owns separate **Windows Profile**, **Linux Profile**, and **Android Profile** contracts. Platform implementation may differ; one profile must not silently inherit another profile's launcher or configuration.
+
+The Windows Profile is WezTerm-backed and has exactly one canonical `open-or-activate` launcher owned by AgentSwitchboard. SysAdminSuite is a delegate and certifier, not a second launcher owner. Raw `wezterm`, `wezterm.exe`, `wezterm-gui.exe`, desktop shortcuts, and consumer repositories may not contain independent lifecycle, discovery, activation, or fallback logic. A missing or uncertified canonical launcher is a blocker.
+
+A claim that a profile or launcher was installed, built, repaired, configured, certified, or deployed requires tracked implementation, profile registry updates, focused validation, commit or GitHub evidence, and an honest proof ceiling. Contract-only doctrine must not claim the launcher exists or that a window was opened or activated.
+
+Validate with `scripts/Test-DeviceProfileLauncherContract.ps1`, then run the wider doctrine and aggregate harness validators.
 
 ## Public plans
 
