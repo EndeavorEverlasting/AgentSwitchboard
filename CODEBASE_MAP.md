@@ -118,12 +118,29 @@ The Windows Profile is WezTerm-backed and contract-only. Its future canonical so
 - `docs/governance/repository-family.md` and `docs/governance/repository-family-harness.md` — family governance.
 - `templates/repository-agent-contract/` — reviewable child adoption template.
 
+## Pi operational harness
+
+- `tooling/pi/harness/codebase-map.json` — Pi-specific structure, entrypoints, commands, and known traps.
+- `tooling/pi/harness/pi-adapter.registry.json` — contract-only routes, upstream verification state, project-local configuration policy, runtime evidence requirements, and privacy gates.
+- `tooling/pi/harness/workflows/` — task intake, independent opinion fusion, and architect-owned autovalidation workflows.
+- `tooling/pi/harness/artifact-registry.json` — local-only run context, attributed role outputs, fusion results, validation ledgers, reports, and handoffs.
+- `tooling/pi/harness/schemas/pi-harness-contracts.schema.json` — run context, execution identity, role-output, fusion-result, and validation-ledger contracts.
+- `.ai/skills/pi-fusion-orchestration/SKILL.md` — experimental bounded Pi orchestration procedure.
+- `tooling/pi/Get-PiHarnessStatus.ps1` — English and JSON read-only repository status.
+- `tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1` — opt-in completeness, Python-contract, staged-diff, and generated-evidence check; never installed implicitly.
+- `scripts/Test-PiHarnessCompleteness.ps1` and `tests/test_pi_harness_contracts.py` — focused cross-platform harness contracts.
+- `docs/harness/pi-operational-harness.md` — operator guide, working state, blockers, gaps, artifact policy, and proof ceiling.
+- `.github/workflows/pi-harness-contract.yml` — Windows and Linux proof gate.
+
+This slice makes AgentSwitchboard the policy, routing, evidence, validation, and handoff layer around a future Pi runtime. It does not install Pi, execute an extension, contact a provider, classify a local endpoint as private, or claim fusion or autovalidation success.
+
 ## Validation
 
 - `scripts/Test-HarnessDoctrineContract.ps1`
 - `scripts/Test-RuntimeEventContract.ps1`
 - `scripts/Test-DeviceProfileLauncherContract.ps1`
 - `scripts/Test-AppOutputContextEngine.ps1`
+- `scripts/Test-PiHarnessCompleteness.ps1`
 - `scripts/Test-AgentDocumentationContract.ps1`
 - `scripts/Test-RepositoryFamilyHarness.ps1`
 - `scripts/Test-PublicPlanContracts.ps1`
@@ -132,6 +149,6 @@ The Windows Profile is WezTerm-backed and contract-only. Its future canonical so
 
 ## Generated evidence and proof boundary
 
-Generated family, startup, app-harness, app-output-context, runtime-event, and device-profile evidence is untracked. It may contain local paths, versions, Git state, or minimized operational payloads and must remain outside tracked authority unless deliberately reviewed as a public fixture.
+Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, and Pi evidence is untracked. It may contain local paths, versions, Git state, minimized operational payloads, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
 
-Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, or contextualization. Neither proves application runtime, an open-or-activate result, provider delivery, external target behavior, deployment, or operator acceptance.
+Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, or workflow semantics. Neither proves application runtime, an open-or-activate result, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, model quality, external target behavior, deployment, or operator acceptance.
