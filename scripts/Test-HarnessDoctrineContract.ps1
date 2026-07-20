@@ -153,10 +153,11 @@ foreach ($doc in @($profileDoctrineText, $templateProfileDoctrineText)) {
         Check ($doc.Contains($token)) "profile-doctrine/$token" 'profile doctrine token missing'
     }
 }
-foreach ($doc in @($agentsText, $templateAgentsText)) {
-    foreach ($token in @('docs/governance/harness-doctrine.md','PR or sprint','validation order','runtime-event-contract','Test-RuntimeEventContract.ps1','device-profile-launcher-contract','Test-DeviceProfileLauncherContract.ps1')) {
-        Check ($doc.Contains($token)) "entrypoint/$token" 'doctrine reference missing'
-    }
+foreach ($token in @('docs/governance/harness-doctrine.md','PR or sprint','validation order','docs/governance/runtime-event-contract.md','Test-RuntimeEventContract.ps1','docs/governance/device-profile-launcher-contract.md','Test-DeviceProfileLauncherContract.ps1')) {
+    Check ($agentsText.Contains($token)) "entrypoint/root/$token" 'root doctrine reference missing'
+}
+foreach ($token in @('docs/governance/harness-doctrine.md','PR or sprint','validation order','runtime-event doctrine','Test-RuntimeEventContract.ps1','docs/governance/device-profile-launcher-contract.md','Test-DeviceProfileLauncherContract.ps1')) {
+    Check ($templateAgentsText.Contains($token)) "entrypoint/template/$token" 'template doctrine reference missing'
 }
 foreach ($token in @('Test-only timing contract','30 seconds wall clock','DeepSeek rate-window contract','unknown or stale schedule state blocks DeepSeek')) {
     Check ($skillText.Contains($token)) "skill/$token" 'GNHF doctrine token missing'
