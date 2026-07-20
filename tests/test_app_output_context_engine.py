@@ -45,10 +45,10 @@ def test_redacts_and_ranks_failure_without_raw_output() -> None:
     assert packet["source"]["rawOutputStored"] is False
     assert packet["context"]["highestSeverity"] in {"error", "blocked"}
     assert packet["promptKit"]["candidates"][0]["promptId"] == "P01"
-    assert "Richard" not in rendered
-    assert "rperez@example.com" not in rendered
-    assert "sk-live-super-secret" not in rendered
-    assert "192.168.1.44" not in rendered
+    assert "FixtureUser" not in rendered
+    assert "fixture.user@example.invalid" not in rendered
+    assert "10.20.30.40" not in rendered
+    assert engine.redact("token=fixture-value") == "token=<redacted>"
     assert len(json.dumps(packet, separators=(",", ":"))) <= 6000
 
 
