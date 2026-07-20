@@ -24,6 +24,8 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | `harness.proof-request` | one-command proof, synthetic validation, composition observer, node/edge coverage, or PASS/SKIP/FAIL request | `harness.proof.aggregate`; run the offline observer and emit untracked JSON plus English evidence |
 | `runtime.event-contract-change` | event envelope, source, observer, listener, handler, successor, sink, correlation, causation, or runtime topology contract changes | `runtime.event-contract.validate`; update deterministic contracts and run `scripts/Test-RuntimeEventContract.ps1` |
 | `runtime.event-cascade-request` | request claims an event listener works, a trigger cascades, or a source-to-sink handoff completes | use `runtime-proof` after contract validation; require correlated observed artifacts and explicit runtime authority |
+| `profile.launcher-request` | Windows Profile, Linux Profile, Android Profile, WezTerm launcher, open-or-activate, desktop shortcut, duplicate-window prevention, or canonical launcher ownership | `profile.launcher.contract.validate`; inspect the profile registry and require one AgentSwitchboard owner per profile |
+| `profile.consumer-certification-request` | SysAdminSuite or another child claims profile consumption or certification | require a separate consumer PR that delegates to the exact canonical launcher and proves no competing lifecycle or raw frontend fallback |
 | `action.claimed` | prompt claims install, setup, build, execute, repair, configure, upgrade, deploy, merge, or release | `action.commitment.validate`; require mutation, validation, and commit or GitHub proof |
 | `powershell.interactive-snippet` | PowerShell intended for interactive copy/paste | `powershell-interactive-execution`; preserve complete syntax units |
 | `gnhf.prompt-request` | explicit GNHF prompt request | `gnhf-prompt-compilation`; output a copy-ready launch artifact |
@@ -63,9 +65,17 @@ A required node without an edge, a dangling edge, a disconnected route, an unsaf
 
 Contract and synthetic fixture success do not prove runtime delivery. A runtime completion claim requires correlated observed source, observer, handler, successor or terminal, and sink artifacts from an explicitly authorized runtime lane. Missing or contradictory chain evidence blocks completion.
 
+## Device profile invariant
+
+`profile.launcher-request` requires `.ai/harness/device-profile-registry.json` and the canonical launcher policy to remain coherent. The Windows Profile is WezTerm-backed, idempotent `open-or-activate`, and owned only by AgentSwitchboard. Linux and Android are separate profile implementations; Android configuration may differ.
+
+Raw `wezterm`, `wezterm.exe`, `wezterm-gui.exe`, desktop shortcuts, and consumer repositories are not independent lifecycle owners. SysAdminSuite may locate, invoke, and certify the exact AgentSwitchboard launcher, but a missing or uncertified launcher is `blocked`, not a fallback opportunity.
+
+Contract success proves ownership and fixture shape only. A runtime claim requires observed evidence for both `opened` and `activated`, duplicate-prevention, and the terminal result. SysAdminSuite certification requires its own tracked consumer PR and validators.
+
 ## Doctrine invariant
 
-`action.claimed` is fail-closed. A prompt that claims action but permits acknowledgment, advice, a plan, summary, or handoff instead of mutation and proof is invalid. An event-listener or cascade claim that permits architecture-only output is also invalid.
+`action.claimed` is fail-closed. A prompt that claims action but permits acknowledgment, advice, a plan, summary, or handoff instead of mutation and proof is invalid. Event-listener, cascade, profile, launcher, and certification claims that permit architecture-only output are also invalid.
 
 The PowerShell trigger preserves compound syntax. Test-only GNHF limits apply even when token or iteration caps exist. DeepSeek requires a fresh verified standard or discounted rate state.
 
@@ -79,8 +89,8 @@ A routed workflow receives repository and branch or worktree, PR or sprint, plan
 
 ## Automatic stop triggers
 
-Stop or escalate when work would overwrite unowned changes; a required capability is unknown; scope crosses a forbidden boundary; writers collide; a gate exposes security or data-loss risk; merge, deployment, secret, destructive Git, or live mutation lacks authority; retries are exhausted; evidence contradicts the plan; test timing or DeepSeek gates fail; the app graph is broken; or runtime event nodes, edges, correlation, causation, terminal evidence, or sink evidence are missing.
+Stop or escalate when work would overwrite unowned changes; a required capability is unknown; scope crosses a forbidden boundary; writers collide; a gate exposes security or data-loss risk; merge, deployment, secret, destructive Git, or live mutation lacks authority; retries are exhausted; evidence contradicts the plan; test timing or DeepSeek gates fail; the app graph is broken; runtime event evidence is incomplete; or a profile has competing owners, raw frontend fallback, independent shortcut logic, cross-profile substitution, or an unproved open-or-activate claim.
 
 ## No implicit authority
 
-The presence of a trigger, plan, startup report, event observer, topology registry, or capability never authorizes installation, push, merge, release, deployment, target mutation, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.
+The presence of a trigger, plan, startup report, event observer, topology registry, profile registry, or capability never authorizes installation, push, merge, release, deployment, target mutation, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.
