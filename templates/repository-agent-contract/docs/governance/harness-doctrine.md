@@ -14,8 +14,12 @@ Use this loop:
 
 Evidence precedes confidence. Preserve existing work before cleanup. Reuse existing contracts before invention. An action claim requires the corresponding mutation, validation, and commit or GitHub evidence; acknowledgment, advice, a plan, summary, or handoff is not a substitute.
 
-A GNHF run used only as a test, smoke check, provider probe, fixture, or contract exercise is limited to 30 seconds wall clock and 30 seconds per iteration, with one iteration by default. A repository-owned wrapper terminates the process tree when the CLI cannot enforce both limits.
+A GNHF contract-only run is limited to 30 seconds wall clock and 30 seconds per iteration, with one iteration by default.
 
-DeepSeek is eligible only in a fresh, verified `standard` or `discounted` rate class with multiplier no greater than `1.0`. Block `double-usage`, premium, unknown, missing, expired, stale, or unverified schedule state. The operator-local schedule belongs at `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\deepseek-usage-windows.json` or a repository-approved platform equivalent.
+DeepSeek is eligible only in a fresh verified `standard` or `discounted` rate class with multiplier no greater than `1.0`. Unknown or stale state blocks use.
+
+## Runtime event contract
+
+Event composition also follows `docs/governance/runtime-event-contract.md` and `.ai/harness/runtime-event-contract.policy.json`. Register every source, observer, handler, successor edge, and evidence sink. Preserve correlation and causation. Static topology does not prove runtime delivery. Validate with `scripts/Test-RuntimeEventContract.ps1`.
 
 Local rules may strengthen this doctrine. They may not weaken it.
