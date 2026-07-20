@@ -22,6 +22,7 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | `plan.coordination-request` | multi-agent, multi-session, multi-wave, cross-PR, sprint-map, launch-pack, or material plan-state request | `public-plan-coordination`; update `plans/` and keep coordination distinct from PR delivery |
 | `startup.readiness-request` | startup or agent availability/configuration request | `startup.readiness.report`; read-only guidance without installation or provider calls |
 | `harness.proof-request` | one-command proof, synthetic validation, composition observer, node/edge coverage, or PASS/SKIP/FAIL request | `harness.proof.aggregate`; run the offline observer and emit untracked JSON plus English evidence |
+| `app.output-context-request` | supplied app, validator, agent, console, JSON, or JSONL output must be minimized and compared with a prompt registry | `app-output-contextualization`; parse supplied output offline, preserve exact execution surface, and emit compact untracked instructions |
 | `runtime.event-contract-change` | event envelope, source, observer, listener, handler, successor, sink, correlation, causation, or runtime topology contract changes | `runtime.event-contract.validate`; update deterministic contracts and run `scripts/Test-RuntimeEventContract.ps1` |
 | `runtime.event-cascade-request` | request claims an event listener works, a trigger cascades, or a source-to-sink handoff completes | use `runtime-proof` after contract validation; require correlated observed artifacts and explicit runtime authority |
 | `profile.launcher-request` | Windows Profile, Linux Profile, Android Profile, WezTerm launcher, open-or-activate, desktop shortcut, duplicate-window prevention, or canonical launcher ownership | `profile.launcher.contract.validate`; inspect the profile registry and require one AgentSwitchboard owner per profile |
@@ -57,6 +58,12 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 
 A required node without an edge, a dangling edge, a disconnected route, an unsafe validator, or a broken required validator is a failure. Missing optional MCP/LSP readiness is an honest skip. Static topology proves registered composition only.
 
+## App-output context invariant
+
+`app.output-context-request` accepts output already captured by the operator. It requires a public source label, a valid `ai-harness-prompt-registry/v1` registry, an exact `regular_ai_prompt` or `gnhf_launch_artifact` surface, and an output directory outside the repository.
+
+The route hashes but does not copy raw output, redacts common credentials and private identifiers, extracts bounded signals and excerpts, and ranks prompt entries only inside the requested execution surface. A ranked prompt is guidance, not authorization. Invalid registries, ambiguous surfaces, unsafe output paths, or unredactable private evidence block the route.
+
 ## Runtime event invariant
 
 `runtime.event-contract-change` requires the typed envelope, runtime topology, correlation and causation rules, artifact policy, doctrine references, and focused validator to remain coherent.
@@ -89,8 +96,8 @@ A routed workflow receives repository and branch or worktree, PR or sprint, plan
 
 ## Automatic stop triggers
 
-Stop or escalate when work would overwrite unowned changes; a required capability is unknown; scope crosses a forbidden boundary; writers collide; a gate exposes security or data-loss risk; merge, deployment, secret, destructive Git, or live mutation lacks authority; retries are exhausted; evidence contradicts the plan; test timing or DeepSeek gates fail; the app graph is broken; runtime event evidence is incomplete; or a profile has competing owners, raw frontend fallback, independent shortcut logic, cross-profile substitution, or an unproved open-or-activate claim.
+Stop or escalate when work would overwrite unowned changes; a required capability is unknown; scope crosses a forbidden boundary; writers collide; a gate exposes security or data-loss risk; merge, deployment, secret, destructive Git, or live mutation lacks authority; retries are exhausted; evidence contradicts the plan; test timing or DeepSeek gates fail; the app graph is broken; app-output context would persist raw or cross-surface data; runtime event evidence is incomplete; or a profile has competing owners, raw frontend fallback, independent shortcut logic, cross-profile substitution, or an unproved open-or-activate claim.
 
 ## No implicit authority
 
-The presence of a trigger, plan, startup report, event observer, topology registry, profile registry, or capability never authorizes installation, push, merge, release, deployment, target mutation, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.
+The presence of a trigger, plan, startup report, event observer, topology registry, profile registry, app-output packet, or capability never authorizes installation, push, merge, release, deployment, target mutation, prompt execution, provider access, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.
