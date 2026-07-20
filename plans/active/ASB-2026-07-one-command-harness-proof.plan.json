@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-07-20T02:20:00Z",
-  "updatedUtc": "2026-07-20T02:20:00Z",
+  "updatedUtc": "2026-07-20T04:00:00Z",
   "mission": "Provide one offline command that observes the registered AgentSwitchboard harness composition, validates safe nodes and event edges, runs required offline validators, and emits an honest PASS, SKIP, or FAIL matrix without runtime or target mutation.",
   "owner": {
     "surface": "app harness validation and event topology",
@@ -16,7 +16,11 @@
   },
   "delivery": {
     "branch": "feat/one-command-harness-proof",
-    "pullRequest": null,
+    "pullRequest": {
+      "number": 35,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/35",
+      "state": "open"
+    },
     "baseRef": "feat/public-plans-startup-readiness",
     "commitRequired": true
   },
@@ -92,7 +96,7 @@
         "Skip optional MCP or LSP readiness honestly",
         "Never claim runtime proof"
       ],
-      "evidence": ["Tracked root command, observer, result schema, and report renderer"]
+      "evidence": ["Tracked root command, observer, result schema, and report renderer", "PR #35 carries delivery and review evidence"]
     },
     {
       "taskId": "TEST-01",
@@ -110,7 +114,7 @@
         "Required validator failures propagate",
         "Optional missing dependencies produce SKIP"
       ],
-      "evidence": ["Pending exact-head Windows and Linux CI"]
+      "evidence": ["Pending exact-head Windows and Linux CI on PR #35"]
     }
   ],
   "validation": [
@@ -126,14 +130,14 @@
   ],
   "proof": {
     "target": "offline synthetic harness aggregation, registered composition topology, JSON and English artifact emission, and no-mutation exact-head CI",
-    "achieved": "Tracked implementation is present; exact-head CI is pending.",
+    "achieved": "Tracked implementation and PR #35 are present; exact-head CI is pending.",
     "ceiling": "Does not prove live event delivery, application or launcher behavior, provider availability, MCP or LSP service readiness, network behavior, target mutation, deployment, or unregistered nodes and edges."
   },
   "handoff": {
     "nextOwner": "validation lane",
-    "nextCommand": "gh pr checks --repo EndeavorEverlasting/AgentSwitchboard --watch",
+    "nextCommand": "gh pr checks 35 --repo EndeavorEverlasting/AgentSwitchboard --watch",
     "notes": [
-      "Open a stacked pull request against feat/public-plans-startup-readiness.",
+      "PR #35 is stacked against feat/public-plans-startup-readiness / PR #34.",
       "Record exact-head Windows and Linux evidence before marking TEST-01 completed.",
       "Expand the graph only through tracked review when new application nodes or event edges become canonical."
     ]
