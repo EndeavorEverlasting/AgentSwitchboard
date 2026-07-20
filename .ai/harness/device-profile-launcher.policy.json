@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "policyId": "agentswitchboard.device-profile-launcher.v1",
+  "canonicalSource": "docs/governance/device-profile-launcher-contract.md",
+  "registry": ".ai/harness/device-profile-registry.json",
+  "registrySchema": ".ai/harness/schemas/device-profile-registry.schema.json",
+  "validator": "scripts/Test-DeviceProfileLauncherContract.ps1",
+  "ownership": {
+    "oneCanonicalLauncherPerProfile": true,
+    "canonicalOwnerRepository": "EndeavorEverlasting/AgentSwitchboard",
+    "consumerIndependentLaunchLogicForbidden": true,
+    "desktopShortcutsDelegateOnly": true,
+    "rawExecutableEntryPointsForbidden": ["wezterm", "wezterm.exe", "wezterm-gui.exe"],
+    "rawFallbackForbidden": true
+  },
+  "windowsProfile": {
+    "profileId": "windows",
+    "displayName": "Windows Profile",
+    "status": "contract-only",
+    "terminalFrontend": "wezterm",
+    "canonicalOperation": "open-or-activate",
+    "canonicalSourcePath": "tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1",
+    "installedPath": "%LOCALAPPDATA%\\AgentSwitchboard\\profiles\\windows\\Invoke-AgentSwitchboardOpenOrActivate.ps1",
+    "consumerCertifier": "EndeavorEverlasting/SysAdminSuite",
+    "allowedOutcomes": ["opened", "activated", "blocked", "failed"]
+  },
+  "idempotence": {
+    "sameIdentityConverges": true,
+    "activateExistingBeforeOpen": true,
+    "duplicateLogicalWorkspaceForbidden": true,
+    "weakProcessHeuristicInsufficient": true,
+    "processExitInsufficient": true,
+    "openedAndActivatedEvidenceRequiredForRuntimeProof": true
+  },
+  "delegation": {
+    "consumerMayLocateCanonicalLauncher": true,
+    "consumerMayValidateVersionAndIdentity": true,
+    "consumerMayPassReviewedArguments": true,
+    "consumerMustPreserveResult": true,
+    "missingOrUncertifiedLauncherOutcome": "blocked",
+    "consumerMayReimplementDiscovery": false,
+    "consumerMayReimplementActivation": false,
+    "consumerMayFallbackToRawFrontend": false
+  },
+  "profiles": {
+    "windows": {"implementationSeparate": true, "frontend": "wezterm"},
+    "linux": {"implementationSeparate": true, "frontend": "profile-defined"},
+    "android": {"implementationSeparate": true, "frontend": "profile-defined", "configurationMayDiffer": true}
+  },
+  "certification": {
+    "exactProfileIdRequired": true,
+    "exactContractVersionRequired": true,
+    "canonicalLauncherIdentityRequired": true,
+    "delegateOnlyRequired": true,
+    "noRawFallbackRequired": true,
+    "openedActivatedBlockedFailedFixturesRequired": true,
+    "repeatedInvocationIdempotenceRequired": true,
+    "proofCeilingRequired": true
+  },
+  "runtimeEvents": {
+    "requiredChain": ["profile-request", "canonical-launcher-resolved", "workspace-discovered", "opened-or-activated", "terminal-result", "evidence-sink"],
+    "correlationAndCausationRequired": true,
+    "staticProofCannotClaimRuntime": true,
+    "syntheticProofCannotClaimLiveDevice": true
+  },
+  "actionCommitment": {
+    "verbs": ["install", "build", "configure", "repair", "certify", "deploy"],
+    "requiresTrackedMutation": true,
+    "requiresFocusedValidation": true,
+    "requiresCommitOrGitHubEvidence": true,
+    "forbidArchitectureOnlySubstitution": true,
+    "forbidPlanOrHandoffSubstitution": true
+  }
+}
