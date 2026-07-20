@@ -1,0 +1,145 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-07-RUNTIME-EVENT-CONTRACT",
+  "title": "Runtime event contract doctrine",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "active",
+  "priority": "high",
+  "createdUtc": "2026-07-20T05:30:00Z",
+  "updatedUtc": "2026-07-20T05:30:00Z",
+  "mission": "Install a canonical runtime event contract that requires typed envelopes, registered event composition, correlation and causation, successor-event rules, evidence sinks, and proof boundaries for every claimed event listener or cascade.",
+  "owner": {
+    "surface": "runtime event doctrine and enforcement",
+    "role": "repository doctrine lane",
+    "agent": "ChatGPT"
+  },
+  "delivery": {
+    "branch": "feat/runtime-event-contract-doctrine",
+    "pullRequest": null,
+    "baseRef": "feat/one-command-harness-proof",
+    "commitRequired": true
+  },
+  "wave": "Commit-Required Harness Doctrine Installation",
+  "lane": "repository doctrine and enforcement",
+  "dependencies": [
+    "ASB-2026-07-ONE-COMMAND-HARNESS-PROOF"
+  ],
+  "safeParallelWork": [
+    "Provider and model routing outside runtime-event doctrine paths",
+    "Child-repository product work that does not edit canonical harness contracts",
+    "Review of PR #35 without branch mutation"
+  ],
+  "ownedScope": [
+    "canonical runtime event doctrine and machine-readable policy",
+    "typed runtime event envelope and topology schemas",
+    "contract-only runtime event topology",
+    "correlation and causation fixtures",
+    "focused PowerShell and Python validators",
+    "harness, agent, capability, trigger, artifact, app-graph, and codebase-map wiring",
+    "child-repository adoption template",
+    "public plan and pull-request proof metadata"
+  ],
+  "forbiddenScope": [
+    "live application or launcher execution",
+    "network or provider probing",
+    "target, account, save, customer-data, or deployment mutation",
+    "secrets, private evidence, or raw sensitive payloads",
+    "generated runtime evidence in Git",
+    "unrelated product behavior",
+    "merge, release, force-push, destructive cleanup, or default-branch mutation"
+  ],
+  "expectedArtifacts": [
+    "docs/governance/runtime-event-contract.md",
+    ".ai/harness/runtime-event-contract.policy.json",
+    ".ai/harness/runtime-event-topology.json",
+    ".ai/harness/schemas/runtime-event-envelope.schema.json",
+    ".ai/harness/schemas/runtime-event-topology.schema.json",
+    ".ai/harness/fixtures/runtime-events/root-event.json",
+    ".ai/harness/fixtures/runtime-events/successor-event.json",
+    ".ai/harness/fixtures/runtime-events/broken-chain-event.json",
+    "scripts/Test-RuntimeEventContract.ps1",
+    "tests/test_runtime_event_contract.py",
+    ".github/workflows/runtime-event-contract.yml",
+    "canonical and child-template authority wiring",
+    "exact-head validation evidence"
+  ],
+  "tasks": [
+    {
+      "taskId": "CONTRACT-01",
+      "title": "Define typed runtime event doctrine",
+      "status": "completed",
+      "owner": "repository doctrine lane",
+      "dependencies": [],
+      "inputs": ["Commit-required harness doctrine", "Static app composition graph", "Artifact registry", "Runtime-proof skill"],
+      "outputs": ["Runtime event doctrine", "Policy", "Envelope schema", "Topology schema"],
+      "acceptanceCriteria": [
+        "Required source-to-sink chain is explicit",
+        "Root and successor correlation and causation invariants are explicit",
+        "Emitted envelopes are immutable",
+        "Static and synthetic proof cannot claim runtime delivery"
+      ],
+      "evidence": ["Tracked doctrine, policy, and closed schemas on feat/runtime-event-contract-doctrine"]
+    },
+    {
+      "taskId": "ENFORCE-01",
+      "title": "Install runtime event enforcement",
+      "status": "completed",
+      "owner": "repository doctrine lane",
+      "dependencies": ["CONTRACT-01"],
+      "inputs": ["Canonical AGENTS and doctrine", "Capabilities", "Triggers", "Harness manifest", "App composition graph"],
+      "outputs": ["Runtime event validator", "Synthetic fixtures", "Authority and template wiring"],
+      "acceptanceCriteria": [
+        "Architecture-only event-listener action claims are rejected",
+        "Valid root and successor fixtures pass",
+        "Broken correlation or causation fixtures fail",
+        "Every required runtime contract node is connected to the app observer",
+        "Child templates may strengthen but not weaken the doctrine"
+      ],
+      "evidence": ["Tracked PowerShell validator, Python contract, synthetic fixtures, app-graph nodes and edges, and template policy"]
+    },
+    {
+      "taskId": "PROOF-01",
+      "title": "Validate the exact delivery head",
+      "status": "in-progress",
+      "owner": "repository doctrine lane",
+      "dependencies": ["CONTRACT-01", "ENFORCE-01"],
+      "inputs": ["Runtime event workflow", "Doctrine validators", "App harness", "Public plan and repository-family checks"],
+      "outputs": ["Exact-head Windows and Linux CI evidence", "PR proof metadata"],
+      "acceptanceCriteria": [
+        "Focused runtime event contract passes",
+        "Harness doctrine and instruction validators pass",
+        "Aggregate app harness passes without runtime execution",
+        "Full PR-range hygiene passes",
+        "Branch and PR remain reviewable without force-push"
+      ],
+      "evidence": ["Pending exact-head pull-request workflows"]
+    }
+  ],
+  "validation": [
+    "pwsh -NoLogo -NoProfile -File ./scripts/Test-RuntimeEventContract.ps1",
+    "python tests/test_runtime_event_contract.py",
+    "pwsh -NoLogo -NoProfile -File ./scripts/Test-HarnessDoctrineContract.ps1",
+    "pwsh -NoLogo -NoProfile -File ./scripts/Test-AgentDocumentationContract.ps1",
+    "pwsh -NoLogo -NoProfile -File ./scripts/Test-AppHarness.ps1 with an output directory outside the checkout",
+    "pwsh -NoLogo -NoProfile -File ./scripts/Test-PublicPlanContracts.ps1",
+    "pwsh -NoLogo -NoProfile -File ./scripts/Test-RepositoryFamilyHarness.ps1",
+    "git diff --check for the full pull-request range",
+    "final branch, commit, changed-file, and pull-request review"
+  ],
+  "proof": {
+    "target": "canonical runtime event doctrine, typed envelope and topology contracts, synthetic root-to-successor causality, enforcement wiring, and exact-head cross-platform validation",
+    "achieved": "Tracked doctrine, policy, schemas, topology, fixtures, validators, workflow, authority wiring, and child template are present; exact-head CI is pending.",
+    "ceiling": "Does not prove AgentSwitchboard currently emits, observes, handles, cascades, or records runtime events during application execution. It provides no launcher, provider, network, target, account, save, deployment, merge, or live-target proof."
+  },
+  "handoff": {
+    "nextOwner": "repository doctrine lane",
+    "nextCommand": "gh pr checks --repo EndeavorEverlasting/AgentSwitchboard --watch",
+    "notes": [
+      "Open a stacked pull request against feat/one-command-harness-proof.",
+      "Bind this plan to the actual pull request after creation.",
+      "Record exact-head evidence before completing PROOF-01.",
+      "A later runtime lane must add actual product nodes and correlated observed artifacts before claiming event delivery."
+    ]
+  }
+}
