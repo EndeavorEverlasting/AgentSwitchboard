@@ -8,7 +8,7 @@ Runtime event work registers this chain:
 
 `event source -> typed event envelope -> observer or listener -> handler -> emitted successor event -> artifact or evidence sink`
 
-A root event uses its event ID as correlation ID, has no causation ID, and starts at sequence zero. A successor uses a new event ID, inherits correlation, identifies its parent event as causation, and advances sequence.
+A root event satisfies `correlationId == eventId`, `causationId == null`, and sequence zero. A successor uses a new event ID, inherits correlation, identifies its parent event as causation, and advances sequence.
 
 Emitted envelopes are immutable. Every source, observer, handler, sink, event type, and edge belongs in the repository's machine-readable runtime topology.
 
