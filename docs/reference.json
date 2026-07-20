@@ -1,0 +1,1766 @@
+{
+  "gnhfWorkflow": [
+    {
+      "useCase": "Reproduce proof and repair one failure",
+      "prompt": "P26",
+      "gitMode": "worktree",
+      "iterations": "2",
+      "tokenCap": "180K",
+      "outcome": "Matrix plus at most one repair commit",
+      "useAfter": "Before larger implementation",
+      "stopGate": "Proof floor known",
+      "pasteInto": "Windows PowerShell 7"
+    },
+    {
+      "useCase": "Recover an interrupted run",
+      "prompt": "P27",
+      "gitMode": "current branch",
+      "iterations": "3",
+      "tokenCap": "240K",
+      "outcome": "Preserved state plus one continuation commit",
+      "useAfter": "Restart, timeout, failed finalization",
+      "stopGate": "Known safe state",
+      "pasteInto": "Windows PowerShell 7"
+    },
+    {
+      "useCase": "Make one bounded mutation",
+      "prompt": "P28",
+      "gitMode": "worktree",
+      "iterations": "3",
+      "tokenCap": "300K",
+      "outcome": "One coherent commit",
+      "useAfter": "Known exact sprint",
+      "stopGate": "One mutation validated",
+      "pasteInto": "Windows PowerShell 7"
+    },
+    {
+      "useCase": "Discover and make first mutation",
+      "prompt": "P29",
+      "gitMode": "worktree",
+      "iterations": "3",
+      "tokenCap": "300K",
+      "outcome": "First safe commit",
+      "useAfter": "Unknown or stale repo",
+      "stopGate": "First mutation validated",
+      "pasteInto": "Windows PowerShell 7"
+    },
+    {
+      "useCase": "Execute a finite queue",
+      "prompt": "P30",
+      "gitMode": "worktree",
+      "iterations": "6",
+      "tokenCap": "600K",
+      "outcome": "One commit per item",
+      "useAfter": "1-5 known items",
+      "stopGate": "Every item dispositioned",
+      "pasteInto": "Windows PowerShell 7"
+    },
+    {
+      "useCase": "Finalize an existing diff",
+      "prompt": "P31",
+      "gitMode": "current branch",
+      "iterations": "2",
+      "tokenCap": "180K",
+      "outcome": "Existing change committed",
+      "useAfter": "Uncommitted intended work",
+      "stopGate": "Known commit state",
+      "pasteInto": "Windows PowerShell 7"
+    },
+    {
+      "useCase": "Repair validation or CI",
+      "prompt": "P32",
+      "gitMode": "worktree",
+      "iterations": "5",
+      "tokenCap": "450K",
+      "outcome": "Root-cause commits",
+      "useAfter": "Reproducible required failure",
+      "stopGate": "Required lane green",
+      "pasteInto": "Windows PowerShell 7"
+    },
+    {
+      "useCase": "Harden offline harness",
+      "prompt": "P33",
+      "gitMode": "worktree",
+      "iterations": "6",
+      "tokenCap": "550K",
+      "outcome": "Harness contracts and final matrix",
+      "useAfter": "Proof floor established",
+      "stopGate": "No unexplained failure",
+      "pasteInto": "Windows PowerShell 7"
+    },
+    {
+      "useCase": "Improve technician UX",
+      "prompt": "P34",
+      "gitMode": "worktree",
+      "iterations": "4",
+      "tokenCap": "350K",
+      "outcome": "One clear operator path",
+      "useAfter": "Implemented workflow exists",
+      "stopGate": "Operator blockers cleared",
+      "pasteInto": "Windows PowerShell 7"
+    },
+    {
+      "useCase": "Upgrade one dependency",
+      "prompt": "P35",
+      "gitMode": "worktree",
+      "iterations": "4",
+      "tokenCap": "350K",
+      "outcome": "Reproducible named upgrade",
+      "useAfter": "Official target known",
+      "stopGate": "Only named scope changed",
+      "pasteInto": "Windows PowerShell 7"
+    },
+    {
+      "useCase": "Repair exact PR branch",
+      "prompt": "P36",
+      "gitMode": "worktree",
+      "iterations": "5",
+      "tokenCap": "450K",
+      "outcome": "Scoped local repair commits",
+      "useAfter": "Branch and base known",
+      "stopGate": "Review-ready local diff",
+      "pasteInto": "Windows PowerShell 7"
+    },
+    {
+      "useCase": "Always cap tokens and iterations",
+      "prompt": "Iteration cap alone does not bound context/spend",
+      "gitMode": "Include both --max-iterations and --max-tokens",
+      "iterations": "prevent-sleep does not block Windows Update restart",
+      "tokenCap": "No automatic native agent failover",
+      "outcome": "Use --worktree and no push by default",
+      "useAfter": "Do not inflate static proof into live proof",
+      "stopGate": "P26/P28-P36",
+      "pasteInto": ""
+    },
+    {
+      "useCase": "Keep active queue finite",
+      "prompt": "Open-ended prompts trigger archaeology and negative-proof loops",
+      "gitMode": "No more than five active items",
+      "iterations": "Save exact resume worktree",
+      "tokenCap": "Route switching belongs outside GNHF",
+      "outcome": "One coherent mutation per commit",
+      "useAfter": "Required failures remain failures",
+      "stopGate": "P30",
+      "pasteInto": ""
+    },
+    {
+      "useCase": "Preserve interrupted state",
+      "prompt": "Restart may stop before commit finalization",
+      "gitMode": "Inspect notes/logs/status before rerun",
+      "iterations": "Review update interruption evidence",
+      "tokenCap": "Do not blame provider without logs",
+      "outcome": "Never reset/remove before review",
+      "useAfter": "0 commits does not mean 0 work",
+      "stopGate": "P27/P31",
+      "pasteInto": ""
+    },
+    {
+      "useCase": "Prove agent spawnability",
+      "prompt": "P37",
+      "gitMode": "none",
+      "iterations": "n/a",
+      "tokenCap": "20-second probe",
+      "outcome": "Exact path and spawn result",
+      "useAfter": "Before any new night agent",
+      "stopGate": "Spawn PASS",
+      "pasteInto": "Windows PowerShell 7"
+    },
+    {
+      "useCase": "Compile a night queue",
+      "prompt": "P38",
+      "gitMode": "worktree",
+      "iterations": "2",
+      "tokenCap": "180K",
+      "outcome": "Committed queue plus baseline report",
+      "useAfter": "Before issue-heavy repair",
+      "stopGate": "Queue committed",
+      "pasteInto": "Windows PowerShell 7"
+    },
+    {
+      "useCase": "Execute overnight repairs",
+      "prompt": "P39",
+      "gitMode": "worktree",
+      "iterations": "8",
+      "tokenCap": "800K",
+      "outcome": "Up to three item commits plus report",
+      "useAfter": "After P37 and P38",
+      "stopGate": "No repeated no-progress",
+      "pasteInto": "Windows PowerShell 7"
+    },
+    {
+      "useCase": "Repair one failure cluster",
+      "prompt": "P40",
+      "gitMode": "worktree",
+      "iterations": "7",
+      "tokenCap": "700K",
+      "outcome": "Cluster repair or diagnosis commit",
+      "useAfter": "Noisy exact test failure",
+      "stopGate": "Cluster dispositioned",
+      "pasteInto": "Windows PowerShell 7"
+    },
+    {
+      "useCase": "Repair a stateful app/game safely",
+      "prompt": "P41",
+      "gitMode": "worktree",
+      "iterations": "7",
+      "tokenCap": "650K",
+      "outcome": "Safe code/test commits plus runtime handoff",
+      "useAfter": "Stateful or save-bearing repo",
+      "stopGate": "No personal-state mutation",
+      "pasteInto": "Windows PowerShell 7"
+    },
+    {
+      "useCase": "Refill exhausted queue",
+      "prompt": "P42",
+      "gitMode": "worktree",
+      "iterations": "2",
+      "tokenCap": "220K",
+      "outcome": "Refreshed committed queue",
+      "useAfter": "No ready items remain",
+      "stopGate": "Queue fresh",
+      "pasteInto": "Windows PowerShell 7"
+    },
+    {
+      "useCase": "Recover no-progress run",
+      "prompt": "P43",
+      "gitMode": "current branch",
+      "iterations": "4",
+      "tokenCap": "320K",
+      "outcome": "Recovery report plus at most one continuation commit",
+      "useAfter": "Spawn, quota, timeout, no-diff, finalization",
+      "stopGate": "Failure classified",
+      "pasteInto": "Windows PowerShell 7"
+    },
+    {
+      "useCase": "Close overnight work",
+      "prompt": "P44",
+      "gitMode": "current branch",
+      "iterations": "3",
+      "tokenCap": "240K",
+      "outcome": "Closeout report and clean worktree",
+      "useAfter": "Morning review",
+      "stopGate": "All work dispositioned",
+      "pasteInto": "Windows PowerShell 7"
+    }
+  ],
+  "nightShiftRunbook": [
+    {
+      "scenario": "Scenario",
+      "sequence": "Sequence",
+      "purpose": "Purpose",
+      "inputs": "Mandatory Inputs",
+      "maxWork": "Max Active Work",
+      "checkpoint": "Checkpoint",
+      "stopWhen": "Stop Early When",
+      "morningAction": "Morning Action",
+      "agentRule": "Recommended Agent Rule"
+    },
+    {
+      "scenario": "Generic issue-heavy repo",
+      "sequence": "P37 → P38 → P39 → P42 as needed → P44",
+      "purpose": "Compile and execute a finite local repair queue.",
+      "inputs": "Clean repo; proven agent; issue sources; canonical proof",
+      "maxWork": "5 queued, 3 attempted per run",
+      "checkpoint": "One commit per item plus queue/report update",
+      "stopWhen": "spawn/auth/quota/network failure; 2 no-diff iterations; identical failure repeats",
+      "morningAction": "Review P44 report, then push or open/update PR manually",
+      "agentRule": "Use only an agent whose exact command passed P37"
+    },
+    {
+      "scenario": "AxTask-style noisy failures",
+      "sequence": "P37 → P38 → P40 → P39 or P42 → P44",
+      "purpose": "Cluster many failures by one shared root cause before repair.",
+      "inputs": "Exact failing command; failure output; related tests",
+      "maxWork": "1 cluster, ≤5 related failures",
+      "checkpoint": "Cluster repair commit or diagnosis report commit",
+      "stopWhen": "failures are unrelated; no evidence improvement after 2 attempts",
+      "morningAction": "Review regression proof and remaining clusters",
+      "agentRule": "Prefer the agent with proven repo-language/tool support"
+    },
+    {
+      "scenario": "BlacksmithGuild/stateful game",
+      "sequence": "P37 → P38 → P41 → P42 as needed → P44",
+      "purpose": "Repair code and fixtures without touching personal saves or accounts.",
+      "inputs": "Safety doctrine; queue; deterministic fixtures; forbidden state paths",
+      "maxWork": "3 code-level issues",
+      "checkpoint": "One commit per issue; runtime-proof handoff when needed",
+      "stopWhen": "live proof requires personal or non-disposable state",
+      "morningAction": "Run P08 later with disposable state only",
+      "agentRule": "Do not choose an agent route that requires live account interaction"
+    },
+    {
+      "scenario": "Interrupted or failed run",
+      "sequence": "P43 → P44 or resume prior executor",
+      "purpose": "Classify and preserve exact state before retry.",
+      "inputs": "Exact worktree; gnhf.log; notes; launcher summary; queue/report",
+      "maxWork": "1 continuation/finalization commit",
+      "checkpoint": "Recovery report commit",
+      "stopWhen": "unknown partial mutation; missing evidence; unsafe ownership",
+      "morningAction": "Review preserved branch and exact next command",
+      "agentRule": "Do not rerun the same failed agent after ENOENT without new P37 proof"
+    },
+    {
+      "scenario": "Reliability rule",
+      "sequence": "Observed failure prevented",
+      "purpose": "Required behavior",
+      "inputs": "Prompt owner",
+      "maxWork": "Local deliverable",
+      "checkpoint": "Remote authority",
+      "stopWhen": "Retry ceiling",
+      "morningAction": "Proof rule",
+      "agentRule": "Recovery"
+    },
+    {
+      "scenario": "Spawn before sprint",
+      "sequence": "Codex native adapter failed with spawn ENOENT",
+      "purpose": "P37 runs bounded exact-path child-process probe",
+      "inputs": "P37",
+      "maxWork": "Spawn result outside repo",
+      "checkpoint": "None",
+      "stopWhen": "One probe",
+      "morningAction": "Command presence is not readiness",
+      "agentRule": "Choose proven adapter or configure path override"
+    }
+  ],
+  "variables": [
+    {
+      "variable": "xyz_repo_or_path",
+      "meaning": "repo full name or local path",
+      "example": "EndeavorEverlasting/SysAdminSuite"
+    },
+    {
+      "variable": "xyz_plan_directory",
+      "meaning": "plan/handoff/context path",
+      "example": "docs/handoff/repo-cleanup-map.md"
+    },
+    {
+      "variable": "xyz_sprint_name",
+      "meaning": "current sprint label",
+      "example": "repo-pr-floor-cleanup"
+    },
+    {
+      "variable": "xyz_branch",
+      "meaning": "target branch",
+      "example": "cleanup/pr-floor"
+    },
+    {
+      "variable": "xyz_lane",
+      "meaning": "agent lane",
+      "example": "coordinator / cleanup"
+    },
+    {
+      "variable": "xyz_owned_scope",
+      "meaning": "what this chat owns",
+      "example": "branches, PR repair, merges, closures"
+    },
+    {
+      "variable": "xyz_forbidden_scope",
+      "meaning": "what this chat must not touch",
+      "example": "runtime mutation, unrelated feature work"
+    },
+    {
+      "variable": "xyz_expected_artifacts",
+      "meaning": "files or outputs to produce",
+      "example": "artifacts/latest/harness-validation.result.json"
+    },
+    {
+      "variable": "xyz_validation_order",
+      "meaning": "explicit test order or deferred checks",
+      "example": "targeted checks first; Pester and survey last"
+    },
+    {
+      "variable": "xyz_pr_number",
+      "meaning": "single PR number",
+      "example": "167"
+    },
+    {
+      "variable": "xyz_pr_numbers",
+      "meaning": "PRs or branches to integrate",
+      "example": "167, 168, 170"
+    },
+    {
+      "variable": "xyz_target_base",
+      "meaning": "canonical or release base",
+      "example": "main"
+    },
+    {
+      "variable": "xyz_release_version",
+      "meaning": "version/tag when releasing",
+      "example": "v0.5.0"
+    },
+    {
+      "variable": "xyz_consumer_repos",
+      "meaning": "cross-repo consumers",
+      "example": "EndeavorEverlasting/foundry, EndeavorEverlasting/Continuum"
+    },
+    {
+      "variable": "xyz_dependency_scope",
+      "meaning": "packages/toolchain to upgrade",
+      "example": "Python runtime + lockfile"
+    },
+    {
+      "variable": "xyz_target_versions",
+      "meaning": "target versions or advisory",
+      "example": "Node 22, pnpm 10"
+    },
+    {
+      "variable": "xyz_audience",
+      "meaning": "documentation audience",
+      "example": "field technicians"
+    },
+    {
+      "variable": "xyz_workflow",
+      "meaning": "documented workflow",
+      "example": "install software from admin server"
+    },
+    {
+      "variable": "xyz_environment",
+      "meaning": "deployment environment",
+      "example": "Windows workstation / admin box"
+    },
+    {
+      "variable": "xyz_targets",
+      "meaning": "deployment targets",
+      "example": "test workstation group"
+    },
+    {
+      "variable": "xyz_package",
+      "meaning": "package/service/agent",
+      "example": "goose"
+    },
+    {
+      "variable": "xyz_opportunity_id",
+      "meaning": "Opportunity_Discovery row ID",
+      "example": "17"
+    },
+    {
+      "variable": "xyz_opportunity_status",
+      "meaning": "current implementation status",
+      "example": "Ready now"
+    },
+    {
+      "variable": "xyz_primary_owner",
+      "meaning": "repo or platform owner",
+      "example": "Continuum"
+    },
+    {
+      "variable": "xyz_recommended_prompt",
+      "meaning": "selected executor",
+      "example": "P06"
+    },
+    {
+      "variable": "xyz_evidence",
+      "meaning": "known commit, PR, report, or blocker",
+      "example": "PR #167; local commit 127b6002"
+    },
+    {
+      "variable": "proof level",
+      "meaning": "highest evidence category reached",
+      "example": "harness proof"
+    },
+    {
+      "variable": "xyz_source_prompt_or_path",
+      "meaning": "detailed sprint prompt, plan, or file path",
+      "example": "docs/sprints/offline-harness.md"
+    },
+    {
+      "variable": "xyz_gnhf_agent",
+      "meaning": "selected GNHF agent",
+      "example": "opencode"
+    },
+    {
+      "variable": "xyz_run_profile",
+      "meaning": "bounded autonomy profile",
+      "example": "smoke / nap / overnight / extended"
+    },
+    {
+      "variable": "xyz_canonical_proof",
+      "meaning": "one canonical validation command",
+      "example": "pwsh -File scripts/validate-sysadmin-harness.ps1"
+    },
+    {
+      "variable": "xyz_execution_environment",
+      "meaning": "terminal or shell domain",
+      "example": "WINDOWS POWERSHELL 7 / WEZTERM-TMUX BASH"
+    },
+    {
+      "variable": "xyz_gnhf_worktree_or_branch",
+      "meaning": "known isolated run location",
+      "example": "C:\\dev\\Repo-gnhf-worktrees\\repo-abc123"
+    },
+    {
+      "variable": "xyz_opencode_session",
+      "meaning": "OpenCode session title or ID",
+      "example": "ses_xxx / overnight harness hardening"
+    },
+    {
+      "variable": "xyz_run_symptom",
+      "meaning": "observed GNHF problem",
+      "example": "slow / interrupted / no commits"
+    },
+    {
+      "variable": "xyz_run_evidence",
+      "meaning": "screenshot, transcript, log, or artifact path",
+      "example": "gnhf.log / iteration-1.jsonl"
+    },
+    {
+      "variable": "xyz_bounded_queue",
+      "meaning": "finite ordered list of no more than five GNHF mutation items",
+      "example": "1. schema parity; 2. stale-artifact guard; 3. technician launcher"
+    },
+    {
+      "variable": "xyz_failure_command",
+      "meaning": "exact failing test, validator, CI check, or workflow",
+      "example": "pwsh -File scripts/Test-Harness.ps1"
+    },
+    {
+      "variable": "xyz_required_checks",
+      "meaning": "required checks that may not be downgraded to SKIP",
+      "example": "PowerShell parser; JSON schema; fixture E2E"
+    },
+    {
+      "variable": "xyz_artifact_root",
+      "meaning": "approved ignored output root for generated evidence",
+      "example": "survey/output or artifacts/runtime"
+    },
+    {
+      "variable": "xyz_interruption_reason",
+      "meaning": "known or suspected reason a GNHF run stopped",
+      "example": "Windows update restart / provider timeout / commit failure"
+    },
+    {
+      "variable": "xyz_gnhf_run_id",
+      "meaning": "specific .gnhf run directory or ID when resuming",
+      "example": "20260715-overnight-harness"
+    },
+    {
+      "variable": "xyz_gnhf_agent_spec",
+      "meaning": "exact GNHF agent specification proven by P37",
+      "example": "acp:goose acp"
+    },
+    {
+      "variable": "xyz_agent_command",
+      "meaning": "base executable GNHF or ACP will spawn",
+      "example": "goose"
+    },
+    {
+      "variable": "xyz_agent_probe_args",
+      "meaning": "bounded noninteractive command arguments",
+      "example": "--version"
+    },
+    {
+      "variable": "xyz_spawn_evidence_path",
+      "meaning": "external or ignored spawn-readiness evidence path",
+      "example": "$env:TEMP\\gnhf-spawn-readiness.json"
+    },
+    {
+      "variable": "xyz_issue_sources",
+      "meaning": "read-only issue sources used to compile the queue",
+      "example": "gh issue list; failing tests; TODO.md"
+    },
+    {
+      "variable": "xyz_night_queue_path",
+      "meaning": "tracked finite queue file",
+      "example": "docs/ops/night-shift-queue.md"
+    },
+    {
+      "variable": "xyz_night_report_path",
+      "meaning": "tracked checkpoint and disposition report",
+      "example": "docs/ops/night-shift-report.md"
+    },
+    {
+      "variable": "xyz_night_closeout_path",
+      "meaning": "tracked morning closeout report",
+      "example": "docs/ops/night-shift-closeout.md"
+    },
+    {
+      "variable": "xyz_stateful_runtime_boundary",
+      "meaning": "forbidden personal or live state",
+      "example": "saves, accounts, inventory, production services"
+    }
+  ],
+  "promptSequence": [
+    {
+      "seq": "00",
+      "promptId": "P00",
+      "moment": "Harness Discipline Instructions",
+      "useItFor": "Set baseline behavior before serious repository work.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "produces": "Stable operating doctrine.",
+      "gate": "Rules are active before work.",
+      "then": "Use the task-specific prompt next.",
+      "mutatesRepo": "YES",
+      "authority": "Advisory or bounded support scope",
+      "proofCeiling": "Rules are active before work.",
+      "copySafeSheet": "P00_COPY_SAFE"
+    },
+    {
+      "seq": "01",
+      "promptId": "P01",
+      "moment": "Commit-Required Repo-Local Harness Builder",
+      "useItFor": "Build or repair the complete repo-local harness and leave validated committed contributions.",
+      "doNotUseWhen": "The request is planning-only or another prompt owns a narrower non-harness mutation.",
+      "produces": "Implemented harness files, validators, operator report, commit, and push or PR evidence.",
+      "gate": "Fresh agents can route work and the exact harness validators pass.",
+      "then": "Use P11 or P12.",
+      "mutatesRepo": "Yes",
+      "authority": "Full owned harness and Git/PR authority",
+      "proofCeiling": "Static and repository validation plus commit/push evidence; runtime proof remains separate where applicable.",
+      "copySafeSheet": "P01_COPY_SAFE"
+    },
+    {
+      "seq": "02",
+      "promptId": "P02",
+      "moment": "Conversation Closeout + Ordered Copy-Panel Sprint Mapper",
+      "useItFor": "A chat contains decisions, gaps, unfinished work, or several next-chat lanes.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "produces": "Launch order first, ordered copy panels, then a durable sprint and factoring map.",
+      "gate": "Context is preserved and panel display matches the recommended order.",
+      "then": "Use P03 or P04.",
+      "mutatesRepo": "No",
+      "authority": "Advisory or bounded support scope",
+      "proofCeiling": "Context preventing rework is preserved.",
+      "copySafeSheet": "P02_COPY_SAFE"
+    },
+    {
+      "seq": "03",
+      "promptId": "P03",
+      "moment": "Repository Evidence + First Sprint Executor",
+      "useItFor": "Entering an unfamiliar, stale, or context-heavy repo.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "produces": "Cited evidence pack, ranked queue, and first bounded repo mutation.",
+      "gate": "Path-grounded evidence plus actual repo movement.",
+      "then": "Use P11 or P12.",
+      "mutatesRepo": "YES",
+      "authority": "Repo evidence + first safe bounded mutation",
+      "proofCeiling": "Path-grounded evidence plus actual repo movement.",
+      "copySafeSheet": "P03_COPY_SAFE"
+    },
+    {
+      "seq": "04",
+      "promptId": "P04",
+      "moment": "Repo-Aware Ordered Sprint + Harness Factoring Distributor",
+      "useItFor": "Known repo work needs harness, agent, application, integration ownership, and exact sequencing.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "produces": "Factored, ordered, non-overlapping copy-panel sprint candidates.",
+      "gate": "Dependencies, collisions, triggers, shared owners, and panel sequence are explicit.",
+      "then": "Use P05 or P07.",
+      "mutatesRepo": "No",
+      "authority": "Advisory or bounded support scope",
+      "proofCeiling": "Dependencies and collision risks are explicit.",
+      "copySafeSheet": "P04_COPY_SAFE"
+    },
+    {
+      "seq": "05",
+      "promptId": "P05",
+      "moment": "Ordered Copy-Panel Sprint Plan Pack Generator",
+      "useItFor": "Parallel or sequential chats need one-click launch panels, explicit factoring, and a display order identical to launch order.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "produces": "Launch order at the top plus one self-contained copy panel per sprint lane.",
+      "gate": "No monolithic prompt surface, shared-preamble assembly, or duplicate ownership.",
+      "then": "Launch P06/P07/P08 as required.",
+      "mutatesRepo": "No",
+      "authority": "Advisory or bounded support scope",
+      "proofCeiling": "Every lane has owned and forbidden scope.",
+      "copySafeSheet": "P05_COPY_SAFE"
+    },
+    {
+      "seq": "06",
+      "promptId": "P06",
+      "moment": "Repo / PR Cleanup Executor",
+      "useItFor": "The user wants cherry-picks, repairs, merges, comments, branch mutations, and PR closure.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "produces": "Preserved useful work, repaired/merged/closed PRs, clean base.",
+      "gate": "Actual Git/GitHub mutations and disposition proof.",
+      "then": "Use P07 for remaining feature work or P12 to close.",
+      "mutatesRepo": "YES",
+      "authority": "Full cleanup authority inside scope; preservation-first",
+      "proofCeiling": "Actual Git/GitHub mutations and disposition proof.",
+      "copySafeSheet": "P06_COPY_SAFE"
+    },
+    {
+      "seq": "07",
+      "promptId": "P07",
+      "moment": "Repo Sprint Executor",
+      "useItFor": "The sprint is known and must change code, doctrine, docs, branches, comments, PRs, contracts, or releases.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "produces": "Committed or remotely mutated repo progress with validation.",
+      "gate": "Commit or concrete Git/GitHub mutation evidence.",
+      "then": "Use P11 or P12.",
+      "mutatesRepo": "YES",
+      "authority": "Full bounded repo/Git/GitHub mutation authority",
+      "proofCeiling": "Commit or concrete Git/GitHub mutation evidence.",
+      "copySafeSheet": "P07_COPY_SAFE"
+    },
+    {
+      "seq": "08",
+      "promptId": "P08",
+      "moment": "Live Runtime Proof Executor",
+      "useItFor": "Static checks cannot prove the requested behavior.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "produces": "Observed behavior proof or honest bounded failure.",
+      "gate": "Observed behavior is not confused with ACK/static proof.",
+      "then": "Use P12.",
+      "mutatesRepo": "YES",
+      "authority": "Runtime mutation only inside safety boundary",
+      "proofCeiling": "Live runtime proof",
+      "copySafeSheet": "P08_COPY_SAFE"
+    },
+    {
+      "seq": "09",
+      "promptId": "P09",
+      "moment": "Read-Only Code Intelligence Catalog",
+      "useItFor": "Agents repeatedly waste time finding seams, symbols, contracts, or entry points.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "produces": "Read-only navigation tools, catalogs, and tests.",
+      "gate": "Navigation prerequisites and limits are honest.",
+      "then": "Use P07 faster.",
+      "mutatesRepo": "No",
+      "authority": "Advisory or bounded support scope",
+      "proofCeiling": "Navigation prerequisites and limits are honest.",
+      "copySafeSheet": "P09_COPY_SAFE"
+    },
+    {
+      "seq": "10",
+      "promptId": "P10",
+      "moment": "Local Hook and Artifact Hygiene",
+      "useItFor": "Logs, evidence, secrets, or local artifacts threaten repo cleanliness.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "produces": "Guardrails, hooks, validators, and cleanup guidance.",
+      "gate": "Bad staged artifacts are blocked or warned.",
+      "then": "Use P11.",
+      "mutatesRepo": "No",
+      "authority": "Advisory or bounded support scope",
+      "proofCeiling": "Bad staged artifacts are blocked or warned.",
+      "copySafeSheet": "P10_COPY_SAFE"
+    },
+    {
+      "seq": "11",
+      "promptId": "P11",
+      "moment": "End-to-End Harness Validator",
+      "useItFor": "Implementation needs a repeatable PASS/SKIP/FAIL gate.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "produces": "Validation matrix and machine-readable result.",
+      "gate": "Skipped checks are not reported as passes.",
+      "then": "Use P12.",
+      "mutatesRepo": "No",
+      "authority": "Advisory or bounded support scope",
+      "proofCeiling": "Harness/static/build proof",
+      "copySafeSheet": "P11_COPY_SAFE"
+    },
+    {
+      "seq": "12",
+      "promptId": "P12",
+      "moment": "Final Handoff Compressor",
+      "useItFor": "A serious sprint is complete or blocked and the next chat must continue cleanly.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "produces": "Concise next-agent handoff and exact next command.",
+      "gate": "No archaeology is required.",
+      "then": "Start next sprint.",
+      "mutatesRepo": "No",
+      "authority": "Advisory or bounded support scope",
+      "proofCeiling": "No archaeology is required.",
+      "copySafeSheet": "P12_COPY_SAFE"
+    },
+    {
+      "seq": "13",
+      "promptId": "P13",
+      "moment": "Self-Improving Rules Review",
+      "useItFor": "A mistake, explanation, or setup problem repeats.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "produces": "Small proposed rule/validator/hook changes.",
+      "gate": "Rules remain bounded and useful.",
+      "then": "Operator approves or P07 implements.",
+      "mutatesRepo": "No",
+      "authority": "Advisory or bounded support scope",
+      "proofCeiling": "Rules remain bounded and useful.",
+      "copySafeSheet": "P13_COPY_SAFE"
+    },
+    {
+      "seq": "14",
+      "promptId": "P14",
+      "moment": "Pull Request Review + Repair Executor",
+      "useItFor": "One PR has requested changes, failing checks, drift, or scope defects.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "produces": "Applied repairs, pushed commits, updated PR and review state.",
+      "gate": "Exact-head repair and PR-update evidence.",
+      "then": "Use P15 when merge-ready.",
+      "mutatesRepo": "YES",
+      "authority": "Existing PR branch and PR metadata",
+      "proofCeiling": "Exact-head repair and PR-update evidence.",
+      "copySafeSheet": "P14_COPY_SAFE"
+    },
+    {
+      "seq": "15",
+      "promptId": "P15",
+      "moment": "Merge + Release Executor",
+      "useItFor": "Validated PRs or branches are ready to integrate, tag, or publish.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "produces": "Merges, closures, tags, releases, refreshed canonical base.",
+      "gate": "Merge/release artifacts and SHAs exist.",
+      "then": "Use P12.",
+      "mutatesRepo": "YES",
+      "authority": "Approved merge/release authority",
+      "proofCeiling": "Merge/release proof",
+      "copySafeSheet": "P15_COPY_SAFE"
+    },
+    {
+      "seq": "16",
+      "promptId": "P16",
+      "moment": "Cross-Repo Contribution Router",
+      "useItFor": "A donor repo contains reusable harness, skills, schemas, or adapters.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "produces": "Versioned contribution manifest/schema/adapter and repo changes.",
+      "gate": "No duplicated or circular authority.",
+      "then": "Use P11 or P12.",
+      "mutatesRepo": "YES",
+      "authority": "Owned donor/consumer contribution surfaces",
+      "proofCeiling": "No duplicated or circular authority.",
+      "copySafeSheet": "P16_COPY_SAFE"
+    },
+    {
+      "seq": "17",
+      "promptId": "P17",
+      "moment": "Dependency + Toolchain Upgrade Executor",
+      "useItFor": "Packages, runtimes, actions, SDKs, images, or toolchains need updating.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "produces": "Resolved upgrade with repaired code/config/tests/docs.",
+      "gate": "Reproducible lockfiles and compatibility proof.",
+      "then": "Use P11 or P12.",
+      "mutatesRepo": "YES",
+      "authority": "Owned dependency and compatibility surfaces",
+      "proofCeiling": "Reproducible lockfiles and compatibility proof.",
+      "copySafeSheet": "P17_COPY_SAFE"
+    },
+    {
+      "seq": "18",
+      "promptId": "P18",
+      "moment": "Documentation + Tutorial Executor",
+      "useItFor": "Users or technicians need executable instructions, not hidden snippets.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "produces": "Repo docs, help, examples, validators, and navigation updates.",
+      "gate": "Docs match implemented behavior and examples validate.",
+      "then": "Use P12.",
+      "mutatesRepo": "YES",
+      "authority": "Owned docs/help/examples and supporting validators",
+      "proofCeiling": "Docs match implemented behavior and examples validate.",
+      "copySafeSheet": "P18_COPY_SAFE"
+    },
+    {
+      "seq": "19",
+      "promptId": "P19",
+      "moment": "Installation + Deployment Executor",
+      "useItFor": "Software, services, agents, or packages must be installed, configured, or deployed.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "produces": "Applied deployment, health proof, cleanup, and rollback record.",
+      "gate": "State/version/health evidence supports the claim.",
+      "then": "Use P08 for live behavior or P12.",
+      "mutatesRepo": "YES",
+      "authority": "Approved environment and deployment targets",
+      "proofCeiling": "Deployment/health proof",
+      "copySafeSheet": "P19_COPY_SAFE"
+    },
+    {
+      "seq": "20",
+      "promptId": "P20",
+      "moment": "Opportunity-to-Sprint Executor",
+      "useItFor": "An opportunity row is selected and should become repo progress without rewriting another prompt.",
+      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
+      "produces": "Repo/PR mutations plus exact status/evidence updates for the row.",
+      "gate": "Opportunity disposition is grounded in repo evidence.",
+      "then": "Use P11/P12.",
+      "mutatesRepo": "YES",
+      "authority": "Selected opportunity and its owned repo scope",
+      "proofCeiling": "Opportunity disposition is grounded in repo evidence.",
+      "copySafeSheet": "P20_COPY_SAFE"
+    },
+    {
+      "seq": "21",
+      "promptId": "P21",
+      "moment": "Many-to-One Prompt Consolidation",
+      "useItFor": "Several prompts, handoffs, or artifact requirements must become one executable mission.",
+      "doNotUseWhen": "Only one already-bounded prompt is needed.",
+      "produces": "Disposition ledger, one execution prompt, and immediate execution when safe.",
+      "gate": "Every source requirement has a disposition and the mission is bounded.",
+      "then": "Use P11/P12.",
+      "mutatesRepo": "YES",
+      "authority": "Source requirements + repo evidence + bounded execution authority",
+      "proofCeiling": "Evidence-backed consolidated mission and execution proof.",
+      "copySafeSheet": "P21_COPY_SAFE"
+    },
+    {
+      "seq": "22",
+      "promptId": "P22",
+      "moment": "Cross-Repo Gap Priority Planner",
+      "useItFor": "Several repositories could receive the same insight and verified gaps should determine the first target.",
+      "doNotUseWhen": "Current circumstances rather than structural gaps should dominate the choice.",
+      "produces": "Gap-ranked repo portfolio, exact launch order, and self-contained repo panels.",
+      "gate": "The top repository is evidence-backed and distinguished from the largest raw gap.",
+      "then": "Launch the top panel or use P16/P07.",
+      "mutatesRepo": "No",
+      "authority": "Advisory portfolio-planning authority",
+      "proofCeiling": "Portfolio ranking proof only; no implementation proof.",
+      "copySafeSheet": "P22_COPY_SAFE"
+    },
+    {
+      "seq": "23",
+      "promptId": "P23",
+      "moment": "Circumstance-Aware Repo Priority Planner",
+      "useItFor": "Current timing, access, urgency, active PRs, environment, or risk should determine which repository moves first.",
+      "doNotUseWhen": "The decision should be based mainly on structural gaps rather than the operating situation.",
+      "produces": "Circumstance-ranked repo order, reassessment triggers, and self-contained repo panels.",
+      "gate": "The ranking is timestamped, evidence-backed, and keeps gap score separate.",
+      "then": "Launch the first panel or reassess when circumstances change.",
+      "mutatesRepo": "No",
+      "authority": "Advisory circumstance-planning authority",
+      "proofCeiling": "Circumstance-ranking proof only; no implementation proof.",
+      "copySafeSheet": "P23_COPY_SAFE"
+    },
+    {
+      "seq": "24",
+      "promptId": "P24",
+      "moment": "App-at-Hand Usage Coach",
+      "useItFor": "The user has an app, screen, file, or workflow in front of them and needs practical operating instructions.",
+      "doNotUseWhen": "Repository documentation must be changed or the app itself must be implemented or repaired.",
+      "produces": "Exact first action, quick start, interface map, task recipes, safety boundaries, troubleshooting, shortcuts, and next step.",
+      "gate": "Instructions are grounded in current evidence and uncertainty is explicit.",
+      "then": "Use the app or use P18 to codify durable documentation.",
+      "mutatesRepo": "No",
+      "authority": "Advisory user-enablement authority",
+      "proofCeiling": "Grounded guidance only; no runtime or operator-success proof.",
+      "copySafeSheet": "P24_COPY_SAFE"
+    },
+    {
+      "seq": "25",
+      "promptId": "P25",
+      "moment": "Repo Tutorial Opportunity Planner",
+      "useItFor": "The repo should be audited to determine which user journeys deserve tutorial sprints.",
+      "doNotUseWhen": "The user only needs immediate coaching, or an already-selected tutorial must be implemented now.",
+      "produces": "Ranked tutorial paths, readiness classifications, dispositions, launch order, and self-contained sprint panels.",
+      "gate": "The top tutorial is supported by current implementation and evidence.",
+      "then": "Launch P18, P07, or P08 according to the prerequisite.",
+      "mutatesRepo": "No",
+      "authority": "Advisory tutorial-portfolio planning authority",
+      "proofCeiling": "Tutorial ranking proof only; no tutorial implementation or operator acceptance proof.",
+      "copySafeSheet": "P25_COPY_SAFE"
+    },
+    {
+      "seq": "26",
+      "promptId": "P26",
+      "moment": "GNHF Proof Floor Reproducer",
+      "useItFor": "The validation floor must be established before a larger autonomous lane.",
+      "doNotUseWhen": "A larger implementation lane should begin before its proof floor is known.",
+      "produces": "Current matrix plus one focused repair commit when necessary.",
+      "gate": "Proof is reproduced; required failures are repaired or explained.",
+      "then": "Use P28/P30/P32/P33 next.",
+      "mutatesRepo": "Yes",
+      "authority": "Validation floor and one focused repair commit",
+      "proofCeiling": "Proof is reproduced; required failures are repaired or explained.",
+      "copySafeSheet": "P26_COPY_SAFE"
+    },
+    {
+      "seq": "27",
+      "promptId": "P27",
+      "moment": "GNHF Interrupted Run Recovery",
+      "useItFor": "A preserved run stopped because of restart, timeout, failed validation, or failed finalization.",
+      "doNotUseWhen": "No preserved worktree exists or the run completed normally.",
+      "produces": "Evidence-backed recovery and at most one continuation commit.",
+      "gate": "No destructive cleanup; saved work is preserved and dispositioned.",
+      "then": "Use P11/P12 after completion or P31 for commit-only repair.",
+      "mutatesRepo": "Yes",
+      "authority": "Preservation and continuation in the exact existing worktree",
+      "proofCeiling": "No destructive cleanup; saved work is preserved and dispositioned.",
+      "copySafeSheet": "P27_COPY_SAFE"
+    },
+    {
+      "seq": "28",
+      "promptId": "P28",
+      "moment": "GNHF Single Mutation",
+      "useItFor": "One concrete sprint should produce one coherent validated commit.",
+      "doNotUseWhen": "The work contains several independent items; use P30.",
+      "produces": "One tracked mutation, one commit, and focused validation.",
+      "gate": "One owned mutation is committed and validated.",
+      "then": "Use P11/P12 or another atomic lane.",
+      "mutatesRepo": "Yes",
+      "authority": "One tracked mutation and local GNHF commit",
+      "proofCeiling": "One owned mutation is committed and validated.",
+      "copySafeSheet": "P28_COPY_SAFE"
+    },
+    {
+      "seq": "29",
+      "promptId": "P29",
+      "moment": "GNHF Repo-First Mutation",
+      "useItFor": "The repository is unfamiliar or stale but should move in the first run.",
+      "doNotUseWhen": "The repo and exact mutation are already known; use P28.",
+      "produces": "At most three candidates and the first safe mutation commit.",
+      "gate": "First mutation occurs without repository-wide archaeology.",
+      "then": "Use P28/P30 or P11/P12.",
+      "mutatesRepo": "Yes",
+      "authority": "Compact discovery followed by first tracked mutation",
+      "proofCeiling": "First mutation occurs without repository-wide archaeology.",
+      "copySafeSheet": "P29_COPY_SAFE"
+    },
+    {
+      "seq": "30",
+      "promptId": "P30",
+      "moment": "GNHF Finite Queue",
+      "useItFor": "A small ordered backlog is already known.",
+      "doNotUseWhen": "The queue is open-ended or larger than five active items.",
+      "produces": "One coherent commit per item and final disposition ledger.",
+      "gate": "Every supplied item is dispositioned and required proof passes.",
+      "then": "Use P11/P12 or P27 after interruption.",
+      "mutatesRepo": "Yes",
+      "authority": "Tracked mutations limited to the supplied queue",
+      "proofCeiling": "Every supplied item is dispositioned and required proof passes.",
+      "copySafeSheet": "P30_COPY_SAFE"
+    },
+    {
+      "seq": "31",
+      "promptId": "P31",
+      "moment": "GNHF Commit Finalization Repair",
+      "useItFor": "A worktree already contains an intended change that failed validation or commit finalization.",
+      "doNotUseWhen": "No intended uncommitted change exists.",
+      "produces": "The existing change is committed or preserved with an exact blocker.",
+      "gate": "No new feature begins; existing work reaches a known commit state.",
+      "then": "Use P11/P12 or P27.",
+      "mutatesRepo": "Yes",
+      "authority": "Existing diff repair and commit finalization only",
+      "proofCeiling": "No new feature begins; existing work reaches a known commit state.",
+      "copySafeSheet": "P31_COPY_SAFE"
+    },
+    {
+      "seq": "32",
+      "promptId": "P32",
+      "moment": "GNHF Validation and CI Repair",
+      "useItFor": "A required test, validator, fixture, schema, or workflow is reproducibly failing.",
+      "doNotUseWhen": "The work is a new feature rather than a reproducible required failure.",
+      "produces": "Root-cause repair commits and executable regression proof.",
+      "gate": "Required failures pass without suppression or downgrade.",
+      "then": "Use P11/P12 or P36.",
+      "mutatesRepo": "Yes",
+      "authority": "Required validation, fixture, schema, test, and CI repair",
+      "proofCeiling": "Required failures pass without suppression or downgrade.",
+      "copySafeSheet": "P32_COPY_SAFE"
+    },
+    {
+      "seq": "33",
+      "promptId": "P33",
+      "moment": "GNHF Harness Hardening",
+      "useItFor": "An offline harness needs deterministic parity, failure paths, or artifact integrity.",
+      "doNotUseWhen": "The work requires live targets or real packages.",
+      "produces": "Bounded harness commits and final PASS/SKIP/FAIL evidence.",
+      "gate": "Zero unexplained required failures and contained evidence.",
+      "then": "Use P11/P12; route live proof to P08.",
+      "mutatesRepo": "Yes",
+      "authority": "Offline harness, artifact, fixture, schema, and CI mutation",
+      "proofCeiling": "Zero unexplained required failures and contained evidence.",
+      "copySafeSheet": "P33_COPY_SAFE"
+    },
+    {
+      "seq": "34",
+      "promptId": "P34",
+      "moment": "GNHF Technician Experience",
+      "useItFor": "Users should not need to recover commands from chat or guess the terminal.",
+      "doNotUseWhen": "The user only needs immediate coaching rather than repo mutation.",
+      "produces": "Launcher/help/docs/example commits and validated guidance.",
+      "gate": "One clear implemented operator path remains.",
+      "then": "Use P11/P12 and field acceptance.",
+      "mutatesRepo": "Yes",
+      "authority": "Launcher, help, docs, examples, and operator contracts",
+      "proofCeiling": "One clear implemented operator path remains.",
+      "copySafeSheet": "P34_COPY_SAFE"
+    },
+    {
+      "seq": "35",
+      "promptId": "P35",
+      "moment": "GNHF Dependency Maintenance",
+      "useItFor": "One evidence-backed version or toolchain update is ready for bounded execution.",
+      "doNotUseWhen": "The upgrade scope is broad, interactive, or unverified.",
+      "produces": "Reproducible upgrade commits and compatibility proof.",
+      "gate": "Only the named scope changes and checks pass.",
+      "then": "Use P11/P12 or P36.",
+      "mutatesRepo": "Yes",
+      "authority": "Named dependency manifests, lockfiles, and compatibility repairs",
+      "proofCeiling": "Only the named scope changes and checks pass.",
+      "copySafeSheet": "P35_COPY_SAFE"
+    },
+    {
+      "seq": "36",
+      "promptId": "P36",
+      "moment": "GNHF PR Branch Repair",
+      "useItFor": "An exact branch has review, CI, drift, regression, or scope defects.",
+      "doNotUseWhen": "The exact branch or target base cannot be identified.",
+      "produces": "Scoped local repair commits and a review-ready final diff.",
+      "gate": "Exact-head repair queue is empty and local proof passes.",
+      "then": "Human push/review, then P15 or P12.",
+      "mutatesRepo": "Yes",
+      "authority": "Exact PR-branch local repair; no remote mutation by default",
+      "proofCeiling": "Exact-head repair queue is empty and local proof passes.",
+      "copySafeSheet": "P36_COPY_SAFE"
+    },
+    {
+      "seq": "37",
+      "promptId": "P37",
+      "moment": "GNHF Agent Spawn Readiness Preflight",
+      "useItFor": "A new agent, adapter, shell domain, or workstation must be proven before a long unattended run.",
+      "doNotUseWhen": "The exact agent command has already passed a bounded child-process spawn test in the current shell.",
+      "produces": "Spawnability result with exact path, timeout behavior, exit code, and next action.",
+      "gate": "The command is spawnable without timeout and no command-presence-only claim is made.",
+      "then": "Use P38 after PASS; fix the adapter or choose another proven agent after FAIL.",
+      "mutatesRepo": "No",
+      "authority": "Read-only shell and repository readiness authority",
+      "proofCeiling": "Spawn and path proof only; no hosted inference or repository mutation proof.",
+      "copySafeSheet": "P37_COPY_SAFE"
+    },
+    {
+      "seq": "38",
+      "promptId": "P38",
+      "moment": "GNHF Night Queue Compiler",
+      "useItFor": "An issue-heavy repo needs a finite executable queue before an overnight repair run.",
+      "doNotUseWhen": "A current committed queue already contains ready items with exact acceptance commands.",
+      "produces": "Committed queue and baseline report with no more than five items.",
+      "gate": "Every item is evidence-backed, owned, dependency-aware, and exactly testable.",
+      "then": "Use P39, P40, or P41.",
+      "mutatesRepo": "Yes",
+      "authority": "Queue and report files only; no product-code repair",
+      "proofCeiling": "Planning artifact commit only; no repair or runtime proof.",
+      "copySafeSheet": "P38_COPY_SAFE"
+    },
+    {
+      "seq": "39",
+      "promptId": "P39",
+      "moment": "GNHF Overnight Repair Batch",
+      "useItFor": "A committed queue contains ready local code repairs and the selected agent passed P37.",
+      "doNotUseWhen": "The work is remote-only, open-ended, lacks exact validation, or requires live interaction.",
+      "produces": "Up to three queue-item commits plus updated queue and night report.",
+      "gate": "Every attempted item is committed or blocked with evidence; repeated no-progress stops the run.",
+      "then": "Use P42, P43, or P44.",
+      "mutatesRepo": "Yes",
+      "authority": "Local code, tests, queue, and report within supplied scope",
+      "proofCeiling": "Committed local repair proof only; no remote integration or live behavior claim.",
+      "copySafeSheet": "P39_COPY_SAFE"
+    },
+    {
+      "seq": "40",
+      "promptId": "P40",
+      "moment": "GNHF Failure Cluster Repair",
+      "useItFor": "One exact test or validator produces many related failures that can be clustered by root cause.",
+      "doNotUseWhen": "Failures are unrelated or no exact reproducible command exists.",
+      "produces": "One repaired cluster with regression proof or a committed diagnosis report.",
+      "gate": "At most five related failures are handled without suppressing required checks.",
+      "then": "Use P39 or P42.",
+      "mutatesRepo": "Yes",
+      "authority": "One bounded root-cause cluster",
+      "proofCeiling": "Offline failure and regression proof; no broad backlog completion claim.",
+      "copySafeSheet": "P40_COPY_SAFE"
+    },
+    {
+      "seq": "41",
+      "promptId": "P41",
+      "moment": "GNHF Stateful App / Game Safe Repair",
+      "useItFor": "A stateful app or game needs code repairs but personal saves, accounts, resources, or production state must remain untouched.",
+      "doNotUseWhen": "The requested proof requires unavoidable mutation of personal or non-disposable state.",
+      "produces": "Up to three code-level repair commits and a runtime-proof handoff when needed.",
+      "gate": "All work stays in code, tests, fixtures, or explicitly disposable runtime state.",
+      "then": "Use P08 later for live proof; otherwise P42 or P44.",
+      "mutatesRepo": "Yes",
+      "authority": "Code, tests, deterministic fixtures, and safety report",
+      "proofCeiling": "Code and deterministic test proof only unless disposable runtime proof is actually observed.",
+      "copySafeSheet": "P41_COPY_SAFE"
+    },
+    {
+      "seq": "42",
+      "promptId": "P42",
+      "moment": "GNHF Night Queue Refill",
+      "useItFor": "The current queue is exhausted, stale, or blocked and a new bounded set is needed.",
+      "doNotUseWhen": "Ready items remain in the current queue.",
+      "produces": "Refreshed committed queue preserving prior dispositions.",
+      "gate": "No product code changes and no more than five new ready items.",
+      "then": "Return to P39, P40, or P41.",
+      "mutatesRepo": "Yes",
+      "authority": "Queue and report refresh only",
+      "proofCeiling": "Queue freshness proof only; no repair claim.",
+      "copySafeSheet": "P42_COPY_SAFE"
+    },
+    {
+      "seq": "43",
+      "promptId": "P43",
+      "moment": "GNHF Night Run Recovery",
+      "useItFor": "A preserved run stopped or made no progress and its exact state must be classified before retry.",
+      "doNotUseWhen": "No preserved worktree or run evidence exists.",
+      "produces": "Committed recovery report plus at most one continuation or finalization commit.",
+      "gate": "No destructive cleanup or blind repetition of the original failure.",
+      "then": "Resume with a proven agent or use P44.",
+      "mutatesRepo": "Yes",
+      "authority": "Exact preserved worktree and recovery artifacts",
+      "proofCeiling": "Recovery and preserved-state proof; no claim beyond observed continuation.",
+      "copySafeSheet": "P43_COPY_SAFE"
+    },
+    {
+      "seq": "44",
+      "promptId": "P44",
+      "moment": "GNHF Morning Closeout",
+      "useItFor": "Overnight work must be reconciled, validated, and made reviewable.",
+      "doNotUseWhen": "New feature implementation is still required.",
+      "produces": "Committed closeout report, final validation matrix, clean worktree, and exact next command.",
+      "gate": "All overnight commits and blockers are dispositioned; exit code alone is never success.",
+      "then": "Human review, push, PR update, or next queue.",
+      "mutatesRepo": "Yes",
+      "authority": "Validation, report, and finalization of existing overnight work",
+      "proofCeiling": "Closeout and local proof only; no push, merge, or release proof.",
+      "copySafeSheet": "P44_COPY_SAFE"
+    }
+  ],
+  "classLegend": [
+    {
+      "promptType": "SETUP",
+      "promptClass": "SETUP / DOCTRINE",
+      "promptIds": "P00-P01",
+      "whenToUse": "Install operating law and repo harness",
+      "progressUse": "YES/Support",
+      "proofGate": "P00 doctrine commit and P01 harness surfaces exist",
+      "fillRole": "Baseline",
+      "fillHex": "#F1F5F9",
+      "color": "Slate",
+      "meaning": "P00 commits doctrine; P01 builds the broader repo-local harness."
+    },
+    {
+      "promptType": "HARVEST",
+      "promptClass": "CLOSEOUT / CONVERSATION",
+      "promptIds": "P02",
+      "whenToUse": "Preserve long-chat decisions and emit ordered launch panels",
+      "progressUse": "No",
+      "proofGate": "Context prevents rework",
+      "fillRole": "Conversation intake",
+      "fillHex": "#E5E7EB",
+      "color": "Gray",
+      "meaning": "Context preservation and handoff; records state without active mutation."
+    },
+    {
+      "promptType": "DISCOVERY + BUILD",
+      "promptClass": "REPO / EVIDENCE + ACTION",
+      "promptIds": "P03",
+      "whenToUse": "Unknown or stale repo",
+      "progressUse": "YES",
+      "proofGate": "Evidence plus first mutation",
+      "fillRole": "Repo entry",
+      "fillHex": "#E0F2FE",
+      "color": "Sky",
+      "meaning": "Repository discovery plus the first safe evidence-backed action."
+    },
+    {
+      "promptType": "PLAN",
+      "promptClass": "PLAN / DISTRIBUTE + PACK",
+      "promptIds": "P04-P05",
+      "whenToUse": "Classify and package bounded lanes",
+      "progressUse": "No",
+      "proofGate": "Scope, order, and dependencies explicit",
+      "fillRole": "Planning",
+      "fillHex": "#FEF3C7",
+      "color": "Amber",
+      "meaning": "Planning, sequencing, factoring, or distribution of bounded work."
+    },
+    {
+      "promptType": "CLEANUP",
+      "promptClass": "REPO / PR CLEANUP",
+      "promptIds": "P06",
+      "whenToUse": "Clean branches, worktrees, and PRs",
+      "progressUse": "YES",
+      "proofGate": "Preservation and Git/GitHub mutations",
+      "fillRole": "Cleanup",
+      "fillHex": "#DBEAFE",
+      "color": "Blue",
+      "meaning": "Preservation-first cleanup of branches, worktrees, and pull requests."
+    },
+    {
+      "promptType": "BUILD",
+      "promptClass": "SPRINT / BUILD + MUTATE",
+      "promptIds": "P07",
+      "whenToUse": "Any bounded repo implementation",
+      "progressUse": "YES",
+      "proofGate": "Commit or mutation evidence",
+      "fillRole": "General execution",
+      "fillHex": "#DCFCE7",
+      "color": "Green",
+      "meaning": "Owned implementation or repository mutation with proof."
+    },
+    {
+      "promptType": "RUNTIME PROOF",
+      "promptClass": "RUNTIME / PROVE",
+      "promptIds": "P08",
+      "whenToUse": "Live behavior required",
+      "progressUse": "Conditional",
+      "proofGate": "Observed behavior chain",
+      "fillRole": "Runtime",
+      "fillHex": "#FFE4E6",
+      "color": "Rose",
+      "meaning": "Live or runtime behavior must be observed and evidenced."
+    },
+    {
+      "promptType": "LEVERAGE",
+      "promptClass": "LEVERAGE / NAVIGATE",
+      "promptIds": "P09",
+      "whenToUse": "Read-only code intelligence",
+      "progressUse": "Support",
+      "proofGate": "Navigation prerequisites proven",
+      "fillRole": "Navigation",
+      "fillHex": "#F3E8FF",
+      "color": "Purple",
+      "meaning": "Read-only navigation, code intelligence, or leverage work."
+    },
+    {
+      "promptType": "SAFETY",
+      "promptClass": "SAFETY / HYGIENE",
+      "promptIds": "P10",
+      "whenToUse": "Artifact and secret hygiene",
+      "progressUse": "Support",
+      "proofGate": "Bad staging blocked",
+      "fillRole": "Guardrail",
+      "fillHex": "#FFEDD5",
+      "color": "Peach",
+      "meaning": "Safety, artifact hygiene, secret protection, and mutation guardrails."
+    },
+    {
+      "promptType": "VALIDATE",
+      "promptClass": "VALIDATE / GATE",
+      "promptIds": "P11",
+      "whenToUse": "Aggregate proof",
+      "progressUse": "Proof",
+      "proofGate": "PASS/SKIP/FAIL matrix",
+      "fillRole": "Validation",
+      "fillHex": "#CCFBF1",
+      "color": "Teal",
+      "meaning": "Validation, acceptance gates, and PASS/SKIP/FAIL proof."
+    },
+    {
+      "promptType": "CLOSEOUT",
+      "promptClass": "CLOSEOUT / HANDOFF",
+      "promptIds": "P12",
+      "whenToUse": "End serious sprint",
+      "progressUse": "Mandatory",
+      "proofGate": "Exact next state preserved",
+      "fillRole": "Closeout",
+      "fillHex": "#E5E7EB",
+      "color": "Gray",
+      "meaning": "Compress exact state, gaps, and next command without new implementation."
+    },
+    {
+      "promptType": "IMPROVE",
+      "promptClass": "IMPROVE / RULES",
+      "promptIds": "P13",
+      "whenToUse": "Repeated pain becomes doctrine",
+      "progressUse": "Support",
+      "proofGate": "Small bounded proposals",
+      "fillRole": "Learning",
+      "fillHex": "#EDE9FE",
+      "color": "Lavender",
+      "meaning": "Turn repeated friction into bounded doctrine or harness improvements."
+    },
+    {
+      "promptType": "REVIEW + REPAIR",
+      "promptClass": "PR / REVIEW REPAIR",
+      "promptIds": "P14",
+      "whenToUse": "One PR is broken or reviewed",
+      "progressUse": "YES",
+      "proofGate": "Exact-head repair and PR update",
+      "fillRole": "PR repair",
+      "fillHex": "#CFFAFE",
+      "color": "Cyan",
+      "meaning": "Review and repair a specific pull request at its exact head."
+    },
+    {
+      "promptType": "INTEGRATE",
+      "promptClass": "MERGE / RELEASE",
+      "promptIds": "P15",
+      "whenToUse": "Ready work must land",
+      "progressUse": "YES",
+      "proofGate": "Merge/tag/release evidence",
+      "fillRole": "Integration",
+      "fillHex": "#E0E7FF",
+      "color": "Indigo",
+      "meaning": "Integrate, merge, tag, release, or refresh the canonical base."
+    },
+    {
+      "promptType": "INTEROP",
+      "promptClass": "CROSS-REPO / CONTRIBUTE",
+      "promptIds": "P16",
+      "whenToUse": "Portable insight spans repos",
+      "progressUse": "YES",
+      "proofGate": "Versioned ownership-safe contribution",
+      "fillRole": "Interop",
+      "fillHex": "#CCFBF1",
+      "color": "Blue-Green",
+      "meaning": "Contribute portable insight or interoperability across repositories."
+    },
+    {
+      "promptType": "MAINTENANCE",
+      "promptClass": "DEPENDENCY / UPGRADE",
+      "promptIds": "P17",
+      "whenToUse": "Upgrade packages/toolchain",
+      "progressUse": "YES",
+      "proofGate": "Reproducible compatibility proof",
+      "fillRole": "Maintenance",
+      "fillHex": "#FEF3C7",
+      "color": "Gold",
+      "meaning": "Upgrade dependencies or toolchains with reproducible compatibility proof."
+    },
+    {
+      "promptType": "ENABLEMENT",
+      "promptClass": "DOCS / TUTORIAL + APP USAGE",
+      "promptIds": "P18, P24",
+      "whenToUse": "Create durable docs or learn the current app",
+      "progressUse": "YES/Support",
+      "proofGate": "Docs validate; guidance is evidence-grounded",
+      "fillRole": "Enablement",
+      "fillHex": "#FDE68A",
+      "color": "Sand",
+      "meaning": "Documentation, tutorials, and in-context app guidance tied to real behavior."
+    },
+    {
+      "promptType": "OPERATE",
+      "promptClass": "DEPLOY / INSTALL",
+      "promptIds": "P19",
+      "whenToUse": "Install/deploy/upgrade target",
+      "progressUse": "YES",
+      "proofGate": "State/version/health proof",
+      "fillRole": "Operations",
+      "fillHex": "#FED7AA",
+      "color": "Orange",
+      "meaning": "Install, deploy, upgrade, or operate a target with health proof."
+    },
+    {
+      "promptType": "OPPORTUNITY",
+      "promptClass": "OPPORTUNITY / EXECUTE",
+      "promptIds": "P20",
+      "whenToUse": "Selected opportunity must become work",
+      "progressUse": "YES",
+      "proofGate": "Repo disposition plus row updates",
+      "fillRole": "Opportunity",
+      "fillHex": "#D1FAE5",
+      "color": "Emerald",
+      "meaning": "Execute a selected opportunity and update its disposition."
+    },
+    {
+      "promptType": "CONSOLIDATE + EXECUTE",
+      "promptClass": "PLAN + BUILD / CONSOLIDATE",
+      "promptIds": "P21",
+      "whenToUse": "Many prompts become one bounded mission",
+      "progressUse": "YES",
+      "proofGate": "Disposition ledger plus execution evidence",
+      "fillRole": "Consolidation",
+      "fillHex": "#FEF3C7",
+      "color": "Amber",
+      "meaning": "Consolidate several prompts without losing requirements; execute the immediate mission when safe."
+    },
+    {
+      "promptType": "PORTFOLIO PLAN",
+      "promptClass": "PORTFOLIO / GAP PRIORITY",
+      "promptIds": "P22",
+      "whenToUse": "Choose which repo receives an insight first by verified gaps",
+      "progressUse": "No",
+      "proofGate": "Evidence-backed portfolio ranking",
+      "fillRole": "Gap portfolio",
+      "fillHex": "#FFE4E6",
+      "color": "Coral",
+      "meaning": "Prioritize repositories by actionable gap, leverage, tractability, and proof readiness."
+    },
+    {
+      "promptType": "PORTFOLIO PLAN",
+      "promptClass": "PORTFOLIO / CIRCUMSTANCE PRIORITY",
+      "promptIds": "P23",
+      "whenToUse": "Choose which repo moves first under current conditions",
+      "progressUse": "No",
+      "proofGate": "Timestamped circumstance ranking",
+      "fillRole": "Circumstance portfolio",
+      "fillHex": "#DBEAFE",
+      "color": "Ocean",
+      "meaning": "Prioritize repositories by urgency, access, timing, dependencies, risk, and available environment."
+    },
+    {
+      "promptType": "TUTORIAL PLAN",
+      "promptClass": "TUTORIAL / OPPORTUNITY",
+      "promptIds": "P25",
+      "whenToUse": "Rank user journeys worth tutorial investment",
+      "progressUse": "No",
+      "proofGate": "Evidence-backed tutorial ranking and readiness dispositions",
+      "fillRole": "Tutorial opportunity",
+      "fillHex": "#D1FAE5",
+      "color": "Mint",
+      "meaning": "Plan tutorial work only when the user journey is implemented, teachable, safe, and independently verifiable."
+    },
+    {
+      "promptType": "AUTONOMY + VALIDATE",
+      "promptClass": "GNHF / PROOF FLOOR",
+      "promptIds": "P26",
+      "whenToUse": "The validation floor must be established before a larger autonomous lane.",
+      "progressUse": "YES",
+      "proofGate": "Proof is reproduced; required failures are repaired or explained.",
+      "fillRole": "Reproduce the canonical proof floor and repair at most one required failure",
+      "fillHex": "#E0E7FF",
+      "color": "Night",
+      "meaning": "Current matrix plus one focused repair commit when necessary."
+    },
+    {
+      "promptType": "RECOVER + BUILD",
+      "promptClass": "GNHF / INTERRUPTED RUN",
+      "promptIds": "P27",
+      "whenToUse": "A preserved run stopped because of restart, timeout, failed validation, or failed finalization.",
+      "progressUse": "YES",
+      "proofGate": "No destructive cleanup; saved work is preserved and dispositioned.",
+      "fillRole": "Preserve and continue an interrupted GNHF worktree",
+      "fillHex": "#F3E8FF",
+      "color": "Violet",
+      "meaning": "Evidence-backed recovery and at most one continuation commit."
+    },
+    {
+      "promptType": "AUTONOMY + BUILD",
+      "promptClass": "GNHF / SINGLE MUTATION",
+      "promptIds": "P28",
+      "whenToUse": "One concrete sprint should produce one coherent validated commit.",
+      "progressUse": "YES",
+      "proofGate": "One owned mutation is committed and validated.",
+      "fillRole": "Execute one bounded repository mutation",
+      "fillHex": "#DCFCE7",
+      "color": "Green",
+      "meaning": "One tracked mutation, one commit, and focused validation."
+    },
+    {
+      "promptType": "DISCOVERY + BUILD",
+      "promptClass": "GNHF / REPO-FIRST",
+      "promptIds": "P29",
+      "whenToUse": "The repository is unfamiliar or stale but should move in the first run.",
+      "progressUse": "YES",
+      "proofGate": "First mutation occurs without repository-wide archaeology.",
+      "fillRole": "Recover compact repo truth and make the first safe mutation",
+      "fillHex": "#E0F2FE",
+      "color": "Sky",
+      "meaning": "At most three candidates and the first safe mutation commit."
+    },
+    {
+      "promptType": "AUTONOMY + QUEUE",
+      "promptClass": "GNHF / FINITE QUEUE",
+      "promptIds": "P30",
+      "whenToUse": "A small ordered backlog is already known.",
+      "progressUse": "YES",
+      "proofGate": "Every supplied item is dispositioned and required proof passes.",
+      "fillRole": "Execute a supplied queue of one to five items",
+      "fillHex": "#E0E7FF",
+      "color": "Night",
+      "meaning": "One coherent commit per item and final disposition ledger."
+    },
+    {
+      "promptType": "RECOVER + COMMIT",
+      "promptClass": "GNHF / FINALIZATION",
+      "promptIds": "P31",
+      "whenToUse": "A worktree already contains an intended change that failed validation or commit finalization.",
+      "progressUse": "YES",
+      "proofGate": "No new feature begins; existing work reaches a known commit state.",
+      "fillRole": "Repair and commit an existing unfinished mutation",
+      "fillHex": "#F3E8FF",
+      "color": "Violet",
+      "meaning": "The existing change is committed or preserved with an exact blocker."
+    },
+    {
+      "promptType": "REPAIR",
+      "promptClass": "GNHF / VALIDATION REPAIR",
+      "promptIds": "P32",
+      "whenToUse": "A required test, validator, fixture, schema, or workflow is reproducibly failing.",
+      "progressUse": "YES",
+      "proofGate": "Required failures pass without suppression or downgrade.",
+      "fillRole": "Repair a bounded failing validation or CI lane",
+      "fillHex": "#CFFAFE",
+      "color": "Cyan",
+      "meaning": "Root-cause repair commits and executable regression proof."
+    },
+    {
+      "promptType": "HARNESS + BUILD",
+      "promptClass": "GNHF / HARNESS HARDEN",
+      "promptIds": "P33",
+      "whenToUse": "An offline harness needs deterministic parity, failure paths, or artifact integrity.",
+      "progressUse": "YES",
+      "proofGate": "Zero unexplained required failures and contained evidence.",
+      "fillRole": "Harden offline contracts, fixtures, repeatability, and artifacts",
+      "fillHex": "#CCFBF1",
+      "color": "Teal",
+      "meaning": "Bounded harness commits and final PASS/SKIP/FAIL evidence."
+    },
+    {
+      "promptType": "ENABLEMENT + BUILD",
+      "promptClass": "GNHF / TECHNICIAN UX",
+      "promptIds": "P34",
+      "whenToUse": "Users should not need to recover commands from chat or guess the terminal.",
+      "progressUse": "YES",
+      "proofGate": "One clear implemented operator path remains.",
+      "fillRole": "Build one clear technician or operator workflow",
+      "fillHex": "#FDE68A",
+      "color": "Sand",
+      "meaning": "Launcher/help/docs/example commits and validated guidance."
+    },
+    {
+      "promptType": "MAINTENANCE + BUILD",
+      "promptClass": "GNHF / DEPENDENCY",
+      "promptIds": "P35",
+      "whenToUse": "One evidence-backed version or toolchain update is ready for bounded execution.",
+      "progressUse": "YES",
+      "proofGate": "Only the named scope changes and checks pass.",
+      "fillRole": "Upgrade one named dependency or toolchain scope",
+      "fillHex": "#FEF3C7",
+      "color": "Gold",
+      "meaning": "Reproducible upgrade commits and compatibility proof."
+    },
+    {
+      "promptType": "REVIEW + BUILD",
+      "promptClass": "GNHF / PR REPAIR",
+      "promptIds": "P36",
+      "whenToUse": "An exact branch has review, CI, drift, regression, or scope defects.",
+      "progressUse": "YES",
+      "proofGate": "Exact-head repair queue is empty and local proof passes.",
+      "fillRole": "Repair one exact PR branch locally",
+      "fillHex": "#E0E7FF",
+      "color": "Indigo",
+      "meaning": "Scoped local repair commits and a review-ready final diff."
+    },
+    {
+      "promptType": "AUTONOMY + PREFLIGHT",
+      "promptClass": "GNHF / SPAWN PREFLIGHT",
+      "promptIds": "P37",
+      "whenToUse": "Before a new unattended agent or adapter is trusted.",
+      "progressUse": "Support",
+      "proofGate": "Exact child-process spawn succeeds inside a bounded timeout.",
+      "fillRole": "Spawn preflight",
+      "fillHex": "#FFEDD5",
+      "color": "Peach",
+      "meaning": "Prove real executable resolution before GNHF opens; avoids ENOENT and command-presence false positives."
+    },
+    {
+      "promptType": "AUTONOMY + PLAN",
+      "promptClass": "GNHF / NIGHT QUEUE",
+      "promptIds": "P38",
+      "whenToUse": "An issue-heavy repo needs a finite committed queue before repair.",
+      "progressUse": "YES",
+      "proofGate": "Every item has evidence, owned paths, dependencies, validation, and a state.",
+      "fillRole": "Night planning",
+      "fillHex": "#E0F2FE",
+      "color": "Sky",
+      "meaning": "Commit the executable queue so the later night run is finite and GNHF has a local deliverable."
+    },
+    {
+      "promptType": "AUTONOMY + BUILD",
+      "promptClass": "GNHF / NIGHT REPAIR",
+      "promptIds": "P39",
+      "whenToUse": "A committed queue contains ready local repairs.",
+      "progressUse": "YES",
+      "proofGate": "Up to three items are committed or blocked; repeated no-progress stops.",
+      "fillRole": "Night repair",
+      "fillHex": "#E0E7FF",
+      "color": "Night",
+      "meaning": "Primary repeatable overnight executor with one commit per queue item and checkpoint report updates."
+    },
+    {
+      "promptType": "REPAIR + AUTONOMY",
+      "promptClass": "GNHF / FAILURE CLUSTER",
+      "promptIds": "P40",
+      "whenToUse": "Many failures share a reproducible root cause.",
+      "progressUse": "YES",
+      "proofGate": "One bounded cluster passes or a diagnosis report is committed.",
+      "fillRole": "Failure cluster",
+      "fillHex": "#CFFAFE",
+      "color": "Cyan",
+      "meaning": "Useful for AxTask-style noisy test suites; cluster before repairing rather than chasing unrelated failures."
+    },
+    {
+      "promptType": "BUILD + SAFETY",
+      "promptClass": "GNHF / STATEFUL SAFE REPAIR",
+      "promptIds": "P41",
+      "whenToUse": "A game or stateful app requires code repair without personal-state mutation.",
+      "progressUse": "YES",
+      "proofGate": "No saves, accounts, live resources, or production state are touched.",
+      "fillRole": "Stateful safety",
+      "fillHex": "#FFE4E6",
+      "color": "Rose",
+      "meaning": "Useful for BlacksmithGuild-style work where code and fixture proof must precede disposable runtime proof."
+    },
+    {
+      "promptType": "AUTONOMY + PLAN",
+      "promptClass": "GNHF / QUEUE REFILL",
+      "promptIds": "P42",
+      "whenToUse": "The committed queue is exhausted, stale, or blocked.",
+      "progressUse": "YES",
+      "proofGate": "Prior dispositions are preserved and no more than five new items are added.",
+      "fillRole": "Queue refill",
+      "fillHex": "#FEF3C7",
+      "color": "Amber",
+      "meaning": "Refill the night queue without mixing planning and implementation."
+    },
+    {
+      "promptType": "RECOVER + BUILD",
+      "promptClass": "GNHF / NO-PROGRESS RECOVERY",
+      "promptIds": "P43",
+      "whenToUse": "A run stopped, failed to spawn, or produced no useful diff.",
+      "progressUse": "YES",
+      "proofGate": "Failure is classified and preserved before at most one continuation commit.",
+      "fillRole": "Night recovery",
+      "fillHex": "#F3E8FF",
+      "color": "Violet",
+      "meaning": "Handles ENOENT, quota, auth, timeout, no-diff, validation, and finalization failures without destructive reruns."
+    },
+    {
+      "promptType": "CLOSEOUT + VALIDATE",
+      "promptClass": "GNHF / MORNING CLOSEOUT",
+      "promptIds": "P44",
+      "whenToUse": "Overnight work needs final proof and handoff.",
+      "progressUse": "YES",
+      "proofGate": "Existing work is validated, reported, committed, and clean.",
+      "fillRole": "Morning closeout",
+      "fillHex": "#E5E7EB",
+      "color": "Gray",
+      "meaning": "Closes the night without starting another feature or mistaking process exit for delivery."
+    }
+  ],
+  "colorRouting": [
+    {
+      "color": "Sky",
+      "role": "Discover and establish truth"
+    },
+    {
+      "color": "Amber",
+      "role": "Plan, factor, or consolidate"
+    },
+    {
+      "color": "Green",
+      "role": "Implement or mutate"
+    },
+    {
+      "color": "Teal",
+      "role": "Validate and gate"
+    },
+    {
+      "color": "Gray",
+      "role": "Close or preserve context"
+    },
+    {
+      "color": "Coral",
+      "role": "Prioritize by actionable gaps"
+    },
+    {
+      "color": "Ocean",
+      "role": "Prioritize by circumstances"
+    },
+    {
+      "color": "Rose",
+      "role": "Live/runtime proof boundary"
+    },
+    {
+      "color": "Sand",
+      "role": "Learn and enable app use"
+    },
+    {
+      "color": "Night",
+      "role": "Compile and cap unattended autonomy"
+    },
+    {
+      "color": "Violet",
+      "role": "Diagnose and preserve interrupted runs"
+    }
+  ]
+}
