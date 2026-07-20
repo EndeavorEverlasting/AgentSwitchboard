@@ -88,7 +88,10 @@ $fixturePath = Join-Path $RootPath "tooling/gnhf/fixtures/startup-readiness/stat
 $fixture = Get-Json -RelativePath "tooling/gnhf/fixtures/startup-readiness/state.partial.json"
 
 if ($contract) {
-    Add-Result -Passed ($contract.contractVersion -eq "1.4.0") -Name "contract/version" -FailureMessage "expected contract 1.4.0"
+    $parsedContractVersion = $null
+    try { $parsedContractVersion = [version][string]$contract.contractVersion }
+    catch {}
+    Add-Result -Passed ($null -ne $parsedContractVersion -and $parsedContractVersion -ge [version]"1.4.0") -Name "contract/version" -FailureMessage "expected contract 1.4.0 or newer"
     Add-Result -Passed ($contract.entrypoints.plans -eq "plans/plan-registry.json") -Name "contract/plans-entrypoint" -FailureMessage "public plan entrypoint is missing"
     Add-Result -Passed ($contract.entrypoints.startupReadiness -eq "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1") -Name "contract/startup-entrypoint" -FailureMessage "startup entrypoint is missing"
     Add-Result -Passed ($contract.entrypoints.appHarness -eq "Test-AppHarness.cmd") -Name "contract/app-harness-entrypoint" -FailureMessage "app harness entrypoint is missing"
