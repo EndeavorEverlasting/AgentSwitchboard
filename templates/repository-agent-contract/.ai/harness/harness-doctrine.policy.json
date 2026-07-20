@@ -5,16 +5,52 @@
   "canonicalSource": "AGENTS.md",
   "requiredSprintFields": ["repository", "branchOrWorktree", "prOrSprint", "lane", "ownedScope", "forbiddenScope", "expectedArtifacts", "validationOrder"],
   "executableLoop": ["request", "evidence-review", "bounded-decision", "repository-or-git-or-github-mutation", "artifacts", "validation", "report", "next-decision"],
-  "actionCommitment": {"requiresTrackedMutation": true, "requiresValidationEvidence": true, "requiresCommitOrGitHubEvidence": true, "forbidAcknowledgmentOnly": true, "forbidPlanSubstitution": true},
-  "gnhfTestOnly": {"maxWallClockSeconds": 30, "maxIterationSeconds": 30, "defaultMaxIterations": 1, "requireProcessTreeTermination": true},
+  "actionCommitment": {
+    "verbs": ["install", "set up", "build", "execute", "repair", "configure", "upgrade", "deploy", "merge", "release"],
+    "requiresTrackedMutation": true,
+    "requiresValidationEvidence": true,
+    "requiresCommitOrGitHubEvidence": true,
+    "forbidAcknowledgmentOnly": true,
+    "forbidPlanSubstitution": true
+  },
+  "deviceProfileTaxonomy": {
+    "namingConvention": "<Platform> Profile",
+    "sharedLayer": "platform-neutral",
+    "platformSpecificWorkMustDeclareProfile": true,
+    "profileNameDoesNotProveImplementation": true,
+    "reservedProfilesMayNotClaimDelivery": true,
+    "profiles": [
+      {"id": "windows", "displayName": "Windows Profile", "status": "current"},
+      {"id": "linux", "displayName": "Linux Profile", "status": "reserved"},
+      {"id": "android", "displayName": "Android Profile", "status": "reserved"}
+    ]
+  },
+  "gnhfTestOnly": {
+    "profiles": ["test", "smoke", "probe", "fixture", "contract"],
+    "maxWallClockSeconds": 30,
+    "maxIterationSeconds": 30,
+    "defaultMaxIterations": 1,
+    "requireProcessTreeTermination": true,
+    "requireExplicitTimeoutEvidence": true
+  },
   "deepseekUsageGate": {
     "mode": "known-nonpremium-window-only",
+    "timeZone": "UTC",
     "allowedRateClasses": ["standard", "discounted"],
     "blockedRateClasses": ["double-usage", "premium-multiplier", "unknown"],
     "maximumAllowedMultiplier": 1.0,
     "defaultAction": "deny",
     "requireVerifiedSchedule": true,
+    "requireSourceAndEffectiveDates": true,
     "operatorSchedulePath": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\deepseek-usage-windows.json"
+  },
+  "safety": {
+    "evidenceBeforeConfidence": true,
+    "preserveBeforeDestructiveCleanup": true,
+    "reuseExistingContractsBeforeInvention": true,
+    "taskSpecificRulesOverrideGenericCloseout": true,
+    "noCompletionWithoutProof": true,
+    "noPromptPlanOrHandoffSubstitution": true
   },
   "localRulesMayStrengthen": true,
   "localRulesMayWeaken": false

@@ -12,6 +12,18 @@
     "forbidAcknowledgmentOnly": true,
     "forbidPlanSubstitution": true
   },
+  "deviceProfileTaxonomy": {
+    "namingConvention": "<Platform> Profile",
+    "sharedLayer": "platform-neutral",
+    "platformSpecificWorkMustDeclareProfile": true,
+    "profileNameDoesNotProveImplementation": true,
+    "reservedProfilesMayNotClaimDelivery": true,
+    "profiles": [
+      {"id": "windows", "displayName": "Windows Profile", "status": "current"},
+      {"id": "linux", "displayName": "Linux Profile", "status": "reserved"},
+      {"id": "android", "displayName": "Android Profile", "status": "reserved"}
+    ]
+  },
   "gnhfTestOnly": {
     "profiles": ["test", "smoke", "probe", "fixture", "contract"],
     "maxWallClockSeconds": 30,

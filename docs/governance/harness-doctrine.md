@@ -22,6 +22,16 @@ For repository work, require tracked mutation or an owned GitHub mutation, valid
 
 Plan-only work is valid only when requested or when an exact blocker makes mutation impossible. The blocker path provides the smallest applicable patch and one safest next command.
 
+## Device-profile taxonomy
+
+Platform- or device-specific work names its target with the canonical `<Platform> Profile` form. The current Windows, WezTerm, WSL, tmux, and Windows-host automation lane is the **Windows Profile**. Do not describe that lane as a universal workstation or all-device profile.
+
+**Linux Profile** and **Android Profile** are reserved peer names for future implementation lanes. A reserved name is architecture, not delivery proof: neither profile may be presented as implemented, installed, validated, or released until its own tracked behavior and platform-appropriate runtime evidence exist.
+
+Cross-platform policy, schemas, routing, handoffs, and shared orchestration remain **platform-neutral**. Shared contracts may be consumed by multiple profiles, but one profile must not silently absorb another platform's lifecycle or proof. Every device-specific sprint declares its target profile, and every completion report states the profile-specific proof ceiling.
+
+The product goal may converge a common terminal and agent experience across devices, but Windows, Linux, and Android each earn separate implementation, validation, operator acceptance, and release evidence.
+
 ## Test-only GNHF timing rule
 
 A GNHF run used only as a test, smoke check, provider probe, fixture, or contract exercise has hard limits:
@@ -56,4 +66,4 @@ The official DeepSeek API pricing reference currently publishes flat token price
 
 ## Invalid execution contracts
 
-Reject acknowledgment-only, summary-only, rewritten-prompt-only, handoff-only, or preflight-only substitutes; action language without mutation and proof; test-only GNHF runs over 30 seconds; and DeepSeek execution during double-usage or unknown schedule state.
+Reject acknowledgment-only, summary-only, rewritten-prompt-only, handoff-only, or preflight-only substitutes; action language without mutation and proof; platform-specific work that omits or misnames its device profile; implementation claims for reserved profiles without tracked and runtime evidence; test-only GNHF runs over 30 seconds; and DeepSeek execution during double-usage or unknown schedule state.
