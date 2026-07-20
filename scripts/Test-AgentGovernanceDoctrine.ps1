@@ -46,6 +46,7 @@ if ($exists) {
         '## Instruction precedence',
         '## Mandatory sprint declaration',
         '## Agent-facing interface doctrine (AXI)',
+        '## Multi-agent and local-model governance',
         '## Forbidden behaviors',
         '## Completion standard'
     )) {
@@ -103,12 +104,33 @@ if ($exists) {
         Add-Result -Passed $text.Contains($rule) -Name "governance/axi/$rule" -FailureMessage 'required agent-interface rule is missing'
     }
 
+    foreach ($rule in @(
+        'Verify the upstream contract',
+        'Treat extensions as executable code',
+        'Prove privacy; do not infer it',
+        'Declare orchestration roles',
+        'Preserve independent evidence',
+        'Make divergence visible',
+        'Separate test authority from implementation',
+        'Bound every loop',
+        'One designated writer',
+        'Log actual execution identity',
+        'official source for the pinned version',
+        'privacy claim requires evidence',
+        'maximum attempts',
+        'provider, model, endpoint class'
+    )) {
+        Add-Result -Passed $text.Contains($rule) -Name "governance/multi-agent/$rule" -FailureMessage 'required multi-agent or local-model rule is missing'
+    }
+
     foreach ($behavior in @(
         'Acknowledgment without mutation',
         'Plans without execution',
         'Summaries without proof',
         'Completion claims without running checks',
-        'Secret or credential exposure'
+        'Secret or credential exposure',
+        'Installing or executing unverified third-party agent snippets',
+        'Claiming privacy, model independence, successful fusion, or continuous validation from configuration intent alone'
     )) {
         Add-Result -Passed $text.Contains($behavior) -Name "governance/forbidden/$behavior" -FailureMessage 'required forbidden behavior is missing'
     }
