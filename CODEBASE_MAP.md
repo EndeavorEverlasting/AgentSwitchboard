@@ -5,103 +5,102 @@ Load only the smallest surface required by the selected skill, workflow, public 
 ## Root coordination
 
 - `AGENTS.md` — universal operating contract and safety floor.
-- `CLAUDE.md` — Claude-compatible adapter subordinate to `AGENTS.md`.
-- `SKILLS.md` — canonical skill catalog and artifact-type routing.
-- `CAPABILITIES.md` — capability verification and authority boundaries.
-- `TRIGGERS.md` — deterministic request and evidence routing.
-- `.ai/agent-contract.json` — canonical contract version and family registration.
+- `CLAUDE.md` — tool adapter subordinate to `AGENTS.md`.
+- `SKILLS.md`, `CAPABILITIES.md`, and `TRIGGERS.md` — procedure, capability, and deterministic routing catalogs.
+- `.ai/agent-contract.json` — canonical contract version, entrypoints, and proof vocabulary.
 - `plans/plan-registry.json` — public machine-readable coordination index.
-- `AgentSwitchboard.cmd` — readiness-first repository startup launcher.
+- `AgentSwitchboard.cmd` — readiness-first startup launcher.
 
 ## Public plans
 
-- `plans/README.md` — plan-versus-PR boundary, lifecycle, and agent procedure.
-- `plans/plan-registry.json` — active public plan index.
-- `plans/schemas/public-plan.schema.json` — closed coordination contract.
-- `plans/active/` — proposed, active, or blocked tracked plans.
-- `plans/archive/` — optional completed, superseded, rejected, or retired plans.
-- `.ai/skills/public-plan-coordination/SKILL.md` — reusable selection, update, validation, and handoff procedure.
-- `scripts/Test-PublicPlanContracts.ps1` — deterministic public plan and startup readiness validator.
-- `tests/test_public_plan_contracts.py` — dependency-free cross-platform structural validation.
+- `plans/README.md` — plan-versus-PR boundary and lifecycle.
+- `plans/plan-registry.json` — active plan index.
+- `plans/schemas/public-plan.schema.json` — closed plan contract.
+- `plans/active/` and `plans/archive/` — current and historical coordination.
+- `.ai/skills/public-plan-coordination/SKILL.md` — plan procedure.
+- `scripts/Test-PublicPlanContracts.ps1` and `tests/test_public_plan_contracts.py` — plan validators.
 - `.github/workflows/public-plan-contracts.yml` — Windows and Linux proof gate.
 
 Plans coordinate work; branches and pull requests transport and review implementation. Application behavior remains in deterministic code and domain contracts.
 
+## Offline app harness observer
+
+- `Test-AppHarness.cmd` — one-command offline proof entrypoint.
+- `scripts/Test-AppHarness.ps1` — PASS/SKIP/FAIL observer and safe validator aggregator.
+- `.ai/harness/app-composition.graph.json` — registered harness nodes and edges.
+- `.ai/harness/schemas/app-composition-graph.schema.json` — graph schema.
+- `.ai/harness/schemas/app-harness-validation.schema.json` — result schema.
+- `.ai/harness/app-harness-report.template.md` — English matrix renderer.
+- `tests/test_app_harness_validator.py` and `.github/workflows/app-harness-validation.yml` — cross-platform contracts.
+
+This layer proves registered static topology and bounded offline validation only.
+
+## Runtime event contract
+
+- `docs/governance/runtime-event-contract.md` — event source, typed envelope, observer, handler, successor, and sink doctrine.
+- `.ai/harness/runtime-event-contract.policy.json` — machine-readable causality and proof policy.
+- `.ai/harness/runtime-event-topology.json` — registered runtime event nodes and directed edges.
+- `.ai/harness/schemas/runtime-event-envelope.schema.json` — closed event envelope.
+- `.ai/harness/schemas/runtime-event-topology.schema.json` — closed topology registry.
+- `.ai/harness/fixtures/runtime-events/` — synthetic root, successor, and broken-chain fixtures.
+- `scripts/Test-RuntimeEventContract.ps1` — focused runtime-event-contract validator.
+- `tests/test_runtime_event_contract.py` — dependency-free topology and causality checks.
+- `.github/workflows/runtime-event-contract.yml` — Windows and Linux proof gate.
+
+The initial topology is contract-only. It does not prove live emission, observation, handling, successor delivery, or sink recording.
+
 ## Repository-family harness
 
-- `.ai/harness/manifest.json` — central harness paths, proof vocabulary, and generated-evidence policy.
-- `.ai/harness/repository-family.registry.json` — exact profiles for AgentSwitchboard, BlacksmithGuild, Web Excel Repair Triage, and SysAdminSuite.
-- `.ai/harness/artifact-registry.json` — closed artifact-role registry for family intake, public plans, status, English reports, startup readiness, and handoff compression.
-- `.ai/harness/workflows/repository-family-intake.workflow.json` — read-only local-clone discovery and readiness workflow.
-- `.ai/harness/schemas/` — run-context, registry, status, and final-handoff schemas.
-- `scripts/Get-RepositoryFamilyHarnessStatus.ps1` — read-only local workspace probe; it does not clone, fetch, run providers, or mutate a repository.
-- `scripts/Test-RepositoryFamilyHarness.ps1` — deterministic registry, schema, workflow, parser, and safety validator.
-- `.github/workflows/repository-family-harness.yml` — Linux and Windows contract gate.
+- `.ai/harness/manifest.json` — central paths, proof vocabulary, and evidence policy.
+- `.ai/harness/repository-family.registry.json` — supported repository profiles.
+- `.ai/harness/artifact-registry.json` — artifact roles and proof ceilings.
+- `.ai/harness/workflows/repository-family-intake.workflow.json` — read-only clone intake.
+- `.ai/harness/schemas/` — run context, status, handoff, app, and event schemas.
+- `scripts/Get-RepositoryFamilyHarnessStatus.ps1` — read-only local probe.
+- `scripts/Test-RepositoryFamilyHarness.ps1` — registry and safety validator.
+- `.github/workflows/repository-family-harness.yml` — family proof gate.
 
 ## Canonical skills
 
-- `.ai/skills/repo-intake/SKILL.md` — recover repository truth and select safe work.
-- `.ai/skills/bounded-sprint/SKILL.md` — execute one bounded tracked change.
-- `.ai/skills/public-plan-coordination/SKILL.md` — coordinate machine-readable work across agents, sessions, waves, branches, and PRs.
-- `.ai/skills/gnhf-prompt-compilation/SKILL.md` — compile the copy-ready bounded `gnhf` PowerShell artifact.
-- `.ai/skills/powershell-interactive-execution/SKILL.md` — produce directory-first PowerShell safe for interactive submission.
-- `.ai/skills/evidence-validation/SKILL.md` — build honest proof and repair validation gaps.
-- `.ai/skills/pr-integration/SKILL.md` — reconcile stacked or parallel branches.
-- `.ai/skills/runtime-proof/SKILL.md` — advance from static evidence to observed behavior without proof inflation.
+- `.ai/skills/repo-intake/SKILL.md`
+- `.ai/skills/bounded-sprint/SKILL.md`
+- `.ai/skills/public-plan-coordination/SKILL.md`
+- `.ai/skills/gnhf-prompt-compilation/SKILL.md`
+- `.ai/skills/powershell-interactive-execution/SKILL.md`
+- `.ai/skills/evidence-validation/SKILL.md`
+- `.ai/skills/pr-integration/SKILL.md`
+- `.ai/skills/runtime-proof/SKILL.md`
 
 ## GNHF control plane
 
-- `tooling/gnhf/` — fleet install, routing, bounded sprint launch, contracts, prompts, schemas, fixtures, and runtime evidence.
-- `tooling/gnhf/Gnhf.Capability.ps1` — distribution discovery and provider-route capability matrix.
-- `tooling/gnhf/Install-ProviderRoutedGnhf.ps1` — transactional capability-driven installer.
-- `tooling/gnhf/Start-ProviderRoutedGnhfSprint.ps1` — provider-preflight + bounded GNHF launcher.
-- `tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1` — read-only local agent inventory and configuration guidance.
-- `tooling/gnhf/schemas/agent-startup-readiness.schema.json` — startup readiness report contract.
-- `Repair-ProviderRoutedGnhf.cmd` — operator front door for provider-route repair.
-- `.ai/harness/schemas/gnhf-runtime-capability.schema.json` — versioned installed capability contract.
-- `Setup-AgentSwitchboard.cmd` — one-click Windows setup front door.
-- `AgentSwitchboard.cmd` — startup orientation followed by optional bounded sprint delegation.
-- `Run-ChatGPTDesktopGnhfSprint.cmd` — desktop GNHF runtime entrypoint when present on the selected integration branch.
-- `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\gnhf-runtime-capability.json` — installed machine-readable capability document for child repos.
-- `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\reports\startup` — local startup reports; never tracked repository authority.
-- `%LOCALAPPDATA%\AgentSwitchboard\` — installed runtime state and logs; never treat it as tracked repository authority.
+- `tooling/gnhf/` — distribution, routing, bounded launch, schemas, fixtures, and evidence.
+- `tooling/gnhf/Gnhf.Capability.ps1` — capability matrix.
+- `tooling/gnhf/Install-ProviderRoutedGnhf.ps1` — transactional installer.
+- `tooling/gnhf/Start-ProviderRoutedGnhfSprint.ps1` — provider-preflight and bounded launch.
+- `tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1` — read-only agent inventory.
+- `Repair-ProviderRoutedGnhf.cmd`, `Setup-AgentSwitchboard.cmd`, and `AgentSwitchboard.cmd` — operator front doors.
+- `%LOCALAPPDATA%\AgentSwitchboard\` — installed state and logs; never tracked authority.
 
-## Workstation and terminal integration
+## Workstation, governance, and adoption
 
-- `tooling/wsl/` — Windows/WSL/tmux workspace provisioning, lifecycle, proof, and repair.
-- `docs/workstation/` — operator runbooks and proof ceilings.
-- workstation scripts may configure a local environment only when the selected workflow explicitly authorizes mutation.
-
-## Governance and adoption
-
-- `docs/governance/repository-family.md` — root/child authority and reviewable propagation model.
-- `docs/governance/repository-family-harness.md` — operational profile, readiness, and child-harness expectations.
-- `templates/repository-agent-contract/` — child adoption templates; never bulk overwrite a child repository's local law.
-- `templates/repository-agent-contract/plans/` — reusable public plan registry, schema, and guidance for child-repository PR adoption.
+- `tooling/wsl/` and `docs/workstation/` — Windows, WSL, tmux, and workstation operations.
+- `docs/governance/harness-doctrine.md` — commit-required doctrine.
+- `docs/governance/runtime-event-contract.md` — runtime event doctrine.
+- `docs/governance/repository-family.md` and `docs/governance/repository-family-harness.md` — family governance.
+- `templates/repository-agent-contract/` — reviewable child adoption template.
 
 ## Validation
 
-- `scripts/Test-AgentDocumentationContract.ps1` — root contract, canonical skills, triggers, and template checks.
-- `scripts/Test-RepositoryFamilyHarness.ps1` — family profile and harness checks.
-- `scripts/Test-PublicPlanContracts.ps1` — public plan and startup readiness checks.
-- `tooling/gnhf/Test-GnhfFleetContracts.ps1` and more specific downstream validators — GNHF implementation checks on branches that contain those surfaces.
+- `scripts/Test-HarnessDoctrineContract.ps1`
+- `scripts/Test-RuntimeEventContract.ps1`
+- `scripts/Test-AgentDocumentationContract.ps1`
+- `scripts/Test-RepositoryFamilyHarness.ps1`
+- `scripts/Test-PublicPlanContracts.ps1`
+- `scripts/Test-AppHarness.ps1`
+- `tooling/gnhf/Test-GnhfFleetContracts.ps1` and downstream focused validators.
 
-## Generated evidence and reports
+## Generated evidence and proof boundary
 
-Repository-family and startup readiness evidence is untracked. It may contain local directory names, command paths, versions, and Git state, so it must not be committed.
+Generated family, startup, app-harness, and runtime-event evidence is untracked. It may contain local paths, versions, Git state, or minimized operational payloads and must remain outside tracked authority unless deliberately reviewed as a public fixture.
 
-Expected outputs from the family status probe:
-
-- `run-context.json`
-- `repository-family-status.json`
-- `operator-report.md`
-- `final-handoff.json`
-
-Expected outputs from startup readiness:
-
-- `agent-startup-readiness-<timestamp>.json`
-- `agent-startup-readiness-<timestamp>.md`
-
-## Proof boundary
-
-A valid family profile proves that AgentSwitchboard knows how to enter and inspect a repository. A valid public plan proves only coordination-contract shape. A startup report proves only local fleet-state and adapter readiness. None of these proves that a child checkout is safe to mutate, a provider is authenticated, a hosted model responded, work was committed, deployment completed, or an operator accepted the result.
+Contract validity proves declared shape. Synthetic fixtures prove bounded causality. Neither proves application runtime, provider delivery, external target behavior, deployment, or operator acceptance.
