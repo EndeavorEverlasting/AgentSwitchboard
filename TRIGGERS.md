@@ -34,7 +34,8 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | `provider.deepseek-request` | selected route uses `deepseek/*` | apply `deepseek.usage-window.evaluate`; block premium, unknown, missing, stale, or unverified state |
 | `review.findings` or `validation.requested` | review findings, proof gap, skipped checks, or contract drift | `evidence-validation` |
 | `integration.requested` | stacked PRs, consumed commits, branch convergence | `pr-integration` |
-| `runtime.requested` | launcher, installer, behavior, harness, or environment proof | `runtime-proof` |
+| `runtime.requested` | launcher, installer, behavior, harness, or environment proof contained within one bounded runtime | `runtime-proof` |
+| `runtime.end-to-end-request` | exact operator command crosses shells, child processes, WSL, tmux, WezTerm, TUI, GUI, provider, application, installer, launcher, or configuration boundaries | `end-to-end-runtime-validation`; require per-stage diagnostics, effective-state and user-experience readback, idempotence or rollback when applicable, and one exact next command |
 | `docs.contract-change` | AGENTS, skills, capabilities, triggers, schemas, governance | `bounded-sprint` plus doctrine and documentation validators |
 | `tool.missing-or-unhealthy` | command absent or bounded probe fails | reuse, repair, install, skip, or block according to scope |
 | `gnhf.runtime-repair-required` | required provider-route capability absent | repair through the capability installer; do not react only to an unpublished version |
@@ -72,6 +73,12 @@ The route hashes but does not copy raw output, redacts common credentials and pr
 
 Contract and synthetic fixture success do not prove runtime delivery. A runtime completion claim requires correlated observed source, observer, handler, successor or terminal, and sink artifacts from an explicitly authorized runtime lane. Missing or contradictory chain evidence blocks completion.
 
+## End-to-end runtime invariant
+
+`runtime.end-to-end-request` selects `.ai/skills/end-to-end-runtime-validation/SKILL.md`. The route freezes the exact operator invocation, names each boundary, proves lower floors first, captures each child command with stdout, stderr, exit code, and timing, reads back effective state, observes the requested user experience, and checks idempotence or rollback when applicable.
+
+A parent process error that reports only a child exit code is incomplete evidence. A configuration file, successful parser, passing CI run, parent exit zero, command acknowledgement, or manual workaround cannot promote the operator path to end-to-end success. Repair remains in the same evidence chain, and the complete operator path is rerun after the failed stage is fixed.
+
 ## Device profile invariant
 
 `profile.launcher-request` requires `.ai/harness/device-profile-registry.json` and the canonical launcher policy to remain coherent. The Windows Profile is WezTerm-backed, idempotent `open-or-activate`, and owned only by AgentSwitchboard. Linux and Android are separate profile implementations; Android configuration may differ.
@@ -96,8 +103,8 @@ A routed workflow receives repository and branch or worktree, PR or sprint, plan
 
 ## Automatic stop triggers
 
-Stop or escalate when work would overwrite unowned changes; a required capability is unknown; scope crosses a forbidden boundary; writers collide; a gate exposes security or data-loss risk; merge, deployment, secret, destructive Git, or live mutation lacks authority; retries are exhausted; evidence contradicts the plan; test timing or DeepSeek gates fail; the app graph is broken; app-output context would persist raw or cross-surface data; runtime event evidence is incomplete; or a profile has competing owners, raw frontend fallback, independent shortcut logic, cross-profile substitution, or an unproved open-or-activate claim.
+Stop or escalate when work would overwrite unowned changes; a required capability is unknown; scope crosses a forbidden boundary; writers collide; a gate exposes security or data-loss risk; merge, deployment, secret, destructive Git, or live mutation lacks authority; retries are exhausted; evidence contradicts the plan; test timing or DeepSeek gates fail; the app graph is broken; app-output context would persist raw or cross-surface data; runtime event evidence is incomplete; an end-to-end stage loses child diagnostics, effective-state readback, rollback safety, or exact environment identity; or a profile has competing owners, raw frontend fallback, independent shortcut logic, cross-profile substitution, or an unproved open-or-activate claim.
 
 ## No implicit authority
 
-The presence of a trigger, plan, startup report, event observer, topology registry, profile registry, app-output packet, or capability never authorizes installation, push, merge, release, deployment, target mutation, prompt execution, provider access, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.
+The presence of a trigger, plan, startup report, event observer, topology registry, profile registry, app-output packet, end-to-end skill, or capability never authorizes installation, push, merge, release, deployment, target mutation, prompt execution, provider access, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.
