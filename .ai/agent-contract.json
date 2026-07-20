@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contractVersion": "1.4.0",
+  "contractVersion": "1.5.0",
   "canonicalRepository": "EndeavorEverlasting/AgentSwitchboard",
   "canonicalRefPolicy": "merged-default-branch",
   "entrypoints": {
@@ -11,7 +11,8 @@
     "triggers": "TRIGGERS.md",
     "plans": "plans/plan-registry.json",
     "startupReadiness": "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
-    "appHarness": "Test-AppHarness.cmd"
+    "appHarness": "Test-AppHarness.cmd",
+    "runtimeEvents": "docs/governance/runtime-event-contract.md"
   },
   "requiredReadOrder": [
     "AGENTS.md",
@@ -26,6 +27,7 @@
     "plans/plan-registry.json and selected public plan",
     "docs/governance/harness-doctrine.md",
     ".ai/harness/harness-doctrine.policy.json",
+    "runtime event contract when event composition is in scope",
     "current validators, PRs, and Git history"
   ],
   "skillRoot": ".ai/skills",
@@ -60,6 +62,18 @@
     "runtimeAllowed": false,
     "targetMutationAllowed": false
   },
+  "runtimeEvents": {
+    "documentation": "docs/governance/runtime-event-contract.md",
+    "policy": ".ai/harness/runtime-event-contract.policy.json",
+    "topology": ".ai/harness/runtime-event-topology.json",
+    "envelopeSchema": ".ai/harness/schemas/runtime-event-envelope.schema.json",
+    "validator": "scripts/Test-RuntimeEventContract.ps1",
+    "contractOnly": true,
+    "correlationAndCausationRequired": true,
+    "allNodesAndEdgesRegistered": true,
+    "runtimeExecutionRequiresExplicitLane": true,
+    "staticProofCannotClaimRuntime": true
+  },
   "startupReadiness": {
     "launcher": "AgentSwitchboard.cmd",
     "reporter": "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
@@ -83,5 +97,5 @@
     {"fullName": "EndeavorEverlasting/web-excel-repair-triage", "relation": "child", "status": "registered"}
   ],
   "canonicalSkills": ["repo-intake", "bounded-sprint", "public-plan-coordination", "gnhf-prompt-compilation", "powershell-interactive-execution", "evidence-validation", "pr-integration", "runtime-proof"],
-  "proofLevels": ["contract", "static-test", "offline-synthetic-harness", "build", "harness", "runtime", "live-target"]
+  "proofLevels": ["contract", "static-test", "offline-synthetic-harness", "runtime-event-contract", "synthetic-cascade", "build", "harness", "runtime"]
 }
