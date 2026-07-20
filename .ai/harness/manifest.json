@@ -19,7 +19,11 @@
     "publicPlanSkill": ".ai/skills/public-plan-coordination/SKILL.md",
     "publicPlanValidator": "scripts/Test-PublicPlanContracts.ps1",
     "startupLauncher": "AgentSwitchboard.cmd",
-    "startupReadinessReporter": "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1"
+    "startupReadinessReporter": "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
+    "appCompositionGraph": ".ai/harness/app-composition.graph.json",
+    "appHarnessValidator": "scripts/Test-AppHarness.ps1",
+    "appHarnessCommand": "Test-AppHarness.cmd",
+    "appHarnessReportTemplate": ".ai/harness/app-harness-report.template.md"
   },
   "schemas": [
     ".ai/harness/schemas/repository-family-registry.schema.json",
@@ -27,12 +31,15 @@
     ".ai/harness/schemas/repository-family-status.schema.json",
     ".ai/harness/schemas/final-handoff.schema.json",
     ".ai/harness/schemas/gnhf-runtime-capability.schema.json",
+    ".ai/harness/schemas/app-composition-graph.schema.json",
+    ".ai/harness/schemas/app-harness-validation.schema.json",
     "plans/schemas/public-plan.schema.json",
     "tooling/gnhf/schemas/agent-startup-readiness.schema.json"
   ],
   "proofLevels": [
     "contract",
     "public-plan-coordination",
+    "offline-synthetic-harness",
     "local-adapter-readiness",
     "read-only-repository-intake",
     "child-validator",
@@ -46,8 +53,27 @@
       "run-context.json",
       "repository-family-status.json",
       "operator-report.md",
-      "final-handoff.json"
+      "final-handoff.json",
+      "app-harness-validation.json",
+      "app-harness-validation.md"
     ]
+  },
+  "appHarnessValidation": {
+    "tracked": false,
+    "defaultRoot": "operating-system temporary directory/AgentSwitchboard/app-harness",
+    "entrypoint": "Test-AppHarness.cmd",
+    "observer": "scripts/Test-AppHarness.ps1",
+    "compositionGraph": ".ai/harness/app-composition.graph.json",
+    "artifacts": [
+      "app-harness-validation.json",
+      "app-harness-validation.md"
+    ],
+    "readOnly": true,
+    "networkAllowed": false,
+    "runtimeAllowed": false,
+    "targetMutationAllowed": false,
+    "optionalDependencyBehavior": "skip-with-reason",
+    "proofCeiling": "registered repository composition and bounded offline validators only"
   },
   "startupReadiness": {
     "tracked": false,
@@ -71,5 +97,5 @@
     "enabled": false,
     "reason": "Explicit startup, CI, and operator commands own validation. No implicit local hook is justified until public-plan adoption and failure behavior are proven across child repositories."
   },
-  "proofCeiling": "This harness proves family registration, public coordination contract shape, local adapter-readiness reporting, read-only local clone discovery, Git identity, required-path readiness, and deterministic contract validation only."
+  "proofCeiling": "This harness proves family registration, public coordination contract shape, registered app-composition topology, bounded offline validator aggregation, local adapter-readiness reporting, read-only local clone discovery, Git identity, required-path readiness, and deterministic contract validation only."
 }
