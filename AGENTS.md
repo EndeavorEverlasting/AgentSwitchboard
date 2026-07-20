@@ -124,7 +124,7 @@ All participating nodes, edges, and event types belong in `.ai/harness/runtime-e
 
 A claim that an event listener or cascade was built requires the corresponding deterministic implementation, topology update, validation, and commit or GitHub evidence. A runtime-success claim additionally requires correlated source, observer, handler, successor or terminal, and sink artifacts from an explicitly authorized runtime lane. Static topology and synthetic fixtures prove lower levels only.
 
-Runtime-event end-to-end proof follows `.ai/skills/project-end-to-end-testing/SKILL.md`; the runtime-event contract remains the domain-specific acceptance boundary.
+Runtime-event end-to-end proof follows `.ai/skills/project-end-to-end-testing/SKILL.md`; run the focused gate `scripts/Test-RuntimeEventContract.ps1` before broader stages, and keep the runtime-event contract as the domain-specific acceptance boundary.
 
 ## Device profiles and launcher ownership
 
@@ -134,7 +134,7 @@ The Windows Profile is WezTerm-backed and has exactly one canonical `open-or-act
 
 A claim that a profile or launcher was installed, built, repaired, configured, certified, or deployed requires tracked implementation, profile registry updates, focused validation, commit or GitHub evidence, and an honest proof ceiling. Contract-only doctrine must not claim the launcher exists or that a window was opened or activated.
 
-Device-profile end-to-end proof follows `.ai/skills/project-end-to-end-testing/SKILL.md`; the launcher contract remains the domain-specific acceptance boundary.
+Device-profile end-to-end proof follows `.ai/skills/project-end-to-end-testing/SKILL.md`; run the focused gate `scripts/Test-DeviceProfileLauncherContract.ps1` before broader stages, and keep the launcher contract as the domain-specific acceptance boundary.
 
 ## Public plans
 
