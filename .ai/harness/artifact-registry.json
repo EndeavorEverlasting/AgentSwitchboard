@@ -81,6 +81,26 @@
       "sensitivity": "local-operational",
       "retention": "fleet reports/startup under %LOCALAPPDATA%/AgentSwitchboard/GnhfFleet",
       "proofCeiling": "English rendering of local adapter readiness and configuration guidance only"
+    },
+    {
+      "artifactId": "app-harness-validation-json",
+      "artifactType": "validation-result",
+      "fileName": "app-harness-validation.json",
+      "schema": ".ai/harness/schemas/app-harness-validation.schema.json",
+      "tracked": false,
+      "sensitivity": "local-operational",
+      "retention": "operator-controlled temporary evidence outside the repository",
+      "proofCeiling": "offline synthetic harness structure and registered event-topology validation only"
+    },
+    {
+      "artifactId": "app-harness-validation-report",
+      "artifactType": "operator-report",
+      "fileName": "app-harness-validation.md",
+      "schema": null,
+      "tracked": false,
+      "sensitivity": "local-operational",
+      "retention": "operator-controlled temporary evidence outside the repository",
+      "proofCeiling": "English PASS/SKIP/FAIL rendering of offline synthetic checks only"
     }
   ]
 }
