@@ -1,0 +1,82 @@
+{
+  "schema": "agentswitchboard.runtime-event-topology.v1",
+  "topologyId": "agentswitchboard.runtime-event-contract.v1",
+  "status": "contract-only",
+  "nodes": [
+    {
+      "id": "source.contract-request",
+      "kind": "source",
+      "implementationStatus": "contract-only",
+      "eventTypes": ["runtime.contract.requested"],
+      "evidenceSink": false,
+      "paths": [".ai/harness/fixtures/runtime-events/root-event.json"]
+    },
+    {
+      "id": "observer.runtime-contract",
+      "kind": "observer",
+      "implementationStatus": "contract-only",
+      "eventTypes": ["runtime.contract.requested"],
+      "evidenceSink": false,
+      "paths": ["scripts/Test-RuntimeEventContract.ps1"]
+    },
+    {
+      "id": "handler.contract-validation",
+      "kind": "handler",
+      "implementationStatus": "contract-only",
+      "eventTypes": ["runtime.contract.requested", "runtime.contract.validated"],
+      "evidenceSink": false,
+      "paths": ["scripts/Test-RuntimeEventContract.ps1"]
+    },
+    {
+      "id": "sink.contract-evidence",
+      "kind": "sink",
+      "implementationStatus": "contract-only",
+      "eventTypes": ["runtime.contract.validated"],
+      "evidenceSink": true,
+      "paths": [".ai/harness/fixtures/runtime-events/successor-event.json"]
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge.source-emits-request",
+      "from": "source.contract-request",
+      "to": "observer.runtime-contract",
+      "kind": "emits",
+      "eventType": "runtime.contract.requested",
+      "required": true
+    },
+    {
+      "id": "edge.observer-observes-request",
+      "from": "source.contract-request",
+      "to": "observer.runtime-contract",
+      "kind": "observes",
+      "eventType": "runtime.contract.requested",
+      "required": true
+    },
+    {
+      "id": "edge.observer-dispatches-handler",
+      "from": "observer.runtime-contract",
+      "to": "handler.contract-validation",
+      "kind": "dispatches",
+      "eventType": "runtime.contract.requested",
+      "required": true
+    },
+    {
+      "id": "edge.handler-emits-successor",
+      "from": "handler.contract-validation",
+      "to": "sink.contract-evidence",
+      "kind": "emits-successor",
+      "eventType": "runtime.contract.validated",
+      "required": true
+    },
+    {
+      "id": "edge.sink-records-successor",
+      "from": "handler.contract-validation",
+      "to": "sink.contract-evidence",
+      "kind": "records",
+      "eventType": "runtime.contract.validated",
+      "required": true
+    }
+  ],
+  "proofCeiling": "This topology registers the required runtime event composition and synthetic contract fixtures only. It does not prove that AgentSwitchboard currently emits, observes, handles, or records these events during application execution."
+}
