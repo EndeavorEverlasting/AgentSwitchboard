@@ -27,7 +27,11 @@
     "runtimeEventPolicy": ".ai/harness/runtime-event-contract.policy.json",
     "runtimeEventDocumentation": "docs/governance/runtime-event-contract.md",
     "runtimeEventTopology": ".ai/harness/runtime-event-topology.json",
-    "runtimeEventValidator": "scripts/Test-RuntimeEventContract.ps1"
+    "runtimeEventValidator": "scripts/Test-RuntimeEventContract.ps1",
+    "deviceProfilePolicy": ".ai/harness/device-profile-launcher.policy.json",
+    "deviceProfileDocumentation": "docs/governance/device-profile-launcher-contract.md",
+    "deviceProfileRegistry": ".ai/harness/device-profile-registry.json",
+    "deviceProfileValidator": "scripts/Test-DeviceProfileLauncherContract.ps1"
   },
   "schemas": [
     ".ai/harness/schemas/repository-family-registry.schema.json",
@@ -39,6 +43,7 @@
     ".ai/harness/schemas/app-harness-validation.schema.json",
     ".ai/harness/schemas/runtime-event-envelope.schema.json",
     ".ai/harness/schemas/runtime-event-topology.schema.json",
+    ".ai/harness/schemas/device-profile-registry.schema.json",
     "plans/schemas/public-plan.schema.json",
     "tooling/gnhf/schemas/agent-startup-readiness.schema.json"
   ],
@@ -47,6 +52,7 @@
     "public-plan-coordination",
     "offline-synthetic-harness",
     "runtime-event-contract",
+    "device-profile-contract",
     "synthetic-cascade",
     "local-adapter-readiness",
     "read-only-repository-intake",
@@ -65,7 +71,9 @@
       "app-harness-validation.json",
       "app-harness-validation.md",
       "runtime-event-<eventId>.json",
-      "runtime-event-cascade-<correlationId>.json"
+      "runtime-event-cascade-<correlationId>.json",
+      "device-profile-launch-result.json",
+      "device-profile-certification.json"
     ]
   },
   "appHarnessValidation": {
@@ -95,6 +103,22 @@
     "targetMutationAllowed": false,
     "proofCeiling": "typed envelope, registered topology, and synthetic causality fixtures only"
   },
+  "deviceProfiles": {
+    "trackedContract": true,
+    "contractOnly": true,
+    "policy": ".ai/harness/device-profile-launcher.policy.json",
+    "registry": ".ai/harness/device-profile-registry.json",
+    "registrySchema": ".ai/harness/schemas/device-profile-registry.schema.json",
+    "validator": "scripts/Test-DeviceProfileLauncherContract.ps1",
+    "canonicalOwner": "EndeavorEverlasting/AgentSwitchboard",
+    "windowsProfileOperation": "open-or-activate",
+    "sysAdminSuiteRole": "consumer-certifier",
+    "generatedEvidenceTracked": false,
+    "runtimeExecutionAllowed": false,
+    "networkAllowed": false,
+    "targetMutationAllowed": false,
+    "proofCeiling": "profile ownership, platform separation, delegation, idempotence rules, and synthetic consumer fixtures only"
+  },
   "startupReadiness": {
     "tracked": false,
     "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/GnhfFleet/reports/startup",
@@ -114,5 +138,5 @@
     "enabled": false,
     "reason": "Explicit startup, CI, and operator commands own validation. No implicit local hook is justified until public-plan adoption and failure behavior are proven across child repositories."
   },
-  "proofCeiling": "This harness proves family registration, public coordination contract shape, registered app-composition topology, bounded offline validator aggregation, runtime-event doctrine shape and synthetic causality fixtures, local adapter-readiness reporting, read-only local clone discovery, Git identity, required-path readiness, and deterministic contract validation only."
+  "proofCeiling": "This harness proves family registration, public coordination contract shape, registered app-composition topology, bounded offline validator aggregation, runtime-event doctrine, device-profile ownership and delegation doctrine, local adapter-readiness reporting, read-only local clone discovery, Git identity, required-path readiness, and deterministic contract validation only."
 }
