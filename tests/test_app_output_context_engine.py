@@ -9,6 +9,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+sys.dont_write_bytecode = True
+
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE = ROOT / "tooling" / "context" / "Contextualize-AppOutput.py"
 FIXTURE_ROOT = ROOT / ".ai" / "harness" / "fixtures" / "app-output-context"
