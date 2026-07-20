@@ -16,7 +16,7 @@ Evidence precedes confidence. Preserve existing work before cleanup. Reuse exist
 
 A GNHF contract-only run is limited to 30 seconds wall clock and 30 seconds per iteration, with one iteration by default.
 
-DeepSeek is eligible only in a fresh verified `standard` or `discounted` rate class with multiplier no greater than `1.0`. Unknown or stale state blocks use.
+DeepSeek is eligible only in a fresh verified `standard` or `discounted` rate class with multiplier no greater than `1.0`. Block `double-usage`, premium, unknown, or stale state.
 
 ## Runtime event contract
 
