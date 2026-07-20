@@ -32,9 +32,10 @@ Every canonical skill must define:
 3. A literal request for a **Good Night, Have Fun prompt**, **GNHF prompt**, or to **compile a sprint for Good Night, Have Fun** selects `gnhf-prompt-compilation`. It must not fall through to generic sprint prose.
 4. Interactive PowerShell selects `powershell-interactive-execution`. Continuation keywords must remain in the same submitted statement as the block they continue.
 5. Supplied application, validator, agent, or tool output that must be compared with a prompt kit selects `app-output-contextualization`. It reads provided output only and preserves execution-surface separation.
-6. `TRIGGERS.md` maps repository evidence to a skill.
-7. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
-8. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
+6. An operator-facing result that crosses shells, child processes, WSL, tmux, WezTerm, a TUI, a GUI, or another runtime boundary selects `end-to-end-runtime-validation`. Use `runtime-proof` for a bounded observation that does not require the complete operator path.
+7. `TRIGGERS.md` maps repository evidence to a skill.
+8. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
+9. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
 
 ## Canonical skills
 
@@ -48,6 +49,7 @@ Every canonical skill must define:
 | [`evidence-validation`](.ai/skills/evidence-validation/SKILL.md) | Build honest proof and repair validation gaps | failing checks, review findings, proof request |
 | [`pr-integration`](.ai/skills/pr-integration/SKILL.md) | Reconcile stacked or parallel branches safely | merge request, stacked PRs, consumed upstream work |
 | [`runtime-proof`](.ai/skills/runtime-proof/SKILL.md) | Move from static confidence to observed behavior | launcher, installer, harness, or live-runtime request |
+| [`end-to-end-runtime-validation`](.ai/skills/end-to-end-runtime-validation/SKILL.md) | Prove the exact operator command across every runtime boundary through effective-state and user-experience readback | workstation repair, Windows-to-WSL chain, tmux/WezTerm configuration, cross-process installer or launcher, opaque child failure |
 | [`app-output-contextualization`](.ai/skills/app-output-contextualization/SKILL.md) | Parse supplied output, redact it, compare it with a prompt registry, and emit compact agent instructions | app output, logs, JSON, JSONL, validator output, minimal-token routing |
 
 ## Public plan distinction
@@ -73,6 +75,10 @@ The detailed canonical format and validation rules live in `.ai/skills/gnhf-prom
 ## App-output distinction
 
 An app-output context packet is a minimized interpretation artifact, not the original log and not an executed prompt. It records the source hash, redacted excerpts, signals, same-surface prompt candidates, required variables, and proof ceiling. Ranking a prompt does not authorize running it.
+
+## End-to-end distinction
+
+`runtime-proof` can establish one observed behavior in an authorized environment. `end-to-end-runtime-validation` is required when the claim depends on the exact command an operator runs and a chain of shell, process, platform, terminal, TUI, GUI, provider, or application boundaries. The end-to-end skill requires per-stage stdout, stderr, exit identity, effective-state readback, user-visible observation, and idempotence or rollback proof when applicable. A parent exception containing only an exit code is not a complete end-to-end failure report.
 
 ## PowerShell interactive distinction
 
