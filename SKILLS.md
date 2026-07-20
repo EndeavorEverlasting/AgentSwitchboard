@@ -31,9 +31,10 @@ Every canonical skill must define:
 2. Multi-agent, multi-session, multi-wave, or cross-PR coordination selects `public-plan-coordination`; use `plans/plan-registry.json` rather than leaving the coordination state only in chat or a PR description.
 3. A literal request for a **Good Night, Have Fun prompt**, **GNHF prompt**, or to **compile a sprint for Good Night, Have Fun** selects `gnhf-prompt-compilation`. It must not fall through to generic sprint prose.
 4. Interactive PowerShell selects `powershell-interactive-execution`. Continuation keywords must remain in the same submitted statement as the block they continue.
-5. `TRIGGERS.md` maps repository evidence to a skill.
-6. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
-7. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
+5. Supplied application, validator, agent, or tool output that must be compared with a prompt kit selects `app-output-contextualization`. It reads provided output only and preserves execution-surface separation.
+6. `TRIGGERS.md` maps repository evidence to a skill.
+7. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
+8. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
 
 ## Canonical skills
 
@@ -47,6 +48,7 @@ Every canonical skill must define:
 | [`evidence-validation`](.ai/skills/evidence-validation/SKILL.md) | Build honest proof and repair validation gaps | failing checks, review findings, proof request |
 | [`pr-integration`](.ai/skills/pr-integration/SKILL.md) | Reconcile stacked or parallel branches safely | merge request, stacked PRs, consumed upstream work |
 | [`runtime-proof`](.ai/skills/runtime-proof/SKILL.md) | Move from static confidence to observed behavior | launcher, installer, harness, or live-runtime request |
+| [`app-output-contextualization`](.ai/skills/app-output-contextualization/SKILL.md) | Parse supplied output, redact it, compare it with a prompt registry, and emit compact agent instructions | app output, logs, JSON, JSONL, validator output, minimal-token routing |
 
 ## Public plan distinction
 
@@ -67,6 +69,10 @@ It is not:
 - a description of how GNHF works.
 
 The detailed canonical format and validation rules live in `.ai/skills/gnhf-prompt-compilation/SKILL.md`.
+
+## App-output distinction
+
+An app-output context packet is a minimized interpretation artifact, not the original log and not an executed prompt. It records the source hash, redacted excerpts, signals, same-surface prompt candidates, required variables, and proof ceiling. Ranking a prompt does not authorize running it.
 
 ## PowerShell interactive distinction
 
