@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "policyId": "agentswitchboard.runtime-event-contract.v1",
+  "canonicalSource": "docs/governance/runtime-event-contract.md",
+  "envelopeSchema": ".ai/harness/schemas/runtime-event-envelope.schema.json",
+  "topologyRegistry": ".ai/harness/runtime-event-topology.json",
+  "topologySchema": ".ai/harness/schemas/runtime-event-topology.schema.json",
+  "validator": "scripts/Test-RuntimeEventContract.ps1",
+  "envelope": {
+    "schema": "agentswitchboard.runtime-event.v1",
+    "requiredFields": [
+      "schema",
+      "eventId",
+      "eventType",
+      "source",
+      "occurredUtc",
+      "correlationId",
+      "causationId",
+      "sequence",
+      "payload",
+      "metadata"
+    ],
+    "eventIdFormat": "uuid",
+    "eventTypePattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)*$",
+    "occurredUtcFormat": "date-time",
+    "payloadType": "object",
+    "immutableAfterEmission": true
+  },
+  "causality": {
+    "rootCorrelationEqualsEventId": true,
+    "rootCausationMustBeNull": true,
+    "rootSequence": 0,
+    "successorCorrelationInherited": true,
+    "successorCausationEqualsParentEventId": true,
+    "successorSequenceGreaterThanParent": true,
+    "successorEventIdMustBeNew": true
+  },
+  "composition": {
+    "requiredNodeKinds": ["source", "observer", "handler", "sink"],
+    "requiredEdgeKinds": ["emits", "observes", "dispatches", "emits-successor", "records"],
+    "allRuntimeNodesMustBeRegistered": true,
+    "allRuntimeEdgesMustBeRegistered": true,
+    "sourceToSinkReachabilityRequired": true
+  },
+  "observer": {
+    "envelopeMutationForbidden": true,
+    "observerFailureMustBeReported": true,
+    "handlerDispatchMustPreserveEnvelope": true,
+    "successorEmissionMustPreserveCorrelation": true
+  },
+  "evidence": {
+    "artifactRegistryRequired": true,
+    "correlationAndCausationRequired": true,
+    "proofPromotion": ["contract", "synthetic-cascade", "runtime-observed", "live-target"],
+    "staticProofCannotClaimRuntime": true,
+    "syntheticProofCannotClaimLiveTarget": true
+  },
+  "safety": {
+    "secretsForbidden": true,
+    "rawCustomerPayloadsForbidden": true,
+    "payloadMinimizationRequired": true,
+    "generatedEvidenceTracked": false,
+    "runtimeExecutionRequiresExplicitRuntimeLane": true,
+    "targetMutationRequiresExplicitAuthority": true
+  }
+}
