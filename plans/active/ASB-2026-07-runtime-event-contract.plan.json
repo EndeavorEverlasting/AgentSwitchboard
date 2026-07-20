@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-07-20T05:30:00Z",
-  "updatedUtc": "2026-07-20T05:30:00Z",
+  "updatedUtc": "2026-07-20T06:20:00Z",
   "mission": "Install a canonical runtime event contract that requires typed envelopes, registered event composition, correlation and causation, successor-event rules, evidence sinks, and proof boundaries for every claimed event listener or cascade.",
   "owner": {
     "surface": "runtime event doctrine and enforcement",
@@ -16,7 +16,11 @@
   },
   "delivery": {
     "branch": "feat/runtime-event-contract-doctrine",
-    "pullRequest": null,
+    "pullRequest": {
+      "number": 36,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/36",
+      "state": "open"
+    },
     "baseRef": "feat/one-command-harness-proof",
     "commitRequired": true
   },
@@ -113,7 +117,7 @@
         "Full PR-range hygiene passes",
         "Branch and PR remain reviewable without force-push"
       ],
-      "evidence": ["Pending exact-head pull-request workflows"]
+      "evidence": ["Pending exact-head pull-request workflows for PR #36"]
     }
   ],
   "validation": [
@@ -129,15 +133,14 @@
   ],
   "proof": {
     "target": "canonical runtime event doctrine, typed envelope and topology contracts, synthetic root-to-successor causality, enforcement wiring, and exact-head cross-platform validation",
-    "achieved": "Tracked doctrine, policy, schemas, topology, fixtures, validators, workflow, authority wiring, and child template are present; exact-head CI is pending.",
+    "achieved": "Tracked doctrine, policy, schemas, topology, fixtures, validators, workflow, authority wiring, child template, and PR #36 binding are present; exact-head CI is pending.",
     "ceiling": "Does not prove AgentSwitchboard currently emits, observes, handles, cascades, or records runtime events during application execution. It provides no launcher, provider, network, target, account, save, deployment, merge, or live-target proof."
   },
   "handoff": {
     "nextOwner": "repository doctrine lane",
-    "nextCommand": "gh pr checks --repo EndeavorEverlasting/AgentSwitchboard --watch",
+    "nextCommand": "gh pr checks 36 --repo EndeavorEverlasting/AgentSwitchboard --watch",
     "notes": [
-      "Open a stacked pull request against feat/one-command-harness-proof.",
-      "Bind this plan to the actual pull request after creation.",
+      "PR #36 is stacked on feat/one-command-harness-proof / PR #35.",
       "Record exact-head evidence before completing PROOF-01.",
       "A later runtime lane must add actual product nodes and correlated observed artifacts before claiming event delivery."
     ]
