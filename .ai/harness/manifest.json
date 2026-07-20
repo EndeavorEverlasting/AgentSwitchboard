@@ -23,7 +23,11 @@
     "appCompositionGraph": ".ai/harness/app-composition.graph.json",
     "appHarnessValidator": "scripts/Test-AppHarness.ps1",
     "appHarnessCommand": "Test-AppHarness.cmd",
-    "appHarnessReportTemplate": ".ai/harness/app-harness-report.template.md"
+    "appHarnessReportTemplate": ".ai/harness/app-harness-report.template.md",
+    "runtimeEventPolicy": ".ai/harness/runtime-event-contract.policy.json",
+    "runtimeEventDocumentation": "docs/governance/runtime-event-contract.md",
+    "runtimeEventTopology": ".ai/harness/runtime-event-topology.json",
+    "runtimeEventValidator": "scripts/Test-RuntimeEventContract.ps1"
   },
   "schemas": [
     ".ai/harness/schemas/repository-family-registry.schema.json",
@@ -33,6 +37,8 @@
     ".ai/harness/schemas/gnhf-runtime-capability.schema.json",
     ".ai/harness/schemas/app-composition-graph.schema.json",
     ".ai/harness/schemas/app-harness-validation.schema.json",
+    ".ai/harness/schemas/runtime-event-envelope.schema.json",
+    ".ai/harness/schemas/runtime-event-topology.schema.json",
     "plans/schemas/public-plan.schema.json",
     "tooling/gnhf/schemas/agent-startup-readiness.schema.json"
   ],
@@ -40,6 +46,8 @@
     "contract",
     "public-plan-coordination",
     "offline-synthetic-harness",
+    "runtime-event-contract",
+    "synthetic-cascade",
     "local-adapter-readiness",
     "read-only-repository-intake",
     "child-validator",
@@ -55,7 +63,9 @@
       "operator-report.md",
       "final-handoff.json",
       "app-harness-validation.json",
-      "app-harness-validation.md"
+      "app-harness-validation.md",
+      "runtime-event-<eventId>.json",
+      "runtime-event-cascade-<correlationId>.json"
     ]
   },
   "appHarnessValidation": {
@@ -64,10 +74,7 @@
     "entrypoint": "Test-AppHarness.cmd",
     "observer": "scripts/Test-AppHarness.ps1",
     "compositionGraph": ".ai/harness/app-composition.graph.json",
-    "artifacts": [
-      "app-harness-validation.json",
-      "app-harness-validation.md"
-    ],
+    "artifacts": ["app-harness-validation.json", "app-harness-validation.md"],
     "readOnly": true,
     "networkAllowed": false,
     "runtimeAllowed": false,
@@ -75,13 +82,23 @@
     "optionalDependencyBehavior": "skip-with-reason",
     "proofCeiling": "registered repository composition and bounded offline validators only"
   },
+  "runtimeEvents": {
+    "trackedContract": true,
+    "contractOnly": true,
+    "policy": ".ai/harness/runtime-event-contract.policy.json",
+    "topology": ".ai/harness/runtime-event-topology.json",
+    "envelopeSchema": ".ai/harness/schemas/runtime-event-envelope.schema.json",
+    "validator": "scripts/Test-RuntimeEventContract.ps1",
+    "generatedEvidenceTracked": false,
+    "runtimeExecutionAllowed": false,
+    "networkAllowed": false,
+    "targetMutationAllowed": false,
+    "proofCeiling": "typed envelope, registered topology, and synthetic causality fixtures only"
+  },
   "startupReadiness": {
     "tracked": false,
     "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/GnhfFleet/reports/startup",
-    "artifacts": [
-      "agent-startup-readiness-<timestamp>.json",
-      "agent-startup-readiness-<timestamp>.md"
-    ],
+    "artifacts": ["agent-startup-readiness-<timestamp>.json", "agent-startup-readiness-<timestamp>.md"],
     "readOnly": true,
     "proofCeiling": "local fleet-state and adapter readiness only"
   },
@@ -97,5 +114,5 @@
     "enabled": false,
     "reason": "Explicit startup, CI, and operator commands own validation. No implicit local hook is justified until public-plan adoption and failure behavior are proven across child repositories."
   },
-  "proofCeiling": "This harness proves family registration, public coordination contract shape, registered app-composition topology, bounded offline validator aggregation, local adapter-readiness reporting, read-only local clone discovery, Git identity, required-path readiness, and deterministic contract validation only."
+  "proofCeiling": "This harness proves family registration, public coordination contract shape, registered app-composition topology, bounded offline validator aggregation, runtime-event doctrine shape and synthetic causality fixtures, local adapter-readiness reporting, read-only local clone discovery, Git identity, required-path readiness, and deterministic contract validation only."
 }
