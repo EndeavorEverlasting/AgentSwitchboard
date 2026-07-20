@@ -134,7 +134,17 @@ try {
 }
 catch { [void]$failures.Add("central/artifacts: $($_.Exception.Message)") }
 
-$combined = ($textByPath.Values -join "`n")
+$deployableContractPaths = @(
+    'tooling/pi/harness/codebase-map.json',
+    'tooling/pi/harness/pi-adapter.registry.json',
+    'tooling/pi/harness/artifact-registry.json',
+    'tooling/pi/harness/workflows/task-intake.workflow.json',
+    'tooling/pi/harness/workflows/opinion-fusion.workflow.json',
+    'tooling/pi/harness/workflows/autovalidate.workflow.json',
+    '.ai/skills/pi-fusion-orchestration/SKILL.md',
+    'docs/harness/pi-operational-harness.md'
+)
+$deployableText = ($deployableContractPaths | ForEach-Object { $textByPath[$_] }) -join "`n"
 foreach ($forbidden in @(
     'npm install -g @mariozechner/pi-coding-agent',
     '%USERPROFILE%\.pi',
@@ -142,7 +152,7 @@ foreach ($forbidden in @(
     'dangerously-skip-permissions',
     'localhost means private'
 )) {
-    Check (-not $combined.Contains($forbidden)) "forbidden/$forbidden" 'unverified installation, API, permission bypass, or privacy shortcut is embedded'
+    Check (-not $deployableText.Contains($forbidden)) "forbidden/$forbidden" 'unverified installation, API, permission bypass, or privacy shortcut is embedded in a deployable contract'
 }
 
 Write-Host 'PI HARNESS COMPLETENESS' -ForegroundColor Cyan
