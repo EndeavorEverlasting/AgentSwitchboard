@@ -49,6 +49,21 @@
     "staticProofCannotClaimRuntime": true,
     "runtimeExecutionRequiresExplicitLane": true
   },
+  "deviceProfileLauncherContract": {
+    "policy": ".ai/harness/device-profile-launcher.policy.json",
+    "documentation": "docs/governance/device-profile-launcher-contract.md",
+    "registry": ".ai/harness/device-profile-registry.json",
+    "registrySchema": ".ai/harness/schemas/device-profile-registry.schema.json",
+    "validator": "scripts/Test-DeviceProfileLauncherContract.ps1",
+    "canonicalOwnerRepository": "EndeavorEverlasting/AgentSwitchboard",
+    "oneCanonicalLauncherPerProfile": true,
+    "windowsProfileOperation": "open-or-activate",
+    "sysAdminSuiteRole": "consumer-certifier",
+    "consumerIndependentLaunchLogicForbidden": true,
+    "rawFrontendFallbackForbidden": true,
+    "crossProfileSubstitutionForbidden": true,
+    "staticProofCannotClaimOpenOrActivate": true
+  },
   "safety": {
     "evidenceBeforeConfidence": true,
     "preserveBeforeDestructiveCleanup": true,
