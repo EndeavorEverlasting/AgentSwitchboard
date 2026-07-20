@@ -58,6 +58,16 @@ A static graph proves registration only. Synthetic fixtures prove contract causa
 
 Any prompt claiming it will build, install, repair, configure, or prove an event listener or cascade must require the corresponding tracked implementation, topology update, validation, commit or GitHub evidence, and honest proof ceiling. Validate the doctrine with `scripts/Test-RuntimeEventContract.ps1`.
 
+## Device profile launcher contract
+
+Read `docs/governance/device-profile-launcher-contract.md` and `.ai/harness/device-profile-launcher.policy.json` whenever work claims a platform profile, terminal launcher, desktop shortcut, open-or-activate path, or consumer certification.
+
+AgentSwitchboard owns one canonical launcher per platform profile. The first concrete contract is the **Windows Profile**: WezTerm-backed, idempotent `open-or-activate`, and owned by AgentSwitchboard. SysAdminSuite may consume and certify that launcher but may not recreate lifecycle logic or fall back to raw `wezterm`, `wezterm.exe`, or `wezterm-gui.exe`. A desktop shortcut delegates to the canonical launcher only.
+
+The **Linux Profile** and **Android Profile** remain separate profile contracts. Their implementation and configuration may differ; a Windows launcher does not prove Linux or Android support.
+
+Any prompt claiming it will install, build, configure, repair, certify, or deploy a profile or launcher must require the corresponding tracked implementation, registry update, focused validation, commit or GitHub evidence, and honest proof ceiling. Contract-only doctrine may not claim a launcher exists or that a workspace was opened or activated. Validate with `scripts/Test-DeviceProfileLauncherContract.ps1`.
+
 ## Preservation and proof
 
 - preserve unrelated dirty work in a separate worktree or branch;
@@ -70,4 +80,4 @@ Any prompt claiming it will build, install, repair, configure, or prove an event
 
 ## Invalid execution contracts
 
-Reject acknowledgment-only, summary-only, rewritten-prompt-only, handoff-only, or preflight-only substitutes; action language without mutation and proof; event-listener or cascade claims without registered nodes, edges, correlated evidence, and the achieved proof boundary; test-only GNHF runs over 30 seconds; and DeepSeek execution during double-usage or unknown schedule state.
+Reject acknowledgment-only, summary-only, rewritten-prompt-only, handoff-only, or preflight-only substitutes; action language without mutation and proof; event-listener or cascade claims without registered nodes, edges, correlated evidence, and the achieved proof boundary; profile or launcher claims that permit competing owners, consumer-owned lifecycle logic, raw frontend fallback, cross-profile substitution, or architecture-only delivery; test-only GNHF runs over 30 seconds; and DeepSeek execution during double-usage or unknown schedule state.
