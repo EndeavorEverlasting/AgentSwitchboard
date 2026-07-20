@@ -38,6 +38,17 @@
       "note": "The official API page currently publishes flat prices and no active time-of-day multiplier. Any plan-specific double-usage schedule must be supplied as a fresh operator-local schedule; unknown or stale schedule state blocks DeepSeek."
     }
   },
+  "runtimeEventContract": {
+    "policy": ".ai/harness/runtime-event-contract.policy.json",
+    "documentation": "docs/governance/runtime-event-contract.md",
+    "topology": ".ai/harness/runtime-event-topology.json",
+    "envelopeSchema": ".ai/harness/schemas/runtime-event-envelope.schema.json",
+    "validator": "scripts/Test-RuntimeEventContract.ps1",
+    "allNodesAndEdgesRegistered": true,
+    "correlationAndCausationRequired": true,
+    "staticProofCannotClaimRuntime": true,
+    "runtimeExecutionRequiresExplicitLane": true
+  },
   "safety": {
     "evidenceBeforeConfidence": true,
     "preserveBeforeDestructiveCleanup": true,
