@@ -101,6 +101,26 @@
       "sensitivity": "local-operational",
       "retention": "operator-controlled temporary evidence outside the repository",
       "proofCeiling": "English PASS/SKIP/FAIL rendering of offline synthetic checks only"
+    },
+    {
+      "artifactId": "runtime-event-envelope",
+      "artifactType": "runtime-event",
+      "fileName": "runtime-event-<eventId>.json",
+      "schema": ".ai/harness/schemas/runtime-event-envelope.schema.json",
+      "tracked": false,
+      "sensitivity": "local-operational",
+      "retention": "operator-controlled runtime evidence outside the repository",
+      "proofCeiling": "one typed event observation only; not a complete cascade"
+    },
+    {
+      "artifactId": "runtime-event-cascade-evidence",
+      "artifactType": "runtime-event-cascade",
+      "fileName": "runtime-event-cascade-<correlationId>.json",
+      "schema": null,
+      "tracked": false,
+      "sensitivity": "local-operational",
+      "retention": "operator-controlled runtime evidence outside the repository",
+      "proofCeiling": "one correlated cascade record only; environment and target claims require separate authority"
     }
   ]
 }
