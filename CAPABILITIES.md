@@ -40,6 +40,15 @@ Agents must not infer `verified` from command presence, prior sessions, document
 
 Public plans coordinate work. They do not grant branch, provider, merge, deployment, target-mutation, secret, or destructive-Git authority.
 
+## Synthetic harness observer capabilities
+
+| Capability | Activation and output | Guardrail and proof |
+|---|---|---|
+| `harness.composition.observe` | inspect `.ai/harness/app-composition.graph.json`; validate every registered required node, declared edge, ingress-to-observer route, and observer-to-output cascade | static registered-topology proof only; missing optional MCP/LSP readiness is an honest skip |
+| `harness.proof.aggregate` | run `Test-AppHarness.cmd` or `scripts/Test-AppHarness.ps1`; emit `app-harness-validation.json` and `app-harness-validation.md` with a PASS/SKIP/FAIL matrix | offline only; bounded repository-owned validators; no network, launcher, provider, application, target, account, save, deployment, or runtime execution |
+
+The event observer proves the composition graph that the repository has registered. It does not infer unregistered nodes, claim live event delivery, or promote a static edge into runtime behavior proof.
+
 ## Harness doctrine capabilities
 
 | Capability | Activation and output | Guardrail and proof |
