@@ -4,7 +4,7 @@
 
 ## Canonical authority
 
-Read `docs/governance/harness-doctrine.md` and `.ai/harness/harness-doctrine.policy.json` before repository work. For event sources, observers, listeners, handlers, trigger cascades, successor events, or evidence sinks, also read `docs/governance/runtime-event-contract.md` and `.ai/harness/runtime-event-contract.policy.json`. For platform profiles, terminal launchers, desktop shortcuts, open-or-activate behavior, or consumer certification, also read `docs/governance/device-profile-launcher-contract.md` and `.ai/harness/device-profile-launcher.policy.json`.
+Read `docs/governance/harness-doctrine.md` and `.ai/harness/harness-doctrine.policy.json` before repository work. For event sources, observers, listeners, handlers, trigger cascades, successor events, or evidence sinks, also read `docs/governance/runtime-event-contract.md` and `.ai/harness/runtime-event-contract.policy.json`. For platform profiles, terminal launchers, desktop shortcuts, open-or-activate behavior, or consumer certification, also read `docs/governance/device-profile-launcher-contract.md` and `.ai/harness/device-profile-launcher.policy.json`. For end-to-end, E2E, system, integration, aggregate-harness, full-project, or exact-head validation, use `.ai/skills/project-end-to-end-testing/SKILL.md`.
 
 A task prompt selects bounded work. It does not replace this contract, grant a forbidden capability, or lower a proof requirement.
 
@@ -63,7 +63,7 @@ If the declaration cannot be made accurately, perform read-only intake first. Do
 - Treat prompts as artifacts, never as the sole implementation.
 - Put material cross-session coordination under `plans/`; a PR description is not the only durable record.
 - Protect credentials, personal data, private hostnames, customer evidence, large logs, dumps, and machine-local junk.
-- Run focused checks before broader safe validation and never inflate static or synthetic proof into runtime or target proof.
+- Route project-wide validation through `project-end-to-end-testing`; run focused checks before broader safe validation and never inflate static or synthetic proof into runtime or target proof.
 - When safe and authorized, mutate tracked files, validate, commit, push, and open or update the intended PR.
 - Preserve the same repair context when a deterministic gate exposes a correctable defect; do not abandon evidence and restart blindly.
 
@@ -124,7 +124,7 @@ All participating nodes, edges, and event types belong in `.ai/harness/runtime-e
 
 A claim that an event listener or cascade was built requires the corresponding deterministic implementation, topology update, validation, and commit or GitHub evidence. A runtime-success claim additionally requires correlated source, observer, handler, successor or terminal, and sink artifacts from an explicitly authorized runtime lane. Static topology and synthetic fixtures prove lower levels only.
 
-Validate the runtime-event-contract with `scripts/Test-RuntimeEventContract.ps1`, then validate registration in the wider harness with `Test-AppHarness.cmd`.
+Runtime-event end-to-end proof follows `.ai/skills/project-end-to-end-testing/SKILL.md`; the runtime-event contract remains the domain-specific acceptance boundary.
 
 ## Device profiles and launcher ownership
 
@@ -134,7 +134,7 @@ The Windows Profile is WezTerm-backed and has exactly one canonical `open-or-act
 
 A claim that a profile or launcher was installed, built, repaired, configured, certified, or deployed requires tracked implementation, profile registry updates, focused validation, commit or GitHub evidence, and an honest proof ceiling. Contract-only doctrine must not claim the launcher exists or that a window was opened or activated.
 
-Validate with `scripts/Test-DeviceProfileLauncherContract.ps1`, then run the wider doctrine and aggregate harness validators.
+Device-profile end-to-end proof follows `.ai/skills/project-end-to-end-testing/SKILL.md`; the launcher contract remains the domain-specific acceptance boundary.
 
 ## Public plans
 
