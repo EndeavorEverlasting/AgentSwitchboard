@@ -1,7 +1,7 @@
 {
   "schema": "agentswitchboard.runtime-event.v1",
   "eventId": "22222222-2222-4222-8222-222222222222",
-  "eventType": "runtime.contract.followup",
+  "eventType": "runtime.contract.validated",
   "source": {
     "nodeId": "handler.contract-validation",
     "component": "AgentSwitchboard",
