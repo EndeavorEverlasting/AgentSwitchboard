@@ -1,0 +1,241 @@
+{
+  "schema": "agentswitchboard.app-composition-graph.v1",
+  "graphId": "agentswitchboard.harness-event-topology.v1",
+  "observerNodeId": "observer.app-harness",
+  "nodes": [
+    {
+      "id": "request.validation",
+      "label": "Harness proof request",
+      "kind": "request",
+      "topologyRole": "ingress",
+      "required": true,
+      "paths": [],
+      "safeOffline": true,
+      "description": "Explicit request for offline synthetic harness proof."
+    },
+    {
+      "id": "entrypoint.one-command",
+      "label": "One-command validator entrypoint",
+      "kind": "entrypoint",
+      "topologyRole": "ingress",
+      "required": true,
+      "paths": ["Test-AppHarness.cmd"],
+      "safeOffline": true
+    },
+    {
+      "id": "observer.app-harness",
+      "label": "App harness event observer",
+      "kind": "observer",
+      "topologyRole": "observer",
+      "required": true,
+      "paths": ["scripts/Test-AppHarness.ps1"],
+      "safeOffline": true,
+      "description": "Aggregates safe offline checks, observes registered nodes and edges, and emits honest PASS/SKIP/FAIL evidence."
+    },
+    {
+      "id": "contract.agent-rules",
+      "label": "Agent operating contract",
+      "kind": "contract",
+      "topologyRole": "observed",
+      "required": true,
+      "paths": ["AGENTS.md"],
+      "safeOffline": true
+    },
+    {
+      "id": "contract.codebase-map",
+      "label": "Codebase map",
+      "kind": "contract",
+      "topologyRole": "observed",
+      "required": true,
+      "paths": ["CODEBASE_MAP.md"],
+      "safeOffline": true
+    },
+    {
+      "id": "trigger.validation-requested",
+      "label": "Validation requested trigger",
+      "kind": "trigger",
+      "topologyRole": "ingress",
+      "required": true,
+      "paths": ["TRIGGERS.md"],
+      "safeOffline": true
+    },
+    {
+      "id": "skill.evidence-validation",
+      "label": "Evidence validation skill",
+      "kind": "skill",
+      "topologyRole": "ingress",
+      "required": true,
+      "paths": [".ai/skills/evidence-validation/SKILL.md"],
+      "safeOffline": true
+    },
+    {
+      "id": "contract.harness-manifest",
+      "label": "Harness manifest",
+      "kind": "contract",
+      "topologyRole": "observed",
+      "required": true,
+      "paths": [".ai/harness/manifest.json"],
+      "safeOffline": true
+    },
+    {
+      "id": "contract.workflow-spec",
+      "label": "Repository intake workflow specification",
+      "kind": "contract",
+      "topologyRole": "observed",
+      "required": true,
+      "paths": [".ai/harness/workflows/repository-family-intake.workflow.json"],
+      "safeOffline": true
+    },
+    {
+      "id": "schema.run-context",
+      "label": "Run context schema",
+      "kind": "schema",
+      "topologyRole": "observed",
+      "required": true,
+      "paths": [".ai/harness/schemas/run-context.schema.json"],
+      "safeOffline": true
+    },
+    {
+      "id": "registry.artifacts",
+      "label": "Artifact registry",
+      "kind": "artifact-registry",
+      "topologyRole": "observed",
+      "required": true,
+      "paths": [".ai/harness/artifact-registry.json"],
+      "safeOffline": true
+    },
+    {
+      "id": "renderer.english-matrix",
+      "label": "English matrix renderer",
+      "kind": "report-renderer",
+      "topologyRole": "observed",
+      "required": true,
+      "paths": [".ai/harness/app-harness-report.template.md"],
+      "safeOffline": true
+    },
+    {
+      "id": "validator.doctrine",
+      "label": "Harness doctrine validator",
+      "kind": "validator",
+      "topologyRole": "observed",
+      "required": true,
+      "paths": ["scripts/Test-HarnessDoctrineContract.ps1"],
+      "safeOffline": true
+    },
+    {
+      "id": "validator.documentation",
+      "label": "Agent documentation validator",
+      "kind": "validator",
+      "topologyRole": "observed",
+      "required": true,
+      "paths": ["scripts/Test-AgentDocumentationContract.ps1"],
+      "safeOffline": true
+    },
+    {
+      "id": "validator.repository-family",
+      "label": "Repository family harness validator",
+      "kind": "validator",
+      "topologyRole": "observed",
+      "required": true,
+      "paths": ["scripts/Test-RepositoryFamilyHarness.ps1"],
+      "safeOffline": true
+    },
+    {
+      "id": "validator.public-plans",
+      "label": "Public plan validator",
+      "kind": "validator",
+      "topologyRole": "observed",
+      "required": true,
+      "paths": ["scripts/Test-PublicPlanContracts.ps1"],
+      "safeOffline": true
+    },
+    {
+      "id": "schema.composition-graph",
+      "label": "Composition graph schema",
+      "kind": "schema",
+      "topologyRole": "observed",
+      "required": true,
+      "paths": [".ai/harness/schemas/app-composition-graph.schema.json"],
+      "safeOffline": true
+    },
+    {
+      "id": "schema.validation-result",
+      "label": "Harness validation result schema",
+      "kind": "schema",
+      "topologyRole": "observed",
+      "required": true,
+      "paths": [".ai/harness/schemas/app-harness-validation.schema.json"],
+      "safeOffline": true
+    },
+    {
+      "id": "contract.hook-policy",
+      "label": "Hook and generated-artifact hygiene policy",
+      "kind": "contract",
+      "topologyRole": "observed",
+      "required": true,
+      "paths": [".ai/harness/manifest.json", ".ai/harness/artifact-registry.json"],
+      "safeOffline": true
+    },
+    {
+      "id": "optional.mcp-lsp",
+      "label": "Optional MCP/LSP symbol readiness",
+      "kind": "optional-capability",
+      "topologyRole": "observed",
+      "required": false,
+      "paths": [".ai/harness/mcp-lsp-readiness.json"],
+      "safeOffline": true,
+      "description": "Optional offline readiness marker. Absence is an honest lsp_project_not_loaded skip, not a failure."
+    },
+    {
+      "id": "artifact.validation-json",
+      "label": "Machine-readable validation result",
+      "kind": "artifact",
+      "topologyRole": "output",
+      "required": true,
+      "paths": [],
+      "safeOffline": true
+    },
+    {
+      "id": "artifact.validation-report",
+      "label": "English validation matrix",
+      "kind": "artifact",
+      "topologyRole": "output",
+      "required": true,
+      "paths": [],
+      "safeOffline": true
+    }
+  ],
+  "edges": [
+    { "id": "edge.request-trigger", "from": "request.validation", "to": "trigger.validation-requested", "event": "harness.proof-request", "required": true },
+    { "id": "edge.trigger-skill", "from": "trigger.validation-requested", "to": "skill.evidence-validation", "event": "route.evidence-validation", "required": true },
+    { "id": "edge.skill-observer", "from": "skill.evidence-validation", "to": "observer.app-harness", "event": "invoke.synthetic-observer", "required": true },
+    { "id": "edge.command-observer", "from": "entrypoint.one-command", "to": "observer.app-harness", "event": "invoke.one-command", "required": true },
+    { "id": "edge.observe-agent-rules", "from": "observer.app-harness", "to": "contract.agent-rules", "event": "observe.required-file", "required": true },
+    { "id": "edge.observe-codebase-map", "from": "observer.app-harness", "to": "contract.codebase-map", "event": "observe.required-file", "required": true },
+    { "id": "edge.observe-manifest", "from": "observer.app-harness", "to": "contract.harness-manifest", "event": "observe.manifest", "required": true },
+    { "id": "edge.observe-workflow", "from": "observer.app-harness", "to": "contract.workflow-spec", "event": "observe.workflow", "required": true },
+    { "id": "edge.observe-run-context", "from": "observer.app-harness", "to": "schema.run-context", "event": "observe.run-context", "required": true },
+    { "id": "edge.observe-artifacts", "from": "observer.app-harness", "to": "registry.artifacts", "event": "observe.artifact-registry", "required": true },
+    { "id": "edge.observe-renderer", "from": "observer.app-harness", "to": "renderer.english-matrix", "event": "observe.report-renderer", "required": true },
+    { "id": "edge.observe-doctrine-validator", "from": "observer.app-harness", "to": "validator.doctrine", "event": "validate.offline", "required": true },
+    { "id": "edge.observe-documentation-validator", "from": "observer.app-harness", "to": "validator.documentation", "event": "validate.offline", "required": true },
+    { "id": "edge.observe-family-validator", "from": "observer.app-harness", "to": "validator.repository-family", "event": "validate.offline", "required": true },
+    { "id": "edge.observe-plan-validator", "from": "observer.app-harness", "to": "validator.public-plans", "event": "validate.offline", "required": true },
+    { "id": "edge.observe-graph-schema", "from": "observer.app-harness", "to": "schema.composition-graph", "event": "observe.schema", "required": true },
+    { "id": "edge.observe-result-schema", "from": "observer.app-harness", "to": "schema.validation-result", "event": "observe.schema", "required": true },
+    { "id": "edge.observe-hook-policy", "from": "observer.app-harness", "to": "contract.hook-policy", "event": "observe.hygiene", "required": true },
+    { "id": "edge.observe-optional-symbols", "from": "observer.app-harness", "to": "optional.mcp-lsp", "event": "observe.optional-symbol-readiness", "required": false },
+    { "id": "edge.manifest-json", "from": "contract.harness-manifest", "to": "artifact.validation-json", "event": "register.generated-artifact", "required": true },
+    { "id": "edge.registry-json", "from": "registry.artifacts", "to": "artifact.validation-json", "event": "classify.generated-artifact", "required": true },
+    { "id": "edge.registry-report", "from": "registry.artifacts", "to": "artifact.validation-report", "event": "classify.generated-artifact", "required": true },
+    { "id": "edge.run-context-json", "from": "schema.run-context", "to": "artifact.validation-json", "event": "constrain.run-context", "required": true },
+    { "id": "edge.renderer-report", "from": "renderer.english-matrix", "to": "artifact.validation-report", "event": "render.english-matrix", "required": true },
+    { "id": "edge.observer-json", "from": "observer.app-harness", "to": "artifact.validation-json", "event": "emit.json-result", "required": true },
+    { "id": "edge.observer-report", "from": "observer.app-harness", "to": "artifact.validation-report", "event": "emit.english-matrix", "required": true },
+    { "id": "edge.doctrine-result", "from": "validator.doctrine", "to": "artifact.validation-json", "event": "report.validator-result", "required": true },
+    { "id": "edge.documentation-result", "from": "validator.documentation", "to": "artifact.validation-json", "event": "report.validator-result", "required": true },
+    { "id": "edge.family-result", "from": "validator.repository-family", "to": "artifact.validation-json", "event": "report.validator-result", "required": true },
+    { "id": "edge.plan-result", "from": "validator.public-plans", "to": "artifact.validation-json", "event": "report.validator-result", "required": true }
+  ],
+  "proofCeiling": "This graph proves only that registered harness composition nodes and declared event edges are structurally connected and that selected validators are safe to invoke offline. It does not prove live event delivery, application runtime behavior, provider readiness, launcher behavior, target mutation, deployment, or unregistered application paths."
+}
