@@ -27,6 +27,10 @@
     {"id":"validator.runtime-events","label":"Runtime event contract validator","kind":"validator","topologyRole":"observed","required":true,"paths":["scripts/Test-RuntimeEventContract.ps1"],"safeOffline":true},
     {"id":"schema.runtime-event-envelope","label":"Runtime event envelope schema","kind":"schema","topologyRole":"observed","required":true,"paths":[".ai/harness/schemas/runtime-event-envelope.schema.json"],"safeOffline":true},
     {"id":"schema.runtime-event-topology","label":"Runtime event topology schema","kind":"schema","topologyRole":"observed","required":true,"paths":[".ai/harness/schemas/runtime-event-topology.schema.json"],"safeOffline":true},
+    {"id":"contract.device-profile-policy","label":"Device profile launcher policy","kind":"contract","topologyRole":"observed","required":true,"paths":[".ai/harness/device-profile-launcher.policy.json","docs/governance/device-profile-launcher-contract.md"],"safeOffline":true},
+    {"id":"registry.device-profiles","label":"Device profile registry","kind":"contract","topologyRole":"observed","required":true,"paths":[".ai/harness/device-profile-registry.json"],"safeOffline":true},
+    {"id":"schema.device-profile-registry","label":"Device profile registry schema","kind":"schema","topologyRole":"observed","required":true,"paths":[".ai/harness/schemas/device-profile-registry.schema.json"],"safeOffline":true},
+    {"id":"validator.device-profiles","label":"Device profile launcher validator","kind":"validator","topologyRole":"observed","required":true,"paths":["scripts/Test-DeviceProfileLauncherContract.ps1"],"safeOffline":true},
     {"id":"optional.mcp-lsp","label":"Optional MCP/LSP symbol readiness","kind":"optional-capability","topologyRole":"observed","required":false,"paths":[".ai/harness/mcp-lsp-readiness.json"],"safeOffline":true,"description":"Optional offline readiness marker. Absence is an honest lsp_project_not_loaded skip, not a failure."},
     {"id":"artifact.validation-json","label":"Machine-readable validation result","kind":"artifact","topologyRole":"output","required":true,"paths":[],"safeOffline":true},
     {"id":"artifact.validation-report","label":"English validation matrix","kind":"artifact","topologyRole":"output","required":true,"paths":[],"safeOffline":true}
@@ -55,6 +59,10 @@
     {"id":"edge.observe-runtime-validator","from":"observer.app-harness","to":"validator.runtime-events","event":"validate.offline","required":true},
     {"id":"edge.observe-runtime-envelope-schema","from":"observer.app-harness","to":"schema.runtime-event-envelope","event":"observe.schema","required":true},
     {"id":"edge.observe-runtime-topology-schema","from":"observer.app-harness","to":"schema.runtime-event-topology","event":"observe.schema","required":true},
+    {"id":"edge.observe-device-profile-policy","from":"observer.app-harness","to":"contract.device-profile-policy","event":"observe.device-profile-policy","required":true},
+    {"id":"edge.observe-device-profile-registry","from":"observer.app-harness","to":"registry.device-profiles","event":"observe.device-profile-registry","required":true},
+    {"id":"edge.observe-device-profile-schema","from":"observer.app-harness","to":"schema.device-profile-registry","event":"observe.schema","required":true},
+    {"id":"edge.observe-device-profile-validator","from":"observer.app-harness","to":"validator.device-profiles","event":"validate.offline","required":true},
     {"id":"edge.observe-optional-symbols","from":"observer.app-harness","to":"optional.mcp-lsp","event":"observe.optional-symbol-readiness","required":false},
     {"id":"edge.manifest-json","from":"contract.harness-manifest","to":"artifact.validation-json","event":"register.generated-artifact","required":true},
     {"id":"edge.registry-json","from":"registry.artifacts","to":"artifact.validation-json","event":"classify.generated-artifact","required":true},
@@ -67,7 +75,8 @@
     {"id":"edge.documentation-result","from":"validator.documentation","to":"artifact.validation-json","event":"report.validator-result","required":true},
     {"id":"edge.family-result","from":"validator.repository-family","to":"artifact.validation-json","event":"report.validator-result","required":true},
     {"id":"edge.plan-result","from":"validator.public-plans","to":"artifact.validation-json","event":"report.validator-result","required":true},
-    {"id":"edge.runtime-event-result","from":"validator.runtime-events","to":"artifact.validation-json","event":"report.validator-result","required":true}
+    {"id":"edge.runtime-event-result","from":"validator.runtime-events","to":"artifact.validation-json","event":"report.validator-result","required":true},
+    {"id":"edge.device-profile-result","from":"validator.device-profiles","to":"artifact.validation-json","event":"report.validator-result","required":true}
   ],
-  "proofCeiling": "This graph proves registered harness nodes, declared edges, and safe offline validator composition. Runtime event nodes here prove doctrine registration only; they do not prove application emission, observation, handling, successor delivery, sink recording, or unregistered paths."
+  "proofCeiling": "This graph proves registered harness nodes, declared edges, and safe offline validator composition. Runtime-event and device-profile nodes prove doctrine registration only; they do not prove application delivery, an open-or-activate result, SysAdminSuite certification, or unregistered paths."
 }
