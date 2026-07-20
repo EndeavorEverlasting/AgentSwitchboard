@@ -16,6 +16,12 @@
     "requireVerifiedSchedule": true,
     "operatorSchedulePath": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\deepseek-usage-windows.json"
   },
+  "runtimeEventContract": {
+    "policy": ".ai/harness/runtime-event-contract.policy.json",
+    "documentation": "docs/governance/runtime-event-contract.md",
+    "validator": "scripts/Test-RuntimeEventContract.ps1",
+    "contractOnly": true
+  },
   "localRulesMayStrengthen": true,
   "localRulesMayWeaken": false
 }
