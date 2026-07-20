@@ -49,6 +49,16 @@ Public plans coordinate work. They do not grant branch, provider, merge, deploym
 
 The event observer proves the composition graph that the repository has registered. It does not infer unregistered nodes, claim live event delivery, or promote a static edge into runtime behavior proof.
 
+## Runtime event capabilities
+
+| Capability | Activation and output | Guardrail and proof |
+|---|---|---|
+| `runtime.event-contract.validate` | validate the typed envelope, correlation and causation fixtures, topology registry, doctrine references, and proof boundaries | run `scripts/Test-RuntimeEventContract.ps1`; contract and synthetic causality proof only |
+| `runtime.event-topology.read` | inspect registered sources, observers, handlers, sinks, event types, and directed edges | read-only; registry presence does not prove implementation or delivery |
+| `runtime.event-cascade.observe` | capture one authorized runtime chain from source through observer, handler, successor or terminal, and evidence sink | unavailable until an explicit runtime lane and implementation-specific observer exist; static or synthetic checks may not claim this capability verified |
+
+A runtime event claim records event ID, correlation ID, causation ID, sequence, source node, handler decision, successor or terminal result, sink artifact, environment, and proof ceiling. Capability presence never grants runtime execution or target mutation authority.
+
 ## Harness doctrine capabilities
 
 | Capability | Activation and output | Guardrail and proof |
@@ -62,16 +72,9 @@ The machine-readable limits and default-deny rules are in `.ai/harness/harness-d
 
 ## Verification requirements
 
-A capability probe must be:
-
-- bounded and low-risk;
-- relevant to the exact environment;
-- recorded with command, result, and limitation;
-- repeated when the environment or credentials may have changed.
+A capability probe must be bounded, low-risk, relevant to the exact environment, recorded with command and limitation, and repeated when the environment or credentials may have changed.
 
 ## Authority formula
-
-An action is permitted only when:
 
 `verified capability + explicit task authority + repository policy + safe current state`
 
@@ -79,26 +82,20 @@ If any term is missing, the action is blocked or escalated.
 
 ## Degradation behavior
 
-When a capability is missing:
-
-- reuse a healthy alternative when the contract allows it;
-- install or repair only inside explicit setup scope;
-- record a precise skip or blocker;
-- continue independent safe lanes;
-- never claim success from a fallback that provides lower proof.
+When a capability is missing, reuse a healthy alternative when allowed, install or repair only inside explicit scope, record a precise skip or blocker, continue independent safe lanes, and never claim success from a lower-proof fallback.
 
 ## Provider and agent separation
 
-Record executor, provider, model, subscription, and local compute separately. A harness being available does not prove a provider is authenticated, a model is reachable, or quota remains.
+Record executor, provider, model, subscription, and local compute separately. Harness availability does not prove provider authentication, model reachability, or quota.
 
 ## Provider-routed GNHF capabilities
 
-AgentSwitchboard splits the provider route into independently classifiable operations:
+AgentSwitchboard splits provider routing into:
 
-1. `discover-gnhf-runtime` — npm dist-tags/versions, installed binary, CLI flags, and optional upstream source facts;
-2. `install-or-select-gnhf-runtime` — transactional install/selection against a capability matrix, not a guessed version;
-3. `prove-provider-route` — shell-correct OpenCode dispatch and bounded model marker;
-4. `launch-bounded-gnhf` — start GNHF only after provider proof and usage-window eligibility;
-5. `verify-committed-delivery` — require a commit ahead of the base; reject zero-exit/no-commit.
+1. `discover-gnhf-runtime`;
+2. `install-or-select-gnhf-runtime`;
+3. `prove-provider-route`;
+4. `launch-bounded-gnhf`;
+5. `verify-committed-delivery`.
 
-Child repositories consume the installed capability document at `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\gnhf-runtime-capability.json` (`agentswitchboard.gnhf-runtime-capability.v1`). They must not guess npm versions, invent GNHF flags, or call source-tree installers during normal launch.
+Child repositories consume `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\gnhf-runtime-capability.json`. They must not guess npm versions, invent GNHF flags, or call source-tree installers during normal launch.
