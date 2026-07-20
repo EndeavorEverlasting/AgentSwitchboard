@@ -1,0 +1,24 @@
+{
+  "schema": "agentswitchboard.pi-workflow.v1",
+  "workflowId": "pi-autovalidate",
+  "trigger": "pi.autovalidate-request",
+  "mission": "Separate acceptance-gate authority from implementation and run a bounded repair loop with one branch writer.",
+  "roles": {
+    "architect": {"writeAuthority": false, "owns": "acceptance contract and immutable gate hash"},
+    "builder": {"writeAuthority": true, "owns": "implementation within declared scope"},
+    "validator": {"writeAuthority": false, "owns": "gate execution and findings"}
+  },
+  "steps": [
+    {"id": "author-gate", "action": "Architect writes deterministic acceptance criteria and validation commands before builder mutation."},
+    {"id": "freeze-gate", "action": "Hash the gate; builder may not weaken, replace, skip, or reinterpret it."},
+    {"id": "implement", "action": "Builder changes only owned files on the assigned branch."},
+    {"id": "validate", "action": "Validator runs the frozen gate and records command, exit, duration, result, and minimized findings."},
+    {"id": "repair", "action": "Builder repairs only actionable failures while the same gate and scope remain valid."},
+    {"id": "terminate", "action": "Stop on pass, exhausted bounds, no progress, changed assumptions, unsafe state, or contradictory evidence."},
+    {"id": "handoff", "action": "Emit validation ledger, changed files, commit evidence, unresolved failures, proof ceiling, and one next command."}
+  ],
+  "bounds": {"maximumAttempts": 5, "maximumWallClockMinutes": 45, "maximumNoProgressAttempts": 2, "tokenLimitRequired": true, "cancellationRequired": true, "writersPerBranch": 1},
+  "successGate": ["frozen gate passed", "expected artifacts exist", "Git diff is scoped", "commit exists", "no failed required validation", "proof ceiling reported"],
+  "outputs": ["pi-validation-gate.json", "pi-validation-ledger.json", "pi-final-handoff.json", "pi-operator-report.md"],
+  "proofCeiling": "Bounded validation-loop contract only; no Pi runtime, provider response, implementation success, or live-target proof."
+}
