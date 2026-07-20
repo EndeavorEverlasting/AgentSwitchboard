@@ -3,6 +3,7 @@
   "workflowId": "pi-opinion-fusion",
   "trigger": "pi.fusion-request",
   "mission": "Collect independent attributed perspectives and produce an adjudicated recommendation without granting multiple writers access to one branch.",
+  "inputHashField": "inputSha256",
   "roles": {
     "architect": {"writeAuthority": false, "output": "pi-architect-opinion.json"},
     "builder": {"writeAuthority": false, "output": "pi-builder-opinion.json"},
@@ -10,7 +11,7 @@
     "designatedWriter": {"count": 1, "writeAuthority": true, "condition": "starts only after fusion acceptance"}
   },
   "steps": [
-    {"id": "freeze-input", "action": "Hash one minimized prompt packet and give the same packet to architect and builder."},
+    {"id": "freeze-input", "action": "Hash one minimized prompt packet as inputSha256 and give the identical packet to architect and builder."},
     {"id": "parallel-opinions", "action": "Run architect and builder independently; prohibit shared scratch state and branch mutation."},
     {"id": "attribute", "action": "Record actual executor, provider, exact model, endpoint class, role, timestamps, and proof ceiling for each output."},
     {"id": "adjudicate", "action": "Preserve consensus, divergence, unresolved risks, rejected alternatives, and source references."},
