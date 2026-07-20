@@ -121,6 +121,26 @@
       "sensitivity": "local-operational",
       "retention": "operator-controlled runtime evidence outside the repository",
       "proofCeiling": "one correlated cascade record only; environment and target claims require separate authority"
+    },
+    {
+      "artifactId": "device-profile-launch-result",
+      "artifactType": "profile-launch-result",
+      "fileName": "device-profile-launch-result.json",
+      "schema": null,
+      "tracked": false,
+      "sensitivity": "local-operational",
+      "retention": "operator-controlled device-profile evidence outside the repository",
+      "proofCeiling": "one profile outcome only; not idempotence, certification, another device profile, or live-device acceptance"
+    },
+    {
+      "artifactId": "device-profile-certification",
+      "artifactType": "profile-certification",
+      "fileName": "device-profile-certification.json",
+      "schema": null,
+      "tracked": false,
+      "sensitivity": "local-operational",
+      "retention": "operator-controlled consumer certification evidence outside the repository",
+      "proofCeiling": "one consumer certification record only; not launcher runtime, open-or-activate behavior, deployment, or another platform profile"
     }
   ]
 }
