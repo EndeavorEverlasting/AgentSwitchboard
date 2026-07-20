@@ -1,0 +1,44 @@
+{
+  "schema": "agentswitchboard.pi-codebase-map.v1",
+  "harnessId": "agentswitchboard.pi-operational-harness.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "purpose": "Map the smallest repository surfaces a Pi-backed agent needs for intake, bounded orchestration, validation, artifact production, and handoff.",
+  "entrypoints": {
+    "governance": "AGENTS.md",
+    "rootMap": "CODEBASE_MAP.md",
+    "manifest": ".ai/harness/manifest.json",
+    "workflowIntake": "tooling/pi/harness/workflows/task-intake.workflow.json",
+    "workflowFusion": "tooling/pi/harness/workflows/opinion-fusion.workflow.json",
+    "workflowAutovalidate": "tooling/pi/harness/workflows/autovalidate.workflow.json",
+    "skill": ".ai/skills/pi-fusion-orchestration/SKILL.md",
+    "status": "tooling/pi/Get-PiHarnessStatus.ps1",
+    "validator": "scripts/Test-PiHarnessCompleteness.ps1",
+    "operatorGuide": "docs/harness/pi-operational-harness.md"
+  },
+  "directories": [
+    {"path": ".ai/harness", "purpose": "Canonical manifests, schemas, workflows, registries, fixtures, and proof policy."},
+    {"path": ".ai/skills", "purpose": "Scoped agent procedures; no product behavior belongs only in prose."},
+    {"path": "tooling/pi/harness", "purpose": "Pi adapter maps, workflows, schemas, and artifact contracts."},
+    {"path": "tooling/pi/hooks", "purpose": "Opt-in local validation hooks; never installed implicitly."},
+    {"path": "scripts", "purpose": "Repository-level deterministic validators and read-only probes."},
+    {"path": "tests", "purpose": "Dependency-free structural and behavioral contracts."},
+    {"path": "docs/harness", "purpose": "English operator guidance, status, gaps, risks, and proof ceilings."},
+    {"path": ".github/workflows", "purpose": "Cross-platform CI proof gates."}
+  ],
+  "commands": [
+    {"name": "Pi harness status", "command": "pwsh -NoLogo -NoProfile -File tooling/pi/Get-PiHarnessStatus.ps1", "effect": "read-only", "proof": "repository contract readiness only"},
+    {"name": "Pi completeness", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-PiHarnessCompleteness.ps1", "effect": "read-only", "proof": "tracked component and contract consistency"},
+    {"name": "Pi dependency-free contracts", "command": "python tests/test_pi_harness_contracts.py", "effect": "read-only", "proof": "JSON and workflow semantics"},
+    {"name": "Aggregate harness", "command": "Test-AppHarness.cmd", "effect": "read-only", "proof": "registered offline repository harness only"},
+    {"name": "Diff hygiene", "command": "git diff --check", "effect": "read-only", "proof": "whitespace and patch hygiene"}
+  ],
+  "knownTraps": [
+    "Do not infer Pi installation, provider readiness, privacy, or model delivery from configuration files.",
+    "Do not execute third-party extension snippets until the pinned upstream API and permissions are reviewed.",
+    "Do not let architect, builder, and validator share write authority on one branch.",
+    "Do not fuse unattributed outputs or hide unresolved divergence.",
+    "Do not run autovalidation without attempt, wall-clock, token, cancellation, and no-progress bounds.",
+    "Do not store prompts, raw model output, credentials, or local endpoint evidence in tracked artifacts."
+  ],
+  "proofCeiling": "Repository map and deterministic offline contracts only; no Pi runtime, provider, model, extension, network, privacy, or code-delivery proof."
+}
