@@ -14,6 +14,7 @@ on:
       - "scripts/Test-AgentDocumentationContract.ps1"
       - "scripts/Test-AgentGovernanceDoctrine.ps1"
       - "scripts/Test-HarnessDoctrineContract.ps1"
+      - "scripts/Test-EndToEndRuntimeValidationSkill.ps1"
       - ".github/workflows/agent-documentation-contract.yml"
   workflow_dispatch:
 
@@ -49,6 +50,9 @@ jobs:
       - name: Run harness doctrine contract
         shell: pwsh
         run: ./scripts/Test-HarnessDoctrineContract.ps1
+      - name: Run end-to-end runtime skill contract
+        shell: pwsh
+        run: ./scripts/Test-EndToEndRuntimeValidationSkill.ps1
       - name: Run documentation contract
         shell: pwsh
         run: ./scripts/Test-AgentDocumentationContract.ps1
@@ -89,7 +93,8 @@ jobs:
           foreach ($path in @(
             'scripts/Test-AgentDocumentationContract.ps1',
             'scripts/Test-AgentGovernanceDoctrine.ps1',
-            'scripts/Test-HarnessDoctrineContract.ps1'
+            'scripts/Test-HarnessDoctrineContract.ps1',
+            'scripts/Test-EndToEndRuntimeValidationSkill.ps1'
           )) {
             $tokens = $null
             $errors = $null
@@ -110,6 +115,11 @@ jobs:
         run: |
           ./scripts/Test-HarnessDoctrineContract.ps1 2>&1 |
             Tee-Object -FilePath "$env:RUNNER_TEMP\harness-doctrine-contract.log"
+      - name: Run end-to-end runtime skill contract
+        shell: pwsh
+        run: |
+          ./scripts/Test-EndToEndRuntimeValidationSkill.ps1 2>&1 |
+            Tee-Object -FilePath "$env:RUNNER_TEMP\end-to-end-runtime-validation-skill.log"
       - name: Run documentation contract
         shell: pwsh
         run: |
@@ -130,4 +140,5 @@ jobs:
             ${{ runner.temp }}/agent-governance-doctrine.log
             ${{ runner.temp }}/agent-documentation-contract.log
             ${{ runner.temp }}/harness-doctrine-contract.log
+            ${{ runner.temp }}/end-to-end-runtime-validation-skill.log
           if-no-files-found: ignore
