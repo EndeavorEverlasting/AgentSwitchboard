@@ -89,6 +89,15 @@ def main() -> None:
         "validator.repository-family",
         "validator.public-plans",
         "contract.hook-policy",
+        "contract.runtime-event-policy",
+        "contract.runtime-event-topology",
+        "validator.runtime-events",
+        "schema.runtime-event-envelope",
+        "schema.runtime-event-topology",
+        "contract.device-profile-policy",
+        "registry.device-profiles",
+        "schema.device-profile-registry",
+        "validator.device-profiles",
         "optional.mcp-lsp",
         "artifact.validation-json",
         "artifact.validation-report",
@@ -160,15 +169,26 @@ def main() -> None:
     assert entrypoints["appCompositionGraph"] == ".ai/harness/app-composition.graph.json"
     assert entrypoints["appHarnessValidator"] == "scripts/Test-AppHarness.ps1"
     assert entrypoints["appHarnessReportTemplate"] == ".ai/harness/app-harness-report.template.md"
+    assert entrypoints["deviceProfilePolicy"] == ".ai/harness/device-profile-launcher.policy.json"
+    assert entrypoints["deviceProfileRegistry"] == ".ai/harness/device-profile-registry.json"
+    assert entrypoints["deviceProfileValidator"] == "scripts/Test-DeviceProfileLauncherContract.ps1"
     assert ".ai/harness/schemas/app-composition-graph.schema.json" in manifest["schemas"]
     assert ".ai/harness/schemas/app-harness-validation.schema.json" in manifest["schemas"]
+    assert ".ai/harness/schemas/device-profile-registry.schema.json" in manifest["schemas"]
     assert manifest["appHarnessValidation"]["readOnly"] is True
     assert manifest["appHarnessValidation"]["runtimeAllowed"] is False
     assert manifest["appHarnessValidation"]["networkAllowed"] is False
     assert manifest["appHarnessValidation"]["targetMutationAllowed"] is False
+    assert manifest["deviceProfiles"]["contractOnly"] is True
+    assert manifest["deviceProfiles"]["runtimeExecutionAllowed"] is False
 
     artifact_ids = {artifact["artifactId"]: artifact for artifact in artifact_registry["artifacts"]}
-    for artifact_id in ("app-harness-validation-json", "app-harness-validation-report"):
+    for artifact_id in (
+        "app-harness-validation-json",
+        "app-harness-validation-report",
+        "device-profile-launch-result",
+        "device-profile-certification",
+    ):
         assert artifact_id in artifact_ids, f"artifact registry entry missing: {artifact_id}"
         assert artifact_ids[artifact_id]["tracked"] is False
         assert artifact_ids[artifact_id]["sensitivity"] == "local-operational"
