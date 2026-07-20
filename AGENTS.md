@@ -64,6 +64,7 @@ If the declaration cannot be made accurately, perform read-only intake first. Do
 - Put material cross-session coordination under `plans/`; a PR description is not the only durable record.
 - Protect credentials, personal data, private hostnames, customer evidence, large logs, dumps, and machine-local junk.
 - Run focused checks before broader safe validation and never inflate static or synthetic proof into runtime or target proof.
+- Select `.ai/skills/end-to-end-runtime-validation/SKILL.md` when operator success crosses shell, process, platform, terminal, TUI, or GUI boundaries. The skill owns the detailed stage order, child diagnostics, effective-state readback, user-experience observation, idempotence, rollback, and handoff evidence.
 - When safe and authorized, mutate tracked files, validate, commit, push, and open or update the intended PR.
 - Preserve the same repair context when a deterministic gate exposes a correctable defect; do not abandon evidence and restart blindly.
 
@@ -124,7 +125,7 @@ All participating nodes, edges, and event types belong in `.ai/harness/runtime-e
 
 A claim that an event listener or cascade was built requires the corresponding deterministic implementation, topology update, validation, and commit or GitHub evidence. A runtime-success claim additionally requires correlated source, observer, handler, successor or terminal, and sink artifacts from an explicitly authorized runtime lane. Static topology and synthetic fixtures prove lower levels only.
 
-Validate the runtime-event-contract with `scripts/Test-RuntimeEventContract.ps1`, then validate registration in the wider harness with `Test-AppHarness.cmd`.
+Validate the runtime-event contract with `scripts/Test-RuntimeEventContract.ps1`, then validate registration in the wider harness with `Test-AppHarness.cmd`. Use `end-to-end-runtime-validation` when the claim includes the operator invocation or a complete source-to-sink runtime path across process boundaries.
 
 ## Device profiles and launcher ownership
 
@@ -134,7 +135,7 @@ The Windows Profile is WezTerm-backed and has exactly one canonical `open-or-act
 
 A claim that a profile or launcher was installed, built, repaired, configured, certified, or deployed requires tracked implementation, profile registry updates, focused validation, commit or GitHub evidence, and an honest proof ceiling. Contract-only doctrine must not claim the launcher exists or that a window was opened or activated.
 
-Validate with `scripts/Test-DeviceProfileLauncherContract.ps1`, then run the wider doctrine and aggregate harness validators.
+Validate with `scripts/Test-DeviceProfileLauncherContract.ps1`, then run the wider doctrine and aggregate harness validators. Use `end-to-end-runtime-validation` to prove the exact operator command, frontend-to-backend chain, effective configuration, open-or-activate behavior, user-visible result, idempotence, and rollback when applicable.
 
 ## Public plans
 
@@ -169,5 +170,7 @@ A task is complete only when, at minimum:
 - commit SHA exists for a writing sprint;
 - push or PR state is reported;
 - one exact next command is given.
+
+When an end-to-end route was required, also report the exact operator command, the successful or failed stage, child stdout and stderr evidence, effective-state readback, user-visible observation, idempotence and rollback result when applicable, and the remaining proof gap.
 
 Also report generated-artifact policy, skipped checks, blockers, proof level and proof ceiling, final Git state, and relevant artifact paths. Cross-agent handoffs must be schema-backed and require the receiver to re-inspect current state.
