@@ -52,6 +52,8 @@ Every writing sprint must state, before mutation:
 - proof ceiling;
 - commit, push, and PR expectation.
 
+Record the PR or sprint identity and the validation order exactly when supplied.
+
 If the declaration cannot be made accurately, perform read-only intake first. Do not begin a broad write lane from a placeholder repository, unknown branch, ambiguous owner, or unbounded task.
 
 ## Mandatory execution discipline
