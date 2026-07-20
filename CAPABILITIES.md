@@ -59,6 +59,17 @@ The event observer proves the composition graph that the repository has register
 
 A runtime event claim records event ID, correlation ID, causation ID, sequence, source node, handler decision, successor or terminal result, sink artifact, environment, and proof ceiling. Capability presence never grants runtime execution or target mutation authority.
 
+## Device profile launcher capabilities
+
+| Capability | Activation and output | Guardrail and proof |
+|---|---|---|
+| `profile.registry.read` | inspect `.ai/harness/device-profile-registry.json` and return Windows, Linux, and Android ownership and status | read-only contract evidence; registry presence does not prove an implementation exists |
+| `profile.launcher.contract.validate` | validate canonical owner, platform separation, Windows `open-or-activate`, delegate-only consumers, idempotence rules, and action-commitment fixtures | run `scripts/Test-DeviceProfileLauncherContract.ps1`; contract proof only |
+| `profile.launcher.open-or-activate` | open one profile workspace or activate its existing owned instance and return `opened`, `activated`, `blocked`, or `failed` | unavailable until the profile implementation exists and an authorized runtime lane observes both open and activate paths |
+| `profile.consumer.certify` | SysAdminSuite verifies exact profile version, canonical launcher identity, delegation, fixtures, and no competing lifecycle logic | certification belongs in a separate SysAdminSuite adoption PR; file presence and process exit are insufficient |
+
+The Windows Profile is WezTerm-backed and owned by AgentSwitchboard. Raw WezTerm commands, desktop shortcuts, and SysAdminSuite are presentation or consumer surfaces only. Linux and Android remain separate profiles and may use different configuration.
+
 ## Harness doctrine capabilities
 
 | Capability | Activation and output | Guardrail and proof |
