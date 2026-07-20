@@ -49,6 +49,17 @@ This layer proves registered static topology and bounded offline validation only
 
 This engine reads supplied output only. It does not launch apps or providers, stores no raw output in its artifacts, and never crosses the regular-AI/GNHF execution-surface boundary.
 
+## AI Harness prompt registry
+
+- `.ai/prompt-kits/v38/prompt-registry.v1.json.gz.b64` — vendored offline gzip/base64 JSON bundle for the P00-P63 registry.
+- `.ai/prompt-kits/v38/source.json` — provenance, workbook hash, and snapshot hash.
+- `Select-AgentSwitchboardPrompt.cmd` — Windows operator entrypoint.
+- `tooling/prompts/Select-AgentSwitchboardPrompt.ps1` — list, search, show, and exact-variable render implementation.
+- `tooling/prompts/Test-AgentSwitchboardPromptRegistry.ps1` — Windows execution-surface and rendering contracts.
+- `tests/test_prompt_registry_snapshot.py` — cross-platform provenance, hash, ID, variable, and static safety contract.
+- `docs/prompt-kits/v38.md` — usage, ownership, update, validation, and proof ceiling.
+- `.github/workflows/prompt-registry.yml` — Windows and Linux contract gate.
+
 ## Runtime event contract
 
 - `docs/governance/runtime-event-contract.md` — event source, typed envelope, observer, handler, successor, and sink doctrine.
@@ -98,6 +109,7 @@ The Windows Profile is WezTerm-backed and contract-only. Its future canonical so
 - `.ai/skills/pr-integration/SKILL.md`
 - `.ai/skills/runtime-proof/SKILL.md`
 - `.ai/skills/app-output-contextualization/SKILL.md`
+- `.ai/skills/prompt-kit-selection/SKILL.md`
 
 ## GNHF control plane
 
@@ -124,6 +136,7 @@ The Windows Profile is WezTerm-backed and contract-only. Its future canonical so
 - `scripts/Test-RuntimeEventContract.ps1`
 - `scripts/Test-DeviceProfileLauncherContract.ps1`
 - `scripts/Test-AppOutputContextEngine.ps1`
+- `tooling/prompts/Test-AgentSwitchboardPromptRegistry.ps1`
 - `scripts/Test-AgentDocumentationContract.ps1`
 - `scripts/Test-RepositoryFamilyHarness.ps1`
 - `scripts/Test-PublicPlanContracts.ps1`

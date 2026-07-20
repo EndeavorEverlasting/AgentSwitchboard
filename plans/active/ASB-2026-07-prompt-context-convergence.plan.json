@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "planId": "ASB-2026-07-PROMPT-CONTEXT-CONVERGENCE",
+  "title": "P45 — Harness Spine and Prompt-Kit Convergence",
+  "status": "active",
+  "priority": "high",
+  "dependencies": ["ASB-2026-07-APP-OUTPUT-CONTEXT-ENGINE"],
+  "owner": "AgentSwitchboard",
+  "lane": "harness-spine",
+  "mission": "Integrate the V39 prompt-registry consumer with the app-output context engine",
+  "ownedScope": [".ai/prompt-kits/v38/", "tooling/prompts/", ".ai/skills/prompt-kit-selection/", "tooling/context/", "tests/"],
+  "forbiddenScope": ["router state machine", "provider auth", "live app control"],
+  "proofTarget": "cross-platform offline harness proof",
+  "proofCeiling": "no provider, prompt, application, or target execution",
+  "branch": "feat/prompt-context-convergence",
+  "base": "feat/app-output-context-engine",
+  "wave": 1
+}
