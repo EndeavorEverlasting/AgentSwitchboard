@@ -1,0 +1,22 @@
+{
+  "schema": "agentswitchboard.runtime-event.v1",
+  "eventId": "11111111-1111-4111-8111-111111111111",
+  "eventType": "runtime.contract.requested",
+  "source": {
+    "nodeId": "source.contract-request",
+    "component": "AgentSwitchboard",
+    "instanceId": null
+  },
+  "occurredUtc": "2026-07-20T04:30:00Z",
+  "correlationId": "11111111-1111-4111-8111-111111111111",
+  "causationId": null,
+  "sequence": 0,
+  "payload": {
+    "request": "validate-runtime-event-contract"
+  },
+  "metadata": {
+    "sensitivity": "public",
+    "redacted": true,
+    "tags": ["synthetic", "contract"]
+  }
+}
