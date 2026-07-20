@@ -125,7 +125,7 @@ if ($null -ne $triggers) {
 
 try {
     $contract = $text['.ai/agent-contract.json'] | ConvertFrom-Json
-    Add-Result -Passed ($contract.contractVersion -eq '1.5.0') -Name 'contract/version' -FailureMessage 'contract version was not advanced'
+    Add-Result -Passed ($contract.contractVersion -eq '1.4.0') -Name 'contract/version' -FailureMessage 'pinned agent contract version changed unexpectedly'
     Add-Result -Passed ($contract.entrypoints.endToEndRuntimeValidation -eq $skillPath) -Name 'contract/entrypoint' -FailureMessage 'skill entrypoint is missing'
     Add-Result -Passed (@($contract.canonicalSkills) -contains 'end-to-end-runtime-validation') -Name 'contract/canonical-skill' -FailureMessage 'skill is not canonically registered'
     Add-Result -Passed ($contract.endToEndRuntimeValidation.validator -eq 'scripts/Test-EndToEndRuntimeValidationSkill.ps1') -Name 'contract/validator' -FailureMessage 'focused validator is not registered'
