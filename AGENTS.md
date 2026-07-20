@@ -1,12 +1,32 @@
 # Agent Operating Contract
 
-AgentSwitchboard is the canonical policy source for the EndeavorEverlasting repository family. Child repositories remain authoritative for their own product behavior, safety boundaries, artifacts, validators, and proof promotion.
+`AGENTS.md` is the single source of truth for how agents operate in AgentSwitchboard. AgentSwitchboard is the canonical policy source for the EndeavorEverlasting repository family. Child repositories remain authoritative for their own product behavior, safety boundaries, artifacts, validators, and proof promotion, but local rules may strengthen and never silently weaken this contract.
 
 ## Canonical authority
 
 Read `docs/governance/harness-doctrine.md` and `.ai/harness/harness-doctrine.policy.json` before repository work. For event sources, observers, listeners, handlers, trigger cascades, successor events, or evidence sinks, also read `docs/governance/runtime-event-contract.md` and `.ai/harness/runtime-event-contract.policy.json`. For platform profiles, terminal launchers, desktop shortcuts, open-or-activate behavior, or consumer certification, also read `docs/governance/device-profile-launcher-contract.md` and `.ai/harness/device-profile-launcher.policy.json`.
 
-Task-specific execution rules override generic closeout behavior while remaining subject to higher-priority platform, safety, and repository law.
+A task prompt selects bounded work. It does not replace this contract, grant a forbidden capability, or lower a proof requirement.
+
+## Agent operating principles
+
+1. **Evidence before action.** Inspect current Git state, repository contracts, plans, validators, active PRs, and relevant implementation before mutating files.
+2. **Floor before furniture.** Establish repository identity, authority, safety, ownership, dependencies, and validation before feature polish, automation, or convenience work.
+3. **Bounded sprints with declared scope.** Every writing sprint has one mission, explicit boundaries, expected artifacts, validation, and a proof ceiling.
+4. **One writer per branch.** A branch or worktree has one active writer. Parallel agents require disjoint branches, disjoint owned paths, and an explicit convergence owner.
+5. **Reuse before replacing.** Search for healthy contracts, helpers, schemas, scripts, validators, workflows, and naming patterns before inventing alternatives.
+6. **No completion without proof.** Completion is an evidence claim, not a confidence statement. Run the checks and report the resulting Git or PR evidence.
+
+## Instruction precedence
+
+When instructions conflict, apply this order:
+
+1. Platform, security, legal, and repository-owner instructions.
+2. This governance contract.
+3. Task-specific prompts.
+4. Generic defaults.
+
+The nearest nested `AGENTS.md` and child-repository product law operate within this order and may strengthen the applicable boundary. Tool-specific adapters such as `CLAUDE.md` may specialize execution but may not weaken higher-priority rules. When a conflict remains, stop the conflicting action, preserve evidence, and name the conflict.
 
 ## Required reading order
 
@@ -20,28 +40,58 @@ Task-specific execution rules override generic closeout behavior while remaining
 
 For repository-family work, load `.ai/harness/repository-family.registry.json` and the target profile before assuming paths, validators, artifacts, or authority. Current repository evidence outranks remembered chat context, stale handoffs, filenames, and timestamps.
 
-## Instruction precedence
+## Mandatory sprint declaration
 
-1. Platform, security, legal, and repository-owner instructions.
-2. Current child-repository product and safety law.
-3. Nearest nested `AGENTS.md`.
-4. Tool-specific adapters, which may not weaken this contract.
-5. Task prompts, which select work but do not grant forbidden capabilities.
+Every writing sprint must state, before mutation:
 
-When rules conflict, stop the conflicting action, preserve evidence, and name the conflict.
+- repository and branch;
+- lane and mission;
+- owned scope and forbidden scope;
+- dependencies and safe parallel work when applicable;
+- expected artifacts and validation commands;
+- proof ceiling;
+- commit, push, and PR expectation.
 
-## Mandatory discipline
+If the declaration cannot be made accurately, perform read-only intake first. Do not begin a broad write lane from a placeholder repository, unknown branch, ambiguous owner, or unbounded task.
 
-- Inspect Git state, contracts, plans, patterns, and validators before invention.
-- State repository, branch or worktree, PR or sprint, lane, owned scope, forbidden scope, dependencies, expected artifacts, validation order when specified, proof ceiling, and commit or PR expectation.
+## Mandatory execution discipline
+
 - Preserve unrelated dirty work; isolate concurrent writers by branch and worktree.
-- Reuse healthy contracts and helpers before creating replacements.
 - Keep judgment in skills and deterministic behavior in code, schemas, registries, validators, workflows, and artifacts.
 - Treat prompts as artifacts, never as the sole implementation.
 - Put material cross-session coordination under `plans/`; a PR description is not the only durable record.
 - Protect credentials, personal data, private hostnames, customer evidence, large logs, dumps, and machine-local junk.
 - Run focused checks before broader safe validation and never inflate static or synthetic proof into runtime or target proof.
 - When safe and authorized, mutate tracked files, validate, commit, push, and open or update the intended PR.
+- Preserve the same repair context when a deterministic gate exposes a correctable defect; do not abandon evidence and restart blindly.
+
+## Agent-facing interface doctrine (AXI)
+
+Agent-facing commands, reports, tools, and wrappers must be designed for reliable operation at low token cost. The enforceable repository interpretation is derived from the Agent eXperience Interface principles at https://axi.md/.
+
+1. **Token-efficient output.** Return only decision-relevant information by default. Prefer compact structured output; use TOON where compatible and retain JSON where schemas or consumers require it.
+2. **Minimal default schemas.** Default list records should expose only the few fields needed for the next decision. Additional fields require an explicit option.
+3. **Content truncation.** Bound large text, state the original size, state that truncation occurred, and provide an explicit full-content escape hatch.
+4. **Pre-computed aggregates.** Include counts, status summaries, derived readiness, and other values that prevent avoidable follow-up calls.
+5. **Definitive empty states.** Return an explicit zero-result or no-match state. Silence is not a valid empty result.
+6. **Structured errors and exit codes.** Fail non-interactively with machine-readable error identity, stable exit semantics, and loud rejection of unknown flags. Keep structured results on stdout and diagnostic detail on stderr when the interface supports that separation.
+7. **Ambient context.** Directory-scoped startup context must be compact, explicit, and opt-in. Do not install implicit hooks merely to inject context.
+8. **Content first.** A no-argument status command should show current actionable state, identity, and readiness rather than only generic help.
+9. **Contextual disclosure.** Each result should include the smallest concrete next action or command template needed to continue safely. Carry forward fixed disambiguating values and leave unknown runtime values as placeholders.
+10. **Consistent help.** Every agent-facing command exposes concise, predictable help. Help complements contextual next steps rather than replacing them.
+
+When safe, combine action and observation so a mutation returns the resulting state and evidence in the same bounded operation. Do not force an agent to spend another call merely to discover whether the preceding action worked.
+
+## Forbidden behaviors
+
+- **Acknowledgment without mutation** when the task safely requires repository change.
+- **Plans without execution** when implementation is owned, bounded, and unblocked.
+- **Summaries without proof** presented as delivery.
+- **Completion claims without running checks** required by the repository or task.
+- **Secret or credential exposure** in prompts, logs, commits, fixtures, plans, reports, or PR text.
+- Destructive Git, force-push, default-branch writes, merge, release, deployment, or live-target mutation without explicit authority.
+- Replacing a healthy canonical contract with a competing file or prompt-only convention.
+- Ambiguous empty output, silently ignored flags, interactive prompts in agent automation, or unbounded output when a deterministic compact result is possible.
 
 ## Runtime event composition
 
@@ -79,7 +129,7 @@ Triggers select reviewed workflows or skills; they never grant destructive, secr
 
 Use the smallest applicable skill and follow its inputs, procedure, outputs, deterministic validation, forbidden scope, and stop conditions. See `SKILLS.md`.
 
-## Repository-family harness
+## Repository-family contract
 
 `.ai/agent-contract.json` declares the canonical contract. `.ai/harness/repository-family.registry.json` declares operational child entrypoints. Use the read-only status probe before cross-repository work:
 
@@ -91,4 +141,12 @@ A ready profile proves only observed clone identity and required paths. It does 
 
 ## Completion standard
 
-Completion requires exact files changed, generated-artifact policy, checks run, skipped checks, commit SHA, push and PR state, blockers, proof level and ceiling, final Git state, and one exact next command. Cross-agent handoffs must be schema-backed and require the receiver to re-inspect current state.
+A task is complete only when, at minimum:
+
+- files changed are named;
+- validation was actually run, with commands and results reported rather than assumed;
+- commit SHA exists for a writing sprint;
+- push or PR state is reported;
+- one exact next command is given.
+
+Also report generated-artifact policy, skipped checks, blockers, proof level and proof ceiling, final Git state, and relevant artifact paths. Cross-agent handoffs must be schema-backed and require the receiver to re-inspect current state.
