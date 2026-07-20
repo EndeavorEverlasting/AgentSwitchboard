@@ -26,6 +26,14 @@
       "status": "active",
       "priority": "high",
       "dependencies": ["ASB-2026-07-PUBLIC-PLANS-STARTUP"]
+    },
+    {
+      "planId": "ASB-2026-07-RUNTIME-EVENT-CONTRACT",
+      "path": "plans/active/ASB-2026-07-runtime-event-contract.plan.json",
+      "summaryPath": "plans/active/ASB-2026-07-runtime-event-contract.md",
+      "status": "active",
+      "priority": "high",
+      "dependencies": ["ASB-2026-07-ONE-COMMAND-HARNESS-PROOF"]
     }
   ]
 }
