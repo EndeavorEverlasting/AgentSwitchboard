@@ -1,0 +1,140 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-07-WINDOWS-PROFILE-LAUNCHER-DOCTRINE",
+  "title": "Windows Profile canonical launcher doctrine",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "active",
+  "priority": "high",
+  "createdUtc": "2026-07-20T07:00:00Z",
+  "updatedUtc": "2026-07-20T07:00:00Z",
+  "mission": "Install the canonical ownership and enforcement contract for one idempotent Windows Profile open-or-activate launcher owned by AgentSwitchboard and consumed and certified by SysAdminSuite, while reserving separate Linux and Android profiles.",
+  "owner": {
+    "surface": "device profile launcher doctrine and enforcement",
+    "role": "repository doctrine lane",
+    "agent": "ChatGPT"
+  },
+  "delivery": {
+    "branch": "feat/windows-profile-launcher-doctrine",
+    "pullRequest": null,
+    "baseRef": "feat/runtime-event-contract-doctrine",
+    "commitRequired": true
+  },
+  "wave": "Commit-Required Harness Doctrine Installation",
+  "lane": "repository doctrine and enforcement",
+  "dependencies": ["ASB-2026-07-RUNTIME-EVENT-CONTRACT"],
+  "safeParallelWork": [
+    "Review of PR #36 without branch mutation",
+    "AgentSwitchboard provider routing outside device-profile doctrine paths",
+    "SysAdminSuite work that does not modify workstation launcher ownership surfaces"
+  ],
+  "ownedScope": [
+    "Windows Linux and Android profile registry and ownership doctrine",
+    "Windows Profile idempotent open-or-activate contract",
+    "AgentSwitchboard canonical ownership and SysAdminSuite consumer-certifier role",
+    "raw WezTerm and competing launcher prohibition",
+    "focused validators fixtures and cross-platform CI",
+    "canonical harness and child-template wiring",
+    "public plan and pull-request proof metadata"
+  ],
+  "forbiddenScope": [
+    "canonical launcher implementation or installed runtime mutation",
+    "WezTerm WSL tmux AgentSwitchboard or SysAdminSuite execution",
+    "SysAdminSuite repository mutation or certification delivery",
+    "Linux or Android launcher implementation",
+    "network provider target account save customer-data or deployment mutation",
+    "secrets private evidence generated runtime junk force-push destructive cleanup default-branch mutation merge or release"
+  ],
+  "expectedArtifacts": [
+    "docs/governance/device-profile-launcher-contract.md",
+    ".ai/harness/device-profile-launcher.policy.json",
+    ".ai/harness/device-profile-registry.json",
+    ".ai/harness/schemas/device-profile-registry.schema.json",
+    ".ai/harness/fixtures/device-profiles/valid-sysadminsuite-consumer.json",
+    ".ai/harness/fixtures/device-profiles/invalid-competing-consumer.json",
+    "scripts/Test-DeviceProfileLauncherContract.ps1",
+    "tests/test_device_profile_launcher_contract.py",
+    ".github/workflows/device-profile-launcher-contract.yml",
+    "canonical and child-template authority wiring",
+    "exact-head validation evidence"
+  ],
+  "tasks": [
+    {
+      "taskId": "PROFILE-01",
+      "title": "Define canonical device profile ownership",
+      "status": "completed",
+      "owner": "repository doctrine lane",
+      "dependencies": [],
+      "inputs": ["Harness doctrine", "Runtime event contract", "Current AgentSwitchboard and SysAdminSuite launcher evidence"],
+      "outputs": ["Profile doctrine", "Machine policy", "Profile registry", "Registry schema"],
+      "acceptanceCriteria": [
+        "Windows Linux and Android profiles are distinct",
+        "AgentSwitchboard is the only canonical launcher owner",
+        "Windows uses idempotent open-or-activate",
+        "SysAdminSuite is a delegate and certifier",
+        "Raw frontend fallback and competing lifecycle logic are forbidden"
+      ],
+      "evidence": ["Tracked doctrine policy registry and schema on feat/windows-profile-launcher-doctrine"]
+    },
+    {
+      "taskId": "ENFORCE-01",
+      "title": "Install profile ownership enforcement",
+      "status": "completed",
+      "owner": "repository doctrine lane",
+      "dependencies": ["PROFILE-01"],
+      "inputs": ["Canonical AGENTS", "Harness doctrine", "Capabilities", "Triggers", "Manifest", "App graph"],
+      "outputs": ["PowerShell validator", "Python contract", "Fixtures", "CI", "Authority and child-template wiring"],
+      "acceptanceCriteria": [
+        "Architecture-only profile action claims are rejected",
+        "Competing consumer ownership is rejected",
+        "Valid SysAdminSuite delegation is accepted",
+        "Aggregate app observer runs the profile validator",
+        "Contract-only status prevents false runtime claims"
+      ],
+      "evidence": ["Tracked validators fixtures workflow authority wiring and graph nodes"]
+    },
+    {
+      "taskId": "PROOF-01",
+      "title": "Validate exact delivery head",
+      "status": "in-progress",
+      "owner": "repository doctrine lane",
+      "dependencies": ["PROFILE-01", "ENFORCE-01"],
+      "inputs": ["Device profile workflow", "Doctrine validators", "Aggregate harness", "Public plan and repository-family gates"],
+      "outputs": ["Exact-head Windows and Linux evidence", "PR proof metadata"],
+      "acceptanceCriteria": [
+        "Focused device profile contract passes",
+        "Harness doctrine and instruction validators pass",
+        "Aggregate app harness passes without runtime execution",
+        "Full pull-request range hygiene passes",
+        "Branch remains reviewable without force-push"
+      ],
+      "evidence": ["Pending exact-head pull-request workflows"]
+    }
+  ],
+  "validation": [
+    "pwsh -NoLogo -NoProfile -File ./scripts/Test-DeviceProfileLauncherContract.ps1",
+    "python tests/test_device_profile_launcher_contract.py",
+    "pwsh -NoLogo -NoProfile -File ./scripts/Test-HarnessDoctrineContract.ps1",
+    "pwsh -NoLogo -NoProfile -File ./scripts/Test-AgentDocumentationContract.ps1",
+    "pwsh -NoLogo -NoProfile -File ./scripts/Test-AppHarness.ps1 with output outside the checkout",
+    "pwsh -NoLogo -NoProfile -File ./scripts/Test-PublicPlanContracts.ps1",
+    "pwsh -NoLogo -NoProfile -File ./scripts/Test-RepositoryFamilyHarness.ps1",
+    "full pull-request range git diff --check",
+    "final branch commit changed-file and pull-request review"
+  ],
+  "proof": {
+    "target": "Canonical device profile ownership, Windows open-or-activate contract, SysAdminSuite delegation rules, action-commitment enforcement, and exact-head cross-platform validation",
+    "achieved": "Tracked doctrine policy registry fixtures validators workflow authority wiring and child templates are present; exact-head CI is pending.",
+    "ceiling": "No canonical launcher implementation, installed launcher, WezTerm process, workspace opening or activation, duplicate-prevention runtime, SysAdminSuite certification, Linux profile, Android profile, deployment, or device acceptance is proven."
+  },
+  "handoff": {
+    "nextOwner": "repository doctrine lane",
+    "nextCommand": "gh pr checks --repo EndeavorEverlasting/AgentSwitchboard --watch",
+    "notes": [
+      "Open a stacked pull request against feat/runtime-event-contract-doctrine.",
+      "Bind this plan to the actual pull request after creation.",
+      "After doctrine lands, implement the canonical launcher in a separate AgentSwitchboard PR.",
+      "After implementation proof, adopt and certify it in a separate SysAdminSuite PR that removes all independent fallback logic."
+    ]
+  }
+}
