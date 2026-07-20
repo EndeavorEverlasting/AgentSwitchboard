@@ -44,6 +44,20 @@ The operator-local schedule belongs at `%LOCALAPPDATA%\AgentSwitchboard\GnhfFlee
 
 The official DeepSeek API pricing reference currently publishes flat token prices and no active time-of-day window. The historical `16:30-00:30 UTC` off-peak window ended on `2025-09-05T16:00:00Z`; it is inactive historical evidence only. A separate plan-specific schedule must be verified from the applicable source.
 
+## Runtime event contract
+
+Read `docs/governance/runtime-event-contract.md` and `.ai/harness/runtime-event-contract.policy.json` whenever work claims an event source, listener, observer, trigger cascade, handler, successor event, or evidence sink.
+
+The required composition is:
+
+`event source -> typed event envelope -> observer or listener -> handler -> emitted successor event -> artifact or evidence sink`
+
+Every participating node and edge must be registered in `.ai/harness/runtime-event-topology.json`. Root events start their own correlation chain; successor events inherit correlation and identify their immediate parent as causation. Emitted envelopes are immutable.
+
+A static graph proves registration only. Synthetic fixtures prove contract causality only. A runtime completion claim requires observed correlated evidence from source emission through the terminal successor or explicit failure and the evidence sink. Process exit, a plan, or an architecture description is not event-delivery proof.
+
+Any prompt claiming it will build, install, repair, configure, or prove an event listener or cascade must require the corresponding tracked implementation, topology update, validation, commit or GitHub evidence, and honest proof ceiling. Validate the doctrine with `scripts/Test-RuntimeEventContract.ps1`.
+
 ## Preservation and proof
 
 - preserve unrelated dirty work in a separate worktree or branch;
@@ -56,4 +70,4 @@ The official DeepSeek API pricing reference currently publishes flat token price
 
 ## Invalid execution contracts
 
-Reject acknowledgment-only, summary-only, rewritten-prompt-only, handoff-only, or preflight-only substitutes; action language without mutation and proof; test-only GNHF runs over 30 seconds; and DeepSeek execution during double-usage or unknown schedule state.
+Reject acknowledgment-only, summary-only, rewritten-prompt-only, handoff-only, or preflight-only substitutes; action language without mutation and proof; event-listener or cascade claims without registered nodes, edges, correlated evidence, and the achieved proof boundary; test-only GNHF runs over 30 seconds; and DeepSeek execution during double-usage or unknown schedule state.
