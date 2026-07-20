@@ -23,6 +23,15 @@ Load only the smallest surface required by the selected skill, workflow, public 
 
 Plans coordinate work; branches and pull requests transport and review implementation. Application behavior remains in deterministic code and domain contracts.
 
+## Project end-to-end validation
+
+- `.ai/skills/project-end-to-end-testing/SKILL.md` — project-wide validation ladder and proof-promotion procedure.
+- `scripts/Test-AgentDocumentationContract.ps1` — skill shape, routing, registration, and proof-boundary enforcement.
+- `scripts/Test-AppHarness.ps1` and `Test-AppHarness.cmd` — registered offline aggregate observer used when affected nodes belong to the composition graph.
+- `.github/workflows/agent-documentation-contract.yml` — Windows and Linux project-skill contract gate.
+
+The project skill composes focused repository-native validators, `evidence-validation` for bounded repair, and `runtime-proof` for an explicitly authorized live stage. It does not replace deterministic test logic, grant runtime authority, or promote static, synthetic, startup, or process-exit evidence into runtime success.
+
 ## Offline app harness observer
 
 - `Test-AppHarness.cmd` — one-command offline proof entrypoint.
@@ -91,6 +100,7 @@ The Windows Profile is WezTerm-backed and contract-only. Its future canonical so
 
 - `.ai/skills/repo-intake/SKILL.md`
 - `.ai/skills/bounded-sprint/SKILL.md`
+- `.ai/skills/project-end-to-end-testing/SKILL.md`
 - `.ai/skills/public-plan-coordination/SKILL.md`
 - `.ai/skills/gnhf-prompt-compilation/SKILL.md`
 - `.ai/skills/powershell-interactive-execution/SKILL.md`
