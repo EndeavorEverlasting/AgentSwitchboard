@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/.ai/harness/schemas/runtime-event-envelope.schema.json",
+  "title": "AgentSwitchboard Runtime Event Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "eventId",
+    "eventType",
+    "source",
+    "occurredUtc",
+    "correlationId",
+    "causationId",
+    "sequence",
+    "payload",
+    "metadata"
+  ],
+  "properties": {
+    "schema": { "const": "agentswitchboard.runtime-event.v1" },
+    "eventId": { "type": "string", "format": "uuid" },
+    "eventType": { "type": "string", "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)*$" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nodeId", "component"],
+      "properties": {
+        "nodeId": { "type": "string", "minLength": 3 },
+        "component": { "type": "string", "minLength": 2 },
+        "instanceId": { "type": ["string", "null"] }
+      }
+    },
+    "occurredUtc": { "type": "string", "format": "date-time" },
+    "correlationId": { "type": "string", "format": "uuid" },
+    "causationId": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "format": "uuid" }
+      ]
+    },
+    "sequence": { "type": "integer", "minimum": 0 },
+    "payload": { "type": "object" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sensitivity", "redacted"],
+      "properties": {
+        "sensitivity": { "enum": ["public", "internal", "local-operational"] },
+        "redacted": { "type": "boolean" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}
