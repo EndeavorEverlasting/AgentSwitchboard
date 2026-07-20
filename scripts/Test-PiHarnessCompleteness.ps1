@@ -35,7 +35,9 @@ $requiredFiles = @(
     'tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1',
     'tests/test_pi_harness_contracts.py',
     'docs/harness/pi-operational-harness.md',
-    '.github/workflows/pi-harness-contract.yml'
+    '.github/workflows/pi-harness-contract.yml',
+    '.ai/harness/manifest.json',
+    '.ai/harness/artifact-registry.json'
 )
 
 $textByPath = @{}
@@ -50,7 +52,9 @@ foreach ($relativePath in @(
     'tooling/pi/harness/workflows/task-intake.workflow.json',
     'tooling/pi/harness/workflows/opinion-fusion.workflow.json',
     'tooling/pi/harness/workflows/autovalidate.workflow.json',
-    'tooling/pi/harness/schemas/pi-harness-contracts.schema.json'
+    'tooling/pi/harness/schemas/pi-harness-contracts.schema.json',
+    '.ai/harness/manifest.json',
+    '.ai/harness/artifact-registry.json'
 )) {
     try {
         $null = $textByPath[$relativePath] | ConvertFrom-Json
@@ -106,17 +110,34 @@ foreach ($token in @('id: pi-fusion-orchestration','status: experimental','## Tr
     Check ($skillText.Contains($token)) "skill/$token" 'skill contract token is missing'
 }
 
-foreach ($central in @('CODEBASE_MAP.md','SKILLS.md','CAPABILITIES.md','TRIGGERS.md','.ai/harness/manifest.json','.ai/harness/artifact-registry.json')) {
-    $text = Read-Tracked $central
-    if ($null -ne $text) {
-        Check ($text.Contains('pi-operational-harness') -or $text.Contains('pi-fusion-orchestration') -or $text.Contains('pi.harness')) "central/$central" 'Pi harness is not registered in the central surface'
+try {
+    $manifest = $textByPath['.ai/harness/manifest.json'] | ConvertFrom-Json
+    Check ($manifest.entrypoints.piHarnessValidator -eq 'scripts/Test-PiHarnessCompleteness.ps1') 'central/manifest/validator' 'Pi completeness validator is not registered'
+    Check ($manifest.entrypoints.piFusionSkill -eq '.ai/skills/pi-fusion-orchestration/SKILL.md') 'central/manifest/skill' 'Pi skill is not registered'
+    Check ($manifest.piOperationalHarness.status -eq 'contract-only') 'central/manifest/status' 'Pi runtime is overclaimed'
+    Check ($manifest.piOperationalHarness.writersPerBranch -eq 1) 'central/manifest/one-writer' 'Pi manifest does not enforce one writer'
+    Check ($manifest.piOperationalHarness.implicitHookInstallationAllowed -eq $false) 'central/manifest/hooks' 'implicit hook installation is allowed'
+    Check ($manifest.piOperationalHarness.providerCallsAllowedByContract -eq $false) 'central/manifest/provider' 'provider calls are allowed by contract-only validation'
+}
+catch { [void]$failures.Add("central/manifest: $($_.Exception.Message)") }
+
+try {
+    $centralArtifacts = $textByPath['.ai/harness/artifact-registry.json'] | ConvertFrom-Json
+    $artifactIds = @($centralArtifacts.artifacts | ForEach-Object { [string]$_.artifactId })
+    foreach ($artifactId in @('pi-run-context','pi-role-opinion','pi-fusion-result','pi-validation-ledger','pi-operator-report','pi-final-handoff')) {
+        Check ($artifactIds -contains $artifactId) "central/artifact/$artifactId" 'Pi artifact is not centrally registered'
+    }
+    foreach ($artifact in @($centralArtifacts.artifacts | Where-Object { [string]$_.artifactId -like 'pi-*' })) {
+        Check ($artifact.tracked -eq $false) "central/artifact-untracked/$($artifact.artifactId)" 'generated Pi evidence is tracked'
+        Check ($artifact.sensitivity -eq 'local-operational') "central/artifact-sensitivity/$($artifact.artifactId)" 'unexpected sensitivity classification'
     }
 }
+catch { [void]$failures.Add("central/artifacts: $($_.Exception.Message)") }
 
 $combined = ($textByPath.Values -join "`n")
 foreach ($forbidden in @(
     'npm install -g @mariozechner/pi-coding-agent',
-    '%USERPROFILE%\\.pi',
+    '%USERPROFILE%\.pi',
     'pi.llm.generate',
     'dangerously-skip-permissions',
     'localhost means private'
