@@ -49,6 +49,16 @@ Public plans coordinate work. They do not grant branch, provider, merge, deploym
 
 The event observer proves the composition graph that the repository has registered. It does not infer unregistered nodes, claim live event delivery, or promote a static edge into runtime behavior proof.
 
+## App-output contextualization capabilities
+
+| Capability | Activation and output | Guardrail and proof |
+|---|---|---|
+| `app.output.contextualize` | explicit supplied-output request; parse text, JSON, or JSONL, redact sensitive material, classify signals, rank same-surface prompt-kit entries, and emit compact JSON plus English instructions | offline supplied input only; no app launch, provider call, prompt execution, repository mutation, or runtime claim |
+| `app.output.prompt-kit.compare` | compare extracted terms with `ai-harness-prompt-registry/v1` fields and return ranked prompt IDs plus required variables | exact execution surface required; no cross-surface fallback; ranking is guidance, not authority |
+| `app.output.redact` | remove common tokens, credentials, email addresses, private IPs, and local user-path identities from excerpts | best-effort deterministic minimization; raw input remains operator-controlled and is never copied into output artifacts |
+
+Run `scripts/Test-AppOutputContextEngine.ps1` for contract proof. A passing result proves the supplied-output pipeline and public fixtures only; it does not prove that the source app ran, that the selected prompt is correct in every domain, or that any downstream agent executed it.
+
 ## Runtime event capabilities
 
 | Capability | Activation and output | Guardrail and proof |
