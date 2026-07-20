@@ -23,6 +23,15 @@ Load only the smallest surface required by the selected skill, workflow, public 
 
 Plans coordinate work; branches and pull requests transport and review implementation. Application behavior remains in deterministic code and domain contracts.
 
+## End-to-end runtime validation
+
+- `.ai/skills/end-to-end-runtime-validation/SKILL.md` — exact operator-path runtime procedure across shell, process, platform, terminal, TUI, and GUI boundaries.
+- `scripts/Test-EndToEndRuntimeValidationSkill.ps1` — deterministic skill, routing, contract, and proof-boundary validator.
+- `.github/workflows/agent-documentation-contract.yml` — Windows and Linux parser, doctrine, skill, documentation, diff-hygiene, and clean-checkout gate.
+- `.ai/agent-contract.json` — canonical entrypoint, generated-evidence policy, and `end-to-end-runtime` proof level.
+
+This skill is selected when success depends on the exact command an operator runs through one or more runtime boundaries. It requires child stdout and stderr, exit identity, effective-state readback, user-visible observation, and idempotence or rollback proof when applicable. Static inspection, passing CI, configuration intent, process creation, or a parent exit code cannot establish end-to-end runtime success.
+
 ## Offline app harness observer
 
 - `Test-AppHarness.cmd` — one-command offline proof entrypoint.
@@ -97,6 +106,7 @@ The Windows Profile is WezTerm-backed and contract-only. Its future canonical so
 - `.ai/skills/evidence-validation/SKILL.md`
 - `.ai/skills/pr-integration/SKILL.md`
 - `.ai/skills/runtime-proof/SKILL.md`
+- `.ai/skills/end-to-end-runtime-validation/SKILL.md`
 - `.ai/skills/app-output-contextualization/SKILL.md`
 
 ## GNHF control plane
@@ -137,6 +147,7 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 ## Validation
 
 - `scripts/Test-HarnessDoctrineContract.ps1`
+- `scripts/Test-EndToEndRuntimeValidationSkill.ps1`
 - `scripts/Test-RuntimeEventContract.ps1`
 - `scripts/Test-DeviceProfileLauncherContract.ps1`
 - `scripts/Test-AppOutputContextEngine.ps1`
@@ -149,6 +160,6 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 
 ## Generated evidence and proof boundary
 
-Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, and Pi evidence is untracked. It may contain local paths, versions, Git state, minimized operational payloads, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
+Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, and Pi evidence is untracked. End-to-end runtime evidence is also local-operational and untracked unless deliberately minimized and reviewed as a public fixture. Evidence may contain local paths, versions, Git state, minimized operational payloads, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
 
-Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, or workflow semantics. Neither proves application runtime, an open-or-activate result, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, model quality, external target behavior, deployment, or operator acceptance.
+Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, or workflow semantics. Neither proves application runtime, an exact operator path, an open-or-activate result, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, model quality, external target behavior, deployment, or operator acceptance.
