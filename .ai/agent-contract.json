@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contractVersion": "1.3.0",
+  "contractVersion": "1.4.0",
   "canonicalRepository": "EndeavorEverlasting/AgentSwitchboard",
   "canonicalRefPolicy": "merged-default-branch",
   "entrypoints": {
@@ -10,7 +10,8 @@
     "capabilities": "CAPABILITIES.md",
     "triggers": "TRIGGERS.md",
     "plans": "plans/plan-registry.json",
-    "startupReadiness": "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1"
+    "startupReadiness": "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
+    "appHarness": "Test-AppHarness.cmd"
   },
   "requiredReadOrder": [
     "AGENTS.md",
@@ -47,6 +48,18 @@
     "machineReadableRequired": true,
     "publicDataOnly": true
   },
+  "appHarness": {
+    "entrypoint": "Test-AppHarness.cmd",
+    "observer": "scripts/Test-AppHarness.ps1",
+    "compositionGraph": ".ai/harness/app-composition.graph.json",
+    "resultSchema": ".ai/harness/schemas/app-harness-validation.schema.json",
+    "reportTemplate": ".ai/harness/app-harness-report.template.md",
+    "generatedOutputTracked": false,
+    "proofLevel": "offline-synthetic-harness",
+    "networkAllowed": false,
+    "runtimeAllowed": false,
+    "targetMutationAllowed": false
+  },
   "startupReadiness": {
     "launcher": "AgentSwitchboard.cmd",
     "reporter": "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
@@ -70,5 +83,5 @@
     {"fullName": "EndeavorEverlasting/web-excel-repair-triage", "relation": "child", "status": "registered"}
   ],
   "canonicalSkills": ["repo-intake", "bounded-sprint", "public-plan-coordination", "gnhf-prompt-compilation", "powershell-interactive-execution", "evidence-validation", "pr-integration", "runtime-proof"],
-  "proofLevels": ["contract", "static-test", "build", "harness", "runtime", "live-target"]
+  "proofLevels": ["contract", "static-test", "offline-synthetic-harness", "build", "harness", "runtime", "live-target"]
 }
