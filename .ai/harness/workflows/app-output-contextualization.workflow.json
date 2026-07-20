@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "agentswitchboard.app-output-contextualization.v1",
+  "trigger": "app.output-context-request",
+  "mission": "Convert supplied application output into minimized, redacted, prompt-kit-aware instructions without executing the application or promoting the evidence beyond offline interpretation.",
+  "inputs": [
+    {
+      "name": "inputPath",
+      "required": true,
+      "contract": "UTF-8 text, JSON, or JSONL output supplied by the operator"
+    },
+    {
+      "name": "promptRegistryPath",
+      "required": true,
+      "contract": "ai-harness-prompt-registry/v1 JSON or gzip/base64 bundle"
+    },
+    {
+      "name": "sourceApplication",
+      "required": true,
+      "contract": "stable public application or adapter label without private hostnames"
+    },
+    {
+      "name": "executionSurface",
+      "required": true,
+      "contract": "regular_ai_prompt or gnhf_launch_artifact"
+    },
+    {
+      "name": "outputRoot",
+      "required": true,
+      "contract": "operator-controlled directory outside the repository"
+    }
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "operation": "read-supplied-output",
+      "owner": "tooling/context/Contextualize-AppOutput.py",
+      "mutation": "none"
+    },
+    {
+      "step": 2,
+      "operation": "parse-text-json-or-jsonl",
+      "owner": "tooling/context/Contextualize-AppOutput.py",
+      "mutation": "none"
+    },
+    {
+      "step": 3,
+      "operation": "redact-secrets-personal-identifiers-private-network-and-user-paths",
+      "owner": "tooling/context/Contextualize-AppOutput.py",
+      "mutation": "none"
+    },
+    {
+      "step": 4,
+      "operation": "extract-signals-severity-keywords-and-minimized-excerpts",
+      "owner": "tooling/context/Contextualize-AppOutput.py",
+      "mutation": "none"
+    },
+    {
+      "step": 5,
+      "operation": "rank-prompts-within-the-requested-execution-surface",
+      "owner": "tooling/context/Contextualize-AppOutput.py",
+      "mutation": "none"
+    },
+    {
+      "step": 6,
+      "operation": "emit-schema-backed-json-and-english-report",
+      "owner": "tooling/context/Contextualize-AppOutput.py",
+      "mutation": "output-root-only"
+    }
+  ],
+  "outputs": [
+    {
+      "artifactId": "app-output-context-json",
+      "fileName": "app-output-context.json",
+      "schema": ".ai/harness/schemas/app-output-context.schema.json"
+    },
+    {
+      "artifactId": "app-output-context-report",
+      "fileName": "app-output-context.md",
+      "schema": null
+    }
+  ],
+  "guardrails": [
+    "Do not launch, attach to, focus, or control the source application.",
+    "Do not store raw application output in generated artifacts.",
+    "Do not cross regular_ai_prompt and gnhf_launch_artifact surfaces.",
+    "Do not treat prompt ranking as authorization to execute the prompt.",
+    "Do not place output inside the source repository.",
+    "Do not include credentials, private hostnames, customer data, or full local user paths."
+  ],
+  "validation": [
+    "python tests/test_app_output_context_engine.py",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-AppOutputContextEngine.ps1",
+    "Test-AppHarness.cmd"
+  ],
+  "proofLevel": "offline-contextualization",
+  "proofCeiling": "Supplied-output parsing, redaction, deterministic signal extraction, prompt-kit ranking, and compact instruction rendering only."
+}
