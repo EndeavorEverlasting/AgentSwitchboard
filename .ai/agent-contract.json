@@ -12,7 +12,8 @@
     "plans": "plans/plan-registry.json",
     "startupReadiness": "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
     "appHarness": "Test-AppHarness.cmd",
-    "runtimeEvents": "docs/governance/runtime-event-contract.md"
+    "runtimeEvents": "docs/governance/runtime-event-contract.md",
+    "deviceProfiles": "docs/governance/device-profile-launcher-contract.md"
   },
   "requiredReadOrder": [
     "AGENTS.md",
@@ -28,6 +29,7 @@
     "docs/governance/harness-doctrine.md",
     ".ai/harness/harness-doctrine.policy.json",
     "runtime event contract when event composition is in scope",
+    "device profile launcher contract when platform launch behavior is in scope",
     "current validators, PRs, and Git history"
   ],
   "skillRoot": ".ai/skills",
@@ -74,6 +76,17 @@
     "runtimeExecutionRequiresExplicitLane": true,
     "staticProofCannotClaimRuntime": true
   },
+  "deviceProfiles": {
+    "policy": ".ai/harness/device-profile-launcher.policy.json",
+    "registry": ".ai/harness/device-profile-registry.json",
+    "validator": "scripts/Test-DeviceProfileLauncherContract.ps1",
+    "contractOnly": true,
+    "canonicalOwner": "EndeavorEverlasting/AgentSwitchboard",
+    "windowsOperation": "open-or-activate",
+    "sysAdminSuiteRole": "consumer-certifier",
+    "rawFallbackForbidden": true,
+    "separatePlatformImplementations": true
+  },
   "startupReadiness": {
     "launcher": "AgentSwitchboard.cmd",
     "reporter": "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
@@ -97,5 +110,5 @@
     {"fullName": "EndeavorEverlasting/web-excel-repair-triage", "relation": "child", "status": "registered"}
   ],
   "canonicalSkills": ["repo-intake", "bounded-sprint", "public-plan-coordination", "gnhf-prompt-compilation", "powershell-interactive-execution", "evidence-validation", "pr-integration", "runtime-proof"],
-  "proofLevels": ["contract", "static-test", "offline-synthetic-harness", "runtime-event-contract", "synthetic-cascade", "build", "harness", "runtime"]
+  "proofLevels": ["contract", "static-test", "offline-synthetic-harness", "runtime-event-contract", "device-profile-contract", "synthetic-cascade", "build", "harness", "runtime"]
 }
