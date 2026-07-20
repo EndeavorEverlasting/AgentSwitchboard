@@ -22,9 +22,10 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | `plan.coordination-request` | multi-agent, multi-session, multi-wave, cross-PR, sprint-map, launch-pack, or material plan-state request | `public-plan-coordination`; update `plans/` and keep coordination distinct from PR delivery |
 | `startup.readiness-request` | startup or agent availability/configuration request | `startup.readiness.report`; read-only guidance without installation or provider calls |
 | `harness.proof-request` | one-command proof, synthetic validation, composition observer, node/edge coverage, or PASS/SKIP/FAIL request | `harness.proof.aggregate`; run the offline observer and emit untracked JSON plus English evidence |
+| `validation.end-to-end-request` | end-to-end, E2E, system, integration, full-project, aggregate-harness, cross-component, or exact-head validation request | `project-end-to-end-testing`; build and execute the ordered project proof ladder |
 | `app.output-context-request` | supplied app, validator, agent, console, JSON, or JSONL output must be minimized and compared with a prompt registry | `app-output-contextualization`; parse supplied output offline, preserve exact execution surface, and emit compact untracked instructions |
 | `runtime.event-contract-change` | event envelope, source, observer, listener, handler, successor, sink, correlation, causation, or runtime topology contract changes | `runtime.event-contract.validate`; update deterministic contracts and run `scripts/Test-RuntimeEventContract.ps1` |
-| `runtime.event-cascade-request` | request claims an event listener works, a trigger cascades, or a source-to-sink handoff completes | use `runtime-proof` after contract validation; require correlated observed artifacts and explicit runtime authority |
+| `runtime.event-cascade-request` | request claims an event listener works, a trigger cascades, or a source-to-sink handoff completes | use `project-end-to-end-testing`, composing `runtime-proof` after contract validation; require correlated observed artifacts and explicit runtime authority |
 | `profile.launcher-request` | Windows Profile, Linux Profile, Android Profile, WezTerm launcher, open-or-activate, desktop shortcut, duplicate-window prevention, or canonical launcher ownership | `profile.launcher.contract.validate`; inspect the profile registry and require one AgentSwitchboard owner per profile |
 | `profile.consumer-certification-request` | SysAdminSuite or another child claims profile consumption or certification | require a separate consumer PR that delegates to the exact canonical launcher and proves no competing lifecycle or raw frontend fallback |
 | `action.claimed` | prompt claims install, setup, build, execute, repair, configure, upgrade, deploy, merge, or release | `action.commitment.validate`; require mutation, validation, and commit or GitHub proof |
@@ -57,6 +58,12 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 `harness.proof-request` routes to `scripts/Test-AppHarness.ps1`. The observer reads `.ai/harness/app-composition.graph.json`, verifies required nodes and edges, runs only graph-listed validators marked safe offline, and emits untracked JSON and English artifacts outside the repository.
 
 A required node without an edge, a dangling edge, a disconnected route, an unsafe validator, or a broken required validator is a failure. Missing optional MCP/LSP readiness is an honest skip. Static topology proves registered composition only.
+
+## Project end-to-end invariant
+
+`validation.end-to-end-request` routes to `.ai/skills/project-end-to-end-testing/SKILL.md`. The route resolves affected paths to existing focused, integration, aggregate, runtime, and CI checks, then runs the applicable proof stages in order. It composes `evidence-validation` for focused repair and `runtime-proof` for an explicitly authorized live stage rather than duplicating either procedure.
+
+Focused checks precede broader safe validation unless the owner supplies a stricter order. A failed or unauthorized lower stage blocks dependent stages. `Test-AppHarness.cmd` is required when affected nodes are registered in the aggregate composition graph. Static or synthetic proof, process start, and exit code zero do not prove runtime or live-target behavior; exact-head CI proves only the observed workflow environment.
 
 ## App-output context invariant
 
@@ -96,8 +103,8 @@ A routed workflow receives repository and branch or worktree, PR or sprint, plan
 
 ## Automatic stop triggers
 
-Stop or escalate when work would overwrite unowned changes; a required capability is unknown; scope crosses a forbidden boundary; writers collide; a gate exposes security or data-loss risk; merge, deployment, secret, destructive Git, or live mutation lacks authority; retries are exhausted; evidence contradicts the plan; test timing or DeepSeek gates fail; the app graph is broken; app-output context would persist raw or cross-surface data; runtime event evidence is incomplete; or a profile has competing owners, raw frontend fallback, independent shortcut logic, cross-profile substitution, or an unproved open-or-activate claim.
+Stop or escalate when work would overwrite unowned changes; a required capability is unknown; scope crosses a forbidden boundary; writers collide; a gate exposes security or data-loss risk; merge, deployment, secret, destructive Git, or live mutation lacks authority; retries are exhausted; evidence contradicts the plan; test timing or DeepSeek gates fail; a required end-to-end stage fails or is skipped without authorization; the app graph is broken; app-output context would persist raw or cross-surface data; runtime event evidence is incomplete; or a profile has competing owners, raw frontend fallback, independent shortcut logic, cross-profile substitution, or an unproved open-or-activate claim.
 
 ## No implicit authority
 
-The presence of a trigger, plan, startup report, event observer, topology registry, profile registry, app-output packet, or capability never authorizes installation, push, merge, release, deployment, target mutation, prompt execution, provider access, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.
+The presence of a trigger, plan, startup report, event observer, topology registry, profile registry, app-output packet, skill, or capability never authorizes installation, push, merge, release, deployment, target mutation, prompt execution, provider access, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.
