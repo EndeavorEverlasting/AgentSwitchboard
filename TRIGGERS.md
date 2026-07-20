@@ -21,6 +21,7 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | `sprint.execute` | scoped request with safe owned files | `bounded-sprint` |
 | `plan.coordination-request` | multi-agent, multi-session, multi-wave, cross-PR, sprint-map, launch-pack, or material plan-state request | `public-plan-coordination`; read or update `plans/` and keep coordination distinct from PR delivery |
 | `startup.readiness-request` | AgentSwitchboard starts or the operator asks what agents are available/configured | `startup.readiness.report`; read local fleet state and emit bounded guidance without installation or provider calls |
+| `harness.proof-request` | one-command harness proof, end-to-end synthetic validation, event observer, composition graph, node/edge coverage, or PASS/SKIP/FAIL matrix request | `harness.proof.aggregate`; run the offline observer, validate registered event topology, and emit untracked JSON plus English evidence |
 | `action.claimed` | prompt claims install, setup, build, execute, repair, configure, upgrade, deploy, merge, or release | `action.commitment.validate`; require mutation, validation, and commit or GitHub proof |
 | `powershell.interactive-snippet` | PowerShell intended for interactive copy/paste or stepwise console entry | `powershell-interactive-execution`; use directory-first commands and never detach a continuation keyword from its preceding block |
 | `gnhf.prompt-request` | explicit “GNHF prompt,” “Good Night, Have Fun prompt,” or “compile this sprint for GNHF” request | `gnhf-prompt-compilation`; output a copy-ready `gnhf` launch command, not generic sprint prose |
@@ -48,6 +49,14 @@ A PR may implement plan tasks, but its description must not become the only dura
 ## Startup readiness invariant
 
 `startup.readiness-request` is read-only. It may inspect existing AgentSwitchboard fleet state and emit local JSON and English guidance. It must not install tools, authenticate providers, read credentials, contact a hosted model, mutate a repository, or claim that an available adapter proves provider readiness.
+
+## Synthetic harness observer invariant
+
+`harness.proof-request` routes to the repository-owned event observer in `scripts/Test-AppHarness.ps1`. The observer reads `.ai/harness/app-composition.graph.json`, verifies registered required nodes and declared edges, runs only graph-listed validators marked `safeOffline`, and emits untracked JSON and English matrix artifacts outside the repository.
+
+A required node with no required edge, a dangling edge, an ingress that cannot cascade into the observer, an observed or output node disconnected from the observer, or a broken required offline validator is a failure. Missing optional MCP/LSP readiness is a `SKIP` with a reason such as `lsp_project_not_loaded`.
+
+Static topology proves registered composition only. It does not prove live event dispatch, application runtime, launcher behavior, provider availability, target mutation, deployment, or an unregistered node or edge.
 
 ## Doctrine routing invariant
 
@@ -99,8 +108,9 @@ Stop or escalate when:
 - evidence contradicts the plan;
 - an interactive PowerShell continuation keyword would be submitted separately from its preceding block;
 - a test-only GNHF run exceeds 30 seconds;
-- DeepSeek rate class is double-usage, premium, unknown, missing, stale, or unverified.
+- DeepSeek rate class is double-usage, premium, unknown, missing, stale, or unverified;
+- the app composition graph contains a dangling required edge, disconnected required node, unsafe validator, or unregistered output cascade.
 
 ## No implicit authority
 
-The presence of a trigger, public plan, startup report, or capability never authorizes installation, push, merge, release, deployment, target mutation, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.
+The presence of a trigger, public plan, startup report, event observer, composition graph, or capability never authorizes installation, push, merge, release, deployment, target mutation, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.
