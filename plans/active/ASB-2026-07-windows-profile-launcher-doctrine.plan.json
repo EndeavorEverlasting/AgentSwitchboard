@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-07-20T07:00:00Z",
-  "updatedUtc": "2026-07-20T07:00:00Z",
+  "updatedUtc": "2026-07-20T07:12:00Z",
   "mission": "Install the canonical ownership and enforcement contract for one idempotent Windows Profile open-or-activate launcher owned by AgentSwitchboard and consumed and certified by SysAdminSuite, while reserving separate Linux and Android profiles.",
   "owner": {
     "surface": "device profile launcher doctrine and enforcement",
@@ -16,7 +16,11 @@
   },
   "delivery": {
     "branch": "feat/windows-profile-launcher-doctrine",
-    "pullRequest": null,
+    "pullRequest": {
+      "number": 37,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/37",
+      "state": "open"
+    },
     "baseRef": "feat/runtime-event-contract-doctrine",
     "commitRequired": true
   },
@@ -124,15 +128,14 @@
   ],
   "proof": {
     "target": "Canonical device profile ownership, Windows open-or-activate contract, SysAdminSuite delegation rules, action-commitment enforcement, and exact-head cross-platform validation",
-    "achieved": "Tracked doctrine policy registry fixtures validators workflow authority wiring and child templates are present; exact-head CI is pending.",
+    "achieved": "Tracked doctrine policy registry fixtures validators workflow authority wiring child templates and PR binding are present; exact-head CI is pending.",
     "ceiling": "No canonical launcher implementation, installed launcher, WezTerm process, workspace opening or activation, duplicate-prevention runtime, SysAdminSuite certification, Linux profile, Android profile, deployment, or device acceptance is proven."
   },
   "handoff": {
     "nextOwner": "repository doctrine lane",
-    "nextCommand": "gh pr checks --repo EndeavorEverlasting/AgentSwitchboard --watch",
+    "nextCommand": "gh pr checks 37 --repo EndeavorEverlasting/AgentSwitchboard --watch",
     "notes": [
-      "Open a stacked pull request against feat/runtime-event-contract-doctrine.",
-      "Bind this plan to the actual pull request after creation.",
+      "PR #37 is stacked against feat/runtime-event-contract-doctrine.",
       "After doctrine lands, implement the canonical launcher in a separate AgentSwitchboard PR.",
       "After implementation proof, adopt and certify it in a separate SysAdminSuite PR that removes all independent fallback logic."
     ]
