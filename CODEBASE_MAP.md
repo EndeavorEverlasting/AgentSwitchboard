@@ -35,6 +35,20 @@ Plans coordinate work; branches and pull requests transport and review implement
 
 This layer proves registered static topology and bounded offline validation only.
 
+## App output context engine
+
+- `Contextualize-AppOutput.cmd` — Windows operator entrypoint.
+- `tooling/context/Contextualize-AppOutput.py` — deterministic text/JSON/JSONL parser, redactor, signal classifier, prompt-kit ranker, and artifact renderer.
+- `.ai/harness/workflows/app-output-contextualization.workflow.json` — inputs, steps, outputs, and guardrails.
+- `.ai/harness/schemas/app-output-context.schema.json` — compact packet schema.
+- `.ai/skills/app-output-contextualization/SKILL.md` — reusable agent procedure.
+- `scripts/Test-AppOutputContextEngine.ps1` and `tests/test_app_output_context_engine.py` — focused completeness and behavior proof.
+- `.ai/harness/fixtures/app-output-context/` — public synthetic output and prompt-registry fixture.
+- `docs/harness/app-output-context-engine.md` — operator guide.
+- `.github/workflows/app-output-context-engine.yml` — Windows and Linux contract gate.
+
+This engine reads supplied output only. It does not launch apps or providers, stores no raw output in its artifacts, and never crosses the regular-AI/GNHF execution-surface boundary.
+
 ## Runtime event contract
 
 - `docs/governance/runtime-event-contract.md` — event source, typed envelope, observer, handler, successor, and sink doctrine.
@@ -68,7 +82,7 @@ The Windows Profile is WezTerm-backed and contract-only. Its future canonical so
 - `.ai/harness/repository-family.registry.json` — supported repository profiles.
 - `.ai/harness/artifact-registry.json` — artifact roles and proof ceilings.
 - `.ai/harness/workflows/repository-family-intake.workflow.json` — read-only clone intake.
-- `.ai/harness/schemas/` — run context, status, handoff, app, event, and device-profile schemas.
+- `.ai/harness/schemas/` — run context, status, handoff, app, event, device-profile, and app-output schemas.
 - `scripts/Get-RepositoryFamilyHarnessStatus.ps1` — read-only local probe.
 - `scripts/Test-RepositoryFamilyHarness.ps1` — registry and safety validator.
 - `.github/workflows/repository-family-harness.yml` — family proof gate.
@@ -83,6 +97,7 @@ The Windows Profile is WezTerm-backed and contract-only. Its future canonical so
 - `.ai/skills/evidence-validation/SKILL.md`
 - `.ai/skills/pr-integration/SKILL.md`
 - `.ai/skills/runtime-proof/SKILL.md`
+- `.ai/skills/app-output-contextualization/SKILL.md`
 
 ## GNHF control plane
 
@@ -108,6 +123,7 @@ The Windows Profile is WezTerm-backed and contract-only. Its future canonical so
 - `scripts/Test-HarnessDoctrineContract.ps1`
 - `scripts/Test-RuntimeEventContract.ps1`
 - `scripts/Test-DeviceProfileLauncherContract.ps1`
+- `scripts/Test-AppOutputContextEngine.ps1`
 - `scripts/Test-AgentDocumentationContract.ps1`
 - `scripts/Test-RepositoryFamilyHarness.ps1`
 - `scripts/Test-PublicPlanContracts.ps1`
@@ -116,6 +132,6 @@ The Windows Profile is WezTerm-backed and contract-only. Its future canonical so
 
 ## Generated evidence and proof boundary
 
-Generated family, startup, app-harness, runtime-event, and device-profile evidence is untracked. It may contain local paths, versions, Git state, or minimized operational payloads and must remain outside tracked authority unless deliberately reviewed as a public fixture.
+Generated family, startup, app-harness, app-output-context, runtime-event, and device-profile evidence is untracked. It may contain local paths, versions, Git state, or minimized operational payloads and must remain outside tracked authority unless deliberately reviewed as a public fixture.
 
-Contract validity proves declared shape. Synthetic fixtures prove bounded causality or ownership. Neither proves application runtime, an open-or-activate result, provider delivery, external target behavior, deployment, or operator acceptance.
+Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, or contextualization. Neither proves application runtime, an open-or-activate result, provider delivery, external target behavior, deployment, or operator acceptance.
