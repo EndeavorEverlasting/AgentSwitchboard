@@ -39,6 +39,8 @@ $branch = (& git -C $RootPath branch --show-current 2>$null | Select-Object -Fir
 $head = (& git -C $RootPath rev-parse HEAD 2>$null | Select-Object -First 1)
 $dirty = [bool](& git -C $RootPath status --short 2>$null)
 $piCommand = Get-Command pi -ErrorAction SilentlyContinue
+$piPath = $null
+if ($null -ne $piCommand) { $piPath = $piCommand.Source }
 
 $missing = @($componentResults | Where-Object { -not $_.exists -or -not $_.tracked })
 $working = @(
@@ -68,7 +70,7 @@ $result = [ordered]@{
     branch = [string]$branch
     head = [string]$head
     dirty = $dirty
-    pi = [ordered]@{ state = $piState; path = if ($piCommand) { $piCommand.Source } else { $null } }
+    pi = [ordered]@{ state = $piState; path = $piPath }
     components = $componentResults
     working = $working
     broken = $broken
@@ -78,12 +80,13 @@ $result = [ordered]@{
     nextCommand = $nextCommand
 }
 
+$readyCount = @($componentResults | Where-Object { $_.exists -and $_.tracked }).Count
 Write-Host 'PI OPERATIONAL HARNESS' -ForegroundColor Cyan
 Write-Host ("Status: {0}" -f $result.status)
 Write-Host ("Branch: {0}" -f $result.branch)
 Write-Host ("HEAD: {0}" -f $result.head)
 Write-Host ("Pi: {0}" -f $result.pi.state)
-Write-Host ("Components: {0}/{1} ready" -f (@($componentResults | Where-Object { $_.exists -and $_.tracked }).Count), $componentResults.Count)
+Write-Host ("Components: {0}/{1} ready" -f $readyCount, $componentResults.Count)
 Write-Host ''
 Write-Host 'Working:'
 $working | ForEach-Object { Write-Host "- $_" }
@@ -101,32 +104,31 @@ if (-not $NoWrite) {
     $jsonPath = Join-Path $OutputDirectory 'pi-harness-status.json'
     $mdPath = Join-Path $OutputDirectory 'pi-harness-status.md'
     $result | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $jsonPath -Encoding utf8
-    @(
+
+    $markdown = [System.Collections.Generic.List[string]]::new()
+    foreach ($line in @(
         '# Pi Operational Harness Status',
         '',
-        "- Status: `$($result.status)`",
-        "- Branch: `$($result.branch)`",
-        "- HEAD: `$($result.head)`",
-        "- Pi: `$($result.pi.state)`",
-        "- Ready components: $(@($componentResults | Where-Object { $_.exists -and $_.tracked }).Count)/$($componentResults.Count)",
+        ("- Status: {0}" -f $result.status),
+        ("- Branch: {0}" -f $result.branch),
+        ("- HEAD: {0}" -f $result.head),
+        ("- Pi: {0}" -f $result.pi.state),
+        ("- Ready components: {0}/{1}" -f $readyCount, $componentResults.Count),
         '',
-        '## Working',
-        ($working | ForEach-Object { "- $_" }),
-        '',
-        '## Broken or blocked',
-        $(if ($broken.Count -eq 0) { '- None at repository-contract level.' } else { $broken | ForEach-Object { "- $_" } }),
-        '',
-        '## Missing runtime proof',
-        ($gaps | ForEach-Object { "- $_" }),
-        '',
-        '## Proof ceiling',
-        $result.proofCeiling,
-        '',
-        '## Next command',
-        '```powershell',
-        $nextCommand,
-        '```'
-    ) | Set-Content -LiteralPath $mdPath -Encoding utf8
+        '## Working'
+    )) { [void]$markdown.Add($line) }
+    foreach ($line in $working) { [void]$markdown.Add("- $line") }
+    [void]$markdown.Add('')
+    [void]$markdown.Add('## Broken or blocked')
+    if ($broken.Count -eq 0) { [void]$markdown.Add('- None at repository-contract level.') }
+    else { foreach ($line in $broken) { [void]$markdown.Add("- $line") } }
+    [void]$markdown.Add('')
+    [void]$markdown.Add('## Missing runtime proof')
+    foreach ($line in $gaps) { [void]$markdown.Add("- $line") }
+    foreach ($line in @('', '## Proof ceiling', $result.proofCeiling, '', '## Next command', '```powershell', $nextCommand, '```')) {
+        [void]$markdown.Add($line)
+    }
+    $markdown | Set-Content -LiteralPath $mdPath -Encoding utf8
     Write-Host "JSON: $jsonPath"
     Write-Host "Report: $mdPath"
 }
