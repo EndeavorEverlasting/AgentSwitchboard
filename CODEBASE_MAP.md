@@ -97,7 +97,10 @@ The Windows Profile is WezTerm-backed and contract-only. Its future canonical so
 - `.ai/skills/evidence-validation/SKILL.md`
 - `.ai/skills/pr-integration/SKILL.md`
 - `.ai/skills/runtime-proof/SKILL.md`
+- `.ai/skills/end-to-end-runtime-validation/SKILL.md`
 - `.ai/skills/app-output-contextualization/SKILL.md`
+
+`end-to-end-runtime-validation` owns exact operator-path proof across nested shells, child processes, WSL, tmux, WezTerm, TUI, GUI, provider, installer, launcher, or application boundaries. It requires per-stage diagnostics, effective-state and user-experience readback, and idempotence or rollback when applicable; it does not replace the generic `runtime-proof` skill.
 
 ## GNHF control plane
 
@@ -141,6 +144,7 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 - `scripts/Test-DeviceProfileLauncherContract.ps1`
 - `scripts/Test-AppOutputContextEngine.ps1`
 - `scripts/Test-PiHarnessCompleteness.ps1`
+- `scripts/Test-EndToEndRuntimeValidationSkill.ps1`
 - `scripts/Test-AgentDocumentationContract.ps1`
 - `scripts/Test-RepositoryFamilyHarness.ps1`
 - `scripts/Test-PublicPlanContracts.ps1`
@@ -149,6 +153,6 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 
 ## Generated evidence and proof boundary
 
-Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, and Pi evidence is untracked. It may contain local paths, versions, Git state, minimized operational payloads, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
+Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, Pi, and end-to-end evidence is untracked. It may contain local paths, versions, Git state, minimized operational payloads, attributed model identities, commands, child-process diagnostics, or effective-state readback and must remain outside tracked authority unless deliberately reviewed as a public fixture.
 
-Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, or workflow semantics. Neither proves application runtime, an open-or-activate result, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, model quality, external target behavior, deployment, or operator acceptance.
+Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, or workflow semantics. Neither proves application runtime, an open-or-activate result, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, model quality, exact operator-path success, external target behavior, deployment, or operator acceptance.
