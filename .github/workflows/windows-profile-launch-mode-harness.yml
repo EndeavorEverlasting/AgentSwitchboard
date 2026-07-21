@@ -32,21 +32,17 @@ jobs:
       - name: Parse PowerShell surfaces
         shell: pwsh
         run: |
-          $failures = [System.Collections.Generic.List[string]]::new()
+          $failures = @()
           foreach ($path in @(
             'scripts/Test-WindowsProfileLaunchModeHarness.ps1',
             'tooling/profiles/windows/Get-WindowsProfileLaunchModeStatus.ps1',
             'tooling/profiles/windows/hooks/Invoke-WindowsProfileLaunchModePreCommit.ps1'
           )) {
             $tokens = $null
-            $errors = $null
-            [void][System.Management.Automation.Language.Parser]::ParseFile(
-              $path,
-              [ref]$tokens,
-              [ref]$errors
-            )
-            foreach ($error in @($errors)) {
-              $failures.Add("$path`: $($error.Message)")
+            $parseErrors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$parseErrors)
+            foreach ($parseError in @($parseErrors)) {
+              $failures += ("{0}: {1}" -f $path, $parseError.Message)
             }
           }
           if ($failures.Count -gt 0) {
@@ -64,6 +60,10 @@ jobs:
       - name: Run read-only status
         shell: pwsh
         run: ./tooling/profiles/windows/Get-WindowsProfileLaunchModeStatus.ps1 -NoWrite
+
+      - name: Run opt-in pre-commit hook
+        shell: pwsh
+        run: ./tooling/profiles/windows/hooks/Invoke-WindowsProfileLaunchModePreCommit.ps1
 
       - name: Run canonical device-profile contract
         shell: pwsh
@@ -104,6 +104,10 @@ jobs:
       - name: Run read-only status
         shell: pwsh
         run: ./tooling/profiles/windows/Get-WindowsProfileLaunchModeStatus.ps1 -NoWrite
+
+      - name: Run opt-in pre-commit hook
+        shell: pwsh
+        run: ./tooling/profiles/windows/hooks/Invoke-WindowsProfileLaunchModePreCommit.ps1
 
       - name: Run canonical device-profile contract
         shell: pwsh
