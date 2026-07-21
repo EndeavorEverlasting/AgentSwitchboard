@@ -53,12 +53,12 @@ $working = @(
     'Generated launch evidence is local-operational and untracked.'
 )
 
-$broken = [System.Collections.Generic.List[string]]::new()
+$broken = @()
 if ($missing.Count -gt 0) {
-    [void]$broken.Add("$($missing.Count) required harness component(s) are missing or untracked.")
+    $broken += "$($missing.Count) required harness component(s) are missing or untracked."
 }
 if ($dirty) {
-    [void]$broken.Add('The checkout is dirty; preserve or isolate unrelated work before writing.')
+    $broken += 'The checkout is dirty; preserve or isolate unrelated work before writing.'
 }
 
 $gaps = @(
@@ -85,7 +85,7 @@ $result = [ordered]@{
         proven = $false
     }
     working = $working
-    broken = @($broken)
+    broken = $broken
     gaps = $gaps
     proofCeiling = 'Tracked launch-mode harness structure and offline contract readiness only; no WezTerm, window, process, tmux, launcher, or workstation runtime proof.'
     nextCommand = 'pwsh -NoLogo -NoProfile -File scripts/Test-WindowsProfileLaunchModeHarness.ps1'
