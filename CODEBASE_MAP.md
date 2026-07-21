@@ -85,6 +85,24 @@ The initial topology is contract-only. It does not prove live emission, observat
 
 The Windows Profile is WezTerm-backed and contract-only. Its future canonical source is `tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1`; the installed contract path is `%LOCALAPPDATA%\AgentSwitchboard\profiles\windows\Invoke-AgentSwitchboardOpenOrActivate.ps1`. SysAdminSuite consumes and certifies it through a separate PR. Linux and Android remain separate profile implementations.
 
+## Windows Profile launch-mode harness
+
+- `tooling/profiles/windows/harness/launch-modes/codebase-map.json` — focused structure, commands, entrypoints, and known traps.
+- `tooling/profiles/windows/harness/launch-modes/launch-mode.registry.json` — default `open-or-activate`, explicit named `new-instance`, one-window limits, identity convergence, and duplicate-detection policy.
+- `tooling/profiles/windows/harness/launch-modes/composition.graph.json` — request, trigger, skill, workflow, validator, artifact, report, and handoff topology.
+- `tooling/profiles/windows/harness/launch-modes/workflows/` — intake, open-or-activate verification, new-instance verification, and duplicate-window diagnosis.
+- `tooling/profiles/windows/harness/launch-modes/artifact-registry.json` — local run context, before/after inventories, results, English reports, and handoffs.
+- `tooling/profiles/windows/harness/launch-modes/schemas/windows-launch-mode-harness.schema.json` — run-context, state-snapshot, result, and handoff contracts.
+- `tooling/profiles/windows/harness/launch-modes/fixtures/` — valid workspace activation, valid named separate instance, and invalid duplicate burst.
+- `.ai/skills/windows-profile-launch-mode-validation/SKILL.md` — scoped selection and validation procedure.
+- `tooling/profiles/windows/Get-WindowsProfileLaunchModeStatus.ps1` — read-only English and JSON repository readiness report.
+- `tooling/profiles/windows/hooks/Invoke-WindowsProfileLaunchModePreCommit.ps1` — opt-in contract, staged-diff, and generated-evidence gate; never installed implicitly.
+- `scripts/Test-WindowsProfileLaunchModeHarness.ps1` and `tests/test_windows_profile_launch_mode_harness.py` — cross-platform completeness and behavior contracts.
+- `docs/harness/windows-profile-launch-mode-harness.md` — operator-facing working state, gaps, workflows, artifact policy, and proof ceiling.
+- `.github/workflows/windows-profile-launch-mode-harness.yml` — Windows and Linux exact-head proof gate.
+
+The default mode converges one workspace identity to one visible window. An explicit named new instance requires exactly one additional top-level WezTerm window, a distinct frontend process, and a unique tmux session; repeating that instance ID must activate it. Two windows attached to the same tmux session are duplicate views, not separate instances. This harness does not implement or execute the launcher.
+
 ## Repository-family harness
 
 - `.ai/harness/manifest.json` — central paths, proof vocabulary, and evidence policy.
@@ -107,6 +125,7 @@ The Windows Profile is WezTerm-backed and contract-only. Its future canonical so
 - `.ai/skills/pr-integration/SKILL.md`
 - `.ai/skills/runtime-proof/SKILL.md`
 - `.ai/skills/end-to-end-runtime-validation/SKILL.md`
+- `.ai/skills/windows-profile-launch-mode-validation/SKILL.md`
 - `.ai/skills/app-output-contextualization/SKILL.md`
 
 ## GNHF control plane
@@ -150,6 +169,7 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 - `scripts/Test-EndToEndRuntimeValidationSkill.ps1`
 - `scripts/Test-RuntimeEventContract.ps1`
 - `scripts/Test-DeviceProfileLauncherContract.ps1`
+- `scripts/Test-WindowsProfileLaunchModeHarness.ps1`
 - `scripts/Test-AppOutputContextEngine.ps1`
 - `scripts/Test-PiHarnessCompleteness.ps1`
 - `scripts/Test-AgentDocumentationContract.ps1`
@@ -160,6 +180,6 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 
 ## Generated evidence and proof boundary
 
-Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, and Pi evidence is untracked. End-to-end runtime evidence is also local-operational and untracked unless deliberately minimized and reviewed as a public fixture. Evidence may contain local paths, versions, Git state, minimized operational payloads, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
+Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, Windows launch-mode, and Pi evidence is untracked. End-to-end runtime evidence is also local-operational and untracked unless deliberately minimized and reviewed as a public fixture. Evidence may contain local paths, versions, Git state, minimized operational payloads, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
 
-Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, or workflow semantics. Neither proves application runtime, an exact operator path, an open-or-activate result, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, model quality, external target behavior, deployment, or operator acceptance.
+Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, launch-mode classification, or workflow semantics. Neither proves application runtime, an exact operator path, an open-or-activate result, a distinct WezTerm instance, duplicate prevention on a workstation, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, model quality, external target behavior, deployment, or operator acceptance.
