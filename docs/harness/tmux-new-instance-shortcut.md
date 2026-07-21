@@ -23,7 +23,7 @@ The bare `dev` session remains reserved for the default `open-or-activate` route
 Install-TmuxNewInstanceShortcut.cmd
 ```
 
-The CMD defaults to Apply because it is itself the explicit installer surface. It invokes PowerShell 7, copies the tracked canonical launcher and manifest beneath the current user's AgentSwitchboard profile root, creates the shortcut, and reads the shortcut properties back.
+The CMD defaults to Apply because it is itself the explicit installer surface. It invokes PowerShell 7, copies the tracked canonical launcher and manifest beneath the current user's AgentSwitchboard Windows Profile root, creates the shortcut, and reads the shortcut properties back.
 
 ### Preview without installing
 
@@ -46,10 +46,10 @@ The expected next session is `dev-2`.
 
 ## Installed files
 
-Default install root:
+Canonical Windows Profile install root:
 
 ```text
-%LOCALAPPDATA%\AgentSwitchboard\profiles\windows\tmux-new-instance\
+%LOCALAPPDATA%\AgentSwitchboard\profiles\windows\
 ```
 
 The installer writes:
@@ -58,6 +58,12 @@ The installer writes:
 - `tmux-new-instance-shortcut.json`
 - `state/tmux-new-instance-shortcut-install-receipt.json`
 - `state/tmux-new-instance-shortcut-operator-report.md`
+
+Runtime launch evidence is written beneath:
+
+```text
+%LOCALAPPDATA%\AgentSwitchboard\profiles\windows\tmux-new-instance\runs\<run-id>\
+```
 
 The shortcut is created in the current user's Windows Desktop folder. The installer refuses to overwrite a shortcut whose description and arguments do not prove AgentSwitchboard ownership.
 
@@ -84,7 +90,7 @@ It does not use `tmux new-session -A`, because `-A` may attach to an existing se
 - A clickable CMD installer exists and defaults to Apply.
 - The CMD contains no independent WezTerm or tmux lifecycle logic.
 - The PowerShell installer supports Plan and Apply.
-- Apply preserves foreign shortcuts, copies the canonical launcher atomically, creates the owned shortcut, and reads it back.
+- Apply preserves foreign shortcuts, installs the launcher at the registered canonical Windows Profile path, creates the owned shortcut, and reads it back.
 - Installation never launches tmux or WezTerm.
 - The canonical launcher implements explicit `new-instance` identity allocation.
 - The bare `dev` session is reserved.
@@ -108,11 +114,11 @@ It does not use `tmux new-session -A`, because `-A` may attach to an existing se
 Generated evidence is local-operational and untracked:
 
 - `tmux-new-instance-shortcut-install-plan.json`
-- `tmux-new-instance-shortcut-install-receipt.json`
-- `tmux-new-instance-shortcut-operator-report.md`
-- `tmux-new-instance-launch-plan.json`
-- `tmux-new-instance-launch-result.json`
-- `tmux-new-instance-final-handoff.json`
+- `state/tmux-new-instance-shortcut-install-receipt.json`
+- `state/tmux-new-instance-shortcut-operator-report.md`
+- `tmux-new-instance/runs/<run-id>/tmux-new-instance-launch-plan.json`
+- `tmux-new-instance/runs/<run-id>/tmux-new-instance-launch-result.json`
+- `tmux-new-instance/runs/<run-id>/tmux-new-instance-final-handoff.json`
 
 Do not commit local paths, terminal scrollback, environment dumps, credentials, customer data, private hostnames, or unreviewed screenshots.
 
@@ -142,7 +148,7 @@ Preserve the first failing boundary and the existing shortcut/session state. Do 
 
 ## Rollback
 
-This sprint does not ship an automatic destructive uninstaller. The installed files and shortcut are user-local, but removing them is still a workstation mutation. A rollback action should first read the install receipt, confirm shortcut ownership, and remove only the exact recorded shortcut and install root through a separately reviewed runtime operation.
+This sprint does not ship an automatic destructive uninstaller. The canonical Windows Profile root may contain files used by other profile operations, so rollback must not delete that directory wholesale. A separately reviewed runtime operation should read the install receipt, confirm shortcut ownership, and remove only the exact recorded shortcut, manifest, receipt/report, and launcher when no other profile consumer owns that launcher.
 
 ## Proof ceiling
 
