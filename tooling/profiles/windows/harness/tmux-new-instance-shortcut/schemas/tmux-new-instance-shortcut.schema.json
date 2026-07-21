@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/profiles/windows/harness/tmux-new-instance-shortcut/schemas/tmux-new-instance-shortcut.schema.json",
+  "title": "AgentSwitchboard tmux New-Instance Shortcut Harness",
+  "oneOf": [
+    {"$ref": "#/$defs/manifest"},
+    {"$ref": "#/$defs/installPlan"},
+    {"$ref": "#/$defs/installReceipt"},
+    {"$ref": "#/$defs/launchPlan"},
+    {"$ref": "#/$defs/launchResult"},
+    {"$ref": "#/$defs/finalHandoff"}
+  ],
+  "$defs": {
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "profileId", "distribution", "sessionPrefix", "workspacePrefix", "classPrefix", "initialWindowName", "maximumInstances", "allocationPolicy", "installRoot", "shortcutName", "shortcutDescription", "installedLauncherName", "installedManifestName", "evidenceDirectoryName", "runtimeMode", "instanceId", "openOrActivateImplementation", "generatedEvidenceTracked"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.tmux-new-instance-shortcut-manifest.v1"},
+        "profileId": {"const": "windows"},
+        "distribution": {"type": "string", "pattern": "^[A-Za-z0-9._-]+$"},
+        "sessionPrefix": {"type": "string", "pattern": "^[A-Za-z0-9_-]+$"},
+        "workspacePrefix": {"type": "string", "pattern": "^[A-Za-z0-9_-]+$"},
+        "classPrefix": {"type": "string", "pattern": "^[A-Za-z0-9._-]+$"},
+        "initialWindowName": {"type": "string", "pattern": "^[A-Za-z0-9_-]+$"},
+        "maximumInstances": {"type": "integer", "minimum": 1, "maximum": 999},
+        "allocationPolicy": {"const": "smallest-positive-integer"},
+        "installRoot": {"type": "string", "minLength": 1},
+        "shortcutName": {"type": "string", "minLength": 1},
+        "shortcutDescription": {"type": "string", "minLength": 1},
+        "installedLauncherName": {"const": "Invoke-AgentSwitchboardOpenOrActivate.ps1"},
+        "installedManifestName": {"type": "string", "minLength": 1},
+        "evidenceDirectoryName": {"type": "string", "minLength": 1},
+        "runtimeMode": {"const": "new-instance"},
+        "instanceId": {"const": "auto"},
+        "openOrActivateImplementation": {"const": "blocked-until-separate-runtime-sprint"},
+        "generatedEvidenceTracked": {"const": false}
+      }
+    },
+    "installPlan": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["schema", "mode", "installedLauncher", "shortcut", "shortcutArguments", "lifecycleOwner", "overwritesForeignShortcut", "launchesDuringInstall", "generatedEvidenceTracked", "proofCeiling"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.tmux-new-instance-shortcut-install-plan.v1"},
+        "mode": {"enum": ["Plan", "Apply"]},
+        "overwritesForeignShortcut": {"const": false},
+        "launchesDuringInstall": {"const": false},
+        "generatedEvidenceTracked": {"const": false},
+        "proofCeiling": {"type": "string", "minLength": 10}
+      }
+    },
+    "installReceipt": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["schema", "status", "launcher", "shortcut", "target", "arguments", "runtimeExecuted", "generatedEvidenceTracked", "proofLevel", "proofCeiling"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.tmux-new-instance-shortcut-install-receipt.v1"},
+        "status": {"const": "installed"},
+        "runtimeExecuted": {"const": false},
+        "generatedEvidenceTracked": {"const": false},
+        "proofLevel": {"const": "installed-shortcut-readback"},
+        "proofCeiling": {"type": "string", "minLength": 10}
+      }
+    },
+    "launchPlan": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["schema", "mode", "operation", "distribution", "instanceId", "sessionName", "workspace", "windowClass", "existingSessions", "allocationPolicy", "createSessionCommand", "attachCommand", "wezTermArguments", "oneRequestMaximumNewWindows", "separateFrontendProcessRequired", "generatedEvidenceTracked", "proofCeiling"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.tmux-new-instance-launch-plan.v1"},
+        "mode": {"const": "new-instance"},
+        "operation": {"enum": ["Plan", "Launch"]},
+        "instanceId": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+        "sessionName": {"type": "string", "pattern": "^[A-Za-z0-9_-]+$"},
+        "existingSessions": {"type": "array", "items": {"type": "string"}},
+        "allocationPolicy": {"const": "smallest-positive-integer"},
+        "oneRequestMaximumNewWindows": {"const": 1},
+        "separateFrontendProcessRequired": {"const": true},
+        "generatedEvidenceTracked": {"const": false},
+        "proofCeiling": {"type": "string", "minLength": 10}
+      }
+    },
+    "launchResult": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["schema", "status", "mode", "visibleWindowObserved", "proofLevel", "proofCeiling"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.tmux-new-instance-launch-result.v1"},
+        "status": {"enum": ["launch-command-accepted", "failed"]},
+        "mode": {"const": "new-instance"},
+        "visibleWindowObserved": {"const": false},
+        "proofLevel": {"enum": ["command-ack", "failure-evidence"]},
+        "proofCeiling": {"type": "string", "minLength": 10}
+      }
+    },
+    "finalHandoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "repository", "branch", "shortcutPath", "installReceiptPath", "launchResultPath", "remainingGaps", "nextCommand"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.tmux-new-instance-final-handoff.v1"},
+        "repository": {"const": "EndeavorEverlasting/AgentSwitchboard"},
+        "branch": {"type": "string", "minLength": 1},
+        "shortcutPath": {"type": "string", "minLength": 1},
+        "installReceiptPath": {"type": "string", "minLength": 1},
+        "launchResultPath": {"type": ["string", "null"]},
+        "remainingGaps": {"type": "array", "items": {"type": "string"}},
+        "nextCommand": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}
