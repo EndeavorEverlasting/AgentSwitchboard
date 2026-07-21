@@ -78,6 +78,7 @@ def main() -> None:
     prefix = "tooling/profiles/windows/harness/launch-modes"
     registry = load(f"{prefix}/launch-mode.registry.json")
     artifacts = load(f"{prefix}/artifact-registry.json")
+    graph = load(f"{prefix}/composition.graph.json")
     schema = load(f"{prefix}/schemas/windows-launch-mode-harness.schema.json")
 
     assert registry["schema"] == (
@@ -187,6 +188,9 @@ def main() -> None:
     assert manifest["entrypoints"]["windowsLaunchModeSkill"] == (
         ".ai/skills/windows-profile-launch-mode-validation/SKILL.md"
     )
+    assert manifest["entrypoints"]["windowsLaunchModeGraph"].endswith(
+        "composition.graph.json"
+    )
     mode_manifest = manifest["windowsProfileLaunchModes"]
     assert mode_manifest["status"] == "contract-only"
     assert mode_manifest["defaultMode"] == "open-or-activate"
@@ -194,14 +198,6 @@ def main() -> None:
     assert mode_manifest["generatedEvidenceTracked"] is False
     assert mode_manifest["runtimeExecutionAllowed"] is False
 
-    central = load(".ai/harness/artifact-registry.json")["artifacts"]
-    by_id = {item["artifactId"]: item for item in central}
-    for artifact_id in expected_artifacts:
-        assert artifact_id in by_id
-        assert by_id[artifact_id]["tracked"] is False
-        assert by_id[artifact_id]["sensitivity"] == "local-operational"
-
-    graph = load(".ai/harness/app-composition.graph.json")
     node_ids = {item["id"] for item in graph["nodes"]}
     edge_ids = {item["id"] for item in graph["edges"]}
     assert {
@@ -237,6 +233,7 @@ def main() -> None:
             f"{prefix}/codebase-map.json",
             f"{prefix}/launch-mode.registry.json",
             f"{prefix}/artifact-registry.json",
+            f"{prefix}/composition.graph.json",
             ".ai/skills/windows-profile-launch-mode-validation/SKILL.md",
             "tooling/profiles/windows/Get-WindowsProfileLaunchModeStatus.ps1",
             "docs/harness/windows-profile-launch-mode-harness.md",
