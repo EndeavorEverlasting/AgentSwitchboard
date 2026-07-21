@@ -1,0 +1,51 @@
+{
+  "schema": "agentswitchboard.tmux-new-instance-shortcut-codebase-map.v1",
+  "harnessId": "agentswitchboard.tmux-new-instance-shortcut-harness.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "purpose": "Install one owned desktop shortcut that delegates to the canonical Windows Profile launcher and allocates one unique tmux session per click.",
+  "entrypoints": {
+    "installerCmd": "Install-TmuxNewInstanceShortcut.cmd",
+    "installer": "tooling/profiles/windows/Install-TmuxNewInstanceShortcut.ps1",
+    "canonicalLauncher": "tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1",
+    "manifest": "tooling/profiles/windows/tmux-new-instance-shortcut.example.json",
+    "profileRegistry": "tooling/profiles/windows/harness/tmux-new-instance-shortcut/shortcut-profile.registry.json",
+    "artifactRegistry": "tooling/profiles/windows/harness/tmux-new-instance-shortcut/artifact-registry.json",
+    "compositionGraph": "tooling/profiles/windows/harness/tmux-new-instance-shortcut/composition.graph.json",
+    "installWorkflow": "tooling/profiles/windows/harness/tmux-new-instance-shortcut/workflows/install-shortcut.workflow.json",
+    "launchWorkflow": "tooling/profiles/windows/harness/tmux-new-instance-shortcut/workflows/launch-new-instance.workflow.json",
+    "failureWorkflow": "tooling/profiles/windows/harness/tmux-new-instance-shortcut/workflows/handle-failure.workflow.json",
+    "schema": "tooling/profiles/windows/harness/tmux-new-instance-shortcut/schemas/tmux-new-instance-shortcut.schema.json",
+    "skill": ".ai/skills/tmux-new-instance-shortcut/SKILL.md",
+    "status": "tooling/profiles/windows/Get-TmuxNewInstanceShortcutStatus.ps1",
+    "validator": "scripts/Test-TmuxNewInstanceShortcutHarness.ps1",
+    "operatorGuide": "docs/harness/tmux-new-instance-shortcut.md"
+  },
+  "directories": [
+    {"path": "tooling/profiles/windows/harness/tmux-new-instance-shortcut", "purpose": "Shortcut-specific maps, registries, workflows, schema, graph, and synthetic fixtures."},
+    {"path": "tooling/profiles/windows", "purpose": "Canonical Windows Profile launcher, installer, manifest, and read-only status surface."},
+    {"path": "tooling/profiles/windows/hooks", "purpose": "Opt-in validation hooks; never installed implicitly."},
+    {"path": ".ai/skills", "purpose": "Scoped operational procedures and stop conditions."},
+    {"path": "scripts", "purpose": "PowerShell completeness and contract validation."},
+    {"path": "tests", "purpose": "Dependency-free allocation and registration contracts."},
+    {"path": "docs/harness", "purpose": "English operator state, gaps, rollback, and proof ceilings."},
+    {"path": ".github/workflows", "purpose": "Windows and Linux exact-head contract proof."}
+  ],
+  "commands": [
+    {"name": "Install desktop shortcut", "command": "Install-TmuxNewInstanceShortcut.cmd", "effect": "writes an owned shortcut and installed launcher under the current user's profile", "proof": "shortcut install and readback only"},
+    {"name": "Preview installation", "command": "Install-TmuxNewInstanceShortcut.cmd plan", "effect": "read-only plan", "proof": "resolved paths and delegation contract only"},
+    {"name": "Preview next identity", "command": "pwsh -NoLogo -NoProfile -File tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1 -Mode new-instance -Operation Plan -ExistingSessions dev,dev-1", "effect": "writes local plan evidence outside the repository", "proof": "deterministic allocation and command construction"},
+    {"name": "Focused completeness", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-TmuxNewInstanceShortcutHarness.ps1", "effect": "read-only", "proof": "tracked files, contracts, plan behavior, and registration"},
+    {"name": "Dependency-free contracts", "command": "python tests/test_tmux_new_instance_shortcut_harness.py", "effect": "read-only", "proof": "allocation, manifest, workflow, CMD, and registration semantics"},
+    {"name": "Diff hygiene", "command": "git diff --check", "effect": "read-only", "proof": "patch and whitespace hygiene"}
+  ],
+  "knownTraps": [
+    "A shortcut may not call raw WezTerm or tmux lifecycle logic; it delegates to the canonical AgentSwitchboard launcher.",
+    "A second WezTerm window attached to dev is not a new tmux instance.",
+    "new-instance sessions are named dev-1, dev-2, and so on; the bare dev identity remains reserved for open-or-activate.",
+    "WezTerm must receive start --always-new-process for the new-instance path.",
+    "The installer may not overwrite a foreign desktop shortcut with the same name.",
+    "Installing the shortcut does not prove WSL, tmux, WezTerm, window visibility, attachment, or operator acceptance.",
+    "The open-or-activate mode remains blocked until its separate implementation and runtime proof sprint."
+  ],
+  "proofCeiling": "Tracked shortcut installer, canonical new-instance implementation, deterministic allocation, installer readback contracts, and offline validation. Live workstation behavior remains separate proof."
+}
