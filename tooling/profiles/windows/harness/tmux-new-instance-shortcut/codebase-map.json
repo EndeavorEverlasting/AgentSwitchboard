@@ -2,6 +2,7 @@
   "schema": "agentswitchboard.tmux-new-instance-shortcut-codebase-map.v1",
   "harnessId": "agentswitchboard.tmux-new-instance-shortcut-harness.v1",
   "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "status": "tracked-unproven-runtime",
   "purpose": "Install one owned desktop shortcut that delegates to the canonical Windows Profile launcher and allocates one unique tmux session per click.",
   "entrypoints": {
     "installerCmd": "Install-TmuxNewInstanceShortcut.cmd",
