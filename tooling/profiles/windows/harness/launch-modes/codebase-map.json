@@ -1,0 +1,45 @@
+{
+  "schema": "agentswitchboard.windows-profile-launch-mode-codebase-map.v1",
+  "harnessId": "agentswitchboard.windows-profile-launch-mode-harness.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "purpose": "Map the smallest repository surfaces needed to distinguish default open-or-activate behavior, explicit named new instances, and accidental duplicate WezTerm windows.",
+  "entrypoints": {
+    "canonicalDeviceProfilePolicy": ".ai/harness/device-profile-launcher.policy.json",
+    "launchModeRegistry": "tooling/profiles/windows/harness/launch-modes/launch-mode.registry.json",
+    "artifactRegistry": "tooling/profiles/windows/harness/launch-modes/artifact-registry.json",
+    "intakeWorkflow": "tooling/profiles/windows/harness/launch-modes/workflows/launch-request-intake.workflow.json",
+    "openOrActivateWorkflow": "tooling/profiles/windows/harness/launch-modes/workflows/open-or-activate-verification.workflow.json",
+    "newInstanceWorkflow": "tooling/profiles/windows/harness/launch-modes/workflows/new-instance-verification.workflow.json",
+    "duplicateDiagnosisWorkflow": "tooling/profiles/windows/harness/launch-modes/workflows/duplicate-window-diagnosis.workflow.json",
+    "schema": "tooling/profiles/windows/harness/launch-modes/schemas/windows-launch-mode-harness.schema.json",
+    "skill": ".ai/skills/windows-profile-launch-mode-validation/SKILL.md",
+    "status": "tooling/profiles/windows/Get-WindowsProfileLaunchModeStatus.ps1",
+    "validator": "scripts/Test-WindowsProfileLaunchModeHarness.ps1",
+    "operatorGuide": "docs/harness/windows-profile-launch-mode-harness.md"
+  },
+  "directories": [
+    {"path": "tooling/profiles/windows/harness/launch-modes", "purpose": "Contract-only maps, registries, schemas, workflows, and public synthetic fixtures."},
+    {"path": "tooling/profiles/windows/hooks", "purpose": "Opt-in local validation hooks; never installed implicitly."},
+    {"path": ".ai/skills", "purpose": "Scoped agent procedures and triggerable operating judgment."},
+    {"path": "scripts", "purpose": "PowerShell completeness and semantic validators."},
+    {"path": "tests", "purpose": "Dependency-free cross-platform fixture and registration contracts."},
+    {"path": "docs/harness", "purpose": "English operator reports, current gaps, and proof ceilings."},
+    {"path": ".github/workflows", "purpose": "Windows and Linux exact-head contract proof."}
+  ],
+  "commands": [
+    {"name": "Launch-mode status", "command": "pwsh -NoLogo -NoProfile -File tooling/profiles/windows/Get-WindowsProfileLaunchModeStatus.ps1 -NoWrite", "effect": "read-only", "proof": "repository contract readiness only"},
+    {"name": "Launch-mode completeness", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-WindowsProfileLaunchModeHarness.ps1", "effect": "read-only", "proof": "tracked component and semantic consistency"},
+    {"name": "Dependency-free contracts", "command": "python tests/test_windows_profile_launch_mode_harness.py", "effect": "read-only", "proof": "registry, workflow, fixture, and central-registration semantics"},
+    {"name": "Aggregate harness", "command": "Test-AppHarness.cmd", "effect": "read-only", "proof": "registered offline repository composition"},
+    {"name": "Diff hygiene", "command": "git diff --check", "effect": "read-only", "proof": "patch and whitespace hygiene"}
+  ],
+  "knownTraps": [
+    "A second window attached to the same tmux session is not an independent workspace.",
+    "Raw WezTerm process count does not prove window identity, activation, or duplication.",
+    "Default open-or-activate must not silently behave like explicit new-instance.",
+    "Explicit new-instance requires a stable instance ID, a distinct frontend process, and a unique tmux session.",
+    "One operator request producing more than one top-level window is duplicate-detected, not success.",
+    "Static configuration and CI do not prove live window behavior or operator acceptance."
+  ],
+  "proofCeiling": "Tracked launch-mode harness structure, deterministic fixture semantics, and offline central registration only."
+}
