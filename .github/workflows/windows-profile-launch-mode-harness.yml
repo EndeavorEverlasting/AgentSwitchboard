@@ -113,13 +113,13 @@ jobs:
         shell: pwsh
         run: ./scripts/Test-DeviceProfileLauncherContract.ps1
 
-      - name: Check validators remain offline
+      - name: Check deployable PowerShell surfaces remain offline
         shell: bash
         run: |
           set -euo pipefail
           ! grep -E 'Invoke-WebRequest|Invoke-RestMethod|Start-Process|wezterm start|wezterm-gui\.exe start' \
-            scripts/Test-WindowsProfileLaunchModeHarness.ps1 \
-            tooling/profiles/windows/Get-WindowsProfileLaunchModeStatus.ps1
+            tooling/profiles/windows/Get-WindowsProfileLaunchModeStatus.ps1 \
+            tooling/profiles/windows/hooks/Invoke-WindowsProfileLaunchModePreCommit.ps1
 
       - name: Full PR-range hygiene
         shell: bash
