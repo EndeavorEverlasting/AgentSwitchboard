@@ -47,6 +47,7 @@ if ($exists) {
         '## Mandatory sprint declaration',
         '## Agent-facing interface doctrine (AXI)',
         '## Multi-agent and local-model governance',
+        '## External skill adoption and prompt-kit gap filling',
         '## Forbidden behaviors',
         '## Completion standard'
     )) {
@@ -123,6 +124,32 @@ if ($exists) {
         Add-Result -Passed $text.Contains($rule) -Name "governance/multi-agent/$rule" -FailureMessage 'required multi-agent or local-model rule is missing'
     }
 
+    foreach ($rule in @(
+        'Verify and pin external skills',
+        'Industry-recommended',
+        'global install changes operator state',
+        'anthropics/skills',
+        'fa0fa64bdc967915dc8399e803be67759e1e62b8',
+        'skills/skill-creator/SKILL.md',
+        '65b3a402dbd09b8e83f9d637c6b553875189085c',
+        'npx skills add anthropics/skills --skill skill-creator -g',
+        'capture intent from conversation and repository evidence',
+        'progressive disclosure',
+        'realistic evaluation prompts',
+        'compare against a baseline',
+        'measure quality, time, and token cost',
+        'gap ledger',
+        'prompt-kit candidate',
+        'Use the prompt kit to estimate bounded sprints',
+        'dependencies, collision boundaries, expected artifacts, validation commands, proof gate, and proof ceiling',
+        'Prompt-kit ranking and external-skill discovery guide routing and estimation only',
+        'Current repository evidence outranks prompt-kit metadata',
+        'add deterministic validation',
+        'Revise, quarantine, or retire skills'
+    )) {
+        Add-Result -Passed $text.Contains($rule) -Name "governance/external-skills/$rule" -FailureMessage 'required external-skill or prompt-kit rule is missing'
+    }
+
     foreach ($behavior in @(
         'Acknowledgment without mutation',
         'Plans without execution',
@@ -130,6 +157,8 @@ if ($exists) {
         'Completion claims without running checks',
         'Secret or credential exposure',
         'Installing or executing unverified third-party agent snippets',
+        'Silently installing a global skill',
+        'Treating a prompt-kit match, generated sprint estimate, or selected skill as authority to execute',
         'Claiming privacy, model independence, successful fusion, or continuous validation from configuration intent alone'
     )) {
         Add-Result -Passed $text.Contains($behavior) -Name "governance/forbidden/$behavior" -FailureMessage 'required forbidden behavior is missing'
@@ -140,7 +169,10 @@ if ($exists) {
         'validation was actually run',
         'commit SHA exists',
         'push or PR state is reported',
-        'one exact next command is given'
+        'one exact next command is given',
+        'pinned source, installation scope, whether installation actually ran',
+        'selected prompt-kit candidate',
+        'evidence that justified the sprint estimate'
     )) {
         Add-Result -Passed $text.Contains($completion) -Name "governance/completion/$completion" -FailureMessage 'minimum completion evidence is missing'
     }
