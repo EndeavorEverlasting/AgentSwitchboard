@@ -1,0 +1,21 @@
+{
+  "schema": "agentswitchboard.tmux-new-instance-shortcut-manifest.v1",
+  "profileId": "windows",
+  "distribution": "Ubuntu",
+  "sessionPrefix": "dev",
+  "workspacePrefix": "agentswitchboard-tmux",
+  "classPrefix": "AgentSwitchboard.Tmux",
+  "initialWindowName": "shell",
+  "maximumInstances": 64,
+  "allocationPolicy": "smallest-positive-integer",
+  "installRoot": "%LOCALAPPDATA%\\AgentSwitchboard\\profiles\\windows\\tmux-new-instance",
+  "shortcutName": "AgentSwitchboard tmux - New Instance",
+  "shortcutDescription": "AgentSwitchboard managed: open one new WezTerm process with one unique tmux session",
+  "installedLauncherName": "Invoke-AgentSwitchboardOpenOrActivate.ps1",
+  "installedManifestName": "tmux-new-instance-shortcut.json",
+  "evidenceDirectoryName": "runs",
+  "runtimeMode": "new-instance",
+  "instanceId": "auto",
+  "openOrActivateImplementation": "blocked-until-separate-runtime-sprint",
+  "generatedEvidenceTracked": false
+}
