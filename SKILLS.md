@@ -33,9 +33,10 @@ Every canonical skill must define:
 4. Interactive PowerShell selects `powershell-interactive-execution`. Continuation keywords must remain in the same submitted statement as the block they continue.
 5. Supplied application, validator, agent, or tool output that must be compared with a prompt kit selects `app-output-contextualization`. It reads provided output only and preserves execution-surface separation.
 6. An operator-facing result that crosses shells, child processes, WSL, tmux, WezTerm, a TUI, a GUI, or another runtime boundary selects `end-to-end-runtime-validation`. Use `runtime-proof` for a bounded observation that does not require the complete operator path.
-7. `TRIGGERS.md` maps repository evidence to a skill.
-8. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
-9. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
+7. A Windows Profile request that distinguishes default open-or-activate from an explicit separate instance, or evidence of duplicate WezTerm windows, selects `windows-profile-launch-mode-validation` before any launcher implementation or runtime claim.
+8. `TRIGGERS.md` maps repository evidence to a skill.
+9. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
+10. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
 
 ## Canonical skills
 
@@ -50,6 +51,7 @@ Every canonical skill must define:
 | [`pr-integration`](.ai/skills/pr-integration/SKILL.md) | Reconcile stacked or parallel branches safely | merge request, stacked PRs, consumed upstream work |
 | [`runtime-proof`](.ai/skills/runtime-proof/SKILL.md) | Move from static confidence to observed behavior | launcher, installer, harness, or live-runtime request |
 | [`end-to-end-runtime-validation`](.ai/skills/end-to-end-runtime-validation/SKILL.md) | Prove the exact operator command across every runtime boundary through effective-state and user-experience readback | workstation repair, Windows-to-WSL chain, tmux/WezTerm configuration, cross-process installer or launcher, opaque child failure |
+| [`windows-profile-launch-mode-validation`](.ai/skills/windows-profile-launch-mode-validation/SKILL.md) | Distinguish default workspace convergence, explicit named new instances, and accidental duplicate WezTerm windows | launch-mode request, separate-instance request, duplicate-window evidence, tmux-session identity ambiguity |
 | [`app-output-contextualization`](.ai/skills/app-output-contextualization/SKILL.md) | Parse supplied output, redact it, compare it with a prompt registry, and emit compact agent instructions | app output, logs, JSON, JSONL, validator output, minimal-token routing |
 
 ## Public plan distinction
@@ -79,6 +81,10 @@ An app-output context packet is a minimized interpretation artifact, not the ori
 ## End-to-end distinction
 
 `runtime-proof` can establish one observed behavior in an authorized environment. `end-to-end-runtime-validation` is required when the claim depends on the exact command an operator runs and a chain of shell, process, platform, terminal, TUI, GUI, provider, or application boundaries. The end-to-end skill requires per-stage stdout, stderr, exit identity, effective-state readback, user-visible observation, and idempotence or rollback proof when applicable. A parent exception containing only an exit code is not a complete end-to-end failure report.
+
+## Windows launch-mode distinction
+
+The default Windows Profile operation remains `open-or-activate`: one logical workspace identity converges to one visible window. An explicit `new-instance` request is a separate named identity that requires exactly one additional top-level window, a distinct frontend process, and a unique tmux session. Two windows attached to the same tmux session are duplicate views of one workspace, not independent instances. Contract validation uses `windows-profile-launch-mode-validation`; workstation claims additionally use `end-to-end-runtime-validation`.
 
 ## PowerShell interactive distinction
 
