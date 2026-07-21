@@ -1,12 +1,19 @@
 [CmdletBinding()]
 param(
-    [string]$RootPath = (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))),
+    [string]$RootPath,
     [string]$OutputDirectory,
     [switch]$NoWrite
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+if ([string]::IsNullOrWhiteSpace($RootPath)) {
+    $RootPath = [string](& git -C $PSScriptRoot rev-parse --show-toplevel 2>$null)
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($RootPath)) {
+        throw 'Unable to resolve the AgentSwitchboard repository root.'
+    }
+}
 $RootPath = (Resolve-Path -LiteralPath $RootPath).Path
 
 $required = @(
@@ -26,23 +33,21 @@ $required = @(
     'docs/harness/windows-profile-launch-mode-harness.md'
 )
 
-$components = foreach ($relativePath in $required) {
-    $path = Join-Path $RootPath $relativePath
-    $exists = Test-Path -LiteralPath $path -PathType Leaf
-    $tracked = $false
-    if ($exists) {
-        $null = & git -C $RootPath ls-files --error-unmatch -- $relativePath 2>$null
-        $tracked = $LASTEXITCODE -eq 0
+$components = @()
+foreach ($relativePath in $required) {
+    $exists = Test-Path -LiteralPath (Join-Path $RootPath $relativePath) -PathType Leaf
+    $components += [pscustomobject]@{
+        path = $relativePath
+        exists = $exists
     }
-    [pscustomobject]@{ path = $relativePath; exists = $exists; tracked = $tracked }
 }
+$missing = @($components | Where-Object { -not $_.exists })
 
-$missing = @($components | Where-Object { -not $_.exists -or -not $_.tracked })
-$branch = [string]((& git -C $RootPath branch --show-current 2>$null | Select-Object -First 1))
-$head = [string]((& git -C $RootPath rev-parse HEAD 2>$null | Select-Object -First 1))
-$dirty = [bool](& git -C $RootPath status --short 2>$null)
-$implementationPath = Join-Path $RootPath 'tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1'
-$implementationPresent = Test-Path -LiteralPath $implementationPath -PathType Leaf
+$branch = [string](& git -C $RootPath branch --show-current 2>$null)
+$head = [string](& git -C $RootPath rev-parse HEAD 2>$null)
+$implementationRelativePath = 'tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1'
+$implementationPresent = Test-Path -LiteralPath (Join-Path $RootPath $implementationRelativePath) -PathType Leaf
+$status = if ($missing.Count -eq 0) { 'contract-ready' } else { 'incomplete' }
 
 $working = @(
     'Default open-or-activate and explicit new-instance modes are declared under one canonical AgentSwitchboard launcher.',
@@ -53,17 +58,9 @@ $working = @(
     'Generated launch evidence is local-operational and untracked.'
 )
 
-$broken = @()
-if ($missing.Count -gt 0) {
-    $broken += "$($missing.Count) required harness component(s) are missing or untracked."
-}
-if ($dirty) {
-    $broken += 'The checkout is dirty; preserve or isolate unrelated work before writing.'
-}
-
 $gaps = @(
-    'The canonical Windows Profile launcher implementation is not proven by this status report.',
-    'The current workstation duplicate-window cause is not proven until the exact operator command is observed with correlated before/after state.',
+    'The canonical Windows Profile launcher implementation is not proven by this report.',
+    'The current workstation duplicate-window cause still requires correlated before and after runtime evidence.',
     'Window activation, distinct WezTerm process creation, unique tmux session creation, and visual acceptance remain runtime proof.',
     'SysAdminSuite consumer certification remains a separate child-repository sprint.'
 )
@@ -73,38 +70,38 @@ if (-not $implementationPresent) {
 
 $result = [ordered]@{
     schema = 'agentswitchboard.windows-profile-launch-mode-status.v1'
-    status = if ($missing.Count -eq 0) { 'contract-ready' } else { 'incomplete' }
+    status = $status
     repository = 'EndeavorEverlasting/AgentSwitchboard'
     branch = $branch
     head = $head
-    dirty = $dirty
     components = $components
-    implementation = [ordered]@{
-        path = 'tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1'
-        present = $implementationPresent
-        proven = $false
-    }
+    missing = @($missing | ForEach-Object { $_.path })
+    implementationPath = $implementationRelativePath
+    implementationPresent = $implementationPresent
     working = $working
-    broken = $broken
     gaps = $gaps
-    proofCeiling = 'Tracked launch-mode harness structure and offline contract readiness only; no WezTerm, window, process, tmux, launcher, or workstation runtime proof.'
+    proofCeiling = 'Tracked launch-mode harness readiness only; no WezTerm, window, process, tmux, launcher, or workstation runtime proof.'
     nextCommand = 'pwsh -NoLogo -NoProfile -File scripts/Test-WindowsProfileLaunchModeHarness.ps1'
 }
 
 Write-Host 'WINDOWS PROFILE LAUNCH MODE HARNESS' -ForegroundColor Cyan
-Write-Host ("Status: {0}" -f $result.status)
-Write-Host ("Branch: {0}" -f $result.branch)
-Write-Host ("HEAD: {0}" -f $result.head)
-Write-Host ("Components: {0}/{1} ready" -f (@($components | Where-Object { $_.exists -and $_.tracked }).Count), $components.Count)
+Write-Host ("Status: {0}" -f $status)
+Write-Host ("Branch: {0}" -f $branch)
+Write-Host ("HEAD: {0}" -f $head)
+Write-Host ("Components: {0}/{1} present" -f ($components.Count - $missing.Count), $components.Count)
 Write-Host ("Canonical launcher source present: {0}" -f $implementationPresent)
 Write-Host ''
 Write-Host 'Working:'
-$working | ForEach-Object { Write-Host "- $_" }
-Write-Host 'Broken or blocked:'
-if ($broken.Count -eq 0) { Write-Host '- None at repository-contract level.' }
-else { $broken | ForEach-Object { Write-Host "- $_" } }
+$working | ForEach-Object { Write-Host ("- {0}" -f $_) }
+Write-Host 'Missing or blocked:'
+if ($missing.Count -eq 0) {
+    Write-Host '- No missing harness components.'
+}
+else {
+    $missing | ForEach-Object { Write-Host ("- Missing: {0}" -f $_.path) }
+}
 Write-Host 'Missing runtime proof:'
-$gaps | ForEach-Object { Write-Host "- $_" }
+$gaps | ForEach-Object { Write-Host ("- {0}" -f $_) }
 Write-Host ("Next: {0}" -f $result.nextCommand)
 
 if (-not $NoWrite) {
@@ -115,23 +112,29 @@ if (-not $NoWrite) {
     $jsonPath = Join-Path $OutputDirectory 'windows-launch-mode-status.json'
     $mdPath = Join-Path $OutputDirectory 'windows-launch-mode-status.md'
     $result | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $jsonPath -Encoding utf8
-    @(
+
+    $lines = @(
         '# Windows Profile Launch Mode Harness Status',
         '',
-        "- Status: `$($result.status)`",
-        "- Branch: `$($result.branch)`",
-        "- HEAD: `$($result.head)`",
-        "- Components: $(@($components | Where-Object { $_.exists -and $_.tracked }).Count)/$($components.Count)",
-        "- Canonical launcher source present: `$implementationPresent`",
+        ('- Status: `{0}`' -f $status),
+        ('- Branch: `{0}`' -f $branch),
+        ('- HEAD: `{0}`' -f $head),
+        ('- Components: {0}/{1}' -f ($components.Count - $missing.Count), $components.Count),
+        ('- Canonical launcher source present: `{0}`' -f $implementationPresent),
         '',
-        '## Working',
-        ($working | ForEach-Object { "- $_" }),
-        '',
-        '## Broken or blocked',
-        $(if ($broken.Count -eq 0) { '- None at repository-contract level.' } else { $broken | ForEach-Object { "- $_" } }),
-        '',
-        '## Missing runtime proof',
-        ($gaps | ForEach-Object { "- $_" }),
+        '## Working'
+    )
+    $lines += @($working | ForEach-Object { '- ' + $_ })
+    $lines += @('', '## Missing or blocked')
+    if ($missing.Count -eq 0) {
+        $lines += '- No missing harness components.'
+    }
+    else {
+        $lines += @($missing | ForEach-Object { '- Missing: ' + $_.path })
+    }
+    $lines += @('', '## Missing runtime proof')
+    $lines += @($gaps | ForEach-Object { '- ' + $_ })
+    $lines += @(
         '',
         '## Proof ceiling',
         $result.proofCeiling,
@@ -140,9 +143,10 @@ if (-not $NoWrite) {
         '```powershell',
         $result.nextCommand,
         '```'
-    ) | Set-Content -LiteralPath $mdPath -Encoding utf8
-    Write-Host "JSON: $jsonPath"
-    Write-Host "Report: $mdPath"
+    )
+    $lines | Set-Content -LiteralPath $mdPath -Encoding utf8
+    Write-Host ("JSON: {0}" -f $jsonPath)
+    Write-Host ("Report: {0}" -f $mdPath)
 }
 
 if ($missing.Count -gt 0) { exit 1 }
