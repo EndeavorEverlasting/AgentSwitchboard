@@ -34,9 +34,10 @@ Every canonical skill must define:
 5. Supplied application, validator, agent, or tool output that must be compared with a prompt kit selects `app-output-contextualization`. It reads provided output only and preserves execution-surface separation.
 6. An operator-facing result that crosses shells, child processes, WSL, tmux, WezTerm, a TUI, a GUI, or another runtime boundary selects `end-to-end-runtime-validation`. Use `runtime-proof` for a bounded observation that does not require the complete operator path.
 7. A Windows Profile request that distinguishes default open-or-activate from an explicit separate instance, or evidence of duplicate WezTerm windows, selects `windows-profile-launch-mode-validation` before any launcher implementation or runtime claim.
-8. `TRIGGERS.md` maps repository evidence to a skill.
-9. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
-10. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
+8. A request for a desktop shortcut or CMD installer that must create one genuinely separate tmux/WezTerm instance selects `tmux-new-instance-shortcut`. It preserves the one-launcher boundary and routes live acceptance through `end-to-end-runtime-validation`.
+9. `TRIGGERS.md` maps repository evidence to a skill.
+10. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
+11. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
 
 ## Canonical skills
 
@@ -52,6 +53,7 @@ Every canonical skill must define:
 | [`runtime-proof`](.ai/skills/runtime-proof/SKILL.md) | Move from static confidence to observed behavior | launcher, installer, harness, or live-runtime request |
 | [`end-to-end-runtime-validation`](.ai/skills/end-to-end-runtime-validation/SKILL.md) | Prove the exact operator command across every runtime boundary through effective-state and user-experience readback | workstation repair, Windows-to-WSL chain, tmux/WezTerm configuration, cross-process installer or launcher, opaque child failure |
 | [`windows-profile-launch-mode-validation`](.ai/skills/windows-profile-launch-mode-validation/SKILL.md) | Distinguish default workspace convergence, explicit named new instances, and accidental duplicate WezTerm windows | launch-mode request, separate-instance request, duplicate-window evidence, tmux-session identity ambiguity |
+| [`tmux-new-instance-shortcut`](.ai/skills/tmux-new-instance-shortcut/SKILL.md) | Install and validate one owned desktop shortcut that allocates a unique tmux session and separate WezTerm process | desktop shortcut request, clickable CMD installer, one-click separate tmux instance |
 | [`app-output-contextualization`](.ai/skills/app-output-contextualization/SKILL.md) | Parse supplied output, redact it, compare it with a prompt registry, and emit compact agent instructions | app output, logs, JSON, JSONL, validator output, minimal-token routing |
 
 ## Public plan distinction
@@ -85,6 +87,10 @@ An app-output context packet is a minimized interpretation artifact, not the ori
 ## Windows launch-mode distinction
 
 The default Windows Profile operation remains `open-or-activate`: one logical workspace identity converges to one visible window. An explicit `new-instance` request is a separate named identity that requires exactly one additional top-level window, a distinct frontend process, and a unique tmux session. Two windows attached to the same tmux session are duplicate views of one workspace, not independent instances. Contract validation uses `windows-profile-launch-mode-validation`; workstation claims additionally use `end-to-end-runtime-validation`.
+
+## tmux shortcut distinction
+
+`tmux-new-instance-shortcut` owns the user-facing installer and explicit separate-instance shortcut. The CMD and `.lnk` are presentation surfaces only: they delegate to `tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1`. Automatic allocation reserves `dev` and selects `dev-1`, `dev-2`, and later unused positive suffixes. The shortcut installer proves installation and readback; a double-click result requires end-to-end runtime validation.
 
 ## PowerShell interactive distinction
 
