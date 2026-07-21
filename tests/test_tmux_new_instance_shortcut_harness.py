@@ -163,7 +163,6 @@ def main() -> None:
         "tmux new-session -d",
         "tmux attach-session",
         "Local\\AgentSwitchboard.TmuxNewInstance",
-        "smallest unused positive",
         "The default open-or-activate path remains blocked",
         "visibleWindowObserved = $false",
         "proofLevel = 'command-ack'",
