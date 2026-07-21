@@ -1,0 +1,67 @@
+{
+  "schema": "agentswitchboard.tmux-new-instance-shortcut-artifacts.v1",
+  "registryId": "agentswitchboard.tmux-new-instance-shortcut-artifacts.v1",
+  "defaultInstallRoot": "%LOCALAPPDATA%/AgentSwitchboard/profiles/windows/tmux-new-instance",
+  "defaultRunRoot": "%LOCALAPPDATA%/AgentSwitchboard/profiles/windows/tmux-new-instance/runs/<run-id>",
+  "tracked": false,
+  "sensitivity": "local-operational",
+  "naming": {
+    "runId": "<UTC timestamp>-<8-character random suffix>",
+    "sessionName": "dev-<positive-integer>",
+    "workspace": "agentswitchboard-tmux-dev-<positive-integer>"
+  },
+  "artifacts": [
+    {
+      "artifactId": "tmux-new-instance-shortcut-install-plan",
+      "fileName": "tmux-new-instance-shortcut-install-plan.json",
+      "artifactType": "install-plan",
+      "generateWith": "Install-TmuxNewInstanceShortcut.cmd plan",
+      "proofCeiling": "Resolved installation paths and delegation intent only."
+    },
+    {
+      "artifactId": "tmux-new-instance-shortcut-install-receipt",
+      "fileName": "tmux-new-instance-shortcut-install-receipt.json",
+      "artifactType": "install-receipt",
+      "generateWith": "Install-TmuxNewInstanceShortcut.cmd",
+      "proofCeiling": "Owned shortcut and installed launcher write/readback only."
+    },
+    {
+      "artifactId": "tmux-new-instance-shortcut-operator-report",
+      "fileName": "tmux-new-instance-shortcut-operator-report.md",
+      "artifactType": "operator-report",
+      "generateWith": "tooling/profiles/windows/Install-TmuxNewInstanceShortcut.ps1 -Mode Apply",
+      "proofCeiling": "Human-readable installed state and next action only."
+    },
+    {
+      "artifactId": "tmux-new-instance-launch-plan",
+      "fileName": "tmux-new-instance-launch-plan.json",
+      "artifactType": "launch-plan",
+      "generateWith": "tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1 -Mode new-instance -Operation Plan",
+      "proofCeiling": "Unique identity allocation and exact command construction only."
+    },
+    {
+      "artifactId": "tmux-new-instance-launch-result",
+      "fileName": "tmux-new-instance-launch-result.json",
+      "artifactType": "launch-result",
+      "generateWith": "desktop shortcut or canonical launcher in Launch mode",
+      "proofCeiling": "Session creation and WezTerm process request acknowledgement until end-to-end observation is captured."
+    },
+    {
+      "artifactId": "tmux-new-instance-final-handoff",
+      "fileName": "tmux-new-instance-final-handoff.json",
+      "artifactType": "final-handoff",
+      "generateWith": "future end-to-end runtime validation lane",
+      "proofCeiling": "Compressed continuation record; the receiver must re-inspect repository and workstation state."
+    }
+  ],
+  "forbiddenContent": [
+    "credentials",
+    "provider tokens",
+    "customer data",
+    "private hostnames",
+    "raw terminal scrollback",
+    "unreviewed screenshots",
+    "full environment dumps"
+  ],
+  "proofCeiling": "Artifact names, locations, generators, sensitivity, and proof ceilings only."
+}
