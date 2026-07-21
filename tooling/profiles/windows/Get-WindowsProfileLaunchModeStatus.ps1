@@ -13,6 +13,7 @@ $required = @(
     'tooling/profiles/windows/harness/launch-modes/codebase-map.json',
     'tooling/profiles/windows/harness/launch-modes/launch-mode.registry.json',
     'tooling/profiles/windows/harness/launch-modes/artifact-registry.json',
+    'tooling/profiles/windows/harness/launch-modes/composition.graph.json',
     'tooling/profiles/windows/harness/launch-modes/workflows/launch-request-intake.workflow.json',
     'tooling/profiles/windows/harness/launch-modes/workflows/open-or-activate-verification.workflow.json',
     'tooling/profiles/windows/harness/launch-modes/workflows/new-instance-verification.workflow.json',
@@ -48,6 +49,7 @@ $working = @(
     'One request may create at most one top-level window, and repeated identity must converge.',
     'Explicit new-instance mode requires a named instance, a separate frontend process, and a unique tmux session.',
     'Synthetic fixtures cover activation, one intentional new instance, and an accidental duplicate burst.',
+    'A dedicated composition graph connects requests, triggers, the skill, workflows, validation, artifacts, and handoff.',
     'Generated launch evidence is local-operational and untracked.'
 )
 
