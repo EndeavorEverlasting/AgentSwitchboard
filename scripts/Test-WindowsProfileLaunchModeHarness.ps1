@@ -33,6 +33,7 @@ $requiredFiles = @(
     'tooling/profiles/windows/harness/launch-modes/codebase-map.json',
     'tooling/profiles/windows/harness/launch-modes/launch-mode.registry.json',
     'tooling/profiles/windows/harness/launch-modes/artifact-registry.json',
+    'tooling/profiles/windows/harness/launch-modes/composition.graph.json',
     'tooling/profiles/windows/harness/launch-modes/workflows/launch-request-intake.workflow.json',
     'tooling/profiles/windows/harness/launch-modes/workflows/open-or-activate-verification.workflow.json',
     'tooling/profiles/windows/harness/launch-modes/workflows/new-instance-verification.workflow.json',
@@ -48,8 +49,6 @@ $requiredFiles = @(
     'docs/harness/windows-profile-launch-mode-harness.md',
     '.github/workflows/windows-profile-launch-mode-harness.yml',
     '.ai/harness/manifest.json',
-    '.ai/harness/artifact-registry.json',
-    '.ai/harness/app-composition.graph.json',
     'CODEBASE_MAP.md',
     'SKILLS.md',
     'TRIGGERS.md'
@@ -101,6 +100,7 @@ try {
     Check ($manifest.entrypoints.windowsLaunchModeRegistry -eq 'tooling/profiles/windows/harness/launch-modes/launch-mode.registry.json') 'manifest/registry' 'registry entrypoint is missing'
     Check ($manifest.entrypoints.windowsLaunchModeValidator -eq 'scripts/Test-WindowsProfileLaunchModeHarness.ps1') 'manifest/validator' 'validator entrypoint is missing'
     Check ($manifest.entrypoints.windowsLaunchModeSkill -eq '.ai/skills/windows-profile-launch-mode-validation/SKILL.md') 'manifest/skill' 'skill entrypoint is missing'
+    Check ($manifest.entrypoints.windowsLaunchModeGraph -eq 'tooling/profiles/windows/harness/launch-modes/composition.graph.json') 'manifest/graph' 'graph entrypoint is missing'
     Check ($manifest.windowsProfileLaunchModes.status -eq 'contract-only') 'manifest/status' 'runtime behavior is overclaimed'
     Check ($manifest.windowsProfileLaunchModes.defaultMode -eq 'open-or-activate') 'manifest/default' 'default mode differs'
     Check ($manifest.windowsProfileLaunchModes.explicitNewInstanceAllowed -eq $true) 'manifest/new-instance' 'explicit new-instance is missing'
@@ -110,7 +110,10 @@ try {
 catch { [void]$failures.Add("manifest/semantic: $($_.Exception.Message)") }
 
 try {
-    $artifacts = @((($text['.ai/harness/artifact-registry.json'] | ConvertFrom-Json).artifacts))
+    $artifactRegistry = $text['tooling/profiles/windows/harness/launch-modes/artifact-registry.json'] | ConvertFrom-Json
+    Check ($artifactRegistry.tracked -eq $false) 'artifacts/untracked' 'artifact registry permits tracked runtime evidence'
+    Check ($artifactRegistry.sensitivity -eq 'local-operational') 'artifacts/sensitivity' 'unexpected sensitivity'
+    $artifacts = @($artifactRegistry.artifacts)
     $byId = @{}
     foreach ($artifact in $artifacts) { $byId[[string]$artifact.artifactId] = $artifact }
     foreach ($artifactId in @(
@@ -121,17 +124,13 @@ try {
         'windows-launch-mode-operator-report',
         'windows-launch-mode-final-handoff'
     )) {
-        Check $byId.ContainsKey($artifactId) "artifact/$artifactId" 'artifact is not centrally registered'
-        if ($byId.ContainsKey($artifactId)) {
-            Check ($byId[$artifactId].tracked -eq $false) "artifact/$artifactId/untracked" 'artifact is tracked'
-            Check ($byId[$artifactId].sensitivity -eq 'local-operational') "artifact/$artifactId/sensitivity" 'unexpected sensitivity'
-        }
+        Check $byId.ContainsKey($artifactId) "artifact/$artifactId" 'artifact is not registered'
     }
 }
 catch { [void]$failures.Add("artifacts/semantic: $($_.Exception.Message)") }
 
 try {
-    $graph = $text['.ai/harness/app-composition.graph.json'] | ConvertFrom-Json
+    $graph = $text['tooling/profiles/windows/harness/launch-modes/composition.graph.json'] | ConvertFrom-Json
     $nodeIds = @($graph.nodes | ForEach-Object { [string]$_.id })
     $edgeIds = @($graph.edges | ForEach-Object { [string]$_.id })
     foreach ($nodeId in @(
@@ -185,6 +184,7 @@ $deployablePaths = @(
     'tooling/profiles/windows/harness/launch-modes/codebase-map.json',
     'tooling/profiles/windows/harness/launch-modes/launch-mode.registry.json',
     'tooling/profiles/windows/harness/launch-modes/artifact-registry.json',
+    'tooling/profiles/windows/harness/launch-modes/composition.graph.json',
     '.ai/skills/windows-profile-launch-mode-validation/SKILL.md',
     'tooling/profiles/windows/Get-WindowsProfileLaunchModeStatus.ps1',
     'docs/harness/windows-profile-launch-mode-harness.md'
