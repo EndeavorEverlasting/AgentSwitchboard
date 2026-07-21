@@ -101,6 +101,18 @@ Pi and other third-party agent runtimes may be evaluated or integrated only thro
 
 No governance-only sprint may claim that Pi, Ollama, LM Studio, a local model, a fusion command, or an autovalidation loop was installed, private, functional, unlimited, or production-ready without the corresponding tracked implementation and runtime evidence.
 
+## External skill adoption and prompt-kit gap filling
+
+AgentSwitchboard treats reputable external skill catalogs as evidence sources for reusable procedures, not as automatic authority. Before inventing a project skill, inspect repository-local skills, registered prompt kits, and verified upstream skill sources.
+
+1. **Verify and pin external skills.** Record the upstream repository, exact commit or release, skill path and blob, license, supported agent or runtime, installation scope, dependencies, executable resources, side effects, update mechanism, rollback, and test status. “Industry-recommended” is not a substitute for this review.
+2. **Prefer project-local reviewability.** Reuse or adapt a pinned skill through a tracked repository change when team behavior depends on it. A global install changes operator state and requires an explicitly authorized workstation or runtime sprint; governance-only work may record an approved command but must not claim that it ran.
+3. **Adopt the verified skill-creator method.** The reviewed reference is `anthropics/skills` at commit `fa0fa64bdc967915dc8399e803be67759e1e62b8`, path `skills/skill-creator/SKILL.md`, blob `65b3a402dbd09b8e83f9d637c6b553875189085c`. The candidate global command is `npx skills add anthropics/skills --skill skill-creator -g`. Use its core method: capture intent from conversation and repository evidence, draft a small skill with a clear trigger and output, use progressive disclosure and bundled deterministic resources, create realistic evaluation prompts, compare against a baseline when outputs are objective, measure quality, time, and token cost, iterate, and improve triggering. Local governance, child-repository product law, security boundaries, and proof requirements remain higher priority.
+4. **Inspect before gap filling.** When AgentSwitchboard operates in another repository, inspect the nearest `AGENTS.md`, codebase map, skills, validators, plans, open PRs, current implementation, and Git state. Build a gap ledger containing observed evidence, the existing owner, missing capability, reusable skill candidate, prompt-kit candidate, confidence, and unresolved risk.
+5. **Use the prompt kit to estimate bounded sprints.** Map each evidence-backed gap to the smallest matching prompt-kit entry and produce sprint candidates with repository and branch, lane and mission, owned and forbidden scope, dependencies, collision boundaries, expected artifacts, validation commands, proof gate, and proof ceiling. Split work when one sprint would cross owners, repositories, or proof levels.
+6. **Keep estimation distinct from authority.** Prompt-kit ranking and external-skill discovery guide routing and estimation only. They do not authorize installation, prompt execution, repository mutation, provider access, merge, deployment, or target changes. Current repository evidence outranks prompt-kit metadata, marketplace popularity, and remembered best practice.
+7. **Close the loop.** After a skill is adopted or created, add deterministic validation and record whether it improved the target tasks. Revise, quarantine, or retire skills that fail triggering, correctness, safety, or efficiency expectations.
+
 ## Forbidden behaviors
 
 - **Acknowledgment without mutation** when the task safely requires repository change.
@@ -112,6 +124,8 @@ No governance-only sprint may claim that Pi, Ollama, LM Studio, a local model, a
 - Replacing a healthy canonical contract with a competing file or prompt-only convention.
 - Ambiguous empty output, silently ignored flags, interactive prompts in agent automation, or unbounded output when a deterministic compact result is possible.
 - Installing or executing unverified third-party agent snippets, packages, extensions, or provider commands as though pasted prose were a tested contract.
+- Silently installing a global skill, importing an unpinned skill, or treating popularity or marketplace ranking as compatibility proof.
+- Treating a prompt-kit match, generated sprint estimate, or selected skill as authority to execute or as proof that delivery occurred.
 - Claiming privacy, model independence, successful fusion, or continuous validation from configuration intent alone.
 
 ## Runtime event composition
@@ -169,5 +183,7 @@ A task is complete only when, at minimum:
 - commit SHA exists for a writing sprint;
 - push or PR state is reported;
 - one exact next command is given.
+
+When external skills or prompt-kit estimates affected the work, also report the pinned source, installation scope, whether installation actually ran, the selected prompt-kit candidate, and the evidence that justified the sprint estimate.
 
 Also report generated-artifact policy, skipped checks, blockers, proof level and proof ceiling, final Git state, and relevant artifact paths. Cross-agent handoffs must be schema-backed and require the receiver to re-inspect current state.
