@@ -119,7 +119,7 @@ function Invoke-BoundedProcess {
 function Get-NewInstanceIdentity {
     param(
         [Parameter(Mandatory)][string]$Prefix,
-        [Parameter(Mandatory)][string[]]$Sessions,
+        [Parameter(Mandatory)][AllowEmptyCollection()][string[]]$Sessions,
         [Parameter(Mandatory)][string]$RequestedInstanceId,
         [Parameter(Mandatory)][int]$MaximumInstances,
         [Parameter(Mandatory)][string]$WorkspacePrefix,
