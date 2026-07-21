@@ -1,0 +1,36 @@
+{
+  "schema": "agentswitchboard.tmux-new-instance-shortcut-workflow.v1",
+  "workflowId": "launch-tmux-new-instance",
+  "trigger": ["profile.tmux-new-instance-shortcut.double-click", "profile.launch-mode-request:new-instance"],
+  "inputs": ["installed canonical launcher", "installed manifest", "WSL distribution", "current tmux session inventory", "PowerShell process identity", "WezTerm CLI identity"],
+  "steps": [
+    "acquire the named allocation mutex",
+    "verify WSL, the selected distribution, tmux, and WezTerm CLI",
+    "list current tmux session names",
+    "allocate the smallest unused positive instance ID",
+    "reserve the bare dev session for open-or-activate",
+    "create exactly one detached tmux session named dev-<id>",
+    "verify the new session exists",
+    "construct one unique WezTerm workspace and window class",
+    "invoke wezterm start --always-new-process with an explicit WSL tmux attach command",
+    "emit a local launch plan and launch result",
+    "require a separate end-to-end lane for visible-window and attached-client proof"
+  ],
+  "outputs": ["tmux-new-instance-launch-plan.json", "tmux-new-instance-launch-result.json", "one tmux session", "one requested WezTerm process"],
+  "successConditions": [
+    "the session name was absent before creation",
+    "one tmux session was created",
+    "the command contains --always-new-process",
+    "the workspace and window class are unique to the session",
+    "the launch result does not claim visible-window observation"
+  ],
+  "failureRules": [
+    "existing explicit instance ID blocks rather than attaches",
+    "allocation exhaustion blocks",
+    "missing WSL, tmux, or WezTerm blocks",
+    "session creation failure blocks WezTerm launch",
+    "one click may not attach a second window to dev",
+    "process acknowledgement cannot be promoted to end-to-end runtime proof"
+  ],
+  "proofCeiling": "Session creation and separate-process command acknowledgement until the exact desktop shortcut is observed end to end."
+}
