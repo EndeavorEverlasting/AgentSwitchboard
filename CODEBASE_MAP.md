@@ -103,6 +103,10 @@ The Windows Profile is WezTerm-backed and contract-only. Its future canonical so
 
 The default mode converges one workspace identity to one visible window. An explicit named new instance requires exactly one additional top-level WezTerm window, a distinct frontend process, and a unique tmux session; repeating that instance ID must activate it. Two windows attached to the same tmux session are duplicate views, not separate instances. This harness does not implement or execute the launcher.
 
+## tmux new-instance desktop shortcut harness
+
+The focused implementation map is `tooling/profiles/windows/harness/tmux-new-instance-shortcut/codebase-map.json`. It indexes the CMD installer, canonical launcher, manifest, workflows, artifact registry, schema, fixtures, skill, validator, status report, hook, operator guide, and Windows/Linux CI. The tracked `new-instance` slice remains unproved on the operator workstation, and default `open-or-activate` remains blocked.
+
 ## Repository-family harness
 
 - `.ai/harness/manifest.json` — central paths, proof vocabulary, and evidence policy.
@@ -170,6 +174,7 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 - `scripts/Test-RuntimeEventContract.ps1`
 - `scripts/Test-DeviceProfileLauncherContract.ps1`
 - `scripts/Test-WindowsProfileLaunchModeHarness.ps1`
+- `scripts/Test-TmuxNewInstanceShortcutHarness.ps1`
 - `scripts/Test-AppOutputContextEngine.ps1`
 - `scripts/Test-PiHarnessCompleteness.ps1`
 - `scripts/Test-AgentDocumentationContract.ps1`
@@ -180,6 +185,6 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 
 ## Generated evidence and proof boundary
 
-Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, Windows launch-mode, and Pi evidence is untracked. End-to-end runtime evidence is also local-operational and untracked unless deliberately minimized and reviewed as a public fixture. Evidence may contain local paths, versions, Git state, minimized operational payloads, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
+Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, Windows launch-mode, tmux shortcut, and Pi evidence is untracked. End-to-end runtime evidence is also local-operational and untracked unless deliberately minimized and reviewed as a public fixture. Evidence may contain local paths, versions, Git state, minimized operational payloads, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
 
-Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, launch-mode classification, or workflow semantics. Neither proves application runtime, an exact operator path, an open-or-activate result, a distinct WezTerm instance, duplicate prevention on a workstation, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, model quality, external target behavior, deployment, or operator acceptance.
+Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, launch-mode classification, shortcut allocation, or workflow semantics. Neither proves application runtime, an exact operator path, an open-or-activate result, a distinct WezTerm instance on the operator workstation, duplicate prevention, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, model quality, external target behavior, deployment, or operator acceptance.
