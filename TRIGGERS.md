@@ -26,6 +26,8 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | `runtime.event-contract-change` | event envelope, source, observer, listener, handler, successor, sink, correlation, causation, or runtime topology contract changes | `runtime.event-contract.validate`; update deterministic contracts and run `scripts/Test-RuntimeEventContract.ps1` |
 | `runtime.event-cascade-request` | request claims an event listener works, a trigger cascades, or a source-to-sink handoff completes | use `runtime-proof` after contract validation; require correlated observed artifacts and explicit runtime authority |
 | `profile.launcher-request` | Windows Profile, Linux Profile, Android Profile, WezTerm launcher, open-or-activate, desktop shortcut, duplicate-window prevention, or canonical launcher ownership | `profile.launcher.contract.validate`; inspect the profile registry and require one AgentSwitchboard owner per profile |
+| `profile.launch-mode-request` | request distinguishes default open-or-activate from a deliberate separate WezTerm instance, or supplies a named instance identity | `windows-profile-launch-mode-validation`; select exactly one contract workflow and preserve the one-launcher boundary |
+| `profile.duplicate-window-observed` | one operator request produced multiple top-level windows, the same workspace appears unexpectedly twice, or two windows attach to one tmux session | `windows-profile-launch-mode-validation` → `duplicate-window-diagnosis`; require correlated before/after inventories and reject process-count-only conclusions |
 | `profile.consumer-certification-request` | SysAdminSuite or another child claims profile consumption or certification | require a separate consumer PR that delegates to the exact canonical launcher and proves no competing lifecycle or raw frontend fallback |
 | `action.claimed` | prompt claims install, setup, build, execute, repair, configure, upgrade, deploy, merge, or release | `action.commitment.validate`; require mutation, validation, and commit or GitHub proof |
 | `powershell.interactive-snippet` | PowerShell intended for interactive copy/paste | `powershell-interactive-execution`; preserve complete syntax units |
@@ -87,6 +89,14 @@ Raw `wezterm`, `wezterm.exe`, `wezterm-gui.exe`, desktop shortcuts, and consumer
 
 Contract success proves ownership and fixture shape only. A runtime claim requires observed evidence for both `opened` and `activated`, duplicate-prevention, and the terminal result. SysAdminSuite certification requires its own tracked consumer PR and validators.
 
+## Windows Profile launch-mode invariant
+
+`profile.launch-mode-request` selects `tooling/profiles/windows/harness/launch-modes/workflows/launch-request-intake.workflow.json`. An omitted mode means `open-or-activate`. That mode converges one stable workspace identity to one visible window: an existing identity is activated and a missing identity may create at most one new top-level window.
+
+`new-instance` is explicit only. It requires a stable instance ID, exactly one additional top-level WezTerm window, a distinct frontend process, and a unique tmux session. Repeating the same instance ID must activate that named instance instead of creating another window. Two windows attached to the same tmux session are duplicate views of one workspace, not separate instances.
+
+`profile.duplicate-window-observed` is fail-closed. One request that creates more than one top-level window, repeats the same workspace identity unexpectedly, or exposes one instance ID in multiple windows selects duplicate diagnosis and cannot be reported as success. Static fixtures prove classification only; workstation behavior requires the exact operator command through `end-to-end-runtime-validation`.
+
 ## Doctrine invariant
 
 `action.claimed` is fail-closed. A prompt that claims action but permits acknowledgment, advice, a plan, summary, or handoff instead of mutation and proof is invalid. Event-listener, cascade, profile, launcher, and certification claims that permit architecture-only output are also invalid.
@@ -103,8 +113,8 @@ A routed workflow receives repository and branch or worktree, PR or sprint, plan
 
 ## Automatic stop triggers
 
-Stop or escalate when work would overwrite unowned changes; a required capability is unknown; scope crosses a forbidden boundary; writers collide; a gate exposes security or data-loss risk; merge, deployment, secret, destructive Git, or live mutation lacks authority; retries are exhausted; evidence contradicts the plan; test timing or DeepSeek gates fail; the app graph is broken; app-output context would persist raw or cross-surface data; runtime event evidence is incomplete; an end-to-end stage loses child diagnostics, effective-state readback, rollback safety, or exact environment identity; or a profile has competing owners, raw frontend fallback, independent shortcut logic, cross-profile substitution, or an unproved open-or-activate claim.
+Stop or escalate when work would overwrite unowned changes; a required capability is unknown; scope crosses a forbidden boundary; writers collide; a gate exposes security or data-loss risk; merge, deployment, secret, destructive Git, or live mutation lacks authority; retries are exhausted; evidence contradicts the plan; test timing or DeepSeek gates fail; the app graph is broken; app-output context would persist raw or cross-surface data; runtime event evidence is incomplete; an end-to-end stage loses child diagnostics, effective-state readback, rollback safety, or exact environment identity; a launch-mode request is ambiguous, lacks a unique instance identity, creates multiple windows, or reuses one tmux session as two claimed instances; or a profile has competing owners, raw frontend fallback, independent shortcut logic, cross-profile substitution, or an unproved open-or-activate claim.
 
 ## No implicit authority
 
-The presence of a trigger, plan, startup report, event observer, topology registry, profile registry, app-output packet, end-to-end skill, or capability never authorizes installation, push, merge, release, deployment, target mutation, prompt execution, provider access, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.
+The presence of a trigger, plan, startup report, event observer, topology registry, profile registry, launch-mode registry, app-output packet, end-to-end skill, or capability never authorizes installation, push, merge, release, deployment, target mutation, prompt execution, provider access, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.
