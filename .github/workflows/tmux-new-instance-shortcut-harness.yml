@@ -33,28 +33,45 @@ jobs:
           fetch-depth: 0
           show-progress: false
 
-      - name: Parse PowerShell surfaces
+      - name: Parse shortcut installer
         shell: pwsh
         run: |
-          $failures = @()
-          foreach ($path in @(
-            'tooling/profiles/windows/Install-TmuxNewInstanceShortcut.ps1',
-            'tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1',
-            'tooling/profiles/windows/Get-TmuxNewInstanceShortcutStatus.ps1',
-            'tooling/profiles/windows/hooks/Invoke-TmuxNewInstanceShortcutPreCommit.ps1',
-            'scripts/Test-TmuxNewInstanceShortcutHarness.ps1'
-          )) {
-            $tokens = $null
-            $parseErrors = $null
-            [void][System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$parseErrors)
-            foreach ($parseError in @($parseErrors)) {
-              $failures += ("{0}: {1}" -f $path, $parseError.Message)
-            }
-          }
-          if ($failures.Count -gt 0) {
-            $failures | ForEach-Object { Write-Error $_ }
-            exit 1
-          }
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile('tooling/profiles/windows/Install-TmuxNewInstanceShortcut.ps1', [ref]$tokens, [ref]$errors)
+          if (@($errors).Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
+
+      - name: Parse canonical launcher
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile('tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1', [ref]$tokens, [ref]$errors)
+          if (@($errors).Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
+
+      - name: Parse status reporter
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile('tooling/profiles/windows/Get-TmuxNewInstanceShortcutStatus.ps1', [ref]$tokens, [ref]$errors)
+          if (@($errors).Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
+
+      - name: Parse opt-in hook
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile('tooling/profiles/windows/hooks/Invoke-TmuxNewInstanceShortcutPreCommit.ps1', [ref]$tokens, [ref]$errors)
+          if (@($errors).Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
+
+      - name: Parse completeness validator
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile('scripts/Test-TmuxNewInstanceShortcutHarness.ps1', [ref]$tokens, [ref]$errors)
+          if (@($errors).Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
 
       - name: Run dependency-free contracts
         run: python tests/test_tmux_new_instance_shortcut_harness.py
