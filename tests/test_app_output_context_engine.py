@@ -51,7 +51,63 @@ def test_redacts_and_ranks_failure_without_raw_output() -> None:
     assert "fixture.user@example.invalid" not in rendered
     assert "10.20.30.40" not in rendered
     assert engine.redact("token=fixture-value") == "token=<redacted>"
-    assert len(json.dumps(packet, separators=(",", ":"))) <= 6000
+    compact = engine.compact_packet(packet)
+    assert len(compact) <= 6000
+    assert packet["packetBounds"]["finalChars"] == len(compact)
+    assert packet["packetBounds"]["maxPacketChars"] == 6000
+
+
+def test_source_app_requires_a_public_non_sensitive_slug() -> None:
+    engine = load_engine()
+    assert engine.normalize_source_app("fixture-app") == "fixture-app"
+    for unsafe in (
+        "LPW003ASI173",
+        "fixture.user@example.invalid",
+        "10.20.30.40",
+        r"C:\Users\FixtureUser",
+        "token=fixture-value",
+        "private_host",
+    ):
+        try:
+            engine.normalize_source_app(unsafe)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"unsafe source label was accepted: {unsafe}")
+
+
+def test_packet_limit_is_enforced_or_rejected() -> None:
+    engine = load_engine()
+    raw = "\n".join(
+        f"failed validation timeout exception record {index} with additional repeated diagnostic text"
+        for index in range(200)
+    )
+    packet = engine.contextualize(
+        raw,
+        load_registry(),
+        source_app="fixture-app",
+        surface="regular_ai_prompt",
+        top=5,
+        max_packet_chars=1800,
+    )
+    compact = engine.compact_packet(packet)
+    assert len(compact) <= 1800
+    assert packet["packetBounds"]["truncated"] is True
+    assert packet["packetBounds"]["initialChars"] > packet["packetBounds"]["finalChars"]
+    assert packet["packetBounds"]["finalChars"] == len(compact)
+
+    try:
+        engine.contextualize(
+            raw,
+            load_registry(),
+            source_app="fixture-app",
+            surface="regular_ai_prompt",
+            max_packet_chars=100,
+        )
+    except ValueError as exc:
+        assert "at least 512" in str(exc)
+    else:
+        raise AssertionError("an impossible packet-size request was accepted")
 
 
 def test_json_input_and_execution_surface_boundary() -> None:
@@ -113,9 +169,35 @@ def test_cli_writes_json_and_english_report() -> None:
         assert report_path.is_file()
         packet = json.loads(json_path.read_text(encoding="utf-8"))
         assert packet["promptKit"]["candidates"][0]["promptId"] == "P01"
+        assert len(json_path.read_text(encoding="utf-8").rstrip("\n")) <= packet["packetBounds"]["maxPacketChars"]
         report = report_path.read_text(encoding="utf-8")
         assert "# APP OUTPUT CONTEXT" in report
+        assert "Packet characters:" in report
+        assert "Packet truncated:" in report
         assert "Proof ceiling:" in report
+
+
+def test_cli_rejects_output_root_inside_repository_before_writing() -> None:
+    forbidden_output = ROOT / "__app_output_context_forbidden__"
+    assert not forbidden_output.exists()
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(ENGINE),
+            "--input", str(FAILURE_LOG),
+            "--prompt-registry", str(REGISTRY),
+            "--source-app", "fixture-app",
+            "--execution-surface", "regular_ai_prompt",
+            "--output-root", str(forbidden_output),
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 2
+    assert "outside the repository checkout" in result.stderr
+    assert not forbidden_output.exists()
 
 
 def test_required_harness_files_and_registration() -> None:
@@ -141,9 +223,12 @@ def test_required_harness_files_and_registration() -> None:
 
 if __name__ == "__main__":
     test_redacts_and_ranks_failure_without_raw_output()
+    test_source_app_requires_a_public_non_sensitive_slug()
+    test_packet_limit_is_enforced_or_rejected()
     test_json_input_and_execution_surface_boundary()
     test_plain_and_bundled_registry_load_identically()
     test_no_match_is_honest()
     test_cli_writes_json_and_english_report()
+    test_cli_rejects_output_root_inside_repository_before_writing()
     test_required_harness_files_and_registration()
     print("PASS: AgentSwitchboard app-output context engine")
