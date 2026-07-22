@@ -35,15 +35,24 @@ git diff --check
 
 ## Runtime certificate
 
-1. Record `wsl.exe -d Ubuntu -- tmux list-sessions -F '#S'`.
+1. Record the tmux session names with:
+
+   ```powershell
+   wsl.exe -d Ubuntu -e bash -lc "tmux list-sessions -F '#S'"
+   ```
+
+   Route the command through `bash -lc` so `#S` reaches tmux as its format argument rather than being lost during Windows/WSL argument translation.
+
 2. Click Continue twice. The second click must not start another marked Continue frontend.
 3. Click New twice. The two clicks must create distinct first-unused sessions such as `dev-1` and `dev-2` and request distinct WezTerm processes.
 4. Record the generated result JSON files under `%LOCALAPPDATA%\AgentSwitchboard\profiles\windows\runs`.
 5. Do not promote proof above command acknowledgement until the windows and attachments are visibly observed.
 
-## Known trap
+## Known traps
 
-Launching `wezterm` from PowerShell invokes the general WezTerm configuration. It is not equivalent to New Instance. When the default program attaches to `dev`, it will show the prior conversation by design.
+- Launching `wezterm` from PowerShell invokes the general WezTerm configuration. It is not equivalent to New Instance. When the default program attaches to `dev`, it will show the prior conversation by design.
+- Do not sanitize redirected process output with `.Replace([char]0, '')`. PowerShell selects the `char,char` overload and the empty replacement cannot convert to a single character. Use `.Replace([string][char]0, [string]::Empty)`.
+- Do not call `wsl.exe -d Ubuntu -- tmux list-sessions -F '#S'` as the certificate command. The `#S` format can be lost before tmux receives it. Use the reviewed `bash -lc` form above.
 
 ## Failure handling
 
