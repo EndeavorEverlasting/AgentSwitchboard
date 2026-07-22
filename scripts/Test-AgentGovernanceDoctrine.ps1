@@ -107,7 +107,12 @@ if ($exists) {
     foreach ($rule in @(
         'Broad strides are encouraged',
         'one coherent vertical slice',
-        'reuse, extend, repair, retire, or create',
+        'Classify every requirement as',
+        '`reuse`',
+        '`extend`',
+        '`repair`',
+        '`retire`',
+        '`create`',
         'Declare the boundary map',
         'one canonical owner',
         'Complete the owned vertical slice',
