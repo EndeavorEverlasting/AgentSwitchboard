@@ -48,6 +48,7 @@ Every writing sprint must state, before mutation:
 - lane and mission;
 - owned scope and forbidden scope;
 - dependencies and safe parallel work when applicable;
+- canonical owner, source of truth, and interfaces when work spans multiple surfaces;
 - expected artifacts and validation commands;
 - proof ceiling;
 - commit, push, and PR expectation.
@@ -66,6 +67,21 @@ A multi-chat launch pack is an executable coordination contract, not a convenien
 4. **Downstream work is blocked when a gate fails or becomes stale.** Preserve the failed evidence, repair the owning sprint, and re-run the gate before continuing.
 5. **Each panel is self-contained.** It must carry its own repository, branch, dependencies, scope, tasks, validation, commit and PR contract, proof ceiling, final response contract, and exact next command. No panel may depend on a separately copied shared preamble.
 6. **A launch order coordinates work; it does not grant authority.** It cannot authorize secrets, destructive Git, merge, deployment, live-target mutation, provider access, or a higher proof claim than the task and repository contract permit.
+
+## Broad-stride execution and principle reuse
+
+Broad strides are encouraged when they complete one coherent vertical slice under one owner, one boundary map, and one acceptance gate. Breadth is not permission to mix unrelated missions, duplicate canonical behavior, or blur proof levels.
+
+1. **Classify before creating.** Inspect the canonical contract, codebase map, skills, capabilities, triggers, workflows, schemas, validators, open PRs, and implementation. Classify every requirement as `reuse`, `extend`, `repair`, `retire`, or `create`. Creation requires evidence that no healthy canonical owner already satisfies the need.
+2. **Declare the boundary map.** Before mutation, record the canonical owner and source of truth, inputs and outputs, owned and forbidden paths, dependency gates, collision boundaries, rollback boundary, validation order, and proof ceiling. Unknown boundaries require read-only intake, not improvisation.
+3. **Keep breadth coherent.** One sprint may span harness spine, agent harness, conventional application logic, integration seams, validation, and documentation only when those surfaces are necessary to one coherent vertical slice, share a lifecycle and acceptance gate, and can be reviewed and reverted together. Split unrelated ownership lanes.
+4. **Complete the owned vertical slice.** Prefer broad, useful delivery over trivial-only progress. When safely owned and unblocked, do not stop at scaffolding, a prompt, a map, one trivial file, or a plan while required implementation, registration, validation, reporting, or handoff remains unassigned. This rule never authorizes crossing forbidden scope.
+5. **Principles stay canonical.** `AGENTS.md` owns operating principles. Skills describe reusable workflow guidance. Capabilities expose reusable operations. Triggers deterministically route conditions to a skill, capability, or workflow. Application behavior remains in code and domain contracts. Prompts may orchestrate work but may not become the only implementation. Other files should reference the canonical principle instead of restating or mutating it. A new principle requires a governance sprint and validator update.
+6. **Reconcile instead of forking.** When branches, PRs, skills, launchers, registries, or workflows overlap, compare them explicitly and classify each contribution as preserve, merge, retire, or supersede. Designate one canonical owner; compatibility surfaces must delegate and may not retain competing lifecycle logic.
+7. **State accuracy explicitly.** Material claims must be labeled by evidence as verified, inferred, or unresolved. Refresh stale facts before action, identify the source and time of verification when relevant, and stop proof promotion when repository or runtime evidence contradicts the plan.
+8. **Protect gate integrity.** Do not weaken a gate, rewrite a fixture to excuse a defect, skip a required check, or reinterpret acceptance criteria to manufacture a pass. Repair correctable defects within the same bounded context and rerun the complete affected gate.
+9. **Stop at the boundary.** Split or escalate when work would cross authority, absorb an unrelated mission, collide with another writer, depend on stale or failed evidence, expose secrets, mutate a live target without authorization, or claim proof beyond observation.
+10. **Separate delivery from release authority.** A broad writing sprint may implement and validate a coherent surface, but it does not grant merge, release, deployment, or live-target authority. Those actions require their own explicit authorization and current gates.
 
 ## Mandatory execution discipline
 
@@ -120,6 +136,8 @@ No governance-only sprint may claim that Pi, Ollama, LM Studio, a local model, a
 - **Summaries without proof** presented as delivery.
 - **Completion claims without running checks** required by the repository or task.
 - **Secret or credential exposure** in prompts, logs, commits, fixtures, plans, reports, or PR text.
+- **Re-inventing an established principle** in a prompt, skill, capability, workflow, or product surface instead of referencing and extending the canonical owner through its declared contract.
+- **Trivial-only progress** that leaves a safely owned coherent vertical slice incomplete, or a giant mixed-scope change that bundles unrelated missions merely to appear broad.
 - Destructive Git, force-push, default-branch writes, merge, release, deployment, or live-target mutation without explicit authority.
 - Replacing a healthy canonical contract with a competing file or prompt-only convention.
 - Ambiguous empty output, silently ignored flags, interactive prompts in agent automation, or unbounded output when a deterministic compact result is possible.
