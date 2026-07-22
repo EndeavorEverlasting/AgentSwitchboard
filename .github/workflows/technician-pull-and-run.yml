@@ -1,0 +1,53 @@
+name: Technician pull-and-run contract
+
+on:
+  pull_request:
+    paths:
+      - 'Pull-And-Run-AgentSwitchboard.cmd'
+      - 'tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1'
+      - 'tests/test_technician_pull_and_run_contract.py'
+      - '.github/workflows/technician-pull-and-run.yml'
+      - 'docs/workstation/technician-pull-and-run.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate portable CMD contract
+        run: python tests/test_technician_pull_and_run_contract.py
+
+      - name: Parse technician PowerShell
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path 'tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1'),
+            [ref]$tokens,
+            [ref]$errors
+          )
+          if ($errors.Count -gt 0) {
+            $errors | Format-List | Out-String | Write-Error
+            exit 1
+          }
+
+      - name: Check repository hygiene
+        shell: bash
+        run: git diff --check ${{ github.event.pull_request.base.sha || 'HEAD^' }}..HEAD
