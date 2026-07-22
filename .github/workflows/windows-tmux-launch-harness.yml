@@ -29,10 +29,12 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Validate dual launch contracts
         shell: pwsh
         run: |
           pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tooling\profiles\windows\Test-AgentSwitchboardTmuxLaunchers.ps1
       - name: Check diff whitespace
         shell: pwsh
-        run: git diff --check HEAD~1 HEAD
+        run: git diff --check origin/main...HEAD
