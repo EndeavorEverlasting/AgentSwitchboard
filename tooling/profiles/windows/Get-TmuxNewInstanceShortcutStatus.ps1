@@ -58,10 +58,10 @@ $working = @(
     'Generated plans, receipts, results, reports, and handoffs remain local-operational and untracked.'
 )
 $gaps = @(
-    'The default open-or-activate path is still intentionally blocked.',
     'Repository and CI checks do not prove the desktop shortcut is installed on the operator workstation.',
     'A live double-click must still prove one visible WezTerm window attached to the allocated tmux session.',
-    'Repeat clicks, styling/layout, rollback, and operator acceptance remain end-to-end runtime proof.'
+    'Repeat clicks, styling/layout, rollback, and operator acceptance remain end-to-end runtime proof.',
+    'Window activation or focus change for open-or-activate remains runtime proof.'
 )
 
 $result = [ordered]@{

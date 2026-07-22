@@ -197,10 +197,7 @@ if ($classPrefix -notmatch '^[A-Za-z0-9._-]+$') { throw "Unsafe WezTerm class pr
 if ($initialWindowName -notmatch '^[A-Za-z0-9_-]+$') { throw "Unsafe tmux window name: $initialWindowName" }
 if ($maximumInstances -lt 1 -or $maximumInstances -gt 999) { throw 'maximumInstances must be between 1 and 999.' }
 
-if ($Mode -eq 'open-or-activate') {
-    Write-Error 'The default open-or-activate path remains blocked on this branch. This tracked launcher currently owns only explicit new-instance requests.'
-    exit 42
-}
+$defaultSessionName = $sessionPrefix
 
 if ($Operation -eq 'Launch' -and $null -ne $ExistingSessions -and $ExistingSessions.Count -gt 0) {
     throw '-ExistingSessions is allowed only with -Operation Plan.'
@@ -232,6 +229,7 @@ else {
 
 $mutex = $null
 $lockAcquired = $false
+$createdSessionName = $null
 try {
     if ($Operation -eq 'Launch') {
         $mutex = [System.Threading.Mutex]::new($false, 'Local\AgentSwitchboard.TmuxNewInstance')
@@ -251,6 +249,105 @@ try {
             throw "Unable to inspect tmux sessions in '$distribution'. $($inventory.Stderr)"
         }
         $sessionInventory = @($inventory.Stdout -split "`r?`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    }
+
+    if ($Mode -eq 'open-or-activate') {
+        $existingSet = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+        foreach ($session in $sessionInventory) {
+            if (-not [string]::IsNullOrWhiteSpace($session)) {
+                [void]$existingSet.Add($session.Trim())
+            }
+        }
+
+        $targetSession = $defaultSessionName
+        $sessionAlreadyExisted = $existingSet.Contains($targetSession)
+        $workspace = "$workspacePrefix-$targetSession"
+        $windowClass = "$classPrefix.$targetSession"
+        $attachCommand = "exec tmux attach-session -t '$targetSession'"
+        $wezTermArguments = @(
+            'start',
+            '--workspace', $workspace,
+            '--class', $windowClass,
+            '--',
+            $(if ($resolvedWsl) { $resolvedWsl } else { 'wsl.exe' }),
+            '-d', $distribution,
+            '-e', 'bash', '-lc', $attachCommand
+        )
+
+        $plan = [ordered]@{
+            schema = 'agentswitchboard.windows-profile-launch-plan.v1'
+            mode = $Mode
+            operation = $Operation
+            distribution = $distribution
+            instanceId = $defaultSessionName
+            sessionName = $targetSession
+            workspace = $workspace
+            windowClass = $windowClass
+            sessionAlreadyExisted = $sessionAlreadyExisted
+            existingSessions = @($sessionInventory)
+            allocationPolicy = 'default-session-identity'
+            createSessionCommand = $(if (-not $sessionAlreadyExisted) { "tmux new-session -d -s '$targetSession' -n '$initialWindowName'" } else { $null })
+            attachCommand = $attachCommand
+            wezTermArguments = $wezTermArguments
+            oneRequestMaximumNewWindows = 1
+            separateFrontendProcessRequired = $false
+            generatedEvidenceTracked = $false
+            proofCeiling = 'Deterministic identity resolution and command construction only. Window activation or focus change requires runtime observation.'
+        }
+        $planPath = Join-Path $OutputDirectory 'windows-profile-launch-plan.json'
+        Write-JsonArtifact -Value $plan -Path $planPath
+
+        if ($Operation -eq 'Plan') {
+            $plan | ConvertTo-Json -Depth 10
+            exit 0
+        }
+
+        if (-not $sessionAlreadyExisted) {
+            $createCommand = "set -euo pipefail; tmux new-session -d -s '$targetSession' -n '$initialWindowName'; tmux has-session -t '$targetSession'"
+            $created = Invoke-BoundedProcess -FilePath $resolvedWsl -ArgumentList @(
+                '-d', $distribution, '-e', 'bash', '-lc', $createCommand
+            ) -Timeout $TimeoutSeconds
+            if ($created.ExitCode -ne 0) {
+                throw "Unable to create tmux session '$targetSession'. $($created.Stderr)"
+            }
+            $createdSessionName = $targetSession
+        }
+
+        $psi = [System.Diagnostics.ProcessStartInfo]::new()
+        $psi.UseShellExecute = $false
+        $psi.CreateNoWindow = $true
+        $psi.FileName = $resolvedWezTerm
+        foreach ($argument in $wezTermArguments) {
+            [void]$psi.ArgumentList.Add([string]$argument)
+        }
+        $wezTermProcess = [System.Diagnostics.Process]::Start($psi)
+        if (-not $wezTermProcess) {
+            throw 'WezTerm did not return a process handle.'
+        }
+
+        $result = [ordered]@{
+            schema = 'agentswitchboard.windows-profile-launch-result.v1'
+            status = 'launch-command-accepted'
+            mode = $Mode
+            distribution = $distribution
+            instanceId = $defaultSessionName
+            sessionName = $targetSession
+            workspace = $workspace
+            windowClass = $windowClass
+            sessionAlreadyExisted = $sessionAlreadyExisted
+            wezTermProcessId = $wezTermProcess.Id
+            planPath = $planPath
+            sessionCreated = (-not $sessionAlreadyExisted)
+            separateFrontendProcessRequested = $false
+            visibleWindowObserved = $false
+            tmuxClientAttachedObserved = $false
+            proofLevel = 'command-ack'
+            proofCeiling = 'A tmux session was resolved and a WezTerm process was requested. Window activation, focus, attachment, and operator acceptance remain runtime proof.'
+        }
+        $resultPath = Join-Path $OutputDirectory 'windows-profile-launch-result.json'
+        Write-JsonArtifact -Value $result -Path $resultPath
+        $result | ConvertTo-Json -Depth 10
+        exit 0
     }
 
     $identity = Get-NewInstanceIdentity -Prefix $sessionPrefix -Sessions $sessionInventory -RequestedInstanceId $InstanceId -MaximumInstances $maximumInstances -WorkspacePrefix $workspacePrefix -ClassPrefix $classPrefix
@@ -301,6 +398,7 @@ try {
     if ($created.ExitCode -ne 0) {
         throw "Unable to create tmux session '$($identity.SessionName)'. $($created.Stderr)"
     }
+    $createdSessionName = $identity.SessionName
 
     $psi = [System.Diagnostics.ProcessStartInfo]::new()
     $psi.UseShellExecute = $false
@@ -311,7 +409,13 @@ try {
     }
     $wezTermProcess = [System.Diagnostics.Process]::Start($psi)
     if (-not $wezTermProcess) {
-        throw 'WezTerm did not return a process handle.'
+        $cleanupCommand = "tmux kill-session -t '$($identity.SessionName)' 2>/dev/null || true"
+        try {
+            Invoke-BoundedProcess -FilePath $resolvedWsl -ArgumentList @(
+                '-d', $distribution, '-e', 'bash', '-lc', $cleanupCommand
+            ) -Timeout $TimeoutSeconds
+        } catch {}
+        throw 'WezTerm did not return a process handle. The newly created tmux session was cleaned up.'
     }
 
     $result = [ordered]@{
