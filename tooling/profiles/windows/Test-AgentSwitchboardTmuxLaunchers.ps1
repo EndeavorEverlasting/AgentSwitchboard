@@ -64,6 +64,12 @@ Assert-Contract -Condition ([string]$manifest.contracts.continue -match 'Never a
 Assert-Contract -Condition ([string]$manifest.contracts.new -match 'Never attach to dev or an existing dev-N session') -Name 'manifest/new-no-existing-attach'
 
 $launcherPath = Join-Path $root 'tooling/profiles/windows/Invoke-AgentSwitchboardTmuxLaunch.ps1'
+$launcherContent = Get-Content -LiteralPath $launcherPath -Raw
+Assert-Contract -Condition (-not $launcherContent.Contains(".Replace([char]0, '')")) -Name 'runtime/no-char-empty-replace'
+Assert-Contract -Condition ($launcherContent.Contains('.Replace([string][char]0, [string]::Empty)')) -Name 'runtime/string-null-removal'
+$nulSample = "before$([char]0)after".Replace([string][char]0, [string]::Empty)
+Assert-Contract -Condition ($nulSample -eq 'beforeafter') -Name 'runtime/null-removal-executes'
+
 $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ('AgentSwitchboardTmuxHarness-' + [guid]::NewGuid().ToString('N'))
 try {
     $continueOutput = Join-Path $tempRoot 'continue'
