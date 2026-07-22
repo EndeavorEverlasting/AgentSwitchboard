@@ -1,0 +1,25 @@
+{
+  "schema": "agentswitchboard.pi-workflow.v1",
+  "workflowId": "pi-opinion-fusion",
+  "trigger": "pi.fusion-request",
+  "mission": "Collect independent attributed perspectives and produce an adjudicated recommendation without granting multiple writers access to one branch.",
+  "inputHashField": "inputSha256",
+  "roles": {
+    "architect": {"writeAuthority": false, "output": "pi-architect-opinion.json"},
+    "builder": {"writeAuthority": false, "output": "pi-builder-opinion.json"},
+    "adjudicator": {"writeAuthority": false, "output": "pi-fusion-result.json"},
+    "designatedWriter": {"count": 1, "writeAuthority": true, "condition": "starts only after fusion acceptance"}
+  },
+  "steps": [
+    {"id": "freeze-input", "action": "Hash one minimized prompt packet as inputSha256 and give the identical packet to architect and builder."},
+    {"id": "parallel-opinions", "action": "Run architect and builder independently; prohibit shared scratch state and branch mutation."},
+    {"id": "attribute", "action": "Record actual executor, provider, exact model, endpoint class, role, timestamps, and proof ceiling for each output."},
+    {"id": "adjudicate", "action": "Preserve consensus, divergence, unresolved risks, rejected alternatives, and source references."},
+    {"id": "accept-or-block", "action": "Accept one bounded approach or block with explicit unresolved questions; do not average incompatible claims."},
+    {"id": "writer-handoff", "action": "Send only the accepted bounded approach, constraints, validations, and proof ceiling to the designated writer."}
+  ],
+  "bounds": {"parallelAgents": 2, "adjudicators": 1, "writersPerBranch": 1, "rawOutputTracked": false, "providerCallsAllowedByContract": false},
+  "outputs": ["pi-architect-opinion.json", "pi-builder-opinion.json", "pi-fusion-result.json", "pi-operator-report.md"],
+  "stopConditions": ["identity unavailable", "input hashes differ", "role outputs are not independently attributable", "divergence is unresolved", "scope or authority changes", "artifact root is unsafe"],
+  "proofCeiling": "Fusion contract and artifact shape only; no model independence, response quality, runtime execution, or implementation correctness proof."
+}

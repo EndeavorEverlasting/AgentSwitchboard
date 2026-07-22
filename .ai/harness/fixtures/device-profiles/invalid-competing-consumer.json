@@ -1,0 +1,10 @@
+{
+  "schema": "agentswitchboard.device-profile-consumer.v1",
+  "profileId": "windows",
+  "consumerRepository": "EndeavorEverlasting/SysAdminSuite",
+  "ownerRepository": "EndeavorEverlasting/SysAdminSuite",
+  "operation": "independent-start",
+  "delegateOnly": false,
+  "shortcutTargetsCanonicalLauncher": false,
+  "certificationComplete": false
+}

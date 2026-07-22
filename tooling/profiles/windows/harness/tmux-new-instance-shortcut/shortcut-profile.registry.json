@@ -1,0 +1,53 @@
+{
+  "schema": "agentswitchboard.tmux-new-instance-shortcut-profile-registry.v1",
+  "registryId": "agentswitchboard.windows-profile.tmux-new-instance-shortcut.v1",
+  "profileId": "windows",
+  "canonicalOwner": "EndeavorEverlasting/AgentSwitchboard",
+  "canonicalLauncher": "tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1",
+  "installerCmd": "Install-TmuxNewInstanceShortcut.cmd",
+  "installer": "tooling/profiles/windows/Install-TmuxNewInstanceShortcut.ps1",
+  "manifest": "tooling/profiles/windows/tmux-new-instance-shortcut.example.json",
+  "status": "tracked-unproven-runtime",
+  "shortcut": {
+    "name": "AgentSwitchboard tmux - New Instance",
+    "targetType": "PowerShell7",
+    "delegatesToCanonicalLauncher": true,
+    "mode": "new-instance",
+    "instanceId": "auto",
+    "windowStyle": "hidden-wrapper-visible-wezterm-only",
+    "foreignShortcutOverwriteAllowed": false,
+    "installationLaunchesRuntime": false
+  },
+  "sessionAllocation": {
+    "bareSessionReservedForDefaultMode": "dev",
+    "newInstancePattern": "dev-<positive-integer>",
+    "policy": "smallest-positive-integer",
+    "maximumInstances": 64,
+    "reuseExistingNamedInstanceAllowed": false,
+    "mutexRequired": true
+  },
+  "wezterm": {
+    "command": "start",
+    "alwaysNewProcessRequired": true,
+    "uniqueWorkspaceRequired": true,
+    "uniqueWindowClassRequired": true,
+    "rawShortcutInvocationAllowed": false
+  },
+  "tmux": {
+    "sessionCreationCommand": "new-session -d",
+    "attachCommand": "attach-session",
+    "newSessionMustBeVerifiedBeforeWindowLaunch": true,
+    "sameSessionMultipleWindowsIsNewInstance": false,
+    "existingTmuxConfigurationIsReused": true,
+    "packageInstallationOwned": false
+  },
+  "runtimeEvidence": {
+    "generatedEvidenceTracked": false,
+    "installReceiptRequired": true,
+    "launchPlanRequired": true,
+    "launchResultRequired": true,
+    "visibleWindowObservationRequiredForRuntimeProof": true,
+    "tmuxClientAttachmentObservationRequiredForRuntimeProof": true
+  },
+  "proofCeiling": "Tracked installer and launcher implementation, deterministic allocation, shortcut readback, and offline contracts. No live desktop shortcut invocation or visible terminal behavior is proven."
+}

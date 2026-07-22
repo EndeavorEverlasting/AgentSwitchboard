@@ -1,0 +1,100 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-07-WINDOWS-PROFILE-LAUNCHER-DOCTRINE",
+  "title": "Windows Profile canonical launcher doctrine",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "completed",
+  "priority": "high",
+  "createdUtc": "2026-07-20T07:00:00Z",
+  "updatedUtc": "2026-07-20T07:22:00Z",
+  "mission": "Install one canonical platform-profile launcher owner, a Windows Profile open-or-activate contract, SysAdminSuite delegation and certification rules, and separate Linux and Android profiles.",
+  "owner": {"surface":"device profile launcher doctrine and enforcement","role":"repository doctrine lane","agent":"ChatGPT"},
+  "delivery": {
+    "branch": "feat/windows-profile-launcher-doctrine",
+    "pullRequest": {"number":37,"url":"https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/37","state":"open"},
+    "baseRef": "feat/runtime-event-contract-doctrine",
+    "commitRequired": true
+  },
+  "wave": "Commit-Required Harness Doctrine Installation",
+  "lane": "repository doctrine and enforcement",
+  "dependencies": ["ASB-2026-07-RUNTIME-EVENT-CONTRACT"],
+  "safeParallelWork": ["Review PR 36", "Provider routing outside profile doctrine", "Child work outside launcher ownership surfaces"],
+  "ownedScope": [
+    "Windows Linux and Android profile ownership doctrine",
+    "Windows idempotent open-or-activate contract",
+    "AgentSwitchboard ownership and SysAdminSuite consumer-certifier role",
+    "focused validators fixtures CI and harness wiring",
+    "child templates and PR proof metadata"
+  ],
+  "forbiddenScope": [
+    "launcher implementation or runtime execution",
+    "SysAdminSuite repository mutation or certification delivery",
+    "Linux or Android implementation",
+    "network provider external-data deployment or secret work",
+    "generated runtime evidence destructive Git default-branch mutation merge or release"
+  ],
+  "expectedArtifacts": [
+    "docs/governance/device-profile-launcher-contract.md",
+    ".ai/harness/device-profile-launcher.policy.json",
+    ".ai/harness/device-profile-registry.json",
+    ".ai/harness/schemas/device-profile-registry.schema.json",
+    "scripts/Test-DeviceProfileLauncherContract.ps1",
+    "tests/test_device_profile_launcher_contract.py",
+    ".github/workflows/device-profile-launcher-contract.yml",
+    "canonical and child-template wiring",
+    "exact-head validation evidence"
+  ],
+  "tasks": [
+    {
+      "taskId":"PROFILE-01","title":"Define canonical profile ownership","status":"completed","owner":"repository doctrine lane","dependencies":[],
+      "inputs":["Harness doctrine","Runtime event contract","Current launcher evidence"],
+      "outputs":["Doctrine","Policy","Registry","Schema"],
+      "acceptanceCriteria":["Separate Windows Linux Android profiles","AgentSwitchboard canonical owner","Windows open-or-activate","SysAdminSuite delegate and certifier"],
+      "evidence":["Tracked profile doctrine policy registry and schema"]
+    },
+    {
+      "taskId":"ENFORCE-01","title":"Install profile enforcement","status":"completed","owner":"repository doctrine lane","dependencies":["PROFILE-01"],
+      "inputs":["Agent rules","Capabilities","Triggers","Manifest","App graph"],
+      "outputs":["Validators","Fixtures","CI","Authority wiring"],
+      "acceptanceCriteria":["Reject architecture-only action claims","Reject competing ownership","Accept delegated consumer","Run validator through aggregate observer"],
+      "evidence":["Tracked PowerShell and Python contracts, fixtures, workflow, graph nodes, and templates"]
+    },
+    {
+      "taskId":"PROOF-01","title":"Validate exact delivery head","status":"completed","owner":"repository doctrine lane","dependencies":["PROFILE-01","ENFORCE-01"],
+      "inputs":["Profile workflow","Doctrine validators","Aggregate harness"],
+      "outputs":["Cross-platform CI evidence","PR metadata"],
+      "acceptanceCriteria":["Focused contract passes","Instruction gates pass","Aggregate passes","Full-range hygiene passes"],
+      "evidence":[
+        "Device profile run 29724409381 passed Windows and Linux at 0164e04be60ef79dcdee73b6e50869314be08d3f",
+        "Runtime event run 29724409464 passed Windows and Linux",
+        "App harness run 29724409468 passed Windows and Linux",
+        "Agent documentation run 29724409440 passed Windows and Linux",
+        "Public plan run 29724409457 passed Windows and Linux",
+        "Repository family run 29724409546 passed Windows and Linux",
+        "Provider contracts run 29724409509 passed"
+      ]
+    }
+  ],
+  "validation": [
+    "scripts/Test-DeviceProfileLauncherContract.ps1",
+    "tests/test_device_profile_launcher_contract.py",
+    "scripts/Test-HarnessDoctrineContract.ps1",
+    "scripts/Test-AgentDocumentationContract.ps1",
+    "scripts/Test-AppHarness.ps1",
+    "scripts/Test-PublicPlanContracts.ps1",
+    "scripts/Test-RepositoryFamilyHarness.ps1",
+    "full pull-request range git diff --check",
+    "final Git and PR review"
+  ],
+  "proof": {
+    "target": "Profile ownership, Windows open-or-activate contract, SysAdminSuite delegation, enforcement, and cross-platform validation",
+    "achieved": "All seven workflows passed at implementation head 0164e04be60ef79dcdee73b6e50869314be08d3f, including focused contract, doctrine, aggregate, safety, clean-checkout, and full-range hygiene checks.",
+    "ceiling": "No canonical launcher implementation, installed launcher, terminal behavior, workspace result, runtime idempotence, SysAdminSuite certification, Linux implementation, Android implementation, deployment, or device acceptance is proven."
+  },
+  "handoff": {
+    "nextOwner": "AgentSwitchboard Windows Profile implementation lane",
+    "nextCommand": "gh pr view 37 --repo EndeavorEverlasting/AgentSwitchboard --web",
+    "notes": ["PR 37 is stacked on PR 36.", "Implement the canonical launcher in a separate AgentSwitchboard PR.", "Certify and delegate from SysAdminSuite in a later separate PR."]
+  }
+}

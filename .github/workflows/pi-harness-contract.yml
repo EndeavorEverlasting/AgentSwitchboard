@@ -1,0 +1,88 @@
+name: Pi operational harness contract
+
+on:
+  pull_request:
+    paths:
+      - "tooling/pi/**"
+      - ".ai/skills/pi-fusion-orchestration/**"
+      - "scripts/Test-PiHarnessCompleteness.ps1"
+      - "tests/test_pi_harness_contracts.py"
+      - "docs/harness/pi-operational-harness.md"
+      - ".ai/harness/manifest.json"
+      - ".ai/harness/artifact-registry.json"
+      - "CODEBASE_MAP.md"
+      - "SKILLS.md"
+      - "CAPABILITIES.md"
+      - "TRIGGERS.md"
+      - ".github/workflows/pi-harness-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run dependency-free Pi contracts
+        run: python tests/test_pi_harness_contracts.py
+      - name: Run Pi completeness contract
+        shell: pwsh
+        run: ./scripts/Test-PiHarnessCompleteness.ps1
+      - name: Run Pi read-only status
+        shell: pwsh
+        run: ./tooling/pi/Get-PiHarnessStatus.ps1 -NoWrite
+      - name: Run canonical documentation contract
+        shell: pwsh
+        run: ./scripts/Test-AgentDocumentationContract.ps1
+      - name: Full PR-range hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check "origin/${GITHUB_BASE_REF}...HEAD"
+          test -z "$(git status --short)"
+
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Parse Pi PowerShell surfaces
+        shell: pwsh
+        run: |
+          $failures = [System.Collections.Generic.List[string]]::new()
+          foreach ($path in @(
+            'scripts/Test-PiHarnessCompleteness.ps1',
+            'tooling/pi/Get-PiHarnessStatus.ps1',
+            'tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1'
+          )) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
+            foreach ($error in @($errors)) { $failures.Add("$path`: $($error.Message)") }
+          }
+          if ($failures.Count -gt 0) {
+            $failures | ForEach-Object { Write-Error $_ }
+            exit 1
+          }
+      - name: Run dependency-free Pi contracts
+        shell: pwsh
+        run: python tests/test_pi_harness_contracts.py
+      - name: Run Pi completeness contract
+        shell: pwsh
+        run: ./scripts/Test-PiHarnessCompleteness.ps1
+      - name: Run Pi read-only status
+        shell: pwsh
+        run: ./tooling/pi/Get-PiHarnessStatus.ps1 -NoWrite
+      - name: Run canonical documentation contract
+        shell: pwsh
+        run: ./scripts/Test-AgentDocumentationContract.ps1
+      - name: Verify clean checkout
+        shell: pwsh
+        run: |
+          git diff --check "origin/$env:GITHUB_BASE_REF...HEAD"
+          if (git status --short) { throw 'Checkout is dirty after validation.' }

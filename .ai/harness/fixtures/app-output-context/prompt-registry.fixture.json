@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "ai-harness-prompt-registry/v1",
+  "kitVersion": "fixture-v1",
+  "variables": [
+    {
+      "name": "xyz_repo_or_path"
+    },
+    {
+      "name": "xyz_failure_evidence"
+    }
+  ],
+  "prompts": [
+    {
+      "id": "P00",
+      "sequence": 0,
+      "name": "General repository task",
+      "moment": "intake",
+      "promptType": "analysis",
+      "promptClass": "general",
+      "sprintPathRole": "intake",
+      "executionSurface": "regular_ai_prompt",
+      "useThisWhen": "A repository request needs inspection and scoped work.",
+      "doNotUseWhen": "A known failure requires diagnosis.",
+      "expectedOutput": "Repository assessment",
+      "requiredVariables": [
+        "xyz_repo_or_path"
+      ],
+      "text": "Inspect xyz_repo_or_path and report evidence."
+    },
+    {
+      "id": "P01",
+      "sequence": 1,
+      "name": "Repair validation failure",
+      "moment": "failure",
+      "promptType": "repair",
+      "promptClass": "validation_repair",
+      "sprintPathRole": "repair",
+      "executionSurface": "regular_ai_prompt",
+      "useThisWhen": "App output reports error failed schema validation mismatch timeout exception or blocked work.",
+      "doNotUseWhen": "The output is nominal and no failure is present.",
+      "expectedOutput": "Root-cause repair with validator proof",
+      "requiredVariables": [
+        "xyz_failure_evidence"
+      ],
+      "text": "Diagnose error failure timeout exception schema validation mismatch and repair from xyz_failure_evidence."
+    },
+    {
+      "id": "P02",
+      "sequence": 2,
+      "name": "Runtime proof",
+      "moment": "runtime",
+      "promptType": "proof",
+      "promptClass": "runtime",
+      "sprintPathRole": "proof",
+      "executionSurface": "regular_ai_prompt",
+      "useThisWhen": "Runtime output needs observed behavior proof.",
+      "doNotUseWhen": "Only static validation exists.",
+      "expectedOutput": "Bounded runtime evidence",
+      "requiredVariables": [],
+      "text": "Collect runtime output and proof without inflating evidence."
+    },
+    {
+      "id": "P26",
+      "sequence": 26,
+      "name": "Bounded GNHF failure repair",
+      "moment": "launch",
+      "promptType": "gnhf",
+      "promptClass": "gnhf",
+      "sprintPathRole": "execution",
+      "executionSurface": "gnhf_launch_artifact",
+      "useThisWhen": "A failed validation or timeout needs a bounded committed GNHF repair.",
+      "doNotUseWhen": "A regular AI prompt is required.",
+      "expectedOutput": "Committed bounded repair",
+      "requiredVariables": [
+        "xyz_repo_or_path"
+      ],
+      "text": "Launch bounded GNHF repair for error failed validation timeout in xyz_repo_or_path."
+    }
+  ]
+}

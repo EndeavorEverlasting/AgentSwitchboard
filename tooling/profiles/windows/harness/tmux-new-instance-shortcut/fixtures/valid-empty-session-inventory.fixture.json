@@ -1,0 +1,11 @@
+{
+  "schema": "agentswitchboard.tmux-new-instance-shortcut-fixture.v1",
+  "expectedValid": true,
+  "existingSessions": [],
+  "requestedInstanceId": "auto",
+  "expectedInstanceId": "1",
+  "expectedSessionName": "dev-1",
+  "expectedWorkspace": "agentswitchboard-tmux-dev-1",
+  "expectedAlwaysNewProcess": true,
+  "expectedDuplicate": false
+}

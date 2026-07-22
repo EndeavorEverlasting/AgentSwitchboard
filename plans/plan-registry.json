@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "registryId": "agentswitchboard.public-plans.v1",
+  "schemaPath": "plans/schemas/public-plan.schema.json",
+  "policy": {
+    "visibility": "public",
+    "planIsNotPullRequest": true,
+    "machineReadableRequired": true,
+    "secretsForbidden": true,
+    "localRuntimeEvidenceForbidden": true,
+    "materialCoordinationChangesRequireSameBranchUpdate": true
+  },
+  "plans": [
+    {
+      "planId": "ASB-2026-07-PUBLIC-PLANS-STARTUP",
+      "path": "plans/active/ASB-2026-07-public-plans-startup-readiness.plan.json",
+      "summaryPath": "plans/active/ASB-2026-07-public-plans-startup-readiness.md",
+      "status": "active",
+      "priority": "high",
+      "dependencies": []
+    },
+    {
+      "planId": "ASB-2026-07-ONE-COMMAND-HARNESS-PROOF",
+      "path": "plans/active/ASB-2026-07-one-command-harness-proof.plan.json",
+      "summaryPath": "plans/active/ASB-2026-07-one-command-harness-proof.md",
+      "status": "active",
+      "priority": "high",
+      "dependencies": ["ASB-2026-07-PUBLIC-PLANS-STARTUP"]
+    },
+    {
+      "planId": "ASB-2026-07-RUNTIME-EVENT-CONTRACT",
+      "path": "plans/active/ASB-2026-07-runtime-event-contract.plan.json",
+      "summaryPath": "plans/active/ASB-2026-07-runtime-event-contract.md",
+      "status": "completed",
+      "priority": "high",
+      "dependencies": ["ASB-2026-07-ONE-COMMAND-HARNESS-PROOF"]
+    },
+    {
+      "planId": "ASB-2026-07-WINDOWS-PROFILE-LAUNCHER-DOCTRINE",
+      "path": "plans/active/ASB-2026-07-windows-profile-launcher-doctrine.plan.json",
+      "summaryPath": "plans/active/ASB-2026-07-windows-profile-launcher-doctrine.md",
+      "status": "completed",
+      "priority": "high",
+      "dependencies": ["ASB-2026-07-RUNTIME-EVENT-CONTRACT"]
+    },
+    {
+      "planId": "ASB-2026-07-APP-OUTPUT-CONTEXT-ENGINE",
+      "path": "plans/active/ASB-2026-07-app-output-context-engine.plan.json",
+      "summaryPath": "plans/active/ASB-2026-07-app-output-context-engine.md",
+      "status": "active",
+      "priority": "high",
+      "dependencies": ["ASB-2026-07-WINDOWS-PROFILE-LAUNCHER-DOCTRINE"]
+    }
+  ]
+}

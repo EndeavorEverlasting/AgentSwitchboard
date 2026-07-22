@@ -1,0 +1,54 @@
+{
+  "schema": "agentswitchboard.device-profile-registry.v1",
+  "registryId": "agentswitchboard.device-profiles.v1",
+  "canonicalOwner": "EndeavorEverlasting/AgentSwitchboard",
+  "profiles": [
+    {
+      "profileId": "windows",
+      "displayName": "Windows Profile",
+      "status": "contract-only",
+      "ownerRepository": "EndeavorEverlasting/AgentSwitchboard",
+      "canonicalOperation": "open-or-activate",
+      "frontend": "wezterm",
+      "implementationSeparate": true,
+      "configurationMayDiffer": false,
+      "canonicalSourcePath": "tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1",
+      "installedPath": "%LOCALAPPDATA%\\AgentSwitchboard\\profiles\\windows\\Invoke-AgentSwitchboardOpenOrActivate.ps1",
+      "consumers": [
+        {
+          "repository": "EndeavorEverlasting/SysAdminSuite",
+          "role": "consumer-certifier",
+          "delegateOnly": true,
+          "rawFallbackAllowed": false
+        }
+      ]
+    },
+    {
+      "profileId": "linux",
+      "displayName": "Linux Profile",
+      "status": "reserved",
+      "ownerRepository": "EndeavorEverlasting/AgentSwitchboard",
+      "canonicalOperation": "open-or-activate",
+      "frontend": "profile-defined",
+      "implementationSeparate": true,
+      "configurationMayDiffer": true,
+      "canonicalSourcePath": null,
+      "installedPath": null,
+      "consumers": []
+    },
+    {
+      "profileId": "android",
+      "displayName": "Android Profile",
+      "status": "reserved",
+      "ownerRepository": "EndeavorEverlasting/AgentSwitchboard",
+      "canonicalOperation": "open-or-activate",
+      "frontend": "profile-defined",
+      "implementationSeparate": true,
+      "configurationMayDiffer": true,
+      "canonicalSourcePath": null,
+      "installedPath": null,
+      "consumers": []
+    }
+  ],
+  "proofCeiling": "The registry proves profile names, ownership, delegation rules, and platform separation only. It does not prove a launcher exists, WezTerm is installed, a window opened or activated, SysAdminSuite certification completed, or any Linux or Android implementation."
+}

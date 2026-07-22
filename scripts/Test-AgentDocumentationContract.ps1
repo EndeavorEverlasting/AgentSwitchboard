@@ -44,6 +44,11 @@ $requiredRootFiles = @(
     "CAPABILITIES.md",
     "TRIGGERS.md",
     ".ai/agent-contract.json",
+    "plans/README.md",
+    "plans/plan-registry.json",
+    "plans/schemas/public-plan.schema.json",
+    ".ai/skills/public-plan-coordination/SKILL.md",
+    "scripts/Test-PublicPlanContracts.ps1",
     "docs/governance/repository-family.md",
     "templates/repository-agent-contract/README.md",
     "templates/repository-agent-contract/AGENTS.md",
@@ -51,7 +56,11 @@ $requiredRootFiles = @(
     "templates/repository-agent-contract/SKILLS.md",
     "templates/repository-agent-contract/CAPABILITIES.md",
     "templates/repository-agent-contract/TRIGGERS.md",
-    "templates/repository-agent-contract/.ai/agent-contract.json"
+    "templates/repository-agent-contract/.ai/agent-contract.json",
+    "templates/repository-agent-contract/.ai/skills/public-plan-coordination/SKILL.md",
+    "templates/repository-agent-contract/plans/README.md",
+    "templates/repository-agent-contract/plans/plan-registry.json",
+    "templates/repository-agent-contract/plans/schemas/public-plan.schema.json"
 )
 
 foreach ($relativePath in $requiredRootFiles) {
@@ -68,10 +77,14 @@ try {
     Add-Result -Passed (-not [string]::IsNullOrWhiteSpace([string]$contract.contractVersion)) -Name "contract/version" -FailureMessage "contractVersion is missing"
     Add-Result -Passed ($contract.canonicalRepository -eq "EndeavorEverlasting/AgentSwitchboard") -Name "contract/canonical-root" -FailureMessage "canonical repository is incorrect"
 
-    foreach ($entrypoint in @("universal", "claude", "skills", "capabilities", "triggers")) {
+    foreach ($entrypoint in @("universal", "claude", "skills", "capabilities", "triggers", "plans", "startupReadiness")) {
         $property = $contract.entrypoints.PSObject.Properties[$entrypoint]
         Add-Result -Passed ($null -ne $property -and -not [string]::IsNullOrWhiteSpace([string]$property.Value)) -Name "contract/entrypoint/$entrypoint" -FailureMessage "entrypoint is missing"
     }
+
+    Add-Result -Passed ($contract.publicPlans.planIsNotPullRequest -eq $true) -Name "contract/public-plans/plan-pr-distinction" -FailureMessage "plan and PR distinction is missing"
+    Add-Result -Passed ($contract.publicPlans.machineReadableRequired -eq $true) -Name "contract/public-plans/machine-readable" -FailureMessage "machine-readable plans are not required"
+    Add-Result -Passed ($contract.startupReadiness.generatedOutputTracked -eq $false) -Name "contract/startup/untracked" -FailureMessage "startup reports must remain untracked"
 
     $expectedRepositories = @(
         "EndeavorEverlasting/AgentSwitchboard",
@@ -87,21 +100,23 @@ try {
     }
 
     $contractSkills = @($contract.canonicalSkills | ForEach-Object { [string]$_ })
-    Add-Result `
-        -Passed ($contractSkills -contains "gnhf-prompt-compilation") `
-        -Name "contract/skill/gnhf-prompt-compilation" `
-        -FailureMessage "canonical GNHF prompt compilation skill is not registered"
+    foreach ($skill in @("public-plan-coordination", "gnhf-prompt-compilation", "powershell-interactive-execution")) {
+        Add-Result `
+            -Passed ($contractSkills -contains $skill) `
+            -Name "contract/skill/$skill" `
+            -FailureMessage "canonical skill is not registered"
+    }
 }
 catch {
     [void]$failures.Add("contract/json`: $($_.Exception.Message)")
 }
 
 $entrypointExpectations = @{
-    "AGENTS.md" = @("CLAUDE.md", "SKILLS.md", "CAPABILITIES.md", "TRIGGERS.md", ".ai/agent-contract.json")
+    "AGENTS.md" = @("CLAUDE.md", "SKILLS.md", "CAPABILITIES.md", "TRIGGERS.md", ".ai/agent-contract.json", "plans/plan-registry.json", "public-plan-coordination")
     "CLAUDE.md" = @("AGENTS.md", "proof")
-    "SKILLS.md" = @(".ai/skills", "repo-intake", "bounded-sprint", "gnhf-prompt-compilation", "evidence-validation", "pr-integration", "runtime-proof")
-    "CAPABILITIES.md" = @("Capabilities describe", "verified")
-    "TRIGGERS.md" = @("Triggers", "repo.dirty-or-conflicted", "gnhf.prompt-request", "live-target-mutation")
+    "SKILLS.md" = @(".ai/skills", "repo-intake", "bounded-sprint", "public-plan-coordination", "gnhf-prompt-compilation", "powershell-interactive-execution", "evidence-validation", "pr-integration", "runtime-proof")
+    "CAPABILITIES.md" = @("Capabilities describe", "verified", "plan.registry.read", "startup.readiness.report")
+    "TRIGGERS.md" = @("Triggers", "repo.dirty-or-conflicted", "plan.coordination-request", "startup.readiness-request", "powershell.interactive-snippet", "gnhf.prompt-request", "live-target-mutation")
 }
 
 foreach ($file in $entrypointExpectations.Keys) {
@@ -118,7 +133,9 @@ foreach ($file in $entrypointExpectations.Keys) {
 $expectedSkills = @(
     "repo-intake",
     "bounded-sprint",
+    "public-plan-coordination",
     "gnhf-prompt-compilation",
+    "powershell-interactive-execution",
     "evidence-validation",
     "pr-integration",
     "runtime-proof"
@@ -147,6 +164,23 @@ foreach ($skill in $expectedSkills) {
     }
 }
 
+$publicPlanSkillText = Get-RequiredText -RelativePath ".ai/skills/public-plan-coordination/SKILL.md"
+if ($null -ne $publicPlanSkillText) {
+    foreach ($token in @(
+        "plans/plan-registry.json",
+        "plan and pull request distinct",
+        "same branch or PR",
+        "product behavior in deterministic code",
+        "scripts/Test-PublicPlanContracts.ps1",
+        "using a pull request description as the only coordination record"
+    )) {
+        Add-Result `
+            -Passed ($publicPlanSkillText.Contains($token)) `
+            -Name "skill/public-plan-coordination/$token" `
+            -FailureMessage "public plan coordination token is missing"
+    }
+}
+
 $gnhfSkillText = Get-RequiredText -RelativePath ".ai/skills/gnhf-prompt-compilation/SKILL.md"
 if ($null -ne $gnhfSkillText) {
     foreach ($token in @(
@@ -170,11 +204,30 @@ if ($null -ne $gnhfSkillText) {
     }
 }
 
+$powerShellSkillText = Get-RequiredText -RelativePath ".ai/skills/powershell-interactive-execution/SKILL.md"
+if ($null -ne $powerShellSkillText) {
+    foreach ($token in @(
+        "Set-Location -LiteralPath",
+        "guard clause",
+        "same syntactic submission",
+        "Never instruct the operator to submit a closing",
+        "No standalone",
+        "hardcoded workstation username"
+    )) {
+        Add-Result `
+            -Passed ($powerShellSkillText.Contains($token)) `
+            -Name "skill/powershell-interactive-execution/$token" `
+            -FailureMessage "interactive PowerShell safety token is missing"
+    }
+}
+
 $templateContractPath = Join-Path $RootPath "templates/repository-agent-contract/.ai/agent-contract.json"
 try {
     $templateContract = Get-Content -LiteralPath $templateContractPath -Raw | ConvertFrom-Json
     Add-Result -Passed ($templateContract.canonicalRepository -eq "EndeavorEverlasting/AgentSwitchboard") -Name "template/canonical-root" -FailureMessage "template does not point to AgentSwitchboard"
     Add-Result -Passed ($templateContract.localRulesMayWeaken -eq $false) -Name "template/no-silent-weakening" -FailureMessage "template permits local weakening"
+    Add-Result -Passed ($templateContract.entrypoints.plans -eq "plans/plan-registry.json") -Name "template/public-plan-entrypoint" -FailureMessage "template plan entrypoint is missing"
+    Add-Result -Passed ($templateContract.publicPlans.planIsNotPullRequest -eq $true) -Name "template/plan-pr-distinction" -FailureMessage "template does not distinguish plans from PRs"
 }
 catch {
     [void]$failures.Add("template/json`: $($_.Exception.Message)")

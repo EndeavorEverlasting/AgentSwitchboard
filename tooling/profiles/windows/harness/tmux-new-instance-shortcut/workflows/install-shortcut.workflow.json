@@ -1,0 +1,28 @@
+{
+  "schema": "agentswitchboard.tmux-new-instance-shortcut-workflow.v1",
+  "workflowId": "install-tmux-new-instance-shortcut",
+  "trigger": ["profile.tmux-new-instance-shortcut.install", "operator.double-click-installer"],
+  "inputs": ["repository root", "tracked manifest", "canonical launcher source", "PowerShell 7 path", "WezTerm CLI path", "desktop directory", "install root"],
+  "steps": [
+    "resolve repository-relative installer and canonical launcher",
+    "validate the manifest and Windows Profile new-instance contract",
+    "render a read-only installation plan",
+    "resolve PowerShell 7 and WezTerm only in Apply mode",
+    "preserve any foreign shortcut with the requested name",
+    "atomically copy the canonical launcher and manifest to the user-local install root",
+    "create or refresh the owned desktop shortcut",
+    "read back target, arguments, icon, description, and delegation mode",
+    "emit local install receipt and English operator report"
+  ],
+  "outputs": ["tmux-new-instance-shortcut-install-plan.json", "tmux-new-instance-shortcut-install-receipt.json", "tmux-new-instance-shortcut-operator-report.md", "owned desktop shortcut"],
+  "failureRules": [
+    "missing PowerShell 7 blocks Apply",
+    "missing WezTerm CLI blocks Apply",
+    "missing canonical launcher blocks Plan and Apply",
+    "foreign shortcut collision blocks overwrite",
+    "shortcut readback mismatch fails installation",
+    "installation never launches tmux or WezTerm"
+  ],
+  "handoff": "Report shortcut path, installed launcher path, receipt path, validation state, proof ceiling, and the exact double-click or runtime-proof next action.",
+  "proofCeiling": "Owned shortcut installation and readback only; no runtime window or tmux behavior."
+}

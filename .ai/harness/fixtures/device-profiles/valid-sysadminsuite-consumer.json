@@ -1,0 +1,18 @@
+{
+  "schema": "agentswitchboard.device-profile-consumer.v1",
+  "profileId": "windows",
+  "consumerRepository": "EndeavorEverlasting/SysAdminSuite",
+  "ownerRepository": "EndeavorEverlasting/AgentSwitchboard",
+  "operation": "open-or-activate",
+  "delegateOnly": true,
+  "rawFrontendFallback": false,
+  "independentDiscoveryLogic": false,
+  "independentActivationLogic": false,
+  "shortcutTargetsCanonicalLauncher": true,
+  "certification": {
+    "contractVersionChecked": true,
+    "launcherIdentityChecked": true,
+    "idempotenceFixturesChecked": true,
+    "proofCeilingRecorded": true
+  }
+}

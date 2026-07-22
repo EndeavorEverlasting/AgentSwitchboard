@@ -1,0 +1,111 @@
+name: Runtime event contract
+
+on:
+  pull_request:
+    paths:
+      - '.ai/harness/runtime-event-contract.policy.json'
+      - '.ai/harness/runtime-event-topology.json'
+      - '.ai/harness/schemas/runtime-event-*.json'
+      - '.ai/harness/fixtures/runtime-events/**'
+      - 'docs/governance/runtime-event-contract.md'
+      - 'docs/governance/harness-doctrine.md'
+      - 'AGENTS.md'
+      - 'CODEBASE_MAP.md'
+      - 'CAPABILITIES.md'
+      - 'TRIGGERS.md'
+      - '.ai/agent-contract.json'
+      - '.ai/harness/manifest.json'
+      - '.ai/harness/app-composition.graph.json'
+      - 'scripts/Test-RuntimeEventContract.ps1'
+      - 'scripts/Test-HarnessDoctrineContract.ps1'
+      - 'scripts/Test-AppHarness.ps1'
+      - 'tests/test_runtime_event_contract.py'
+      - 'templates/repository-agent-contract/**'
+      - 'plans/**'
+      - '.github/workflows/runtime-event-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Parse PowerShell validators
+        shell: pwsh
+        run: |
+          $errors = @()
+          foreach ($path in @(
+            'scripts/Test-RuntimeEventContract.ps1',
+            'scripts/Test-HarnessDoctrineContract.ps1',
+            'scripts/Test-AppHarness.ps1'
+          )) {
+            $tokens = $null
+            $parseErrors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Join-Path $PWD $path),
+              [ref]$tokens,
+              [ref]$parseErrors
+            )
+            if ($parseErrors.Count -gt 0) { $errors += "$path`: $($parseErrors -join '; ')" }
+          }
+          if ($errors.Count -gt 0) { throw ($errors -join "`n") }
+
+      - name: Run runtime event contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File ./scripts/Test-RuntimeEventContract.ps1
+
+      - name: Run canonical doctrine contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File ./scripts/Test-HarnessDoctrineContract.ps1
+
+      - name: Run aggregate offline observer
+        shell: pwsh
+        run: |
+          $output = Join-Path $env:RUNNER_TEMP 'runtime-event-app-harness'
+          pwsh -NoLogo -NoProfile -File ./scripts/Test-AppHarness.ps1 -OutputRoot $output
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (-not (Test-Path -LiteralPath (Join-Path $output 'app-harness-validation.json'))) { throw 'JSON result missing' }
+
+      - name: Run dependency-free contracts
+        shell: pwsh
+        run: python ./tests/test_runtime_event_contract.py
+
+      - name: Verify checkout remains clean
+        shell: pwsh
+        run: |
+          $dirty = git status --porcelain=v1
+          if ($dirty) { throw "Validator mutated checkout:`n$dirty" }
+
+  linux-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run dependency-free contracts
+        run: python tests/test_runtime_event_contract.py
+
+      - name: Run PowerShell contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File ./scripts/Test-RuntimeEventContract.ps1
+
+      - name: Check validator safety surface
+        shell: bash
+        run: |
+          if grep -Eqi 'Invoke-WebRequest|Invoke-RestMethod|Start-Process|opencode run|git push' scripts/Test-RuntimeEventContract.ps1; then
+            echo 'Runtime event doctrine validator contains a forbidden execution surface.' >&2
+            exit 1
+          fi
+
+      - name: Full PR-range hygiene
+        shell: bash
+        run: |
+          git fetch --no-tags origin "${{ github.base_ref }}"
+          git diff --check "origin/${{ github.base_ref }}...HEAD"

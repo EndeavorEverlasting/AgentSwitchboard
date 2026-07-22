@@ -1,0 +1,168 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-07-APP-OUTPUT-CONTEXT-ENGINE",
+  "title": "App output context engine",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "active",
+  "priority": "high",
+  "createdUtc": "2026-07-20T17:09:00Z",
+  "updatedUtc": "2026-07-20T17:37:00Z",
+  "mission": "Build an offline engine that parses supplied application output, minimizes and redacts it, compares it with the prompt-kit registry, and emits compact agent instructions with an honest proof ceiling.",
+  "owner": {
+    "surface": "app-output contextualization harness",
+    "role": "harness infrastructure lane",
+    "agent": "ChatGPT"
+  },
+  "delivery": {
+    "branch": "feat/app-output-context-engine",
+    "pullRequest": {
+      "number": 38,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/38",
+      "state": "open"
+    },
+    "baseRef": "feat/windows-profile-launcher-doctrine",
+    "commitRequired": true
+  },
+  "wave": "Harness Infrastructure Build",
+  "lane": "harness infrastructure",
+  "dependencies": [
+    "ASB-2026-07-WINDOWS-PROFILE-LAUNCHER-DOCTRINE"
+  ],
+  "safeParallelWork": [
+    "Review and rebase the existing prompt-registry consumer without editing this branch",
+    "Windows Profile implementation outside app-output context paths",
+    "Provider routing work outside context engine manifests and catalogs"
+  ],
+  "ownedScope": [
+    "offline app-output parser and redactor",
+    "prompt-kit comparison and execution-surface guard",
+    "schema workflow skill capability trigger and artifact registration",
+    "focused validator fixtures CI operator documentation and public plan"
+  ],
+  "forbiddenScope": [
+    "governance contract or P00 policy changes",
+    "source-application execution attachment focus or mutation",
+    "provider calls prompt execution product code secrets customer data and raw runtime logs",
+    "launcher implementation deployment merge release destructive Git and default-branch mutation"
+  ],
+  "expectedArtifacts": [
+    "Contextualize-AppOutput.cmd",
+    "tooling/context/Contextualize-AppOutput.py",
+    ".ai/harness/schemas/app-output-context.schema.json",
+    ".ai/harness/workflows/app-output-contextualization.workflow.json",
+    ".ai/skills/app-output-contextualization/SKILL.md",
+    "scripts/Test-AppOutputContextEngine.ps1",
+    "tests/test_app_output_context_engine.py",
+    ".ai/harness/fixtures/app-output-context/",
+    "docs/harness/app-output-context-engine.md",
+    ".github/workflows/app-output-context-engine.yml",
+    "central harness registrations and validation evidence"
+  ],
+  "tasks": [
+    {
+      "taskId": "ENGINE-01",
+      "title": "Build deterministic contextualizer",
+      "status": "completed",
+      "owner": "harness infrastructure lane",
+      "dependencies": [],
+      "inputs": [
+        "supplied UTF-8 output",
+        "prompt-registry contract",
+        "requested execution surface"
+      ],
+      "outputs": [
+        "redacted context JSON",
+        "English operator report"
+      ],
+      "acceptanceCriteria": [
+        "Parse text JSON and JSONL",
+        "Hash but do not persist raw output",
+        "Redact common credentials and private identifiers",
+        "Rank only prompts on the requested surface",
+        "Emit an honest no-match result"
+      ],
+      "evidence": [
+        "Dependency-free Python fixture suite passes locally"
+      ]
+    },
+    {
+      "taskId": "HARNESS-01",
+      "title": "Register workflow and artifacts",
+      "status": "completed",
+      "owner": "harness infrastructure lane",
+      "dependencies": [
+        "ENGINE-01"
+      ],
+      "inputs": [
+        "existing manifest artifact registry graph skill capability and trigger patterns"
+      ],
+      "outputs": [
+        "schema workflow skill registrations graph nodes and artifact contracts"
+      ],
+      "acceptanceCriteria": [
+        "Fresh agent can discover the engine",
+        "Aggregate observer can reach every required node",
+        "Generated artifacts remain untracked and outside the repository"
+      ],
+      "evidence": [
+        "Tracked harness component set committed and pushed to the isolated remote branch"
+      ]
+    },
+    {
+      "taskId": "PROOF-01",
+      "title": "Validate and deliver",
+      "status": "in-progress",
+      "owner": "harness infrastructure lane",
+      "dependencies": [
+        "ENGINE-01",
+        "HARNESS-01"
+      ],
+      "inputs": [
+        "focused validator",
+        "aggregate harness",
+        "public plan validators",
+        "GitHub pull-request workflows"
+      ],
+      "outputs": [
+        "commit SHA",
+        "push evidence",
+        "pull request",
+        "cross-platform validation"
+      ],
+      "acceptanceCriteria": [
+        "Focused tests pass",
+        "Existing aggregate validators pass",
+        "git diff --check passes",
+        "Pull request records proof level and ceiling"
+      ],
+      "evidence": [
+        "Pull request #38 opened against the verified PR #37 head",
+        "Remote branch and tracked component files exist",
+        "GitHub exact-head validation pending"
+      ]
+    }
+  ],
+  "validation": [
+    "python tests/test_app_output_context_engine.py",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-AppOutputContextEngine.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
+    "Test-AppHarness.cmd",
+    "git diff --check"
+  ],
+  "proof": {
+    "target": "Tracked and discoverable app-output contextualization harness with deterministic fixture proof and aggregate registration",
+    "achieved": "The engine, schema, workflow, skill, registries, fixtures, focused validator, aggregate graph integration, CI, documentation, branch, and PR exist. Local fixture proof passed; GitHub exact-head checks remain in progress.",
+    "ceiling": "No source application was executed, no provider was contacted, no selected prompt was executed, and no runtime or target behavior is proven."
+  },
+  "handoff": {
+    "nextOwner": "Prompt-kit integration and router convergence lane",
+    "nextCommand": "gh pr view 38 --repo EndeavorEverlasting/AgentSwitchboard --web",
+    "notes": [
+      "The engine consumes the generic ai-harness-prompt-registry/v1 contract.",
+      "The full V38 snapshot remains owned by the separate prompt-registry consumer PR #29.",
+      "Re-inspect the current stack before rebasing or integrating overlapping catalog and manifest files."
+    ]
+  }
+}

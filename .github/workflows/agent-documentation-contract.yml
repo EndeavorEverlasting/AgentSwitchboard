@@ -12,6 +12,9 @@ on:
       - "docs/governance/**"
       - "templates/repository-agent-contract/**"
       - "scripts/Test-AgentDocumentationContract.ps1"
+      - "scripts/Test-AgentGovernanceDoctrine.ps1"
+      - "scripts/Test-HarnessDoctrineContract.ps1"
+      - "scripts/Test-EndToEndRuntimeValidationSkill.ps1"
       - ".github/workflows/agent-documentation-contract.yml"
   workflow_dispatch:
 
@@ -32,14 +35,24 @@ jobs:
           python3 - <<'PY'
           import json
           from pathlib import Path
-
           for path in (
               Path('.ai/agent-contract.json'),
+              Path('.ai/harness/harness-doctrine.policy.json'),
               Path('templates/repository-agent-contract/.ai/agent-contract.json'),
+              Path('templates/repository-agent-contract/.ai/harness/harness-doctrine.policy.json'),
           ):
               json.loads(path.read_text(encoding='utf-8-sig'))
               print(f'PASS: {path}')
           PY
+      - name: Run governance doctrine contract
+        shell: pwsh
+        run: ./scripts/Test-AgentGovernanceDoctrine.ps1
+      - name: Run harness doctrine contract
+        shell: pwsh
+        run: ./scripts/Test-HarnessDoctrineContract.ps1
+      - name: Run end-to-end runtime skill contract
+        shell: pwsh
+        run: ./scripts/Test-EndToEndRuntimeValidationSkill.ps1
       - name: Run documentation contract
         shell: pwsh
         run: ./scripts/Test-AgentDocumentationContract.ps1
@@ -73,20 +86,40 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Parse PowerShell validator
+      - name: Parse PowerShell validators
         shell: pwsh
         run: |
-          $tokens = $null
-          $errors = $null
-          [void][System.Management.Automation.Language.Parser]::ParseFile(
+          $failures = [System.Collections.Generic.List[string]]::new()
+          foreach ($path in @(
             'scripts/Test-AgentDocumentationContract.ps1',
-            [ref]$tokens,
-            [ref]$errors
-          )
-          if ($errors.Count -gt 0) {
-            $errors | ForEach-Object { Write-Error $_.Message }
+            'scripts/Test-AgentGovernanceDoctrine.ps1',
+            'scripts/Test-HarnessDoctrineContract.ps1',
+            'scripts/Test-EndToEndRuntimeValidationSkill.ps1'
+          )) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
+            foreach ($error in @($errors)) { $failures.Add("$path`: $($error.Message)") }
+          }
+          if ($failures.Count -gt 0) {
+            $failures | ForEach-Object { Write-Error $_ }
             exit 1
           }
+      - name: Run governance doctrine contract
+        shell: pwsh
+        run: |
+          ./scripts/Test-AgentGovernanceDoctrine.ps1 2>&1 |
+            Tee-Object -FilePath "$env:RUNNER_TEMP\agent-governance-doctrine.log"
+      - name: Run harness doctrine contract
+        shell: pwsh
+        run: |
+          ./scripts/Test-HarnessDoctrineContract.ps1 2>&1 |
+            Tee-Object -FilePath "$env:RUNNER_TEMP\harness-doctrine-contract.log"
+      - name: Run end-to-end runtime skill contract
+        shell: pwsh
+        run: |
+          ./scripts/Test-EndToEndRuntimeValidationSkill.ps1 2>&1 |
+            Tee-Object -FilePath "$env:RUNNER_TEMP\end-to-end-runtime-skill-contract.log"
       - name: Run documentation contract
         shell: pwsh
         run: |
@@ -95,19 +128,17 @@ jobs:
       - name: Verify clean checkout
         shell: pwsh
         run: |
-          if ($env:GITHUB_BASE_REF) {
-            git diff --check "origin/$env:GITHUB_BASE_REF...HEAD"
-          }
-          else {
-            git diff --check HEAD^
-          }
-          if (git status --short) {
-            throw 'Checkout is dirty after validation.'
-          }
+          if ($env:GITHUB_BASE_REF) { git diff --check "origin/$env:GITHUB_BASE_REF...HEAD" }
+          else { git diff --check HEAD^ }
+          if (git status --short) { throw 'Checkout is dirty after validation.' }
       - name: Upload contract diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: agent-documentation-contract
-          path: ${{ runner.temp }}/agent-documentation-contract.log
+          path: |
+            ${{ runner.temp }}/agent-governance-doctrine.log
+            ${{ runner.temp }}/agent-documentation-contract.log
+            ${{ runner.temp }}/harness-doctrine-contract.log
+            ${{ runner.temp }}/end-to-end-runtime-skill-contract.log
           if-no-files-found: ignore

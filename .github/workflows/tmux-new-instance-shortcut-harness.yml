@@ -1,0 +1,191 @@
+name: tmux new-instance shortcut harness
+
+on:
+  pull_request:
+    paths:
+      - "Install-TmuxNewInstanceShortcut.cmd"
+      - "CODEBASE_MAP.md"
+      - "SKILLS.md"
+      - "TRIGGERS.md"
+      - ".ai/harness/manifest.json"
+      - ".ai/skills/tmux-new-instance-shortcut/**"
+      - "tooling/profiles/windows/Install-TmuxNewInstanceShortcut.ps1"
+      - "tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1"
+      - "tooling/profiles/windows/Get-TmuxNewInstanceShortcutStatus.ps1"
+      - "tooling/profiles/windows/tmux-new-instance-shortcut.example.json"
+      - "tooling/profiles/windows/harness/tmux-new-instance-shortcut/**"
+      - "tooling/profiles/windows/hooks/Invoke-TmuxNewInstanceShortcutPreCommit.ps1"
+      - "scripts/Test-TmuxNewInstanceShortcutHarness.ps1"
+      - "tests/test_tmux_new_instance_shortcut_harness.py"
+      - "docs/harness/tmux-new-instance-shortcut.md"
+      - ".github/workflows/tmux-new-instance-shortcut-harness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: false
+
+      - name: Parse shortcut installer
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile('tooling/profiles/windows/Install-TmuxNewInstanceShortcut.ps1', [ref]$tokens, [ref]$errors)
+          if (@($errors).Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
+
+      - name: Parse canonical launcher
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile('tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1', [ref]$tokens, [ref]$errors)
+          if (@($errors).Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
+
+      - name: Parse status reporter
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile('tooling/profiles/windows/Get-TmuxNewInstanceShortcutStatus.ps1', [ref]$tokens, [ref]$errors)
+          if (@($errors).Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
+
+      - name: Parse opt-in hook
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile('tooling/profiles/windows/hooks/Invoke-TmuxNewInstanceShortcutPreCommit.ps1', [ref]$tokens, [ref]$errors)
+          if (@($errors).Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
+
+      - name: Parse completeness validator
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile('scripts/Test-TmuxNewInstanceShortcutHarness.ps1', [ref]$tokens, [ref]$errors)
+          if (@($errors).Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
+
+      - name: Run dependency-free contracts
+        run: python tests/test_tmux_new_instance_shortcut_harness.py
+
+      - name: Run focused completeness
+        shell: pwsh
+        run: ./scripts/Test-TmuxNewInstanceShortcutHarness.ps1
+
+      - name: Run read-only status
+        shell: pwsh
+        run: ./tooling/profiles/windows/Get-TmuxNewInstanceShortcutStatus.ps1 -NoWrite
+
+      - name: Exercise isolated shortcut installation
+        shell: pwsh
+        run: |
+          $root = Join-Path $env:RUNNER_TEMP 'asb-tmux-shortcut-install'
+          $desktop = Join-Path $root 'Desktop'
+          $install = Join-Path $root 'Install'
+          $output = Join-Path $root 'Evidence'
+          $fakeBin = Join-Path $root 'Bin'
+          New-Item -ItemType Directory -Path $desktop, $fakeBin -Force | Out-Null
+          $pwsh = (Get-Command pwsh.exe -ErrorAction Stop).Source
+          $wezterm = Join-Path $fakeBin 'wezterm.exe'
+          Set-Content -LiteralPath $wezterm -Value 'fixture' -Encoding ascii
+
+          ./tooling/profiles/windows/Install-TmuxNewInstanceShortcut.ps1 `
+            -Mode Apply `
+            -InstallRoot $install `
+            -DesktopDirectory $desktop `
+            -PwshPath $pwsh `
+            -WezTermPath $wezterm `
+            -OutputDirectory $output
+
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $shortcut = Join-Path $desktop 'AgentSwitchboard tmux - New Instance.lnk'
+          $receipt = Join-Path $install 'state/tmux-new-instance-shortcut-install-receipt.json'
+          if (-not (Test-Path -LiteralPath $shortcut -PathType Leaf)) { throw 'Shortcut was not created.' }
+          if (-not (Test-Path -LiteralPath $receipt -PathType Leaf)) { throw 'Install receipt was not created.' }
+          $data = Get-Content -LiteralPath $receipt -Raw | ConvertFrom-Json
+          if ($data.runtimeExecuted -ne $false) { throw 'Installer claimed or executed runtime.' }
+          if ($data.arguments -notlike '*-Mode new-instance*') { throw 'Shortcut mode readback is wrong.' }
+          if ($data.arguments -notlike '*-InstanceId auto*') { throw 'Shortcut instance allocation readback is wrong.' }
+          if (Test-Path -LiteralPath (Join-Path $install 'runs') -PathType Container) { throw 'Installation unexpectedly created runtime runs.' }
+
+      - name: Run opt-in pre-commit hook
+        shell: pwsh
+        run: ./tooling/profiles/windows/hooks/Invoke-TmuxNewInstanceShortcutPreCommit.ps1
+
+      - name: Run launch-mode and profile floors
+        shell: pwsh
+        run: |
+          ./scripts/Test-WindowsProfileLaunchModeHarness.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./scripts/Test-DeviceProfileLauncherContract.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./scripts/Test-AgentDocumentationContract.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Verify clean checkout and diff hygiene
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_BASE_REF) {
+            git diff --check "origin/$env:GITHUB_BASE_REF...HEAD"
+          }
+          else {
+            git diff --check HEAD^
+          }
+          if (git status --short) { throw 'Checkout is dirty after validation.' }
+
+  linux-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: false
+
+      - name: Run dependency-free contracts
+        run: python3 tests/test_tmux_new_instance_shortcut_harness.py
+
+      - name: Run focused completeness
+        shell: pwsh
+        run: ./scripts/Test-TmuxNewInstanceShortcutHarness.ps1
+
+      - name: Run read-only status
+        shell: pwsh
+        run: ./tooling/profiles/windows/Get-TmuxNewInstanceShortcutStatus.ps1 -NoWrite
+
+      - name: Run launch-mode and profile floors
+        shell: pwsh
+        run: |
+          ./scripts/Test-WindowsProfileLaunchModeHarness.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./scripts/Test-DeviceProfileLauncherContract.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Check deployable surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -E 'Invoke-WebRequest|Invoke-RestMethod|git push|gh pr merge|Remove-Item[[:space:]]+-Recurse' \
+            Install-TmuxNewInstanceShortcut.cmd \
+            tooling/profiles/windows/Install-TmuxNewInstanceShortcut.ps1 \
+            tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1 \
+            tooling/profiles/windows/Get-TmuxNewInstanceShortcutStatus.ps1
+          ! grep -E 'wezterm(\.exe)? start|tmux new-session' Install-TmuxNewInstanceShortcut.cmd
+
+      - name: Full PR-range hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git diff --check "${{ github.event.pull_request.base.sha }}" HEAD
+          else
+            git diff --check HEAD^
+          fi
+          test -z "$(git status --short)"

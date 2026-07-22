@@ -1,0 +1,133 @@
+name: Windows Profile launch-mode harness
+
+on:
+  pull_request:
+    paths:
+      - "CODEBASE_MAP.md"
+      - "SKILLS.md"
+      - "TRIGGERS.md"
+      - ".ai/harness/**"
+      - ".ai/skills/windows-profile-launch-mode-validation/**"
+      - "tooling/profiles/windows/harness/launch-modes/**"
+      - "tooling/profiles/windows/Get-WindowsProfileLaunchModeStatus.ps1"
+      - "tooling/profiles/windows/hooks/Invoke-WindowsProfileLaunchModePreCommit.ps1"
+      - "scripts/Test-WindowsProfileLaunchModeHarness.ps1"
+      - "tests/test_windows_profile_launch_mode_harness.py"
+      - "docs/harness/windows-profile-launch-mode-harness.md"
+      - ".github/workflows/windows-profile-launch-mode-harness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: false
+
+      - name: Parse PowerShell surfaces
+        shell: pwsh
+        run: |
+          $failures = @()
+          foreach ($path in @(
+            'scripts/Test-WindowsProfileLaunchModeHarness.ps1',
+            'tooling/profiles/windows/Get-WindowsProfileLaunchModeStatus.ps1',
+            'tooling/profiles/windows/hooks/Invoke-WindowsProfileLaunchModePreCommit.ps1'
+          )) {
+            $tokens = $null
+            $parseErrors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$parseErrors)
+            foreach ($parseError in @($parseErrors)) {
+              $failures += ("{0}: {1}" -f $path, $parseError.Message)
+            }
+          }
+          if ($failures.Count -gt 0) {
+            $failures | ForEach-Object { Write-Error $_ }
+            exit 1
+          }
+
+      - name: Run dependency-free contracts
+        run: python tests/test_windows_profile_launch_mode_harness.py
+
+      - name: Run launch-mode completeness
+        shell: pwsh
+        run: ./scripts/Test-WindowsProfileLaunchModeHarness.ps1
+
+      - name: Run read-only status
+        shell: pwsh
+        run: ./tooling/profiles/windows/Get-WindowsProfileLaunchModeStatus.ps1 -NoWrite
+
+      - name: Run opt-in pre-commit hook
+        shell: pwsh
+        run: ./tooling/profiles/windows/hooks/Invoke-WindowsProfileLaunchModePreCommit.ps1
+
+      - name: Run canonical device-profile contract
+        shell: pwsh
+        run: ./scripts/Test-DeviceProfileLauncherContract.ps1
+
+      - name: Run agent documentation contract
+        shell: pwsh
+        run: ./scripts/Test-AgentDocumentationContract.ps1
+
+      - name: Verify clean checkout
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_BASE_REF) {
+            git diff --check "origin/$env:GITHUB_BASE_REF...HEAD"
+          }
+          else {
+            git diff --check HEAD^
+          }
+          if (git status --short) {
+            throw 'Checkout is dirty after validation.'
+          }
+
+  linux-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: false
+
+      - name: Run dependency-free contracts
+        run: python3 tests/test_windows_profile_launch_mode_harness.py
+
+      - name: Run launch-mode completeness
+        shell: pwsh
+        run: ./scripts/Test-WindowsProfileLaunchModeHarness.ps1
+
+      - name: Run read-only status
+        shell: pwsh
+        run: ./tooling/profiles/windows/Get-WindowsProfileLaunchModeStatus.ps1 -NoWrite
+
+      - name: Run opt-in pre-commit hook
+        shell: pwsh
+        run: ./tooling/profiles/windows/hooks/Invoke-WindowsProfileLaunchModePreCommit.ps1
+
+      - name: Run canonical device-profile contract
+        shell: pwsh
+        run: ./scripts/Test-DeviceProfileLauncherContract.ps1
+
+      - name: Check deployable PowerShell surfaces remain offline
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -E 'Invoke-WebRequest|Invoke-RestMethod|Start-Process|wezterm start|wezterm-gui\.exe start' \
+            tooling/profiles/windows/Get-WindowsProfileLaunchModeStatus.ps1 \
+            tooling/profiles/windows/hooks/Invoke-WindowsProfileLaunchModePreCommit.ps1
+
+      - name: Full PR-range hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git diff --check "${{ github.event.pull_request.base.sha }}" HEAD
+          else
+            git diff --check HEAD^
+          fi
+          test -z "$(git status --short)"

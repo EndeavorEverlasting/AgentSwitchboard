@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "policyId": "agentswitchboard.device-profile-launcher.v1",
+  "canonicalRepository": "EndeavorEverlasting/AgentSwitchboard",
+  "canonicalSource": "docs/governance/device-profile-launcher-contract.md",
+  "registry": ".ai/harness/device-profile-registry.json",
+  "validator": "scripts/Test-DeviceProfileLauncherContract.ps1",
+  "oneCanonicalLauncherPerProfile": true,
+  "canonicalOwnerRepository": "EndeavorEverlasting/AgentSwitchboard",
+  "windowsProfileName": "Windows Profile",
+  "windowsCanonicalOperation": "open-or-activate",
+  "consumerDelegateOnly": true,
+  "consumerIndependentLaunchLogicForbidden": true,
+  "rawFrontendFallbackForbidden": true,
+  "desktopShortcutsDelegateOnly": true,
+  "separatePlatformImplementationsRequired": true,
+  "androidConfigurationMayDiffer": true,
+  "localRulesMayStrengthen": true,
+  "localRulesMayWeaken": false
+}

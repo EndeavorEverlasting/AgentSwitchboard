@@ -1,0 +1,63 @@
+{
+  "schema": "agentswitchboard.pi-adapter-registry.v1",
+  "registryId": "agentswitchboard.pi-adapters.v1",
+  "upstream": {
+    "package": "@mariozechner/pi-coding-agent",
+    "sourceRepository": "badlogic/pi-mono",
+    "pinnedVersion": null,
+    "status": "verification-required",
+    "rule": "Resolve and record an exact installed version and its official API contract before installation or extension execution."
+  },
+  "configuration": {
+    "preferredScope": "project-local",
+    "projectRoot": ".pi",
+    "allowedTrackedPaths": [".pi/extensions", ".pi/skills", ".pi/prompts", ".pi/themes"],
+    "globalConfigurationMutationAllowed": false,
+    "implicitHookInstallationAllowed": false
+  },
+  "routes": [
+    {
+      "routeId": "pi-single-agent",
+      "workflow": "tooling/pi/harness/workflows/task-intake.workflow.json",
+      "roles": ["builder"],
+      "writerCount": 1,
+      "status": "contract-only"
+    },
+    {
+      "routeId": "pi-opinion-fusion",
+      "workflow": "tooling/pi/harness/workflows/opinion-fusion.workflow.json",
+      "roles": ["architect", "builder", "adjudicator"],
+      "writerCount": 1,
+      "status": "contract-only"
+    },
+    {
+      "routeId": "pi-autovalidate",
+      "workflow": "tooling/pi/harness/workflows/autovalidate.workflow.json",
+      "roles": ["architect", "builder", "validator"],
+      "writerCount": 1,
+      "status": "contract-only"
+    }
+  ],
+  "requiredRuntimeEvidence": [
+    "pi executable path and version",
+    "resolved provider and exact model identity",
+    "endpoint class and binding",
+    "extension source and integrity",
+    "outbound-network and telemetry observation",
+    "repository branch and designated writer",
+    "attempt, time, token, and cancellation bounds",
+    "artifact root outside tracked authority"
+  ],
+  "privacyClaimPolicy": {
+    "default": "unproven",
+    "localhostIsSufficient": false,
+    "requiredEvidence": ["resolved endpoint", "listener binding", "provider and model", "fallback routes", "telemetry state", "observed outbound connections", "persistence paths"]
+  },
+  "generatedEvidence": {
+    "tracked": false,
+    "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/PiHarness/runs/<run-id>",
+    "containsRawPrompt": false,
+    "containsRawModelOutput": false
+  },
+  "proofCeiling": "Adapter registry and routing contract only; no package installation, extension compatibility, provider availability, local privacy, model response, or repository mutation proof."
+}

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "policyId": "agentswitchboard.runtime-event-contract.v1",
+  "canonicalRepository": "EndeavorEverlasting/AgentSwitchboard",
+  "canonicalSource": "docs/governance/runtime-event-contract.md",
+  "envelopeSchema": ".ai/harness/schemas/runtime-event-envelope.schema.json",
+  "topologyRegistry": ".ai/harness/runtime-event-topology.json",
+  "validator": "scripts/Test-RuntimeEventContract.ps1",
+  "envelope": {
+    "requiredFields": ["schema", "eventId", "eventType", "source", "occurredUtc", "correlationId", "causationId", "sequence", "payload", "metadata"],
+    "immutableAfterEmission": true
+  },
+  "causality": {
+    "rootCorrelationEqualsEventId": true,
+    "rootCausationMustBeNull": true,
+    "rootSequence": 0,
+    "successorCorrelationInherited": true,
+    "successorCausationEqualsParentEventId": true,
+    "successorSequenceGreaterThanParent": true,
+    "successorEventIdMustBeNew": true
+  },
+  "composition": {
+    "allRuntimeNodesMustBeRegistered": true,
+    "allRuntimeEdgesMustBeRegistered": true,
+    "sourceToSinkReachabilityRequired": true
+  },
+  "evidence": {
+    "staticProofCannotClaimRuntime": true,
+    "syntheticProofCannotClaimLiveTarget": true
+  },
+  "localRulesMayStrengthen": true,
+  "localRulesMayWeaken": false
+}

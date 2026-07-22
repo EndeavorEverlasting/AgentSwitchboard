@@ -1,0 +1,24 @@
+{
+  "schema": "agentswitchboard.pi-workflow.v1",
+  "workflowId": "pi-task-intake",
+  "trigger": "pi.harness-request",
+  "mission": "Select the smallest safe Pi workflow from current repository evidence without launching Pi or a provider.",
+  "inputs": ["repository", "branch", "lane", "mission", "ownedScope", "forbiddenScope", "expectedArtifacts", "validationCommands", "proofCeiling"],
+  "steps": [
+    {"id": "inspect", "action": "Read AGENTS.md, CODEBASE_MAP.md, the central harness manifest, Pi adapter registry, active plan, Git state, and relevant validators."},
+    {"id": "capability", "action": "Classify Pi, provider, model, endpoint, extension, network, and write capabilities as verified, constrained, blocked, or unknown."},
+    {"id": "route", "action": "Choose exactly one route: single-agent, opinion-fusion, autovalidate, or blocked."},
+    {"id": "declare", "action": "Record roles, designated writer, branch ownership, limits, artifact root, validation order, stop conditions, and proof ceiling."},
+    {"id": "validate-plan", "action": "Run the Pi harness completeness validator before any runtime lane is authorized."},
+    {"id": "handoff", "action": "Emit a minimized run-context packet and one exact next command; never emit credentials or raw prompts."}
+  ],
+  "routeRules": [
+    {"route": "single-agent", "when": "one bounded implementation lane and one writer are sufficient"},
+    {"route": "opinion-fusion", "when": "independent technical perspectives materially reduce design risk"},
+    {"route": "autovalidate", "when": "acceptance gates can be authored independently before implementation"},
+    {"route": "blocked", "when": "repository state, authority, runtime identity, privacy evidence, or bounds are missing"}
+  ],
+  "failureHandling": ["preserve evidence", "do not silently change route", "do not widen scope", "name the failed gate", "emit one recovery command"],
+  "outputs": ["pi-run-context.json", "pi-operator-report.md", "pi-final-handoff.json"],
+  "proofCeiling": "Offline workflow selection and declaration only."
+}

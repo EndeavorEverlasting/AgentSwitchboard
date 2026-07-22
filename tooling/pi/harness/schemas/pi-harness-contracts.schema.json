@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/pi/harness/schemas/pi-harness-contracts.schema.json",
+  "title": "AgentSwitchboard Pi Harness Contracts",
+  "$defs": {
+    "executionIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["executor", "provider", "model", "endpointClass", "role"],
+      "properties": {
+        "executor": {"type": "string", "minLength": 1},
+        "provider": {"type": "string", "minLength": 1},
+        "model": {"type": "string", "minLength": 1},
+        "endpointClass": {"enum": ["local", "hosted", "bridge", "unknown"]},
+        "role": {"enum": ["architect", "builder", "validator", "adjudicator", "designated-writer"]}
+      }
+    },
+    "runContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "runId", "repository", "branch", "lane", "mission", "ownedScope", "forbiddenScope", "workflow", "designatedWriter", "limits", "artifactRoot", "proofCeiling"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.pi-run-context.v1"},
+        "runId": {"type": "string", "pattern": "^[A-Za-z0-9._-]+$"},
+        "repository": {"type": "string", "minLength": 1},
+        "branch": {"type": "string", "minLength": 1},
+        "lane": {"type": "string", "minLength": 1},
+        "mission": {"type": "string", "minLength": 1},
+        "ownedScope": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "forbiddenScope": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "workflow": {"enum": ["single-agent", "opinion-fusion", "autovalidate", "blocked"]},
+        "designatedWriter": {"type": "string", "minLength": 1},
+        "limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["maximumAttempts", "maximumWallClockMinutes", "maximumNoProgressAttempts", "tokenLimit"],
+          "properties": {
+            "maximumAttempts": {"type": "integer", "minimum": 1},
+            "maximumWallClockMinutes": {"type": "integer", "minimum": 1},
+            "maximumNoProgressAttempts": {"type": "integer", "minimum": 1},
+            "tokenLimit": {"type": "integer", "minimum": 1}
+          }
+        },
+        "artifactRoot": {"type": "string", "minLength": 1},
+        "proofCeiling": {"type": "string", "minLength": 1}
+      }
+    },
+    "roleOutput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "runId", "inputSha256", "identity", "summary", "recommendations", "risks", "proofCeiling"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.pi-role-output.v1"},
+        "runId": {"type": "string"},
+        "inputSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "identity": {"$ref": "#/$defs/executionIdentity"},
+        "summary": {"type": "string"},
+        "recommendations": {"type": "array", "items": {"type": "string"}},
+        "risks": {"type": "array", "items": {"type": "string"}},
+        "proofCeiling": {"type": "string"}
+      }
+    },
+    "fusionResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "runId", "sourceArtifacts", "consensus", "divergence", "unresolvedRisks", "rejectedAlternatives", "acceptedApproach", "status", "proofCeiling"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.pi-fusion-result.v1"},
+        "runId": {"type": "string"},
+        "sourceArtifacts": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string"}},
+        "consensus": {"type": "array", "items": {"type": "string"}},
+        "divergence": {"type": "array", "items": {"type": "string"}},
+        "unresolvedRisks": {"type": "array", "items": {"type": "string"}},
+        "rejectedAlternatives": {"type": "array", "items": {"type": "string"}},
+        "acceptedApproach": {"type": ["string", "null"]},
+        "status": {"enum": ["accepted", "blocked"]},
+        "proofCeiling": {"type": "string"}
+      }
+    },
+    "validationLedger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "runId", "gateSha256", "attempts", "terminalStatus", "proofCeiling"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.pi-validation-ledger.v1"},
+        "runId": {"type": "string"},
+        "gateSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "attempts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["number", "command", "exitCode", "durationSeconds", "result", "progressObserved"],
+            "properties": {
+              "number": {"type": "integer", "minimum": 1},
+              "command": {"type": "string"},
+              "exitCode": {"type": "integer"},
+              "durationSeconds": {"type": "number", "minimum": 0},
+              "result": {"enum": ["pass", "fail", "blocked", "cancelled"]},
+              "progressObserved": {"type": "boolean"}
+            }
+          }
+        },
+        "terminalStatus": {"enum": ["passed", "failed", "blocked", "cancelled", "no-progress"]},
+        "proofCeiling": {"type": "string"}
+      }
+    }
+  },
+  "oneOf": [
+    {"$ref": "#/$defs/runContext"},
+    {"$ref": "#/$defs/roleOutput"},
+    {"$ref": "#/$defs/fusionResult"},
+    {"$ref": "#/$defs/validationLedger"}
+  ]
+}

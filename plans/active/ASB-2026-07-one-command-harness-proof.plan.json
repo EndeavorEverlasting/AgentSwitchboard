@@ -1,0 +1,158 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-07-ONE-COMMAND-HARNESS-PROOF",
+  "title": "One-command synthetic harness proof",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "active",
+  "priority": "high",
+  "createdUtc": "2026-07-20T02:20:00Z",
+  "updatedUtc": "2026-07-20T04:06:00Z",
+  "mission": "Provide one offline command that observes the registered AgentSwitchboard harness composition, validates safe nodes and event edges, runs required offline validators, and emits an honest PASS, SKIP, or FAIL matrix without runtime or target mutation.",
+  "owner": {
+    "surface": "app harness validation and event topology",
+    "role": "validation lane",
+    "agent": "ChatGPT"
+  },
+  "delivery": {
+    "branch": "feat/one-command-harness-proof",
+    "pullRequest": {
+      "number": 35,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/35",
+      "state": "open"
+    },
+    "baseRef": "feat/public-plans-startup-readiness",
+    "commitRequired": true
+  },
+  "wave": "One-command harness proof",
+  "lane": "validation / harness proof",
+  "dependencies": [
+    "ASB-2026-07-PUBLIC-PLANS-STARTUP"
+  ],
+  "safeParallelWork": [
+    "Unrelated provider runtime work outside app-harness paths",
+    "Child-repository plan adoption in separate branches and pull requests"
+  ],
+  "ownedScope": [
+    "offline aggregate harness validator and root command",
+    "registered app-composition node and edge graph",
+    "result and topology schemas",
+    "English PASS/SKIP/FAIL renderer",
+    "generated artifact registration",
+    "focused static contracts and CI",
+    "capability, trigger, manifest, agent-contract, and public-plan wiring"
+  ],
+  "forbiddenScope": [
+    "live runtime execution",
+    "network probing",
+    "application, game, browser, provider, agent, installer, or launcher execution",
+    "target repository or customer-data mutation",
+    "save or account mutation",
+    "secret collection",
+    "generated runtime junk in Git",
+    "merge, deployment, release, force-push, or default-branch mutation"
+  ],
+  "expectedArtifacts": [
+    "Test-AppHarness.cmd",
+    "scripts/Test-AppHarness.ps1",
+    ".ai/harness/app-composition.graph.json",
+    ".ai/harness/schemas/app-composition-graph.schema.json",
+    ".ai/harness/schemas/app-harness-validation.schema.json",
+    ".ai/harness/app-harness-report.template.md",
+    "tests/test_app_harness_validator.py",
+    ".github/workflows/app-harness-validation.yml",
+    "app-harness-validation.json",
+    "app-harness-validation.md"
+  ],
+  "tasks": [
+    {
+      "taskId": "GRAPH-01",
+      "title": "Register composition nodes and event edges",
+      "status": "completed",
+      "owner": "validation lane",
+      "dependencies": [],
+      "inputs": ["Harness manifest", "Trigger registry", "Capabilities", "Existing validators", "Artifact registry"],
+      "outputs": [".ai/harness/app-composition.graph.json", ".ai/harness/schemas/app-composition-graph.schema.json"],
+      "acceptanceCriteria": [
+        "Every registered required node has a required edge",
+        "Ingress nodes reach the observer",
+        "Observed and output nodes are reachable from the observer",
+        "Dangling required edges fail"
+      ],
+      "evidence": [
+        "Tracked graph and closed schema on feat/one-command-harness-proof",
+        "App harness validation run 29715920913 passed graph reachability and dangling-edge contracts on Windows and Linux at implementation head ce9d81984b5d28444838e0ac53577bce204f2560"
+      ]
+    },
+    {
+      "taskId": "OBSERVER-01",
+      "title": "Implement offline aggregate observer",
+      "status": "completed",
+      "owner": "validation lane",
+      "dependencies": ["GRAPH-01"],
+      "inputs": ["Registered safe validators", "Run-context policy", "Artifact registry", "Report template"],
+      "outputs": ["Test-AppHarness.cmd", "scripts/Test-AppHarness.ps1", "app-harness-validation.json", "app-harness-validation.md"],
+      "acceptanceCriteria": [
+        "Detect repository root and print branch and commit",
+        "Run only bounded offline validators",
+        "Emit JSON and English matrix outside the repository",
+        "Skip optional MCP or LSP readiness honestly",
+        "Never claim runtime proof"
+      ],
+      "evidence": [
+        "Tracked root command, observer, result schema, and report renderer",
+        "PR #35 carries delivery and review evidence",
+        "App harness validation run 29715920913 emitted the 7 passed / 1 skipped / 0 failed matrix and JSON plus Markdown artifacts on Windows and Linux at implementation head ce9d81984b5d28444838e0ac53577bce204f2560"
+      ]
+    },
+    {
+      "taskId": "TEST-01",
+      "title": "Prove parser, matrix, artifact, and safety contracts",
+      "status": "completed",
+      "owner": "validation lane",
+      "dependencies": ["GRAPH-01", "OBSERVER-01"],
+      "inputs": ["Observer implementation", "Composition graph", "Schemas", "CI workflow"],
+      "outputs": ["tests/test_app_harness_validator.py", ".github/workflows/app-harness-validation.yml", "exact-head validation evidence"],
+      "acceptanceCriteria": [
+        "PowerShell parses",
+        "Matrix and JSON artifacts are emitted",
+        "No application, launcher, browser, provider, or network execution is present",
+        "No checkout mutation occurs",
+        "Required validator failures propagate",
+        "Optional missing dependencies produce SKIP"
+      ],
+      "evidence": [
+        "App harness validation run 29715920913 passed Windows and Linux parser, aggregate, static, artifact, optional-skip, no-mutation, and hygiene checks",
+        "Agent documentation contract run 29715920903 passed",
+        "Public plan and startup readiness contracts run 29715920900 passed",
+        "Repository family harness run 29715920914 passed on Windows and Linux",
+        "Provider-routed GNHF contracts run 29715920906 passed"
+      ]
+    }
+  ],
+  "validation": [
+    "python tests/test_app_harness_validator.py",
+    "PowerShell parser for scripts/Test-AppHarness.ps1",
+    "pwsh -NoLogo -NoProfile -File ./scripts/Test-AppHarness.ps1 with temporary OutputRoot",
+    "scripts/Test-HarnessDoctrineContract.ps1",
+    "scripts/Test-AgentDocumentationContract.ps1",
+    "scripts/Test-RepositoryFamilyHarness.ps1",
+    "scripts/Test-PublicPlanContracts.ps1",
+    "git diff --check for the full PR range",
+    "final clean-checkout inspection"
+  ],
+  "proof": {
+    "target": "offline synthetic harness aggregation, registered composition topology, JSON and English artifact emission, and no-mutation exact-head CI",
+    "achieved": "Implementation head ce9d81984b5d28444838e0ac53577bce204f2560 passed app harness run 29715920913, agent documentation run 29715920903, public plan/startup run 29715920900, repository family run 29715920914, and provider-routed GNHF run 29715920906. The evidence-only plan commit requires its own exact-head CI before closeout.",
+    "ceiling": "Does not prove live event delivery, application or launcher behavior, provider availability, MCP or LSP service readiness, network behavior, target mutation, deployment, or unregistered nodes and edges."
+  },
+  "handoff": {
+    "nextOwner": "validation lane",
+    "nextCommand": "gh pr checks 35 --repo EndeavorEverlasting/AgentSwitchboard --watch",
+    "notes": [
+      "PR #35 is stacked against feat/public-plans-startup-readiness / PR #34.",
+      "Require exact-head CI on this evidence-only plan update before closeout.",
+      "Expand the graph only through tracked review when new application nodes or event edges become canonical."
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "schema": "agentswitchboard.pi-artifact-registry.v1",
+  "registryId": "agentswitchboard.pi-operational-artifacts.v1",
+  "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/PiHarness/runs/<run-id>",
+  "tracked": false,
+  "artifacts": [
+    {"artifactId": "pi-run-context", "fileName": "pi-run-context.json", "contract": "runContext", "sensitivity": "local-operational", "generation": "task-intake workflow", "naming": "one per run", "proofCeiling": "declared route and limits only"},
+    {"artifactId": "pi-architect-opinion", "fileName": "pi-architect-opinion.json", "contract": "roleOutput", "sensitivity": "local-operational", "generation": "opinion-fusion architect lane", "naming": "one per run", "proofCeiling": "one attributed model output only"},
+    {"artifactId": "pi-builder-opinion", "fileName": "pi-builder-opinion.json", "contract": "roleOutput", "sensitivity": "local-operational", "generation": "opinion-fusion builder lane", "naming": "one per run", "proofCeiling": "one attributed model output only"},
+    {"artifactId": "pi-fusion-result", "fileName": "pi-fusion-result.json", "contract": "fusionResult", "sensitivity": "local-operational", "generation": "opinion-fusion adjudicator lane", "naming": "one per run", "proofCeiling": "recorded consensus, divergence, risks, and accepted or blocked decision only"},
+    {"artifactId": "pi-validation-ledger", "fileName": "pi-validation-ledger.json", "contract": "validationLedger", "sensitivity": "local-operational", "generation": "autovalidate workflow", "naming": "one append-only ledger per run", "proofCeiling": "bounded gate execution evidence only"},
+    {"artifactId": "pi-operator-report", "fileName": "pi-operator-report.md", "contract": null, "sensitivity": "local-operational", "generation": "Get-PiHarnessStatus.ps1 or workflow renderer", "naming": "one per run", "proofCeiling": "English rendering of observed repository and run evidence"},
+    {"artifactId": "pi-final-handoff", "fileName": "pi-final-handoff.json", "contract": "runContext", "sensitivity": "local-operational", "generation": "workflow terminal step", "naming": "one per run", "proofCeiling": "compressed continuation record; receiver must re-inspect current state"}
+  ],
+  "retention": "operator-controlled local evidence outside the repository",
+  "forbiddenContent": ["credentials", "API keys", "OAuth tokens", "raw prompts", "raw model transcripts", "customer data", "private hostnames", "unredacted local usernames"],
+  "proofCeiling": "Artifact naming, location, generation, and sensitivity contract only."
+}

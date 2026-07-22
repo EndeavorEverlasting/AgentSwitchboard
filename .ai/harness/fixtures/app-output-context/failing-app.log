@@ -1,0 +1,3 @@
+2026-07-20T16:55:01Z ERROR schema validation mismatch in C:\Users\FixtureUser\dev\AgentSwitchboard
+contact=fixture.user@example.invalid host=10.20.30.40
+Process failed with exit code 1 after timeout; work is blocked.

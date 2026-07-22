@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "policyId": "agentswitchboard.harness-doctrine.v1",
+  "canonicalSource": "AGENTS.md",
+  "requiredSprintFields": ["repository", "branchOrWorktree", "prOrSprint", "lane", "ownedScope", "forbiddenScope", "expectedArtifacts", "validationOrder"],
+  "executableLoop": ["request", "evidence-review", "bounded-decision", "repository-or-git-or-github-mutation", "artifacts", "validation", "report", "next-decision"],
+  "actionCommitment": {
+    "verbs": ["install", "set up", "build", "execute", "repair", "configure", "upgrade", "deploy", "merge", "release"],
+    "requiresTrackedMutation": true,
+    "requiresValidationEvidence": true,
+    "requiresCommitOrGitHubEvidence": true,
+    "forbidAcknowledgmentOnly": true,
+    "forbidPlanSubstitution": true
+  },
+  "gnhfTestOnly": {
+    "profiles": ["test", "smoke", "probe", "fixture", "contract"],
+    "maxWallClockSeconds": 30,
+    "maxIterationSeconds": 30,
+    "defaultMaxIterations": 1,
+    "requireProcessTreeTermination": true,
+    "requireExplicitTimeoutEvidence": true
+  },
+  "deepseekUsageGate": {
+    "mode": "known-nonpremium-window-only",
+    "timeZone": "UTC",
+    "allowedRateClasses": ["standard", "discounted"],
+    "blockedRateClasses": ["double-usage", "premium-multiplier", "unknown"],
+    "maximumAllowedMultiplier": 1.0,
+    "defaultAction": "deny",
+    "requireVerifiedSchedule": true,
+    "requireSourceAndEffectiveDates": true,
+    "operatorSchedulePath": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\deepseek-usage-windows.json",
+    "officialPricingReference": {
+      "url": "https://api-docs.deepseek.com/quick_start/pricing/",
+      "verifiedAt": "2026-07-18T00:00:00Z",
+      "activeTimeOfDayWindowPublished": false,
+      "historicalOffPeakWindowUtc": {"start": "16:30", "end": "00:30", "active": false, "endedAt": "2025-09-05T16:00:00Z"},
+      "note": "The official API page currently publishes flat prices and no active time-of-day multiplier. Any plan-specific double-usage schedule must be supplied as a fresh operator-local schedule; unknown or stale schedule state blocks DeepSeek."
+    }
+  },
+  "runtimeEventContract": {
+    "policy": ".ai/harness/runtime-event-contract.policy.json",
+    "documentation": "docs/governance/runtime-event-contract.md",
+    "topology": ".ai/harness/runtime-event-topology.json",
+    "envelopeSchema": ".ai/harness/schemas/runtime-event-envelope.schema.json",
+    "validator": "scripts/Test-RuntimeEventContract.ps1",
+    "allNodesAndEdgesRegistered": true,
+    "correlationAndCausationRequired": true,
+    "staticProofCannotClaimRuntime": true,
+    "runtimeExecutionRequiresExplicitLane": true
+  },
+  "deviceProfileLauncherContract": {
+    "policy": ".ai/harness/device-profile-launcher.policy.json",
+    "documentation": "docs/governance/device-profile-launcher-contract.md",
+    "registry": ".ai/harness/device-profile-registry.json",
+    "registrySchema": ".ai/harness/schemas/device-profile-registry.schema.json",
+    "validator": "scripts/Test-DeviceProfileLauncherContract.ps1",
+    "canonicalOwnerRepository": "EndeavorEverlasting/AgentSwitchboard",
+    "oneCanonicalLauncherPerProfile": true,
+    "windowsProfileOperation": "open-or-activate",
+    "sysAdminSuiteRole": "consumer-certifier",
+    "consumerIndependentLaunchLogicForbidden": true,
+    "rawFrontendFallbackForbidden": true,
+    "crossProfileSubstitutionForbidden": true,
+    "staticProofCannotClaimOpenOrActivate": true
+  },
+  "safety": {
+    "evidenceBeforeConfidence": true,
+    "preserveBeforeDestructiveCleanup": true,
+    "reuseExistingContractsBeforeInvention": true,
+    "taskSpecificRulesOverrideGenericCloseout": true,
+    "noCompletionWithoutProof": true,
+    "noPromptPlanOrHandoffSubstitution": true
+  }
+}

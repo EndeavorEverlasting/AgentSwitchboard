@@ -1,0 +1,27 @@
+{
+  "schema": "agentswitchboard.tmux-new-instance-shortcut-workflow.v1",
+  "workflowId": "handle-tmux-new-instance-shortcut-failure",
+  "trigger": ["shortcut.install-failed", "shortcut.launch-failed", "shortcut.runtime-mismatch"],
+  "inputs": ["install plan", "install receipt when present", "launch plan when present", "launch result", "exact operator action", "first failing boundary"],
+  "steps": [
+    "preserve the existing desktop shortcut when ownership is uncertain",
+    "identify whether the failure occurred in CMD, PowerShell, shortcut COM creation, WSL, tmux allocation, tmux creation, WezTerm process start, or terminal attachment",
+    "preserve bounded stderr and the local artifact paths",
+    "do not delete a created tmux session automatically after a later WezTerm failure",
+    "do not retry with raw wezterm or a second shortcut implementation",
+    "run the focused completeness validator before changing tracked contracts",
+    "repair the first deterministic failure in the same branch and evidence chain",
+    "rerun the exact failed stage and then the complete applicable path",
+    "emit an English report with one safe next command"
+  ],
+  "outputs": ["failed tmux-new-instance-launch-result.json", "operator-readable failure summary", "bounded next command", "optional final handoff"],
+  "stopConditions": [
+    "foreign shortcut collision",
+    "unknown installed launcher identity",
+    "unsafe session or distribution name",
+    "missing dependency that requires separate installation authority",
+    "runtime state contradicts the selected session identity",
+    "live repair would require destructive cleanup or workstation-wide configuration replacement"
+  ],
+  "proofCeiling": "Failure localization and bounded repair evidence only."
+}

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/.ai/harness/schemas/runtime-event-topology.schema.json",
+  "title": "AgentSwitchboard Runtime Event Topology",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "topologyId", "status", "nodes", "edges", "proofCeiling"],
+  "properties": {
+    "schema": { "const": "agentswitchboard.runtime-event-topology.v1" },
+    "topologyId": { "type": "string", "minLength": 5 },
+    "status": { "enum": ["contract-only", "synthetic", "runtime-observed"] },
+    "nodes": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "implementationStatus", "eventTypes", "evidenceSink"],
+        "properties": {
+          "id": { "type": "string", "minLength": 3 },
+          "kind": { "enum": ["source", "observer", "handler", "sink"] },
+          "implementationStatus": { "enum": ["contract-only", "implemented", "observed"] },
+          "eventTypes": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+          "evidenceSink": { "type": "boolean" },
+          "paths": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "from", "to", "kind", "eventType", "required"],
+        "properties": {
+          "id": { "type": "string", "minLength": 3 },
+          "from": { "type": "string", "minLength": 3 },
+          "to": { "type": "string", "minLength": 3 },
+          "kind": { "enum": ["emits", "observes", "dispatches", "emits-successor", "records"] },
+          "eventType": { "type": ["string", "null"] },
+          "required": { "type": "boolean" }
+        }
+      }
+    },
+    "proofCeiling": { "type": "string", "minLength": 10 }
+  }
+}

@@ -1,0 +1,80 @@
+name: Device profile launcher contract
+
+on:
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - "CAPABILITIES.md"
+      - "TRIGGERS.md"
+      - "CODEBASE_MAP.md"
+      - "docs/governance/**"
+      - ".ai/agent-contract.json"
+      - ".ai/harness/**"
+      - "plans/**"
+      - "scripts/Test-DeviceProfileLauncherContract.ps1"
+      - "scripts/Test-HarnessDoctrineContract.ps1"
+      - "tests/test_device_profile_launcher_contract.py"
+      - ".github/workflows/device-profile-launcher-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: false
+      - name: Parse PowerShell validators
+        shell: pwsh
+        run: |
+          foreach ($file in @('scripts/Test-DeviceProfileLauncherContract.ps1','scripts/Test-HarnessDoctrineContract.ps1')) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($file, [ref]$tokens, [ref]$errors)
+            if ($errors.Count) { $errors | ForEach-Object { Write-Error "${file}: $($_.Message)" }; exit 1 }
+          }
+      - name: Run device profile contract
+        shell: pwsh
+        run: ./scripts/Test-DeviceProfileLauncherContract.ps1
+      - name: Run canonical doctrine contract
+        shell: pwsh
+        run: ./scripts/Test-HarnessDoctrineContract.ps1
+      - name: Run dependency-free contract
+        run: python tests/test_device_profile_launcher_contract.py
+      - name: Verify clean checkout
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_EVENT_NAME -eq 'pull_request') { git diff --check "${{ github.event.pull_request.base.sha }}" HEAD }
+          if (git status --short) { throw 'Checkout is dirty after validation.' }
+
+  linux-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: false
+      - name: Run dependency-free contract
+        run: python3 tests/test_device_profile_launcher_contract.py
+      - name: Run PowerShell contract
+        shell: pwsh
+        run: ./scripts/Test-DeviceProfileLauncherContract.ps1
+      - name: Check validator remains offline
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -E 'Invoke-WebRequest|Invoke-RestMethod|Start-Process|wezterm-gui\.exe start' scripts/Test-DeviceProfileLauncherContract.ps1
+      - name: Full PR-range hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git diff --check "${{ github.event.pull_request.base.sha }}" HEAD
+          else
+            git diff --check HEAD^
+          fi
+          test -z "$(git status --short)"
