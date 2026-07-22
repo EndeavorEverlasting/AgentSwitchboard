@@ -45,6 +45,7 @@ if ($exists) {
         '## Agent operating principles',
         '## Instruction precedence',
         '## Mandatory sprint declaration',
+        '## Launch order and dependency gates',
         '## Agent-facing interface doctrine (AXI)',
         '## Multi-agent and local-model governance',
         '## Forbidden behaviors',
@@ -86,6 +87,20 @@ if ($exists) {
         'proof ceiling'
     )) {
         Add-Result -Passed $text.Contains($field) -Name "governance/sprint-declaration/$field" -FailureMessage 'mandatory sprint declaration field is missing'
+    }
+
+    foreach ($rule in @(
+        'One prompt panel goes into one new chat.',
+        'Run them in this exact order.',
+        'A dependency gate is hard',
+        'Parallel-group panels remain contiguous',
+        'disjoint branches or worktrees',
+        'named convergence owner',
+        'Downstream work is blocked',
+        'Each panel is self-contained',
+        'A launch order coordinates work; it does not grant authority'
+    )) {
+        Add-Result -Passed $text.Contains($rule) -Name "governance/launch-order/$rule" -FailureMessage 'required launch-order rule is missing'
     }
 
     foreach ($rule in @(
