@@ -56,6 +56,17 @@ Record the PR or sprint identity and the validation order exactly when supplied.
 
 If the declaration cannot be made accurately, perform read-only intake first. Do not begin a broad write lane from a placeholder repository, unknown branch, ambiguous owner, or unbounded task.
 
+## Launch order and dependency gates
+
+A multi-chat launch pack is an executable coordination contract, not a convenience list.
+
+1. **One prompt panel goes into one new chat. Run them in this exact order.** The displayed panel order must match the declared launch order; do not introduce an alternate display, category, or convenience order.
+2. **A dependency gate is hard.** A downstream sprint may not start until the gate's named repository state, artifacts, validation, review, and proof requirements are satisfied with current evidence.
+3. **Parallel-group panels remain contiguous.** Parallel work is allowed only when each lane has disjoint branches or worktrees, disjoint owned paths, explicit collision boundaries, and a named convergence owner.
+4. **Downstream work is blocked when a gate fails or becomes stale.** Preserve the failed evidence, repair the owning sprint, and re-run the gate before continuing.
+5. **Each panel is self-contained.** It must carry its own repository, branch, dependencies, scope, tasks, validation, commit and PR contract, proof ceiling, final response contract, and exact next command. No panel may depend on a separately copied shared preamble.
+6. **A launch order coordinates work; it does not grant authority.** It cannot authorize secrets, destructive Git, merge, deployment, live-target mutation, provider access, or a higher proof claim than the task and repository contract permit.
+
 ## Mandatory execution discipline
 
 - Preserve unrelated dirty work; isolate concurrent writers by branch and worktree.
