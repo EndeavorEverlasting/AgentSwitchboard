@@ -1,0 +1,26 @@
+{
+  "schema": "agentswitchboard.windows-tmux-launch.v1",
+  "profileId": "windows",
+  "distribution": "Ubuntu",
+  "continueSession": "dev",
+  "newSessionPrefix": "dev",
+  "workspacePrefix": "agentswitchboard",
+  "classPrefix": "AgentSwitchboard",
+  "initialWindowName": "init",
+  "maximumInstances": 99,
+  "installRoot": "%LOCALAPPDATA%\\AgentSwitchboard\\profiles\\windows",
+  "desktopLaunchers": {
+    "continue": "AgentSwitchboard - Continue Work.cmd",
+    "new": "AgentSwitchboard - New Instance.cmd"
+  },
+  "legacySurfaces": [
+    "AgentSwitchboard tmux.cmd",
+    "AgentSwitchboard tmux - New Instance.lnk"
+  ],
+  "contracts": {
+    "continue": "Activate the existing marked WezTerm frontend when present; otherwise create dev only when absent and launch one frontend attached to dev. Never allocate a numbered session.",
+    "new": "Allocate the smallest unused dev-N session and launch exactly one separate WezTerm frontend. Never attach to dev or an existing dev-N session."
+  },
+  "generatedEvidenceTracked": false,
+  "proofCeiling": "Static contract, deterministic plan, installer receipt, and launch command acknowledgement. Visible window behavior and operator acceptance require workstation runtime proof."
+}
