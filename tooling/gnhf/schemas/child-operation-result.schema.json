@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/gnhf/schemas/child-operation-result.schema.json",
+  "title": "GNHF Child Operation Result",
+  "description": "Result returned by a child repository after running an operation requested by AgentSwitchboard.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "requestId", "generatedUtc", "targetRepository", "operationId", "status", "proofLevel", "proofCeiling"],
+  "properties": {
+    "schema": {
+      "const": "agentswitchboard.gnhf.child-operation-result.v1"
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generatedUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "targetRepository": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "running", "completed", "failed", "blocked", "rejected"]
+    },
+    "proofLevel": {
+      "type": "string",
+      "minLength": 1
+    },
+    "proofCeiling": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "path"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "risks": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "nextCommand": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reinspectState": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}
