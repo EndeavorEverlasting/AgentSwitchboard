@@ -1,0 +1,40 @@
+{
+  "schema": "agentswitchboard.workflow.v1",
+  "workflowId": "windows-tmux-launch",
+  "purpose": "Choose, install, validate, and prove the two non-overlapping Windows tmux launch modes.",
+  "entrypoints": {
+    "continue": "Open-AgentSwitchboard-Continue.cmd",
+    "new": "Open-AgentSwitchboard-New.cmd",
+    "install": "Install-AgentSwitchboard-Tmux-Launchers.cmd",
+    "validate": "pwsh -NoLogo -NoProfile -File tooling/profiles/windows/Test-AgentSwitchboardTmuxLaunchers.ps1"
+  },
+  "selection": [
+    {
+      "when": "operator wants the prior dev workspace and conversation state",
+      "mode": "continue",
+      "contract": "activate the existing marked frontend when present; otherwise attach one frontend to dev"
+    },
+    {
+      "when": "operator wants isolated work that must not display the prior dev session",
+      "mode": "new",
+      "contract": "allocate a new dev-N session and a separate WezTerm process"
+    }
+  ],
+  "failureHandling": [
+    "Do not fall back from new to continue.",
+    "Do not launch a second continue frontend when a marked one is detected.",
+    "Preserve legacy launchers and report them as non-authoritative.",
+    "Record plan/result artifacts under LOCALAPPDATA and return the exact artifact path."
+  ],
+  "handoff": {
+    "required": [
+      "selected mode",
+      "session name",
+      "workspace",
+      "window class",
+      "plan/result path",
+      "validator result",
+      "runtime proof ceiling"
+    ]
+  }
+}
