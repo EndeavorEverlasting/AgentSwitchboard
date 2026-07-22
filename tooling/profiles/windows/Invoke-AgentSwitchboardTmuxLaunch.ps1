@@ -80,8 +80,8 @@ function Invoke-BoundedProcess {
 
     return [pscustomobject]@{
         ExitCode = $process.ExitCode
-        Stdout = $stdoutTask.GetAwaiter().GetResult().Replace([char]0, '').Trim()
-        Stderr = $stderrTask.GetAwaiter().GetResult().Replace([char]0, '').Trim()
+        Stdout = $stdoutTask.GetAwaiter().GetResult().Replace([string][char]0, [string]::Empty).Trim()
+        Stderr = $stderrTask.GetAwaiter().GetResult().Replace([string][char]0, [string]::Empty).Trim()
     }
 }
 
