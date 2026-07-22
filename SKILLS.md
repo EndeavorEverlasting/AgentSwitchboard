@@ -43,6 +43,7 @@ Every canonical skill must define:
 | [`evidence-validation`](.ai/skills/evidence-validation/SKILL.md) | Build honest proof and repair validation gaps | failing checks, review findings, proof request |
 | [`pr-integration`](.ai/skills/pr-integration/SKILL.md) | Reconcile stacked or parallel branches safely | merge request, stacked PRs, consumed upstream work |
 | [`runtime-proof`](.ai/skills/runtime-proof/SKILL.md) | Move from static confidence to observed behavior | launcher, installer, harness, or live-runtime request |
+| [`windows-tmux-launch`](.ai/skills/windows-tmux-launch/SKILL.md) | Select and prove Continue Work versus isolated New Instance launch behavior | WezTerm/tmux launch request, duplicate conversation regression, obsolete CMD |
 
 ## GNHF artifact distinction
 
