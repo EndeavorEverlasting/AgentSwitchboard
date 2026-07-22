@@ -48,6 +48,19 @@ jobs:
             exit 1
           }
 
+      - name: Exercise CMD argument guard
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          set AGENT_SWITCHBOARD_NO_PAUSE=1
+          call Pull-And-Run-AgentSwitchboard.cmd unsupported-mode
+          if not errorlevel 2 exit /b 1
+          if errorlevel 3 exit /b 1
+
       - name: Check repository hygiene
         shell: bash
-        run: git diff --check ${{ github.event.pull_request.base.sha || 'HEAD^' }}..HEAD
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ -z "$BASE_REF" ]; then BASE_REF=main; fi
+          git diff --check "origin/$BASE_REF...HEAD"
