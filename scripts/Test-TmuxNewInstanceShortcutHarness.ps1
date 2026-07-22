@@ -110,7 +110,7 @@ try {
     Check ($manifest.instanceId -eq 'auto') 'manifest/instance'
     Check ($manifest.sessionPrefix -eq 'dev') 'manifest/session-prefix'
     Check ($manifest.allocationPolicy -eq 'smallest-positive-integer') 'manifest/allocation'
-    Check ($manifest.openOrActivateImplementation -eq 'blocked-until-separate-runtime-sprint') 'manifest/open-block'
+    Check ($manifest.openOrActivateImplementation -eq 'implemented') 'manifest/open-block'
     Check ($manifest.generatedEvidenceTracked -eq $false) 'manifest/evidence'
 
     $registry = $text['tooling/profiles/windows/harness/tmux-new-instance-shortcut/shortcut-profile.registry.json'] | ConvertFrom-Json
@@ -149,7 +149,7 @@ Check (-not $installer.Contains('Start-Process')) 'installer/no-runtime'
 Check (-not $installer.Contains('tmux new-session')) 'installer/no-tmux'
 
 $launcher = $text['tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1']
-foreach ($token in @('--always-new-process', 'tmux new-session -d', 'tmux attach-session', 'Local\AgentSwitchboard.TmuxNewInstance', 'The default open-or-activate path remains blocked', 'visibleWindowObserved = $false', "proofLevel = 'command-ack'")) {
+foreach ($token in @('--always-new-process', 'tmux new-session -d', 'tmux attach-session', 'Local\AgentSwitchboard.TmuxNewInstance', 'open-or-activate', 'visibleWindowObserved = $false', "proofLevel = 'command-ack'")) {
     Check ($launcher.Contains($token)) "launcher/$token"
 }
 Check (-not $launcher.Contains('tmux new-session -A')) 'launcher/no-new-A'

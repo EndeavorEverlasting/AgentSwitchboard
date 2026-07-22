@@ -46,7 +46,7 @@
     "WezTerm must receive start --always-new-process for the new-instance path.",
     "The installer may not overwrite a foreign desktop shortcut with the same name.",
     "Installing the shortcut does not prove WSL, tmux, WezTerm, window visibility, attachment, or operator acceptance.",
-    "The open-or-activate mode remains blocked until its separate implementation and runtime proof sprint."
+    "The open-or-activate launcher path is implemented but live workstation proof remains separate."
   ],
   "proofCeiling": "Tracked shortcut installer, canonical new-instance implementation, deterministic allocation, installer readback contracts, and offline validation. Live workstation behavior remains separate proof."
 }

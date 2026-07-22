@@ -107,7 +107,7 @@ It does not use `tmux new-session -A`, because `-A` may attach to an existing se
 - A live double-click has not yet proved one visible WezTerm window.
 - The exact allocated tmux session has not yet been observed as the attached client inside the visible window.
 - Window styling, layout, focus behavior, repeat-click behavior, rollback, and operator acceptance remain unproved.
-- The default `open-or-activate` route remains intentionally blocked until its separate implementation and runtime-proof sprint.
+- The `open-or-activate` launcher path is implemented but not yet proved on a live workstation.
 
 ## Artifacts
 

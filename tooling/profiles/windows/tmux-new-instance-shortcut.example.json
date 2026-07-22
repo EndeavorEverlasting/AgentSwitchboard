@@ -16,6 +16,6 @@
   "evidenceDirectoryName": "tmux-new-instance\\runs",
   "runtimeMode": "new-instance",
   "instanceId": "auto",
-  "openOrActivateImplementation": "blocked-until-separate-runtime-sprint",
+  "openOrActivateImplementation": "implemented",
   "generatedEvidenceTracked": false
 }

@@ -105,7 +105,7 @@ The default mode converges one workspace identity to one visible window. An expl
 
 ## tmux new-instance desktop shortcut harness
 
-The focused implementation map is `tooling/profiles/windows/harness/tmux-new-instance-shortcut/codebase-map.json`. It indexes the CMD installer, canonical launcher, manifest, workflows, artifact registry, schema, fixtures, skill, validator, status report, hook, operator guide, and Windows/Linux CI. The tracked `new-instance` slice remains unproved on the operator workstation, and default `open-or-activate` remains blocked.
+The focused implementation map is `tooling/profiles/windows/harness/tmux-new-instance-shortcut/codebase-map.json`. It indexes the CMD installer, canonical launcher, manifest, workflows, artifact registry, schema, fixtures, skill, validator, status report, hook, operator guide, and Windows/Linux CI. The tracked `new-instance` and `open-or-activate` slices remain unproved on the operator workstation.
 
 ## Repository-family harness
 

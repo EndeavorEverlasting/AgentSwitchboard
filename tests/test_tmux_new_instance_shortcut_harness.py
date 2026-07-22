@@ -49,7 +49,7 @@ def main() -> None:
     assert manifest["sessionPrefix"] == "dev"
     assert manifest["allocationPolicy"] == "smallest-positive-integer"
     assert manifest["openOrActivateImplementation"] == (
-        "blocked-until-separate-runtime-sprint"
+        "implemented"
     )
     assert manifest["generatedEvidenceTracked"] is False
 
@@ -163,7 +163,7 @@ def main() -> None:
         "tmux new-session -d",
         "tmux attach-session",
         "Local\\AgentSwitchboard.TmuxNewInstance",
-        "The default open-or-activate path remains blocked",
+        "open-or-activate",
         "visibleWindowObserved = $false",
         "proofLevel = 'command-ack'",
     ):
