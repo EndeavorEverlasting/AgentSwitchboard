@@ -46,6 +46,7 @@ if ($exists) {
         '## Instruction precedence',
         '## Mandatory sprint declaration',
         '## Launch order and dependency gates',
+        '## Broad-stride execution and principle reuse',
         '## Agent-facing interface doctrine (AXI)',
         '## Multi-agent and local-model governance',
         '## Forbidden behaviors',
@@ -104,6 +105,25 @@ if ($exists) {
     }
 
     foreach ($rule in @(
+        'Broad strides are encouraged',
+        'one coherent vertical slice',
+        'reuse, extend, repair, retire, or create',
+        'Declare the boundary map',
+        'one canonical owner',
+        'Complete the owned vertical slice',
+        'Principles stay canonical',
+        'Skills describe reusable workflow guidance',
+        'Capabilities expose reusable operations',
+        'Triggers deterministically route conditions',
+        'Application behavior remains in code',
+        'verified, inferred, or unresolved',
+        'Do not weaken a gate',
+        'does not grant merge, release, deployment, or live-target authority'
+    )) {
+        Add-Result -Passed $text.Contains($rule) -Name "governance/broad-stride/$rule" -FailureMessage 'required broad-stride or principle-reuse rule is missing'
+    }
+
+    foreach ($rule in @(
         'Token-efficient output',
         'Minimal default schemas',
         'Content truncation',
@@ -144,6 +164,8 @@ if ($exists) {
         'Summaries without proof',
         'Completion claims without running checks',
         'Secret or credential exposure',
+        'Re-inventing an established principle',
+        'Trivial-only progress',
         'Installing or executing unverified third-party agent snippets',
         'Claiming privacy, model independence, successful fusion, or continuous validation from configuration intent alone'
     )) {
