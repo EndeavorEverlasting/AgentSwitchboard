@@ -24,6 +24,7 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | `validation.requested` | proof gap, skipped checks, contract drift | `evidence-validation` |
 | `integration.requested` | stacked PRs, consumed commits, branch convergence | `pr-integration` |
 | `runtime.requested` | launcher, installer, behavior, harness, or environment proof | `runtime-proof` |
+| `windows.tmux-launch` | continue prior tmux work, create isolated WezTerm instance, duplicate-session regression, obsolete terminal CMD | `windows-tmux-launch`; select exactly one non-fallback mode and validate before live proof |
 | `docs.contract-change` | AGENTS, skills, capabilities, triggers, schemas | `bounded-sprint` plus documentation-contract validator |
 | `tool.missing-or-unhealthy` | command absent or bounded probe fails | reuse, repair, install, skip, or block according to scope |
 | `gnhf.runtime-repair-required` | required provider-route capabilities absent (executable, agent adapter, worktree, caps, launchers, OpenCode model selection) | repair via `Repair-ProviderRoutedGnhf.cmd` / capability installer; do not trigger solely because an unpublished source version is newer |
@@ -40,6 +41,10 @@ The `gnhf.prompt-request` trigger is an artifact-type selector. It requires the 
 Do not route a GNHF prompt request to a sprint map, launch pack, plan-only response, ordinary repo-agent prompt, or explanatory essay.
 
 When the exact agent cannot be proven launchable in the intended execution domain, the selected skill produces the bounded spawnability probe before repository work.
+
+## Windows tmux launch invariant
+
+`windows.tmux-launch` must resolve to one explicit mode. Continue targets only `dev` and may activate an existing marked frontend. New allocates an unused `dev-N` and requests a distinct WezTerm process. Neither mode may silently fall back to the other, and invoking bare `wezterm` is not an AgentSwitchboard launch contract.
 
 ## Trigger payload
 
