@@ -54,8 +54,9 @@ jobs:
         run: |
           set AGENT_SWITCHBOARD_NO_PAUSE=1
           call Pull-And-Run-AgentSwitchboard.cmd unsupported-mode
-          if not errorlevel 2 exit /b 1
-          if errorlevel 3 exit /b 1
+          set RESULT_CODE=%ERRORLEVEL%
+          if not "%RESULT_CODE%"=="2" exit /b 1
+          exit /b 0
 
       - name: Check repository hygiene
         shell: bash
