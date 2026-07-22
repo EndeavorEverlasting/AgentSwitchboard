@@ -1,0 +1,39 @@
+{
+  "schema": "agentswitchboard.artifact-registry.v1",
+  "registryId": "windows-tmux-launch",
+  "artifacts": [
+    {
+      "artifactId": "windows-tmux-launch-plan",
+      "fileName": "windows-tmux-launch-plan.json",
+      "location": "%LOCALAPPDATA%\\AgentSwitchboard\\profiles\\windows\\runs\\<run-id>",
+      "generator": "Invoke-AgentSwitchboardTmuxLaunch.ps1",
+      "tracked": false,
+      "proofCeiling": "deterministic session/workspace/process command plan"
+    },
+    {
+      "artifactId": "windows-tmux-launch-result",
+      "fileName": "windows-tmux-launch-result.json",
+      "location": "%LOCALAPPDATA%\\AgentSwitchboard\\profiles\\windows\\runs\\<run-id>",
+      "generator": "Invoke-AgentSwitchboardTmuxLaunch.ps1",
+      "tracked": false,
+      "proofCeiling": "process observation or launch command acknowledgement; not operator acceptance"
+    },
+    {
+      "artifactId": "windows-tmux-launch-install-receipt",
+      "fileName": "windows-tmux-launch-install-receipt.json",
+      "location": "%LOCALAPPDATA%\\AgentSwitchboard\\profiles\\windows\\state",
+      "generator": "Install-AgentSwitchboardTmuxLaunchers.ps1",
+      "tracked": false,
+      "proofCeiling": "installed launcher content and readback"
+    },
+    {
+      "artifactId": "windows-tmux-launch-operator-report",
+      "fileName": "windows-tmux-launch-operator-report.md",
+      "location": "%LOCALAPPDATA%\\AgentSwitchboard\\profiles\\windows\\state",
+      "generator": "Install-AgentSwitchboardTmuxLaunchers.ps1",
+      "tracked": false,
+      "proofCeiling": "English installation summary"
+    }
+  ],
+  "naming": "Stable artifact names inside timestamped run directories; never commit workstation evidence."
+}
