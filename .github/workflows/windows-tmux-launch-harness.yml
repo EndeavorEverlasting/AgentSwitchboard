@@ -1,0 +1,38 @@
+name: Windows tmux launch harness
+
+on:
+  pull_request:
+    paths:
+      - "Open-AgentSwitchboard-Continue.cmd"
+      - "Open-AgentSwitchboard-New.cmd"
+      - "Install-AgentSwitchboard-Tmux-Launchers.cmd"
+      - "tooling/profiles/windows/**"
+      - ".ai/harness/workflows/windows-tmux-launch.workflow.json"
+      - ".ai/harness/artifacts/windows-tmux-launch.artifact-registry.json"
+      - ".ai/skills/windows-tmux-launch/**"
+      - "docs/workstation/windows-tmux-launch.md"
+      - ".github/workflows/windows-tmux-launch-harness.yml"
+  push:
+    branches: [main]
+    paths:
+      - "Open-AgentSwitchboard-Continue.cmd"
+      - "Open-AgentSwitchboard-New.cmd"
+      - "Install-AgentSwitchboard-Tmux-Launchers.cmd"
+      - "tooling/profiles/windows/**"
+      - ".ai/harness/workflows/windows-tmux-launch.workflow.json"
+      - ".ai/harness/artifacts/windows-tmux-launch.artifact-registry.json"
+      - ".ai/skills/windows-tmux-launch/**"
+      - "docs/workstation/windows-tmux-launch.md"
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate dual launch contracts
+        shell: pwsh
+        run: |
+          pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tooling\profiles\windows\Test-AgentSwitchboardTmuxLaunchers.ps1
+      - name: Check diff whitespace
+        shell: pwsh
+        run: git diff --check HEAD~1 HEAD
