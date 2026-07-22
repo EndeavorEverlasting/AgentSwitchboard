@@ -12,6 +12,8 @@
     "workflow": ".ai/harness/workflows/repository-family-intake.workflow.json",
     "statusProbe": "scripts/Get-RepositoryFamilyHarnessStatus.ps1",
     "validator": "scripts/Test-RepositoryFamilyHarness.ps1",
+    "pythonValidator": "scripts/validate_harness.py",
+    "bomContractValidator": "scripts/test_powershell_utf8_bom_contract.py",
     "operatorReportTemplate": ".ai/harness/operator-report.template.md",
     "finalHandoffSchema": ".ai/harness/schemas/final-handoff.schema.json"
   },
@@ -42,6 +44,11 @@
   "localHooks": {
     "enabled": false,
     "reason": "The first slice uses explicit CI and operator commands. No implicit local hook is justified until adoption and failure behavior are proven."
+  },
+  "validation": {
+    "linuxNativeCommand": "python3 scripts/validate_harness.py",
+    "testCommand": "python3 -m pytest tests/test_harness_validation.py -v",
+    "bomCommand": "python3 scripts/test_powershell_utf8_bom_contract.py"
   },
   "proofCeiling": "This harness proves family registration, read-only local clone discovery, Git identity, required-path readiness, and deterministic contract validation only."
 }

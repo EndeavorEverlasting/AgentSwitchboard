@@ -11,6 +11,9 @@ on:
       - "docs/governance/repository-family*.md"
       - "scripts/Get-RepositoryFamilyHarnessStatus.ps1"
       - "scripts/Test-RepositoryFamilyHarness.ps1"
+      - "scripts/validate_harness.py"
+      - "tests/test_harness_validation.py"
+      - "pyproject.toml"
       - "scripts/Test-AgentDocumentationContract.ps1"
       - ".github/workflows/repository-family-harness.yml"
   workflow_dispatch:
@@ -19,6 +22,38 @@ permissions:
   contents: read
 
 jobs:
+  python-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pytest
+        run: pip install pytest
+      - name: Run Python harness validator
+        shell: bash
+        run: python3 scripts/validate_harness.py
+      - name: Run Python harness tests
+        shell: bash
+        run: python3 -m pytest tests/test_harness_validation.py -v
+      - name: Run PowerShell UTF-8 BOM contract
+        shell: bash
+        run: python3 scripts/test_powershell_utf8_bom_contract.py
+      - name: Check repository hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${GITHUB_BASE_REF:-}" ]]; then
+            git diff --check "origin/${GITHUB_BASE_REF}...HEAD"
+          else
+            git diff --check HEAD^
+          fi
+          test -z "$(git status --short)"
+
   linux-contracts:
     runs-on: ubuntu-latest
     steps:

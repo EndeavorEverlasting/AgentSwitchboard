@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [string]$RepoPath = (Get-Location).Path,
     [ValidateSet("opencode", "deepseek", "goose", "agy", "copilot", "hermes")]
