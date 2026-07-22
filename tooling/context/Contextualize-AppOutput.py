@@ -22,6 +22,7 @@ SCHEMA = "agentswitchboard.app-output-context/v1"
 REGISTRY_SCHEMA = "ai-harness-prompt-registry/v1"
 SURFACES = ("regular_ai_prompt", "gnhf_launch_artifact")
 SEVERITY_ORDER = {"none": 0, "info": 1, "warning": 2, "error": 3, "blocked": 4}
+REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 
 TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_.:/-]{2,}")
 EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.I)
@@ -36,6 +37,7 @@ PRIVATE_IP_RE = re.compile(
 )
 WINDOWS_USER_RE = re.compile(r"(?i)\b[A-Z]:\\Users\\[^\\\s]+")
 UNIX_HOME_RE = re.compile(r"(?<![\w/])/home/[^/\s]+")
+PUBLIC_SOURCE_LABEL_RE = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
 SECRET_PATTERNS = (
     re.compile(r"(?i)\b(bearer)\s+[A-Za-z0-9._~+/=-]{8,}"),
     re.compile(r"(?i)\b(api[_ -]?key|token|secret|password)\s*[:=]\s*[^\s,;]+"),
@@ -156,6 +158,37 @@ def redact(text: str) -> str:
     return value
 
 
+def normalize_source_app(source_app: str) -> str:
+    label = source_app.strip()
+    if not label:
+        raise ValueError("source-app must be a non-empty public label.")
+    if len(label) > 64:
+        raise ValueError("source-app exceeds the 64-character public-label limit.")
+    if redact(label) != label:
+        raise ValueError("source-app contains sensitive data; provide a stable public application slug.")
+    if not PUBLIC_SOURCE_LABEL_RE.fullmatch(label):
+        raise ValueError(
+            "source-app must be a lowercase public slug using letters, digits, and single hyphens only."
+        )
+    if any(character.isdigit() for character in label) and "-" not in label:
+        raise ValueError(
+            "source-app containing digits must use a descriptive hyphenated public slug, not a host-style label."
+        )
+    return label
+
+
+def ensure_output_root_outside_repository(path: Path) -> Path:
+    resolved = path.expanduser().resolve()
+    repository = REPOSITORY_ROOT.resolve()
+    try:
+        resolved.relative_to(repository)
+    except ValueError:
+        return resolved
+    raise ValueError(
+        f"output-root must be outside the repository checkout: {repository}"
+    )
+
+
 def normalize_records(records: Iterable[str], max_record_chars: int = 800) -> list[str]:
     normalized: list[str] = []
     for record in records:
@@ -234,12 +267,12 @@ def rank_prompts(
         sequence = int(prompt.get("sequence", 10_000))
         ranked.append((score, -sequence, str(prompt["id"]), {
             "promptId": str(prompt["id"]),
-            "name": str(prompt.get("name", "")),
+            "name": str(prompt.get("name", ""))[:160],
             "score": score,
             "executionSurface": surface,
             "matchedTerms": sorted(set(matched))[:8],
             "useThisWhen": str(prompt.get("useThisWhen", ""))[:240],
-            "requiredVariables": [str(item) for item in prompt.get("requiredVariables", [])],
+            "requiredVariables": [str(item)[:80] for item in prompt.get("requiredVariables", [])[:16]],
         }))
     ranked.sort(key=lambda item: (-item[0], -item[1], item[2]))
     return [item[3] for item in ranked[:top]]
@@ -255,8 +288,7 @@ def choose_excerpts(records: list[str], limit: int = 6, max_chars: int = 360) ->
             score += 2
         scored.append((score, -index, record[:max_chars]))
     scored.sort(reverse=True)
-    excerpts = [entry[2] for entry in scored[:limit] if entry[2]]
-    return excerpts
+    return [entry[2] for entry in scored[:limit] if entry[2]]
 
 
 def build_instruction(highest: str, candidates: list[dict[str, Any]]) -> tuple[str, str]:
@@ -273,6 +305,114 @@ def build_instruction(highest: str, candidates: list[dict[str, Any]]) -> tuple[s
     return action, route
 
 
+def compact_packet(packet: dict[str, Any]) -> str:
+    return json.dumps(packet, ensure_ascii=False, separators=(",", ":"))
+
+
+def sync_candidate_derivatives(packet: dict[str, Any]) -> None:
+    candidates = packet["promptKit"]["candidates"]
+    packet["instructionPacket"]["suggestedPromptIds"] = [
+        item["promptId"] for item in candidates
+    ]
+    packet["instructionPacket"]["requiredVariables"] = sorted({
+        variable
+        for item in candidates
+        for variable in item["requiredVariables"]
+    })
+
+
+def refresh_packet_bounds(
+    packet: dict[str, Any],
+    *,
+    initial_chars: int,
+    max_packet_chars: int,
+    truncated: bool,
+) -> int:
+    bounds = packet["packetBounds"]
+    bounds["maxPacketChars"] = max_packet_chars
+    bounds["initialChars"] = initial_chars
+    bounds["truncated"] = truncated
+    for _ in range(8):
+        size = len(compact_packet(packet))
+        if bounds["finalChars"] == size:
+            return size
+        bounds["finalChars"] = size
+    return len(compact_packet(packet))
+
+
+def enforce_packet_limit(packet: dict[str, Any], max_packet_chars: int) -> dict[str, Any]:
+    if max_packet_chars < 512:
+        raise ValueError("max-packet-chars must be at least 512.")
+
+    initial_chars = refresh_packet_bounds(
+        packet,
+        initial_chars=0,
+        max_packet_chars=max_packet_chars,
+        truncated=False,
+    )
+    initial_chars = refresh_packet_bounds(
+        packet,
+        initial_chars=initial_chars,
+        max_packet_chars=max_packet_chars,
+        truncated=False,
+    )
+    if initial_chars <= max_packet_chars:
+        return packet
+
+    reductions = (
+        lambda: (
+            packet["context"].__setitem__("excerpts", packet["context"]["excerpts"][:2]),
+            packet["context"].__setitem__("keywords", packet["context"]["keywords"][:8]),
+            packet["promptKit"].__setitem__("candidates", packet["promptKit"]["candidates"][:1]),
+        ),
+        lambda: [
+            candidate.update({
+                "name": candidate["name"][:80],
+                "matchedTerms": candidate["matchedTerms"][:4],
+                "useThisWhen": candidate["useThisWhen"][:120],
+                "requiredVariables": candidate["requiredVariables"][:8],
+            })
+            for candidate in packet["promptKit"]["candidates"]
+        ],
+        lambda: (
+            packet["context"].__setitem__(
+                "excerpts", [item[:160] for item in packet["context"]["excerpts"][:1]]
+            ),
+            packet["context"].__setitem__("keywords", packet["context"]["keywords"][:4]),
+            packet["context"].__setitem__("signals", packet["context"]["signals"][:4]),
+        ),
+        lambda: (
+            packet["context"].__setitem__("excerpts", []),
+            packet["context"].__setitem__("keywords", []),
+            packet["context"].__setitem__("signals", packet["context"]["signals"][:2]),
+        ),
+        lambda: packet["promptKit"].__setitem__("candidates", []),
+    )
+
+    for reduce_packet in reductions:
+        reduce_packet()
+        sync_candidate_derivatives(packet)
+        size = refresh_packet_bounds(
+            packet,
+            initial_chars=initial_chars,
+            max_packet_chars=max_packet_chars,
+            truncated=True,
+        )
+        if size <= max_packet_chars:
+            return packet
+
+    minimum_chars = refresh_packet_bounds(
+        packet,
+        initial_chars=initial_chars,
+        max_packet_chars=max_packet_chars,
+        truncated=True,
+    )
+    raise ValueError(
+        f"max-packet-chars={max_packet_chars} is too small; "
+        f"the minimum schema-valid packet is {minimum_chars} characters."
+    )
+
+
 def contextualize(
     raw: str,
     registry: dict[str, Any],
@@ -284,6 +424,7 @@ def contextualize(
 ) -> dict[str, Any]:
     if surface not in SURFACES:
         raise ValueError(f"Unsupported execution surface: {surface}")
+    public_source_app = normalize_source_app(source_app)
     parsed = parse_output(raw)
     records = normalize_records(parsed.records)
     signals, highest = classify_signals(records)
@@ -293,7 +434,7 @@ def contextualize(
         "schema": SCHEMA,
         "generatedUtc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "source": {
-            "application": source_app,
+            "application": public_source_app,
             "format": parsed.format,
             "sha256": sha256_text(raw),
             "rawOutputStored": False,
@@ -325,21 +466,14 @@ def contextualize(
             "level": "offline-contextualization",
             "ceiling": "Offline parsing, redaction, signal extraction, deterministic prompt-kit ranking, and compact instruction rendering only. No application execution, provider response, repository mutation, target behavior, or runtime success is proven.",
         },
+        "packetBounds": {
+            "maxPacketChars": max_packet_chars,
+            "initialChars": 0,
+            "finalChars": 0,
+            "truncated": False,
+        },
     }
-    encoded = json.dumps(packet, ensure_ascii=False, separators=(",", ":"))
-    if len(encoded) > max_packet_chars:
-        packet["context"]["excerpts"] = packet["context"]["excerpts"][:2]
-        packet["context"]["keywords"] = packet["context"]["keywords"][:8]
-        packet["promptKit"]["candidates"] = packet["promptKit"]["candidates"][:1]
-        packet["instructionPacket"]["suggestedPromptIds"] = [
-            item["promptId"] for item in packet["promptKit"]["candidates"]
-        ]
-        packet["instructionPacket"]["requiredVariables"] = sorted({
-            variable
-            for item in packet["promptKit"]["candidates"]
-            for variable in item["requiredVariables"]
-        })
-    return packet
+    return enforce_packet_limit(packet, max_packet_chars)
 
 
 def render_report(packet: dict[str, Any]) -> str:
@@ -353,6 +487,7 @@ def render_report(packet: dict[str, Any]) -> str:
         for item in packet["context"]["signals"]
     ] or ["- No known failure or warning signal."]
     excerpt_lines = [f"- `{item}`" for item in packet["context"]["excerpts"]] or ["- No non-empty records."]
+    bounds = packet["packetBounds"]
     return "\n".join([
         "# APP OUTPUT CONTEXT",
         "",
@@ -361,6 +496,8 @@ def render_report(packet: dict[str, Any]) -> str:
         f"- Input SHA-256: `{packet['source']['sha256']}`",
         f"- Highest severity: `{packet['context']['highestSeverity']}`",
         f"- Execution surface: `{packet['promptKit']['requestedExecutionSurface']}`",
+        f"- Packet characters: `{bounds['finalChars']}` / `{bounds['maxPacketChars']}`",
+        f"- Packet truncated: `{str(bounds['truncated']).lower()}`",
         "",
         "## Signals",
         *signal_lines,
@@ -384,12 +521,28 @@ def render_report(packet: dict[str, Any]) -> str:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Parse supplied app output into a compact prompt-kit-aware instruction packet.")
+    parser = argparse.ArgumentParser(
+        description="Parse supplied app output into a compact prompt-kit-aware instruction packet."
+    )
     parser.add_argument("--input", required=True, type=Path, help="UTF-8 text, JSON, or JSONL output file.")
-    parser.add_argument("--prompt-registry", required=True, type=Path, help="ai-harness-prompt-registry/v1 JSON or .gz.b64 bundle.")
-    parser.add_argument("--source-app", required=True, help="Stable public application or adapter label; do not include private hostnames.")
+    parser.add_argument(
+        "--prompt-registry",
+        required=True,
+        type=Path,
+        help="ai-harness-prompt-registry/v1 JSON or .gz.b64 bundle.",
+    )
+    parser.add_argument(
+        "--source-app",
+        required=True,
+        help="Stable lowercase public application slug; never a hostname, path, account, or secret.",
+    )
     parser.add_argument("--execution-surface", required=True, choices=SURFACES)
-    parser.add_argument("--output-root", required=True, type=Path, help="Directory outside the source repository.")
+    parser.add_argument(
+        "--output-root",
+        required=True,
+        type=Path,
+        help="Directory outside the source repository.",
+    )
     parser.add_argument("--top", type=int, default=3, choices=range(1, 6), metavar="1-5")
     parser.add_argument("--max-packet-chars", type=int, default=8_000)
     return parser
@@ -398,6 +551,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
+        output_root = ensure_output_root_outside_repository(args.output_root)
         raw = load_text(args.input)
         registry = load_registry(args.prompt_registry)
         packet = contextualize(
@@ -408,16 +562,21 @@ def main(argv: list[str] | None = None) -> int:
             top=args.top,
             max_packet_chars=args.max_packet_chars,
         )
-        args.output_root.mkdir(parents=True, exist_ok=True)
-        json_path = args.output_root / "app-output-context.json"
-        report_path = args.output_root / "app-output-context.md"
-        json_path.write_text(json.dumps(packet, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        output_root.mkdir(parents=True, exist_ok=True)
+        json_path = output_root / "app-output-context.json"
+        report_path = output_root / "app-output-context.md"
+        json_path.write_text(compact_packet(packet) + "\n", encoding="utf-8")
         report_path.write_text(render_report(packet), encoding="utf-8")
     except (OSError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
     print(f"Context JSON: {json_path}")
     print(f"English report: {report_path}")
+    print(
+        "Packet bounds: "
+        f"{packet['packetBounds']['finalChars']}/{packet['packetBounds']['maxPacketChars']} "
+        f"(truncated={str(packet['packetBounds']['truncated']).lower()})"
+    )
     print(f"Proof ceiling: {packet['proof']['ceiling']}")
     return 0
 
