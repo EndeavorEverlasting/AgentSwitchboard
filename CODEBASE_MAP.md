@@ -30,6 +30,7 @@ Load only the smallest surface required by the selected skill, workflow, or repo
 - `.ai/skills/evidence-validation/SKILL.md` — build honest proof and repair validation gaps.
 - `.ai/skills/pr-integration/SKILL.md` — reconcile stacked or parallel branches.
 - `.ai/skills/runtime-proof/SKILL.md` — advance from static evidence to observed behavior without proof inflation.
+- `.ai/skills/windows-tmux-launch/SKILL.md` — select, install, validate, and prove Continue Work versus isolated New Instance behavior.
 
 ## GNHF control plane
 
@@ -47,7 +48,15 @@ Load only the smallest surface required by the selected skill, workflow, or repo
 ## Workstation and terminal integration
 
 - `tooling/wsl/` — Windows/WSL/tmux workspace provisioning, lifecycle, proof, and repair.
-- `docs/workstation/` — operator runbooks and proof ceilings.
+- `tooling/profiles/windows/Invoke-AgentSwitchboardTmuxLaunch.ps1` — canonical dual-mode launcher; Continue targets only `dev`, New allocates an unused `dev-N`.
+- `tooling/profiles/windows/Install-AgentSwitchboardTmuxLaunchers.ps1` — installs the two explicit Desktop CMD surfaces and emits receipt/report evidence.
+- `tooling/profiles/windows/Test-AgentSwitchboardTmuxLaunchers.ps1` — completeness, parser, manifest, plan, and CMD-mode validator.
+- `Open-AgentSwitchboard-Continue.cmd` — repository-relative Continue Work entrypoint.
+- `Open-AgentSwitchboard-New.cmd` — repository-relative isolated New Instance entrypoint.
+- `Install-AgentSwitchboard-Tmux-Launchers.cmd` — one-click installer/refresh entrypoint.
+- `.ai/harness/workflows/windows-tmux-launch.workflow.json` — selection, failure, and handoff workflow.
+- `.ai/harness/artifacts/windows-tmux-launch.artifact-registry.json` — generated plan/result/receipt/report registry.
+- `docs/workstation/windows-tmux-launch.md` — English operator runbook, known trap, and live certificate.
 - workstation scripts may configure a local environment only when the selected workflow explicitly authorizes mutation.
 
 ## Governance and adoption
@@ -61,6 +70,7 @@ Load only the smallest surface required by the selected skill, workflow, or repo
 - `scripts/Test-AgentDocumentationContract.ps1` — root contract, canonical skills, triggers, and template checks.
 - `scripts/Test-RepositoryFamilyHarness.ps1` — family profile and harness checks.
 - `tooling/gnhf/Test-GnhfFleetContracts.ps1` and more specific downstream validators — GNHF implementation checks on branches that contain those surfaces.
+- `tooling/profiles/windows/Test-AgentSwitchboardTmuxLaunchers.ps1` — Windows tmux dual-launch completeness and behavior-plan gate.
 
 ## Generated evidence and reports
 
@@ -73,6 +83,10 @@ Expected outputs from the family status probe:
 - `operator-report.md`
 - `final-handoff.json`
 
+Windows tmux launch evidence is also untracked and lives beneath `%LOCALAPPDATA%\AgentSwitchboard\profiles\windows`. Its registered outputs are plan/result JSON plus install receipt/operator report.
+
 ## Proof boundary
 
 A valid family profile proves that AgentSwitchboard knows how to enter and inspect a repository. It does not prove that a child checkout is present, current, clean, validated, or safe to mutate. The status probe earns only read-only repository-intake proof; every child validator and runtime authority remains local to that child repository.
+
+The Windows tmux harness proves separate deterministic Continue and New contracts in Plan mode. Visible window activation, process separation, tmux attachment, layout, and operator acceptance remain workstation runtime proof.
