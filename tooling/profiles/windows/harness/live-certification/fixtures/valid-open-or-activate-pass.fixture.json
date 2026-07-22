@@ -1,0 +1,26 @@
+{
+  "schema": "agentswitchboard.windows-profile-live-certification-fixture.v1",
+  "fixtureId": "certification-open-or-activate-pass",
+  "expectedValid": true,
+  "expectedOutcome": "activated",
+  "mode": "open-or-activate",
+  "before": {
+    "wezTermProcesses": [],
+    "tmuxSessions": ["dev"],
+    "tmuxClients": []
+  },
+  "afterFirst": {
+    "wezTermProcesses": [{"pid": 1001}],
+    "tmuxSessions": ["dev"],
+    "tmuxClients": ["1"]
+  },
+  "afterSecond": {
+    "wezTermProcesses": [{"pid": 1001}],
+    "tmuxSessions": ["dev"],
+    "tmuxClients": ["1"]
+  },
+  "expectedNewWindows": 1,
+  "expectedSessionCreated": false,
+  "expectedDuplicateDetected": false,
+  "expectedIdempotent": true
+}

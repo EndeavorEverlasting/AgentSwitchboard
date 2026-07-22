@@ -1,0 +1,54 @@
+{
+  "schema": "agentswitchboard.windows-profile-live-certification-run-context.v1",
+  "$defs": {
+    "runContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "runId", "agentSwitchboardSha", "launcherPath", "launcherManifestHash", "mode", "operatorCommand", "distribution", "expectedTmuxIdentity", "evidenceRoot", "timeoutSeconds", "rollbackBoundary", "proofCeiling"],
+      "properties": {
+        "schema": { "const": "agentswitchboard.windows-profile-live-certification-run-context.v1" },
+        "runId": { "type": "string", "minLength": 3 },
+        "agentSwitchboardSha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "launcherPath": { "type": "string", "minLength": 1 },
+        "launcherManifestHash": { "type": "string", "minLength": 1 },
+        "mode": { "enum": ["open-or-activate", "new-instance"] },
+        "operatorCommand": { "type": "string", "minLength": 1 },
+        "distribution": { "type": "string", "minLength": 1 },
+        "expectedTmuxIdentity": { "type": "string", "minLength": 1 },
+        "evidenceRoot": { "type": "string", "minLength": 1 },
+        "timeoutSeconds": { "type": "integer", "minimum": 1, "maximum": 300 },
+        "rollbackBoundary": { "type": "string", "minLength": 1 },
+        "proofCeiling": { "type": "string", "minLength": 10 }
+      }
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "capturedAt", "wezTermProcesses", "tmuxSessions", "tmuxClients"],
+      "properties": {
+        "schema": { "const": "agentswitchboard.windows-profile-live-certification-snapshot.v1" },
+        "capturedAt": { "type": "string", "format": "date-time" },
+        "wezTermProcesses": { "type": "array", "items": { "type": "object" } },
+        "tmuxSessions": { "type": "array", "items": { "type": "string" } },
+        "tmuxClients": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "certificationResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "status", "mode", "openedOrActivated", "sessionCreated", "duplicateDetected", "idempotent", "rollbackSuccessful", "proofLevel", "proofCeiling"],
+      "properties": {
+        "schema": { "const": "agentswitchboard.windows-profile-live-certification-result.v1" },
+        "status": { "enum": ["PASS", "FAIL", "BLOCKED", "SKIPPED"] },
+        "mode": { "enum": ["open-or-activate", "new-instance"] },
+        "openedOrActivated": { "type": "boolean" },
+        "sessionCreated": { "type": "boolean" },
+        "duplicateDetected": { "type": "boolean" },
+        "idempotent": { "type": "boolean" },
+        "rollbackSuccessful": { "type": "boolean" },
+        "proofLevel": { "type": "string", "minLength": 1 },
+        "proofCeiling": { "type": "string", "minLength": 10 }
+      }
+    }
+  }
+}
