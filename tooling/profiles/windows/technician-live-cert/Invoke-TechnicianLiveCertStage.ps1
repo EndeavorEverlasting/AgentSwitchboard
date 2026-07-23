@@ -22,7 +22,7 @@ if (-not $RepoRoot) {
 }
 
 $commonModule = Join-Path $scriptDir 'TechnicianLiveCert.Common.psm1'
-Import-Module -LiteralPath $commonModule -Force
+Import-Module -Name $commonModule -Force
 
 $manifest = Get-TechnicianLiveCertManifest -RepoRoot $RepoRoot
 
