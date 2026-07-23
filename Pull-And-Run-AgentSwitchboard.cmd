@@ -9,9 +9,9 @@ if /I "%~1"=="--repo-ready" goto :repo_ready
 
 set "MODE=%~1"
 if not defined MODE set "MODE=shell"
-if /I not "%MODE%"=="shell" if /I not "%MODE%"=="agy" if /I not "%MODE%"=="opencode" if /I not "%MODE%"=="setup" (
+if /I not "%MODE%"=="shell" if /I not "%MODE%"=="agy" if /I not "%MODE%"=="opencode" if /I not "%MODE%"=="setup" if /I not "%MODE%"=="hermes" (
   echo [FAIL] Unsupported mode: %MODE%
-  echo Usage: %~nx0 [shell^|agy^|opencode^|setup] [repo-path] [git-ref]
+  echo Usage: %~nx0 [shell^|agy^|opencode^|setup^|hermes] [repo-path] [git-ref]
   set "RESULT=2"
   goto :finish
 )
@@ -28,6 +28,14 @@ if errorlevel 1 (
   echo [FAIL] Git for Windows was not found on PATH.
   echo Install Git, reopen Command Prompt, and run this CMD again.
   set "RESULT=10"
+  goto :finish
+)
+
+where pwsh.exe >nul 2>&1
+if errorlevel 1 (
+  echo [FAIL] PowerShell 7 ^(pwsh.exe^) was not found on PATH.
+  echo Install PowerShell 7, reopen Command Prompt, and run this CMD again.
+  set "RESULT=23"
   goto :finish
 )
 
@@ -157,14 +165,6 @@ if errorlevel 1 (
   goto :finish
 )
 
-where pwsh.exe >nul 2>&1
-if errorlevel 1 (
-  echo [FAIL] PowerShell 7 ^(pwsh.exe^) was not found on PATH.
-  echo Install PowerShell 7, reopen Command Prompt, and run this CMD again.
-  set "RESULT=23"
-  goto :finish
-)
-
 set "SETUP_SCRIPT=%REPO_ROOT%\tooling\profiles\windows\Setup-TechnicianAgentSwitchboard.ps1"
 if not exist "%SETUP_SCRIPT%" (
   echo [FAIL] Repository setup script is missing:
@@ -180,6 +180,7 @@ set "RESULT=%ERRORLEVEL%"
 echo.
 if "%RESULT%"=="0" (
   echo [PASS] AgentSwitchboard technician operation completed.
+  echo [INFO] Open a new PowerShell window to use: wezterm, tmux, agy, and opencode.
 ) else (
   echo [FAIL] AgentSwitchboard technician operation exited with code %RESULT%.
 )
