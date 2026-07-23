@@ -10,16 +10,38 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-Write-Host "Running P05-Launch-AGY stage..." -ForegroundColor Yellow
+Write-Host 'Running P05-Launch-AGY stage...' -ForegroundColor Yellow
 
 $setupScript = Join-Path $RepoRoot 'tooling\profiles\windows\Setup-TechnicianAgentSwitchboard.ps1'
-Write-Host "Delegating to Setup-TechnicianAgentSwitchboard.ps1 -Mode agy..." -ForegroundColor Gray
-
-$proc = Start-Process -FilePath "pwsh.exe" -ArgumentList "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$setupScript`"", "-Mode", "agy", "-RepoRoot", "`"$RepoRoot`"" -Wait -NoNewWindow -PassThru
-
-if ($proc.ExitCode -ne 0) {
-    Write-Warning "Launch AGY returned exit code $($proc.ExitCode)."
+if (-not (Test-Path -LiteralPath $setupScript -PathType Leaf)) {
+    throw "Canonical technician setup/launcher script is missing: $setupScript"
 }
 
-Write-Host "P05-Launch-AGY completed." -ForegroundColor Green
+$pwshPath = (Get-Command pwsh.exe -ErrorAction Stop).Source
+$startedAt = (Get-Date).ToUniversalTime().ToString('o')
+$proc = Start-Process -FilePath $pwshPath -ArgumentList @(
+    '-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass',
+    '-File', ('"{0}"' -f $setupScript),
+    '-Mode', 'agy',
+    '-RepoRoot', ('"{0}"' -f $RepoRoot)
+) -Wait -NoNewWindow -PassThru
+
+$ack = [ordered]@{
+    schema = 'agentswitchboard.technician-live-cert-launch-ack.v1'
+    mode = 'agy'
+    startedAt = $startedAt
+    completedAt = (Get-Date).ToUniversalTime().ToString('o')
+    exitCode = $proc.ExitCode
+    commandAcknowledged = ($proc.ExitCode -eq 0)
+    authentication = 'unproven-unless-observed'
+    providerResponse = 'unproven-unless-observed'
+    proofCeiling = 'AGY launch command acknowledgement. TUI visibility, authentication, and provider response are separate runtime observations.'
+}
+$ack | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $StageDir 'agy-launch-ack.json') -Encoding utf8NoBOM
+
+if ($proc.ExitCode -ne 0) {
+    throw "Canonical AGY launch failed with exit code $($proc.ExitCode)."
+}
+
+Write-Host 'P05 AGY launch command was acknowledged. Manual TUI observation remains required.' -ForegroundColor Green
 return 0
