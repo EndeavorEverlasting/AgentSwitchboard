@@ -165,6 +165,7 @@ if ($stageDef.optional) {
 
 Save-TechnicianLiveCertRunContext -RunContext $runContext
 
-Write-Host "Stage $StageId finished with status '$stageStatus' (exit code: $exitCode)." -ForegroundColor (if ($stageStatus -eq 'passed') { 'Green' } else { 'Red' })
+$statusColor = if ($stageStatus -eq 'passed') { 'Green' } else { 'Red' }
+Write-Host "Stage $StageId finished with status '$stageStatus' (exit code: $exitCode)." -ForegroundColor $statusColor
 
 exit $exitCode
