@@ -61,6 +61,7 @@ jobs:
         shell: pwsh
         run: |
           $env:AGENT_SWITCHBOARD_NO_PAUSE = '1'
+          $env:TECHNICIAN_LIVE_CERT_CI_SURFACE = '1'
           $logPath = Join-Path $PWD 'technician-p00-ci.log'
           & cmd.exe /d /c "call Technician-LiveCert-P00-Preflight.cmd > `"$logPath`" 2>&1"
           $exitCode = $LASTEXITCODE
