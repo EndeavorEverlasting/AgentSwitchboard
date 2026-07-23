@@ -13,7 +13,7 @@
       "optional": false,
       "dependencies": [],
       "manualObservationRequired": false,
-      "evidenceArtifacts": ["stage-P00.json", "preflight/"]
+      "evidenceArtifacts": ["stage-P00.json", "P00/preflight-summary.json"]
     },
     {
       "stageId": "P01",
@@ -26,7 +26,7 @@
       "optional": false,
       "dependencies": ["P00"],
       "manualObservationRequired": false,
-      "evidenceArtifacts": ["stage-P01.json", "network/"]
+      "evidenceArtifacts": ["stage-P01.json", "P01/network-summary.json"]
     },
     {
       "stageId": "P02",
@@ -39,7 +39,7 @@
       "optional": false,
       "dependencies": ["P00", "P01"],
       "manualObservationRequired": false,
-      "evidenceArtifacts": ["stage-P02.json", "setup/"]
+      "evidenceArtifacts": ["stage-P02.json", "P02/setup-summary.json"]
     },
     {
       "stageId": "P03",
@@ -52,7 +52,7 @@
       "optional": false,
       "dependencies": ["P02"],
       "manualObservationRequired": false,
-      "evidenceArtifacts": ["stage-P03.json", "commands/"]
+      "evidenceArtifacts": ["stage-P03.json", "P03/commands-summary.json", "P03/probe-wezterm.json", "P03/probe-tmux.json", "P03/probe-agy.json", "P03/probe-opencode.json"]
     },
     {
       "stageId": "P04",
@@ -65,7 +65,8 @@
       "optional": false,
       "dependencies": ["P00", "P02", "P03"],
       "manualObservationRequired": true,
-      "evidenceArtifacts": ["stage-P04.json", "launcher/"]
+      "manualObservationPrompt": "Confirm exactly one expected WezTerm window opened or activated, it is attached to tmux session 'dev', the shell is interactive, and no unexpected duplicate top-level WezTerm window appeared.",
+      "evidenceArtifacts": ["stage-P04.json", "P04/shell-launch-ack.json"]
     },
     {
       "stageId": "P05",
@@ -78,7 +79,8 @@
       "optional": false,
       "dependencies": ["P04"],
       "manualObservationRequired": true,
-      "evidenceArtifacts": ["stage-P05.json", "agy/"]
+      "manualObservationPrompt": "Confirm the existing canonical WezTerm/tmux workspace is reused, one tmux window named 'agy' is selected, the AGY TUI is visible and responsive, and no unexpected duplicate top-level WezTerm window appeared. Authentication/provider response is separate proof and is not required for this core gate.",
+      "evidenceArtifacts": ["stage-P05.json", "P05/agy-launch-ack.json"]
     },
     {
       "stageId": "P06",
@@ -91,7 +93,8 @@
       "optional": false,
       "dependencies": ["P04"],
       "manualObservationRequired": true,
-      "evidenceArtifacts": ["stage-P06.json", "opencode/"]
+      "manualObservationPrompt": "Confirm the existing canonical WezTerm/tmux workspace is reused, one tmux window named 'opencode' is selected, the OpenCode TUI is visible and responsive, and no unexpected duplicate top-level WezTerm window appeared. Authentication/provider response is separate proof and is not required for this core gate.",
+      "evidenceArtifacts": ["stage-P06.json", "P06/opencode-launch-ack.json"]
     },
     {
       "stageId": "P07",
@@ -104,7 +107,8 @@
       "optional": false,
       "dependencies": ["P02", "P04", "P05", "P06"],
       "manualObservationRequired": true,
-      "evidenceArtifacts": ["stage-P07.json", "repeatability/"]
+      "manualObservationPrompt": "Confirm the repeat shell/AGY/OpenCode requests reused the canonical workspace: no unintended duplicate top-level WezTerm window appeared and existing AGY/OpenCode windows were reused or selected rather than duplicated.",
+      "evidenceArtifacts": ["stage-P07.json", "P07/repeatability-summary.json"]
     },
     {
       "stageId": "P08",
@@ -117,7 +121,7 @@
       "optional": false,
       "dependencies": ["P07"],
       "manualObservationRequired": false,
-      "evidenceArtifacts": ["stage-P08.json", "final/", "technician-live-cert-summary.json", "technician-live-cert-report.md", "technician-live-cert-stage-matrix.csv", "technician-live-cert-handoff.txt"]
+      "evidenceArtifacts": ["stage-P08.json", "technician-live-cert-summary.json", "technician-live-cert-report.md", "technician-live-cert-stage-matrix.csv", "technician-live-cert-handoff.txt"]
     },
     {
       "stageId": "P09",
@@ -130,7 +134,8 @@
       "optional": true,
       "dependencies": ["P08"],
       "manualObservationRequired": true,
-      "evidenceArtifacts": ["stage-P09.json", "hermes/"]
+      "manualObservationPrompt": "Confirm the optional Hermes portal/browser handoff completed as expected. This result is independent of the already-completed core P00-P08 certificate.",
+      "evidenceArtifacts": ["stage-P09.json", "P09/hermes/"]
     }
   ],
   "coreSequence": ["P00", "P01", "P02", "P03", "P04", "P05", "P06", "P07", "P08"],
@@ -151,7 +156,7 @@
       "implementation": "stages/Repair-Technician-WezTerm.ps1",
       "requiresElevation": true,
       "requiresNetwork": true,
-      "targetsStages": ["P00", "P02", "P03", "P04"]
+      "targetsStages": ["P02", "P03", "P04"]
     },
     {
       "repairId": "AGY",
@@ -177,7 +182,7 @@
       "cmd": "Repair-Technician-Command-Shims.cmd",
       "implementation": "stages/Repair-Technician-Command-Shims.ps1",
       "requiresElevation": false,
-      "requiresNetwork": false,
+      "requiresNetwork": true,
       "targetsStages": ["P03", "P04", "P05", "P06"]
     }
   ],
