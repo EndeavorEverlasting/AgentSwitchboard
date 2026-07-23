@@ -72,6 +72,8 @@ def main() -> None:
         "lifecycle scripts disabled": "--ignore-scripts",
         "minimum Node": "$minimumNodeVersion",
         "node version check": "Node version probe",
+        "native npm": "@('npm.cmd', 'npm.exe', 'npm')",
+        "Windows cmd execution": "ConvertTo-CmdToken",
         "exact Pi readback": "Pi version mismatch after operation",
         "npm package readback": "npm package readback failed",
         "install mode": "'Install'",
@@ -86,6 +88,9 @@ def main() -> None:
 
     launcher_tokens = {
         "exact version": "Pi version mismatch",
+        "bash resolver": "Resolve-BashCommand",
+        "Git Bash path": "Git/bin/bash.exe",
+        "bash version probe": "$bashPath --version",
         "telemetry opt-out": "$env:PI_TELEMETRY = '0'",
         "version check opt-out": "$env:PI_SKIP_VERSION_CHECK = '1'",
         "offline option": "$env:PI_OFFLINE = '1'",
@@ -119,6 +124,9 @@ def main() -> None:
         "minimumNodeVersion",
         "tests/test_pi_runtime_support.py",
         "Start-AgentSwitchboardPi.ps1",
+        "Resolve-BashCommand",
+        "shell = [ordered]",
+        "Node/npm/bash readiness",
     ):
         require(status, token, "runtime-aware status")
 
