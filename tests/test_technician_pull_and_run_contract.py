@@ -18,7 +18,7 @@ LIVE_CERT_FIXTURE = (
     / "technician-quickstart-2026-07-22-fail.fixture.json"
 )
 LIVE_CERT_SKILL = ROOT / ".ai" / "skills" / "windows-profile-live-certification" / "SKILL.md"
-AGENTS_PATH = ROOT / "AGENTS.md"
+DOCTRINE_PATH = ROOT / "docs" / "governance" / "live-cert-failure-doctrine.md"
 
 
 def require(text: str, token: str, label: str) -> None:
@@ -27,7 +27,7 @@ def require(text: str, token: str, label: str) -> None:
 
 
 def main() -> None:
-    for path in (CMD_PATH, SETUP_PATH, LIVE_CERT_FIXTURE, LIVE_CERT_SKILL, AGENTS_PATH):
+    for path in (CMD_PATH, SETUP_PATH, LIVE_CERT_FIXTURE, LIVE_CERT_SKILL, DOCTRINE_PATH):
         if not path.is_file():
             raise AssertionError(f"missing technician contract file: {path}")
 
@@ -35,7 +35,7 @@ def main() -> None:
     setup = SETUP_PATH.read_text(encoding="utf-8")
     fixture = LIVE_CERT_FIXTURE.read_text(encoding="utf-8")
     skill = LIVE_CERT_SKILL.read_text(encoding="utf-8")
-    agents = AGENTS_PATH.read_text(encoding="utf-8")
+    doctrine = DOCTRINE_PATH.read_text(encoding="utf-8")
 
     cmd_requirements = {
         "canonical repository": "https://github.com/EndeavorEverlasting/AgentSwitchboard.git",
@@ -136,9 +136,9 @@ def main() -> None:
         (skill, "Observed live failure outranks static and CI success", "live-cert failure precedence"),
         (skill, "exact operator shell", "shell-specific command resolution"),
         (skill, "browser handoff", "interactive browser boundary"),
-        (agents, "Observed live failure outranks static, synthetic, and CI success", "governance failure precedence"),
-        (agents, "Optional agent installation or browser authentication may not block", "optional-stage isolation"),
-        (agents, "repo-owned shim", "cross-shell shim doctrine"),
+        (doctrine, "Observed live failure outranks static, synthetic, and CI success", "governance failure precedence"),
+        (doctrine, "Optional agent installation or browser authentication may not block", "optional-stage isolation"),
+        (doctrine, "repo-owned shim", "cross-shell shim doctrine"),
     ):
         require(text, token, label)
 
