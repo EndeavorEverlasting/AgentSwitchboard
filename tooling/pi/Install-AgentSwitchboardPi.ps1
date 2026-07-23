@@ -67,7 +67,7 @@ $summary = [ordered]@{
     steps = $steps
     error = $null
     proofLevel = 'installer-command-and-version-readback'
-    proofCeiling = 'Package installation/removal command, executable resolution, and exact version readback only. Provider authentication, model availability, project trust, network privacy, extensions, model response, and agent delivery are not proven.'
+    proofCeiling = 'Package installation or removal command, executable resolution, and exact version readback only. Provider authentication, model availability, project trust, network privacy, extensions, model response, and agent delivery are not proven.'
 }
 
 function Add-Step {
@@ -85,6 +85,25 @@ function Add-Step {
     })
 }
 
+function Resolve-NativeCommand {
+    param([Parameter(Mandatory)][string[]]$Names)
+
+    foreach ($name in $Names) {
+        $command = Get-Command $name -ErrorAction SilentlyContinue
+        if ($command -and $command.Source -and $command.Source -notlike '*.ps1') {
+            return $command.Source
+        }
+    }
+    return $null
+}
+
+function ConvertTo-CmdToken {
+    param([Parameter(Mandatory)][string]$Value)
+
+    if ($Value -notmatch '[\s&|<>^()%!"]') { return $Value }
+    return '"' + ($Value -replace '"', '""') + '"'
+}
+
 function Invoke-CapturedProcess {
     param(
         [Parameter(Mandatory)][string]$FilePath,
@@ -93,13 +112,25 @@ function Invoke-CapturedProcess {
     )
 
     $psi = [System.Diagnostics.ProcessStartInfo]::new()
-    $psi.FileName = $FilePath
     $psi.UseShellExecute = $false
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
     $psi.CreateNoWindow = $true
-    foreach ($argument in $ArgumentList) {
-        [void]$psi.ArgumentList.Add($argument)
+
+    $extension = [IO.Path]::GetExtension($FilePath)
+    if ($IsWindows -and $extension -in @('.cmd', '.bat')) {
+        $psi.FileName = if ($env:ComSpec) { $env:ComSpec } else { Join-Path $env:SystemRoot 'System32/cmd.exe' }
+        [void]$psi.ArgumentList.Add('/d')
+        [void]$psi.ArgumentList.Add('/s')
+        [void]$psi.ArgumentList.Add('/c')
+        $commandLine = @('call', (ConvertTo-CmdToken -Value $FilePath)) + @($ArgumentList | ForEach-Object { ConvertTo-CmdToken -Value ([string]$_) })
+        [void]$psi.ArgumentList.Add(($commandLine -join ' '))
+    }
+    else {
+        $psi.FileName = $FilePath
+        foreach ($argument in $ArgumentList) {
+            [void]$psi.ArgumentList.Add($argument)
+        }
     }
 
     $process = [System.Diagnostics.Process]::new()
@@ -152,12 +183,13 @@ function Refresh-NpmPath {
 }
 
 function Resolve-PiCommand {
-    $command = Get-Command pi -ErrorAction SilentlyContinue
-    if ($command) { return $command.Source }
+    $names = if ($IsWindows) { @('pi.cmd', 'pi.exe', 'pi') } else { @('pi') }
+    $resolved = Resolve-NativeCommand -Names $names
+    if ($resolved) { return $resolved }
 
-    $names = if ($IsWindows) { @('pi.cmd', 'pi.exe', 'pi.ps1') } else { @('pi') }
+    $fileNames = if ($IsWindows) { @('pi.cmd', 'pi.exe') } else { @('pi') }
     foreach ($directory in @($env:PATH -split [IO.Path]::PathSeparator | Where-Object { $_ })) {
-        foreach ($name in $names) {
+        foreach ($name in $fileNames) {
             $candidate = Join-Path $directory $name
             if (Test-Path -LiteralPath $candidate -PathType Leaf) {
                 return (Resolve-Path -LiteralPath $candidate).Path
@@ -190,12 +222,12 @@ try {
     }
     Add-Step -Name 'upstream-contract' -Status 'passed' -Evidence "$packageSpec; Node >= $minimumNodeVersion"
 
-    $nodeCommand = Get-Command node -ErrorAction SilentlyContinue
-    $npmCommand = Get-Command npm -ErrorAction SilentlyContinue
-    if (-not $nodeCommand) { throw "Node.js is required. Install Node.js $minimumNodeVersion or newer, then rerun this command." }
-    if (-not $npmCommand) { throw 'npm is required and was not found on PATH.' }
+    $nodePath = Resolve-NativeCommand -Names $(if ($IsWindows) { @('node.exe', 'node') } else { @('node') })
+    $npmPath = Resolve-NativeCommand -Names $(if ($IsWindows) { @('npm.cmd', 'npm.exe', 'npm') } else { @('npm') })
+    if (-not $nodePath) { throw "Node.js is required. Install Node.js $minimumNodeVersion or newer, then rerun this command." }
+    if (-not $npmPath) { throw 'A native npm command is required and was not found on PATH.' }
 
-    $nodeProbe = Invoke-CapturedProcess -FilePath $nodeCommand.Source -ArgumentList @('--version') -TimeoutSeconds 30
+    $nodeProbe = Invoke-CapturedProcess -FilePath $nodePath -ArgumentList @('--version') -TimeoutSeconds 30
     if ($nodeProbe.TimedOut -or $nodeProbe.ExitCode -ne 0) {
         throw "Node version probe failed. stdout=$($nodeProbe.Stdout) stderr=$($nodeProbe.Stderr)"
     }
@@ -203,37 +235,35 @@ try {
     if (-not $nodeMatch.Success) { throw "Unable to parse Node version from '$($nodeProbe.Stdout)'." }
     $nodeVersion = [version]$nodeMatch.Groups[1].Value
     if ($nodeVersion -lt $minimumNodeVersion) {
-        throw "Pi $pinnedVersion requires Node.js $minimumNodeVersion or newer. Found $nodeVersion at $($nodeCommand.Source)."
+        throw "Pi $pinnedVersion requires Node.js $minimumNodeVersion or newer. Found $nodeVersion at $nodePath."
     }
-    $summary.node = [ordered]@{ path = $nodeCommand.Source; version = $nodeVersion.ToString() }
-    Add-Step -Name 'node' -Status 'passed' -Evidence "$($nodeCommand.Source) :: $nodeVersion"
+    $summary.node = [ordered]@{ path = $nodePath; version = $nodeVersion.ToString() }
+    Add-Step -Name 'node' -Status 'passed' -Evidence "$nodePath :: $nodeVersion"
 
-    $npmProbe = Invoke-CapturedProcess -FilePath $npmCommand.Source -ArgumentList @('--version') -TimeoutSeconds 30
+    $npmProbe = Invoke-CapturedProcess -FilePath $npmPath -ArgumentList @('--version') -TimeoutSeconds 30
     if ($npmProbe.TimedOut -or $npmProbe.ExitCode -ne 0) {
         throw "npm version probe failed. stdout=$($npmProbe.Stdout) stderr=$($npmProbe.Stderr)"
     }
-    $npmPrefix = Refresh-NpmPath -NpmPath $npmCommand.Source
-    $summary.npm = [ordered]@{ path = $npmCommand.Source; version = $npmProbe.Stdout.Trim(); globalPrefix = $npmPrefix }
-    Add-Step -Name 'npm' -Status 'passed' -Evidence "$($npmCommand.Source) :: $($npmProbe.Stdout.Trim()) :: prefix=$npmPrefix"
+    $npmPrefix = Refresh-NpmPath -NpmPath $npmPath
+    $summary.npm = [ordered]@{ path = $npmPath; version = $npmProbe.Stdout.Trim(); globalPrefix = $npmPrefix }
+    Add-Step -Name 'npm' -Status 'passed' -Evidence "$npmPath :: $($npmProbe.Stdout.Trim()) :: prefix=$npmPrefix"
 
     $piPath = Resolve-PiCommand
     $installedVersion = $null
-    if ($piPath) {
-        $installedVersion = Get-PiVersion -PiPath $piPath
-    }
+    if ($piPath) { $installedVersion = Get-PiVersion -PiPath $piPath }
 
     if ($Mode -eq 'Uninstall') {
         if (-not $piPath) {
             Add-Step -Name 'uninstall' -Status 'skipped' -Evidence 'Pi executable is already absent.'
         }
         elseif ($PSCmdlet.ShouldProcess($packageName, 'Uninstall verified global Pi CLI package')) {
-            $uninstall = Invoke-CapturedProcess -FilePath $npmCommand.Source -ArgumentList @('uninstall', '-g', $packageName) -TimeoutSeconds 600
+            $uninstall = Invoke-CapturedProcess -FilePath $npmPath -ArgumentList @('uninstall', '-g', $packageName) -TimeoutSeconds 600
             $uninstall.Stdout | Set-Content -LiteralPath $stdoutPath -Encoding utf8
             $uninstall.Stderr | Set-Content -LiteralPath $stderrPath -Encoding utf8
             if ($uninstall.TimedOut -or $uninstall.ExitCode -ne 0) {
                 throw "Pi uninstall failed. stdout=$stdoutPath stderr=$stderrPath"
             }
-            Refresh-NpmPath -NpmPath $npmCommand.Source | Out-Null
+            Refresh-NpmPath -NpmPath $npmPath | Out-Null
             if (Resolve-PiCommand) { throw 'Pi executable remains resolvable after npm uninstall.' }
             Add-Step -Name 'uninstall' -Status 'passed' -Evidence "Removed $packageName. Settings, credentials, sessions, and project files were not deleted."
         }
@@ -249,7 +279,7 @@ try {
 
     if ($Mode -eq 'Install' -and $needsInstall) {
         if ($PSCmdlet.ShouldProcess($packageSpec, 'Install exact global Pi CLI package with lifecycle scripts disabled')) {
-            $install = Invoke-CapturedProcess -FilePath $npmCommand.Source -ArgumentList @('install', '-g', '--ignore-scripts', $packageSpec) -TimeoutSeconds 900
+            $install = Invoke-CapturedProcess -FilePath $npmPath -ArgumentList @('install', '-g', '--ignore-scripts', $packageSpec) -TimeoutSeconds 900
             $install.Stdout | Set-Content -LiteralPath $stdoutPath -Encoding utf8
             $install.Stderr | Set-Content -LiteralPath $stderrPath -Encoding utf8
             if ($install.TimedOut -or $install.ExitCode -ne 0) {
@@ -257,7 +287,7 @@ try {
             }
             Add-Step -Name 'install' -Status 'passed' -Evidence "Installed $packageSpec with --ignore-scripts. stdout=$stdoutPath stderr=$stderrPath"
         }
-        Refresh-NpmPath -NpmPath $npmCommand.Source | Out-Null
+        Refresh-NpmPath -NpmPath $npmPath | Out-Null
         $piPath = Resolve-PiCommand
         if (-not $piPath) { throw 'npm reported success, but the pi executable is not resolvable.' }
         $installedVersion = Get-PiVersion -PiPath $piPath
@@ -271,7 +301,7 @@ try {
         throw "Pi version mismatch after operation. Expected $pinnedVersion; found $($installedVersion.Version)."
     }
 
-    $listProbe = Invoke-CapturedProcess -FilePath $npmCommand.Source -ArgumentList @('list', '-g', '--depth=0', $packageName) -TimeoutSeconds 60
+    $listProbe = Invoke-CapturedProcess -FilePath $npmPath -ArgumentList @('list', '-g', '--depth=0', $packageName) -TimeoutSeconds 60
     if ($listProbe.TimedOut -or $listProbe.ExitCode -ne 0 -or -not $listProbe.Stdout.Contains("$packageName@$pinnedVersion")) {
         throw "npm package readback failed for $packageSpec. stdout=$($listProbe.Stdout) stderr=$($listProbe.Stderr)"
     }
