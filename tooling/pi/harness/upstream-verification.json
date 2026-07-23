@@ -9,6 +9,12 @@
   "minimumNodeVersion": "22.19.0",
   "executable": "pi",
   "versionProbe": "pi --version",
+  "shellRequirement": "bash",
+  "windowsShellDiscovery": [
+    "reviewed shellPath in Pi settings",
+    "C:\\Program Files\\Git\\bin\\bash.exe",
+    "bash.exe on PATH"
+  ],
   "configurationScope": "project-local",
   "projectSettings": ".pi/settings.json",
   "telemetryOptOut": {
@@ -18,5 +24,5 @@
   "versionCheckOptOut": "PI_SKIP_VERSION_CHECK=1",
   "offlineMode": "PI_OFFLINE=1 or --offline",
   "providerPolicy": "The Pi CLI is free and MIT-licensed; model/provider access is separate and may require an existing subscription, API key, or local/custom provider.",
-  "proofCeiling": "Verified upstream package identity, exact version, documented installation syntax, minimum Node version, command name, settings scope, and telemetry controls only. No local installation or provider response is proven by this tracked record."
+  "proofCeiling": "Verified upstream package identity, exact version, documented installation syntax, minimum Node version, bash requirement, command name, settings scope, and telemetry controls only. No local installation, project trust, provider response, or endpoint privacy is proven by this tracked record."
 }
