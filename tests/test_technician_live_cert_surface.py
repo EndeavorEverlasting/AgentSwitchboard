@@ -9,6 +9,7 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR = os.path.join(REPO_ROOT, "tooling", "profiles", "windows", "technician-live-cert")
 MANIFEST_PATH = os.path.join(BASE_DIR, "technician-live-cert.manifest.json")
 SCHEMAS_DIR = os.path.join(BASE_DIR, "schemas")
+STAGE_DISPATCHER_PATH = os.path.join(BASE_DIR, "Invoke-TechnicianLiveCertStage.ps1")
 
 
 class TestTechnicianLiveCertSurface(unittest.TestCase):
@@ -82,6 +83,19 @@ class TestTechnicianLiveCertSurface(unittest.TestCase):
         """Verify report template exists."""
         template_path = os.path.join(BASE_DIR, "templates", "technician-live-cert-report.template.md")
         self.assertTrue(os.path.exists(template_path), "Report template missing")
+
+    def test_direct_stage_click_can_create_run(self):
+        """A directly clicked P00 must create a new run instead of requiring prior evidence."""
+        with open(STAGE_DISPATCHER_PATH, "r", encoding="utf-8") as f:
+            dispatcher = f.read()
+
+        self.assertIn("[string]::IsNullOrWhiteSpace($RunId)", dispatcher)
+        self.assertIn("New-TechnicianLiveCertRunContext -RepoRoot $RepoRoot", dispatcher)
+        self.assertLess(
+            dispatcher.index("New-TechnicianLiveCertRunContext -RepoRoot $RepoRoot"),
+            dispatcher.index("Get-TechnicianLiveCertRunContext -RunId $RunId"),
+            "Standalone stage bootstrap must create a run before attempting run lookup.",
+        )
 
 
 if __name__ == "__main__":
