@@ -38,11 +38,20 @@ if ([string]::IsNullOrWhiteSpace($RunId)) {
     if ($StageId -eq 'P00') {
         $runContext = New-TechnicianLiveCertRunContext -RepoRoot $RepoRoot
     } else {
-        $activeRunId = Get-TechnicianLiveCertActiveRunId
-        if ([string]::IsNullOrWhiteSpace($activeRunId)) {
+        $resolvedRunId = Get-TechnicianLiveCertActiveRunId
+        if ([string]::IsNullOrWhiteSpace($resolvedRunId) -and $StageId -eq 'P09') {
+            $resolvedRunId = Get-LatestCompletedTechnicianLiveCertRunId
+            if (-not [string]::IsNullOrWhiteSpace($resolvedRunId)) {
+                Write-Host "P09 is attaching to the latest completed core certificate: $resolvedRunId" -ForegroundColor Gray
+            }
+        }
+        if ([string]::IsNullOrWhiteSpace($resolvedRunId)) {
+            if ($StageId -eq 'P09') {
+                throw "No completed P00-P08 live-cert run exists for optional P09. Complete the core certificate first."
+            }
             throw "No active live-cert run exists for stage '$StageId'. Start with Technician-LiveCert-P00-Preflight.cmd."
         }
-        $runContext = Get-TechnicianLiveCertRunContext -RunId $activeRunId
+        $runContext = Get-TechnicianLiveCertRunContext -RunId $resolvedRunId
     }
     $RunId = $runContext.runId
 } else {
