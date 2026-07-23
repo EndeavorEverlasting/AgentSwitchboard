@@ -81,11 +81,19 @@ class TestTechnicianLiveCertSurface(unittest.TestCase):
             for target in repair["targetsStages"]:
                 self.assertIn(target, stage_ids)
 
-    def test_hermes_is_optional_and_outside_core(self):
+    def test_hermes_is_optional_outside_core_and_can_bind_completed_run(self):
         stages = {stage["stageId"]: stage for stage in self.manifest["stages"]}
         self.assertTrue(stages["P09"]["optional"])
         self.assertEqual(["P08"], stages["P09"]["dependencies"])
         self.assertNotIn("P09", self.manifest["coreSequence"])
+
+        dispatcher = read_text(STAGE_DISPATCHER_PATH)
+        common = read_text(COMMON_MODULE_PATH)
+        self.assertIn("$StageId -eq 'P09'", dispatcher)
+        self.assertIn("Get-LatestCompletedTechnicianLiveCertRunId", dispatcher)
+        self.assertIn("No completed P00-P08 live-cert run exists for optional P09", dispatcher)
+        self.assertIn("function Get-LatestCompletedTechnicianLiveCertRunId", common)
+        self.assertIn("$run.stages.P08.status -eq 'passed'", common)
 
     def test_schema_and_report_files_exist(self):
         for schema_name in [
