@@ -111,6 +111,15 @@ class TestTechnicianLiveCertSurface(unittest.TestCase):
 
         self.assertEqual([], offenders, f"Unsupported Import-Module -LiteralPath found in: {offenders}")
 
+    def test_dispatcher_does_not_invoke_if_as_foreground_color_command(self):
+        """PowerShell keyword expressions used as command arguments must be evaluated before Write-Host."""
+        with open(STAGE_DISPATCHER_PATH, "r", encoding="utf-8") as f:
+            dispatcher = f.read()
+
+        self.assertNotIn("-ForegroundColor (if", dispatcher)
+        self.assertIn("$statusColor = if ($stageStatus -eq 'passed')", dispatcher)
+        self.assertIn("-ForegroundColor $statusColor", dispatcher)
+
 
 if __name__ == "__main__":
     unittest.main()
