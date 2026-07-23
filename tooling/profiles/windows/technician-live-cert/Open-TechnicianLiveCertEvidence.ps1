@@ -8,7 +8,7 @@ $ErrorActionPreference = 'Stop'
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $commonModule = Join-Path $scriptDir 'TechnicianLiveCert.Common.psm1'
-Import-Module -LiteralPath $commonModule -Force
+Import-Module -Name $commonModule -Force
 
 $runsDir = Get-TechnicianLiveCertRunsDir
 
