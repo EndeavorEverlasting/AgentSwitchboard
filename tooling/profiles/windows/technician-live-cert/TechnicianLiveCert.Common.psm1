@@ -22,19 +22,38 @@ function Assert-Elevation {
     }
 }
 
+function Resolve-TechnicianRepoRoot {
+    [CmdletBinding()]
+    param(
+        [string]$RepoRoot
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($RepoRoot)) {
+        $candidate = $RepoRoot.Trim().Trim('"').TrimEnd('\', '/')
+        if (Test-Path -LiteralPath $candidate -PathType Container) {
+            return (Resolve-Path -LiteralPath $candidate).Path
+        }
+    }
+
+    $fallback = Join-Path $PSScriptRoot '..\..\..\..'
+    if (-not (Test-Path -LiteralPath $fallback -PathType Container)) {
+        throw "Unable to resolve AgentSwitchboard repository root from '$RepoRoot' or module path '$PSScriptRoot'."
+    }
+    return (Resolve-Path -LiteralPath $fallback).Path
+}
+
 function Get-TechnicianLiveCertBaseDir {
     [CmdletBinding()]
     param(
         [string]$RepoRoot
     )
-    if ($RepoRoot -and (Test-Path -LiteralPath $RepoRoot)) {
-        $candidate = Join-Path $RepoRoot 'tooling\profiles\windows\technician-live-cert'
-        if (Test-Path -LiteralPath $candidate) {
-            return (Resolve-Path -LiteralPath $candidate).Path
-        }
+
+    $resolvedRepoRoot = Resolve-TechnicianRepoRoot -RepoRoot $RepoRoot
+    $candidate = Join-Path $resolvedRepoRoot 'tooling\profiles\windows\technician-live-cert'
+    if (-not (Test-Path -LiteralPath $candidate -PathType Container)) {
+        throw "Technician live-cert directory not found under repository root: $resolvedRepoRoot"
     }
-    $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-    return (Resolve-Path -LiteralPath $scriptDir).Path
+    return (Resolve-Path -LiteralPath $candidate).Path
 }
 
 function Get-TechnicianLiveCertManifestPath {
@@ -105,9 +124,7 @@ function New-TechnicianLiveCertRunContext {
         [string]$RepoRoot = ''
     )
 
-    if (-not $RepoRoot) {
-        $RepoRoot = (Get-Item $PSScriptRoot).Parent.Parent.Parent.FullName
-    }
+    $RepoRoot = Resolve-TechnicianRepoRoot -RepoRoot $RepoRoot
 
     $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
     $username = $identity.Name
@@ -117,8 +134,8 @@ function New-TechnicianLiveCertRunContext {
     $head = '0000000000000000000000000000000000000000'
     $branch = 'unknown'
     try {
-        $head = (git rev-parse HEAD 2>$null).Trim()
-        $branch = (git rev-parse --abbrev-ref HEAD 2>$null).Trim()
+        $head = (& git -C $RepoRoot rev-parse HEAD 2>$null).Trim()
+        $branch = (& git -C $RepoRoot rev-parse --abbrev-ref HEAD 2>$null).Trim()
     } catch {}
 
     $evidenceRoot = Get-TechnicianLiveCertRunDir -RunId $RunId
@@ -165,6 +182,7 @@ function New-TechnicianLiveCertRunContext {
         username = $username
         hostname = $hostname
         repository = 'https://github.com/EndeavorEverlasting/AgentSwitchboard'
+        repositoryRoot = $RepoRoot
         branch = $branch
         head = $head
         distribution = 'Ubuntu'
@@ -321,6 +339,7 @@ function Invoke-ManualObservationPrompt {
 Export-ModuleMember -Function @(
     'Test-IsElevated',
     'Assert-Elevation',
+    'Resolve-TechnicianRepoRoot',
     'Get-TechnicianLiveCertBaseDir',
     'Get-TechnicianLiveCertManifestPath',
     'Get-TechnicianLiveCertManifest',
