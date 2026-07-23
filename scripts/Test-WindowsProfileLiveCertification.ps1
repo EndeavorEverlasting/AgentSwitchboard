@@ -17,11 +17,15 @@ function Check {
     else { [void]$failures.Add("$Name`: $Message") }
 }
 
+$failureFixture = 'tooling/profiles/windows/harness/live-certification/fixtures/technician-quickstart-2026-07-22-fail.fixture.json'
+$doctrinePath = 'docs/governance/live-cert-failure-doctrine.md'
 $requiredFiles = @(
     'tooling/profiles/windows/harness/live-certification/schemas/windows-profile-live-certification.schema.json',
     'tooling/profiles/windows/harness/live-certification/fixtures/valid-open-or-activate-pass.fixture.json',
     'tooling/profiles/windows/harness/live-certification/fixtures/valid-new-instance-pass.fixture.json',
-    '.ai/skills/windows-profile-live-certification/SKILL.md'
+    $failureFixture,
+    '.ai/skills/windows-profile-live-certification/SKILL.md',
+    $doctrinePath
 )
 
 foreach ($relativePath in $requiredFiles) {
@@ -61,7 +65,8 @@ catch { [void]$failures.Add("schema/semantic: $($_.Exception.Message)") }
 
 $fixturePaths = @(
     'tooling/profiles/windows/harness/live-certification/fixtures/valid-open-or-activate-pass.fixture.json',
-    'tooling/profiles/windows/harness/live-certification/fixtures/valid-new-instance-pass.fixture.json'
+    'tooling/profiles/windows/harness/live-certification/fixtures/valid-new-instance-pass.fixture.json',
+    $failureFixture
 )
 foreach ($relativePath in $fixturePaths) {
     $path = Join-Path $RootPath $relativePath
@@ -72,6 +77,15 @@ foreach ($relativePath in $fixturePaths) {
             Check ($null -ne $fixture.expectedValid) "fixture/$relativePath/expectedValid" 'expectedValid missing'
             Check ($null -ne $fixture.expectedOutcome) "fixture/$relativePath/expectedOutcome" 'expectedOutcome missing'
             Check ($null -ne $fixture.mode) "fixture/$relativePath/mode" 'mode missing'
+            if ($relativePath -eq $failureFixture) {
+                Check ($fixture.expectedOutcome -eq 'failed') 'fixture/failure/outcome' 'sanitized live-cert report must remain a failure'
+                Check ($fixture.observedAt -eq '2026-07-22') 'fixture/failure/date' 'observed date drifted'
+                $stageJson = $fixture.stageEvidence | ConvertTo-Json -Depth 8
+                foreach ($token in @('opencode-installation', 'hermes-browser-handoff', 'agy-installation', 'wezterm-command-resolution', 'tmux-command-resolution')) {
+                    Check ($stageJson.Contains($token)) "fixture/failure/$token" 'required observed stage missing'
+                }
+                Check ($fixture.proofLevel -eq 'behavior-observed-failure') 'fixture/failure/proof-level' 'failure proof level is dishonest'
+            }
         }
         catch { [void]$failures.Add("fixture/$relativePath exception: $($_.Exception.Message)") }
     }
@@ -80,9 +94,37 @@ foreach ($relativePath in $fixturePaths) {
 $skillPath = Join-Path $RootPath '.ai/skills/windows-profile-live-certification/SKILL.md'
 if (Test-Path -LiteralPath $skillPath -PathType Leaf) {
     $skill = Get-Content -LiteralPath $skillPath -Raw
-    foreach ($token in @('id: windows-profile-live-certification', '## Trigger', '## Inputs', '## Procedure', '## Outputs', '## Deterministic validation', '## Forbidden scope', '## Stop and escalate')) {
-        Check ($skill.Contains($token)) "skill/$token" 'required skill section missing'
+    foreach ($token in @(
+        'id: windows-profile-live-certification',
+        'version: 1.1.0',
+        '## Trigger',
+        '## Inputs',
+        '## Procedure',
+        '## Outputs',
+        '## Deterministic validation',
+        '## Forbidden scope',
+        '## Stop and escalate',
+        'Observed live failure outranks static and CI success',
+        'exact operator shell',
+        'repo-owned shim',
+        'browser handoff',
+        'optional agents separately'
+    )) {
+        Check ($skill.Contains($token)) "skill/$token" 'required skill contract missing'
     }
+}
+
+$doctrine = Get-Content -LiteralPath (Join-Path $RootPath $doctrinePath) -Raw
+foreach ($token in @(
+    'Observed live failure outranks static, synthetic, and CI success',
+    'Optional agent installation or browser authentication may not block',
+    'repo-owned shim',
+    'Ctrl+C',
+    '/debug',
+    'OpenCode installation: observed pass',
+    'AGY installation: observed fail'
+)) {
+    Check ($doctrine.Contains($token)) "doctrine/$token" 'required live-cert doctrine missing'
 }
 
 Write-Host 'WINDOWS PROFILE LIVE CERTIFICATION HARNESS' -ForegroundColor Cyan
