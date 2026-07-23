@@ -3,6 +3,7 @@ name: Technician pull-and-run contract
 on:
   pull_request:
     paths:
+      - 'Pull-Repo-And-Setup-AgentSwitchboard.cmd'
       - 'Pull-And-Run-AgentSwitchboard.cmd'
       - 'tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1'
       - 'tooling/profiles/windows/harness/live-certification/fixtures/technician-quickstart-2026-07-22-fail.fixture.json'
@@ -35,7 +36,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Validate portable CMD and failed live-cert contract
+      - name: Validate parent pull command, portable CMD, and failed live-cert contract
         run: python tests/test_technician_pull_and_run_contract.py
 
       - name: Parse technician and validator PowerShell
@@ -61,7 +62,7 @@ jobs:
             }
           }
 
-      - name: Exercise CMD argument guard
+      - name: Exercise child CMD argument guard
         if: runner.os == 'Windows'
         shell: cmd
         run: |
