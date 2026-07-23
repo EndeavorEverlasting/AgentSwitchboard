@@ -31,7 +31,14 @@ if (-not $stageDef) {
     throw "Stage '$StageId' is not defined in manifest."
 }
 
-$runContext = Get-TechnicianLiveCertRunContext -RunId $RunId
+# A directly clicked stage must be able to start its own run when no run ID
+# exists yet. Full-run and resume callers continue to pass an explicit RunId.
+if ([string]::IsNullOrWhiteSpace($RunId)) {
+    $runContext = New-TechnicianLiveCertRunContext -RepoRoot $RepoRoot
+    $RunId = $runContext.runId
+} else {
+    $runContext = Get-TechnicianLiveCertRunContext -RunId $RunId
+}
 $runDir = Get-TechnicianLiveCertRunDir -RunId $runContext.runId
 
 # Check dependencies
