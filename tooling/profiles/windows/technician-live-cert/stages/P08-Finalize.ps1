@@ -13,7 +13,7 @@ $ErrorActionPreference = 'Stop'
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $parentDir = Split-Path -Parent $scriptDir
 $commonModule = Join-Path $parentDir 'TechnicianLiveCert.Common.psm1'
-Import-Module -LiteralPath $commonModule -Force
+Import-Module -Name $commonModule -Force
 
 Write-Host "Running P08-Finalize stage..." -ForegroundColor Yellow
 
