@@ -186,6 +186,38 @@ function Get-TechnicianLiveCertActiveRunId {
     return [string]$pointer.runId
 }
 
+function Get-LatestCompletedTechnicianLiveCertRunId {
+    [CmdletBinding()]
+    param()
+
+    $runsDir = Get-TechnicianLiveCertRunsDir
+    $candidates = Get-ChildItem -LiteralPath $runsDir -Directory -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTimeUtc -Descending
+
+    foreach ($candidate in $candidates) {
+        $runJson = Join-Path $candidate.FullName 'run.json'
+        if (-not (Test-Path -LiteralPath $runJson -PathType Leaf)) {
+            continue
+        }
+
+        try {
+            $run = Get-Content -LiteralPath $runJson -Raw | ConvertFrom-Json
+        }
+        catch {
+            continue
+        }
+
+        if ($run.status -eq 'completed' -and
+            $run.stages -and
+            $run.stages.PSObject.Properties['P08'] -and
+            $run.stages.P08.status -eq 'passed') {
+            return [string]$run.runId
+        }
+    }
+
+    return $null
+}
+
 function Clear-TechnicianLiveCertActiveRun {
     [CmdletBinding()]
     param(
@@ -479,6 +511,7 @@ Export-ModuleMember -Function @(
     'Get-TechnicianLiveCertActiveRunPath',
     'Set-TechnicianLiveCertActiveRun',
     'Get-TechnicianLiveCertActiveRunId',
+    'Get-LatestCompletedTechnicianLiveCertRunId',
     'Clear-TechnicianLiveCertActiveRun',
     'New-TechnicianLiveCertRunId',
     'Get-TechnicianLiveCertRunDir',
