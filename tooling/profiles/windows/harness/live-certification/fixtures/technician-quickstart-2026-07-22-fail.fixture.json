@@ -1,0 +1,64 @@
+{
+  "schema": "agentswitchboard.windows-profile-live-certification-fixture.v1",
+  "fixtureId": "technician-quickstart-2026-07-22-fail",
+  "expectedValid": true,
+  "expectedOutcome": "failed",
+  "mode": "open-or-activate",
+  "observedAt": "2026-07-22",
+  "environment": "sanitized Windows technician workstation",
+  "exactOperatorSurface": "downloaded Pull-And-Run-AgentSwitchboard.cmd",
+  "before": {
+    "wezTermProcesses": [],
+    "tmuxSessions": [],
+    "tmuxClients": []
+  },
+  "afterFirst": {
+    "wezTermProcesses": [],
+    "tmuxSessions": [],
+    "tmuxClients": []
+  },
+  "afterSecond": {
+    "wezTermProcesses": [],
+    "tmuxSessions": [],
+    "tmuxClients": []
+  },
+  "expectedNewWindows": 0,
+  "expectedSessionCreated": false,
+  "expectedDuplicateDetected": false,
+  "expectedIdempotent": false,
+  "stageEvidence": [
+    {
+      "passedStage": "repository-pull",
+      "result": "pass",
+      "evidence": "The technician obtained and ran the repository command surface."
+    },
+    {
+      "passedStage": "opencode-installation",
+      "result": "pass",
+      "evidence": "The technician reported that OpenCode installed successfully."
+    },
+    {
+      "failedStage": "hermes-browser-handoff",
+      "result": "fail",
+      "evidence": "Hermes stalled immediately before opening its website and required Ctrl+C or /debug; the automated path did not supply the required newline."
+    },
+    {
+      "failedStage": "agy-installation",
+      "result": "fail",
+      "evidence": "AGY was not installed by the default technician path."
+    },
+    {
+      "failedStage": "wezterm-command-resolution",
+      "result": "fail",
+      "evidence": "WezTerm was not recognized from the technician's PowerShell command surface."
+    },
+    {
+      "failedStage": "tmux-command-resolution",
+      "result": "fail",
+      "evidence": "tmux was not recognized from the technician's PowerShell command surface; the path did not expose the WSL-owned command through an owned Windows shim."
+    }
+  ],
+  "classification": "failed-live-certification",
+  "proofLevel": "behavior-observed-failure",
+  "proofCeiling": "This fixture records a sanitized operator-observed failure. It proves neither the repaired command nor any later workstation run succeeds."
+}
