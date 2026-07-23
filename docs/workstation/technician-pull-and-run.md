@@ -1,8 +1,63 @@
 # Technician Pull and Run
 
-Use one repository-owned CMD to obtain the current AgentSwitchboard code, verify that the checkout can be updated without discarding work, prepare the Windows Profile prerequisites, and open the requested terminal surface.
+## Start here — pull the repository first
 
-## What the CMD does
+The technician must begin with the parent bootstrap. Do not start with commands inside the repository, because those files do not exist until this gate completes.
+
+Open **Command Prompt** and run:
+
+```cmd
+curl.exe -fL https://raw.githubusercontent.com/EndeavorEverlasting/AgentSwitchboard/feat/technician-pull-and-run-cmd/Pull-Repo-And-Setup-AgentSwitchboard.cmd -o "%TEMP%\Pull-Repo-And-Setup-AgentSwitchboard.cmd" && call "%TEMP%\Pull-Repo-And-Setup-AgentSwitchboard.cmd"
+```
+
+This parent command:
+
+1. downloads the repository bootstrap;
+2. clones AgentSwitchboard to `%USERPROFILE%\Desktop\dev\AgentSwitchboard` when absent;
+3. otherwise validates the origin, fetches, and fast-forwards the branch safely;
+4. runs the core `setup` mode from the freshly pulled repository;
+5. installs or verifies WezTerm, tmux, AGY, and OpenCode;
+6. creates PowerShell-visible command shims;
+7. prints the exact next verification commands.
+
+**Gate:** Do not run any repo-local command below until the parent command reports:
+
+```text
+[PASS] The repository was cloned or safely fast-forwarded and setup completed.
+```
+
+## Verify the pulled setup
+
+Close any old PowerShell window. Open a **new PowerShell window** and run:
+
+```powershell
+wezterm --version
+tmux -V
+agy --version
+opencode --version
+```
+
+All four commands must resolve before launching an agent surface.
+
+## Launch after the pull/setup gate
+
+Only after the parent command and four PowerShell checks pass:
+
+```cmd
+call "%USERPROFILE%\Desktop\dev\AgentSwitchboard\Pull-And-Run-AgentSwitchboard.cmd" shell
+call "%USERPROFILE%\Desktop\dev\AgentSwitchboard\Pull-And-Run-AgentSwitchboard.cmd" agy
+call "%USERPROFILE%\Desktop\dev\AgentSwitchboard\Pull-And-Run-AgentSwitchboard.cmd" opencode
+```
+
+Hermes is optional and separate:
+
+```cmd
+call "%USERPROFILE%\Desktop\dev\AgentSwitchboard\Pull-And-Run-AgentSwitchboard.cmd" hermes
+```
+
+## What the parent and child CMDs do
+
+`Pull-Repo-And-Setup-AgentSwitchboard.cmd` is the technician's first-entry parent command. It acquires the child bootstrap and requests repository pull plus setup.
 
 `Pull-And-Run-AgentSwitchboard.cmd`:
 
@@ -22,37 +77,6 @@ Use one repository-owned CMD to obtain the current AgentSwitchboard code, verify
 
 It never runs `git reset`, `git clean`, `git stash`, force-push, or destructive tmux cleanup. It does not edit `.wezterm.lua` or `.tmux.conf`.
 
-## Current branch command
-
-Until the pull request lands on `main`, open **Command Prompt** and run:
-
-```cmd
-curl.exe -fL https://raw.githubusercontent.com/EndeavorEverlasting/AgentSwitchboard/feat/technician-pull-and-run-cmd/Pull-And-Run-AgentSwitchboard.cmd -o "%TEMP%\Pull-And-Run-AgentSwitchboard.cmd" && call "%TEMP%\Pull-And-Run-AgentSwitchboard.cmd" setup "%USERPROFILE%\Desktop\dev\AgentSwitchboard" feat/technician-pull-and-run-cmd
-```
-
-After setup succeeds, open a new PowerShell window and use:
-
-```powershell
-wezterm --version
-tmux -V
-agy --version
-opencode --version
-```
-
-Then request the desired surface from Command Prompt or PowerShell:
-
-```cmd
-call "%USERPROFILE%\Desktop\dev\AgentSwitchboard\Pull-And-Run-AgentSwitchboard.cmd" shell
-call "%USERPROFILE%\Desktop\dev\AgentSwitchboard\Pull-And-Run-AgentSwitchboard.cmd" agy
-call "%USERPROFILE%\Desktop\dev\AgentSwitchboard\Pull-And-Run-AgentSwitchboard.cmd" opencode
-```
-
-After merge, the normal first command is:
-
-```cmd
-curl.exe -fL https://raw.githubusercontent.com/EndeavorEverlasting/AgentSwitchboard/main/Pull-And-Run-AgentSwitchboard.cmd -o "%TEMP%\Pull-And-Run-AgentSwitchboard.cmd" && call "%TEMP%\Pull-And-Run-AgentSwitchboard.cmd" setup
-```
-
 ## Modes
 
 ```cmd
@@ -71,7 +95,7 @@ Pull-And-Run-AgentSwitchboard.cmd hermes
 
 AGY, OpenCode, and Hermes authentication remains interactive. The CMD does not read, store, or print provider credentials.
 
-## Why tmux can now run from PowerShell
+## Why tmux can run from PowerShell
 
 `tmux` remains installed inside Ubuntu. The setup does not pretend it is a native Windows executable. Instead, it writes an AgentSwitchboard-owned `tmux.cmd` shim that delegates to the exact `/usr/bin/tmux` path inside the selected distribution. The same pattern is used for the WSL-owned AGY and OpenCode commands.
 
@@ -102,7 +126,7 @@ The sanitized fixture is stored at:
 tooling/profiles/windows/harness/live-certification/fixtures/technician-quickstart-2026-07-22-fail.fixture.json
 ```
 
-The repair is not live-certified until the exact remote setup command is rerun on an authorized technician workstation.
+The repair is not live-certified until the exact parent remote command is rerun on an authorized technician workstation.
 
 ## Expected prerequisites and blockers
 
