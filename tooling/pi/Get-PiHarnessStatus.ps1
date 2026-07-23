@@ -130,6 +130,7 @@ if ($missing.Count -eq 0) {
     [void]$working.Add('Project-local settings load repository skills after explicit Pi project trust and disable install telemetry.')
     [void]$working.Add('The launcher disables telemetry and version checks by default, stores sessions outside the repository, and never bypasses project trust.')
 }
+
 if ($nodeReady) { [void]$working.Add("Node.js $($nodeProbe.version) satisfies the minimum $minimumNode requirement.") }
 elseif (-not $nodePath) { [void]$broken.Add("Node.js $minimumNode or newer is required and was not found.") }
 elseif (-not $nodeProbe) { [void]$broken.Add("Node.js was found at '$nodePath' but its version could not be verified.") }
@@ -143,7 +144,7 @@ if (-not $bashPath) {
     if ($IsWindows) { [void]$broken.Add('Pi requires bash on Windows. Install Git for Windows or configure a reviewed Pi shellPath.') }
     else { [void]$broken.Add('Pi requires bash, but bash was not found on PATH.') }
 }
-elif (-not $bashReady) { [void]$broken.Add("bash was found at '$bashPath' but its version could not be verified.") }
+elseif (-not $bashReady) { [void]$broken.Add("bash was found at '$bashPath' but its version could not be verified.") }
 else { [void]$working.Add("bash $($bashProbe.version) is available at $bashPath.") }
 
 if ($piReady) { [void]$working.Add("Pi $($piProbe.version) matches the pinned version at $piPath.") }
@@ -216,7 +217,9 @@ if (-not $NoWrite) {
     $jsonPath = Join-Path $OutputDirectory 'pi-harness-status.json'
     $mdPath = Join-Path $OutputDirectory 'pi-harness-status.md'
     $result | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $jsonPath -Encoding utf8NoBOM
-    @(
+
+    $markdown = [System.Collections.Generic.List[string]]::new()
+    foreach ($line in @(
         '# Pi Operational Harness Status',
         '',
         "- Status: $($result.status)",
@@ -228,23 +231,18 @@ if (-not $NoWrite) {
         "- Pi: $($result.pi.state) $($result.pi.version)",
         "- Ready components: $readyCount/$($componentResults.Count)",
         '',
-        '## Working',
-        @($working | ForEach-Object { "- $_" }),
-        '',
-        '## Broken or blocked',
-        $(if ($broken.Count -eq 0) { '- None at the observed readiness level.' } else { @($broken | ForEach-Object { "- $_" }) }),
-        '',
-        '## Missing runtime proof',
-        @($gaps | ForEach-Object { "- $_" }),
-        '',
-        '## Proof ceiling',
-        $result.proofCeiling,
-        '',
-        '## Next command',
-        '```powershell',
-        $nextCommand,
-        '```'
-    ) | ForEach-Object { $_ } | Set-Content -LiteralPath $mdPath -Encoding utf8
+        '## Working'
+    )) { [void]$markdown.Add($line) }
+    foreach ($line in $working) { [void]$markdown.Add("- $line") }
+    [void]$markdown.Add('')
+    [void]$markdown.Add('## Broken or blocked')
+    if ($broken.Count -eq 0) { [void]$markdown.Add('- None at the observed readiness level.') }
+    else { foreach ($line in $broken) { [void]$markdown.Add("- $line") } }
+    [void]$markdown.Add('')
+    [void]$markdown.Add('## Missing runtime proof')
+    foreach ($line in $gaps) { [void]$markdown.Add("- $line") }
+    foreach ($line in @('', '## Proof ceiling', $result.proofCeiling, '', '## Next command', '```powershell', $nextCommand, '```')) { [void]$markdown.Add($line) }
+    $markdown | Set-Content -LiteralPath $mdPath -Encoding utf8
     Write-Host "JSON: $jsonPath"
     Write-Host "Report: $mdPath"
 }
