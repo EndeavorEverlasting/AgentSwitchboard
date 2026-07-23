@@ -1,0 +1,69 @@
+name: Technician Live-Cert Surface CI
+
+on:
+  push:
+    branches:
+      - feat/technician-clickable-live-cert-cmds
+      - main
+  pull_request:
+    paths:
+      - 'tooling/profiles/windows/technician-live-cert/**'
+      - 'Technician-LiveCert-*.cmd'
+      - 'Repair-Technician-*.cmd'
+      - 'Run-Technician-LiveCert.cmd'
+      - 'AgentSwitchboard-Technician-Bootstrap.cmd'
+      - 'Open-TechnicianLiveCertEvidence.cmd'
+      - 'Install-TechnicianLiveCertShortcuts.cmd'
+      - 'scripts/Test-TechnicianLiveCertSurface.ps1'
+      - 'tests/test_technician_live_cert_surface.py'
+      - '.github/workflows/technician-live-cert-surface.yml'
+      - 'docs/workstation/technician-live-cert-click-guide.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-surface:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run Python structural tests
+        run: python tests/test_technician_live_cert_surface.py
+
+      - name: Validate surface in PowerShell
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertSurface.ps1
+
+      - name: Validate Windows Profile live-certification doctrine
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-WindowsProfileLiveCertification.ps1
+
+      - name: Validate end-to-end runtime skill
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-EndToEndRuntimeValidationSkill.ps1
+
+      - name: Validate device profile launcher contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-DeviceProfileLauncherContract.ps1
+
+      - name: Exercise CMD dry-run
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          set AGENT_SWITCHBOARD_NO_PAUSE=1
+          call Technician-LiveCert-P00-Preflight.cmd
+          if errorlevel 1 exit /b %errorlevel%
+
+      - name: Check repository hygiene
+        shell: bash
+        run: git diff --check

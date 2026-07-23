@@ -1,0 +1,6 @@
+# AgentSwitchboard gitignore
+__pycache__/
+*.pyc
+.pytest_cache/
+technician-live-cert/runs/
+*.log

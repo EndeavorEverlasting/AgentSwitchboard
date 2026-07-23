@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-2020-12/schema#",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/schemas/technician-live-cert-run.schema.json",
+  "title": "Technician Live-Cert Run Context",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "runId", "startedAt", "accountSid", "username", "hostname", "repository", "branch", "head", "distribution", "elevationState", "evidenceRoot", "proofCeiling", "stages", "status"],
+  "properties": {
+    "schema": { "type": "string", "const": "agentswitchboard.technician-live-cert-run.v1" },
+    "runId": { "type": "string", "pattern": "^\\d{8}T\\d{6}Z-[a-f0-9]{8}$" },
+    "startedAt": { "type": "string", "format": "date-time" },
+    "completedAt": { "type": ["string", "null"], "format": "date-time" },
+    "accountSid": { "type": "string" },
+    "username": { "type": "string" },
+    "hostname": { "type": "string" },
+    "repository": { "type": "string", "format": "uri" },
+    "branch": { "type": "string" },
+    "head": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "distribution": { "type": "string" },
+    "elevationState": { "type": "string", "enum": ["none", "requested", "elevated"] },
+    "evidenceRoot": { "type": "string" },
+    "proofCeiling": { "type": "string" },
+    "stages": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/stageState" },
+      "required": ["P00", "P01", "P02", "P03", "P04", "P05", "P06", "P07", "P08"],
+      "additionalProperties": false
+    },
+    "optionalStages": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/stageState" },
+      "propertyNames": { "pattern": "^P\\d{2}$" }
+    },
+    "status": { "type": "string", "enum": ["running", "completed", "failed", "incomplete"] }
+  },
+  "$defs": {
+    "stageState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stageId", "name", "status", "startedAt", "completedAt", "exitCode", "evidencePath", "classification"],
+      "properties": {
+        "stageId": { "type": "string", "pattern": "^P\\d{2}$" },
+        "name": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "running", "passed", "failed", "skipped", "blocked"] },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "completedAt": { "type": ["string", "null"], "format": "date-time" },
+        "exitCode": { "type": ["integer", "null"] },
+        "evidencePath": { "type": ["string", "null"] },
+        "classification": { "type": ["string", "null"] },
+        "manualObservation": { "type": ["object", "null"] },
+        "error": { "type": ["string", "null"] }
+      }
+    }
+  }
+}
