@@ -5,9 +5,14 @@ on:
     paths:
       - 'Pull-And-Run-AgentSwitchboard.cmd'
       - 'tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1'
+      - 'tooling/profiles/windows/harness/live-certification/fixtures/technician-quickstart-2026-07-22-fail.fixture.json'
       - 'tests/test_technician_pull_and_run_contract.py'
-      - '.github/workflows/technician-pull-and-run.yml'
+      - 'scripts/Test-WindowsProfileLiveCertification.ps1'
+      - '.ai/skills/windows-profile-live-certification/SKILL.md'
+      - '.ai/skills/end-to-end-runtime-validation/SKILL.md'
+      - 'docs/governance/live-cert-failure-doctrine.md'
       - 'docs/workstation/technician-pull-and-run.md'
+      - '.github/workflows/technician-pull-and-run.yml'
   workflow_dispatch:
 
 permissions:
@@ -29,23 +34,29 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Validate portable CMD contract
+      - name: Validate portable CMD and failed live-cert contract
         run: python tests/test_technician_pull_and_run_contract.py
 
-      - name: Parse technician PowerShell
+      - name: Parse technician and validator PowerShell
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $tokens = $null
-          $errors = $null
-          [void][System.Management.Automation.Language.Parser]::ParseFile(
-            (Resolve-Path 'tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1'),
-            [ref]$tokens,
-            [ref]$errors
+          $paths = @(
+            'tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1',
+            'scripts/Test-WindowsProfileLiveCertification.ps1'
           )
-          if ($errors.Count -gt 0) {
-            $errors | Format-List | Out-String | Write-Error
-            exit 1
+          foreach ($path in $paths) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $path),
+              [ref]$tokens,
+              [ref]$errors
+            )
+            if ($errors.Count -gt 0) {
+              $errors | Format-List | Out-String | Write-Error
+              exit 1
+            }
           }
 
       - name: Exercise CMD argument guard
@@ -54,9 +65,20 @@ jobs:
         run: |
           set AGENT_SWITCHBOARD_NO_PAUSE=1
           call Pull-And-Run-AgentSwitchboard.cmd unsupported-mode
-          set RESULT_CODE=%ERRORLEVEL%
-          if not "%RESULT_CODE%"=="2" exit /b 1
-          exit /b 0
+          set CMD_RESULT=%ERRORLEVEL%
+          if not "%CMD_RESULT%"=="2" exit /b 1
+
+      - name: Validate Windows Profile live-certification doctrine
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-WindowsProfileLiveCertification.ps1
+
+      - name: Validate agent documentation contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1
+
+      - name: Validate harness doctrine contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-HarnessDoctrineContract.ps1
 
       - name: Check repository hygiene
         shell: bash
