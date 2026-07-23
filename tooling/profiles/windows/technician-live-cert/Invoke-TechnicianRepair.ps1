@@ -72,8 +72,14 @@ Write-Host '============================================================' -Foreg
 
 $exitCode = 1
 try {
-    & $implPath -RepairId $RepairId -RunId $RunId -RepoRoot $RepoRoot
-    $exitCode = if ($null -ne $LASTEXITCODE) { $LASTEXITCODE } else { 0 }
+    $repairResult = & $implPath -RepairId $RepairId -RunId $RunId -RepoRoot $RepoRoot
+    if ($repairResult -is [int]) {
+        $exitCode = [int]$repairResult
+    } elseif ($null -ne $repairResult -and $repairResult.PSObject.Properties['exitCode']) {
+        $exitCode = [int]$repairResult.exitCode
+    } else {
+        $exitCode = 0
+    }
 }
 catch {
     $exitCode = 1
