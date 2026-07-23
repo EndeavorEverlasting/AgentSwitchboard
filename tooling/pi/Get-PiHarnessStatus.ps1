@@ -35,9 +35,31 @@ function Resolve-NativeCommand {
     param([Parameter(Mandatory)][string[]]$Names)
     foreach ($name in $Names) {
         $command = Get-Command $name -ErrorAction SilentlyContinue
-        if ($command -and $command.Source -and $command.Source -notlike '*.ps1') {
-            return $command.Source
+        if ($command -and $command.Source -and $command.Source -notlike '*.ps1') { return $command.Source }
+    }
+    return $null
+}
+
+function Resolve-BashCommand {
+    $candidates = [System.Collections.Generic.List[string]]::new()
+    if ($IsWindows) {
+        foreach ($candidate in @(
+            $(if ($env:ProgramFiles) { Join-Path $env:ProgramFiles 'Git/bin/bash.exe' }),
+            $(if (${env:ProgramFiles(x86)}) { Join-Path ${env:ProgramFiles(x86)} 'Git/bin/bash.exe' })
+        )) {
+            if ($candidate) { [void]$candidates.Add($candidate) }
         }
+        foreach ($name in @('bash.exe', 'bash')) {
+            $command = Get-Command $name -ErrorAction SilentlyContinue
+            if ($command -and $command.Source) { [void]$candidates.Add($command.Source) }
+        }
+    }
+    else {
+        $command = Get-Command bash -ErrorAction SilentlyContinue
+        if ($command -and $command.Source) { [void]$candidates.Add($command.Source) }
+    }
+    foreach ($candidate in $candidates) {
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) { return (Resolve-Path -LiteralPath $candidate).Path }
     }
     return $null
 }
@@ -81,9 +103,11 @@ $dirty = [bool](& git -C $RootPath status --short 2>$null)
 $nodePath = Resolve-NativeCommand -Names $(if ($IsWindows) { @('node.exe', 'node') } else { @('node') })
 $npmPath = Resolve-NativeCommand -Names $(if ($IsWindows) { @('npm.cmd', 'npm.exe', 'npm') } else { @('npm') })
 $piPath = Resolve-NativeCommand -Names $(if ($IsWindows) { @('pi.cmd', 'pi.exe', 'pi') } else { @('pi') })
+$bashPath = Resolve-BashCommand
 $nodeProbe = Read-VersionProbe -Path $nodePath -Pattern 'v?(\d+\.\d+\.\d+)'
 $npmProbe = Read-VersionProbe -Path $npmPath
 $piProbe = Read-VersionProbe -Path $piPath
+$bashProbe = Read-VersionProbe -Path $bashPath -Pattern '(\d+\.\d+(?:\.\d+)?)'
 
 $missing = @($componentResults | Where-Object { -not $_.exists -or -not $_.tracked })
 $broken = [System.Collections.Generic.List[string]]::new()
@@ -96,6 +120,8 @@ if ($dirty) { [void]$broken.Add('The checkout is dirty; a write lane must preser
 $expectedPi = if ($verification) { [version]([string]$verification.version) } else { $null }
 $minimumNode = if ($verification) { [version]([string]$verification.minimumNodeVersion) } else { $null }
 $nodeReady = $nodeProbe -and ([version]$nodeProbe.version -ge $minimumNode)
+$npmReady = [bool]$npmProbe
+$bashReady = [bool]$bashProbe
 $piReady = $piProbe -and ([version]$piProbe.version -eq $expectedPi)
 
 if ($missing.Count -eq 0) {
@@ -110,8 +136,15 @@ elseif (-not $nodeProbe) { [void]$broken.Add("Node.js was found at '$nodePath' b
 else { [void]$broken.Add("Node.js $($nodeProbe.version) is below the required $minimumNode version.") }
 
 if (-not $npmPath) { [void]$broken.Add('npm was not found; the pinned Pi package cannot be installed.') }
-elseif (-not $npmProbe) { [void]$broken.Add("npm was found at '$npmPath' but its version could not be verified.") }
+elseif (-not $npmReady) { [void]$broken.Add("npm was found at '$npmPath' but its version could not be verified.") }
 else { [void]$working.Add("npm $($npmProbe.version) is available at $npmPath.") }
+
+if (-not $bashPath) {
+    if ($IsWindows) { [void]$broken.Add('Pi requires bash on Windows. Install Git for Windows or configure a reviewed Pi shellPath.') }
+    else { [void]$broken.Add('Pi requires bash, but bash was not found on PATH.') }
+}
+elif (-not $bashReady) { [void]$broken.Add("bash was found at '$bashPath' but its version could not be verified.") }
+else { [void]$working.Add("bash $($bashProbe.version) is available at $bashPath.") }
 
 if ($piReady) { [void]$working.Add("Pi $($piProbe.version) matches the pinned version at $piPath.") }
 elseif (-not $piPath) { [void]$gaps.Add("Pi $expectedPi is not installed. Run the repository installer.") }
@@ -126,7 +159,7 @@ foreach ($gap in @(
 )) { [void]$gaps.Add($gap) }
 
 $status = if ($missing.Count -gt 0) { 'incomplete' }
-elseif (-not $nodeReady -or -not $npmProbe) { 'blocked' }
+elseif (-not $nodeReady -or -not $npmReady -or -not $bashReady) { 'blocked' }
 elseif ($piReady) { 'runtime-ready-provider-unproved' }
 else { 'installable' }
 
@@ -146,14 +179,15 @@ $result = [ordered]@{
     dirty = $dirty
     upstream = if ($verification) { [ordered]@{ package = $verification.package; version = $verification.version; minimumNodeVersion = $verification.minimumNodeVersion; verifiedAt = $verification.verifiedAt } } else { $null }
     node = [ordered]@{ state = if ($nodeReady) { 'ready' } elseif ($nodePath) { 'unready' } else { 'missing' }; path = $nodePath; version = if ($nodeProbe) { $nodeProbe.version } else { $null } }
-    npm = [ordered]@{ state = if ($npmProbe) { 'ready' } elseif ($npmPath) { 'unready' } else { 'missing' }; path = $npmPath; version = if ($npmProbe) { $npmProbe.version } else { $null } }
+    npm = [ordered]@{ state = if ($npmReady) { 'ready' } elseif ($npmPath) { 'unready' } else { 'missing' }; path = $npmPath; version = if ($npmProbe) { $npmProbe.version } else { $null } }
+    shell = [ordered]@{ state = if ($bashReady) { 'ready' } elseif ($bashPath) { 'unready' } else { 'missing' }; path = $bashPath; version = if ($bashProbe) { $bashProbe.version } else { $null } }
     pi = [ordered]@{ state = if ($piReady) { 'ready' } elseif ($piPath) { 'version-mismatch-or-unverified' } else { 'missing' }; path = $piPath; version = if ($piProbe) { $piProbe.version } else { $null } }
     components = $componentResults
     working = $working
     broken = $broken
     missing = @($missing | ForEach-Object { $_.path })
     gaps = $gaps
-    proofCeiling = 'Read-only repository component, Node/npm readiness, and Pi exact-version status. No provider login, model response, extension execution, endpoint privacy, or code-delivery proof.'
+    proofCeiling = 'Read-only repository component, Node/npm/bash readiness, and Pi exact-version status. No provider login, model response, extension execution, endpoint privacy, or code-delivery proof.'
     nextCommand = $nextCommand
 }
 
@@ -164,6 +198,7 @@ Write-Host ("Branch: {0}" -f $result.branch)
 Write-Host ("HEAD: {0}" -f $result.head)
 Write-Host ("Node: {0} {1}" -f $result.node.state, $result.node.version)
 Write-Host ("npm: {0} {1}" -f $result.npm.state, $result.npm.version)
+Write-Host ("Bash: {0} {1}" -f $result.shell.state, $result.shell.version)
 Write-Host ("Pi: {0} {1}" -f $result.pi.state, $result.pi.version)
 Write-Host ("Components: {0}/{1} ready" -f $readyCount, $componentResults.Count)
 Write-Host ''
@@ -176,40 +211,40 @@ $gaps | ForEach-Object { Write-Host "- $_" }
 Write-Host "Next: $nextCommand"
 
 if (-not $NoWrite) {
-    if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
-        $OutputDirectory = Join-Path ([System.IO.Path]::GetTempPath()) 'AgentSwitchboard/PiHarness/status'
-    }
+    if ([string]::IsNullOrWhiteSpace($OutputDirectory)) { $OutputDirectory = Join-Path ([System.IO.Path]::GetTempPath()) 'AgentSwitchboard/PiHarness/status' }
     $null = New-Item -ItemType Directory -Path $OutputDirectory -Force
     $jsonPath = Join-Path $OutputDirectory 'pi-harness-status.json'
     $mdPath = Join-Path $OutputDirectory 'pi-harness-status.md'
     $result | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $jsonPath -Encoding utf8NoBOM
-
-    $markdown = [System.Collections.Generic.List[string]]::new()
-    foreach ($line in @(
+    @(
         '# Pi Operational Harness Status',
         '',
-        ("- Status: {0}" -f $result.status),
-        ("- Branch: {0}" -f $result.branch),
-        ("- HEAD: {0}" -f $result.head),
-        ("- Node: {0} {1}" -f $result.node.state, $result.node.version),
-        ("- npm: {0} {1}" -f $result.npm.state, $result.npm.version),
-        ("- Pi: {0} {1}" -f $result.pi.state, $result.pi.version),
-        ("- Ready components: {0}/{1}" -f $readyCount, $componentResults.Count),
+        "- Status: $($result.status)",
+        "- Branch: $($result.branch)",
+        "- HEAD: $($result.head)",
+        "- Node: $($result.node.state) $($result.node.version)",
+        "- npm: $($result.npm.state) $($result.npm.version)",
+        "- Bash: $($result.shell.state) $($result.shell.version)",
+        "- Pi: $($result.pi.state) $($result.pi.version)",
+        "- Ready components: $readyCount/$($componentResults.Count)",
         '',
-        '## Working'
-    )) { [void]$markdown.Add($line) }
-    foreach ($line in $working) { [void]$markdown.Add("- $line") }
-    [void]$markdown.Add('')
-    [void]$markdown.Add('## Broken or blocked')
-    if ($broken.Count -eq 0) { [void]$markdown.Add('- None at the observed readiness level.') }
-    else { foreach ($line in $broken) { [void]$markdown.Add("- $line") } }
-    [void]$markdown.Add('')
-    [void]$markdown.Add('## Missing runtime proof')
-    foreach ($line in $gaps) { [void]$markdown.Add("- $line") }
-    foreach ($line in @('', '## Proof ceiling', $result.proofCeiling, '', '## Next command', '```powershell', $nextCommand, '```')) {
-        [void]$markdown.Add($line)
-    }
-    $markdown | Set-Content -LiteralPath $mdPath -Encoding utf8
+        '## Working',
+        @($working | ForEach-Object { "- $_" }),
+        '',
+        '## Broken or blocked',
+        $(if ($broken.Count -eq 0) { '- None at the observed readiness level.' } else { @($broken | ForEach-Object { "- $_" }) }),
+        '',
+        '## Missing runtime proof',
+        @($gaps | ForEach-Object { "- $_" }),
+        '',
+        '## Proof ceiling',
+        $result.proofCeiling,
+        '',
+        '## Next command',
+        '```powershell',
+        $nextCommand,
+        '```'
+    ) | ForEach-Object { $_ } | Set-Content -LiteralPath $mdPath -Encoding utf8
     Write-Host "JSON: $jsonPath"
     Write-Host "Report: $mdPath"
 }
