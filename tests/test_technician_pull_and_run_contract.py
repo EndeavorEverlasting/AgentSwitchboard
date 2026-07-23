@@ -5,6 +5,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PARENT_CMD_PATH = ROOT / "Pull-Repo-And-Setup-AgentSwitchboard.cmd"
 CMD_PATH = ROOT / "Pull-And-Run-AgentSwitchboard.cmd"
 SETUP_PATH = ROOT / "tooling" / "profiles" / "windows" / "Setup-TechnicianAgentSwitchboard.ps1"
 LIVE_CERT_FIXTURE = (
@@ -27,15 +28,30 @@ def require(text: str, token: str, label: str) -> None:
 
 
 def main() -> None:
-    for path in (CMD_PATH, SETUP_PATH, LIVE_CERT_FIXTURE, LIVE_CERT_SKILL, DOCTRINE_PATH):
+    for path in (PARENT_CMD_PATH, CMD_PATH, SETUP_PATH, LIVE_CERT_FIXTURE, LIVE_CERT_SKILL, DOCTRINE_PATH):
         if not path.is_file():
             raise AssertionError(f"missing technician contract file: {path}")
 
+    parent = PARENT_CMD_PATH.read_text(encoding="utf-8")
     cmd = CMD_PATH.read_text(encoding="utf-8")
     setup = SETUP_PATH.read_text(encoding="utf-8")
     fixture = LIVE_CERT_FIXTURE.read_text(encoding="utf-8")
     skill = LIVE_CERT_SKILL.read_text(encoding="utf-8")
     doctrine = DOCTRINE_PATH.read_text(encoding="utf-8")
+
+    parent_requirements = {
+        "explicit first command": "This is the first technician command.",
+        "canonical raw bootstrap": "Pull-And-Run-AgentSwitchboard.cmd",
+        "explicit setup handoff": 'call "%BOOTSTRAP_PATH%" setup',
+        "repo path": "%USERPROFILE%\\Desktop\\dev\\AgentSwitchboard",
+        "pull result": "The repository was cloned or safely fast-forwarded",
+        "next PowerShell verification": "wezterm --version",
+        "tmux verification": "tmux -V",
+        "AGY verification": "agy --version",
+        "OpenCode verification": "opencode --version",
+    }
+    for label, token in parent_requirements.items():
+        require(parent, token, label)
 
     cmd_requirements = {
         "canonical repository": "https://github.com/EndeavorEverlasting/AgentSwitchboard.git",
@@ -57,15 +73,16 @@ def main() -> None:
     for label, token in cmd_requirements.items():
         require(cmd, token, label)
 
-    for forbidden in (
-        r"\bgit\s+reset\b",
-        r"\bgit\s+clean\b",
-        r"\bgit\s+stash\b",
-        r"push\s+--force",
-        r"force-push",
-    ):
-        if re.search(forbidden, cmd, re.IGNORECASE):
-            raise AssertionError(f"destructive Git behavior is forbidden: {forbidden}")
+    for text in (parent, cmd):
+        for forbidden in (
+            r"\bgit\s+reset\b",
+            r"\bgit\s+clean\b",
+            r"\bgit\s+stash\b",
+            r"push\s+--force",
+            r"force-push",
+        ):
+            if re.search(forbidden, text, re.IGNORECASE):
+                raise AssertionError(f"destructive Git behavior is forbidden: {forbidden}")
 
     setup_requirements = {
         "Windows guard": "The technician Windows Profile setup must run on Windows.",
@@ -142,7 +159,7 @@ def main() -> None:
     ):
         require(text, token, label)
 
-    print("PASS: technician pull-and-run CMD and failed live-cert repair contract")
+    print("PASS: explicit parent pull command, technician setup, and failed live-cert repair contract")
 
 
 if __name__ == "__main__":
