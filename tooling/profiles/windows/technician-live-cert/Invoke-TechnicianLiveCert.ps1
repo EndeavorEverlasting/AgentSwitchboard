@@ -15,12 +15,9 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-if (-not $RepoRoot) {
-    $RepoRoot = (Get-Item $scriptDir).Parent.Parent.Parent.FullName
-}
-
 $commonModule = Join-Path $scriptDir 'TechnicianLiveCert.Common.psm1'
 Import-Module -Name $commonModule -Force
+$RepoRoot = Resolve-TechnicianRepoRoot -RepoRoot $RepoRoot
 
 $manifest = Get-TechnicianLiveCertManifest -RepoRoot $RepoRoot
 
@@ -30,15 +27,16 @@ if (-not $RunId -and -not $Resume) {
 } else {
     $runContext = Get-TechnicianLiveCertRunContext -RunId $RunId
     $RunId = $runContext.runId
+    $null = Assert-TechnicianLiveCertRunIdentity -RunContext $runContext -RepoRoot $RepoRoot
 }
 
 $runDir = Get-TechnicianLiveCertRunDir -RunId $RunId
 
-Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host " TECHNICIAN CLICKABLE LIVE-CERT FULL RUN" -ForegroundColor Yellow
+Write-Host '============================================================' -ForegroundColor Cyan
+Write-Host ' TECHNICIAN CLICKABLE LIVE-CERT FULL RUN' -ForegroundColor Yellow
 Write-Host " Run ID: $RunId" -ForegroundColor White
 Write-Host " Evidence Path: $runDir" -ForegroundColor White
-Write-Host "============================================================" -ForegroundColor Cyan
+Write-Host '============================================================' -ForegroundColor Cyan
 
 $sequence = @($manifest.coreSequence)
 if ($IncludeOptional) {
@@ -46,13 +44,13 @@ if ($IncludeOptional) {
 }
 
 $stageDispatcher = Join-Path $scriptDir 'Invoke-TechnicianLiveCertStage.ps1'
-
+$pwshPath = (Get-Command pwsh.exe -ErrorAction Stop).Source
 $overallFailed = $false
 $failedStageId = $null
 
 foreach ($stageId in $sequence) {
-    # If resuming, check if stage already passed
     if ($Resume) {
+        $runContext = Get-TechnicianLiveCertRunContext -RunId $RunId
         $stageState = $null
         if ($runContext.stages.PSObject.Properties[$stageId]) {
             $stageState = $runContext.stages.$stageId
@@ -60,18 +58,23 @@ foreach ($stageId in $sequence) {
             $stageState = $runContext.optionalStages.$stageId
         }
         if ($stageState -and $stageState.status -eq 'passed') {
-            Write-Host "Stage $stageId already passed. Skipping (Resume mode)." -ForegroundColor Gray
+            Write-Host "Stage $stageId already passed. Skipping in Resume mode." -ForegroundColor Gray
             continue
         }
     }
 
     Write-Host "`n--- Running Stage $stageId ---" -ForegroundColor Yellow
-    
-    $proc = Start-Process -FilePath "pwsh.exe" -ArgumentList "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$stageDispatcher`"", "-StageId", "$stageId", "-RunId", "$RunId", "-RepoRoot", "`"$RepoRoot`"", $(if ($NonInteractive) { "-NonInteractive" }) -Wait -NoNewWindow -PassThru
+    $arguments = @(
+        '-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass',
+        '-File', ('"{0}"' -f $stageDispatcher),
+        '-StageId', $stageId,
+        '-RunId', $RunId,
+        '-RepoRoot', ('"{0}"' -f $RepoRoot)
+    )
+    if ($NonInteractive) { $arguments += '-NonInteractive' }
 
+    $proc = Start-Process -FilePath $pwshPath -ArgumentList $arguments -Wait -NoNewWindow -PassThru
     $stageExit = $proc.ExitCode
-
-    # Reload run context
     $runContext = Get-TechnicianLiveCertRunContext -RunId $RunId
 
     if ($stageExit -ne 0) {
@@ -83,37 +86,42 @@ foreach ($stageId in $sequence) {
 
 if ($overallFailed) {
     Write-Host "`n============================================================" -ForegroundColor Red
-    Write-Host " LIVE-CERT RUN FAILED AT STAGE $failedStageId" -ForegroundColor Red
-    Write-Host "============================================================" -ForegroundColor Red
+    Write-Host " LIVE-CERT RUN STOPPED AT STAGE $failedStageId" -ForegroundColor Red
+    Write-Host '============================================================' -ForegroundColor Red
 
-    # Find matching repairs
     $matchingRepairs = @($manifest.repairs | Where-Object { $_.targetsStages -contains $failedStageId })
     if ($matchingRepairs.Count -gt 0) {
-        Write-Host "`nRecommended Repair Command(s):" -ForegroundColor Yellow
-        foreach ($r in $matchingRepairs) {
-            Write-Host "  - $($r.cmd)  (ID: $($r.repairId), Name: $($r.name))" -ForegroundColor Cyan
+        Write-Host "`nTracked repair CMD(s):" -ForegroundColor Yellow
+        foreach ($repair in $matchingRepairs) {
+            Write-Host "  - $($repair.cmd)  [$($repair.name)]" -ForegroundColor Cyan
         }
     } else {
-        Write-Host "`nNo specific repair command mapped for stage $failedStageId." -ForegroundColor Gray
+        Write-Host "`nNo stage-specific repair CMD is mapped. Review the stage evidence before changing anything." -ForegroundColor Gray
     }
 
-    Write-Host "`nTo resume after repair, run:" -ForegroundColor White
+    Write-Host "`nEvidence:" -ForegroundColor White
+    Write-Host "  $runDir" -ForegroundColor Cyan
+    Write-Host "`nResume after repair:" -ForegroundColor White
     Write-Host "  Run-Technician-LiveCert.cmd -Resume -RunId $RunId" -ForegroundColor Yellow
-    Write-Host "============================================================" -ForegroundColor Red
+    Write-Host '============================================================' -ForegroundColor Red
 
     $runContext.status = 'failed'
     $runContext.completedAt = (Get-Date).ToUniversalTime().ToString('o')
     Save-TechnicianLiveCertRunContext -RunContext $runContext
     exit 1
-} else {
-    $runContext.status = 'completed'
-    $runContext.completedAt = (Get-Date).ToUniversalTime().ToString('o')
-    Save-TechnicianLiveCertRunContext -RunContext $runContext
-
-    Write-Host "`n============================================================" -ForegroundColor Green
-    Write-Host " LIVE-CERT RUN COMPLETED SUCCESSFULLY!" -ForegroundColor Green
-    Write-Host " Run ID: $RunId" -ForegroundColor White
-    Write-Host " Evidence Folder: $runDir" -ForegroundColor White
-    Write-Host "============================================================" -ForegroundColor Green
-    exit 0
 }
+
+$runContext = Get-TechnicianLiveCertRunContext -RunId $RunId
+$runContext.status = 'completed'
+if (-not $runContext.completedAt) {
+    $runContext.completedAt = (Get-Date).ToUniversalTime().ToString('o')
+}
+Save-TechnicianLiveCertRunContext -RunContext $runContext
+
+Write-Host "`n============================================================" -ForegroundColor Green
+Write-Host ' LIVE-CERT CORE RUN COMPLETED SUCCESSFULLY' -ForegroundColor Green
+Write-Host " Run ID: $RunId" -ForegroundColor White
+Write-Host " Evidence Folder: $runDir" -ForegroundColor White
+Write-Host ' Provider authentication/response remains separate unless explicitly observed.' -ForegroundColor Gray
+Write-Host '============================================================' -ForegroundColor Green
+exit 0
