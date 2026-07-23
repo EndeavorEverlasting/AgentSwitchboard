@@ -55,13 +55,18 @@ function Get-TechnicianRepoGitState {
     )
 
     $resolvedRoot = Resolve-TechnicianRepoRoot -RepoRoot $RepoRoot
-    $head = (& git -C $resolvedRoot rev-parse HEAD 2>$null).Trim()
-    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($head)) {
+
+    $headOutput = @(& git -C $resolvedRoot rev-parse HEAD 2>$null)
+    $headExit = $LASTEXITCODE
+    $head = if ($headOutput.Count -gt 0) { ([string]$headOutput[0]).Trim() } else { '' }
+    if ($headExit -ne 0 -or [string]::IsNullOrWhiteSpace($head)) {
         throw "Unable to resolve repository HEAD for '$resolvedRoot'."
     }
 
-    $branch = (& git -C $resolvedRoot symbolic-ref --quiet --short HEAD 2>$null).Trim()
-    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($branch)) {
+    $branchOutput = @(& git -C $resolvedRoot symbolic-ref --quiet --short HEAD 2>$null)
+    $branchExit = $LASTEXITCODE
+    $branch = if ($branchOutput.Count -gt 0) { ([string]$branchOutput[0]).Trim() } else { '' }
+    if ($branchExit -ne 0 -or [string]::IsNullOrWhiteSpace($branch)) {
         $branch = 'DETACHED'
     }
 
