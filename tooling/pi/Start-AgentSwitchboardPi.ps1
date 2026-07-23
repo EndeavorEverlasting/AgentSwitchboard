@@ -32,12 +32,39 @@ function Resolve-PiCommand {
     if ($IsWindows) {
         foreach ($name in @('pi.cmd', 'pi.exe', 'pi')) {
             $command = Get-Command $name -ErrorAction SilentlyContinue
-            if ($command -and $command.Source -notlike '*.ps1') { return $command.Source }
+            if ($command -and $command.Source -and $command.Source -notlike '*.ps1') { return $command.Source }
         }
     }
     else {
         $command = Get-Command pi -ErrorAction SilentlyContinue
         if ($command) { return $command.Source }
+    }
+    return $null
+}
+
+function Resolve-BashCommand {
+    $candidates = [System.Collections.Generic.List[string]]::new()
+    if ($IsWindows) {
+        foreach ($candidate in @(
+            $(if ($env:ProgramFiles) { Join-Path $env:ProgramFiles 'Git/bin/bash.exe' }),
+            $(if (${env:ProgramFiles(x86)}) { Join-Path ${env:ProgramFiles(x86)} 'Git/bin/bash.exe' })
+        )) {
+            if ($candidate) { [void]$candidates.Add($candidate) }
+        }
+        foreach ($name in @('bash.exe', 'bash')) {
+            $command = Get-Command $name -ErrorAction SilentlyContinue
+            if ($command -and $command.Source) { [void]$candidates.Add($command.Source) }
+        }
+    }
+    else {
+        $command = Get-Command bash -ErrorAction SilentlyContinue
+        if ($command -and $command.Source) { [void]$candidates.Add($command.Source) }
+    }
+
+    foreach ($candidate in $candidates) {
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+            return (Resolve-Path -LiteralPath $candidate).Path
+        }
     }
     return $null
 }
@@ -61,6 +88,18 @@ if (-not $piPath) {
 $piVersion = Get-PiVersion -PiPath $piPath
 if ($piVersion.Version -ne $expectedVersion) {
     throw "Pi version mismatch. Expected $expectedVersion; found $($piVersion.Version). Run the repository installer to repair the pinned version."
+}
+
+$bashPath = Resolve-BashCommand
+if (-not $bashPath) {
+    if ($IsWindows) {
+        throw 'Pi requires a bash shell on Windows. Install Git for Windows, verify C:\Program Files\Git\bin\bash.exe, or configure a reviewed shellPath in Pi settings.'
+    }
+    throw 'Pi requires bash, but bash was not found on PATH.'
+}
+$bashOutput = & $bashPath --version 2>&1 | Out-String
+if ($LASTEXITCODE -ne 0) {
+    throw "Bash was found at '$bashPath' but its version probe failed. Output: $($bashOutput.Trim())"
 }
 
 if (-not $EnableTelemetry) { $env:PI_TELEMETRY = '0' }
@@ -99,6 +138,7 @@ $summary = [ordered]@{
     head = [string]$head
     dirty = $dirty
     pi = [ordered]@{ path = $piPath; version = $piVersion.Version.ToString() }
+    shell = [ordered]@{ path = $bashPath; version = ($bashOutput -split "`r?`n" | Select-Object -First 1).Trim() }
     projectSettings = '.pi/settings.json'
     projectTrust = 'operator-interactive; never bypassed by this launcher'
     telemetry = if ($EnableTelemetry) { 'operator-enabled' } else { 'disabled' }
@@ -110,7 +150,7 @@ $summary = [ordered]@{
     rawPromptRecorded = $false
     exitCode = $null
     proofLevel = 'runtime-command-invocation'
-    proofCeiling = 'Exact pinned Pi executable invocation from the repository root with project settings and low-noise environment controls. Provider authentication, model identity, response quality, privacy, extension behavior, code mutation, and delivery remain runtime evidence.'
+    proofCeiling = 'Exact pinned Pi executable invocation from the repository root with a verified bash shell, project settings, and low-noise environment controls. Provider authentication, model identity, response quality, privacy, extension behavior, code mutation, and delivery remain runtime evidence.'
     error = $null
 }
 
@@ -121,6 +161,7 @@ Write-Host "Repository:    $RootPath"
 Write-Host "Branch:        $branch"
 Write-Host "HEAD:          $head"
 Write-Host "Pi:            $($piVersion.Raw)"
+Write-Host "Bash:          $bashPath"
 Write-Host "Telemetry:     $($summary.telemetry)"
 Write-Host "Version check: $($summary.versionCheck)"
 Write-Host "Offline:       $Offline"
