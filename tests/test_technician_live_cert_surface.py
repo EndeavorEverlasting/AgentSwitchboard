@@ -97,6 +97,20 @@ class TestTechnicianLiveCertSurface(unittest.TestCase):
             "Standalone stage bootstrap must create a run before attempting run lookup.",
         )
 
+    def test_no_unsupported_import_module_literal_path(self):
+        """Import-Module does not expose -LiteralPath; owned runtime scripts must use -Name for path imports."""
+        offenders = []
+        for root, _, files in os.walk(BASE_DIR):
+            for filename in files:
+                if not filename.lower().endswith((".ps1", ".psm1")):
+                    continue
+                path = os.path.join(root, filename)
+                with open(path, "r", encoding="utf-8") as f:
+                    if "Import-Module -LiteralPath" in f.read():
+                        offenders.append(os.path.relpath(path, REPO_ROOT))
+
+        self.assertEqual([], offenders, f"Unsupported Import-Module -LiteralPath found in: {offenders}")
+
 
 if __name__ == "__main__":
     unittest.main()
