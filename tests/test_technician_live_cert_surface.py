@@ -234,16 +234,61 @@ class TestTechnicianLiveCertSurface(unittest.TestCase):
             "AGENT_SWITCHBOARD_REPO",
             "repo-path.txt",
             "%CD%\\.git",
-            "%USERPROFILE%\\dev\\AgentSwitchBoard-Live",
             "machine binding",
             "portable default",
             "Machine repo binding saved",
+            ":load_machine_binding",
+            "ORIGINAL_NO_PAUSE",
         ]:
             self.assertIn(token, bootstrap)
 
-        self.assertNotIn('set "DEFAULT_REPO=%USERPROFILE%\\Desktop\\dev\\AgentSwitchboard"', bootstrap)
-        self.assertIn('set "REPO_ROOT=%USERPROFILE%\\dev\\AgentSwitchBoard-Live"', parent)
-        self.assertIn('set "DEFAULT_REPO=%USERPROFILE%\\dev\\AgentSwitchBoard-Live"', pull_and_run)
+        default_assignments = re.findall(
+            r'^\s*set\s+"DEFAULT_REPO=([^\"]+)"\s*$', bootstrap, flags=re.IGNORECASE | re.MULTILINE
+        )
+        self.assertEqual(
+            [r"%USERPROFILE%\dev\AgentSwitchBoard-Live"],
+            default_assignments,
+            "bootstrap must have exactly one effective portable DEFAULT_REPO assignment",
+        )
+        self.assertFalse(
+            any("desktop" in value.lower() or "onedrive" in value.lower() for value in default_assignments),
+            "bootstrap canonical default must not depend on Desktop or OneDrive",
+        )
+        self.assertNotIn('if exist "%STATE_FILE%" (', bootstrap)
+
+        acquire_call = bootstrap.index('call "%PARENT_TEMP%" "%REPO_ROOT%" "%BRANCH%"')
+        acquire_gate = bootstrap.index('if not "%EXITCODE%"=="0"')
+        state_write = bootstrap.index('>"%STATE_FILE%" echo %REPO_ROOT%')
+        repair_call = bootstrap.index('call "%REPO_ROOT%\\Repair-Technician-WSL-Ubuntu.cmd"')
+        setup_call = bootstrap.index('call "%REPO_ROOT%\\Pull-And-Run-AgentSwitchboard.cmd" setup')
+        cert_call = bootstrap.index('call "%REPO_ROOT%\\Run-Technician-LiveCert.cmd"')
+        self.assertLess(acquire_call, acquire_gate)
+        self.assertLess(acquire_gate, state_write)
+        self.assertLess(state_write, repair_call)
+        self.assertLess(repair_call, setup_call)
+        self.assertLess(setup_call, cert_call)
+        self.assertIn("per-machine binding could not be saved", bootstrap)
+        self.assertIn('if not "%ORIGINAL_NO_PAUSE%"=="1"', bootstrap)
+
+        parent_root_assignments = re.findall(
+            r'^\s*set\s+"REPO_ROOT=([^\"]+)"\s*$', parent, flags=re.IGNORECASE | re.MULTILINE
+        )
+        self.assertIn(r"%USERPROFILE%\dev\AgentSwitchBoard-Live", parent_root_assignments)
+        self.assertFalse(
+            any("desktop" in value.lower() or "onedrive" in value.lower() for value in parent_root_assignments),
+            "parent canonical root must not depend on Desktop or OneDrive",
+        )
+        self.assertIn('call "%BOOTSTRAP_PATH%" acquire', parent)
+
+        child_default_assignments = re.findall(
+            r'^\s*set\s+"DEFAULT_REPO=([^\"]+)"\s*$', pull_and_run, flags=re.IGNORECASE | re.MULTILINE
+        )
+        self.assertEqual([r"%USERPROFILE%\dev\AgentSwitchBoard-Live"], child_default_assignments)
+        self.assertFalse(
+            any("desktop" in value.lower() or "onedrive" in value.lower() for value in child_default_assignments),
+            "pull-and-run canonical default must not depend on Desktop or OneDrive",
+        )
+        self.assertIn('"acquire"', pull_and_run)
 
     def test_bootstrap_is_single_file_capable_and_parent_hash_is_pinned(self):
         bootstrap = read_text(BOOTSTRAP_PATH)
