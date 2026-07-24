@@ -3,7 +3,7 @@ setlocal EnableExtensions DisableDelayedExpansion
 title AgentSwitchboard Technician Bootstrap
 
 set "BRANCH=main"
-set "EXPECTED_PARENT_SHA256=4f07f750f8831c18e864adc1fb3c8c57f693e9c090a6d820a3f022da0ac33873"
+set "EXPECTED_PARENT_SHA256=a0d603585bb66dfa9fa4c3af2179415321d667b0c8548c960d8012278968881b"
 set "DEFAULT_REPO=%USERPROFILE%\dev\AgentSwitchBoard-Live"
 set "STATE_DIR=%LOCALAPPDATA%\AgentSwitchBoard\state"
 set "STATE_FILE=%STATE_DIR%\repo-path.txt"
@@ -134,28 +134,74 @@ echo [PASS] Parent bootstrap SHA-256 verified.
 call "%PARENT_TEMP%" "%REPO_ROOT%" "%BRANCH%"
 set "EXITCODE=%ERRORLEVEL%"
 if not "%EXITCODE%"=="0" (
-  echo [FAIL] Repository acquisition/setup failed with exit code %EXITCODE%.
+  echo [FAIL] Repository acquisition failed with exit code %EXITCODE%.
   goto :finish
 )
 
-rem Bind only after the canonical pull/setup surface verified the checkout.
+rem Bind only after the canonical acquisition surface verified the checkout.
 if not exist "%STATE_DIR%" mkdir "%STATE_DIR%" >nul 2>&1
 if not exist "%STATE_DIR%" (
-  echo [WARN] Setup passed but the per-machine binding directory could not be created:
+  echo [WARN] Repository acquisition passed but the per-machine binding directory could not be created:
   echo        %STATE_DIR%
 ) else (
   >"%STATE_FILE%" echo %REPO_ROOT%
   echo [PASS] Machine repo binding saved: %STATE_FILE%
 )
 
+if not exist "%REPO_ROOT%\Repair-Technician-WSL-Ubuntu.cmd" (
+  echo [FAIL] Freshly pulled repository does not contain Repair-Technician-WSL-Ubuntu.cmd.
+  set "EXITCODE=21"
+  goto :finish
+)
+if not exist "%REPO_ROOT%\Pull-And-Run-AgentSwitchboard.cmd" (
+  echo [FAIL] Freshly pulled repository does not contain Pull-And-Run-AgentSwitchboard.cmd.
+  set "EXITCODE=22"
+  goto :finish
+)
 if not exist "%REPO_ROOT%\Run-Technician-LiveCert.cmd" (
   echo [FAIL] Freshly pulled repository does not contain Run-Technician-LiveCert.cmd.
-  set "EXITCODE=21"
+  set "EXITCODE=24"
+  goto :finish
+)
+
+rem A first-machine bootstrap repairs the WSL platform before workstation setup.
+rem This is intentionally idempotent on machines whose WSL/Ubuntu state is healthy.
+set "AGENT_SWITCHBOARD_NO_PAUSE=1"
+echo.
+echo ============================================================
+echo  FIRST-MACHINE PREREQUISITE: WSL / UBUNTU
+echo ============================================================
+call "%REPO_ROOT%\Repair-Technician-WSL-Ubuntu.cmd"
+set "REPAIR_EXIT=%ERRORLEVEL%"
+if "%REPAIR_EXIT%"=="3010" (
+  echo.
+  echo [REBOOT REQUIRED] Windows must restart before setup can continue.
+  echo [INFO] The WSL repair has registered its one-time continuation.
+  echo [INFO] After that repair finishes, run AgentSwitchboard-Technician-Bootstrap.cmd again from anywhere.
+  set "EXITCODE=3010"
+  goto :finish
+)
+if not "%REPAIR_EXIT%"=="0" (
+  echo [FAIL] First-machine WSL/Ubuntu repair failed with exit code %REPAIR_EXIT%.
+  set "EXITCODE=%REPAIR_EXIT%"
+  goto :finish
+)
+
+rem Only after WSL/Ubuntu is healthy do we install/verify the workstation tools.
+echo.
+echo ============================================================
+echo  WORKSTATION SETUP
+echo ============================================================
+call "%REPO_ROOT%\Pull-And-Run-AgentSwitchboard.cmd" setup "%REPO_ROOT%" "%BRANCH%"
+set "SETUP_EXIT=%ERRORLEVEL%"
+if not "%SETUP_EXIT%"=="0" (
+  echo [FAIL] Workstation setup failed with exit code %SETUP_EXIT%.
+  set "EXITCODE=%SETUP_EXIT%"
   goto :finish
 )
 
 echo.
-echo [PASS] Repository acquisition/setup completed.
+echo [PASS] Repository acquisition, first-machine prerequisites, and workstation setup completed.
 echo [NEXT] Starting the repository-owned full technician live certificate.
 call "%REPO_ROOT%\Run-Technician-LiveCert.cmd"
 set "EXITCODE=%ERRORLEVEL%"
