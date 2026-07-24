@@ -88,6 +88,9 @@ catch {
 
 if ($exitCode -eq 0) {
     Write-Host "`nRepair $RepairId completed successfully." -ForegroundColor Green
+} elseif ($exitCode -eq 3010) {
+    Write-Host "`nRepair $RepairId reached a required Windows reboot boundary." -ForegroundColor Yellow
+    Write-Host 'The repair registered a one-time continuation for the same Windows user. Restart Windows; do not rerun the same pre-reboot step manually.' -ForegroundColor Yellow
 } else {
     Write-Host "`nRepair $RepairId failed with exit code $exitCode." -ForegroundColor Red
 }
