@@ -3,7 +3,7 @@ setlocal EnableExtensions DisableDelayedExpansion
 title AgentSwitchboard Pull Repo and Setup
 
 set "BRANCH=main"
-set "REPO_ROOT=%USERPROFILE%\Desktop\dev\AgentSwitchboard"
+set "REPO_ROOT=%USERPROFILE%\dev\AgentSwitchBoard-Live"
 set "BOOTSTRAP_URL=https://raw.githubusercontent.com/EndeavorEverlasting/AgentSwitchboard/%BRANCH%/Pull-And-Run-AgentSwitchboard.cmd"
 set "BOOTSTRAP_PATH=%TEMP%\Pull-And-Run-AgentSwitchboard.cmd"
 
@@ -14,7 +14,7 @@ set "BOOTSTRAP_URL=https://raw.githubusercontent.com/EndeavorEverlasting/AgentSw
 echo ============================================================
 echo  AgentSwitchboard Parent Bootstrap
 echo ============================================================
-echo This is the first technician command.
+echo This is the first technician repository-acquisition command.
 echo It downloads the repo bootstrap, then clones or fast-forwards:
 echo   %REPO_ROOT%
 echo Branch:
@@ -33,18 +33,15 @@ if errorlevel 1 (
   exit /b 11
 )
 
-call "%BOOTSTRAP_PATH%" setup "%REPO_ROOT%" "%BRANCH%"
+call "%BOOTSTRAP_PATH%" acquire "%REPO_ROOT%" "%BRANCH%"
 set "RESULT=%ERRORLEVEL%"
 if not "%RESULT%"=="0" (
-  echo [FAIL] Repository pull/setup failed with exit code %RESULT%.
+  echo [FAIL] Repository acquisition failed with exit code %RESULT%.
   exit /b %RESULT%
 )
 
 echo.
-echo [PASS] The repository was cloned or safely fast-forwarded and setup completed.
-echo [NEXT] Open a new PowerShell window and run:
-echo        wezterm --version
-echo        tmux -V
-echo        agy --version
-echo        opencode --version
+echo [PASS] The repository was cloned or safely fast-forwarded.
+echo [INFO] Workstation setup is intentionally deferred until first-machine prerequisites are repaired.
+echo [INFO] Canonical portable repo root: %USERPROFILE%\dev\AgentSwitchBoard-Live
 exit /b 0
