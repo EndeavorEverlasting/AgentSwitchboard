@@ -2,18 +2,39 @@
   "schema": "agentswitchboard.pi-adapter-registry.v1",
   "registryId": "agentswitchboard.pi-adapters.v1",
   "upstream": {
-    "package": "@mariozechner/pi-coding-agent",
-    "sourceRepository": "badlogic/pi-mono",
-    "pinnedVersion": null,
-    "status": "verification-required",
-    "rule": "Resolve and record an exact installed version and its official API contract before installation or extension execution."
+    "package": "@earendil-works/pi-coding-agent",
+    "sourceRepository": "earendil-works/pi",
+    "documentation": "https://pi.dev/docs/latest",
+    "pinnedVersion": "0.81.1",
+    "minimumNodeVersion": "22.19.0",
+    "status": "verified-install-supported",
+    "verifiedAt": "2026-07-23",
+    "verificationRecord": "tooling/pi/harness/upstream-verification.json",
+    "rule": "Install only the exact verified package version with lifecycle scripts disabled; update the verification record, contracts, and runtime checks before changing the pin."
   },
   "configuration": {
     "preferredScope": "project-local",
     "projectRoot": ".pi",
-    "allowedTrackedPaths": [".pi/extensions", ".pi/skills", ".pi/prompts", ".pi/themes"],
+    "projectSettings": ".pi/settings.json",
+    "allowedTrackedPaths": [".pi/settings.json", ".pi/extensions", ".pi/skills", ".pi/prompts", ".pi/themes", ".ai/skills"],
+    "globalCliInstallationAllowed": true,
     "globalConfigurationMutationAllowed": false,
-    "implicitHookInstallationAllowed": false
+    "implicitHookInstallationAllowed": false,
+    "exactVersionRequired": true,
+    "lifecycleScriptsAllowed": false,
+    "projectTrustBypassAllowed": false
+  },
+  "runtimeSurfaces": {
+    "installer": "tooling/pi/Install-AgentSwitchboardPi.ps1",
+    "windowsInstaller": "Install-AgentSwitchboardPi.cmd",
+    "launcher": "tooling/pi/Start-AgentSwitchboardPi.ps1",
+    "windowsLauncher": "Start-AgentSwitchboardPi.cmd",
+    "status": "tooling/pi/Get-PiHarnessStatus.ps1",
+    "projectSettings": ".pi/settings.json",
+    "defaultTelemetry": "disabled",
+    "defaultVersionCheck": "disabled",
+    "defaultOffline": false,
+    "sessionStorage": "outside-repository"
   },
   "routes": [
     {
@@ -21,7 +42,7 @@
       "workflow": "tooling/pi/harness/workflows/task-intake.workflow.json",
       "roles": ["builder"],
       "writerCount": 1,
-      "status": "contract-only"
+      "status": "launcher-supported-runtime-unproved"
     },
     {
       "routeId": "pi-opinion-fusion",
@@ -39,25 +60,38 @@
     }
   ],
   "requiredRuntimeEvidence": [
-    "pi executable path and version",
+    "pi executable path and exact version",
+    "Node.js and npm executable paths and versions",
+    "project trust decision without bypass",
     "resolved provider and exact model identity",
     "endpoint class and binding",
-    "extension source and integrity",
+    "extension or package source and integrity when enabled",
     "outbound-network and telemetry observation",
     "repository branch and designated writer",
     "attempt, time, token, and cancellation bounds",
-    "artifact root outside tracked authority"
+    "artifact and session roots outside tracked authority"
   ],
   "privacyClaimPolicy": {
     "default": "unproven",
     "localhostIsSufficient": false,
+    "telemetryDisabledByDefaultLauncher": true,
+    "versionCheckDisabledByDefaultLauncher": true,
+    "offlineModeAvailable": true,
     "requiredEvidence": ["resolved endpoint", "listener binding", "provider and model", "fallback routes", "telemetry state", "observed outbound connections", "persistence paths"]
+  },
+  "freeAccessPolicy": {
+    "cliLicense": "MIT",
+    "cliCost": "free",
+    "providerAccessIsSeparate": true,
+    "supportedAccessClasses": ["existing subscription", "API key", "local or custom provider"],
+    "rule": "Do not describe every model route as free merely because the Pi harness is free."
   },
   "generatedEvidence": {
     "tracked": false,
     "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/PiHarness/runs/<run-id>",
+    "linuxDefaultRoot": "$XDG_STATE_HOME/AgentSwitchboard/PiHarness/runs/<run-id>",
     "containsRawPrompt": false,
     "containsRawModelOutput": false
   },
-  "proofCeiling": "Adapter registry and routing contract only; no package installation, extension compatibility, provider availability, local privacy, model response, or repository mutation proof."
+  "proofCeiling": "Verified exact-version Pi installation and launcher surfaces, project-local skill registration, low-noise environment controls, command resolution, and static/cross-platform validation. Provider authentication, model availability, endpoint privacy, extension compatibility, model response, fusion quality, autovalidation effectiveness, repository delivery, and operator acceptance require separate runtime evidence."
 }

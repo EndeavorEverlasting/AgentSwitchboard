@@ -20,6 +20,8 @@ def load(relative: str) -> dict:
 def main() -> None:
     codebase = load("tooling/pi/harness/codebase-map.json")
     registry = load("tooling/pi/harness/pi-adapter.registry.json")
+    verification = load("tooling/pi/harness/upstream-verification.json")
+    settings = load(".pi/settings.json")
     artifacts = load("tooling/pi/harness/artifact-registry.json")
     schema = load("tooling/pi/harness/schemas/pi-harness-contracts.schema.json")
     intake = load("tooling/pi/harness/workflows/task-intake.workflow.json")
@@ -28,16 +30,34 @@ def main() -> None:
 
     assert codebase["schema"] == "agentswitchboard.pi-codebase-map.v1"
     assert codebase["entrypoints"]["validator"] == "scripts/Test-PiHarnessCompleteness.ps1"
+    assert codebase["entrypoints"]["installer"] == "tooling/pi/Install-AgentSwitchboardPi.ps1"
+    assert codebase["entrypoints"]["launcher"] == "tooling/pi/Start-AgentSwitchboardPi.ps1"
     assert any("one writer" in trap.lower() for trap in codebase["knownTraps"])
 
+    assert verification["package"] == "@earendil-works/pi-coding-agent"
+    assert verification["version"] == "0.81.1"
+    assert verification["minimumNodeVersion"] == "22.19.0"
+    assert verification["sourceRepository"] == "earendil-works/pi"
+
     assert registry["schema"] == "agentswitchboard.pi-adapter-registry.v1"
-    assert registry["upstream"]["status"] == "verification-required"
+    assert registry["upstream"]["status"] == "verified-install-supported"
+    assert registry["upstream"]["package"] == verification["package"]
+    assert registry["upstream"]["pinnedVersion"] == verification["version"]
     assert registry["configuration"]["preferredScope"] == "project-local"
     assert registry["configuration"]["globalConfigurationMutationAllowed"] is False
     assert registry["configuration"]["implicitHookInstallationAllowed"] is False
+    assert registry["configuration"]["projectTrustBypassAllowed"] is False
     assert registry["privacyClaimPolicy"]["localhostIsSufficient"] is False
     assert all(route["writerCount"] == 1 for route in registry["routes"])
-    assert all(route["status"] == "contract-only" for route in registry["routes"])
+    route_status = {route["routeId"]: route["status"] for route in registry["routes"]}
+    assert route_status["pi-single-agent"] == "launcher-supported-runtime-unproved"
+    assert route_status["pi-opinion-fusion"] == "contract-only"
+    assert route_status["pi-autovalidate"] == "contract-only"
+
+    assert settings["enableInstallTelemetry"] is False
+    assert settings["skills"] == ["../.ai/skills"]
+    assert settings["packages"] == []
+    assert settings["extensions"] == []
 
     assert artifacts["tracked"] is False
     names = [item["fileName"] for item in artifacts["artifacts"]]
@@ -88,11 +108,13 @@ def main() -> None:
         for path in (
             "tooling/pi/harness/codebase-map.json",
             "tooling/pi/harness/pi-adapter.registry.json",
+            "tooling/pi/harness/upstream-verification.json",
             "tooling/pi/harness/artifact-registry.json",
             "tooling/pi/harness/workflows/task-intake.workflow.json",
             "tooling/pi/harness/workflows/opinion-fusion.workflow.json",
             "tooling/pi/harness/workflows/autovalidate.workflow.json",
             ".ai/skills/pi-fusion-orchestration/SKILL.md",
+            ".pi/settings.json",
         )
     )
     for forbidden_snippet in (
@@ -100,6 +122,7 @@ def main() -> None:
         "%USERPROFILE%\\.pi",
         "pi.llm.generate",
         "dangerously-skip-permissions",
+        '"defaultProjectTrust": "always"',
     ):
         assert forbidden_snippet not in all_text, f"unverified executable snippet embedded: {forbidden_snippet}"
 

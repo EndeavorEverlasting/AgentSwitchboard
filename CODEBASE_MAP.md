@@ -132,6 +132,10 @@ The focused implementation map is `tooling/profiles/windows/harness/tmux-new-ins
 - `.ai/skills/windows-profile-launch-mode-validation/SKILL.md`
 - `.ai/skills/app-output-contextualization/SKILL.md`
 
+## Experimental skills
+
+- `.ai/skills/pi-fusion-orchestration/SKILL.md`
+
 ## GNHF control plane
 
 - `tooling/gnhf/` — distribution, routing, bounded launch, schemas, fixtures, and evidence.
@@ -151,21 +155,25 @@ The focused implementation map is `tooling/profiles/windows/harness/tmux-new-ins
 - `docs/governance/repository-family.md` and `docs/governance/repository-family-harness.md` — family governance.
 - `templates/repository-agent-contract/` — reviewable child adoption template.
 
-## Pi operational harness
+## Pi operational harness and runtime support
 
+- `tooling/pi/harness/upstream-verification.json` — verified current package, exact version, source repository, minimum Node version, install syntax, telemetry controls, and provider-cost boundary.
+- `.pi/settings.json` — project-local settings that disable install telemetry and expose `.ai/skills` after explicit Pi project trust.
+- `tooling/pi/Install-AgentSwitchboardPi.ps1` and `Install-AgentSwitchboardPi.cmd` — exact-version install, verify, and uninstall surfaces; no global Pi configuration or authentication mutation.
+- `tooling/pi/Start-AgentSwitchboardPi.ps1` and `Start-AgentSwitchboardPi.cmd` — exact-version single-agent launcher with low-noise defaults and external session storage.
 - `tooling/pi/harness/codebase-map.json` — Pi-specific structure, entrypoints, commands, and known traps.
-- `tooling/pi/harness/pi-adapter.registry.json` — contract-only routes, upstream verification state, project-local configuration policy, runtime evidence requirements, and privacy gates.
-- `tooling/pi/harness/workflows/` — task intake, independent opinion fusion, and architect-owned autovalidation workflows.
+- `tooling/pi/harness/pi-adapter.registry.json` — verified runtime surface, project-local configuration policy, route states, runtime evidence requirements, privacy gates, and free-CLI/provider separation.
+- `tooling/pi/harness/workflows/` — task intake, independent opinion fusion, and architect-owned autovalidation contracts.
 - `tooling/pi/harness/artifact-registry.json` — local-only run context, attributed role outputs, fusion results, validation ledgers, reports, and handoffs.
 - `tooling/pi/harness/schemas/pi-harness-contracts.schema.json` — run context, execution identity, role-output, fusion-result, and validation-ledger contracts.
-- `.ai/skills/pi-fusion-orchestration/SKILL.md` — experimental bounded Pi orchestration procedure.
-- `tooling/pi/Get-PiHarnessStatus.ps1` — English and JSON read-only repository status.
-- `tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1` — opt-in completeness, Python-contract, staged-diff, and generated-evidence check; never installed implicitly.
-- `scripts/Test-PiHarnessCompleteness.ps1` and `tests/test_pi_harness_contracts.py` — focused cross-platform harness contracts.
-- `docs/harness/pi-operational-harness.md` — operator guide, working state, blockers, gaps, artifact policy, and proof ceiling.
-- `.github/workflows/pi-harness-contract.yml` — Windows and Linux proof gate.
+- `.ai/skills/pi-fusion-orchestration/SKILL.md` — experimental bounded Pi multi-agent orchestration procedure.
+- `tooling/pi/Get-PiHarnessStatus.ps1` — English and JSON read-only repository, Node/npm, and exact-version status.
+- `tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1` — opt-in completeness, runtime-contract, staged-diff, and generated-evidence check; never installed implicitly.
+- `scripts/Test-PiHarnessCompleteness.ps1`, `tests/test_pi_harness_contracts.py`, and `tests/test_pi_runtime_support.py` — focused cross-platform support contracts.
+- `docs/harness/pi-operational-harness.md` — install, launch, trust, provider, modularity, route, artifact, and proof guidance.
+- `.github/workflows/pi-harness-contract.yml` — Windows and Linux proof gate without package installation or provider calls.
 
-This slice makes AgentSwitchboard the policy, routing, evidence, validation, and handoff layer around a future Pi runtime. It does not install Pi, execute an extension, contact a provider, classify a local endpoint as private, or claim fusion or autovalidation success.
+The exact pinned single-agent Pi installer and launcher are implemented, but not yet live-certified on an operator workstation. Opinion fusion and autovalidation remain contract-only until tracked execution adapters produce attributed live evidence. The Pi CLI may be free while provider/model access is paid, limited, or unavailable; those facts are recorded separately.
 
 ## Validation
 
@@ -177,6 +185,8 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 - `scripts/Test-TmuxNewInstanceShortcutHarness.ps1`
 - `scripts/Test-AppOutputContextEngine.ps1`
 - `scripts/Test-PiHarnessCompleteness.ps1`
+- `tests/test_pi_harness_contracts.py`
+- `tests/test_pi_runtime_support.py`
 - `scripts/Test-AgentDocumentationContract.ps1`
 - `scripts/Test-RepositoryFamilyHarness.ps1`
 - `scripts/Test-PublicPlanContracts.ps1`
@@ -187,4 +197,4 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 
 Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, Windows launch-mode, tmux shortcut, and Pi evidence is untracked. End-to-end runtime evidence is also local-operational and untracked unless deliberately minimized and reviewed as a public fixture. Evidence may contain local paths, versions, Git state, minimized operational payloads, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
 
-Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, launch-mode classification, shortcut allocation, or workflow semantics. Neither proves application runtime, an exact operator path, an open-or-activate result, a distinct WezTerm instance on the operator workstation, duplicate prevention, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, model quality, external target behavior, deployment, or operator acceptance.
+Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, launch-mode classification, shortcut allocation, or workflow semantics. Neither proves application runtime, an exact operator path, an open-or-activate result, a distinct WezTerm instance on the operator workstation, duplicate prevention, SysAdminSuite certification, Pi workstation installation, project trust, provider delivery, endpoint privacy, extension compatibility, model quality, fusion/autovalidation execution, external target behavior, deployment, or operator acceptance.

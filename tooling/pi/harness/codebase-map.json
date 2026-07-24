@@ -2,43 +2,58 @@
   "schema": "agentswitchboard.pi-codebase-map.v1",
   "harnessId": "agentswitchboard.pi-operational-harness.v1",
   "repository": "EndeavorEverlasting/AgentSwitchboard",
-  "purpose": "Map the smallest repository surfaces a Pi-backed agent needs for intake, bounded orchestration, validation, artifact production, and handoff.",
+  "purpose": "Map the smallest repository surfaces a Pi-backed agent needs for verified installation, low-noise launch, intake, bounded orchestration, validation, artifact production, and handoff.",
   "entrypoints": {
     "governance": "AGENTS.md",
     "rootMap": "CODEBASE_MAP.md",
     "manifest": ".ai/harness/manifest.json",
+    "upstreamVerification": "tooling/pi/harness/upstream-verification.json",
+    "projectSettings": ".pi/settings.json",
+    "installer": "tooling/pi/Install-AgentSwitchboardPi.ps1",
+    "windowsInstaller": "Install-AgentSwitchboardPi.cmd",
+    "launcher": "tooling/pi/Start-AgentSwitchboardPi.ps1",
+    "windowsLauncher": "Start-AgentSwitchboardPi.cmd",
     "workflowIntake": "tooling/pi/harness/workflows/task-intake.workflow.json",
     "workflowFusion": "tooling/pi/harness/workflows/opinion-fusion.workflow.json",
     "workflowAutovalidate": "tooling/pi/harness/workflows/autovalidate.workflow.json",
     "skill": ".ai/skills/pi-fusion-orchestration/SKILL.md",
     "status": "tooling/pi/Get-PiHarnessStatus.ps1",
     "validator": "scripts/Test-PiHarnessCompleteness.ps1",
+    "runtimeTest": "tests/test_pi_runtime_support.py",
     "operatorGuide": "docs/harness/pi-operational-harness.md"
   },
   "directories": [
     {"path": ".ai/harness", "purpose": "Canonical manifests, schemas, workflows, registries, fixtures, and proof policy."},
-    {"path": ".ai/skills", "purpose": "Scoped agent procedures; no product behavior belongs only in prose."},
-    {"path": "tooling/pi/harness", "purpose": "Pi adapter maps, workflows, schemas, and artifact contracts."},
+    {"path": ".ai/skills", "purpose": "Scoped agent procedures loaded by Pi through project-local settings; no product behavior belongs only in prose."},
+    {"path": ".pi", "purpose": "Project-local Pi settings and reviewed modular resources; project trust is required and never bypassed."},
+    {"path": "tooling/pi", "purpose": "Pi installation, launch, status, adapter maps, workflows, schemas, and artifact contracts."},
     {"path": "tooling/pi/hooks", "purpose": "Opt-in local validation hooks; never installed implicitly."},
     {"path": "scripts", "purpose": "Repository-level deterministic validators and read-only probes."},
-    {"path": "tests", "purpose": "Dependency-free structural and behavioral contracts."},
+    {"path": "tests", "purpose": "Dependency-free structural, security, and behavioral contracts."},
     {"path": "docs/harness", "purpose": "English operator guidance, status, gaps, risks, and proof ceilings."},
     {"path": ".github/workflows", "purpose": "Cross-platform CI proof gates."}
   ],
   "commands": [
-    {"name": "Pi harness status", "command": "pwsh -NoLogo -NoProfile -File tooling/pi/Get-PiHarnessStatus.ps1", "effect": "read-only", "proof": "repository contract readiness only"},
+    {"name": "Install pinned Pi", "command": "pwsh -NoLogo -NoProfile -File tooling/pi/Install-AgentSwitchboardPi.ps1 -Mode Install", "effect": "global exact-version CLI package installation; no global Pi configuration or authentication mutation", "proof": "installer command and exact executable/version readback"},
+    {"name": "Verify pinned Pi", "command": "pwsh -NoLogo -NoProfile -File tooling/pi/Install-AgentSwitchboardPi.ps1 -Mode Verify", "effect": "read-only", "proof": "Node/npm readiness, package identity, executable path, and exact version"},
+    {"name": "Start AgentSwitchboard Pi", "command": "pwsh -NoLogo -NoProfile -File tooling/pi/Start-AgentSwitchboardPi.ps1", "effect": "operator-authorized Pi runtime; telemetry and version checks disabled by default", "proof": "pinned runtime command invocation only"},
+    {"name": "Windows install", "command": "Install-AgentSwitchboardPi.cmd", "effect": "delegates to the repository installer", "proof": "installer command acknowledgement and readback"},
+    {"name": "Windows launch", "command": "Start-AgentSwitchboardPi.cmd", "effect": "delegates to the repository launcher", "proof": "pinned runtime command invocation only"},
+    {"name": "Pi harness status", "command": "pwsh -NoLogo -NoProfile -File tooling/pi/Get-PiHarnessStatus.ps1", "effect": "read-only", "proof": "repository, Node/npm, and exact-version readiness"},
     {"name": "Pi completeness", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-PiHarnessCompleteness.ps1", "effect": "read-only", "proof": "tracked component and contract consistency"},
-    {"name": "Pi dependency-free contracts", "command": "python tests/test_pi_harness_contracts.py", "effect": "read-only", "proof": "JSON and workflow semantics"},
+    {"name": "Pi dependency-free contracts", "command": "python tests/test_pi_harness_contracts.py && python tests/test_pi_runtime_support.py", "effect": "read-only", "proof": "JSON, workflow, installer, launcher, trust, and privacy semantics"},
     {"name": "Aggregate harness", "command": "Test-AppHarness.cmd", "effect": "read-only", "proof": "registered offline repository harness only"},
     {"name": "Diff hygiene", "command": "git diff --check", "effect": "read-only", "proof": "whitespace and patch hygiene"}
   ],
   "knownTraps": [
-    "Do not infer Pi installation, provider readiness, privacy, or model delivery from configuration files.",
-    "Do not execute third-party extension snippets until the pinned upstream API and permissions are reviewed.",
+    "Do not describe provider or model access as universally free merely because the Pi CLI is free and MIT-licensed.",
+    "Do not infer provider readiness, privacy, model delivery, or extension safety from successful Pi installation.",
+    "Do not bypass the Pi project-trust prompt or silently mutate global Pi settings, credentials, providers, or models.",
+    "Do not execute third-party extension snippets until the source, exact version, permissions, and integrity are reviewed.",
     "Enforce one writer per branch; architect, builder, validator, and adjudicator roles must not share write authority.",
     "Do not fuse unattributed outputs or hide unresolved divergence.",
     "Do not run autovalidation without attempt, wall-clock, token, cancellation, and no-progress bounds.",
-    "Do not store prompts, raw model output, credentials, or local endpoint evidence in tracked artifacts."
+    "Do not store prompts, raw model output, credentials, sessions, or local endpoint evidence in tracked artifacts."
   ],
-  "proofCeiling": "Repository map and deterministic offline contracts only; no Pi runtime, provider, model, extension, network, privacy, or code-delivery proof."
+  "proofCeiling": "Verified upstream identity and exact-version installer/launcher contracts, project-local skill wiring, low-noise controls, repository map, and deterministic cross-platform validation. No provider login, model response, extension execution, network privacy, opinion-fusion delivery, autovalidation success, or operator acceptance proof."
 }
