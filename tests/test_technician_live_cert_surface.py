@@ -13,8 +13,11 @@ BASE_DIR = os.path.join(REPO_ROOT, "tooling", "profiles", "windows", "technician
 MANIFEST_PATH = os.path.join(BASE_DIR, "technician-live-cert.manifest.json")
 SCHEMAS_DIR = os.path.join(BASE_DIR, "schemas")
 STAGE_DISPATCHER_PATH = os.path.join(BASE_DIR, "Invoke-TechnicianLiveCertStage.ps1")
+REPAIR_DISPATCHER_PATH = os.path.join(BASE_DIR, "Invoke-TechnicianRepair.ps1")
 COMMON_MODULE_PATH = os.path.join(BASE_DIR, "TechnicianLiveCert.Common.psm1")
 BOOTSTRAP_PATH = os.path.join(REPO_ROOT, "AgentSwitchboard-Technician-Bootstrap.cmd")
+PARENT_BOOTSTRAP_PATH = os.path.join(REPO_ROOT, "Pull-Repo-And-Setup-AgentSwitchboard.cmd")
+WSL_REPAIR_PATH = os.path.join(BASE_DIR, "stages", "Repair-Technician-WSL-Ubuntu.ps1")
 
 
 def read_text(path: str) -> str:
@@ -122,12 +125,19 @@ class TestTechnicianLiveCertSurface(unittest.TestCase):
         ]:
             self.assertIn(token, common)
 
-    def test_same_user_elevation_is_enforced(self):
+    def test_same_user_elevation_and_reboot_boundary_are_enforced(self):
         dispatcher = read_text(STAGE_DISPATCHER_PATH)
         for token in ["$OriginSid", "-Verb RunAs", "Same-user elevation failed", "runContext.accountSid"]:
             self.assertIn(token, dispatcher)
-        repair_dispatcher = read_text(os.path.join(BASE_DIR, "Invoke-TechnicianRepair.ps1"))
-        for token in ["$OriginSid", "-Verb RunAs", "Same-user elevation failed"]:
+
+        repair_dispatcher = read_text(REPAIR_DISPATCHER_PATH)
+        for token in [
+            "$OriginSid",
+            "-Verb RunAs",
+            "Same-user elevation failed",
+            "$exitCode -eq 3010",
+            "required Windows reboot boundary",
+        ]:
             self.assertIn(token, repair_dispatcher)
 
     def test_no_unsupported_import_module_literal_path(self):
@@ -152,6 +162,29 @@ class TestTechnicianLiveCertSurface(unittest.TestCase):
         for token in ["wsl.exe", "'Ubuntu'", "evidenceWritable", "accountSid", "TECHNICIAN_LIVE_CERT_CI_SURFACE"]:
             self.assertIn(token, p00)
         self.assertIn("Repair-Technician-WSL-Ubuntu.cmd", p00)
+
+    def test_wsl_repair_is_first_machine_capable_and_does_not_loop(self):
+        repair = read_text(WSL_REPAIR_PATH)
+        for token in [
+            "Microsoft-Windows-Subsystem-Linux",
+            "VirtualMachinePlatform",
+            "dism.exe",
+            "/NoRestart",
+            "RunOnce",
+            "AgentSwitchBoardWslUbuntuRepair",
+            "return 3010",
+            "'--web-download'",
+            "'--no-launch'",
+            "'--set-default-version'",
+            "'--set-version'",
+            "one-time post-reboot continuation",
+            "first-run initialization",
+            "do not invent a password",
+        ]:
+            self.assertIn(token, repair)
+        self.assertNotIn("Ubuntu is not yet available after 'wsl --install -d Ubuntu'", repair)
+        self.assertIn("if ($continuingAfterReboot)", repair)
+        self.assertIn("fail closed instead of creating a reboot loop", repair)
 
     def test_p03_executes_exact_four_version_probes_in_child_powershell(self):
         p03 = read_text(os.path.join(BASE_DIR, "stages", "P03-Verify-Commands.ps1"))
@@ -193,12 +226,14 @@ class TestTechnicianLiveCertSurface(unittest.TestCase):
 
     def test_bootstrap_is_single_file_capable_and_parent_hash_is_pinned(self):
         bootstrap = read_text(BOOTSTRAP_PATH)
+        parent = read_text(PARENT_BOOTSTRAP_PATH)
+        self.assertIn('set "BRANCH=main"', bootstrap)
+        self.assertIn('set "BRANCH=main"', parent)
         self.assertIn("curl.exe -fL \"%PARENT_URL%\"", bootstrap)
         self.assertIn("Get-FileHash -Algorithm SHA256", bootstrap)
         self.assertIn("Run-Technician-LiveCert.cmd", bootstrap)
         match = re.search(r'EXPECTED_PARENT_SHA256=([a-f0-9]{64})', bootstrap, flags=re.IGNORECASE)
         self.assertIsNotNone(match, "Bootstrap must pin a 64-character parent SHA-256")
-
         parent_blob = subprocess.check_output(
             ["git", "show", "HEAD:Pull-Repo-And-Setup-AgentSwitchboard.cmd"],
             cwd=REPO_ROOT,
