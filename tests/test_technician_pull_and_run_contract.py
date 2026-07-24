@@ -43,7 +43,7 @@ def main() -> None:
         "explicit first command": "This is the first technician command.",
         "canonical raw bootstrap": "Pull-And-Run-AgentSwitchboard.cmd",
         "explicit setup handoff": 'call "%BOOTSTRAP_PATH%" setup',
-        "repo path": "%USERPROFILE%\\Desktop\\dev\\AgentSwitchboard",
+        "portable repo path": "%USERPROFILE%\\dev\\AgentSwitchBoard-Live",
         "pull result": "The repository was cloned or safely fast-forwarded",
         "next PowerShell verification": "wezterm --version",
         "tmux verification": "tmux -V",
@@ -55,7 +55,7 @@ def main() -> None:
 
     cmd_requirements = {
         "canonical repository": "https://github.com/EndeavorEverlasting/AgentSwitchboard.git",
-        "user-relative default": "%USERPROFILE%\\Desktop\\dev\\AgentSwitchboard",
+        "portable user-relative default": "%USERPROFILE%\\dev\\AgentSwitchBoard-Live",
         "clone": "git clone --branch",
         "verified-origin fetch": "fetch origin --prune",
         "fast-forward pull": "pull --ff-only",
@@ -72,6 +72,10 @@ def main() -> None:
     }
     for label, token in cmd_requirements.items():
         require(cmd, token, label)
+
+    for text in (parent, cmd):
+        if "%USERPROFILE%\\Desktop\\dev\\AgentSwitchboard" in text:
+            raise AssertionError("technician bootstrap must not depend on redirected Desktop as its canonical repo root")
 
     if "fetch --all --prune" in cmd:
         raise AssertionError("technician pull path must fetch only the verified origin remote")
@@ -162,7 +166,7 @@ def main() -> None:
     ):
         require(text, token, label)
 
-    print("PASS: explicit parent pull command, technician setup, and failed live-cert repair contract")
+    print("PASS: explicit parent pull command, portable technician setup, and failed live-cert repair contract")
 
 
 if __name__ == "__main__":
