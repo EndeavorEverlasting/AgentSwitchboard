@@ -9,6 +9,7 @@ set "STATE_DIR=%LOCALAPPDATA%\AgentSwitchBoard\state"
 set "STATE_FILE=%STATE_DIR%\repo-path.txt"
 set "PARENT_NAME=Pull-Repo-And-Setup-AgentSwitchboard.cmd"
 set "PARENT_TEMP=%TEMP%\AgentSwitchboard-%PARENT_NAME%"
+set "ORIGINAL_NO_PAUSE=%AGENT_SWITCHBOARD_NO_PAUSE%"
 
 if not "%~2"=="" set "BRANCH=%~2"
 if /I not "%BRANCH%"=="main" (
@@ -217,7 +218,7 @@ call "%REPO_ROOT%\Run-Technician-LiveCert.cmd"
 set "EXITCODE=%ERRORLEVEL%"
 
 :finish
-if not "%AGENT_SWITCHBOARD_NO_PAUSE%"=="1" (
+if not "%ORIGINAL_NO_PAUSE%"=="1" (
   echo.
   echo Press any key to close this window.
   pause >nul
