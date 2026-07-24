@@ -1,0 +1,97 @@
+name: Technician pull-and-run contract
+
+on:
+  pull_request:
+    paths:
+      - 'Pull-Repo-And-Setup-AgentSwitchboard.cmd'
+      - 'Pull-And-Run-AgentSwitchboard.cmd'
+      - 'tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1'
+      - 'tooling/profiles/windows/harness/live-certification/fixtures/technician-quickstart-2026-07-22-fail.fixture.json'
+      - 'tests/test_technician_pull_and_run_contract.py'
+      - 'scripts/Test-WindowsProfileLiveCertification.ps1'
+      - 'scripts/Test-EndToEndRuntimeValidationSkill.ps1'
+      - '.ai/skills/windows-profile-live-certification/SKILL.md'
+      - '.ai/skills/end-to-end-runtime-validation/SKILL.md'
+      - 'docs/governance/live-cert-failure-doctrine.md'
+      - 'docs/workstation/technician-pull-and-run.md'
+      - '.github/workflows/technician-pull-and-run.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate parent pull command, portable CMD, and failed live-cert contract
+        run: python tests/test_technician_pull_and_run_contract.py
+
+      - name: Parse technician and validator PowerShell
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $paths = @(
+            'tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1',
+            'scripts/Test-WindowsProfileLiveCertification.ps1',
+            'scripts/Test-EndToEndRuntimeValidationSkill.ps1'
+          )
+          foreach ($path in $paths) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $path),
+              [ref]$tokens,
+              [ref]$errors
+            )
+            if ($errors.Count -gt 0) {
+              $errors | Format-List | Out-String | Write-Error
+              exit 1
+            }
+          }
+
+      - name: Exercise child CMD argument guard
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          set AGENT_SWITCHBOARD_NO_PAUSE=1
+          call Pull-And-Run-AgentSwitchboard.cmd unsupported-mode
+          set CMD_RESULT=%ERRORLEVEL%
+          if not "%CMD_RESULT%"=="2" exit /b 1
+
+      - name: Validate Windows Profile live-certification doctrine
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-WindowsProfileLiveCertification.ps1
+
+      - name: Validate end-to-end runtime skill
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-EndToEndRuntimeValidationSkill.ps1
+
+      - name: Validate agent documentation contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1
+
+      - name: Validate harness doctrine contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-HarnessDoctrineContract.ps1
+
+      - name: Check repository hygiene
+        shell: bash
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ -z "$BASE_REF" ]; then BASE_REF=main; fi
+          git diff --check "origin/$BASE_REF...HEAD"

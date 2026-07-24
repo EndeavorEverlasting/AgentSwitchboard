@@ -43,7 +43,7 @@ $contractText = Read-RequiredText '.ai/agent-contract.json'
 if ($null -ne $skillText) {
     foreach ($token in @(
         'id: end-to-end-runtime-validation',
-        'version: 1.0.0',
+        'version: 1.1.0',
         'status: canonical',
         '## Trigger',
         '## Inputs',
@@ -53,12 +53,18 @@ if ($null -ne $skillText) {
         '## Forbidden scope',
         '## Stop and escalate',
         'exact operator command',
+        'exact shell',
         'Enumerate every boundary',
         'Capture stdout, stderr, exit code',
         'Read back effective state',
         'Observe the user experience',
         'Prove idempotence and rollback',
-        'Process creation, command acknowledgement, configuration-file presence, a zero parent exit code',
+        'repo-owned shim',
+        'Model interactive input',
+        'browser handoff',
+        'optional agent',
+        'Observed live failure outranks lower-floor success',
+        'Process creation, command acknowledgement, configuration-file presence',
         'No runtime success claim from static inspection, CI alone',
         'No blind retry'
     )) {
