@@ -3,7 +3,7 @@ setlocal EnableExtensions DisableDelayedExpansion
 title AgentSwitchboard Technician Pull and Run
 
 set "REPO_URL=https://github.com/EndeavorEverlasting/AgentSwitchboard.git"
-set "DEFAULT_REPO=%USERPROFILE%\Desktop\dev\AgentSwitchboard"
+set "DEFAULT_REPO=%USERPROFILE%\dev\AgentSwitchBoard-Live"
 
 if /I "%~1"=="--repo-ready" goto :repo_ready
 
