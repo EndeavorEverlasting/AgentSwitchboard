@@ -3,7 +3,7 @@ setlocal EnableExtensions DisableDelayedExpansion
 title AgentSwitchboard Pull Repo and Setup
 
 set "BRANCH=main"
-set "REPO_ROOT=%USERPROFILE%\Desktop\dev\AgentSwitchboard"
+set "REPO_ROOT=%USERPROFILE%\dev\AgentSwitchBoard-Live"
 set "BOOTSTRAP_URL=https://raw.githubusercontent.com/EndeavorEverlasting/AgentSwitchboard/%BRANCH%/Pull-And-Run-AgentSwitchboard.cmd"
 set "BOOTSTRAP_PATH=%TEMP%\Pull-And-Run-AgentSwitchboard.cmd"
 
@@ -42,6 +42,7 @@ if not "%RESULT%"=="0" (
 
 echo.
 echo [PASS] The repository was cloned or safely fast-forwarded and setup completed.
+echo [INFO] Canonical portable repo root: %USERPROFILE%\dev\AgentSwitchBoard-Live
 echo [NEXT] Open a new PowerShell window and run:
 echo        wezterm --version
 echo        tmux -V
