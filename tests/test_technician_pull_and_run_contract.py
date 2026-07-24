@@ -57,7 +57,7 @@ def main() -> None:
         "canonical repository": "https://github.com/EndeavorEverlasting/AgentSwitchboard.git",
         "user-relative default": "%USERPROFILE%\\Desktop\\dev\\AgentSwitchboard",
         "clone": "git clone --branch",
-        "fetch": "fetch --all --prune",
+        "verified-origin fetch": "fetch origin --prune",
         "fast-forward pull": "pull --ff-only",
         "dirty checkout detection": "status --porcelain=v1 --untracked-files=normal",
         "detached checkout detection": "symbolic-ref --quiet --short HEAD",
@@ -72,6 +72,9 @@ def main() -> None:
     }
     for label, token in cmd_requirements.items():
         require(cmd, token, label)
+
+    if "fetch --all --prune" in cmd:
+        raise AssertionError("technician pull path must fetch only the verified origin remote")
 
     for text in (parent, cmd):
         for forbidden in (
