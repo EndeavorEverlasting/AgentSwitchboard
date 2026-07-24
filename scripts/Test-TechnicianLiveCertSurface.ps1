@@ -171,9 +171,25 @@ Check ($bootstrap.Contains('set "BRANCH=main"')) 'bootstrap/main-pin' 'First-mac
 Check ($bootstrap.Contains('EXPECTED_PARENT_SHA256=')) 'bootstrap/hash-pin' 'First-machine bootstrap must pin parent SHA-256'
 Check ($bootstrap.Contains('Get-FileHash -Algorithm SHA256')) 'bootstrap/hash-verify' 'First-machine bootstrap must verify SHA-256'
 Check ($bootstrap.Contains('Run-Technician-LiveCert.cmd')) 'bootstrap/full-run' 'Bootstrap must hand off to full live-cert CMD'
+foreach ($token in @(
+    'AGENT_SWITCHBOARD_REPO',
+    'repo-path.txt',
+    '%CD%\.git',
+    '%USERPROFILE%\dev\AgentSwitchBoard-Live',
+    'machine binding',
+    'portable default',
+    'Machine repo binding saved'
+)) {
+    Check ($bootstrap.Contains($token)) "bootstrap/portable/$token" "Bootstrap missing portable repo-binding token $token"
+}
+Check (-not $bootstrap.Contains('set "DEFAULT_REPO=%USERPROFILE%\Desktop\dev\AgentSwitchboard"')) 'bootstrap/no-desktop-default' 'Bootstrap must not depend on the redirected Desktop as its canonical default'
 
 $parentBootstrap = Read-RepoText 'Pull-Repo-And-Setup-AgentSwitchboard.cmd'
 Check ($parentBootstrap.Contains('set "BRANCH=main"')) 'parent-bootstrap/main-pin' 'Parent bootstrap must default to main'
+Check ($parentBootstrap.Contains('set "REPO_ROOT=%USERPROFILE%\dev\AgentSwitchBoard-Live"')) 'parent-bootstrap/portable-root' 'Parent bootstrap must use the portable canonical repo root'
+
+$pullAndRun = Read-RepoText 'Pull-And-Run-AgentSwitchboard.cmd'
+Check ($pullAndRun.Contains('set "DEFAULT_REPO=%USERPROFILE%\dev\AgentSwitchBoard-Live"')) 'pull-and-run/portable-root' 'Pull-and-run CMD must share the portable canonical repo root'
 
 Write-Host '============================================================' -ForegroundColor Cyan
 Write-Host ' Technician Live-Cert Surface Validation Summary' -ForegroundColor White
