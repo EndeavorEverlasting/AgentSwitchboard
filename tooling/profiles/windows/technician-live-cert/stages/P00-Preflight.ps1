@@ -51,22 +51,22 @@ $wslPath = [string]$requiredCommands['wsl.exe']
 
 if (-not $ciSurfaceOnly) {
     if ([string]::IsNullOrWhiteSpace($wslPath)) {
-        throw "WSL is not installed. Double-click Repair-Technician-WSL-Ubuntu.cmd, complete any required reboot and Ubuntu initialization, then restart P00."
+        throw 'WSL is absent. Double-click Repair-Technician-WSL-Ubuntu.cmd; that repair owns first-machine machine-wide WSL feature activation, reboot continuation, Ubuntu registration, and initialization before P00 is retried.'
     }
 
     $rawDistributions = @(& $wslPath --list --quiet 2>$null)
     if ($LASTEXITCODE -ne 0) {
-        throw 'WSL is installed but its distribution list could not be read.'
+        throw 'wsl.exe exists but the WSL platform is not active enough to enumerate distributions. Double-click Repair-Technician-WSL-Ubuntu.cmd; it owns system-wide feature activation and any required reboot continuation.'
     }
     $distributions = @($rawDistributions | ForEach-Object { ([string]$_).Replace([char]0, '').Trim() } | Where-Object { $_ })
     $ubuntuInitialized = $distributions -contains 'Ubuntu'
     if (-not $ubuntuInitialized) {
-        throw "The required WSL distribution 'Ubuntu' is not initialized. Double-click Repair-Technician-WSL-Ubuntu.cmd, complete Ubuntu first-run initialization, then restart P00."
+        throw "The required WSL distribution 'Ubuntu' is not initialized. Double-click Repair-Technician-WSL-Ubuntu.cmd; it owns Ubuntu installation and first-run initialization before P00 is retried."
     }
 
     & $wslPath -d Ubuntu -- bash -lc 'printf AGENT_SWITCHBOARD_UBUNTU_READY' | Out-Null
     if ($LASTEXITCODE -ne 0) {
-        throw "Ubuntu exists but could not execute a non-interactive bash command. Complete Ubuntu initialization and restart P00."
+        throw 'Ubuntu exists but the default Linux user cannot execute a non-interactive Bash command. Double-click Repair-Technician-WSL-Ubuntu.cmd to finish the owned initialization path before P00 is retried.'
     }
 }
 

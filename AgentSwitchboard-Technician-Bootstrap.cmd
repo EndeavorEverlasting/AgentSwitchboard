@@ -2,17 +2,17 @@
 setlocal EnableExtensions DisableDelayedExpansion
 title AgentSwitchboard Technician Bootstrap
 
-set "BRANCH=feat/technician-clickable-live-cert-cmds"
-set "EXPECTED_PARENT_SHA256=8dea9f202eb0a3a3b5b41fda8ec6547d4cf444260e3d03a26ad76a5e855154bb"
+set "BRANCH=main"
+set "EXPECTED_PARENT_SHA256=1598cd15b9624d5975fb714e00484fa064e2ddf27598099fcaa52eb786ee75a0"
 set "DEFAULT_REPO=%USERPROFILE%\Desktop\dev\AgentSwitchboard"
 set "PARENT_NAME=Pull-Repo-And-Setup-AgentSwitchboard.cmd"
 set "PARENT_TEMP=%TEMP%\AgentSwitchboard-%PARENT_NAME%"
 
 if not "%~1"=="" set "DEFAULT_REPO=%~1"
 if not "%~2"=="" set "BRANCH=%~2"
-if /I not "%BRANCH%"=="feat/technician-clickable-live-cert-cmds" (
-  echo [FAIL] This development bootstrap is pinned to feat/technician-clickable-live-cert-cmds.
-  echo        A different branch requires a separately reviewed bootstrap/hash pair.
+if /I not "%BRANCH%"=="main" (
+  echo [FAIL] This production bootstrap is pinned to main.
+  echo        A different ref requires a separately reviewed bootstrap/hash pair.
   exit /b 8
 )
 

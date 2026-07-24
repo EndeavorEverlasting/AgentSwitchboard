@@ -2,7 +2,7 @@
 setlocal EnableExtensions DisableDelayedExpansion
 title AgentSwitchboard Pull Repo and Setup
 
-set "BRANCH=feat/technician-pull-and-run-cmd"
+set "BRANCH=main"
 set "REPO_ROOT=%USERPROFILE%\Desktop\dev\AgentSwitchboard"
 set "BOOTSTRAP_URL=https://raw.githubusercontent.com/EndeavorEverlasting/AgentSwitchboard/%BRANCH%/Pull-And-Run-AgentSwitchboard.cmd"
 set "BOOTSTRAP_PATH=%TEMP%\Pull-And-Run-AgentSwitchboard.cmd"
