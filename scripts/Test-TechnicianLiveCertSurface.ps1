@@ -101,6 +101,11 @@ foreach ($token in @('-Verb RunAs', '$OriginSid', 'Same-user elevation failed', 
 }
 Check (-not $dispatcherText.Contains('-ForegroundColor (if')) 'dispatcher/no-if-command' 'Dispatcher contains invalid executable if-expression argument'
 
+$repairDispatcher = Read-RepoText "$baseRelative\Invoke-TechnicianRepair.ps1"
+foreach ($token in @('-Verb RunAs', '$OriginSid', 'Same-user elevation failed', '$exitCode -eq 3010', 'required Windows reboot boundary')) {
+    Check ($repairDispatcher.Contains($token)) "repair-dispatcher/$token" "Repair dispatcher missing $token"
+}
+
 $unsupportedImports = @()
 Get-ChildItem -LiteralPath (Join-Path $RootPath $baseRelative) -File -Recurse | Where-Object Extension -in @('.ps1', '.psm1') | ForEach-Object {
     if ((Get-Content -LiteralPath $_.FullName -Raw).Contains('Import-Module -LiteralPath')) {
@@ -113,6 +118,27 @@ $p00 = Read-RepoText "$baseRelative\stages\P00-Preflight.ps1"
 foreach ($token in @('wsl.exe', "'Ubuntu'", 'evidenceWritable', 'accountSid', 'TECHNICIAN_LIVE_CERT_CI_SURFACE')) {
     Check ($p00.Contains($token)) "p00/$token" "P00 missing required contract token $token"
 }
+
+$wslRepair = Read-RepoText "$baseRelative\stages\Repair-Technician-WSL-Ubuntu.ps1"
+foreach ($token in @(
+    'Microsoft-Windows-Subsystem-Linux',
+    'VirtualMachinePlatform',
+    'dism.exe',
+    '/NoRestart',
+    'RunOnce',
+    'AgentSwitchBoardWslUbuntuRepair',
+    'return 3010',
+    "'--web-download'",
+    "'--no-launch'",
+    "'--set-default-version'",
+    "'--set-version'",
+    'one-time post-reboot continuation',
+    'first-run initialization',
+    'do not invent a password'
+)) {
+    Check ($wslRepair.Contains($token)) "repair/wsl/$token" "WSL repair missing first-machine contract token $token"
+}
+Check (-not $wslRepair.Contains("Ubuntu is not yet available after 'wsl --install -d Ubuntu'")) 'repair/wsl/no-old-loop' 'WSL repair still contains the old immediate-failure/retry loop'
 
 $p03 = Read-RepoText "$baseRelative\stages\P03-Verify-Commands.ps1"
 foreach ($token in @("'wezterm'", "'tmux'", "'agy'", "'opencode'", "'-V'", "'--version'", 'pwsh.exe', 'P03 command verification failed')) {
@@ -141,9 +167,13 @@ foreach ($token in @("'wezterm'", "'tmux'", "'agy'", "'opencode'")) {
 }
 
 $bootstrap = Read-RepoText 'AgentSwitchboard-Technician-Bootstrap.cmd'
+Check ($bootstrap.Contains('set "BRANCH=main"')) 'bootstrap/main-pin' 'First-machine bootstrap must default to main'
 Check ($bootstrap.Contains('EXPECTED_PARENT_SHA256=')) 'bootstrap/hash-pin' 'First-machine bootstrap must pin parent SHA-256'
 Check ($bootstrap.Contains('Get-FileHash -Algorithm SHA256')) 'bootstrap/hash-verify' 'First-machine bootstrap must verify SHA-256'
 Check ($bootstrap.Contains('Run-Technician-LiveCert.cmd')) 'bootstrap/full-run' 'Bootstrap must hand off to full live-cert CMD'
+
+$parentBootstrap = Read-RepoText 'Pull-Repo-And-Setup-AgentSwitchboard.cmd'
+Check ($parentBootstrap.Contains('set "BRANCH=main"')) 'parent-bootstrap/main-pin' 'Parent bootstrap must default to main'
 
 Write-Host '============================================================' -ForegroundColor Cyan
 Write-Host ' Technician Live-Cert Surface Validation Summary' -ForegroundColor White
