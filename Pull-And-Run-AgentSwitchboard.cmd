@@ -86,8 +86,8 @@ if not defined CURRENT_BRANCH (
   goto :finish
 )
 
-echo [INFO] Fetching current repository state...
-git -C "%REPO_ROOT%" fetch --all --prune
+echo [INFO] Fetching verified origin state...
+git -C "%REPO_ROOT%" fetch origin --prune
 if errorlevel 1 (
   set "RESULT=15"
   goto :finish
