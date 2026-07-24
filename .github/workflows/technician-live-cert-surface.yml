@@ -1,0 +1,84 @@
+name: Technician Live-Cert Surface CI
+
+on:
+  push:
+    branches:
+      - feat/technician-clickable-live-cert-cmds
+      - main
+  pull_request:
+    paths:
+      - 'tooling/profiles/windows/technician-live-cert/**'
+      - 'Technician-LiveCert-*.cmd'
+      - 'Repair-Technician-*.cmd'
+      - 'Run-Technician-LiveCert.cmd'
+      - 'AgentSwitchboard-Technician-Bootstrap.cmd'
+      - 'Open-TechnicianLiveCertEvidence.cmd'
+      - 'Install-TechnicianLiveCertShortcuts.cmd'
+      - 'scripts/Test-TechnicianLiveCertSurface.ps1'
+      - 'tests/test_technician_live_cert_surface.py'
+      - '.github/workflows/technician-live-cert-surface.yml'
+      - 'docs/workstation/technician-live-cert-click-guide.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-surface:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run Python structural tests
+        run: python tests/test_technician_live_cert_surface.py
+
+      - name: Validate surface in PowerShell
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertSurface.ps1
+
+      - name: Validate Windows Profile live-certification doctrine
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-WindowsProfileLiveCertification.ps1
+
+      - name: Validate end-to-end runtime skill
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-EndToEndRuntimeValidationSkill.ps1
+
+      - name: Validate device profile launcher contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-DeviceProfileLauncherContract.ps1
+
+      - name: Exercise CMD dry-run
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:AGENT_SWITCHBOARD_NO_PAUSE = '1'
+          $env:TECHNICIAN_LIVE_CERT_CI_SURFACE = '1'
+          $logPath = Join-Path $PWD 'technician-p00-ci.log'
+          & cmd.exe /d /c "call Technician-LiveCert-P00-Preflight.cmd > `"$logPath`" 2>&1"
+          $exitCode = $LASTEXITCODE
+          Get-Content -LiteralPath $logPath
+          if ($exitCode -ne 0) {
+            throw "Technician-LiveCert-P00-Preflight.cmd failed with exit code $exitCode. See technician-p00-ci evidence artifact."
+          }
+
+      - name: Upload Windows CMD dry-run evidence
+        if: runner.os == 'Windows' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: technician-p00-ci-${{ github.run_attempt }}
+          path: technician-p00-ci.log
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Check repository hygiene
+        shell: bash
+        run: git diff --check

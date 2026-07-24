@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-2020-12/schema#",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/schemas/technician-live-cert-stage-result.schema.json",
+  "title": "Technician Live-Cert Stage Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "stageId", "name", "status", "startedAt", "completedAt", "exitCode", "evidencePath", "classification", "proofLevel", "evidenceArtifacts"],
+  "properties": {
+    "schema": { "type": "string", "const": "agentswitchboard.technician-live-cert-stage.v1" },
+    "stageId": { "type": "string", "pattern": "^P\\d{2}$" },
+    "name": { "type": "string" },
+    "status": { "type": "string", "enum": ["pending", "running", "passed", "failed", "skipped", "blocked"] },
+    "startedAt": { "type": "string", "format": "date-time" },
+    "completedAt": { "type": ["string", "null"], "format": "date-time" },
+    "exitCode": { "type": ["integer", "null"] },
+    "evidencePath": { "type": ["string", "null"] },
+    "classification": { "type": ["string", "null"] },
+    "proofLevel": { "type": "string" },
+    "evidenceArtifacts": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "manualObservation": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "prompt": { "type": "string" },
+        "response": { "type": "string", "enum": ["1", "2", "3"] },
+        "notes": { "type": "string" }
+      },
+      "required": ["prompt", "response"]
+    },
+    "error": { "type": ["string", "null"] }
+  }
+}
