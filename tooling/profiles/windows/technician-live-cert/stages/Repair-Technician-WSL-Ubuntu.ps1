@@ -178,7 +178,7 @@ Write-Host '[PASS] Ubuntu is registered.' -ForegroundColor Green
 Invoke-NativeChecked -FilePath $wslPath -ArgumentList @('--set-version', 'Ubuntu', '2') | Out-Null
 
 # The Microsoft Ubuntu package has a per-user first-run step.
-# Do not invent a password or silently create passwordless sudo.
+# Safety invariant: do not invent a password or silently create passwordless sudo.
 # Launch that official first-run experience when the default user cannot yet execute a command, then verify it.
 & $wslPath -d Ubuntu -- bash -lc 'printf AGENT_SWITCHBOARD_UBUNTU_READY' | Out-Null
 $defaultUserExit = $LASTEXITCODE
