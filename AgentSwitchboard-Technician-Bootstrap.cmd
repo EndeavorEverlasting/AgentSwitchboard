@@ -3,12 +3,13 @@ setlocal EnableExtensions DisableDelayedExpansion
 title AgentSwitchboard Technician Bootstrap
 
 set "BRANCH=main"
-set "EXPECTED_PARENT_SHA256=1598cd15b9624d5975fb714e00484fa064e2ddf27598099fcaa52eb786ee75a0"
-set "DEFAULT_REPO=%USERPROFILE%\Desktop\dev\AgentSwitchboard"
+set "EXPECTED_PARENT_SHA256=4f07f750f8831c18e864adc1fb3c8c57f693e9c090a6d820a3f022da0ac33873"
+set "DEFAULT_REPO=%USERPROFILE%\dev\AgentSwitchBoard-Live"
+set "STATE_DIR=%LOCALAPPDATA%\AgentSwitchBoard\state"
+set "STATE_FILE=%STATE_DIR%\repo-path.txt"
 set "PARENT_NAME=Pull-Repo-And-Setup-AgentSwitchboard.cmd"
 set "PARENT_TEMP=%TEMP%\AgentSwitchboard-%PARENT_NAME%"
 
-if not "%~1"=="" set "DEFAULT_REPO=%~1"
 if not "%~2"=="" set "BRANCH=%~2"
 if /I not "%BRANCH%"=="main" (
   echo [FAIL] This production bootstrap is pinned to main.
@@ -16,15 +17,81 @@ if /I not "%BRANCH%"=="main" (
   exit /b 8
 )
 
-set "PARENT_URL=https://raw.githubusercontent.com/EndeavorEverlasting/AgentSwitchboard/%BRANCH%/%PARENT_NAME%"
 for %%I in ("%~dp0.") do set "SCRIPT_DIR=%%~fI"
+set "REPO_ROOT="
+set "BINDING_SOURCE="
+
+rem 1. Explicit invocation argument always wins.
+if not "%~1"=="" (
+  set "REPO_ROOT=%~1"
+  set "BINDING_SOURCE=explicit argument"
+  goto :repo_selected
+)
+
+rem 2. Environment override is portable across shells and shortcuts.
+if defined AGENT_SWITCHBOARD_REPO (
+  set "REPO_ROOT=%AGENT_SWITCHBOARD_REPO%"
+  set "BINDING_SOURCE=AGENT_SWITCHBOARD_REPO"
+  goto :repo_selected
+)
+
+rem 3. When invoked from an existing checkout, keep that checkout.
+if exist "%SCRIPT_DIR%\.git" (
+  set "REPO_ROOT=%SCRIPT_DIR%"
+  set "BINDING_SOURCE=bootstrap directory"
+  goto :repo_selected
+)
+if exist "%CD%\.git" (
+  set "REPO_ROOT=%CD%"
+  set "BINDING_SOURCE=current directory"
+  goto :repo_selected
+)
+
+rem 4. Reuse this machine's previously verified checkout from any directory.
+if exist "%STATE_FILE%" (
+  set /p "REPO_ROOT="<"%STATE_FILE%"
+  if defined REPO_ROOT if exist "%REPO_ROOT%\.git" (
+    set "BINDING_SOURCE=machine binding"
+    goto :repo_selected
+  )
+  set "REPO_ROOT="
+)
+
+rem 5. Recognize common healthy historical locations without depending on them.
+if exist "%USERPROFILE%\dev\AgentSwitchBoard-Live\.git" (
+  set "REPO_ROOT=%USERPROFILE%\dev\AgentSwitchBoard-Live"
+  set "BINDING_SOURCE=portable candidate"
+  goto :repo_selected
+)
+if exist "%USERPROFILE%\dev\AgentSwitchBoard\.git" (
+  set "REPO_ROOT=%USERPROFILE%\dev\AgentSwitchBoard"
+  set "BINDING_SOURCE=portable candidate"
+  goto :repo_selected
+)
+if exist "%USERPROFILE%\Desktop\dev\AgentSwitchBoard-Live\.git" (
+  set "REPO_ROOT=%USERPROFILE%\Desktop\dev\AgentSwitchBoard-Live"
+  set "BINDING_SOURCE=legacy Desktop candidate"
+  goto :repo_selected
+)
+if exist "%USERPROFILE%\Desktop\dev\AgentSwitchBoard\.git" (
+  set "REPO_ROOT=%USERPROFILE%\Desktop\dev\AgentSwitchBoard"
+  set "BINDING_SOURCE=legacy Desktop candidate"
+  goto :repo_selected
+)
+
+rem 6. A machine with no checkout gets one stable path outside Desktop/OneDrive.
 set "REPO_ROOT=%DEFAULT_REPO%"
-if exist "%SCRIPT_DIR%\.git" set "REPO_ROOT=%SCRIPT_DIR%"
+set "BINDING_SOURCE=portable default"
+
+:repo_selected
+for %%I in ("%REPO_ROOT%") do set "REPO_ROOT=%%~fI"
+set "PARENT_URL=https://raw.githubusercontent.com/EndeavorEverlasting/AgentSwitchboard/%BRANCH%/%PARENT_NAME%"
 
 echo ============================================================
 echo  AgentSwitchboard Technician Bootstrap
 echo ============================================================
 echo Repository: %REPO_ROOT%
+echo Binding:    %BINDING_SOURCE%
 echo Branch:     %BRANCH%
 echo.
 
@@ -69,6 +136,16 @@ set "EXITCODE=%ERRORLEVEL%"
 if not "%EXITCODE%"=="0" (
   echo [FAIL] Repository acquisition/setup failed with exit code %EXITCODE%.
   goto :finish
+)
+
+rem Bind only after the canonical pull/setup surface verified the checkout.
+if not exist "%STATE_DIR%" mkdir "%STATE_DIR%" >nul 2>&1
+if not exist "%STATE_DIR%" (
+  echo [WARN] Setup passed but the per-machine binding directory could not be created:
+  echo        %STATE_DIR%
+) else (
+  >"%STATE_FILE%" echo %REPO_ROOT%
+  echo [PASS] Machine repo binding saved: %STATE_FILE%
 )
 
 if not exist "%REPO_ROOT%\Run-Technician-LiveCert.cmd" (
