@@ -17,6 +17,7 @@ REPAIR_DISPATCHER_PATH = os.path.join(BASE_DIR, "Invoke-TechnicianRepair.ps1")
 COMMON_MODULE_PATH = os.path.join(BASE_DIR, "TechnicianLiveCert.Common.psm1")
 BOOTSTRAP_PATH = os.path.join(REPO_ROOT, "AgentSwitchboard-Technician-Bootstrap.cmd")
 PARENT_BOOTSTRAP_PATH = os.path.join(REPO_ROOT, "Pull-Repo-And-Setup-AgentSwitchboard.cmd")
+PULL_AND_RUN_PATH = os.path.join(REPO_ROOT, "Pull-And-Run-AgentSwitchboard.cmd")
 WSL_REPAIR_PATH = os.path.join(BASE_DIR, "stages", "Repair-Technician-WSL-Ubuntu.ps1")
 
 
@@ -223,6 +224,26 @@ class TestTechnicianLiveCertSurface(unittest.TestCase):
         for command_name in ["'wezterm'", "'tmux'", "'agy'", "'opencode'"]:
             self.assertIn(command_name, repair)
         self.assertNotIn("wsl.exe -d Ubuntu -- bash -lc", repair)
+
+    def test_bootstrap_repo_binding_is_location_independent(self):
+        bootstrap = read_text(BOOTSTRAP_PATH)
+        parent = read_text(PARENT_BOOTSTRAP_PATH)
+        pull_and_run = read_text(PULL_AND_RUN_PATH)
+
+        for token in [
+            "AGENT_SWITCHBOARD_REPO",
+            "repo-path.txt",
+            "%CD%\\.git",
+            "%USERPROFILE%\\dev\\AgentSwitchBoard-Live",
+            "machine binding",
+            "portable default",
+            "Machine repo binding saved",
+        ]:
+            self.assertIn(token, bootstrap)
+
+        self.assertNotIn('set "DEFAULT_REPO=%USERPROFILE%\\Desktop\\dev\\AgentSwitchboard"', bootstrap)
+        self.assertIn('set "REPO_ROOT=%USERPROFILE%\\dev\\AgentSwitchBoard-Live"', parent)
+        self.assertIn('set "DEFAULT_REPO=%USERPROFILE%\\dev\\AgentSwitchBoard-Live"', pull_and_run)
 
     def test_bootstrap_is_single_file_capable_and_parent_hash_is_pinned(self):
         bootstrap = read_text(BOOTSTRAP_PATH)
