@@ -114,17 +114,23 @@ if (Test-Path -LiteralPath $skillPath -PathType Leaf) {
     }
 }
 
-$doctrine = Get-Content -LiteralPath (Join-Path $RootPath $doctrinePath) -Raw
-foreach ($token in @(
-    'Observed live failure outranks static, synthetic, and CI success',
-    'Optional agent installation or browser authentication may not block',
-    'repo-owned shim',
-    'Ctrl+C',
-    '/debug',
-    'OpenCode installation: observed pass',
-    'AGY installation: observed fail'
-)) {
-    Check ($doctrine.Contains($token)) "doctrine/$token" 'required live-cert doctrine missing'
+$doctrinePathFull = Join-Path $RootPath $doctrinePath
+if (Test-Path -LiteralPath $doctrinePathFull -PathType Leaf) {
+    $doctrine = Get-Content -LiteralPath $doctrinePathFull -Raw
+    foreach ($token in @(
+        'Observed live failure outranks static, synthetic, and CI success',
+        'Optional agent installation or browser authentication may not block',
+        'repo-owned shim',
+        'Ctrl+C',
+        '/debug',
+        'OpenCode installation: observed pass',
+        'AGY installation: observed fail'
+    )) {
+        Check ($doctrine.Contains($token)) "doctrine/$token" 'required live-cert doctrine missing'
+    }
+}
+else {
+    Check $false 'doctrine/file' "required doctrine file is missing: $doctrinePath"
 }
 
 Write-Host 'WINDOWS PROFILE LIVE CERTIFICATION HARNESS' -ForegroundColor Cyan
