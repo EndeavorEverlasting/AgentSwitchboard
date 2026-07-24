@@ -48,15 +48,20 @@ if exist "%CD%\.git" (
 )
 
 rem 4. Reuse this machine's previously verified checkout from any directory.
-if exist "%STATE_FILE%" (
-  set /p "REPO_ROOT="<"%STATE_FILE%"
-  if defined REPO_ROOT if exist "%REPO_ROOT%\.git" (
-    set "BINDING_SOURCE=machine binding"
-    goto :repo_selected
-  )
-  set "REPO_ROOT="
-)
+if exist "%STATE_FILE%" goto :load_machine_binding
+goto :after_machine_binding
 
+:load_machine_binding
+set "REPO_ROOT="
+set /p "REPO_ROOT="<"%STATE_FILE%"
+if not defined REPO_ROOT goto :after_machine_binding
+if exist "%REPO_ROOT%\.git" (
+  set "BINDING_SOURCE=machine binding"
+  goto :repo_selected
+)
+set "REPO_ROOT="
+
+:after_machine_binding
 rem 5. Recognize common healthy historical locations without depending on them.
 if exist "%USERPROFILE%\dev\AgentSwitchBoard-Live\.git" (
   set "REPO_ROOT=%USERPROFILE%\dev\AgentSwitchBoard-Live"
@@ -145,7 +150,12 @@ if not exist "%STATE_DIR%" (
   echo        %STATE_DIR%
 ) else (
   >"%STATE_FILE%" echo %REPO_ROOT%
-  echo [PASS] Machine repo binding saved: %STATE_FILE%
+  if errorlevel 1 (
+    echo [WARN] Repository acquisition passed but the per-machine binding could not be saved:
+    echo        %STATE_FILE%
+  ) else (
+    echo [PASS] Machine repo binding saved: %STATE_FILE%
+  )
 )
 
 if not exist "%REPO_ROOT%\Repair-Technician-WSL-Ubuntu.cmd" (
