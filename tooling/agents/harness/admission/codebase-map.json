@@ -1,0 +1,50 @@
+{
+  "schema": "agentswitchboard.agent-admission-codebase-map.v1",
+  "harnessId": "agentswitchboard.agent-admission-harness.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "purpose": "Map the smallest repository surfaces required to admit an agent by demonstrated proof discipline, select a safe execution lane, validate the decision, produce local artifacts, and hand off without trusting model prose as proof.",
+  "entrypoints": {
+    "governance": "AGENTS.md",
+    "rootMap": "CODEBASE_MAP.md",
+    "capabilities": "CAPABILITIES.md",
+    "triggers": "TRIGGERS.md",
+    "registry": "tooling/agents/harness/admission/agent-admission.registry.json",
+    "artifactRegistry": "tooling/agents/harness/admission/artifact-registry.json",
+    "workflowIntake": "tooling/agents/harness/admission/workflows/task-intake.workflow.json",
+    "workflowAdmission": "tooling/agents/harness/admission/workflows/admission-evaluation.workflow.json",
+    "workflowRouting": "tooling/agents/harness/admission/workflows/route-selection.workflow.json",
+    "workflowFailureHandoff": "tooling/agents/harness/admission/workflows/failure-handoff.workflow.json",
+    "schema": "tooling/agents/harness/admission/schemas/agent-admission-harness.schema.json",
+    "fixtureSuite": "tooling/agents/harness/admission/fixtures/runtime-proof-discipline.cases.json",
+    "skill": ".ai/skills/agent-admission-routing/SKILL.md",
+    "status": "tooling/agents/Get-AgentAdmissionHarnessStatus.ps1",
+    "validator": "scripts/Test-AgentAdmissionHarness.ps1",
+    "operatorGuide": "docs/harness/agent-admission-harness.md"
+  },
+  "directories": [
+    {"path": "tooling/agents/harness/admission", "purpose": "Agent admission, proof-reduction, routing, artifact, workflow, schema, and fixture contracts."},
+    {"path": ".ai/skills/agent-admission-routing", "purpose": "Scoped procedure for selecting a lane from deterministic admission evidence."},
+    {"path": "tooling/agents/hooks", "purpose": "Opt-in local validation hooks; never installed implicitly."},
+    {"path": "scripts", "purpose": "Repository-level deterministic completeness validators."},
+    {"path": "tests", "purpose": "Dependency-free structural and semantic contract tests."},
+    {"path": "docs/harness", "purpose": "English operator status, known gaps, traps, artifact policy, and proof ceiling."},
+    {"path": ".github/workflows", "purpose": "Cross-platform exact-head contract gates."}
+  ],
+  "commands": [
+    {"name": "Admission harness status", "command": "pwsh -NoLogo -NoProfile -File tooling/agents/Get-AgentAdmissionHarnessStatus.ps1", "effect": "read-only", "proof": "repository contract readiness only"},
+    {"name": "Admission harness completeness", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-AgentAdmissionHarness.ps1", "effect": "read-only", "proof": "tracked component, routing, fixture, and proof-reducer consistency"},
+    {"name": "Dependency-free admission contracts", "command": "python tests/test_agent_admission_harness.py", "effect": "read-only", "proof": "JSON and routing semantics"},
+    {"name": "Aggregate harness", "command": "Test-AppHarness.cmd", "effect": "read-only", "proof": "registered offline repository harness only"},
+    {"name": "Diff hygiene", "command": "git diff --check", "effect": "read-only", "proof": "whitespace and patch hygiene"}
+  ],
+  "knownTraps": [
+    "Agent presence, command availability, reputation, price, or prior success does not establish runtime-proof eligibility.",
+    "A lower-proof lane may not be reported as completion when the task requires live-runtime proof.",
+    "Not attempted, command acknowledged, launcher observed, runtime attached, and behavior observed are distinct proof states.",
+    "Stale evidence from another run, agent, provider, model, branch, commit, environment, or correlation ID must not promote proof.",
+    "Requested routing is not execution proof; record the actual executor, provider, model, lane, branch, and validation result.",
+    "Unknown or failed admission defaults to static/build-safe work only; live-runtime certification fails closed.",
+    "Generated admission evidence remains local-operational and untracked."
+  ],
+  "proofCeiling": "Repository map and deterministic offline admission/routing contracts only; no provider call, model-quality judgment, runtime enforcement, external target behavior, or live certification proof."
+}
