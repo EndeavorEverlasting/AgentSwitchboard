@@ -32,6 +32,23 @@ Plans coordinate work; branches and pull requests transport and review implement
 
 This skill is selected when success depends on the exact command an operator runs through one or more runtime boundaries. It requires child stdout and stderr, exit identity, effective-state readback, user-visible observation, and idempotence or rollback proof when applicable. Static inspection, passing CI, configuration intent, process creation, or a parent exit code cannot establish end-to-end runtime success.
 
+## Agent admission and proof-discipline harness
+
+- `tooling/agents/harness/admission/codebase-map.json` — focused structure, entrypoints, commands, and known weak-agent traps.
+- `tooling/agents/harness/admission/agent-admission.registry.json` — execution lanes, exact-identity admission requirements, proof reducer, terminal classifications, and fail-closed routing rules.
+- `tooling/agents/harness/admission/workflows/` — task intake, admission evaluation, route selection, and blocked/failure handoff.
+- `tooling/agents/harness/admission/artifact-registry.json` — local-only admission, route, execution-identity, proof-ledger, report, and handoff artifacts.
+- `tooling/agents/harness/admission/schemas/agent-admission-harness.schema.json` — execution identity, run context, admission result, route decision, proof ledger, and handoff contracts.
+- `tooling/agents/harness/admission/fixtures/runtime-proof-discipline.cases.json` — five canonical cases separating live pass, not attempted, launcher blocked, ACK-only, and stale evidence.
+- `.ai/skills/agent-admission-routing/SKILL.md` — scoped lane-selection and admission procedure.
+- `tooling/agents/Get-AgentAdmissionHarnessStatus.ps1` — read-only English and JSON repository status.
+- `tooling/agents/hooks/Invoke-AgentAdmissionHarnessPreCommit.ps1` — opt-in completeness, dependency-free contracts, staged-diff hygiene, and generated-evidence exclusion; never installed implicitly.
+- `scripts/Test-AgentAdmissionHarness.ps1` and `tests/test_agent_admission_harness.py` — focused cross-platform completeness and proof-reducer contracts.
+- `docs/harness/agent-admission-harness.md` — operator guide, working state, gaps, artifacts, commands, and proof ceiling.
+- `.github/workflows/agent-admission-harness.yml` — Windows and Linux exact-head contract gate.
+
+Unknown agent/provider/model identities are restricted to bounded `static-build` work. `repository-runtime` and `live-runtime` require a current `runtime-proof-discipline/v1` pass bound to the exact execution identity; no eligible live agent produces `BLOCKED_NO_ELIGIBLE_AGENT`, not a silent proof downgrade. This harness is contract-only in this sprint: existing product launchers are not yet universally wired to enforce it before every delegated execution.
+
 ## Offline app harness observer
 
 - `Test-AppHarness.cmd` — one-command offline proof entrypoint.
@@ -129,6 +146,7 @@ The focused implementation map is `tooling/profiles/windows/harness/tmux-new-ins
 - `.ai/skills/pr-integration/SKILL.md`
 - `.ai/skills/runtime-proof/SKILL.md`
 - `.ai/skills/end-to-end-runtime-validation/SKILL.md`
+- `.ai/skills/agent-admission-routing/SKILL.md`
 - `.ai/skills/windows-profile-launch-mode-validation/SKILL.md`
 - `.ai/skills/app-output-contextualization/SKILL.md`
 
@@ -171,6 +189,8 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 
 - `scripts/Test-HarnessDoctrineContract.ps1`
 - `scripts/Test-EndToEndRuntimeValidationSkill.ps1`
+- `scripts/Test-AgentAdmissionHarness.ps1`
+- `tests/test_agent_admission_harness.py`
 - `scripts/Test-RuntimeEventContract.ps1`
 - `scripts/Test-DeviceProfileLauncherContract.ps1`
 - `scripts/Test-WindowsProfileLaunchModeHarness.ps1`
@@ -185,6 +205,6 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 
 ## Generated evidence and proof boundary
 
-Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, Windows launch-mode, tmux shortcut, and Pi evidence is untracked. End-to-end runtime evidence is also local-operational and untracked unless deliberately minimized and reviewed as a public fixture. Evidence may contain local paths, versions, Git state, minimized operational payloads, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
+Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, agent-admission, Windows launch-mode, tmux shortcut, and Pi evidence is untracked. End-to-end runtime evidence is also local-operational and untracked unless deliberately minimized and reviewed as a public fixture. Evidence may contain local paths, versions, Git state, minimized operational payloads, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
 
-Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, launch-mode classification, shortcut allocation, or workflow semantics. Neither proves application runtime, an exact operator path, an open-or-activate result, a distinct WezTerm instance on the operator workstation, duplicate prevention, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, model quality, external target behavior, deployment, or operator acceptance.
+Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, admission classification, launch-mode classification, shortcut allocation, or workflow semantics. Neither proves application runtime, an exact operator path, an agent/provider/model's arbitrary-task quality, universal product-runtime admission enforcement, an open-or-activate result, a distinct WezTerm instance on the operator workstation, duplicate prevention, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, external target behavior, deployment, or operator acceptance.
