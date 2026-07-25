@@ -1,0 +1,18 @@
+{
+  "schema": "agentswitchboard.agent-admission-workflow.v1",
+  "workflowId": "agent-task-intake",
+  "trigger": "agent.execution-request",
+  "purpose": "Freeze task proof requirements and candidate identities before an agent is selected or allowed to execute.",
+  "inputs": ["repository", "branchOrWorktree", "taskId", "requestedProof", "requestedLane", "candidateAgents", "ownedScope", "forbiddenScope", "validationOrder"],
+  "steps": [
+    {"step": 1, "action": "reinspect current repository, branch or worktree, relevant PRs, validators, and active ownership; preserve unrelated dirty work"},
+    {"step": 2, "action": "classify requested proof and reject ambiguous live-runtime requests until the terminal evidence chain is named"},
+    {"step": 3, "action": "record candidate agent identity as agentId/provider/model/endpointClass; requested alias is not execution identity"},
+    {"step": 4, "action": "load current admission evidence for each exact identity; missing, stale, or mismatched evidence is unassessed"},
+    {"step": 5, "action": "write agent-admission-run-context.json outside the repository with requested proof, candidates, authority, and validation order"},
+    {"step": 6, "action": "select admission-evaluation when the requested lane requires proof-discipline admission; otherwise continue to route-selection with static-build eligibility only"}
+  ],
+  "outputs": ["agent-admission-run-context", "candidate-admission-state", "nextWorkflow"],
+  "failureHandling": "Preserve evidence and route to failure-handoff; do not silently reduce required proof or substitute a different execution surface.",
+  "proofCeiling": "Task identity, requested proof, candidate identity, and admission freshness classification only; no agent execution or runtime success."
+}
