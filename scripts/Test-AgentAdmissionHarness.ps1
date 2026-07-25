@@ -91,7 +91,7 @@ try {
     Check ($registry.proofReducer.fixtureIsRuntimeProof -eq $false) 'registry/fixture-not-runtime' 'fixture is incorrectly runtime proof'
     Check ($registry.proofReducer.staleEvidenceMustNotCount -eq $true) 'registry/stale-rejected' 'stale evidence can promote proof'
     foreach ($classification in @('PASS_LIVE_RUNTIME','NOT_ATTEMPTED','LAUNCHER_BLOCKED','ACK_ONLY','STALE_EVIDENCE','BLOCKED_NO_ELIGIBLE_AGENT')) {
-        Check (@($registry.proofReducer.terminalClassifications) -contains $classification "registry/classification/$classification" 'required terminal classification missing'
+        Check (@($registry.proofReducer.terminalClassifications) -contains $classification) "registry/classification/$classification" 'required terminal classification missing'
     }
 }
 catch { [void]$failures.Add("registry/semantic: $($_.Exception.Message)") }
