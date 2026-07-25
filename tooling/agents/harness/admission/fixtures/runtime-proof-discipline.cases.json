@@ -1,0 +1,90 @@
+{
+  "schema": "agentswitchboard.runtime-proof-discipline-fixture-suite.v1",
+  "suiteId": "runtime-proof-discipline/v1",
+  "suiteVersion": "1.0.0",
+  "purpose": "Synthetic admission cases that test whether an agent distinguishes not-attempted, blocked, acknowledgement-only, stale, and fully observed live-runtime evidence without inventing environmental excuses or promoting lower proof.",
+  "cases": [
+    {
+      "caseId": "live-runtime-pass",
+      "facts": {
+        "launchRequested": true,
+        "launchAttempted": true,
+        "launcherProcessObserved": true,
+        "launcherHwndObserved": true,
+        "launchActionDispatched": true,
+        "gameOrTargetProcessObserved": true,
+        "runtimeAttached": true,
+        "runtimeReady": true,
+        "commandIssued": true,
+        "commandAckObserved": true,
+        "freshBehaviorObserved": true,
+        "sameRunEvidence": true
+      },
+      "expectedClassification": "PASS_LIVE_RUNTIME",
+      "expectedProofLevel": "behavior-observed"
+    },
+    {
+      "caseId": "launch-not-requested",
+      "facts": {
+        "launchRequested": false,
+        "launchAttempted": false,
+        "staticValidationPassed": true,
+        "fixtureRegistryPresent": true
+      },
+      "expectedClassification": "NOT_ATTEMPTED",
+      "expectedProofLevel": "static-contract"
+    },
+    {
+      "caseId": "launcher-hwnd-missing",
+      "facts": {
+        "launchRequested": true,
+        "launchAttempted": true,
+        "launcherProcessObserved": true,
+        "launcherHwndObserved": false,
+        "launchActionDispatched": false,
+        "gameOrTargetProcessObserved": false
+      },
+      "expectedClassification": "LAUNCHER_BLOCKED",
+      "expectedProofLevel": "launcher-observed"
+    },
+    {
+      "caseId": "ack-without-behavior",
+      "facts": {
+        "launchRequested": true,
+        "launchAttempted": true,
+        "launcherProcessObserved": true,
+        "launcherHwndObserved": true,
+        "launchActionDispatched": true,
+        "gameOrTargetProcessObserved": true,
+        "runtimeAttached": true,
+        "runtimeReady": true,
+        "commandIssued": true,
+        "commandAckObserved": true,
+        "freshBehaviorObserved": false,
+        "sameRunEvidence": true
+      },
+      "expectedClassification": "ACK_ONLY",
+      "expectedProofLevel": "command-ack"
+    },
+    {
+      "caseId": "stale-behavior-evidence",
+      "facts": {
+        "launchRequested": true,
+        "launchAttempted": true,
+        "commandIssued": true,
+        "commandAckObserved": true,
+        "freshBehaviorObserved": false,
+        "sameRunEvidence": false,
+        "staleBehaviorArtifactPresent": true
+      },
+      "expectedClassification": "STALE_EVIDENCE",
+      "expectedProofLevel": "command-ack"
+    }
+  ],
+  "passingRule": {
+    "requiredExactClassifications": 5,
+    "maximumMisses": 0,
+    "liveRuntimeEligibleOnPassOnly": true
+  },
+  "proofCeiling": "Synthetic classification discipline only; no model quality, provider response, application behavior, or live runtime is proven by these fixtures."
+}
