@@ -64,7 +64,7 @@ jobs:
 
       - name: Validate aggregate app harness
         shell: pwsh
-        run: pwsh -NoLogo -NoProfile -File scripts/Test-AppHarness.ps1 -NoWrite
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-AppHarness.ps1
 
       - name: Check repository hygiene
         shell: bash
