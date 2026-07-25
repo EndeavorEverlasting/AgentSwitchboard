@@ -1,0 +1,13 @@
+{
+  "schema": "agentswitchboard.gnhf.trigger-snapshot.v1",
+  "triggerId": "p00-example-trig",
+  "generatedUtc": "2026-07-18T06:00:00Z",
+  "source": "agent-switchboard-orchestrator",
+  "eventType": "manual-queue-compile",
+  "payloadHash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "payloadSummary": "Operator manually compiled the P00 example prompt queue.",
+  "authorized": true,
+  "authorityBoundary": "static-validation",
+  "sprint": "xyz_runtime_sprint",
+  "lane": "harness-maturity"
+}

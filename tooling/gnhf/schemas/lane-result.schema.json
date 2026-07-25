@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/gnhf/schemas/lane-result.schema.json",
+  "title": "GNHF Lane Result",
+  "description": "Result record for one executed lane in a GNHF queue plan.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "laneId", "planId", "status", "startedUtc", "completedUtc", "proofLevel", "proofCeiling"],
+  "properties": {
+    "schema": {
+      "const": "agentswitchboard.gnhf.lane-result.v1"
+    },
+    "laneId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "planId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "running", "passed", "failed", "blocked", "skipped"]
+    },
+    "startedUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completedUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "proofLevel": {
+      "type": "string",
+      "enum": ["contract", "read-only-repository-intake", "child-validator", "child-build", "child-runtime", "harness", "static test", "build", "launcher", "command ACK", "behavior observed", "live runtime"]
+    },
+    "proofCeiling": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "path"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "risks": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "nextCommand": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

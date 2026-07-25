@@ -1,0 +1,39 @@
+{
+  "schema": "agentswitchboard.gnhf.prompt-queue.v1",
+  "queueId": "p00-example",
+  "generatedUtc": "2026-07-18T06:00:00Z",
+  "sprint": "xyz_runtime_sprint",
+  "baseBranch": "main",
+  "targetRepository": "EndeavorEverlasting/BlacksmithGuild",
+  "defaultAgent": "opencode",
+  "lanes": [
+    {
+      "id": "inspect",
+      "lane": "harness-maturity",
+      "agent": "opencode",
+      "promptPath": "tooling/gnhf/prompts/inspect-harness.md",
+      "maxIterations": 2,
+      "maxTokens": 100000,
+      "ownedScope": "Read-only harness contract inspection",
+      "forbiddenScope": "Live provider execution, repository mutation, Bannerlord launch",
+      "expectedArtifacts": ["harness-report.json"],
+      "validation": "python3 tooling/gnhf/tests/validate_orchestration_contracts.py",
+      "stopWhen": "The harness contracts are proven intact and the report is committed."
+    },
+    {
+      "id": "capsule",
+      "lane": "harness-maturity",
+      "dependsOn": ["inspect"],
+      "agent": "opencode",
+      "promptPath": "tooling/gnhf/prompts/generate-capsule.md",
+      "maxIterations": 2,
+      "maxTokens": 100000,
+      "ownedScope": "Generate a sprint capsule from the inspection result",
+      "forbiddenScope": "Live execution, mutation of child repository state",
+      "expectedArtifacts": ["sprint-capsule.json"],
+      "validation": "python3 tooling/gnhf/tests/validate_orchestration_contracts.py",
+      "stopWhen": "The sprint capsule is generated and validated."
+    }
+  ],
+  "notes": ["Example P00 prompt queue for the BlacksmithGuild convergence."]
+}

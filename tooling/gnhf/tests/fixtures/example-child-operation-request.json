@@ -1,0 +1,15 @@
+{
+  "schema": "agentswitchboard.gnhf.child-operation-request.v1",
+  "requestId": "p00-example-req",
+  "generatedUtc": "2026-07-18T06:00:00Z",
+  "consumerId": "agent-switchboard",
+  "targetRepository": "blacksmith-guild",
+  "operationId": "inspect-harness",
+  "inputs": {},
+  "authorityBoundary": "static-validation",
+  "proofCeiling": "static test",
+  "sprint": "xyz_runtime_sprint",
+  "lane": "harness-maturity",
+  "sourceQueueId": "p00-example",
+  "sourcePlanId": "p00-example-plan"
+}

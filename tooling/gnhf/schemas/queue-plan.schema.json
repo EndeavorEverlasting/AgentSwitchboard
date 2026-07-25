@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/gnhf/schemas/queue-plan.schema.json",
+  "title": "GNHF Queue Plan",
+  "description": "Compiled execution plan produced from a prompt queue by the queue compiler.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "planId", "queueId", "generatedUtc", "sprint", "baseBranch", "executionOrder", "lanes"],
+  "properties": {
+    "schema": {
+      "const": "agentswitchboard.gnhf.queue-plan.v1"
+    },
+    "planId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "queueId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "generatedUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sprint": {
+      "type": "string",
+      "minLength": 1
+    },
+    "baseBranch": {
+      "type": "string",
+      "minLength": 1
+    },
+    "targetRepository": {
+      "type": "string",
+      "minLength": 1
+    },
+    "executionOrder": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "lanes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "lane", "stageIndex", "agent", "promptPath", "maxIterations", "maxTokens", "ownedScope", "forbiddenScope", "validation", "stopWhen"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lane": {
+            "type": "string",
+            "minLength": 1
+          },
+          "stageIndex": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "dependsOn": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "agent": {
+            "type": "string",
+            "minLength": 1
+          },
+          "promptPath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "maxIterations": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "maxTokens": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "ownedScope": {
+            "type": "string",
+            "minLength": 1
+          },
+          "forbiddenScope": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedArtifacts": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "validation": {
+            "type": "string",
+            "minLength": 1
+          },
+          "stopWhen": {
+            "type": "string",
+            "minLength": 1
+          },
+          "allowPush": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "blockers": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}
