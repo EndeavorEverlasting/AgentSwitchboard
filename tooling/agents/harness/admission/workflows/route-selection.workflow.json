@@ -1,0 +1,19 @@
+{
+  "schema": "agentswitchboard.agent-admission-workflow.v1",
+  "workflowId": "agent-route-selection",
+  "trigger": "agent.route-selection-required",
+  "purpose": "Select an execution lane from requested proof and current admission evidence instead of selecting an agent brand first.",
+  "inputs": ["runContext", "candidateAdmissions", "registry", "availableCapabilities"],
+  "steps": [
+    {"step": 1, "action": "filter candidates by current capability availability and exact identity; capability presence alone does not establish admission"},
+    {"step": 2, "action": "derive the minimum lane from the task acceptance boundary; live-runtime acceptance requires the live-runtime lane"},
+    {"step": 3, "action": "for static-build, allow an unassessed candidate only inside repository-owned bounded implementation and deterministic validation"},
+    {"step": 4, "action": "for repository-runtime or live-runtime, require runtime-proof-discipline-pass for the exact identity"},
+    {"step": 5, "action": "when no eligible live-runtime candidate exists, emit BLOCKED_NO_ELIGIBLE_AGENT rather than assigning a weaker candidate or lowering proof"},
+    {"step": 6, "action": "record selected identity, selected lane, rejected candidates with reasons, required proof, and one exact next workflow in agent-route-decision.json"},
+    {"step": 7, "action": "before delegated execution, require agent-execution-identity.json to record the actual executor/provider/model/endpoint/role/branch; requested routing is not execution proof"}
+  ],
+  "outputs": ["agent-route-decision", "agent-execution-identity-requirement"],
+  "terminalStates": ["selected", "blocked-no-eligible-agent", "blocked-capability", "blocked-authority", "blocked-scope"],
+  "proofCeiling": "Deterministic selection decision only; it does not prove that the selected agent executed, succeeded, or earned a higher proof level."
+}
