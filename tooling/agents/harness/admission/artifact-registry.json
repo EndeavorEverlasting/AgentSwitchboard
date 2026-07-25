@@ -1,0 +1,18 @@
+{
+  "schema": "agentswitchboard.agent-admission-artifact-registry.v1",
+  "registryId": "agentswitchboard.agent-admission-artifacts.v1",
+  "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/AgentAdmission/runs/<run-id>",
+  "tracked": false,
+  "artifacts": [
+    {"artifactId": "agent-admission-run-context", "fileName": "agent-admission-run-context.json", "contract": "runContext", "generation": "task-intake workflow", "sensitivity": "local-operational", "naming": "one per run", "proofCeiling": "declared task, requested proof, candidate identities, and artifact root only"},
+    {"artifactId": "agent-admission-eval-result", "fileName": "agent-admission-eval-result.json", "contract": "admissionResult", "generation": "admission-evaluation workflow", "sensitivity": "local-operational", "naming": "one per candidate identity and suite version", "proofCeiling": "bounded synthetic proof-discipline classification only"},
+    {"artifactId": "agent-route-decision", "fileName": "agent-route-decision.json", "contract": "routeDecision", "generation": "route-selection workflow", "sensitivity": "local-operational", "naming": "one active decision per task run", "proofCeiling": "selected execution lane and blocker identity only; not execution proof"},
+    {"artifactId": "agent-execution-identity", "fileName": "agent-execution-identity.json", "contract": "executionIdentity", "generation": "runtime owner before delegated execution", "sensitivity": "local-operational", "naming": "one per actual delegated executor", "proofCeiling": "actual executor/provider/model/endpoint/role identity only"},
+    {"artifactId": "agent-proof-ledger", "fileName": "agent-proof-ledger.json", "contract": "proofLedger", "generation": "runtime harness or validator", "sensitivity": "local-operational", "naming": "append-only per task run", "proofCeiling": "observed machine facts and reduced proof state only"},
+    {"artifactId": "agent-admission-operator-report", "fileName": "agent-admission-operator-report.md", "contract": null, "generation": "Get-AgentAdmissionHarnessStatus.ps1 or workflow renderer", "sensitivity": "local-operational", "naming": "one per status or task run", "proofCeiling": "English rendering of observed repository, admission, routing, and gap evidence"},
+    {"artifactId": "agent-admission-final-handoff", "fileName": "agent-admission-final-handoff.json", "contract": "handoff", "generation": "failure-handoff or terminal workflow step", "sensitivity": "local-operational", "naming": "one per task run", "proofCeiling": "compressed continuation record; receiving agent must re-inspect current repository and admission state"}
+  ],
+  "retention": "operator-controlled local evidence outside the repository",
+  "forbiddenContent": ["credentials", "API keys", "OAuth tokens", "raw private prompts", "raw model transcripts", "customer data", "private hostnames", "unredacted local usernames"],
+  "proofCeiling": "Artifact naming, location, sensitivity, and generation contract only."
+}

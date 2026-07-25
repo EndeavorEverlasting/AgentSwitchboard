@@ -40,6 +40,17 @@ Agents must not infer `verified` from command presence, prior sessions, document
 
 Public plans coordinate work. They do not grant branch, provider, merge, deployment, target-mutation, secret, or destructive-Git authority.
 
+## Agent admission and routing capabilities
+
+| Capability | Activation and output | Guardrail and proof |
+|---|---|---|
+| `agent.admission.inspect` | inspect the agent-admission registry plus current admission evidence for one exact `agentId/provider/model/endpointClass` identity | read-only; command presence, route availability, price, reputation, or another identity's result does not establish eligibility |
+| `agent.admission.evaluate` | evaluate one exact candidate against `runtime-proof-discipline/v1` and emit a schema-backed admission result | synthetic admission only; deterministic comparison grades the candidate, all five canonical cases must match with zero misses, and the candidate cannot self-certify |
+| `agent.route.select` | select `static-build`, `repository-runtime`, `live-runtime`, or `adjudication-readonly` from requested proof, current capability, and current admission state | lane before brand; unknown identities are static/build-only; required live proof with no eligible candidate returns `BLOCKED_NO_ELIGIBLE_AGENT` rather than silently downgrading proof |
+| `agent.proof.reduce` | reduce observed same-run machine facts to `NOT_ATTEMPTED`, `LAUNCHER_BLOCKED`, `ACK_ONLY`, `STALE_EVIDENCE`, `FAILED_RUNTIME`, or `PASS_LIVE_RUNTIME` | model prose is non-authoritative; fixture presence, process presence, command ACK, and stale artifacts cannot be promoted into behavior proof |
+
+Run `scripts/Test-AgentAdmissionHarness.ps1` for repository-contract proof. This harness does not by itself execute an agent, contact a provider, enforce admission in every existing product launcher, or prove live runtime behavior. Product-runtime wiring remains a separate implementation boundary.
+
 ## Synthetic harness observer capabilities
 
 | Capability | Activation and output | Guardrail and proof |

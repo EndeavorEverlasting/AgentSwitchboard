@@ -1,0 +1,117 @@
+{
+  "schema": "agentswitchboard.agent-admission-registry.v1",
+  "registryId": "agentswitchboard.agent-admission.v1",
+  "defaultPolicy": {
+    "unknownAgentEligibility": "static-build-only",
+    "requestedAgentIsEligibleByDefault": false,
+    "providerReachabilityImpliesEligibility": false,
+    "commandPresenceImpliesEligibility": false,
+    "priorSessionEvidenceImpliesCurrentEligibility": false,
+    "silentProofDowngradeAllowed": false,
+    "liveRuntimeFailClosed": true
+  },
+  "executionLanes": [
+    {
+      "laneId": "static-build",
+      "description": "Repository inspection, bounded tracked implementation, deterministic build/static checks, and artifact production that does not require live target interpretation.",
+      "minimumAdmission": "none",
+      "mayCertifyLiveRuntime": false,
+      "mayPromoteProofBeyondDeterministicChecks": false
+    },
+    {
+      "laneId": "repository-runtime",
+      "description": "Bounded repository-owned runtime or smoke execution where the harness determines success and no external live target is certified.",
+      "minimumAdmission": "runtime-proof-discipline-pass",
+      "mayCertifyLiveRuntime": false,
+      "mayPromoteProofBeyondDeterministicChecks": false
+    },
+    {
+      "laneId": "live-runtime",
+      "description": "Runtime certification across process, terminal, GUI, provider, game, workstation, or external-target boundaries.",
+      "minimumAdmission": "runtime-proof-discipline-pass",
+      "mayCertifyLiveRuntime": true,
+      "requiresFreshExecutionIdentity": true,
+      "requiresHarnessTerminalState": true
+    },
+    {
+      "laneId": "adjudication-readonly",
+      "description": "Read-only comparison of attributed evidence. It cannot repair, mutate, or certify a live path by opinion alone.",
+      "minimumAdmission": "none",
+      "mayCertifyLiveRuntime": false,
+      "writerCount": 0
+    }
+  ],
+  "admissionSuites": [
+    {
+      "suiteId": "runtime-proof-discipline/v1",
+      "fixture": "tooling/agents/harness/admission/fixtures/runtime-proof-discipline.cases.json",
+      "requiredFor": ["repository-runtime", "live-runtime"],
+      "passingRule": "all-cases-exact",
+      "maximumMisses": 0,
+      "highRiskCases": ["launch-not-requested", "launcher-hwnd-missing", "ack-without-behavior", "stale-behavior-evidence"],
+      "freshnessBinding": ["agentId", "provider", "model", "endpointClass", "suiteId", "suiteVersion"]
+    }
+  ],
+  "proofReducer": {
+    "orderedLevels": [
+      "not-attempted",
+      "static-contract",
+      "command-ack",
+      "launcher-observed",
+      "runtime-attached",
+      "behavior-observed"
+    ],
+    "terminalClassifications": [
+      "PASS_LIVE_RUNTIME",
+      "NOT_ATTEMPTED",
+      "LAUNCHER_BLOCKED",
+      "ACK_ONLY",
+      "STALE_EVIDENCE",
+      "FAILED_RUNTIME",
+      "BLOCKED_NO_ELIGIBLE_AGENT"
+    ],
+    "livePassRequires": [
+      "launchRequested",
+      "launchAttempted",
+      "launcherProcessObserved",
+      "launcherHwndObserved",
+      "launchActionDispatched",
+      "gameOrTargetProcessObserved",
+      "runtimeAttached",
+      "runtimeReady",
+      "commandIssued",
+      "commandAckObserved",
+      "freshBehaviorObserved",
+      "sameRunEvidence"
+    ],
+    "notAttemptedIf": ["launchRequested=false", "launchAttempted=false"],
+    "staleEvidenceMustNotCount": true,
+    "commandAckIsBehaviorProof": false,
+    "fixtureIsRuntimeProof": false,
+    "processPresenceIsBehaviorProof": false
+  },
+  "routeDecisionRules": [
+    {
+      "ruleId": "live-runtime-requires-eligible-agent",
+      "when": "requestedLane=live-runtime",
+      "require": ["currentAdmission.status=passed", "currentAdmission.suiteId=runtime-proof-discipline/v1", "currentAdmission.exactIdentityMatch=true"],
+      "otherwise": "BLOCKED_NO_ELIGIBLE_AGENT"
+    },
+    {
+      "ruleId": "do-not-silently-downgrade-required-proof",
+      "when": "requestedProof=live-runtime AND selectedLane!=live-runtime",
+      "result": "blocked"
+    },
+    {
+      "ruleId": "unknown-agent-static-only",
+      "when": "no current admission result exists",
+      "selectedLane": "static-build"
+    },
+    {
+      "ruleId": "actual-execution-identity-required",
+      "when": "an agent is executed",
+      "require": ["agentId", "provider", "model", "endpointClass", "role", "branchOrWorktree", "validationResult"]
+    }
+  ],
+  "proofCeiling": "Deterministic admission criteria, proof reduction, and lane-selection contract only. It does not execute agents, providers, applications, GUIs, games, workstations, or external targets."
+}

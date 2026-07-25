@@ -21,6 +21,10 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | `sprint.execute` | scoped request with safe owned files | `bounded-sprint` |
 | `plan.coordination-request` | multi-agent, multi-session, multi-wave, cross-PR, sprint-map, launch-pack, or material plan-state request | `public-plan-coordination`; update `plans/` and keep coordination distinct from PR delivery |
 | `startup.readiness-request` | startup or agent availability/configuration request | `startup.readiness.report`; read-only guidance without installation or provider calls |
+| `agent.execution-request` | AgentSwitchboard is about to choose or delegate work to an agent/provider/model | `agent-admission-routing` → `agent-task-intake`; freeze required proof before selecting an agent |
+| `agent.admission-required` | requested lane is `repository-runtime` or `live-runtime` and current exact admission is missing, stale, failed, or identity-mismatched | `agent-admission-routing` → `agent-admission-evaluation`; candidate classifies fixtures, deterministic harness grades |
+| `agent.route-selection-required` | task proof is frozen and candidate capability/admission states are available | `agent-admission-routing` → `agent-route-selection`; select eligible lane before brand and fail closed for live runtime |
+| `agent.route-or-proof-blocked` | admission failed, no eligible live agent exists, proof is stale/contradictory, or a requested operation was not attempted | `agent-admission-routing` → `agent-failure-handoff`; preserve strongest observed proof and exact next action |
 | `harness.proof-request` | one-command proof, synthetic validation, composition observer, node/edge coverage, or PASS/SKIP/FAIL request | `harness.proof.aggregate`; run the offline observer and emit untracked JSON plus English evidence |
 | `app.output-context-request` | supplied app, validator, agent, console, JSON, or JSONL output must be minimized and compared with a prompt registry | `app-output-contextualization`; parse supplied output offline, preserve exact execution surface, and emit compact untracked instructions |
 | `runtime.event-contract-change` | event envelope, source, observer, listener, handler, successor, sink, correlation, causation, or runtime topology contract changes | `runtime.event-contract.validate`; update deterministic contracts and run `scripts/Test-RuntimeEventContract.ps1` |
@@ -56,6 +60,16 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 ## Startup readiness invariant
 
 `startup.readiness-request` is read-only. It may inspect existing fleet state and emit local JSON and guidance. It must not install, authenticate, read credentials, contact a hosted model, mutate a repository, or claim adapter presence proves provider readiness.
+
+## Agent admission invariant
+
+`agent.execution-request` freezes the acceptance boundary before agent selection. Unknown or stale identities may perform only bounded `static-build` work where deterministic repository checks own the success decision.
+
+`agent.admission-required` uses `runtime-proof-discipline/v1`. Live/runtime eligibility belongs to the exact `agentId/provider/model/endpointClass` identity and requires all canonical cases exact with zero misses. Agent explanation is evidence to record, not the pass/fail authority.
+
+`agent.route-selection-required` selects by eligible execution lane and current capability before agent brand. When the task requires `live-runtime` and no exact current identity is eligible, emit `BLOCKED_NO_ELIGIBLE_AGENT`; do not silently lower required proof or substitute static validation as completion.
+
+`agent.route-or-proof-blocked` preserves the strongest actually observed proof. `NOT_ATTEMPTED`, `LAUNCHER_BLOCKED`, `ACK_ONLY`, `STALE_EVIDENCE`, and `PASS_LIVE_RUNTIME` are distinct terminal states. A not-attempted operation cannot be reclassified as an environment blocker without evidence that the operation was actually requested and attempted.
 
 ## Synthetic harness observer invariant
 
@@ -121,8 +135,8 @@ A routed workflow receives repository and branch or worktree, PR or sprint, plan
 
 ## Automatic stop triggers
 
-Stop or escalate when work would overwrite unowned changes; a required capability is unknown; scope crosses a forbidden boundary; writers collide; a gate exposes security or data-loss risk; merge, deployment, secret, destructive Git, or live mutation lacks authority; retries are exhausted; evidence contradicts the plan; test timing or DeepSeek gates fail; the app graph is broken; app-output context would persist raw or cross-surface data; runtime event evidence is incomplete; an end-to-end stage loses child diagnostics, effective-state readback, rollback safety, or exact environment identity; a launch-mode request is ambiguous, lacks a unique instance identity, creates multiple windows, or reuses one tmux session as two claimed instances; a shortcut collision is foreign, a new-instance route reuses bare `dev`, an explicit instance already exists, session allocation is exhausted, or the WezTerm command omits `--always-new-process`; or a profile has competing owners, raw frontend fallback, independent shortcut logic, cross-profile substitution, or an unproved open-or-activate claim.
+Stop or escalate when work would overwrite unowned changes; a required capability is unknown; scope crosses a forbidden boundary; writers collide; a gate exposes security or data-loss risk; merge, deployment, secret, destructive Git, or live mutation lacks authority; retries are exhausted; evidence contradicts the plan; test timing or DeepSeek gates fail; agent execution identity is unknown; a required admission result is missing, stale, failed, or identity-mismatched; live-runtime proof is required but no eligible agent exists; an agent promotes `NOT_ATTEMPTED`, `LAUNCHER_BLOCKED`, `ACK_ONLY`, or `STALE_EVIDENCE` into success; the app graph is broken; app-output context would persist raw or cross-surface data; runtime event evidence is incomplete; an end-to-end stage loses child diagnostics, effective-state readback, rollback safety, or exact environment identity; a launch-mode request is ambiguous, lacks a unique instance identity, creates multiple windows, or reuses one tmux session as two claimed instances; a shortcut collision is foreign, a new-instance route reuses bare `dev`, an explicit instance already exists, session allocation is exhausted, or the WezTerm command omits `--always-new-process`; or a profile has competing owners, raw frontend fallback, independent shortcut logic, cross-profile substitution, or an unproved open-or-activate claim.
 
 ## No implicit authority
 
-The presence of a trigger, plan, startup report, event observer, topology registry, profile registry, launch-mode registry, shortcut registry, app-output packet, end-to-end skill, or capability never authorizes installation, push, merge, release, deployment, target mutation, prompt execution, provider access, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.
+The presence of a trigger, plan, startup report, admission result, route decision, event observer, topology registry, profile registry, launch-mode registry, shortcut registry, app-output packet, end-to-end skill, or capability never authorizes installation, push, merge, release, deployment, target mutation, prompt execution, provider access, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.

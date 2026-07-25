@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/agents/harness/admission/schemas/agent-admission-harness.schema.json",
+  "title": "AgentSwitchboard Agent Admission Harness Contracts",
+  "$defs": {
+    "executionIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agentId", "provider", "model", "endpointClass", "role"],
+      "properties": {
+        "agentId": {"type": "string", "minLength": 1},
+        "provider": {"type": "string", "minLength": 1},
+        "model": {"type": "string", "minLength": 1},
+        "endpointClass": {"type": "string", "minLength": 1},
+        "role": {"type": "string", "minLength": 1},
+        "branchOrWorktree": {"type": ["string", "null"]},
+        "validationResult": {"type": ["string", "null"]}
+      }
+    },
+    "runContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "runId", "repository", "taskId", "requestedProof", "requestedLane", "candidateAgents", "createdAt"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.agent-admission-run-context.v1"},
+        "runId": {"type": "string", "minLength": 1},
+        "repository": {"const": "EndeavorEverlasting/AgentSwitchboard"},
+        "branchOrWorktree": {"type": ["string", "null"]},
+        "taskId": {"type": "string", "minLength": 1},
+        "requestedProof": {"enum": ["contract", "static", "repository-runtime", "live-runtime"]},
+        "requestedLane": {"enum": ["static-build", "repository-runtime", "live-runtime", "adjudication-readonly"]},
+        "candidateAgents": {"type": "array", "items": {"$ref": "#/$defs/executionIdentity"}, "minItems": 1},
+        "createdAt": {"type": "string", "format": "date-time"}
+      }
+    },
+    "caseResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["caseId", "classification", "proofLevel", "matched"],
+      "properties": {
+        "caseId": {"type": "string", "minLength": 1},
+        "classification": {"enum": ["PASS_LIVE_RUNTIME", "NOT_ATTEMPTED", "LAUNCHER_BLOCKED", "ACK_ONLY", "STALE_EVIDENCE", "FAILED_RUNTIME"]},
+        "proofLevel": {"enum": ["not-attempted", "static-contract", "command-ack", "launcher-observed", "runtime-attached", "behavior-observed"]},
+        "matched": {"type": "boolean"}
+      }
+    },
+    "admissionResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "suiteId", "suiteVersion", "identity", "status", "exactIdentityMatch", "caseResults", "evaluatedAt", "proofCeiling"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.agent-admission-result.v1"},
+        "suiteId": {"const": "runtime-proof-discipline/v1"},
+        "suiteVersion": {"type": "string", "minLength": 1},
+        "identity": {"$ref": "#/$defs/executionIdentity"},
+        "status": {"enum": ["passed", "failed", "blocked-invalid-suite", "blocked-identity-mismatch"]},
+        "exactIdentityMatch": {"type": "boolean"},
+        "caseResults": {"type": "array", "items": {"$ref": "#/$defs/caseResult"}, "minItems": 5},
+        "evaluatedAt": {"type": "string", "format": "date-time"},
+        "proofCeiling": {"type": "string", "minLength": 1}
+      }
+    },
+    "routeDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "taskId", "requestedProof", "selectedLane", "status", "rejectedCandidates", "nextAction", "proofCeiling"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.agent-route-decision.v1"},
+        "taskId": {"type": "string", "minLength": 1},
+        "requestedProof": {"enum": ["contract", "static", "repository-runtime", "live-runtime"]},
+        "selectedLane": {"type": ["string", "null"], "enum": ["static-build", "repository-runtime", "live-runtime", "adjudication-readonly", null]},
+        "selectedIdentity": {"anyOf": [{"$ref": "#/$defs/executionIdentity"}, {"type": "null"}]},
+        "status": {"enum": ["selected", "blocked-no-eligible-agent", "blocked-capability", "blocked-authority", "blocked-scope"]},
+        "rejectedCandidates": {"type": "array", "items": {"type": "object"}},
+        "nextAction": {"type": "string", "minLength": 1},
+        "proofCeiling": {"type": "string", "minLength": 1}
+      }
+    },
+    "proofLedger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "runId", "facts", "classification", "proofLevel", "sameRunEvidence"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.agent-proof-ledger.v1"},
+        "runId": {"type": "string", "minLength": 1},
+        "facts": {"type": "object"},
+        "classification": {"enum": ["PASS_LIVE_RUNTIME", "NOT_ATTEMPTED", "LAUNCHER_BLOCKED", "ACK_ONLY", "STALE_EVIDENCE", "FAILED_RUNTIME"]},
+        "proofLevel": {"enum": ["not-attempted", "static-contract", "command-ack", "launcher-observed", "runtime-attached", "behavior-observed"]},
+        "sameRunEvidence": {"type": "boolean"}
+      }
+    },
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "runId", "terminalState", "proofLevel", "lastAction", "nextAction", "receiverMustReinspect"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.agent-admission-handoff.v1"},
+        "runId": {"type": "string", "minLength": 1},
+        "terminalState": {"type": "string", "minLength": 1},
+        "proofLevel": {"type": "string", "minLength": 1},
+        "lastAction": {"type": "string", "minLength": 1},
+        "nextAction": {"type": "string", "minLength": 1},
+        "receiverMustReinspect": {"const": true}
+      }
+    }
+  },
+  "oneOf": [
+    {"$ref": "#/$defs/runContext"},
+    {"$ref": "#/$defs/executionIdentity"},
+    {"$ref": "#/$defs/admissionResult"},
+    {"$ref": "#/$defs/routeDecision"},
+    {"$ref": "#/$defs/proofLedger"},
+    {"$ref": "#/$defs/handoff"}
+  ]
+}

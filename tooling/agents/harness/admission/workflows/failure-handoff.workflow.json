@@ -1,0 +1,18 @@
+{
+  "schema": "agentswitchboard.agent-admission-workflow.v1",
+  "workflowId": "agent-failure-handoff",
+  "trigger": "agent.route-or-proof-blocked",
+  "purpose": "Convert failed admission, blocked routing, contradictory proof, or weak-agent misuse into a precise continuation artifact without inventing an environment blocker.",
+  "inputs": ["runContext", "admissionResult", "routeDecision", "proofLedger", "lastDeterministicFailure"],
+  "steps": [
+    {"step": 1, "action": "classify the terminal state as not-attempted, admission-failed, no-eligible-agent, capability-blocked, authority-blocked, deterministic-failure, stale-evidence, or runtime-failure"},
+    {"step": 2, "action": "preserve the strongest actually observed proof level and explicitly reject any higher unsupported claim"},
+    {"step": 3, "action": "record the exact failed or unattempted operation, last child command when applicable, exit identity, artifact paths, and correlation or run binding"},
+    {"step": 4, "action": "name whether repair belongs to harness, product, environment, provider, or operator authority; do not convert not-attempted into environment-blocked"},
+    {"step": 5, "action": "emit one exact dependency-aware next workflow or command and the artifact it must produce"},
+    {"step": 6, "action": "write agent-admission-final-handoff.json and an English operator summary outside the repository; receiver must re-inspect current state"}
+  ],
+  "outputs": ["agent-admission-final-handoff", "agent-admission-operator-report"],
+  "terminalStates": ["NOT_ATTEMPTED", "ADMISSION_FAILED", "BLOCKED_NO_ELIGIBLE_AGENT", "BLOCKED_CAPABILITY", "BLOCKED_AUTHORITY", "STALE_EVIDENCE", "FAILED_RUNTIME"],
+  "proofCeiling": "Failure identity and continuation evidence only; a handoff never converts blocked or unattempted work into successful runtime proof."
+}

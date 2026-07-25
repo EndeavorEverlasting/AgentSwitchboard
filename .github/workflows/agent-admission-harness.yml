@@ -1,0 +1,75 @@
+name: Agent admission harness
+
+on:
+  pull_request:
+    paths:
+      - 'tooling/agents/harness/admission/**'
+      - 'tooling/agents/Get-AgentAdmissionHarnessStatus.ps1'
+      - 'tooling/agents/hooks/Invoke-AgentAdmissionHarnessPreCommit.ps1'
+      - '.ai/skills/agent-admission-routing/SKILL.md'
+      - 'scripts/Test-AgentAdmissionHarness.ps1'
+      - 'tests/test_agent_admission_harness.py'
+      - 'docs/harness/agent-admission-harness.md'
+      - 'CODEBASE_MAP.md'
+      - 'SKILLS.md'
+      - 'TRIGGERS.md'
+      - 'CAPABILITIES.md'
+      - '.ai/harness/manifest.json'
+      - '.ai/harness/artifact-registry.json'
+      - '.github/workflows/agent-admission-harness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run dependency-free agent admission contracts
+        run: python tests/test_agent_admission_harness.py
+
+      - name: Validate agent admission harness completeness
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-AgentAdmissionHarness.ps1
+
+      - name: Render read-only admission harness status
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File tooling/agents/Get-AgentAdmissionHarnessStatus.ps1 -NoWrite
+
+      - name: Validate agent documentation contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1
+
+      - name: Validate harness doctrine contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-HarnessDoctrineContract.ps1
+
+      - name: Validate repository-family harness
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-RepositoryFamilyHarness.ps1
+
+      - name: Validate aggregate app harness
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-AppHarness.ps1
+
+      - name: Check repository hygiene
+        shell: bash
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ -z "$BASE_REF" ]; then BASE_REF=main; fi
+          git diff --check "origin/$BASE_REF...HEAD"
