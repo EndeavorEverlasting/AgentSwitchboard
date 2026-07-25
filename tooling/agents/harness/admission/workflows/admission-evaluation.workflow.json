@@ -1,0 +1,24 @@
+{
+  "schema": "agentswitchboard.agent-admission-workflow.v1",
+  "workflowId": "agent-admission-evaluation",
+  "trigger": "agent.admission-required",
+  "purpose": "Evaluate whether one exact agent/provider/model identity can distinguish runtime proof states without being trusted to certify itself.",
+  "inputs": ["runContext", "candidateIdentity", "suiteId", "fixtureSuite"],
+  "steps": [
+    {"step": 1, "action": "verify suite identity, version, exact candidate identity, and freshness binding before evaluation"},
+    {"step": 2, "action": "present each synthetic case independently and require exactly one terminal classification plus proof level; do not expose expected answers"},
+    {"step": 3, "action": "compare returned classifications with the fixture suite deterministically; model explanation is non-authoritative"},
+    {"step": 4, "action": "require all cases exact with zero misses for runtime-proof-discipline/v1"},
+    {"step": 5, "action": "record pass or fail, per-case mismatches, evaluated identity, suite version, timestamp, and proof ceiling in agent-admission-eval-result.json"},
+    {"step": 6, "action": "grant runtime-proof-discipline-pass only on an exact pass; otherwise leave the identity static-build-only"}
+  ],
+  "outputs": ["agent-admission-eval-result", "admissionStatus"],
+  "terminalStates": ["passed", "failed", "blocked-invalid-suite", "blocked-identity-mismatch"],
+  "guardrails": [
+    "The candidate does not decide whether it passed.",
+    "A persuasive explanation cannot override an incorrect classification.",
+    "A prior model version, provider route, endpoint class, or alias cannot satisfy the current exact identity.",
+    "A failed suite never grants live-runtime eligibility by fallback."
+  ],
+  "proofCeiling": "Synthetic proof-discipline admission for one exact execution identity only; no live provider quality or application behavior proof."
+}
