@@ -1,0 +1,79 @@
+{
+  "schema": "agentswitchboard.typed-cascade-ontology-registry.v1",
+  "registryId": "agentswitchboard.typed-cascade-domain-rules.v1",
+  "purpose": "Machine-readable post-action invariants analogous to OWL/SHACL constraints. They constrain result meaning after structural validation has already passed.",
+  "ruleTypes": [
+    {
+      "type": "functional-property",
+      "meaning": "one subject may have at most one value for the named property",
+      "failureClassification": "REJECT_RESULT_CARDINALITY"
+    },
+    {
+      "type": "disjoint-classes",
+      "meaning": "one entity may not simultaneously inhabit both declared classes in the same result context",
+      "failureClassification": "REJECT_RESULT_DISJOINTNESS"
+    },
+    {
+      "type": "one-of",
+      "meaning": "the property value must be one member of a closed enumeration",
+      "failureClassification": "REJECT_RESULT_ENUMERATION"
+    },
+    {
+      "type": "domain-range",
+      "meaning": "a property may connect only entities of the declared subject and object classes",
+      "failureClassification": "REJECT_RESULT_DOMAIN_RANGE"
+    },
+    {
+      "type": "required-reference",
+      "meaning": "the referenced entity must exist in the current run ledger before the assertion can pass",
+      "failureClassification": "REJECT_RESULT_REFERENCE"
+    }
+  ],
+  "cascadeRules": [
+    {
+      "ruleId": "one-terminal-classification-per-action",
+      "type": "functional-property",
+      "subjectClass": "ActionResult",
+      "property": "terminalClassification"
+    },
+    {
+      "ruleId": "success-and-rejection-are-disjoint",
+      "type": "disjoint-classes",
+      "leftClass": "ValidatedSuccessor",
+      "rightClass": "RejectedTerminal"
+    },
+    {
+      "ruleId": "proof-level-is-closed",
+      "type": "one-of",
+      "property": "proofLevel",
+      "allowed": ["input-contract", "action-observed", "result-domain", "synthetic-cascade", "runtime-observed", "live-target"]
+    },
+    {
+      "ruleId": "successor-caused-by-runtime-event",
+      "type": "domain-range",
+      "property": "causationId",
+      "domainClass": "RuntimeEvent",
+      "rangeClass": "RuntimeEvent"
+    },
+    {
+      "ruleId": "result-action-reference-must-exist",
+      "type": "required-reference",
+      "property": "actionId",
+      "referenceSet": "currentRun.actions"
+    },
+    {
+      "ruleId": "causation-reference-must-exist",
+      "type": "required-reference",
+      "property": "causationId",
+      "referenceSet": "currentRun.events"
+    }
+  ],
+  "worldStateRules": {
+    "sameRunOnly": true,
+    "sameCorrelationOnlyForPromotion": true,
+    "futureReferencesForbidden": true,
+    "missingReferencesReject": true,
+    "contradictoryTerminalAssertionsReject": true
+  },
+  "proofCeiling": "Machine-readable ontology-style rule vocabulary and cascade-domain invariants only; no OWL reasoner, RDF store, SHACL engine, or live world-state query is executed by this registry."
+}
