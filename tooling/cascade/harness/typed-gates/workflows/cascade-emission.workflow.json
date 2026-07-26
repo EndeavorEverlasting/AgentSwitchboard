@@ -1,0 +1,20 @@
+{
+  "schema": "agentswitchboard.typed-cascade-workflow.v1",
+  "workflowId": "typed-cascade-emission",
+  "trigger": "pre-action gate passed, deterministic action result was observed, and post-action gate passed",
+  "steps": [
+    "Read the accepted parent event/result and verify the current run/action/correlation identity again.",
+    "Allocate a new successor eventId; inherit correlationId; set causationId to the immediate parent eventId; increment sequence.",
+    "Render an immutable minimized payload containing only decision-relevant result fields and proof metadata.",
+    "Write cascade-successor-event and append its identity/classification to cascade-proof-ledger outside the repository.",
+    "Record sink acknowledgement as a separate stage; only then classify the synthetic fixture chain PASS_SYNTHETIC_CASCADE."
+  ],
+  "outputs": ["cascade-successor-event", "cascade-proof-ledger", "sink acknowledgement"],
+  "invariants": [
+    "No success successor exists without both gate passes and a fresh action observation.",
+    "Successor event identity is new while correlation is inherited and causation points to the immediate parent.",
+    "Event envelopes are immutable after emission.",
+    "Synthetic cascade proof cannot be promoted to runtime-observed or live-target proof."
+  ],
+  "proofCeiling": "Synthetic correlated successor emission and sink-recording semantics only; no live runtime delivery."
+}
