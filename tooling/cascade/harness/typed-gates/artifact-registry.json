@@ -1,0 +1,19 @@
+{
+  "schema": "agentswitchboard.typed-cascade-artifact-registry.v1",
+  "registryId": "agentswitchboard.typed-cascade-artifacts.v1",
+  "defaultRoot": "%TEMP%/AgentSwitchboard/TypedCascade/runs/<run-id>",
+  "tracked": false,
+  "artifacts": [
+    {"artifactId": "cascade-run-context", "fileName": "cascade-run-context.json", "generatedBy": "task-intake workflow", "naming": "one per run", "sensitivity": "local-operational", "proofCeiling": "declared operation, authority prerequisites, schemas, ontology profile, and correlation identity only"},
+    {"artifactId": "cascade-pre-gate-result", "fileName": "cascade-pre-gate-result.json", "generatedBy": "pre-action-validation workflow", "naming": "one per attempted action", "sensitivity": "local-operational", "proofCeiling": "input structural validity and prerequisite state only"},
+    {"artifactId": "cascade-action-observation", "fileName": "cascade-action-observation.json", "generatedBy": "deterministic action boundary or fixture adapter", "naming": "one per actionId", "sensitivity": "local-operational", "proofCeiling": "observed action result only; not semantic validity"},
+    {"artifactId": "cascade-post-gate-result", "fileName": "cascade-post-gate-result.json", "generatedBy": "post-action-validation workflow", "naming": "one per fresh action result", "sensitivity": "local-operational", "proofCeiling": "declared domain/ontology coherence for the fresh result only"},
+    {"artifactId": "cascade-successor-event", "fileName": "cascade-successor-event.json", "generatedBy": "cascade-emission workflow", "naming": "one per accepted successor", "sensitivity": "local-operational", "proofCeiling": "one immutable correlated successor event only"},
+    {"artifactId": "cascade-proof-ledger", "fileName": "cascade-proof-ledger.json", "generatedBy": "cascade-emission and failure-handoff workflows", "naming": "one append-only logical ledger per run", "sensitivity": "local-operational", "proofCeiling": "recorded gate and causality evidence only"},
+    {"artifactId": "cascade-operator-report", "fileName": "cascade-operator-report.md", "generatedBy": "status reporter or workflow renderer", "naming": "one per run", "sensitivity": "local-operational", "proofCeiling": "English rendering of observed contract evidence"},
+    {"artifactId": "cascade-final-handoff", "fileName": "cascade-final-handoff.json", "generatedBy": "terminal workflow", "naming": "one per completed or rejected run", "sensitivity": "local-operational", "proofCeiling": "compressed continuation record; receiver must re-inspect current repository/runtime state"}
+  ],
+  "forbiddenContent": ["credentials", "API keys", "OAuth tokens", "raw customer payloads", "private hostnames", "unredacted local usernames", "agent chain-of-thought"],
+  "retention": "operator-controlled temporary evidence outside the repository",
+  "proofCeiling": "Artifact naming, location, generation, sensitivity, and proof-boundary contract only."
+}
