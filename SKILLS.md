@@ -33,12 +33,13 @@ Every canonical skill must define:
 4. Interactive PowerShell selects `powershell-interactive-execution`. Continuation keywords must remain in the same submitted statement as the block they continue.
 5. Supplied application, validator, agent, or tool output that must be compared with a prompt kit selects `app-output-contextualization`. It reads provided output only and preserves execution-surface separation.
 6. Before AgentSwitchboard delegates implementation or validation to one of several agents/providers/models, or before any agent receives `repository-runtime` or `live-runtime` authority, select `agent-admission-routing`. Unknown identities remain static/build-only; live-runtime selection requires a fresh exact admission pass.
-7. An operator-facing result that crosses shells, child processes, WSL, tmux, WezTerm, a TUI, a GUI, or another runtime boundary selects `end-to-end-runtime-validation`. Use `runtime-proof` for a bounded observation that does not require the complete operator path.
-8. A Windows Profile request that distinguishes default open-or-activate from an explicit separate instance, or evidence of duplicate WezTerm windows, selects `windows-profile-launch-mode-validation` before any launcher implementation or runtime claim.
-9. A request for a desktop shortcut or CMD installer that must create one genuinely separate tmux/WezTerm instance selects `tmux-new-instance-shortcut`. It preserves the one-launcher boundary and routes live acceptance through `end-to-end-runtime-validation`.
-10. `TRIGGERS.md` maps repository evidence to a skill.
-11. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
-12. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
+7. When an operation or event cascade requires strict structural validation before execution and semantic/domain validation before its result may propagate, select `typed-cascade-validation`. The pre-action gate and post-action gate are distinct proof floors; agent prose may not bypass either gate.
+8. An operator-facing result that crosses shells, child processes, WSL, tmux, WezTerm, a TUI, a GUI, or another runtime boundary selects `end-to-end-runtime-validation`. Use `runtime-proof` for a bounded observation that does not require the complete operator path.
+9. A Windows Profile request that distinguishes default open-or-activate from an explicit separate instance, or evidence of duplicate WezTerm windows, selects `windows-profile-launch-mode-validation` before any launcher implementation or runtime claim.
+10. A request for a desktop shortcut or CMD installer that must create one genuinely separate tmux/WezTerm instance selects `tmux-new-instance-shortcut`. It preserves the one-launcher boundary and routes live acceptance through `end-to-end-runtime-validation`.
+11. `TRIGGERS.md` maps repository evidence to a skill.
+12. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
+13. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
 
 ## Canonical skills
 
@@ -54,6 +55,7 @@ Every canonical skill must define:
 | [`runtime-proof`](.ai/skills/runtime-proof/SKILL.md) | Move from static confidence to observed behavior | launcher, installer, harness, or live-runtime request |
 | [`end-to-end-runtime-validation`](.ai/skills/end-to-end-runtime-validation/SKILL.md) | Prove the exact operator command across every runtime boundary through effective-state and user-experience readback | workstation repair, Windows-to-WSL chain, tmux/WezTerm configuration, cross-process installer or launcher, opaque child failure |
 | [`agent-admission-routing`](.ai/skills/agent-admission-routing/SKILL.md) | Admit exact agent/provider/model identities by proof discipline and choose the strongest safe execution lane without trusting agent prose as proof | agent delegation, weak/free model use, repository-runtime request, live-runtime request, proof-discipline mismatch |
+| [`typed-cascade-validation`](.ai/skills/typed-cascade-validation/SKILL.md) | Enforce a structural pre-action gate, semantic post-action gate, and causally linked successor-event contract | cascading events, pre-tool validation, post-tool validation, Pydantic-style input gate, ontology/OWL/SHACL-style result rules |
 | [`windows-profile-launch-mode-validation`](.ai/skills/windows-profile-launch-mode-validation/SKILL.md) | Distinguish default workspace convergence, explicit named new instances, and accidental duplicate WezTerm windows | launch-mode request, separate-instance request, duplicate-window evidence, tmux-session identity ambiguity |
 | [`tmux-new-instance-shortcut`](.ai/skills/tmux-new-instance-shortcut/SKILL.md) | Install and validate one owned desktop shortcut that allocates a unique tmux session and separate WezTerm process | desktop shortcut request, clickable CMD installer, one-click separate tmux instance |
 | [`app-output-contextualization`](.ai/skills/app-output-contextualization/SKILL.md) | Parse supplied output, redact it, compare it with a prompt registry, and emit compact agent instructions | app output, logs, JSON, JSONL, validator output, minimal-token routing |
@@ -87,6 +89,12 @@ An app-output context packet is a minimized interpretation artifact, not the ori
 Agent admission separates **availability** from **eligibility**. Command presence, provider reachability, a cheap/free route, reputation, or prior unrelated success may make an agent a candidate but do not authorize it to certify runtime behavior. Unknown identities default to `static-build`; `repository-runtime` and `live-runtime` require a fresh `runtime-proof-discipline/v1` pass bound to the exact agent/provider/model/endpoint identity. When live proof is required and no eligible candidate exists, the correct result is `BLOCKED_NO_ELIGIBLE_AGENT`, not a silent downgrade to static checks.
 
 The deterministic harness owns classification. `NOT_ATTEMPTED`, `LAUNCHER_BLOCKED`, `ACK_ONLY`, `STALE_EVIDENCE`, and `PASS_LIVE_RUNTIME` are materially different states; model prose cannot promote one into another.
+
+## Typed cascade distinction
+
+`typed-cascade-validation` separates **request validity** from **result validity**. The pre-action gate is a structural/type contract analogous to Pydantic-style runtime validation. The post-action gate is a semantic/domain contract analogous to OWL/SHACL-style constraints. A request that fails the first gate is not executed. A result that fails the second gate may remain an observed action result but cannot emit a success successor. Only a fresh same-run result that passes both gates may propagate to an immutable correlated successor event.
+
+The contract is library-agnostic: repository validation does not imply that Pydantic, an OWL reasoner, or SHACL is installed or executing.
 
 ## End-to-end distinction
 
