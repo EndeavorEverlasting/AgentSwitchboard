@@ -1,0 +1,80 @@
+name: Typed cascade validation harness
+
+on:
+  pull_request:
+    paths:
+      - 'tooling/cascade/**'
+      - '.ai/skills/typed-cascade-validation/SKILL.md'
+      - 'scripts/Test-TypedCascadeHarness.ps1'
+      - 'tests/test_typed_cascade_harness.py'
+      - 'docs/harness/typed-cascade-validation.md'
+      - 'Test-TypedCascadeHarness.cmd'
+      - 'CODEBASE_MAP.md'
+      - 'SKILLS.md'
+      - 'TRIGGERS.md'
+      - 'CAPABILITIES.md'
+      - '.github/workflows/typed-cascade-harness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run dependency-free typed cascade semantics
+        run: python tests/test_typed_cascade_harness.py
+
+      - name: Validate typed cascade harness completeness
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-TypedCascadeHarness.ps1
+
+      - name: Render read-only typed cascade status
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File tooling/cascade/Get-TypedCascadeHarnessStatus.ps1 -NoWrite
+
+      - name: Validate runtime event compatibility
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-RuntimeEventContract.ps1
+
+      - name: Validate upstream agent admission harness
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-AgentAdmissionHarness.ps1
+
+      - name: Validate agent documentation contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1
+
+      - name: Validate harness doctrine contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-HarnessDoctrineContract.ps1
+
+      - name: Validate repository-family harness
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-RepositoryFamilyHarness.ps1
+
+      - name: Validate aggregate app harness
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-AppHarness.ps1
+
+      - name: Check repository hygiene
+        shell: bash
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ -z "$BASE_REF" ]; then BASE_REF=main; fi
+          git diff --check "origin/$BASE_REF...HEAD"
