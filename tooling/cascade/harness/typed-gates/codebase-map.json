@@ -1,0 +1,48 @@
+{
+  "schema": "agentswitchboard.typed-cascade-codebase-map.v1",
+  "harnessId": "agentswitchboard.typed-cascade-validation.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "purpose": "Map the smallest harness surface required to validate an operation before execution, validate its observed result against domain rules, and emit a causally linked successor event without trusting agent prose as proof.",
+  "entrypoints": {
+    "governance": "AGENTS.md",
+    "rootMap": "CODEBASE_MAP.md",
+    "runtimeEventPolicy": ".ai/harness/runtime-event-contract.policy.json",
+    "runtimeEventTopology": ".ai/harness/runtime-event-topology.json",
+    "registry": "tooling/cascade/harness/typed-gates/typed-cascade.registry.json",
+    "ontologyRegistry": "tooling/cascade/harness/typed-gates/ontology.registry.json",
+    "artifactRegistry": "tooling/cascade/harness/typed-gates/artifact-registry.json",
+    "intakeWorkflow": "tooling/cascade/harness/typed-gates/workflows/task-intake.workflow.json",
+    "preGateWorkflow": "tooling/cascade/harness/typed-gates/workflows/pre-action-validation.workflow.json",
+    "postGateWorkflow": "tooling/cascade/harness/typed-gates/workflows/post-action-validation.workflow.json",
+    "cascadeWorkflow": "tooling/cascade/harness/typed-gates/workflows/cascade-emission.workflow.json",
+    "failureWorkflow": "tooling/cascade/harness/typed-gates/workflows/failure-handoff.workflow.json",
+    "skill": ".ai/skills/typed-cascade-validation/SKILL.md",
+    "status": "tooling/cascade/Get-TypedCascadeHarnessStatus.ps1",
+    "validator": "scripts/Test-TypedCascadeHarness.ps1",
+    "operatorGuide": "docs/harness/typed-cascade-validation.md"
+  },
+  "directories": [
+    {"path": "tooling/cascade/harness/typed-gates", "purpose": "Typed gate maps, registries, schemas, fixtures, workflows, and artifact contracts."},
+    {"path": ".ai/skills", "purpose": "Scoped agent procedure for selecting and operating the deterministic gates."},
+    {"path": "scripts", "purpose": "Repository-owned deterministic completeness and contract validators."},
+    {"path": "tests", "purpose": "Dependency-free behavioral checks for gate and cascade semantics."},
+    {"path": "docs/harness", "purpose": "Human-readable state, known traps, proof ceiling, and handoff guidance."},
+    {"path": ".github/workflows", "purpose": "Windows/Linux exact-head contract gates."}
+  ],
+  "commands": [
+    {"name": "Typed cascade one-command proof", "command": "Test-TypedCascadeHarness.cmd", "effect": "read-only", "proof": "tracked harness structure plus synthetic gate/cascade semantics"},
+    {"name": "Typed cascade completeness", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-TypedCascadeHarness.ps1", "effect": "read-only", "proof": "tracked component and registry consistency"},
+    {"name": "Dependency-free behavior", "command": "python tests/test_typed_cascade_harness.py", "effect": "read-only", "proof": "pre-gate, post-gate, causality, and terminal-classification semantics"},
+    {"name": "Status", "command": "pwsh -NoLogo -NoProfile -File tooling/cascade/Get-TypedCascadeHarnessStatus.ps1", "effect": "read-only", "proof": "English and JSON repository-contract state"},
+    {"name": "Diff hygiene", "command": "git diff --check", "effect": "read-only", "proof": "patch whitespace hygiene"}
+  ],
+  "knownTraps": [
+    "Do not treat Python or JSON permissiveness as an input contract; the pre-action gate must validate required fields, types, ranges, and enums before execution.",
+    "Do not treat a structurally valid result as a semantically valid result; the post-action gate owns domain cardinality, disjointness, enumeration, reference, and world-state coherence.",
+    "Do not let the agent mutate external state and then ask validation to catch up. The deterministic action boundary owns mutation; agent reasoning remains proposal/selection only.",
+    "Do not emit a success successor after either gate rejects the chain.",
+    "Do not reuse a stale result or event from another run, correlation ID, or action ID.",
+    "Do not claim OWL, SHACL, Pydantic, or another runtime library is installed merely because this contract uses equivalent validation roles."
+  ],
+  "proofCeiling": "Repository structure, typed-gate contracts, synthetic ontology rules, workflow causality, and offline validation only; no product dispatcher, external side effect, live event delivery, Pydantic runtime, OWL reasoner, SHACL engine, or target behavior is proven."
+}

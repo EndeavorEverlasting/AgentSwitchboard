@@ -1,0 +1,15 @@
+{
+  "schema": "agentswitchboard.typed-cascade-workflow.v1",
+  "workflowId": "typed-cascade-task-intake",
+  "trigger": "typed operation, tool call, event cascade, or result-validation request",
+  "steps": [
+    "Resolve repository, branch/worktree, owner, action authority, and exact requested proof level.",
+    "Select the declared input contract and ontology profile before any action is attempted.",
+    "Allocate runId, actionId, and correlationId and create cascade-run-context outside the repository.",
+    "Freeze input payload digest and authority scope without persisting secrets or raw customer payloads.",
+    "Dispatch only to pre-action-validation; do not call the action boundary directly from intake."
+  ],
+  "outputs": ["cascade-run-context", "pre-action-validation request"],
+  "failure": "Missing contract, ontology profile, authority declaration, or identity produces a typed blocked/rejected handoff; it does not fall through to execution.",
+  "proofCeiling": "Run identity and declared contracts only; no input validity, action execution, result validity, or successor delivery."
+}

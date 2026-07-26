@@ -1,0 +1,20 @@
+{
+  "schema": "agentswitchboard.typed-cascade-workflow.v1",
+  "workflowId": "typed-cascade-failure-handoff",
+  "trigger": "any gate, action-observation, causality, or sink stage rejects or blocks",
+  "steps": [
+    "Freeze the terminal classification and strongest actually observed proof level.",
+    "Record the failed stage, failed rule/check IDs, run/action/correlation identity, and artifact paths without raw sensitive payloads.",
+    "Do not emit or retain a success successor for a rejected chain.",
+    "Select the owning repair workflow or validator from the codebase map; do not substitute generic advice or agent reinterpretation.",
+    "Emit cascade-final-handoff with one executable next command and require a fresh complete gate sequence after repair."
+  ],
+  "outputs": ["cascade-proof-ledger", "cascade-final-handoff", "operator-readable failure summary"],
+  "invariants": [
+    "Input rejection is not an action failure because the action was never authorized.",
+    "Missing action observation is BLOCKED_ACTION_NOT_OBSERVED, not a semantic result failure.",
+    "Post-gate rejection preserves the action observation but forbids success propagation.",
+    "Agent narrative cannot promote or rename a deterministic terminal classification."
+  ],
+  "proofCeiling": "Failure identity, strongest observed proof, and deterministic continuation contract only."
+}

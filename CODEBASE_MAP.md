@@ -49,6 +49,25 @@ This skill is selected when success depends on the exact command an operator run
 
 Unknown agent/provider/model identities are restricted to bounded `static-build` work. `repository-runtime` and `live-runtime` require a current `runtime-proof-discipline/v1` pass bound to the exact execution identity; no eligible live agent produces `BLOCKED_NO_ELIGIBLE_AGENT`, not a silent proof downgrade. This harness is contract-only in this sprint: existing product launchers are not yet universally wired to enforce it before every delegated execution.
 
+## Typed cascade validation harness
+
+- `tooling/cascade/harness/typed-gates/codebase-map.json` — focused structure, entrypoints, commands, and known two-gate/cascade traps.
+- `tooling/cascade/harness/typed-gates/typed-cascade.registry.json` — pre-action gate, deterministic action boundary, post-action domain gate, terminal classifications, and successor rules.
+- `tooling/cascade/harness/typed-gates/ontology.registry.json` — ontology-style functional-property, disjointness, one-of, domain/range, and required-reference rules.
+- `tooling/cascade/harness/typed-gates/workflows/` — task intake, pre-action validation, post-action validation, successor emission, and failure handoff.
+- `tooling/cascade/harness/typed-gates/artifact-registry.json` — local-only gate, action-observation, successor, proof-ledger, report, and handoff artifacts.
+- `tooling/cascade/harness/typed-gates/schemas/typed-cascade-harness.schema.json` — operation request, gate result, action observation, successor event, and handoff contracts.
+- `tooling/cascade/harness/typed-gates/fixtures/typed-cascade.cases.json` — synthetic accepted/rejected cascades spanning structure, authority, freshness, ontology rules, references, and causality.
+- `.ai/skills/typed-cascade-validation/SKILL.md` — scoped two-gate cascade procedure.
+- `tooling/cascade/Get-TypedCascadeHarnessStatus.ps1` — read-only English and JSON repository status.
+- `tooling/cascade/hooks/Invoke-TypedCascadeHarnessPreCommit.ps1` — opt-in completeness, semantic fixture, runtime-event compatibility, staged-diff, and generated-evidence gate.
+- `scripts/Test-TypedCascadeHarness.ps1` and `tests/test_typed_cascade_harness.py` — cross-platform completeness and dependency-free semantic reducer.
+- `Test-TypedCascadeHarness.cmd` — one-command offline proof front door.
+- `docs/harness/typed-cascade-validation.md` — operator guide, two-gate model, ontology rule vocabulary, gaps, commands, and proof ceiling.
+- `.github/workflows/typed-cascade-harness.yml` — Windows and Linux exact-head contract gate.
+
+The pre-action gate answers whether a request is structurally and authoritatively valid enough to attempt; the post-action gate answers whether the fresh observed result is semantically coherent enough to propagate. Only both passes plus a fresh action observation may emit an immutable causally linked successor. This is contract-only: product dispatchers, Pydantic, OWL/SHACL engines, and live event delivery are not claimed.
+
 ## Offline app harness observer
 
 - `Test-AppHarness.cmd` — one-command offline proof entrypoint.
@@ -147,6 +166,7 @@ The focused implementation map is `tooling/profiles/windows/harness/tmux-new-ins
 - `.ai/skills/runtime-proof/SKILL.md`
 - `.ai/skills/end-to-end-runtime-validation/SKILL.md`
 - `.ai/skills/agent-admission-routing/SKILL.md`
+- `.ai/skills/typed-cascade-validation/SKILL.md`
 - `.ai/skills/windows-profile-launch-mode-validation/SKILL.md`
 - `.ai/skills/app-output-contextualization/SKILL.md`
 
@@ -191,6 +211,8 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 - `scripts/Test-EndToEndRuntimeValidationSkill.ps1`
 - `scripts/Test-AgentAdmissionHarness.ps1`
 - `tests/test_agent_admission_harness.py`
+- `scripts/Test-TypedCascadeHarness.ps1`
+- `tests/test_typed_cascade_harness.py`
 - `scripts/Test-RuntimeEventContract.ps1`
 - `scripts/Test-DeviceProfileLauncherContract.ps1`
 - `scripts/Test-WindowsProfileLaunchModeHarness.ps1`
@@ -205,6 +227,6 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 
 ## Generated evidence and proof boundary
 
-Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, agent-admission, Windows launch-mode, tmux shortcut, and Pi evidence is untracked. End-to-end runtime evidence is also local-operational and untracked unless deliberately minimized and reviewed as a public fixture. Evidence may contain local paths, versions, Git state, minimized operational payloads, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
+Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, agent-admission, typed-cascade, Windows launch-mode, tmux shortcut, and Pi evidence is untracked. End-to-end runtime evidence is also local-operational and untracked unless deliberately minimized and reviewed as a public fixture. Evidence may contain local paths, versions, Git state, minimized operational payloads, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
 
-Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, admission classification, launch-mode classification, shortcut allocation, or workflow semantics. Neither proves application runtime, an exact operator path, an agent/provider/model's arbitrary-task quality, universal product-runtime admission enforcement, an open-or-activate result, a distinct WezTerm instance on the operator workstation, duplicate prevention, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, external target behavior, deployment, or operator acceptance.
+Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, admission classification, typed pre/post gate classification, launch-mode classification, shortcut allocation, or workflow semantics. Neither proves application runtime, an exact operator path, an agent/provider/model's arbitrary-task quality, universal product-runtime admission enforcement, product consumption of typed-cascade gates, Pydantic/OWL/SHACL runtime execution, an open-or-activate result, a distinct WezTerm instance on the operator workstation, duplicate prevention, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, external target behavior, deployment, or operator acceptance.

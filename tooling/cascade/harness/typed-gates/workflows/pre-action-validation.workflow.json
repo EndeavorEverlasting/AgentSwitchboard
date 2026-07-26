@@ -1,0 +1,19 @@
+{
+  "schema": "agentswitchboard.typed-cascade-workflow.v1",
+  "workflowId": "typed-cascade-pre-action-validation",
+  "trigger": "task intake produced a run context and operation request",
+  "steps": [
+    "Load the declared input schema/contract and reject unknown contract IDs.",
+    "Validate required fields, closed-field policy, scalar/container types, ranges, and fixed enumerations.",
+    "Validate declared authority prerequisites and scope markers without reading or serializing credential values.",
+    "On any failure emit cascade.input.rejected, write cascade-pre-gate-result, and terminate before execution.",
+    "Only on complete pass emit cascade.input.validated and action.authorized with the same run/action/correlation identity."
+  ],
+  "outputs": ["cascade-pre-gate-result", "cascade.input.validated or cascade.input.rejected"],
+  "invariants": [
+    "The pre-action gate is complete before the deterministic action boundary is invoked.",
+    "Agent prose cannot coerce or reinterpret an invalid input into a pass.",
+    "A rejected input cannot produce action.result.observed or a success successor."
+  ],
+  "proofCeiling": "Structural/type/authority-prerequisite validity only; no action or result proof."
+}

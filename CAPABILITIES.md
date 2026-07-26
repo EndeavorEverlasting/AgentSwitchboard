@@ -51,6 +51,18 @@ Public plans coordinate work. They do not grant branch, provider, merge, deploym
 
 Run `scripts/Test-AgentAdmissionHarness.ps1` for repository-contract proof. This harness does not by itself execute an agent, contact a provider, enforce admission in every existing product launcher, or prove live runtime behavior. Product-runtime wiring remains a separate implementation boundary.
 
+## Typed cascade validation capabilities
+
+| Capability | Activation and output | Guardrail and proof |
+|---|---|---|
+| `cascade.pre-validate` | validate one operation request against its declared structural/type/range/enumeration contract and authority prerequisites before execution | input-contract proof only; a pass does not prove the action ran, and a failure forbids execution |
+| `cascade.action.observe` | bind one deterministic action observation to the current run/action/correlation identity | observation only; product code owns mutation and this contract does not itself execute the side effect |
+| `cascade.post-validate` | validate one fresh result against ontology-style cardinality, disjointness, enumeration, domain/range, reference, and world-state rules | result-domain proof only; structural validity or command ACK cannot substitute for semantic validity |
+| `cascade.successor.emit-contract` | construct one immutable successor identity with new event ID, inherited correlation, immediate-parent causation, and advanced sequence after both gates pass | synthetic contract proof only; no live event delivery or sink acknowledgement is inferred |
+| `cascade.proof.reduce` | reduce gate/action/causality facts to exact pass, reject, or blocked terminal classifications | agent narrative cannot override deterministic rejection; stale/cross-run evidence cannot promote proof |
+
+Run `scripts/Test-TypedCascadeHarness.ps1` and `python tests/test_typed_cascade_harness.py` for repository-contract proof. Pydantic, OWL, and SHACL are optional future implementation adapters; their runtime presence or execution is not implied by these contracts.
+
 ## Synthetic harness observer capabilities
 
 | Capability | Activation and output | Guardrail and proof |

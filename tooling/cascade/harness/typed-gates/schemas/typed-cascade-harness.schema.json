@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentswitchboard.typed-cascade-harness.schema.v1",
+  "title": "AgentSwitchboard typed cascade harness contracts",
+  "$defs": {
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runId", "actionId", "correlationId"],
+      "properties": {
+        "runId": {"type": "string", "minLength": 1},
+        "actionId": {"type": "string", "minLength": 1},
+        "correlationId": {"type": "string", "minLength": 1}
+      }
+    },
+    "operationRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "identity", "operation", "input", "authority", "inputContractId", "ontologyProfileId"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.cascade-operation-request.v1"},
+        "identity": {"$ref": "#/$defs/identity"},
+        "operation": {"type": "string", "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)*$"},
+        "input": {"type": "object"},
+        "authority": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["declared", "scope"],
+          "properties": {
+            "declared": {"type": "boolean"},
+            "scope": {"type": "string", "minLength": 1}
+          }
+        },
+        "inputContractId": {"type": "string", "minLength": 1},
+        "ontologyProfileId": {"type": "string", "minLength": 1}
+      }
+    },
+    "gateResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "gateId", "identity", "status", "classification", "checks", "proofLevel"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.cascade-gate-result.v1"},
+        "gateId": {"enum": ["pre-action", "post-action"]},
+        "identity": {"$ref": "#/$defs/identity"},
+        "status": {"enum": ["pass", "reject", "blocked"]},
+        "classification": {"type": "string", "minLength": 1},
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["checkId", "status"],
+            "properties": {
+              "checkId": {"type": "string", "minLength": 1},
+              "status": {"enum": ["pass", "fail", "skip"]},
+              "reason": {"type": ["string", "null"]}
+            }
+          }
+        },
+        "proofLevel": {"enum": ["input-contract", "action-observed", "result-domain", "synthetic-cascade", "runtime-observed", "live-target"]}
+      }
+    },
+    "actionObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "identity", "observed", "result", "occurredUtc"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.cascade-action-observation.v1"},
+        "identity": {"$ref": "#/$defs/identity"},
+        "observed": {"type": "boolean"},
+        "result": {"type": "object"},
+        "occurredUtc": {"type": "string", "format": "date-time"}
+      }
+    },
+    "successorEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "eventId", "eventType", "correlationId", "causationId", "sequence", "actionId", "payload"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.typed-cascade-event.v1"},
+        "eventId": {"type": "string", "minLength": 1},
+        "eventType": {"type": "string", "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)*$"},
+        "correlationId": {"type": "string", "minLength": 1},
+        "causationId": {"type": "string", "minLength": 1},
+        "sequence": {"type": "integer", "minimum": 1},
+        "actionId": {"type": "string", "minLength": 1},
+        "payload": {"type": "object"}
+      }
+    },
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "identity", "terminalClassification", "strongestProofLevel", "artifacts", "nextCommand"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.typed-cascade-handoff.v1"},
+        "identity": {"$ref": "#/$defs/identity"},
+        "terminalClassification": {"type": "string", "minLength": 1},
+        "strongestProofLevel": {"enum": ["input-contract", "action-observed", "result-domain", "synthetic-cascade", "runtime-observed", "live-target"]},
+        "artifacts": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "nextCommand": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "oneOf": [
+    {"$ref": "#/$defs/operationRequest"},
+    {"$ref": "#/$defs/gateResult"},
+    {"$ref": "#/$defs/actionObservation"},
+    {"$ref": "#/$defs/successorEvent"},
+    {"$ref": "#/$defs/handoff"}
+  ]
+}

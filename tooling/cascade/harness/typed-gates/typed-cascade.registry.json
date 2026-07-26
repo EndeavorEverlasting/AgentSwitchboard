@@ -1,0 +1,95 @@
+{
+  "schema": "agentswitchboard.typed-cascade-registry.v1",
+  "registryId": "agentswitchboard.typed-cascade-validation.v1",
+  "status": "contract-only",
+  "canonicalRuntimeEventPolicy": ".ai/harness/runtime-event-contract.policy.json",
+  "executionDiscipline": {
+    "agentRole": "pure-proposal-and-selection",
+    "agentMayMutateExternalState": false,
+    "deterministicBoundaryOwnsMutation": true,
+    "preGateRequiredBeforeExecution": true,
+    "postGateRequiredBeforeSuccessorEmission": true,
+    "successorEnvelopeImmutable": true,
+    "sameRunCorrelationRequired": true,
+    "silentGateBypassAllowed": false
+  },
+  "gates": [
+    {
+      "gateId": "pre-action",
+      "role": "structural-contract",
+      "analogy": "Pydantic at the door",
+      "inputs": ["operation request", "declared input schema", "authority context"],
+      "checks": ["required fields", "types", "ranges", "enumerations", "closed fields where declared", "authority token presence without reading secrets"],
+      "passEvent": "cascade.input.validated",
+      "rejectEvent": "cascade.input.rejected",
+      "proofCeiling": "request shape and declared authority prerequisites only; no action execution"
+    },
+    {
+      "gateId": "post-action",
+      "role": "semantic-domain-contract",
+      "analogy": "ontology at the ledger",
+      "inputs": ["fresh action result", "domain assertions", "ontology registry", "correlation identity"],
+      "checks": ["functional cardinality", "disjoint classes or roles", "fixed enumerations", "domain/range compatibility", "required reference existence", "same-run freshness", "world-state coherence"],
+      "passEvent": "cascade.result.validated",
+      "rejectEvent": "cascade.result.rejected",
+      "proofCeiling": "declared domain coherence for one observed result only"
+    }
+  ],
+  "cascade": {
+    "orderedStages": [
+      "request.received",
+      "input.validated",
+      "action.authorized",
+      "action.result.observed",
+      "result.validated",
+      "successor.emitted",
+      "sink.recorded"
+    ],
+    "terminalClassifications": [
+      "PASS_SYNTHETIC_CASCADE",
+      "REJECT_INPUT_SCHEMA",
+      "REJECT_INPUT_AUTHORITY",
+      "REJECT_RESULT_CARDINALITY",
+      "REJECT_RESULT_DISJOINTNESS",
+      "REJECT_RESULT_ENUMERATION",
+      "REJECT_RESULT_DOMAIN_RANGE",
+      "REJECT_RESULT_REFERENCE",
+      "REJECT_STALE_RESULT",
+      "REJECT_CAUSALITY",
+      "BLOCKED_ACTION_NOT_OBSERVED"
+    ],
+    "rules": {
+      "preGateFailureStopsExecution": true,
+      "postGateFailureStopsSuccessor": true,
+      "successorCorrelationInherited": true,
+      "successorCausationEqualsParentEventId": true,
+      "successorSequenceGreaterThanParent": true,
+      "staleArtifactsCannotPromote": true,
+      "agentNarrativeCannotOverrideGate": true
+    }
+  },
+  "libraryAdapters": {
+    "pydantic": {
+      "role": "optional implementation adapter for the pre-action structural gate",
+      "requiredByContractValidation": false,
+      "presenceDoesNotProveGateExecution": true
+    },
+    "owl": {
+      "role": "optional ontology/reasoner adapter for post-action semantic rules",
+      "requiredByContractValidation": false,
+      "presenceDoesNotProveSemanticValidation": true
+    },
+    "shacl": {
+      "role": "optional graph constraint adapter for post-action validation",
+      "requiredByContractValidation": false,
+      "presenceDoesNotProveSemanticValidation": true
+    }
+  },
+  "generatedEvidence": {
+    "tracked": false,
+    "defaultRoot": "%TEMP%/AgentSwitchboard/TypedCascade/runs/<run-id>",
+    "rawSecretsForbidden": true,
+    "rawCustomerPayloadsForbidden": true
+  },
+  "proofCeiling": "Contract-only two-gate validation and synthetic cascade semantics. No product execution boundary, live mutation, live event cascade, Pydantic runtime, OWL reasoning, or SHACL execution is claimed."
+}
