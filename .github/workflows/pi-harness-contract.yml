@@ -4,9 +4,13 @@ on:
   pull_request:
     paths:
       - "tooling/pi/**"
+      - ".pi/**"
+      - "Install-AgentSwitchboardPi.cmd"
+      - "Start-AgentSwitchboardPi.cmd"
       - ".ai/skills/pi-fusion-orchestration/**"
       - "scripts/Test-PiHarnessCompleteness.ps1"
       - "tests/test_pi_harness_contracts.py"
+      - "tests/test_pi_runtime_support.py"
       - "docs/harness/pi-operational-harness.md"
       - ".ai/harness/manifest.json"
       - ".ai/harness/artifact-registry.json"
@@ -28,7 +32,29 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run dependency-free Pi contracts
-        run: python tests/test_pi_harness_contracts.py
+        run: |
+          python tests/test_pi_harness_contracts.py
+          python tests/test_pi_runtime_support.py
+      - name: Parse Pi PowerShell surfaces
+        shell: pwsh
+        run: |
+          $failures = [System.Collections.Generic.List[string]]::new()
+          foreach ($path in @(
+            'scripts/Test-PiHarnessCompleteness.ps1',
+            'tooling/pi/Get-PiHarnessStatus.ps1',
+            'tooling/pi/Install-AgentSwitchboardPi.ps1',
+            'tooling/pi/Start-AgentSwitchboardPi.ps1',
+            'tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1'
+          )) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
+            foreach ($error in @($errors)) { $failures.Add("$path`: $($error.Message)") }
+          }
+          if ($failures.Count -gt 0) {
+            $failures | ForEach-Object { Write-Error $_ }
+            exit 1
+          }
       - name: Run Pi completeness contract
         shell: pwsh
         run: ./scripts/Test-PiHarnessCompleteness.ps1
@@ -58,6 +84,8 @@ jobs:
           foreach ($path in @(
             'scripts/Test-PiHarnessCompleteness.ps1',
             'tooling/pi/Get-PiHarnessStatus.ps1',
+            'tooling/pi/Install-AgentSwitchboardPi.ps1',
+            'tooling/pi/Start-AgentSwitchboardPi.ps1',
             'tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1'
           )) {
             $tokens = $null
@@ -71,7 +99,14 @@ jobs:
           }
       - name: Run dependency-free Pi contracts
         shell: pwsh
-        run: python tests/test_pi_harness_contracts.py
+        run: |
+          python tests/test_pi_harness_contracts.py
+          python tests/test_pi_runtime_support.py
+      - name: Exercise CMD wrappers without runtime mutation
+        shell: cmd
+        run: |
+          findstr /C:"Install-AgentSwitchboardPi.ps1" Install-AgentSwitchboardPi.cmd >nul || exit /b 1
+          findstr /C:"Start-AgentSwitchboardPi.ps1" Start-AgentSwitchboardPi.cmd >nul || exit /b 1
       - name: Run Pi completeness contract
         shell: pwsh
         run: ./scripts/Test-PiHarnessCompleteness.ps1

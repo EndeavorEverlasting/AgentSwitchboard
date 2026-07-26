@@ -80,6 +80,21 @@ A runtime event claim records event ID, correlation ID, causation ID, sequence, 
 
 The Windows Profile is WezTerm-backed and owned by AgentSwitchboard. Raw WezTerm commands, desktop shortcuts, and SysAdminSuite are presentation or consumer surfaces only. Linux and Android remain separate profiles and may use different configuration.
 
+## Pi adapter capabilities
+
+| Capability | Activation and output | Guardrail and proof |
+|---|---|---|
+| `pi.upstream.verify` | read `tooling/pi/harness/upstream-verification.json`; return exact package, version, source, minimum Node version, and verified install syntax | tracked upstream identity only; does not prove a workstation installation or provider availability |
+| `pi.install.exact` | run `tooling/pi/Install-AgentSwitchboardPi.ps1 -Mode Install`; install the exact verified global CLI package with npm lifecycle scripts disabled and emit local evidence | explicit dependency-install authority required; no global Pi configuration, credentials, provider, model, hook, or trust mutation |
+| `pi.install.verify` | run installer in `Verify` mode; read back Node, npm, npm global package identity, Pi executable path, and exact Pi version | read-only workstation proof of package readiness; no model or provider call |
+| `pi.runtime.launch` | run `tooling/pi/Start-AgentSwitchboardPi.ps1`; invoke the exact pinned Pi executable from the repository root with project-local settings | project trust and authentication remain interactive; provider/model response, privacy, extension behavior, and delivery remain runtime proof |
+| `pi.status.report` | run `tooling/pi/Get-PiHarnessStatus.ps1`; classify repository support as incomplete, blocked, installable, or runtime-ready-provider-unproved | read-only; command presence alone does not prove project trust, provider login, or model response |
+| `pi.single-agent.route` | use the pinned launcher for one bounded builder lane under one-writer governance | launcher supported, runtime unproved until exact provider/model identity and result are observed |
+| `pi.opinion-fusion.route` | select architect, builder, and adjudicator contract with attributed outputs and one designated writer | contract-only; no execution adapter or live fusion proof yet |
+| `pi.autovalidate.route` | select frozen architect gate, bounded builder attempts, and validator evidence | contract-only; no live autovalidation execution proof yet |
+
+The Pi CLI is free and MIT-licensed, but provider and model access is separate. Do not classify a route as free merely because the harness is free. Project trust is never bypassed, third-party packages or extensions require separate review, and sessions or generated evidence remain outside the repository.
+
 ## Harness doctrine capabilities
 
 | Capability | Activation and output | Guardrail and proof |

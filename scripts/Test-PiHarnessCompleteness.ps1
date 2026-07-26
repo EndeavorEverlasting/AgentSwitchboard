@@ -25,15 +25,22 @@ function Read-Tracked([string]$RelativePath) {
 $requiredFiles = @(
     'tooling/pi/harness/codebase-map.json',
     'tooling/pi/harness/pi-adapter.registry.json',
+    'tooling/pi/harness/upstream-verification.json',
     'tooling/pi/harness/artifact-registry.json',
     'tooling/pi/harness/workflows/task-intake.workflow.json',
     'tooling/pi/harness/workflows/opinion-fusion.workflow.json',
     'tooling/pi/harness/workflows/autovalidate.workflow.json',
     'tooling/pi/harness/schemas/pi-harness-contracts.schema.json',
     '.ai/skills/pi-fusion-orchestration/SKILL.md',
+    '.pi/settings.json',
+    'tooling/pi/Install-AgentSwitchboardPi.ps1',
+    'tooling/pi/Start-AgentSwitchboardPi.ps1',
+    'Install-AgentSwitchboardPi.cmd',
+    'Start-AgentSwitchboardPi.cmd',
     'tooling/pi/Get-PiHarnessStatus.ps1',
     'tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1',
     'tests/test_pi_harness_contracts.py',
+    'tests/test_pi_runtime_support.py',
     'docs/harness/pi-operational-harness.md',
     '.github/workflows/pi-harness-contract.yml',
     '.ai/harness/manifest.json',
@@ -48,11 +55,13 @@ foreach ($relativePath in $requiredFiles) {
 foreach ($relativePath in @(
     'tooling/pi/harness/codebase-map.json',
     'tooling/pi/harness/pi-adapter.registry.json',
+    'tooling/pi/harness/upstream-verification.json',
     'tooling/pi/harness/artifact-registry.json',
     'tooling/pi/harness/workflows/task-intake.workflow.json',
     'tooling/pi/harness/workflows/opinion-fusion.workflow.json',
     'tooling/pi/harness/workflows/autovalidate.workflow.json',
     'tooling/pi/harness/schemas/pi-harness-contracts.schema.json',
+    '.pi/settings.json',
     '.ai/harness/manifest.json',
     '.ai/harness/artifact-registry.json'
 )) {
@@ -66,19 +75,52 @@ foreach ($relativePath in @(
 }
 
 try {
+    $verification = $textByPath['tooling/pi/harness/upstream-verification.json'] | ConvertFrom-Json
+    Check ($verification.schema -eq 'agentswitchboard.pi-upstream-verification.v1') 'upstream/schema' 'unexpected upstream verification schema'
+    Check ($verification.package -eq '@earendil-works/pi-coding-agent') 'upstream/package' 'current official package identity is not pinned'
+    Check ($verification.version -eq '0.81.1') 'upstream/version' 'verified Pi version drifted without contract update'
+    Check ($verification.sourceRepository -eq 'earendil-works/pi') 'upstream/repository' 'current official source repository is not recorded'
+    Check ($verification.minimumNodeVersion -eq '22.19.0') 'upstream/node' 'minimum Node version is not pinned'
+    Check ($verification.installCommand -eq 'npm install -g --ignore-scripts @earendil-works/pi-coding-agent@0.81.1') 'upstream/install' 'verified installation command is missing or unpinned'
+    Check ($verification.providerPolicy -match 'CLI is free' -and $verification.providerPolicy -match 'provider access is separate') 'upstream/free-access' 'free CLI and provider-cost boundary is unclear'
+}
+catch { [void]$failures.Add("upstream/semantic: $($_.Exception.Message)") }
+
+try {
     $registry = $textByPath['tooling/pi/harness/pi-adapter.registry.json'] | ConvertFrom-Json
     Check ($registry.schema -eq 'agentswitchboard.pi-adapter-registry.v1') 'registry/schema' 'unexpected registry schema'
-    Check ($registry.upstream.status -eq 'verification-required') 'registry/upstream-verification' 'upstream version must fail closed until verified'
+    Check ($registry.upstream.status -eq 'verified-install-supported') 'registry/upstream-verification' 'verified installation support is not declared'
+    Check ($registry.upstream.package -eq $verification.package) 'registry/package' 'registry and verification package identities disagree'
+    Check ($registry.upstream.pinnedVersion -eq $verification.version) 'registry/version' 'registry and verification versions disagree'
     Check ($registry.configuration.preferredScope -eq 'project-local') 'registry/project-local' 'project-local configuration is not preferred'
-    Check ($registry.configuration.globalConfigurationMutationAllowed -eq $false) 'registry/no-global-mutation' 'global configuration mutation is allowed'
+    Check ($registry.configuration.globalCliInstallationAllowed -eq $true) 'registry/global-cli' 'verified global CLI installation is not allowed'
+    Check ($registry.configuration.globalConfigurationMutationAllowed -eq $false) 'registry/no-global-config' 'global Pi configuration mutation is allowed'
     Check ($registry.configuration.implicitHookInstallationAllowed -eq $false) 'registry/no-implicit-hooks' 'implicit hook installation is allowed'
+    Check ($registry.configuration.projectTrustBypassAllowed -eq $false) 'registry/no-trust-bypass' 'project trust may be bypassed'
+    Check ($registry.configuration.lifecycleScriptsAllowed -eq $false) 'registry/no-lifecycle-scripts' 'npm lifecycle scripts are allowed'
     Check ($registry.privacyClaimPolicy.localhostIsSufficient -eq $false) 'registry/privacy-proof' 'localhost is incorrectly treated as privacy proof'
+    Check ($registry.freeAccessPolicy.cliCost -eq 'free') 'registry/free-cli' 'Pi CLI cost classification is missing'
+    Check ($registry.freeAccessPolicy.providerAccessIsSeparate -eq $true) 'registry/provider-cost-separate' 'provider cost is conflated with CLI cost'
     foreach ($route in @($registry.routes)) {
         Check ($route.writerCount -eq 1) "registry/one-writer/$($route.routeId)" 'route does not require exactly one writer'
-        Check ($route.status -eq 'contract-only') "registry/contract-only/$($route.routeId)" 'runtime behavior is claimed without proof'
+    }
+    $singleRoute = @($registry.routes | Where-Object { $_.routeId -eq 'pi-single-agent' })[0]
+    Check ($singleRoute.status -eq 'launcher-supported-runtime-unproved') 'registry/single-agent-status' 'single-agent launcher support is not represented honestly'
+    foreach ($route in @($registry.routes | Where-Object { $_.routeId -ne 'pi-single-agent' })) {
+        Check ($route.status -eq 'contract-only') "registry/contract-only/$($route.routeId)" 'multi-agent runtime behavior is claimed without proof'
     }
 }
 catch { [void]$failures.Add("registry/semantic: $($_.Exception.Message)") }
+
+try {
+    $settings = $textByPath['.pi/settings.json'] | ConvertFrom-Json
+    Check ($settings.enableInstallTelemetry -eq $false) 'settings/no-install-telemetry' 'project settings enable install telemetry'
+    Check ($settings.enableSkillCommands -eq $true) 'settings/skill-commands' 'repository skills are not command-addressable'
+    Check (@($settings.skills).Count -eq 1 -and $settings.skills[0] -eq '../.ai/skills') 'settings/skills' 'Pi does not load the repository skill directory'
+    Check (@($settings.packages).Count -eq 0) 'settings/no-third-party-packages' 'unreviewed Pi packages are configured'
+    Check (@($settings.extensions).Count -eq 0) 'settings/no-third-party-extensions' 'unreviewed Pi extensions are configured'
+}
+catch { [void]$failures.Add("settings/semantic: $($_.Exception.Message)") }
 
 $expectedWorkflows = @{
     'tooling/pi/harness/workflows/task-intake.workflow.json' = 'pi-task-intake'
@@ -110,14 +152,32 @@ foreach ($token in @('id: pi-fusion-orchestration','status: experimental','## Tr
     Check ($skillText.Contains($token)) "skill/$token" 'skill contract token is missing'
 }
 
+$installerText = $textByPath['tooling/pi/Install-AgentSwitchboardPi.ps1']
+foreach ($token in @('upstream-verification.json','--ignore-scripts','minimumNodeVersion','Pi version mismatch after operation','configurationMutation = ''none''','authenticationMutation = ''none''','AgentSwitchboard/PiHarness/install')) {
+    Check ($installerText.Contains($token)) "installer/$token" 'installer contract token is missing'
+}
+$launcherText = $textByPath['tooling/pi/Start-AgentSwitchboardPi.ps1']
+foreach ($token in @("`$env:PI_TELEMETRY = '0'","`$env:PI_SKIP_VERSION_CHECK = '1'","`$env:PI_OFFLINE = '1'",'PI_CODING_AGENT_SESSION_DIR','never bypassed by this launcher','rawArgumentsRecorded = $false','rawPromptRecorded = $false')) {
+    Check ($launcherText.Contains($token)) "launcher/$token" 'launcher contract token is missing'
+}
+foreach ($forbidden in @('--approve','defaultProjectTrust','auth.json','models.json','dangerously-skip-permissions')) {
+    Check (-not $launcherText.Contains($forbidden)) "launcher/forbidden/$forbidden" 'launcher bypasses trust or mutates authentication/model state'
+}
+
 try {
     $manifest = $textByPath['.ai/harness/manifest.json'] | ConvertFrom-Json
     Check ($manifest.entrypoints.piHarnessValidator -eq 'scripts/Test-PiHarnessCompleteness.ps1') 'central/manifest/validator' 'Pi completeness validator is not registered'
     Check ($manifest.entrypoints.piFusionSkill -eq '.ai/skills/pi-fusion-orchestration/SKILL.md') 'central/manifest/skill' 'Pi skill is not registered'
-    Check ($manifest.piOperationalHarness.status -eq 'contract-only') 'central/manifest/status' 'Pi runtime is overclaimed'
+    Check ($manifest.entrypoints.piUpstreamVerification -eq 'tooling/pi/harness/upstream-verification.json') 'central/manifest/upstream' 'Pi upstream verification is not registered'
+    Check ($manifest.entrypoints.piInstaller -eq 'tooling/pi/Install-AgentSwitchboardPi.ps1') 'central/manifest/installer' 'Pi installer is not registered'
+    Check ($manifest.entrypoints.piLauncher -eq 'tooling/pi/Start-AgentSwitchboardPi.ps1') 'central/manifest/launcher' 'Pi launcher is not registered'
+    Check ($manifest.entrypoints.piProjectSettings -eq '.pi/settings.json') 'central/manifest/settings' 'Pi project settings are not registered'
+    Check ($manifest.piOperationalHarness.status -eq 'installer-launcher-supported-runtime-unproved') 'central/manifest/status' 'Pi support is over- or under-claimed'
     Check ($manifest.piOperationalHarness.writersPerBranch -eq 1) 'central/manifest/one-writer' 'Pi manifest does not enforce one writer'
     Check ($manifest.piOperationalHarness.implicitHookInstallationAllowed -eq $false) 'central/manifest/hooks' 'implicit hook installation is allowed'
-    Check ($manifest.piOperationalHarness.providerCallsAllowedByContract -eq $false) 'central/manifest/provider' 'provider calls are allowed by contract-only validation'
+    Check ($manifest.piOperationalHarness.globalConfigurationMutationAllowed -eq $false) 'central/manifest/global-config' 'global Pi configuration mutation is allowed'
+    Check ($manifest.piOperationalHarness.projectTrustBypassAllowed -eq $false) 'central/manifest/trust' 'project trust bypass is allowed'
+    Check ($manifest.piOperationalHarness.providerCallsAllowedByContractValidation -eq $false) 'central/manifest/provider-validation' 'provider calls are allowed during contract validation'
 }
 catch { [void]$failures.Add("central/manifest: $($_.Exception.Message)") }
 
@@ -137,11 +197,13 @@ catch { [void]$failures.Add("central/artifacts: $($_.Exception.Message)") }
 $deployableContractPaths = @(
     'tooling/pi/harness/codebase-map.json',
     'tooling/pi/harness/pi-adapter.registry.json',
+    'tooling/pi/harness/upstream-verification.json',
     'tooling/pi/harness/artifact-registry.json',
     'tooling/pi/harness/workflows/task-intake.workflow.json',
     'tooling/pi/harness/workflows/opinion-fusion.workflow.json',
     'tooling/pi/harness/workflows/autovalidate.workflow.json',
     '.ai/skills/pi-fusion-orchestration/SKILL.md',
+    '.pi/settings.json',
     'docs/harness/pi-operational-harness.md'
 )
 $deployableText = ($deployableContractPaths | ForEach-Object { $textByPath[$_] }) -join "`n"
@@ -150,9 +212,10 @@ foreach ($forbidden in @(
     '%USERPROFILE%\.pi',
     'pi.llm.generate',
     'dangerously-skip-permissions',
-    'localhost means private'
+    'localhost means private',
+    'all Pi model access is free'
 )) {
-    Check (-not $deployableText.Contains($forbidden)) "forbidden/$forbidden" 'unverified installation, API, permission bypass, or privacy shortcut is embedded in a deployable contract'
+    Check (-not $deployableText.Contains($forbidden)) "forbidden/$forbidden" 'stale package, API, permission bypass, privacy shortcut, or cost overclaim is embedded in a deployable contract'
 }
 
 Write-Host 'PI HARNESS COMPLETENESS' -ForegroundColor Cyan

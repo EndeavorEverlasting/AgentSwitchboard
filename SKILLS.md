@@ -35,9 +35,10 @@ Every canonical skill must define:
 6. An operator-facing result that crosses shells, child processes, WSL, tmux, WezTerm, a TUI, a GUI, or another runtime boundary selects `end-to-end-runtime-validation`. Use `runtime-proof` for a bounded observation that does not require the complete operator path.
 7. A Windows Profile request that distinguishes default open-or-activate from an explicit separate instance, or evidence of duplicate WezTerm windows, selects `windows-profile-launch-mode-validation` before any launcher implementation or runtime claim.
 8. A request for a desktop shortcut or CMD installer that must create one genuinely separate tmux/WezTerm instance selects `tmux-new-instance-shortcut`. It preserves the one-launcher boundary and routes live acceptance through `end-to-end-runtime-validation`.
-9. `TRIGGERS.md` maps repository evidence to a skill.
-10. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
-11. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
+9. A Pi request for attributed multi-agent opinion fusion or bounded architect-builder-validator iteration selects the experimental `pi-fusion-orchestration` skill. Pi installation and single-agent launch use the repository capabilities and scripts; live acceptance still selects `end-to-end-runtime-validation`.
+10. `TRIGGERS.md` maps repository evidence to a skill.
+11. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
+12. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
 
 ## Canonical skills
 
@@ -55,6 +56,14 @@ Every canonical skill must define:
 | [`windows-profile-launch-mode-validation`](.ai/skills/windows-profile-launch-mode-validation/SKILL.md) | Distinguish default workspace convergence, explicit named new instances, and accidental duplicate WezTerm windows | launch-mode request, separate-instance request, duplicate-window evidence, tmux-session identity ambiguity |
 | [`tmux-new-instance-shortcut`](.ai/skills/tmux-new-instance-shortcut/SKILL.md) | Install and validate one owned desktop shortcut that allocates a unique tmux session and separate WezTerm process | desktop shortcut request, clickable CMD installer, one-click separate tmux instance |
 | [`app-output-contextualization`](.ai/skills/app-output-contextualization/SKILL.md) | Parse supplied output, redact it, compare it with a prompt registry, and emit compact agent instructions | app output, logs, JSON, JSONL, validator output, minimal-token routing |
+
+## Experimental skills
+
+| Skill | Purpose | Primary triggers |
+|---|---|---|
+| [`pi-fusion-orchestration`](.ai/skills/pi-fusion-orchestration/SKILL.md) | Orchestrate attributed Pi architect, builder, adjudicator, or validator roles with one writer and bounded loops | `pi.opinion-fusion-request`, `pi.autovalidate-request`, explicit reviewed Pi multi-agent experiment |
+
+The Pi single-agent launcher is implemented independently of this experimental skill. Opinion fusion and autovalidation remain contract-only until a reviewed execution adapter produces live, attributed evidence.
 
 ## Public plan distinction
 
@@ -83,6 +92,12 @@ An app-output context packet is a minimized interpretation artifact, not the ori
 ## End-to-end distinction
 
 `runtime-proof` can establish one observed behavior in an authorized environment. `end-to-end-runtime-validation` is required when the claim depends on the exact command an operator runs and a chain of shell, process, platform, terminal, TUI, GUI, provider, or application boundaries. The end-to-end skill requires per-stage stdout, stderr, exit identity, effective-state readback, user-visible observation, and idempotence or rollback proof when applicable. A parent exception containing only an exit code is not a complete end-to-end failure report.
+
+## Pi runtime distinction
+
+The tracked installer and launcher support an exact pinned Pi single-agent runtime, project-local `.ai/skills`, low-noise defaults, and external session storage. They do not authenticate a provider, select a model, bypass project trust, or prove a model response. The Pi CLI may be free while the selected provider or model is paid, rate-limited, or unavailable.
+
+`pi-fusion-orchestration` governs modular multi-agent experiments only. Its architect, builder, adjudicator, and validator outputs remain separate and attributed, and exactly one role receives branch write authority. Contract files do not prove that those agents actually ran.
 
 ## Windows launch-mode distinction
 
