@@ -1,0 +1,19 @@
+{
+  "schema": "agentswitchboard.typed-cascade-workflow.v1",
+  "workflowId": "typed-cascade-post-action-validation",
+  "trigger": "a fresh deterministic action observation exists for the current run/action/correlation identity",
+  "steps": [
+    "Reject missing, unobserved, stale, cross-run, or cross-correlation action results before semantic evaluation.",
+    "Load the declared ontology profile and evaluate functional-property cardinality constraints.",
+    "Evaluate class/role disjointness, fixed enumerations, domain/range compatibility, and required current-run references.",
+    "On any semantic failure emit cascade.result.rejected, write cascade-post-gate-result, and forbid a success successor.",
+    "Only on complete semantic pass emit cascade.result.validated and authorize cascade-emission."
+  ],
+  "outputs": ["cascade-post-gate-result", "cascade.result.validated or cascade.result.rejected"],
+  "invariants": [
+    "Structural validity is insufficient for semantic success.",
+    "Command acknowledgement or process presence is not ontology/world-state proof.",
+    "A post-gate rejection is terminal for the success path and preserves the strongest actually observed proof level."
+  ],
+  "proofCeiling": "Declared ontology/domain coherence of one fresh action result only; no successor delivery or live-target acceptance."
+}
