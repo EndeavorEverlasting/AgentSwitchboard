@@ -1,0 +1,77 @@
+{
+  "schema": "agentswitchboard.typed-cascade-fixtures.v1",
+  "suiteId": "typed-cascade-gates/v1",
+  "cases": [
+    {
+      "caseId": "valid-complete-cascade",
+      "request": {"operation": "fixture.execute", "input": {"count": 2, "mode": "safe"}, "authorityDeclared": true},
+      "observation": {"observed": true, "sameRun": true, "sameCorrelation": true, "actionIdExists": true, "terminalClassifications": ["PASS_SYNTHETIC_CASCADE"], "classes": ["ValidatedSuccessor"], "proofLevel": "synthetic-cascade", "causationClass": "RuntimeEvent", "causationExists": true, "successorCorrelationInherited": true, "successorCausationIsParent": true, "successorSequenceAdvanced": true},
+      "expectedClassification": "PASS_SYNTHETIC_CASCADE"
+    },
+    {
+      "caseId": "input-wrong-type",
+      "request": {"operation": "fixture.execute", "input": {"count": "two", "mode": "safe"}, "authorityDeclared": true},
+      "observation": null,
+      "expectedClassification": "REJECT_INPUT_SCHEMA"
+    },
+    {
+      "caseId": "input-authority-missing",
+      "request": {"operation": "fixture.execute", "input": {"count": 2, "mode": "safe"}, "authorityDeclared": false},
+      "observation": null,
+      "expectedClassification": "REJECT_INPUT_AUTHORITY"
+    },
+    {
+      "caseId": "action-not-observed",
+      "request": {"operation": "fixture.execute", "input": {"count": 2, "mode": "safe"}, "authorityDeclared": true},
+      "observation": {"observed": false, "sameRun": true, "sameCorrelation": true, "actionIdExists": true},
+      "expectedClassification": "BLOCKED_ACTION_NOT_OBSERVED"
+    },
+    {
+      "caseId": "stale-result",
+      "request": {"operation": "fixture.execute", "input": {"count": 2, "mode": "safe"}, "authorityDeclared": true},
+      "observation": {"observed": true, "sameRun": false, "sameCorrelation": false, "actionIdExists": true},
+      "expectedClassification": "REJECT_STALE_RESULT"
+    },
+    {
+      "caseId": "duplicate-terminal-classification",
+      "request": {"operation": "fixture.execute", "input": {"count": 2, "mode": "safe"}, "authorityDeclared": true},
+      "observation": {"observed": true, "sameRun": true, "sameCorrelation": true, "actionIdExists": true, "terminalClassifications": ["PASS_SYNTHETIC_CASCADE", "REJECT_RESULT_REFERENCE"], "classes": ["ValidatedSuccessor"], "proofLevel": "synthetic-cascade", "causationClass": "RuntimeEvent", "causationExists": true, "successorCorrelationInherited": true, "successorCausationIsParent": true, "successorSequenceAdvanced": true},
+      "expectedClassification": "REJECT_RESULT_CARDINALITY"
+    },
+    {
+      "caseId": "disjoint-success-and-rejection",
+      "request": {"operation": "fixture.execute", "input": {"count": 2, "mode": "safe"}, "authorityDeclared": true},
+      "observation": {"observed": true, "sameRun": true, "sameCorrelation": true, "actionIdExists": true, "terminalClassifications": ["PASS_SYNTHETIC_CASCADE"], "classes": ["ValidatedSuccessor", "RejectedTerminal"], "proofLevel": "synthetic-cascade", "causationClass": "RuntimeEvent", "causationExists": true, "successorCorrelationInherited": true, "successorCausationIsParent": true, "successorSequenceAdvanced": true},
+      "expectedClassification": "REJECT_RESULT_DISJOINTNESS"
+    },
+    {
+      "caseId": "made-up-proof-level",
+      "request": {"operation": "fixture.execute", "input": {"count": 2, "mode": "safe"}, "authorityDeclared": true},
+      "observation": {"observed": true, "sameRun": true, "sameCorrelation": true, "actionIdExists": true, "terminalClassifications": ["PASS_SYNTHETIC_CASCADE"], "classes": ["ValidatedSuccessor"], "proofLevel": "probably-runtime", "causationClass": "RuntimeEvent", "causationExists": true, "successorCorrelationInherited": true, "successorCausationIsParent": true, "successorSequenceAdvanced": true},
+      "expectedClassification": "REJECT_RESULT_ENUMERATION"
+    },
+    {
+      "caseId": "wrong-causation-domain-range",
+      "request": {"operation": "fixture.execute", "input": {"count": 2, "mode": "safe"}, "authorityDeclared": true},
+      "observation": {"observed": true, "sameRun": true, "sameCorrelation": true, "actionIdExists": true, "terminalClassifications": ["PASS_SYNTHETIC_CASCADE"], "classes": ["ValidatedSuccessor"], "proofLevel": "synthetic-cascade", "causationClass": "ProviderAccount", "causationExists": true, "successorCorrelationInherited": true, "successorCausationIsParent": true, "successorSequenceAdvanced": true},
+      "expectedClassification": "REJECT_RESULT_DOMAIN_RANGE"
+    },
+    {
+      "caseId": "missing-action-reference",
+      "request": {"operation": "fixture.execute", "input": {"count": 2, "mode": "safe"}, "authorityDeclared": true},
+      "observation": {"observed": true, "sameRun": true, "sameCorrelation": true, "actionIdExists": false, "terminalClassifications": ["PASS_SYNTHETIC_CASCADE"], "classes": ["ValidatedSuccessor"], "proofLevel": "synthetic-cascade", "causationClass": "RuntimeEvent", "causationExists": true, "successorCorrelationInherited": true, "successorCausationIsParent": true, "successorSequenceAdvanced": true},
+      "expectedClassification": "REJECT_RESULT_REFERENCE"
+    },
+    {
+      "caseId": "broken-successor-causality",
+      "request": {"operation": "fixture.execute", "input": {"count": 2, "mode": "safe"}, "authorityDeclared": true},
+      "observation": {"observed": true, "sameRun": true, "sameCorrelation": true, "actionIdExists": true, "terminalClassifications": ["PASS_SYNTHETIC_CASCADE"], "classes": ["ValidatedSuccessor"], "proofLevel": "synthetic-cascade", "causationClass": "RuntimeEvent", "causationExists": true, "successorCorrelationInherited": true, "successorCausationIsParent": false, "successorSequenceAdvanced": true},
+      "expectedClassification": "REJECT_CAUSALITY"
+    }
+  ],
+  "preGateContract": {
+    "count": {"type": "integer", "minimum": 1, "maximum": 100},
+    "mode": {"type": "enum", "allowed": ["safe", "dry-run"]}
+  },
+  "passingRule": "Every case must reduce to its exact expected classification; no lower-proof fallback may count as a pass."
+}
