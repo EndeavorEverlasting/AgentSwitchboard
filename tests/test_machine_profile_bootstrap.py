@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import re
@@ -5,8 +6,11 @@ import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DETECTOR = os.path.join(ROOT, 'tooling', 'profiles', 'windows', 'Get-AgentSwitchboardMachineProfile.ps1')
-REGISTRY = os.path.join(ROOT, 'tooling', 'profiles', 'windows', 'harness', 'machine-profile', 'machine-profile.registry.json')
-SCHEMA = os.path.join(ROOT, 'tooling', 'profiles', 'windows', 'harness', 'machine-profile', 'schemas', 'machine-profile.schema.json')
+HARNESS_ROOT = os.path.join(ROOT, 'tooling', 'profiles', 'windows', 'harness', 'machine-profile')
+REGISTRY = os.path.join(HARNESS_ROOT, 'machine-profile.registry.json')
+CODEBASE_MAP = os.path.join(HARNESS_ROOT, 'codebase-map.json')
+SCHEMA = os.path.join(HARNESS_ROOT, 'schemas', 'machine-profile.schema.json')
+SKILL = os.path.join(ROOT, '.ai', 'skills', 'machine-profile-bootstrap', 'SKILL.md')
 BOOTSTRAP = os.path.join(ROOT, 'AgentSwitchboard-Technician-Bootstrap.cmd')
 PULL = os.path.join(ROOT, 'Pull-And-Run-AgentSwitchboard.cmd')
 
@@ -17,10 +21,13 @@ def text(path):
 
 
 class MachineProfileBootstrapContract(unittest.TestCase):
-    def test_registry_schema_and_fixtures(self):
+    def test_registry_schema_map_skill_and_fixtures(self):
         registry = json.loads(text(REGISTRY))
         schema = json.loads(text(SCHEMA))
+        codebase_map = json.loads(text(CODEBASE_MAP))
+        skill = text(SKILL)
         self.assertEqual('agentswitchboard.machine-profile-registry.v1', registry['schema'])
+        self.assertEqual('agentswitchboard.machine-profile-codebase-map.v1', codebase_map['schema'])
         self.assertEqual('agentswitchboard.machine-profile.v1', schema['properties']['schema']['const'])
         ids = [item['profileId'] for item in registry['profiles']]
         self.assertEqual([
@@ -30,6 +37,14 @@ class MachineProfileBootstrapContract(unittest.TestCase):
             'personal-onedrive',
             'local-windows',
         ], ids)
+        for token in [
+            'Get-AgentSwitchboardMachineProfile.ps1',
+            'Do not guess',
+            'machine-profile.json',
+            'AGENT_SWITCHBOARD_REPO',
+            'proof ceiling',
+        ]:
+            self.assertIn(token, skill)
         fixture_root = os.path.join(os.path.dirname(REGISTRY), 'fixtures')
         for name in ['enterprise-onedrive.fixture.json', 'local-windows.fixture.json']:
             payload = json.loads(text(os.path.join(fixture_root, name)))
@@ -74,7 +89,11 @@ class MachineProfileBootstrapContract(unittest.TestCase):
             'Windows PowerShell',
         ]:
             self.assertIn(token, bootstrap)
-        self.assertRegex(bootstrap, r'EXPECTED_PROFILE_SHA256=[a-f0-9]{64}')
+        match = re.search(r'EXPECTED_PROFILE_SHA256=([a-f0-9]{64})', bootstrap, flags=re.IGNORECASE)
+        self.assertIsNotNone(match)
+        with open(DETECTOR, 'rb') as handle:
+            detector_hash = hashlib.sha256(handle.read()).hexdigest()
+        self.assertEqual(detector_hash, match.group(1).lower())
 
     def test_acquire_mode_does_not_require_pwsh(self):
         pull = text(PULL)
