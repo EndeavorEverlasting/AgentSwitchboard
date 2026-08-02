@@ -1,0 +1,47 @@
+name: Machine profile bootstrap
+on:
+  pull_request:
+    paths:
+      - 'AgentSwitchboard-Technician-Bootstrap.cmd'
+      - 'Pull-And-Run-AgentSwitchboard.cmd'
+      - 'tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1'
+      - 'tooling/profiles/windows/harness/machine-profile/**'
+      - 'scripts/Test-MachineProfileBootstrap.ps1'
+      - 'tests/test_machine_profile_bootstrap.py'
+      - '.github/workflows/machine-profile-bootstrap.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'AgentSwitchboard-Technician-Bootstrap.cmd'
+      - 'Pull-And-Run-AgentSwitchboard.cmd'
+      - 'tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1'
+      - 'tooling/profiles/windows/harness/machine-profile/**'
+      - 'scripts/Test-MachineProfileBootstrap.ps1'
+      - 'tests/test_machine_profile_bootstrap.py'
+      - '.github/workflows/machine-profile-bootstrap.yml'
+jobs:
+  static-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest tests.test_machine_profile_bootstrap
+      - run: git diff --check
+  windows-contract:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path 'tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1'), [ref]$tokens, [ref]$errors)
+          if ($errors.Count) { $errors | Format-List | Out-String | Write-Error }
+          ./scripts/Test-MachineProfileBootstrap.ps1
+      - run: python -m unittest tests.test_machine_profile_bootstrap
+      - run: git diff --check
