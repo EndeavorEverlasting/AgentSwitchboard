@@ -1,4 +1,3 @@
-import hashlib
 import json
 import os
 import re
@@ -12,6 +11,7 @@ CODEBASE_MAP = os.path.join(HARNESS_ROOT, 'codebase-map.json')
 SCHEMA = os.path.join(HARNESS_ROOT, 'schemas', 'machine-profile.schema.json')
 SKILL = os.path.join(ROOT, '.ai', 'skills', 'machine-profile-bootstrap', 'SKILL.md')
 BOOTSTRAP = os.path.join(ROOT, 'AgentSwitchboard-Technician-Bootstrap.cmd')
+DIRECTORY_BOOTSTRAP = os.path.join(ROOT, 'Bootstrap-AgentSwitchboard-In-Directory.cmd')
 PULL = os.path.join(ROOT, 'Pull-And-Run-AgentSwitchboard.cmd')
 
 
@@ -81,19 +81,33 @@ class MachineProfileBootstrapContract(unittest.TestCase):
         self.assertLess(profile_call, parent_call)
         self.assertLess(parent_call, pwsh_gate)
         for token in [
-            'EXPECTED_PROFILE_SHA256=',
+            'PROFILE_REF=',
             'PROFILE_URL=',
             'Machine profile:',
             'profile recommendation',
             'machine-profile.json',
             'Windows PowerShell',
+            'commit-pinned machine-profile detector',
         ]:
             self.assertIn(token, bootstrap)
-        match = re.search(r'EXPECTED_PROFILE_SHA256=([a-f0-9]{64})', bootstrap, flags=re.IGNORECASE)
+        match = re.search(r'PROFILE_REF=([a-f0-9]{40})', bootstrap, flags=re.IGNORECASE)
         self.assertIsNotNone(match)
-        with open(DETECTOR, 'rb') as handle:
-            detector_hash = hashlib.sha256(handle.read()).hexdigest()
-        self.assertEqual(detector_hash, match.group(1).lower())
+        self.assertIn('/%PROFILE_REF%/tooling/profiles/windows/%PROFILE_NAME%', bootstrap)
+        self.assertNotIn('EXPECTED_PROFILE_SHA256=', bootstrap)
+
+    def test_directory_bootstrap_is_generic_and_explicit(self):
+        wrapper = text(DIRECTORY_BOOTSTRAP)
+        for token in [
+            'WORKSPACE_ROOT=%~1',
+            'REPO_LEAF=%~2',
+            'AgentSwitchBoard-Live',
+            'AgentSwitchboard-Technician-Bootstrap.cmd',
+            'call "%BOOTSTRAP_PATH%" "%REPO_ROOT%" main',
+        ]:
+            self.assertIn(token, wrapper)
+        self.assertNotIn('CheeksMcClappeth', wrapper)
+        self.assertNotIn('OneDrive', wrapper)
+        self.assertIn('Usage: %~nx0 "C:\\path\\to\\Dev"', wrapper)
 
     def test_acquire_mode_does_not_require_pwsh(self):
         pull = text(PULL)
