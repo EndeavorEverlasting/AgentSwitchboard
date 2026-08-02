@@ -31,6 +31,9 @@ if errorlevel 1 (
   goto :finish
 )
 
+if /I not "%MODE%"=="acquire" goto :require_pwsh
+goto :after_pwsh_gate
+:require_pwsh
 where pwsh.exe >nul 2>&1
 if errorlevel 1 (
   echo [FAIL] PowerShell 7 ^(pwsh.exe^) was not found on PATH.
@@ -38,6 +41,7 @@ if errorlevel 1 (
   set "RESULT=23"
   goto :finish
 )
+:after_pwsh_gate
 
 echo ============================================================
 echo  AgentSwitchboard Technician Pull and Run
@@ -166,7 +170,7 @@ if errorlevel 1 (
 )
 
 if /I "%MODE%"=="acquire" (
-  echo [PASS] Repository acquisition completed. Workstation setup is intentionally deferred.
+  echo [PASS] Repository acquisition completed without requiring PowerShell 7.
   set "RESULT=0"
   goto :finish
 )
