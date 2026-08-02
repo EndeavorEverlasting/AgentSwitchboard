@@ -90,7 +90,7 @@ function Test-AgentSwitchboardCheckout {
     if (-not (Test-Path -LiteralPath (Join-Path $Path '.git') -PathType Container)) { return $false }
 
     $git = Get-Command 'git.exe' -ErrorAction SilentlyContinue
-    if (-not $git) { return $true }
+    if (-not $git) { return $false }
     try {
         $origin = (& $git.Source -C $Path remote get-url origin 2>$null | Select-Object -First 1).Trim()
         return $origin -in @(
@@ -164,11 +164,12 @@ if ($redirectedDesktop -or $redirectedDocuments) { [void]$reasons.Add('Known fol
 
 $candidates = [System.Collections.Generic.List[object]]::new()
 $simulated = $null
+$environmentOverride = [string]$env:AGENT_SWITCHBOARD_REPO
 if ($ProbeFile -and $facts.PSObject.Properties.Name -contains 'existingRepositoryRoot') {
     $simulated = [string]$facts.existingRepositoryRoot
 }
 Add-Candidate $candidates $RepoRoot 'explicit-repo-root' -SimulatedExisting:($ProbeFile -and $RepoRoot -and $RepoRoot -ieq $simulated)
-Add-Candidate $candidates $env:AGENT_SWITCHBOARD_REPO 'environment-override'
+Add-Candidate $candidates $environmentOverride 'environment-override'
 if ($simulated) { Add-Candidate $candidates $simulated 'probe-existing-checkout' -SimulatedExisting }
 
 $bindingPath = Join-Path $env:LOCALAPPDATA 'AgentSwitchBoard\state\repo-path.txt'
@@ -194,6 +195,9 @@ $existing = $candidates | Where-Object { $_.exists } | Select-Object -First 1
 $recommendedRepoRoot = if ($RepoRoot) {
     [Environment]::ExpandEnvironmentVariables($RepoRoot)
 }
+elseif (-not [string]::IsNullOrWhiteSpace($environmentOverride)) {
+    [Environment]::ExpandEnvironmentVariables($environmentOverride)
+}
 elseif ($existing) {
     $existing.path
 }
@@ -201,7 +205,13 @@ else {
     $canonicalRoot
 }
 
-if ($existing) {
+if ($RepoRoot) {
+    [void]$reasons.Add('An explicit repository root was selected by the operator.')
+}
+elseif (-not [string]::IsNullOrWhiteSpace($environmentOverride)) {
+    [void]$reasons.Add('AGENT_SWITCHBOARD_REPO selected the repository root before checkout discovery.')
+}
+elseif ($existing) {
     [void]$reasons.Add("A verified existing checkout was selected from '$($existing.source)'.")
 }
 else {
@@ -238,7 +248,7 @@ $profile = [ordered]@{
         expectedOrigin = $expectedRepository
         candidates = @($candidates)
         recommendedRoot = $recommendedRepoRoot
-        selectionPolicy = 'explicit > verified existing checkout > stable user-local dev root; OneDrive paths are evidence, not the new-checkout default'
+        selectionPolicy = 'explicit > environment override > verified existing checkout > stable user-local dev root; OneDrive paths are evidence, not the new-checkout default'
     }
     reasons = @($reasons)
     proofCeiling = 'Local environment observation and deterministic path recommendation only. This profile does not prove package installation, authentication, provider access, launcher behavior, or live agent success.'
