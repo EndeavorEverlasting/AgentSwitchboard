@@ -3,6 +3,7 @@
   "canonicalOwner": "tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1",
   "entrypoints": [
     "AgentSwitchboard-Technician-Bootstrap.cmd",
+    "Bootstrap-AgentSwitchboard-In-Directory.cmd",
     "Get-AgentSwitchboard-MachineProfile.cmd"
   ],
   "contracts": [
@@ -25,7 +26,7 @@
     "%LOCALAPPDATA%\\AgentSwitchboard\\machine-profile\\machine-profile.env.cmd",
     "%LOCALAPPDATA%\\AgentSwitchboard\\machine-profile\\machine-profile.env.ps1"
   ],
-  "collisionBoundary": "This harness owns machine-environment detection and repository-root recommendation. It does not own provider credentials, agent routing, package installation, WSL repair, launcher behavior, or live certification.",
+  "collisionBoundary": "This harness owns machine-environment detection, chosen-directory delegation, and repository-root recommendation. It does not own provider credentials, agent routing, package installation, WSL repair, launcher behavior, or live certification.",
   "privacyBoundary": "Real usernames, hostnames, tenant names, and filesystem paths remain local-only. Only synthetic fixtures may be committed.",
-  "proofCeiling": "Tracked detection logic, deterministic classification, path recommendation, fixture validation, and bootstrap ordering only."
+  "proofCeiling": "Tracked detection logic, deterministic classification, chosen-directory delegation, path recommendation, fixture validation, and bootstrap ordering only."
 }
