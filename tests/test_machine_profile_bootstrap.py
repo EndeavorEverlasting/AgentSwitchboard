@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import subprocess
 import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -66,6 +67,7 @@ class MachineProfileBootstrapContract(unittest.TestCase):
             "machine-profile.env.cmd",
             "machine-profile.env.ps1",
             "ProbeFile",
+            "AllowEmptyCollection",
         ]:
             self.assertIn(token, detector)
         self.assertNotIn('ConvertFrom-Json -AsHashtable', detector)
@@ -92,8 +94,16 @@ class MachineProfileBootstrapContract(unittest.TestCase):
             self.assertIn(token, bootstrap)
         match = re.search(r'PROFILE_REF=([a-f0-9]{40})', bootstrap, flags=re.IGNORECASE)
         self.assertIsNotNone(match)
+        profile_ref = match.group(1).lower()
         self.assertIn('/%PROFILE_REF%/tooling/profiles/windows/%PROFILE_NAME%', bootstrap)
         self.assertNotIn('EXPECTED_PROFILE_SHA256=', bootstrap)
+        pinned_detector = subprocess.check_output(
+            ['git', 'show', f'{profile_ref}:tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1'],
+            cwd=ROOT,
+        )
+        with open(DETECTOR, 'rb') as handle:
+            current_detector = handle.read()
+        self.assertEqual(current_detector, pinned_detector)
 
     def test_directory_bootstrap_is_generic_and_explicit(self):
         wrapper = text(DIRECTORY_BOOTSTRAP)
@@ -117,6 +127,7 @@ class MachineProfileBootstrapContract(unittest.TestCase):
         self.assertLess(acquire_gate, pwsh_gate)
         self.assertLess(pwsh_gate, clone)
         self.assertIn('Repository acquisition completed without requiring PowerShell 7', pull)
+        self.assertIn('Workstation setup is intentionally deferred.', pull)
 
 
 if __name__ == '__main__':
