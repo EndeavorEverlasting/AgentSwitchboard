@@ -1,0 +1,16 @@
+{
+  "username": "newuser",
+  "userProfile": "C:\\Users\\newuser",
+  "computerName": "DESKTOP-1234",
+  "userDomain": "WORKGROUP",
+  "azureAdJoined": false,
+  "domainJoined": false,
+  "tenantName": null,
+  "oneDriveCommercial": null,
+  "oneDriveConsumer": null,
+  "oneDrive": null,
+  "desktopPath": "C:\\Users\\newuser\\Desktop",
+  "documentsPath": "C:\\Users\\newuser\\Documents",
+  "existingRepositoryRoot": null,
+  "tools": { "curl": true, "git": true, "powershell": true, "pwsh": true, "winget": true, "wsl": true }
+}
