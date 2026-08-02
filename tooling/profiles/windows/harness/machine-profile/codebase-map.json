@@ -1,0 +1,32 @@
+{
+  "schema": "agentswitchboard.machine-profile-codebase-map.v1",
+  "canonicalOwner": "tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1",
+  "entrypoints": [
+    "AgentSwitchboard-Technician-Bootstrap.cmd",
+    "Bootstrap-AgentSwitchboard-In-Directory.cmd",
+    "Get-AgentSwitchboard-MachineProfile.cmd"
+  ],
+  "contracts": [
+    "tooling/profiles/windows/harness/machine-profile/machine-profile.registry.json",
+    "tooling/profiles/windows/harness/machine-profile/schemas/machine-profile.schema.json"
+  ],
+  "fixtures": [
+    "tooling/profiles/windows/harness/machine-profile/fixtures/enterprise-onedrive.fixture.json",
+    "tooling/profiles/windows/harness/machine-profile/fixtures/local-windows.fixture.json"
+  ],
+  "validators": [
+    "scripts/Test-MachineProfileBootstrap.ps1",
+    "tests/test_machine_profile_bootstrap.py",
+    ".github/workflows/machine-profile-bootstrap.yml"
+  ],
+  "operatorDocumentation": "docs/workstation/machine-profile-bootstrap.md",
+  "agentSkill": ".ai/skills/machine-profile-bootstrap/SKILL.md",
+  "localArtifacts": [
+    "%LOCALAPPDATA%\\AgentSwitchboard\\machine-profile\\machine-profile.json",
+    "%LOCALAPPDATA%\\AgentSwitchboard\\machine-profile\\machine-profile.env.cmd",
+    "%LOCALAPPDATA%\\AgentSwitchboard\\machine-profile\\machine-profile.env.ps1"
+  ],
+  "collisionBoundary": "This harness owns machine-environment detection, chosen-directory delegation, and repository-root recommendation. It does not own provider credentials, agent routing, package installation, WSL repair, launcher behavior, or live certification.",
+  "privacyBoundary": "Real usernames, hostnames, tenant names, and filesystem paths remain local-only. Only synthetic fixtures may be committed.",
+  "proofCeiling": "Tracked detection logic, deterministic classification, chosen-directory delegation, path recommendation, fixture validation, and bootstrap ordering only."
+}

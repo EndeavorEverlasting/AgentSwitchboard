@@ -4,9 +4,13 @@ title AgentSwitchboard Technician Bootstrap
 
 set "BRANCH=main"
 set "EXPECTED_PARENT_SHA256=a0d603585bb66dfa9fa4c3af2179415321d667b0c8548c960d8012278968881b"
+set "PROFILE_REF=4eb21c50692568abb187923b96e2801a68215198"
 set "DEFAULT_REPO=%USERPROFILE%\dev\AgentSwitchBoard-Live"
 set "STATE_DIR=%LOCALAPPDATA%\AgentSwitchBoard\state"
 set "STATE_FILE=%STATE_DIR%\repo-path.txt"
+set "PROFILE_NAME=Get-AgentSwitchboardMachineProfile.ps1"
+set "PROFILE_TEMP=%TEMP%\AgentSwitchboard-%PROFILE_NAME%"
+set "PROFILE_JSON=%LOCALAPPDATA%\AgentSwitchboard\machine-profile\machine-profile.json"
 set "PARENT_NAME=Pull-Repo-And-Setup-AgentSwitchboard.cmd"
 set "PARENT_TEMP=%TEMP%\AgentSwitchboard-%PARENT_NAME%"
 set "ORIGINAL_NO_PAUSE=%AGENT_SWITCHBOARD_NO_PAUSE%"
@@ -18,9 +22,22 @@ if /I not "%BRANCH%"=="main" (
   exit /b 8
 )
 
+where curl.exe >nul 2>&1
+if errorlevel 1 (
+  echo [FAIL] curl.exe was not found.
+  exit /b 10
+)
+where powershell.exe >nul 2>&1
+if errorlevel 1 (
+  echo [FAIL] Windows PowerShell was not found.
+  echo        Repository acquisition cannot run the pinned machine detector or verify bootstrap content without it.
+  exit /b 9
+)
+
 for %%I in ("%~dp0.") do set "SCRIPT_DIR=%%~fI"
 set "REPO_ROOT="
 set "BINDING_SOURCE="
+set "PROFILE_ID=not-detected"
 
 rem 1. Explicit invocation argument always wins.
 if not "%~1"=="" (
@@ -63,7 +80,24 @@ if exist "%REPO_ROOT%\.git" (
 set "REPO_ROOT="
 
 :after_machine_binding
-rem 5. Recognize common healthy historical locations without depending on them.
+rem 5. Download the immutable commit-pinned detector before guessing from a
+rem username, hostname, company, redirected Desktop, or OneDrive convention.
+set "PROFILE_URL=https://raw.githubusercontent.com/EndeavorEverlasting/AgentSwitchboard/%PROFILE_REF%/tooling/profiles/windows/%PROFILE_NAME%"
+echo [INFO] Downloading commit-pinned machine-profile detector %PROFILE_REF%...
+curl.exe -fL "%PROFILE_URL%" -o "%PROFILE_TEMP%"
+if errorlevel 1 goto :profile_fallback
+
+set "PROFILE_REPO_ROOT="
+for /f "usebackq delims=" %%I in (`powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%PROFILE_TEMP%" -Mode Apply -Emit RepoRoot 2^>nul`) do set "PROFILE_REPO_ROOT=%%I"
+if defined PROFILE_REPO_ROOT (
+  set "REPO_ROOT=%PROFILE_REPO_ROOT%"
+  set "BINDING_SOURCE=profile recommendation"
+  for /f "usebackq delims=" %%I in (`powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%PROFILE_TEMP%" -Mode Detect -Emit ProfileId 2^>nul`) do set "PROFILE_ID=%%I"
+  goto :repo_selected
+)
+
+:profile_fallback
+rem 6. Retain bounded historical candidates if profile detection is unavailable.
 if exist "%USERPROFILE%\dev\AgentSwitchBoard-Live\.git" (
   set "REPO_ROOT=%USERPROFILE%\dev\AgentSwitchBoard-Live"
   set "BINDING_SOURCE=portable candidate"
@@ -85,7 +119,7 @@ if exist "%USERPROFILE%\Desktop\dev\AgentSwitchBoard\.git" (
   goto :repo_selected
 )
 
-rem 6. A machine with no checkout gets one stable path outside Desktop/OneDrive.
+rem 7. A machine with no checkout gets one stable path outside Desktop/OneDrive.
 set "REPO_ROOT=%DEFAULT_REPO%"
 set "BINDING_SOURCE=portable default"
 
@@ -96,21 +130,12 @@ set "PARENT_URL=https://raw.githubusercontent.com/EndeavorEverlasting/AgentSwitc
 echo ============================================================
 echo  AgentSwitchboard Technician Bootstrap
 echo ============================================================
-echo Repository: %REPO_ROOT%
-echo Binding:    %BINDING_SOURCE%
-echo Branch:     %BRANCH%
+echo Repository:      %REPO_ROOT%
+echo Binding:         %BINDING_SOURCE%
+echo Machine profile: %PROFILE_ID%
+echo Profile evidence:%PROFILE_JSON%
+echo Branch:          %BRANCH%
 echo.
-
-where curl.exe >nul 2>&1
-if errorlevel 1 (
-  echo [FAIL] curl.exe was not found.
-  exit /b 10
-)
-where pwsh.exe >nul 2>&1
-if errorlevel 1 (
-  echo [FAIL] PowerShell 7 ^(pwsh.exe^) was not found on PATH.
-  exit /b 23
-)
 
 rem Always execute the raw reviewed parent bootstrap, even when a checkout
 rem already exists. This avoids Git line-ending conversion changing the hash.
@@ -123,7 +148,7 @@ if errorlevel 1 (
 
 set "AS_PARENT_PATH=%PARENT_TEMP%"
 set "ACTUAL_PARENT_SHA256="
-for /f "usebackq delims=" %%H in (`pwsh.exe -NoLogo -NoProfile -Command "(Get-FileHash -Algorithm SHA256 -LiteralPath $env:AS_PARENT_PATH).Hash.ToLowerInvariant()"`) do set "ACTUAL_PARENT_SHA256=%%H"
+for /f "usebackq delims=" %%H in (`powershell.exe -NoLogo -NoProfile -Command "(Get-FileHash -Algorithm SHA256 -LiteralPath $env:AS_PARENT_PATH).Hash.ToLowerInvariant()"`) do set "ACTUAL_PARENT_SHA256=%%H"
 if not defined ACTUAL_PARENT_SHA256 (
   echo [FAIL] Could not calculate the parent bootstrap SHA-256.
   exit /b 12
@@ -159,6 +184,11 @@ if not exist "%STATE_DIR%" (
   )
 )
 
+if exist "%REPO_ROOT%\tooling\profiles\windows\%PROFILE_NAME%" (
+  powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%REPO_ROOT%\tooling\profiles\windows\%PROFILE_NAME%" -Mode Apply -Emit None -RepoRoot "%REPO_ROOT%"
+  if errorlevel 1 echo [WARN] Repository was acquired, but the final machine-profile refresh failed.
+)
+
 if not exist "%REPO_ROOT%\Repair-Technician-WSL-Ubuntu.cmd" (
   echo [FAIL] Freshly pulled repository does not contain Repair-Technician-WSL-Ubuntu.cmd.
   set "EXITCODE=21"
@@ -175,8 +205,17 @@ if not exist "%REPO_ROOT%\Run-Technician-LiveCert.cmd" (
   goto :finish
 )
 
+rem PowerShell 7 is a workstation-setup dependency, not a repository-acquisition dependency.
+where pwsh.exe >nul 2>&1
+if errorlevel 1 (
+  echo [BLOCKED] Repository acquisition and machine profiling passed.
+  echo [BLOCKED] PowerShell 7 ^(pwsh.exe^) is required before WSL repair, setup, and live certification.
+  echo [NEXT] Install PowerShell 7, reopen Command Prompt, and run this bootstrap again from anywhere.
+  set "EXITCODE=23"
+  goto :finish
+)
+
 rem A first-machine bootstrap repairs the WSL platform before workstation setup.
-rem This is intentionally idempotent on machines whose WSL/Ubuntu state is healthy.
 set "AGENT_SWITCHBOARD_NO_PAUSE=1"
 echo.
 echo ============================================================
@@ -198,7 +237,6 @@ if not "%REPAIR_EXIT%"=="0" (
   goto :finish
 )
 
-rem Only after WSL/Ubuntu is healthy do we install/verify the workstation tools.
 echo.
 echo ============================================================
 echo  WORKSTATION SETUP
@@ -212,7 +250,7 @@ if not "%SETUP_EXIT%"=="0" (
 )
 
 echo.
-echo [PASS] Repository acquisition, first-machine prerequisites, and workstation setup completed.
+echo [PASS] Repository acquisition, machine profiling, first-machine prerequisites, and workstation setup completed.
 echo [NEXT] Starting the repository-owned full technician live certificate.
 call "%REPO_ROOT%\Run-Technician-LiveCert.cmd"
 set "EXITCODE=%ERRORLEVEL%"

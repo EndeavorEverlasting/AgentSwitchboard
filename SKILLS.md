@@ -28,16 +28,17 @@ Every canonical skill must define:
 ## Resolution order
 
 1. A task explicitly names a valid skill.
-2. Multi-agent, multi-session, multi-wave, or cross-PR coordination selects `public-plan-coordination`; use `plans/plan-registry.json` rather than leaving the coordination state only in chat or a PR description.
-3. A literal request for a **Good Night, Have Fun prompt**, **GNHF prompt**, or to **compile a sprint for Good Night, Have Fun** selects `gnhf-prompt-compilation`. It must not fall through to generic sprint prose.
-4. Interactive PowerShell selects `powershell-interactive-execution`. Continuation keywords must remain in the same submitted statement as the block they continue.
-5. Supplied application, validator, agent, or tool output that must be compared with a prompt kit selects `app-output-contextualization`. It reads provided output only and preserves execution-surface separation.
-6. An operator-facing result that crosses shells, child processes, WSL, tmux, WezTerm, a TUI, a GUI, or another runtime boundary selects `end-to-end-runtime-validation`. Use `runtime-proof` for a bounded observation that does not require the complete operator path.
-7. A Windows Profile request that distinguishes default open-or-activate from an explicit separate instance, or evidence of duplicate WezTerm windows, selects `windows-profile-launch-mode-validation` before any launcher implementation or runtime claim.
-8. A request for a desktop shortcut or CMD installer that must create one genuinely separate tmux/WezTerm instance selects `tmux-new-instance-shortcut`. It preserves the one-launcher boundary and routes live acceptance through `end-to-end-runtime-validation`.
-9. `TRIGGERS.md` maps repository evidence to a skill.
-10. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
-11. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
+2. A new, repaired, relocated, or differently named Windows box whose repository path, username, company convention, hostname, redirected folders, or OneDrive layout is uncertain selects `machine-profile-bootstrap` before path selection or workstation setup.
+3. Multi-agent, multi-session, multi-wave, or cross-PR coordination selects `public-plan-coordination`; use `plans/plan-registry.json` rather than leaving the coordination state only in chat or a PR description.
+4. A literal request for a **Good Night, Have Fun prompt**, **GNHF prompt**, or to **compile a sprint for Good Night, Have Fun** selects `gnhf-prompt-compilation`. It must not fall through to generic sprint prose.
+5. Interactive PowerShell selects `powershell-interactive-execution`. Continuation keywords must remain in the same submitted statement as the block they continue.
+6. Supplied application, validator, agent, or tool output that must be compared with a prompt kit selects `app-output-contextualization`. It reads provided output only and preserves execution-surface separation.
+7. An operator-facing result that crosses shells, child processes, WSL, tmux, WezTerm, a TUI, a GUI, or another runtime boundary selects `end-to-end-runtime-validation`. Use `runtime-proof` for a bounded observation that does not require the complete operator path.
+8. A Windows Profile request that distinguishes default open-or-activate from an explicit separate instance, or evidence of duplicate WezTerm windows, selects `windows-profile-launch-mode-validation` before any launcher implementation or runtime claim.
+9. A request for a desktop shortcut or CMD installer that must create one genuinely separate tmux/WezTerm instance selects `tmux-new-instance-shortcut`. It preserves the one-launcher boundary and routes live acceptance through `end-to-end-runtime-validation`.
+10. `TRIGGERS.md` maps repository evidence to a skill.
+11. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
+12. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
 
 ## Canonical skills
 
@@ -45,6 +46,7 @@ Every canonical skill must define:
 |---|---|---|
 | [`repo-intake`](.ai/skills/repo-intake/SKILL.md) | Recover repository truth and select safe work | new repository, stale context, unknown branch state |
 | [`bounded-sprint`](.ai/skills/bounded-sprint/SKILL.md) | Execute one scoped tracked change through commit/PR | explicit implementation request, ranked sprint selected |
+| [`machine-profile-bootstrap`](.ai/skills/machine-profile-bootstrap/SKILL.md) | Detect Windows identity/path conventions and deterministically acquire AgentSwitchboard at an inferred or explicitly chosen root | new box, new username, missing repo, corporate hostname, redirected Desktop/Documents, OneDrive variation, explicit Dev directory |
 | [`public-plan-coordination`](.ai/skills/public-plan-coordination/SKILL.md) | Coordinate public machine-readable work across agents, sessions, waves, branches, and PRs | plan request, sprint map, material ownership/dependency/handoff change |
 | [`gnhf-prompt-compilation`](.ai/skills/gnhf-prompt-compilation/SKILL.md) | Compile one copy-ready bounded `gnhf` PowerShell launch command | “GNHF prompt,” “Good Night, Have Fun prompt,” compile sprint for GNHF |
 | [`powershell-interactive-execution`](.ai/skills/powershell-interactive-execution/SKILL.md) | Produce directory-first PowerShell safe for interactive submission | PowerShell snippet, console steps, interactive command |
@@ -55,6 +57,12 @@ Every canonical skill must define:
 | [`windows-profile-launch-mode-validation`](.ai/skills/windows-profile-launch-mode-validation/SKILL.md) | Distinguish default workspace convergence, explicit named new instances, and accidental duplicate WezTerm windows | launch-mode request, separate-instance request, duplicate-window evidence, tmux-session identity ambiguity |
 | [`tmux-new-instance-shortcut`](.ai/skills/tmux-new-instance-shortcut/SKILL.md) | Install and validate one owned desktop shortcut that allocates a unique tmux session and separate WezTerm process | desktop shortcut request, clickable CMD installer, one-click separate tmux instance |
 | [`app-output-contextualization`](.ai/skills/app-output-contextualization/SKILL.md) | Parse supplied output, redact it, compare it with a prompt registry, and emit compact agent instructions | app output, logs, JSON, JSONL, validator output, minimal-token routing |
+
+## Machine-profile distinction
+
+A machine profile is a local observation and path-selection artifact, not a workstation success claim. It detects username, user profile, hostname, domain or Azure AD join signals, tenant name, known-folder redirection, OneDrive roots, tool availability, existing checkout candidates, and a recommended repository root. An explicit operator path always wins. Real machine-profile output stays under `%LOCALAPPDATA%` and is never committed.
+
+`Bootstrap-AgentSwitchboard-In-Directory.cmd` is the reusable chosen-directory front door. It computes `<workspace>\AgentSwitchBoard-Live` and delegates to the canonical technician bootstrap; it does not duplicate Git, WSL, setup, or live-certification logic.
 
 ## Public plan distinction
 
