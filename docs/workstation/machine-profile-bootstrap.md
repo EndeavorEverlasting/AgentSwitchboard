@@ -19,9 +19,9 @@ The profile observes Windows username, user profile, hostname, user domain, Azur
 Repository selection is deterministic:
 
 1. explicit repo path;
-2. `AGENT_SWITCHBOARD_REPO`;
+2. `AGENT_SWITCHBOARD_REPO`, including a selected root that has not been cloned yet;
 3. verified machine binding;
-4. verified existing checkout candidate;
+4. verified existing checkout candidate whose origin can be confirmed;
 5. `%USERPROFILE%\dev\AgentSwitchBoard-Live`.
 
 OneDrive and redirected known folders are evidence used to understand the machine. They are not the default location for a new checkout. This prevents different corporate naming and redirection conventions from silently changing the canonical repository root.
@@ -46,13 +46,13 @@ A different leaf may be supplied as the second argument:
 Bootstrap-AgentSwitchboard-In-Directory.cmd "C:\path\to\Dev" AgentSwitchBoard
 ```
 
-From a machine that does not yet have the repository, download and invoke the same tracked wrapper:
+From a machine that does not yet have the repository, download the immutable reviewed wrapper and invoke it:
 
 ```cmd
-curl.exe -fL https://raw.githubusercontent.com/EndeavorEverlasting/AgentSwitchboard/main/Bootstrap-AgentSwitchboard-In-Directory.cmd -o "%TEMP%\Bootstrap-AgentSwitchboard-In-Directory.cmd" && call "%TEMP%\Bootstrap-AgentSwitchboard-In-Directory.cmd" "%USERPROFILE%\Desktop\Dev"
+curl.exe -fL https://raw.githubusercontent.com/EndeavorEverlasting/AgentSwitchboard/3951cfee26f28d55585fde39719ae3e9863b10eb/Bootstrap-AgentSwitchboard-In-Directory.cmd -o "%TEMP%\Bootstrap-AgentSwitchboard-In-Directory.cmd" && call "%TEMP%\Bootstrap-AgentSwitchboard-In-Directory.cmd" "%USERPROFILE%\Desktop\Dev"
 ```
 
-The wrapper creates the workspace directory when absent, computes the explicit repository root, and delegates to `AgentSwitchboard-Technician-Bootstrap.cmd`. It does not duplicate Git, WSL, setup, or live-certification logic.
+The wrapper creates the workspace directory when absent, computes the explicit repository root, downloads the canonical technician bootstrap from an immutable commit, verifies its exact Git blob identity, and only then executes it. It does not duplicate Git, WSL, setup, or live-certification logic.
 
 ## Bootstrap ordering
 
