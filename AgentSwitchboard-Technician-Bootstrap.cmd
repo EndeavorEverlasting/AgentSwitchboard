@@ -4,7 +4,7 @@ title AgentSwitchboard Technician Bootstrap
 
 set "BRANCH=main"
 set "EXPECTED_PARENT_SHA256=a0d603585bb66dfa9fa4c3af2179415321d667b0c8548c960d8012278968881b"
-set "EXPECTED_PROFILE_SHA256=69646d3cb6fa4fc8782efa60b72239420100f240e2eabc1dff5ed94ce70bd9ef"
+set "PROFILE_REF=e16a38d0b6bd3d70aa43fbb899395eb1dacca888"
 set "DEFAULT_REPO=%USERPROFILE%\dev\AgentSwitchBoard-Live"
 set "STATE_DIR=%LOCALAPPDATA%\AgentSwitchBoard\state"
 set "STATE_FILE=%STATE_DIR%\repo-path.txt"
@@ -30,7 +30,7 @@ if errorlevel 1 (
 where powershell.exe >nul 2>&1
 if errorlevel 1 (
   echo [FAIL] Windows PowerShell was not found.
-  echo        Repository acquisition cannot verify pinned bootstrap content without it.
+  echo        Repository acquisition cannot run the pinned machine detector or verify bootstrap content without it.
   exit /b 9
 )
 
@@ -80,23 +80,12 @@ if exist "%REPO_ROOT%\.git" (
 set "REPO_ROOT="
 
 :after_machine_binding
-rem 5. Download the pinned standalone detector before guessing from a username,
-rem hostname, company, redirected Desktop, or OneDrive convention.
-set "PROFILE_URL=https://raw.githubusercontent.com/EndeavorEverlasting/AgentSwitchboard/%BRANCH%/tooling/profiles/windows/%PROFILE_NAME%"
-echo [INFO] Downloading the pinned machine-profile detector...
+rem 5. Download the immutable commit-pinned detector before guessing from a
+rem username, hostname, company, redirected Desktop, or OneDrive convention.
+set "PROFILE_URL=https://raw.githubusercontent.com/EndeavorEverlasting/AgentSwitchboard/%PROFILE_REF%/tooling/profiles/windows/%PROFILE_NAME%"
+echo [INFO] Downloading commit-pinned machine-profile detector %PROFILE_REF%...
 curl.exe -fL "%PROFILE_URL%" -o "%PROFILE_TEMP%"
 if errorlevel 1 goto :profile_fallback
-
-set "AS_PROFILE_PATH=%PROFILE_TEMP%"
-set "ACTUAL_PROFILE_SHA256="
-for /f "usebackq delims=" %%H in (`powershell.exe -NoLogo -NoProfile -Command "(Get-FileHash -Algorithm SHA256 -LiteralPath $env:AS_PROFILE_PATH).Hash.ToLowerInvariant()"`) do set "ACTUAL_PROFILE_SHA256=%%H"
-if not defined ACTUAL_PROFILE_SHA256 goto :profile_fallback
-if /I not "%ACTUAL_PROFILE_SHA256%"=="%EXPECTED_PROFILE_SHA256%" (
-  echo [WARN] Machine-profile SHA-256 mismatch. No unverified detector was executed.
-  echo Expected: %EXPECTED_PROFILE_SHA256%
-  echo Actual:   %ACTUAL_PROFILE_SHA256%
-  goto :profile_fallback
-)
 
 set "PROFILE_REPO_ROOT="
 for /f "usebackq delims=" %%I in (`powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%PROFILE_TEMP%" -Mode Apply -Emit RepoRoot 2^>nul`) do set "PROFILE_REPO_ROOT=%%I"
