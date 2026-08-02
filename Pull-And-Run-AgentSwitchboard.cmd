@@ -171,6 +171,7 @@ if errorlevel 1 (
 
 if /I "%MODE%"=="acquire" (
   echo [PASS] Repository acquisition completed without requiring PowerShell 7.
+  echo [INFO] Workstation setup is intentionally deferred.
   set "RESULT=0"
   goto :finish
 )
