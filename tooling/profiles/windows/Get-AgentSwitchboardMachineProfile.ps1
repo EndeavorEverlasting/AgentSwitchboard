@@ -104,7 +104,7 @@ function Test-AgentSwitchboardCheckout {
 
 function Add-Candidate {
     param(
-        [Parameter(Mandatory)][System.Collections.Generic.List[object]]$List,
+        [Parameter(Mandatory)][AllowEmptyCollection()][System.Collections.Generic.List[object]]$List,
         [AllowNull()][string]$Path,
         [Parameter(Mandatory)][string]$Source,
         [switch]$SimulatedExisting
