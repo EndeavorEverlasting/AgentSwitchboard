@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import re
@@ -68,6 +69,9 @@ class MachineProfileBootstrapContract(unittest.TestCase):
             "machine-profile.env.ps1",
             "ProbeFile",
             "AllowEmptyCollection",
+            "environmentOverride",
+            "AGENT_SWITCHBOARD_REPO selected the repository root before checkout discovery",
+            "if (-not $git) { return $false }",
         ]:
             self.assertIn(token, detector)
         self.assertNotIn('ConvertFrom-Json -AsHashtable', detector)
@@ -105,7 +109,7 @@ class MachineProfileBootstrapContract(unittest.TestCase):
             current_detector = handle.read()
         self.assertEqual(current_detector, pinned_detector)
 
-    def test_directory_bootstrap_is_generic_and_explicit(self):
+    def test_directory_bootstrap_is_generic_explicit_and_immutable(self):
         wrapper = text(DIRECTORY_BOOTSTRAP)
         for token in [
             'WORKSPACE_ROOT=%~1',
@@ -113,11 +117,29 @@ class MachineProfileBootstrapContract(unittest.TestCase):
             'AgentSwitchBoard-Live',
             'AgentSwitchboard-Technician-Bootstrap.cmd',
             'call "%BOOTSTRAP_PATH%" "%REPO_ROOT%" main',
+            'EXPECTED_BOOTSTRAP_BLOB=',
+            'No downloaded bootstrap was executed.',
+            '/%BOOTSTRAP_REF%/AgentSwitchboard-Technician-Bootstrap.cmd',
         ]:
             self.assertIn(token, wrapper)
         self.assertNotIn('CheeksMcClappeth', wrapper)
         self.assertNotIn('OneDrive', wrapper)
+        self.assertNotIn('/main/AgentSwitchboard-Technician-Bootstrap.cmd', wrapper)
         self.assertIn('Usage: %~nx0 "C:\\path\\to\\Dev"', wrapper)
+
+        ref_match = re.search(r'BOOTSTRAP_REF=([a-f0-9]{40})', wrapper, flags=re.IGNORECASE)
+        blob_match = re.search(r'EXPECTED_BOOTSTRAP_BLOB=([a-f0-9]{40})', wrapper, flags=re.IGNORECASE)
+        self.assertIsNotNone(ref_match)
+        self.assertIsNotNone(blob_match)
+        pinned = subprocess.check_output(
+            ['git', 'show', f'{ref_match.group(1)}:AgentSwitchboard-Technician-Bootstrap.cmd'],
+            cwd=ROOT,
+        )
+        git_blob = hashlib.sha1(
+            b'blob ' + str(len(pinned)).encode('ascii') + b'\0' + pinned,
+            usedforsecurity=False,
+        ).hexdigest()
+        self.assertEqual(blob_match.group(1).lower(), git_blob)
 
     def test_acquire_mode_does_not_require_pwsh(self):
         pull = text(PULL)
