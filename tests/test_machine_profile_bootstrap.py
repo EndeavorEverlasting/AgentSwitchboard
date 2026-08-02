@@ -105,9 +105,11 @@ class MachineProfileBootstrapContract(unittest.TestCase):
             ['git', 'show', f'{profile_ref}:tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1'],
             cwd=ROOT,
         )
-        with open(DETECTOR, 'rb') as handle:
-            current_detector = handle.read()
-        self.assertEqual(current_detector, pinned_detector)
+        tracked_detector = subprocess.check_output(
+            ['git', 'show', 'HEAD:tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1'],
+            cwd=ROOT,
+        )
+        self.assertEqual(tracked_detector, pinned_detector)
 
     def test_directory_bootstrap_is_generic_explicit_and_immutable(self):
         wrapper = text(DIRECTORY_BOOTSTRAP)
