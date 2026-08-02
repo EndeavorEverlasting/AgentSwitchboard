@@ -2,7 +2,7 @@
 
 AgentSwitchboard must not guess a repository path from a remembered username, company, hostname, Desktop layout, or OneDrive folder name.
 
-The canonical detector is:
+## Canonical detector
 
 ```powershell
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File tooling\profiles\windows\Get-AgentSwitchboardMachineProfile.ps1 -Mode Apply
@@ -26,6 +26,36 @@ Repository selection is deterministic:
 
 OneDrive and redirected known folders are evidence used to understand the machine. They are not the default location for a new checkout. This prevents different corporate naming and redirection conventions from silently changing the canonical repository root.
 
-The technician bootstrap runs profile detection before repository acquisition using Windows PowerShell, so PowerShell 7 is no longer a prerequisite for cloning the missing repository. PowerShell 7 remains required before workstation setup and live certification.
+## Chosen workspace directory
+
+When the operator explicitly wants AgentSwitchboard beneath a particular `Dev` directory, use the repository-owned wrapper instead of composing a one-off AI command:
+
+```cmd
+Bootstrap-AgentSwitchboard-In-Directory.cmd "C:\path\to\Dev"
+```
+
+The default repository leaf is `AgentSwitchBoard-Live`, so the resulting checkout is:
+
+```text
+C:\path\to\Dev\AgentSwitchBoard-Live
+```
+
+A different leaf may be supplied as the second argument:
+
+```cmd
+Bootstrap-AgentSwitchboard-In-Directory.cmd "C:\path\to\Dev" AgentSwitchBoard
+```
+
+From a machine that does not yet have the repository, download and invoke the same tracked wrapper:
+
+```cmd
+curl.exe -fL https://raw.githubusercontent.com/EndeavorEverlasting/AgentSwitchboard/main/Bootstrap-AgentSwitchboard-In-Directory.cmd -o "%TEMP%\Bootstrap-AgentSwitchboard-In-Directory.cmd" && call "%TEMP%\Bootstrap-AgentSwitchboard-In-Directory.cmd" "%USERPROFILE%\Desktop\Dev"
+```
+
+The wrapper creates the workspace directory when absent, computes the explicit repository root, and delegates to `AgentSwitchboard-Technician-Bootstrap.cmd`. It does not duplicate Git, WSL, setup, or live-certification logic.
+
+## Bootstrap ordering
+
+The technician bootstrap runs profile detection before repository acquisition using Windows PowerShell, so PowerShell 7 is no longer a prerequisite for cloning the missing repository. PowerShell 7 remains required before WSL repair, workstation setup, and live certification.
 
 Observed usernames, hostnames, tenant names, and paths are never committed. Synthetic fixtures are the only profile identities tracked by the repository.
