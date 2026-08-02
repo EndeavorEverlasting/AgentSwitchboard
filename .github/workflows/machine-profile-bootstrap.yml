@@ -3,9 +3,16 @@ on:
   pull_request:
     paths:
       - 'AgentSwitchboard-Technician-Bootstrap.cmd'
+      - 'Bootstrap-AgentSwitchboard-In-Directory.cmd'
+      - 'Get-AgentSwitchboard-MachineProfile.cmd'
       - 'Pull-And-Run-AgentSwitchboard.cmd'
+      - '.ai/skills/machine-profile-bootstrap/SKILL.md'
+      - 'SKILLS.md'
+      - 'TRIGGERS.md'
+      - 'CODEBASE_MAP.md'
       - 'tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1'
       - 'tooling/profiles/windows/harness/machine-profile/**'
+      - 'docs/workstation/machine-profile-bootstrap.md'
       - 'scripts/Test-MachineProfileBootstrap.ps1'
       - 'tests/test_machine_profile_bootstrap.py'
       - '.github/workflows/machine-profile-bootstrap.yml'
@@ -13,9 +20,16 @@ on:
     branches: [main]
     paths:
       - 'AgentSwitchboard-Technician-Bootstrap.cmd'
+      - 'Bootstrap-AgentSwitchboard-In-Directory.cmd'
+      - 'Get-AgentSwitchboard-MachineProfile.cmd'
       - 'Pull-And-Run-AgentSwitchboard.cmd'
+      - '.ai/skills/machine-profile-bootstrap/SKILL.md'
+      - 'SKILLS.md'
+      - 'TRIGGERS.md'
+      - 'CODEBASE_MAP.md'
       - 'tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1'
       - 'tooling/profiles/windows/harness/machine-profile/**'
+      - 'docs/workstation/machine-profile-bootstrap.md'
       - 'scripts/Test-MachineProfileBootstrap.ps1'
       - 'tests/test_machine_profile_bootstrap.py'
       - '.github/workflows/machine-profile-bootstrap.yml'
