@@ -2,6 +2,7 @@
   "schema": "agentswitchboard.device-profile-registry.v1",
   "registryId": "agentswitchboard.device-profiles.v1",
   "canonicalOwner": "EndeavorEverlasting/AgentSwitchboard",
+  "environmentCapabilityPolicy": ".ai/harness/environment-capability.policy.json",
   "profiles": [
     {
       "profileId": "windows",
@@ -39,7 +40,8 @@
     {
       "profileId": "android",
       "displayName": "Android Profile",
-      "status": "repository-implemented",
+      "status": "terminal-client-implemented",
+      "capabilityRole": "terminal-client",
       "ownerRepository": "EndeavorEverlasting/AgentSwitchboard",
       "canonicalOperation": "open-or-activate",
       "frontend": "termux",
@@ -49,10 +51,21 @@
       "installedPath": "$PREFIX/bin/agentswitchboard-phone",
       "bootstrapPath": "Bootstrap-AgentSwitchboard-Termux.sh",
       "workspaceBackend": "tmux",
+      "localTmuxRole": "local-shell-only",
+      "localTmuxScope": "device-local-only",
       "continuityTransport": "ssh",
+      "crossDeviceContinuityRequiresRemoteWorkspaceHost": true,
+      "remoteShellClassificationRequired": true,
+      "nativeOrchestrationRuntime": "unimplemented",
+      "nativeAgentRuntime": "unproved",
+      "fullRuntimeClaimAllowed": false,
+      "topologies": [
+        "android-termux-local-shell",
+        "android-termux-ssh-posix-workspace-client"
+      ],
       "localEvidencePath": "${XDG_STATE_HOME:-$HOME/.local/state}/agentswitchboard/android",
       "consumers": []
     }
   ],
-  "proofCeiling": "The registry proves profile names, ownership, delegation rules, platform separation, and the tracked Android Termux/tmux/SSH implementation paths. It does not prove Termux is installed on a phone, packages were installed, SSH authentication succeeded, a local or remote tmux workspace opened or activated, Android process persistence, Windows or Linux runtime behavior, or operator acceptance."
+  "proofCeiling": "The registry proves profile names, ownership, delegation rules, platform separation, and tracked Android terminal-client implementation paths. Android is not a proved native AgentSwitchboard orchestration or agent runtime. Phone-local tmux is device-local only; cross-device continuity requires both clients to attach to the same separately classified remote workspace host and tmux server/session identity."
 }
