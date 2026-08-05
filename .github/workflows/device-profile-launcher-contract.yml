@@ -4,20 +4,26 @@ on:
   pull_request:
     paths:
       - "AGENTS.md"
+      - "SKILLS.md"
       - "CAPABILITIES.md"
       - "TRIGGERS.md"
       - "CODEBASE_MAP.md"
       - "Bootstrap-AgentSwitchboard-Termux.sh"
       - "docs/governance/**"
+      - "docs/harness/environment-capability-harness.md"
       - "docs/workstation/android-termux.md"
       - "tooling/profiles/android/**"
+      - "tooling/profiles/harness/environment-capability/**"
       - ".ai/agent-contract.json"
       - ".ai/harness/**"
       - "plans/**"
+      - "scripts/Test-EnvironmentCapabilityHarness.ps1"
       - "scripts/Test-DeviceProfileLauncherContract.ps1"
       - "scripts/Test-HarnessDoctrineContract.ps1"
+      - "tests/test_environment_capability_harness.py"
       - "tests/test_android_termux_profile.py"
       - "tests/test_device_profile_launcher_contract.py"
+      - ".github/workflows/environment-capability-harness.yml"
       - ".github/workflows/device-profile-launcher-contract.yml"
   workflow_dispatch:
 
@@ -35,12 +41,22 @@ jobs:
       - name: Parse PowerShell validators
         shell: pwsh
         run: |
-          foreach ($file in @('scripts/Test-DeviceProfileLauncherContract.ps1','scripts/Test-HarnessDoctrineContract.ps1')) {
+          foreach ($file in @(
+            'scripts/Test-EnvironmentCapabilityHarness.ps1',
+            'scripts/Test-DeviceProfileLauncherContract.ps1',
+            'scripts/Test-HarnessDoctrineContract.ps1'
+          )) {
             $tokens = $null
             $errors = $null
             [void][System.Management.Automation.Language.Parser]::ParseFile($file, [ref]$tokens, [ref]$errors)
-            if ($errors.Count) { $errors | ForEach-Object { Write-Error "${file}: $($_.Message)" }; exit 1 }
+            if ($errors.Count) {
+              $errors | ForEach-Object { Write-Error "${file}: $($_.Message)" }
+              exit 1
+            }
           }
+      - name: Run environment capability contract
+        shell: pwsh
+        run: ./scripts/Test-EnvironmentCapabilityHarness.ps1
       - name: Run device profile contract
         shell: pwsh
         run: ./scripts/Test-DeviceProfileLauncherContract.ps1
@@ -48,13 +64,17 @@ jobs:
         shell: pwsh
         run: ./scripts/Test-HarnessDoctrineContract.ps1
       - name: Run dependency-free contracts
+        shell: pwsh
         run: |
+          python tests/test_environment_capability_harness.py
           python tests/test_device_profile_launcher_contract.py
           python tests/test_android_termux_profile.py
       - name: Verify clean checkout
         shell: pwsh
         run: |
-          if ($env:GITHUB_EVENT_NAME -eq 'pull_request') { git diff --check "${{ github.event.pull_request.base.sha }}" HEAD }
+          if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
+            git diff --check "${{ github.event.pull_request.base.sha }}" HEAD
+          }
           if (git status --short) { throw 'Checkout is dirty after validation.' }
 
   linux-contracts:
@@ -71,17 +91,25 @@ jobs:
           bash -n Bootstrap-AgentSwitchboard-Termux.sh
           bash -n tooling/profiles/android/Invoke-AgentSwitchboardOpenOrActivate.sh
       - name: Run dependency-free contracts
-        run: |
-          python3 tests/test_device_profile_launcher_contract.py
-          python3 tests/test_android_termux_profile.py
-      - name: Run PowerShell contract
-        shell: pwsh
-        run: ./scripts/Test-DeviceProfileLauncherContract.ps1
-      - name: Check validator remains offline
         shell: bash
         run: |
           set -euo pipefail
-          ! grep -E 'Invoke-WebRequest|Invoke-RestMethod|Start-Process|wezterm-gui\.exe start' scripts/Test-DeviceProfileLauncherContract.ps1
+          python3 tests/test_environment_capability_harness.py
+          python3 tests/test_device_profile_launcher_contract.py
+          python3 tests/test_android_termux_profile.py
+      - name: Run PowerShell contracts
+        shell: pwsh
+        run: |
+          ./scripts/Test-EnvironmentCapabilityHarness.ps1
+          ./scripts/Test-DeviceProfileLauncherContract.ps1
+          ./scripts/Test-HarnessDoctrineContract.ps1
+      - name: Check validators remain offline
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -E 'Invoke-WebRequest|Invoke-RestMethod|Start-Process|ssh[[:space:]]|wezterm-gui\.exe start|pkg install' \
+            scripts/Test-EnvironmentCapabilityHarness.ps1 \
+            tests/test_environment_capability_harness.py
       - name: Full PR-range hygiene
         shell: bash
         run: |
