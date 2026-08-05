@@ -86,13 +86,37 @@ class TestTechnicianAgentSwitchboardReady(unittest.TestCase):
         self.assertIn("AgentSwitchboard Technician Ready.lnk", text)
         self.assertIn("Run Technician Live Cert.lnk", text)
 
-    def test_exact_head_validation_is_file_owned_and_truthful(self) -> None:
+    def test_exact_head_validation_is_file_owned_truthful_and_complete(self) -> None:
         text = read(EXACT_PS1)
-        for token in ("FETCH_HEAD", "worktree add --detach", "verifiedHead = $fetchedHead", "verifiedHead = $actualHead", "LastWriteTimeUtc -ge $p00StartedUtc", "tests.test_technician_agentswitchboard_ready", "Test-TechnicianAgentSwitchboardReady.ps1", "exact-head-validation.json", "Verified HEAD: $actualHead"):
+        for token in (
+            "FETCH_HEAD",
+            "worktree add --detach",
+            "verifiedHead = $fetchedHead",
+            "verifiedHead = $actualHead",
+            "LastWriteTimeUtc -ge $p00StartedUtc",
+            "tests.test_technician_agentswitchboard_ready",
+            "Test-TechnicianAgentSwitchboardReady.ps1",
+            "exact-head-validation.json",
+            "Verified HEAD:      $actualHead",
+            "[switch]$RunReadiness",
+            "Exact-head AgentSwitchboard readiness",
+            "Technician-AgentSwitchboard-Ready.cmd",
+            "LastWriteTimeUtc -ge $readinessStartedUtc",
+            "readiness.startupReadiness.stateObserved",
+            "readiness.commands.AgentSwitchboard.shim",
+            "readinessArtifact",
+            "exact-head-cross-shell-p00-and-agentswitchboard-readiness",
+        ):
             self.assertIn(token, text, token)
         for forbidden in (r"\bgit(?:\.exe)?\s+(?:-C\s+\S+\s+)?reset\b", r"\bgit(?:\.exe)?\s+(?:-C\s+\S+\s+)?clean\b", r"\bgit(?:\.exe)?\s+(?:-C\s+\S+\s+)?stash\b", r"push\s+--force"):
             self.assertIsNone(re.search(forbidden, text, re.IGNORECASE), forbidden)
-        self.assertIn("Invoke-TechnicianExactHeadValidation.ps1", read(EXACT_CMD))
+
+        cmd = read(EXACT_CMD)
+        self.assertIn("Invoke-TechnicianExactHeadValidation.ps1", cmd)
+        self.assertIn('set "FIELD_MODE=%~4"', cmd)
+        self.assertIn('if /I not "%FIELD_MODE%"=="validate" if /I not "%FIELD_MODE%"=="ready"', cmd)
+        self.assertIn("-RunReadiness", cmd)
+        self.assertIn("Ready mode requires an explicit expected commit SHA", cmd)
 
     def test_no_prompt_or_transcript_markers_are_operator_commands(self) -> None:
         for path in (READY_CMD, EXACT_CMD, READY_ENGINE, EXACT_PS1):
