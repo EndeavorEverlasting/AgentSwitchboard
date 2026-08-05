@@ -1,6 +1,6 @@
 # AgentSwitchboard Codebase Map
 
-Load only the smallest surface required by the selected skill, workflow, public plan, or repository-family profile.
+Load only the smallest surface required by the selected skill, workflow, public plan, environment topology, or repository-family profile.
 
 ## Root coordination
 
@@ -9,7 +9,30 @@ Load only the smallest surface required by the selected skill, workflow, public 
 - `SKILLS.md`, `CAPABILITIES.md`, and `TRIGGERS.md` — procedure, capability, and deterministic routing catalogs.
 - `.ai/agent-contract.json` — canonical contract version, entrypoints, and proof vocabulary.
 - `plans/plan-registry.json` — public machine-readable coordination index.
-- `AgentSwitchboard.cmd` — readiness-first startup launcher.
+- `AgentSwitchboard.cmd` — readiness-first Windows startup launcher.
+
+## Environment capability and continuity harness
+
+Use this surface before any cross-platform installer, launcher, auto-configuration, phone-access, SSH, remote-tmux, WSL/Linux/Windows, Termux, or “any environment” claim.
+
+- `docs/governance/environment-capability-contract.md` — five-layer doctrine, role ceilings, status vocabulary, host-scoped tmux identity, remote preflight, and false-proof rejection.
+- `.ai/harness/environment-capability.policy.json` — machine-readable invariants and Android capability ceiling.
+- `tooling/profiles/harness/environment-capability/codebase-map.json` — focused harness map.
+- `tooling/profiles/harness/environment-capability/environment-capability.registry.json` — registered Windows and Android topologies.
+- `tooling/profiles/harness/environment-capability/schemas/environment-capability.schema.json` — topology registry schema.
+- `tooling/profiles/harness/environment-capability/artifact-registry.json` — local observation, selection, preflight, certification, report, and handoff evidence.
+- `tooling/profiles/harness/environment-capability/workflows/` — read-only intake, topology selection, and bounded certification workflows.
+- `tooling/profiles/harness/environment-capability/fixtures/` — valid Windows/Android roles and invalid full-runtime, cross-host tmux-name, and unclassified-SSH claims.
+- `.ai/skills/environment-capability-routing/SKILL.md` — canonical procedure.
+- `scripts/Test-EnvironmentCapabilityHarness.ps1` and `tests/test_environment_capability_harness.py` — deterministic Windows/Linux contracts.
+- `docs/harness/environment-capability-harness.md` — operator guide and corrective Android analysis.
+- `.github/workflows/environment-capability-harness.yml` — exact-head proof gate.
+
+The required layer chain is:
+
+`frontend -> transport -> workspace host -> orchestration runtime -> agent runtime`
+
+The Android implementation is `terminal-client-implemented`. Phone-local tmux is `local-shell-only` and `device-local-only`; cross-device continuity requires both clients to attach to the same separately classified workspace host and tmux server/session identity. Native Android AgentSwitchboard orchestration is unimplemented and agent/provider runtime is unproved.
 
 ## Public plans
 
@@ -30,7 +53,7 @@ Plans coordinate work; branches and pull requests transport and review implement
 - `.github/workflows/agent-documentation-contract.yml` — Windows and Linux parser, doctrine, skill, documentation, diff-hygiene, and clean-checkout gate.
 - `.ai/agent-contract.json` — canonical entrypoint, generated-evidence policy, and `end-to-end-runtime` proof level.
 
-This skill is selected when success depends on the exact command an operator runs through one or more runtime boundaries. It requires child stdout and stderr, exit identity, effective-state readback, user-visible observation, and idempotence or rollback proof when applicable. Static inspection, passing CI, configuration intent, process creation, or a parent exit code cannot establish end-to-end runtime success.
+Environment topology selection precedes end-to-end execution. This skill requires child stdout and stderr, exit identity, effective-state readback, user-visible observation, and idempotence or rollback proof when applicable. Static inspection, passing CI, configuration intent, process creation, SSH acknowledgement, repository presence, or a parent exit code cannot establish end-to-end runtime success.
 
 ## Offline app harness observer
 
@@ -74,16 +97,18 @@ The initial topology is contract-only. It does not prove live emission, observat
 
 ## Device profile launcher contract
 
-- `docs/governance/device-profile-launcher-contract.md` — canonical profile ownership, open-or-activate, delegation, certification, and proof doctrine.
-- `.ai/harness/device-profile-launcher.policy.json` — machine-readable one-owner and idempotence rules.
+- `docs/governance/device-profile-launcher-contract.md` — canonical profile ownership, environment topology, open-or-activate, delegation, certification, and proof doctrine.
+- `.ai/harness/device-profile-launcher.policy.json` — machine-readable one-owner, Android role ceiling, remote preflight, and host-scoped idempotence rules.
 - `.ai/harness/device-profile-registry.json` — Windows, Linux, and Android profile registry.
-- `.ai/harness/schemas/device-profile-registry.schema.json` — closed registry envelope.
+- `.ai/harness/schemas/device-profile-registry.schema.json` — capability-aware registry schema.
 - `.ai/harness/fixtures/device-profiles/` — valid SysAdminSuite delegation and invalid competing-owner fixtures.
-- `scripts/Test-DeviceProfileLauncherContract.ps1` — focused ownership and action-commitment validator.
+- `scripts/Test-DeviceProfileLauncherContract.ps1` — focused ownership, environment-boundary, and action-commitment validator.
 - `tests/test_device_profile_launcher_contract.py` — dependency-free profile and delegation checks.
 - `.github/workflows/device-profile-launcher-contract.yml` — Windows and Linux proof gate.
 
-The Windows Profile is WezTerm-backed and contract-only. Its future canonical source is `tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1`; the installed contract path is `%LOCALAPPDATA%\AgentSwitchboard\profiles\windows\Invoke-AgentSwitchboardOpenOrActivate.ps1`. SysAdminSuite consumes and certifies it through a separate PR. Linux and Android remain separate profile implementations.
+The Windows Profile is WezTerm-backed and contract-only. Its canonical source is `tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1`; SysAdminSuite consumes and certifies it through a separate PR.
+
+The Android profile is a Termux terminal client. `Bootstrap-AgentSwitchboard-Termux.sh` installs only the terminal-client floor. `tooling/profiles/android/Invoke-AgentSwitchboardOpenOrActivate.sh` exposes `status`, `local-shell`, and a preflighted `remote` POSIX/tmux adapter. It does not provide a native Android GNHF, coding-agent, provider, or authentication runtime.
 
 ## Windows Profile launch-mode harness
 
@@ -101,7 +126,7 @@ The Windows Profile is WezTerm-backed and contract-only. Its future canonical so
 - `docs/harness/windows-profile-launch-mode-harness.md` — operator-facing working state, gaps, workflows, artifact policy, and proof ceiling.
 - `.github/workflows/windows-profile-launch-mode-harness.yml` — Windows and Linux exact-head proof gate.
 
-The default mode converges one workspace identity to one visible window. An explicit named new instance requires exactly one additional top-level WezTerm window, a distinct frontend process, and a unique tmux session; repeating that instance ID must activate it. Two windows attached to the same tmux session are duplicate views, not separate instances. This harness does not implement or execute the launcher.
+The default mode converges one workspace identity to one visible window on one workspace host. An explicit named new instance requires exactly one additional top-level WezTerm window, a distinct frontend process, and a unique tmux session; repeating that instance ID must activate it. Two windows attached to the same tmux server/session are duplicate views, not separate instances. This harness does not prove live launcher behavior.
 
 ## tmux new-instance desktop shortcut harness
 
@@ -109,11 +134,11 @@ The focused implementation map is `tooling/profiles/windows/harness/tmux-new-ins
 
 ## Repository-family harness
 
-- `.ai/harness/manifest.json` — central paths, proof vocabulary, and evidence policy.
+- `.ai/harness/manifest.json` — central paths, proof vocabulary, environment topology, and evidence policy.
 - `.ai/harness/repository-family.registry.json` — supported repository profiles.
 - `.ai/harness/artifact-registry.json` — artifact roles and proof ceilings.
 - `.ai/harness/workflows/repository-family-intake.workflow.json` — read-only clone intake.
-- `.ai/harness/schemas/` — run context, status, handoff, app, event, device-profile, and app-output schemas.
+- `.ai/harness/schemas/` — run context, status, handoff, app, event, device-profile, environment-capability, and app-output schemas.
 - `scripts/Get-RepositoryFamilyHarnessStatus.ps1` — read-only local probe.
 - `scripts/Test-RepositoryFamilyHarness.ps1` — registry and safety validator.
 - `.github/workflows/repository-family-harness.yml` — family proof gate.
@@ -122,6 +147,7 @@ The focused implementation map is `tooling/profiles/windows/harness/tmux-new-ins
 
 - `.ai/skills/repo-intake/SKILL.md`
 - `.ai/skills/bounded-sprint/SKILL.md`
+- `.ai/skills/environment-capability-routing/SKILL.md`
 - `.ai/skills/public-plan-coordination/SKILL.md`
 - `.ai/skills/gnhf-prompt-compilation/SKILL.md`
 - `.ai/skills/powershell-interactive-execution/SKILL.md`
@@ -134,19 +160,22 @@ The focused implementation map is `tooling/profiles/windows/harness/tmux-new-ins
 
 ## GNHF control plane
 
-- `tooling/gnhf/` — distribution, routing, bounded launch, schemas, fixtures, and evidence.
+- `tooling/gnhf/` — Windows-first distribution, routing, bounded launch, schemas, fixtures, and evidence.
 - `tooling/gnhf/Gnhf.Capability.ps1` — capability matrix.
 - `tooling/gnhf/Install-ProviderRoutedGnhf.ps1` — transactional installer.
 - `tooling/gnhf/Start-ProviderRoutedGnhfSprint.ps1` — provider-preflight and bounded launch.
 - `tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1` — read-only agent inventory.
-- `Repair-ProviderRoutedGnhf.cmd`, `Setup-AgentSwitchboard.cmd`, and `AgentSwitchboard.cmd` — operator front doors.
-- `%LOCALAPPDATA%\AgentSwitchboard\` — installed state and logs; never tracked authority.
+- `Repair-ProviderRoutedGnhf.cmd`, `Setup-AgentSwitchboard.cmd`, and `AgentSwitchboard.cmd` — Windows operator front doors.
+- `%LOCALAPPDATA%\AgentSwitchboard\` — installed Windows state and logs; never tracked authority.
+
+Repository presence on Android, Linux, or a remote host does not imply this control plane has been ported or configured there.
 
 ## Workstation, governance, and adoption
 
-- `tooling/wsl/` and `docs/workstation/` — Windows, WSL, tmux, and workstation operations.
+- `tooling/wsl/` and `docs/workstation/` — Windows, WSL, tmux, Android terminal-client, and workstation operations.
 - `docs/governance/harness-doctrine.md` — commit-required doctrine.
 - `docs/governance/runtime-event-contract.md` — runtime event doctrine.
+- `docs/governance/environment-capability-contract.md` — cross-environment role and continuity doctrine.
 - `docs/governance/device-profile-launcher-contract.md` — device-profile launcher doctrine.
 - `docs/governance/repository-family.md` and `docs/governance/repository-family-harness.md` — family governance.
 - `templates/repository-agent-contract/` — reviewable child adoption template.
@@ -170,6 +199,7 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 ## Validation
 
 - `scripts/Test-HarnessDoctrineContract.ps1`
+- `scripts/Test-EnvironmentCapabilityHarness.ps1`
 - `scripts/Test-EndToEndRuntimeValidationSkill.ps1`
 - `scripts/Test-RuntimeEventContract.ps1`
 - `scripts/Test-DeviceProfileLauncherContract.ps1`
@@ -185,6 +215,6 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 
 ## Generated evidence and proof boundary
 
-Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, Windows launch-mode, tmux shortcut, and Pi evidence is untracked. End-to-end runtime evidence is also local-operational and untracked unless deliberately minimized and reviewed as a public fixture. Evidence may contain local paths, versions, Git state, minimized operational payloads, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
+Generated family, startup, app-harness, app-output-context, runtime-event, environment-capability, device-profile, Windows launch-mode, tmux shortcut, and Pi evidence is untracked. End-to-end runtime evidence is also local-operational and untracked unless deliberately minimized and reviewed as a public fixture. Evidence may contain local paths, versions, Git state, minimized operational payloads, remote host classification, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
 
-Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, launch-mode classification, shortcut allocation, or workflow semantics. Neither proves application runtime, an exact operator path, an open-or-activate result, a distinct WezTerm instance on the operator workstation, duplicate prevention, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, model quality, external target behavior, deployment, or operator acceptance.
+Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, topology classification, false-proof rejection, contextualization, launch-mode classification, shortcut allocation, or workflow semantics. Neither proves application runtime, an exact operator path, a phone installation, remote SSH compatibility, tmux attachment, an open-or-activate result, a distinct WezTerm instance on the operator workstation, duplicate prevention, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, model quality, external target behavior, deployment, or operator acceptance.
