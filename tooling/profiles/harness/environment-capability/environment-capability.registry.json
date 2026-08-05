@@ -1,0 +1,139 @@
+{
+  "schema": "agentswitchboard.environment-capability-registry.v1",
+  "registryId": "agentswitchboard.environment-capability.topologies.v1",
+  "canonicalOwner": "EndeavorEverlasting/AgentSwitchboard",
+  "policy": ".ai/harness/environment-capability.policy.json",
+  "topologies": [
+    {
+      "topologyId": "windows-wezterm-wsl-control-plane",
+      "displayName": "Windows WezTerm and WSL control plane",
+      "implementationStatus": "full-runtime-implemented",
+      "implementedRoleCeiling": "full-runtime-host",
+      "frontend": {
+        "hostClass": "windows",
+        "implementation": "wezterm"
+      },
+      "transport": {
+        "kind": "local-process-boundary"
+      },
+      "workspaceHost": {
+        "hostClass": "wsl-linux",
+        "tmuxRequired": true,
+        "repositoryRequired": true
+      },
+      "orchestrationRuntime": {
+        "hostClass": "windows",
+        "requiredCommands": [
+          "pwsh",
+          "wsl.exe"
+        ],
+        "repositoryOwnedEntrypoints": [
+          "AgentSwitchboard.cmd",
+          "tooling/gnhf/Setup-AgentSwitchboard.ps1"
+        ]
+      },
+      "agentRuntime": {
+        "hostClass": "profile-defined",
+        "requiresBoundedProbe": true,
+        "authenticationSeparate": true
+      },
+      "runtimeCertificationRequired": true
+    },
+    {
+      "topologyId": "android-termux-local-shell",
+      "displayName": "Android Termux local shell",
+      "implementationStatus": "terminal-client-implemented",
+      "implementedRoleCeiling": "local-shell-only",
+      "frontend": {
+        "hostClass": "android-termux",
+        "implementation": "termux"
+      },
+      "transport": {
+        "kind": "local-process-boundary"
+      },
+      "workspaceHost": {
+        "hostClass": "android-termux",
+        "tmuxRequired": true,
+        "repositoryRequired": false,
+        "continuityScope": "device-local-only"
+      },
+      "orchestrationRuntime": {
+        "hostClass": null,
+        "status": "unimplemented"
+      },
+      "agentRuntime": {
+        "hostClass": null,
+        "status": "unproved"
+      },
+      "runtimeCertificationRequired": true,
+      "forbiddenClaims": [
+        "cross-device-continuity",
+        "windows-workspace-resume",
+        "full-runtime-host"
+      ]
+    },
+    {
+      "topologyId": "android-termux-ssh-posix-workspace-client",
+      "displayName": "Android Termux client to a classified POSIX tmux workspace host",
+      "implementationStatus": "terminal-client-implemented",
+      "implementedRoleCeiling": "terminal-client",
+      "frontend": {
+        "hostClass": "android-termux",
+        "implementation": "termux"
+      },
+      "transport": {
+        "kind": "ssh",
+        "authenticationSeparate": true
+      },
+      "workspaceHost": {
+        "hostClass": "posix-remote",
+        "shellClassMustBeObserved": true,
+        "tmuxRequired": true,
+        "repositoryRequiredForAgentSwitchboardClaim": true,
+        "preflightRequired": true
+      },
+      "orchestrationRuntime": {
+        "hostClass": "remote-profile-defined",
+        "status": "must-be-observed"
+      },
+      "agentRuntime": {
+        "hostClass": "remote-profile-defined",
+        "status": "must-be-observed",
+        "authenticationSeparate": true
+      },
+      "runtimeCertificationRequired": true,
+      "forbiddenClaims": [
+        "native-android-orchestration-runtime",
+        "remote-windows-shell-compatible",
+        "full-runtime-host"
+      ]
+    },
+    {
+      "topologyId": "android-native-agentswitchboard-full-runtime",
+      "displayName": "Native Android AgentSwitchboard full runtime",
+      "implementationStatus": "reserved",
+      "implementedRoleCeiling": "unsupported",
+      "frontend": {
+        "hostClass": "android-termux",
+        "implementation": "termux"
+      },
+      "transport": {
+        "kind": "local-process-boundary"
+      },
+      "workspaceHost": {
+        "hostClass": "android-termux"
+      },
+      "orchestrationRuntime": {
+        "hostClass": "android-termux",
+        "status": "unimplemented"
+      },
+      "agentRuntime": {
+        "hostClass": "android-termux",
+        "status": "unproved"
+      },
+      "runtimeCertificationRequired": true,
+      "blockedReason": "The current Windows-first PowerShell, GNHF, provider, worktree, and live-certification chain has not been ported or certified for Termux."
+    }
+  ],
+  "proofCeiling": "Registered topology shape, role ceilings, prerequisites, and forbidden claim boundaries only. No specific environment or runtime is proved by registry presence."
+}
