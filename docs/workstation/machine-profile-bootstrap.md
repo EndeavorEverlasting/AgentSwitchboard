@@ -1,12 +1,12 @@
 # Machine-profile bootstrap
 
-AgentSwitchboard must not guess a repository path from a remembered username, hostname, Desktop layout, OneDrive label, or another machine's checkout.
+AgentSwitchboard must not guess a repository path from a remembered username, company, hostname, Desktop layout, OneDrive folder name, or another machine's checkout.
 
-## Windows environment roles
+## Supported Windows environment roles
 
-The focused harness tracks four roles: `personal-windows-laptop`, `desktop-workstation`, `admin-box-1`, and `admin-box-2`. Role identity is explicit or comes from a local binding. It is never inferred from a username, hostname, tenant label, or path. Machines remain distinct roles even when roots match.
+The focused operational harness recognizes `personal-windows-laptop`, `desktop-workstation`, `admin-box-1`, and `admin-box-2`. Role identity is explicit or comes from a local machine binding. It is never inferred from a username, hostname substring, tenant label, or path. The desktop workstation and admin boxes remain distinct roles even when two machines share a checkout-root convention.
 
-The personal-laptop role supports `%USERPROFILE%\Desktop\Dev` with repository leaf `AgentSwitchBoard-Live`; the resolved absolute path stays local-only. Desktop and admin roles require an explicit path, `AGENT_SWITCHBOARD_REPO`, verified binding, or verified checkout.
+The personal-laptop role supports an explicit `%USERPROFILE%\Desktop\Dev` workspace with repository leaf `AgentSwitchBoard-Live`; the resolved username and absolute path remain local-only. Desktop and admin roles require an explicit path, `AGENT_SWITCHBOARD_REPO`, verified machine binding, or verified existing checkout.
 
 ## Canonical detector
 
@@ -14,36 +14,81 @@ The personal-laptop role supports `%USERPROFILE%\Desktop\Dev` with repository le
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File tooling\profiles\windows\Get-AgentSwitchboardMachineProfile.ps1 -Mode Apply
 ```
 
-Local evidence is written beneath `%LOCALAPPDATA%\AgentSwitchboard\machine-profile` as `machine-profile.json`, `machine-profile.env.cmd`, and `machine-profile.env.ps1`.
+It records local-only evidence under `%LOCALAPPDATA%\AgentSwitchboard\machine-profile`:
 
-Resolution precedence is explicit path, `AGENT_SWITCHBOARD_REPO`, verified binding, verified checkout, then detector fallback. Redirected folders and OneDrive are evidence, not authority to invent a root.
+- `machine-profile.json`
+- `machine-profile.env.cmd`
+- `machine-profile.env.ps1`
+
+The profile observes Windows username, user profile, hostname, user domain, Azure AD/domain join signals, tenant name, known Desktop/Documents locations, commercial and consumer OneDrive roots, available tools, existing checkout candidates, and the recommended repository root.
+
+Repository selection is deterministic:
+
+1. explicit repo path;
+2. `AGENT_SWITCHBOARD_REPO`, including a selected root that has not been cloned yet;
+3. verified machine binding;
+4. verified existing checkout candidate whose origin can be confirmed;
+5. `%USERPROFILE%\dev\AgentSwitchBoard-Live`.
+
+OneDrive and redirected known folders are evidence used to understand the machine. They are not the default location for a new checkout. This prevents different corporate naming and redirection conventions from silently changing the canonical repository root.
 
 ## Operational harness
 
-Read `tooling/profiles/windows/harness/machine-profile/manifest.json`, `codebase-map.json`, `environment-role.registry.json`, `known-traps.registry.json`, and `.ai/skills/machine-profile-bootstrap/SKILL.md`.
+Read these focused files before issuing path-sensitive commands:
+
+- `tooling/profiles/windows/harness/machine-profile/manifest.json`
+- `tooling/profiles/windows/harness/machine-profile/codebase-map.json`
+- `tooling/profiles/windows/harness/machine-profile/environment-role.registry.json`
+- `tooling/profiles/windows/harness/machine-profile/known-traps.registry.json`
+- `tooling/profiles/windows/harness/machine-profile/workflows/workflow-specs.json`
+- `.ai/skills/machine-profile-bootstrap/SKILL.md`
+
+Generate the operator status artifacts and run completeness validation:
 
 ```cmd
 Get-MachineProfileHarnessStatus.cmd
 Test-MachineProfileHarness.cmd
 ```
 
-The pre-commit hook is opt-in and never installed implicitly:
+The pre-commit hook is opt-in and is never installed implicitly:
 
 ```powershell
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File tooling\profiles\windows\hooks\Invoke-MachineProfileHarnessPreCommit.ps1
 ```
 
-## Chosen workspace
+## Chosen workspace directory
+
+When the operator explicitly wants AgentSwitchboard beneath a particular `Dev` directory, use the repository-owned wrapper instead of composing a one-off AI command:
 
 ```cmd
 Bootstrap-AgentSwitchboard-In-Directory.cmd "C:\path\to\Dev"
 ```
 
-## Failure ordering
+The default repository leaf is `AgentSwitchBoard-Live`, so the resulting checkout is:
+
+```text
+C:\path\to\Dev\AgentSwitchBoard-Live
+```
+
+A different leaf may be supplied as the second argument:
+
+```cmd
+Bootstrap-AgentSwitchboard-In-Directory.cmd "C:\path\to\Dev" AgentSwitchBoard
+```
+
+From a machine that does not yet have the repository, download the immutable reviewed wrapper and invoke it:
+
+```cmd
+curl.exe -fL https://raw.githubusercontent.com/EndeavorEverlasting/AgentSwitchboard/3951cfee26f28d55585fde39719ae3e9863b10eb/Bootstrap-AgentSwitchboard-In-Directory.cmd -o "%TEMP%\Bootstrap-AgentSwitchboard-In-Directory.cmd" && call "%TEMP%\Bootstrap-AgentSwitchboard-In-Directory.cmd" "%USERPROFILE%\Desktop\Dev"
+```
+
+The wrapper creates the workspace directory when absent, computes the explicit repository root, downloads the canonical technician bootstrap from an immutable commit, verifies its exact Git blob identity, and only then executes it. It does not duplicate Git, WSL, setup, or live-certification logic.
+
+## Failure ordering and shell discipline
 
 Repository identity and path precede PowerShell, WSL repair, setup, and live certification. A failed prerequisite blocks every downstream stage.
 
-In cmd.exe, preserve the owning exit immediately:
+In cmd.exe, capture the owning exit code immediately:
 
 ```cmd
 call ".\Repair-Technician-WSL-Ubuntu.cmd"
@@ -51,8 +96,22 @@ set "WSL_RC=%ERRORLEVEL%"
 echo WSL_REPAIR_EXIT=%WSL_RC%
 ```
 
-PowerShell NUL removal must use `.Replace(([char]0).ToString(), [string]::Empty)`, not the ambiguous char/char overload.
+Every operator block must name its shell. Do not patch a candidate checkout with an untracked one-liner and then invoke a pull wrapper over it. Commit and push the repair on an isolated branch, fetch without force, verify the exact SHA, and then execute.
+
+PowerShell 7 NUL removal uses the explicit string overload:
+
+```powershell
+.Replace(([char]0).ToString(), [string]::Empty)
+```
+
+The ambiguous `.Replace([char]0, '')` call binds to the char/char overload and can fail.
+
+## Bootstrap ordering
+
+The technician bootstrap runs profile detection before repository acquisition using Windows PowerShell, so PowerShell 7 is no longer a prerequisite for cloning the missing repository. PowerShell 7 remains required before WSL repair, workstation setup, and live certification.
+
+Observed usernames, hostnames, tenant names, role assignments, and resolved paths are never committed. Synthetic fixtures, role IDs, and environment-variable patterns are the only tracked identities.
 
 ## Proof boundary
 
-Harness validation proves component completeness, role routing, local-only path policy, workflows, reports, and deterministic checks. It does not prove WSL health, package installation, launcher behavior, authentication, provider response, or a visible coding environment.
+Harness validation proves component completeness, explicit role routing, local-only path policy, workflow shape, operator-report rendering, and deterministic checks. It does not prove WSL health, package installation, launcher behavior, authentication, provider response, or a visible working coding environment.
