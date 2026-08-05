@@ -22,9 +22,9 @@
     {
       "workflowId": "machine-profile-handoff",
       "trigger": "Sprint end, review boundary, reboot boundary, runtime stop, or chat transfer.",
-      "requiredFields": ["repo", "branch", "PR or sprint", "lane", "owned scope", "forbidden scope", "environmentRoleId", "repositoryRootSource", "changes", "files", "artifacts", "validation", "skips", "gaps", "risks", "important paths", "git state", "proof ceiling", "exact next command"],
-      "steps": ["Resolve branch and HEAD from Git.", "Name root source without committing private resolved paths.", "Order next steps by dependency and owner.", "Make the first command non-destructive, exact-ref-verifying, validator-running, artifact-resolving, and exit-preserving."],
-      "outputs": ["operator report", "local handoff", "exact next command"]
+      "requiredFields": ["repo", "branch", "PR or sprint", "lane", "owned scope", "forbidden scope", "environmentRoleId", "repositoryRootSource", "changes", "files", "artifacts", "validation", "skips", "gaps", "risks", "important paths", "git state", "proof ceiling", "next action owner", "next action dependency", "exact next command"],
+      "steps": ["Resolve branch and HEAD from Git.", "Name root source without committing private resolved paths.", "Order next steps by dependency and owner.", "Make the first command non-destructive, location-independent, exact-ref-verifying, validator-running, artifact-resolving, and exit-preserving.", "Do not emit a bare repo-relative command when the caller may remain outside the checkout.", "After a proof has passed, advance the next unproven review, merge, protected-runtime, or deployment gate instead of rerunning the same proof."],
+      "outputs": ["operator report", "local handoff", "next action owner", "next action dependency", "exact next command"]
     }
   ]
 }
