@@ -72,13 +72,18 @@ jobs:
         run: |
           ./scripts/Test-HarnessDoctrineContract.ps1
           ./scripts/Test-AgentDocumentationContract.ps1
-      - name: Run dependency-free contracts
+      - name: Python environment capability contract
         shell: pwsh
-        run: |
-          python tests/test_environment_capability_harness.py
-          python tests/test_environment_capability_template.py
-          python tests/test_android_termux_profile.py
-          python tests/test_device_profile_launcher_contract.py
+        run: python tests/test_environment_capability_harness.py
+      - name: Python template inheritance contract
+        shell: pwsh
+        run: python tests/test_environment_capability_template.py
+      - name: Python Android terminal-client contract
+        shell: pwsh
+        run: python tests/test_android_termux_profile.py
+      - name: Python device profile contract
+        shell: pwsh
+        run: python tests/test_device_profile_launcher_contract.py
       - name: Verify PR-range hygiene and clean checkout
         shell: pwsh
         run: |
@@ -100,14 +105,18 @@ jobs:
           set -euo pipefail
           bash -n Bootstrap-AgentSwitchboard-Termux.sh
           bash -n tooling/profiles/android/Invoke-AgentSwitchboardOpenOrActivate.sh
-      - name: Run dependency-free contracts
+      - name: Python environment capability contract
         shell: bash
-        run: |
-          set -euo pipefail
-          python3 tests/test_environment_capability_harness.py
-          python3 tests/test_environment_capability_template.py
-          python3 tests/test_android_termux_profile.py
-          python3 tests/test_device_profile_launcher_contract.py
+        run: python3 tests/test_environment_capability_harness.py
+      - name: Python template inheritance contract
+        shell: bash
+        run: python3 tests/test_environment_capability_template.py
+      - name: Python Android terminal-client contract
+        shell: bash
+        run: python3 tests/test_android_termux_profile.py
+      - name: Python device profile contract
+        shell: bash
+        run: python3 tests/test_device_profile_launcher_contract.py
       - name: Run PowerShell contracts
         shell: pwsh
         run: |
