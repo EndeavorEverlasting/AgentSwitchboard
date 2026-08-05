@@ -33,7 +33,8 @@ $result = [ordered]@{
     source = $null
     shimDefinition = $null
     targetDistribution = if ($CommandName -in @('tmux', 'agy', 'opencode')) { 'Ubuntu' } else { $null }
-    versionOutput = $null
+    probe = $null
+    output = $null
     exitCode = 1
     passed = $false
     error = $null
@@ -49,18 +50,36 @@ try {
 
     $command = Get-Command $CommandName -ErrorAction Stop
     $result.source = $command.Source
-    if ($command.Source -and $command.Source.EndsWith('.cmd', [System.StringComparison]::OrdinalIgnoreCase)) {
+    if ($command.Source -and $command.Source.EndsWith('.cmd', [StringComparison]::OrdinalIgnoreCase)) {
         $result.shimDefinition = (Get-Content -LiteralPath $command.Source -Raw).Trim()
     }
 
-    $argument = if ($CommandName -eq 'tmux') { '-V' } else { '--version' }
-    $output = (& $command.Source $argument 2>&1 | Out-String).Trim()
-    $nativeExit = $LASTEXITCODE
-    $result.versionOutput = $output
-    $result.exitCode = $nativeExit
-    $result.passed = ($nativeExit -eq 0 -and -not [string]::IsNullOrWhiteSpace($output))
-    if (-not $result.passed) {
-        $result.error = "Version probe failed or returned empty output."
+    if ($CommandName -eq 'AgentSwitchboard') {
+        $result.probe = '-ListAgents'
+        $output = (& cmd.exe /d /c "call `"$($command.Source)`" -ListAgents" 2>&1 | Out-String).Trim()
+        $nativeExit = $LASTEXITCODE
+        $result.output = $output
+        $result.exitCode = $nativeExit
+        $result.passed = (
+            $nativeExit -eq 0 -and
+            -not [string]::IsNullOrWhiteSpace($output) -and
+            $output -notmatch '(?im)overall:\s*(not-configured|blocked)'
+        )
+        if (-not $result.passed) {
+            $result.error = 'AgentSwitchboard -ListAgents failed, returned empty output, or reported unusable readiness.'
+        }
+    }
+    else {
+        $argument = if ($CommandName -eq 'tmux') { '-V' } else { '--version' }
+        $result.probe = $argument
+        $output = (& $command.Source $argument 2>&1 | Out-String).Trim()
+        $nativeExit = $LASTEXITCODE
+        $result.output = $output
+        $result.exitCode = $nativeExit
+        $result.passed = ($nativeExit -eq 0 -and -not [string]::IsNullOrWhiteSpace($output))
+        if (-not $result.passed) {
+            $result.error = 'Version probe failed or returned empty output.'
+        }
     }
 }
 catch {
@@ -68,19 +87,23 @@ catch {
     $result.error = $_.Exception.Message
 }
 
-$result | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $OutputPath -Encoding utf8NoBOM
+$result | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $OutputPath -Encoding utf8NoBOM
 if ($result.passed) { exit 0 }
 exit $result.exitCode
 '@
-[System.IO.File]::WriteAllText($probeScript, $probeContent, [System.Text.UTF8Encoding]::new($false))
+[IO.File]::WriteAllText($probeScript, $probeContent, [Text.UTF8Encoding]::new($false))
 
 $pwshPath = (Get-Command pwsh.exe -ErrorAction Stop).Source
-$results = [System.Collections.Generic.List[object]]::new()
-$failures = [System.Collections.Generic.List[string]]::new()
+$results = [Collections.Generic.List[object]]::new()
+$failures = [Collections.Generic.List[string]]::new()
+$commandNames = @('AgentSwitchboard', 'wezterm', 'tmux', 'agy', 'opencode')
 
-foreach ($commandName in @('wezterm', 'tmux', 'agy', 'opencode')) {
+foreach ($commandName in $commandNames) {
     $outputPath = Join-Path $StageDir "probe-$commandName.json"
-    & $pwshPath -NoLogo -NoProfile -ExecutionPolicy Bypass -File $probeScript -CommandName $commandName -ShimRoot $commandShimRoot -OutputPath $outputPath
+    & $pwshPath -NoLogo -NoProfile -ExecutionPolicy Bypass -File $probeScript `
+        -CommandName $commandName `
+        -ShimRoot $commandShimRoot `
+        -OutputPath $outputPath
     $probeExit = $LASTEXITCODE
 
     if (-not (Test-Path -LiteralPath $outputPath -PathType Leaf)) {
@@ -93,17 +116,18 @@ foreach ($commandName in @('wezterm', 'tmux', 'agy', 'opencode')) {
     if ($probeExit -ne 0 -or -not $result.passed) {
         [void]$failures.Add("$commandName exit=$probeExit error=$($result.error)")
         Write-Host "FAIL $commandName: $($result.error)" -ForegroundColor Red
-    } else {
-        Write-Host "PASS $commandName -> $($result.source) :: $($result.versionOutput)" -ForegroundColor Green
+    }
+    else {
+        Write-Host "PASS $commandName -> $($result.source) :: $($result.output)" -ForegroundColor Green
     }
 }
 
 $summaryPath = Join-Path $StageDir 'commands-summary.json'
-$results | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $summaryPath -Encoding utf8NoBOM
+$results | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $summaryPath -Encoding utf8NoBOM
 
-if ($failures.Count -gt 0 -or $results.Count -ne 4) {
+if ($failures.Count -gt 0 -or $results.Count -ne $commandNames.Count) {
     throw "P03 command verification failed: $($failures -join '; '). Evidence: $summaryPath"
 }
 
-Write-Host 'P03-Verify-Commands passed all four fresh-PowerShell version probes.' -ForegroundColor Green
+Write-Host 'P03-Verify-Commands passed AgentSwitchboard readiness plus four tool probes in fresh PowerShell processes.' -ForegroundColor Green
 return 0
