@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/profiles/harness/environment-capability/schemas/environment-capability.schema.json",
+  "title": "AgentSwitchboard environment capability registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "registryId",
+    "canonicalOwner",
+    "policy",
+    "topologies",
+    "proofCeiling"
+  ],
+  "properties": {
+    "schema": {
+      "const": "agentswitchboard.environment-capability-registry.v1"
+    },
+    "registryId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "canonicalOwner": {
+      "const": "EndeavorEverlasting/AgentSwitchboard"
+    },
+    "policy": {
+      "const": ".ai/harness/environment-capability.policy.json"
+    },
+    "topologies": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "$ref": "#/$defs/topology"
+      }
+    },
+    "proofCeiling": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "topology": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "topologyId",
+        "displayName",
+        "implementationStatus",
+        "implementedRoleCeiling",
+        "frontend",
+        "transport",
+        "workspaceHost",
+        "orchestrationRuntime",
+        "agentRuntime",
+        "runtimeCertificationRequired"
+      ],
+      "properties": {
+        "topologyId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "implementationStatus": {
+          "enum": [
+            "reserved",
+            "contract-only",
+            "terminal-client-implemented",
+            "workspace-host-implemented",
+            "full-runtime-implemented",
+            "runtime-proved"
+          ]
+        },
+        "implementedRoleCeiling": {
+          "enum": [
+            "full-runtime-host",
+            "workspace-host",
+            "terminal-client",
+            "local-shell-only",
+            "transport-only",
+            "unsupported"
+          ]
+        },
+        "frontend": {
+          "type": "object"
+        },
+        "transport": {
+          "type": "object"
+        },
+        "workspaceHost": {
+          "type": "object"
+        },
+        "orchestrationRuntime": {
+          "type": "object"
+        },
+        "agentRuntime": {
+          "type": "object"
+        },
+        "runtimeCertificationRequired": {
+          "const": true
+        },
+        "forbiddenClaims": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
