@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "policyId": "agentswitchboard.environment-capability.v1",
+  "canonicalSource": "docs/governance/environment-capability-contract.md",
+  "registry": "tooling/profiles/harness/environment-capability/environment-capability.registry.json",
+  "schema": "tooling/profiles/harness/environment-capability/schemas/environment-capability.schema.json",
+  "validator": "scripts/Test-EnvironmentCapabilityHarness.ps1",
+  "pythonContract": "tests/test_environment_capability_harness.py",
+  "layers": [
+    "frontend",
+    "transport",
+    "workspaceHost",
+    "orchestrationRuntime",
+    "agentRuntime"
+  ],
+  "roles": [
+    "full-runtime-host",
+    "workspace-host",
+    "terminal-client",
+    "local-shell-only",
+    "transport-only",
+    "unsupported"
+  ],
+  "implementationStatuses": [
+    "reserved",
+    "contract-only",
+    "terminal-client-implemented",
+    "workspace-host-implemented",
+    "full-runtime-implemented",
+    "runtime-proved"
+  ],
+  "forbiddenStatuses": [
+    "repository-implemented"
+  ],
+  "invariants": {
+    "layersProveIndependently": true,
+    "terminalClientIsNotRuntimeHost": true,
+    "repositoryPresenceIsNotRuntimeReadiness": true,
+    "packagePresenceIsNotCapabilityVerification": true,
+    "sshReachabilityIsNotRemoteShellClassification": true,
+    "commandAckIsNotBehaviorProof": true,
+    "sameTmuxNameAcrossHostsIsSameSession": false,
+    "tmuxIdentityRequiresSameServerAndHost": true,
+    "phoneLocalTmuxIsCrossDeviceContinuity": false,
+    "androidIsGenericLinux": false,
+    "androidWezTermMayBeAssumed": false,
+    "remotePreflightBeforeMutation": true,
+    "exactTopologyRequired": true,
+    "runtimeProofRequiresFreshSameRunEvidence": true
+  },
+  "autoConfiguration": {
+    "universalInstallerAllowed": false,
+    "requiredOrder": [
+      "observe",
+      "classify-layers",
+      "select-topology",
+      "report-blockers",
+      "bounded-mutation",
+      "effective-state-readback",
+      "focused-validation",
+      "authorized-runtime-certification",
+      "proof-report"
+    ],
+    "unknownEnvironmentAction": "block-and-report",
+    "crossProfileSubstitutionAllowed": false
+  },
+  "android": {
+    "currentStatus": "terminal-client-implemented",
+    "currentRole": "terminal-client",
+    "frontend": "termux",
+    "transport": "ssh",
+    "localTmuxScope": "device-local-only",
+    "nativeOrchestrationRuntime": "unimplemented",
+    "nativeAgentRuntime": "unproved",
+    "crossDeviceContinuityRequiresRemoteWorkspaceHost": true,
+    "remoteShellMustBeClassified": true,
+    "fullRuntimeClaimAllowed": false
+  },
+  "remotePreflight": {
+    "requiredFields": [
+      "targetAlias",
+      "remoteOsClass",
+      "remoteShellClass",
+      "tmuxStatus",
+      "repositoryStatus",
+      "orchestrationRuntimeStatus",
+      "agentRuntimeStatus",
+      "persistenceStatus",
+      "selectedTopologyId"
+    ],
+    "blockOnUnknownShell": true,
+    "blockOnUnexpectedOrigin": true,
+    "blockOnDirtyCheckout": true,
+    "blockOnMissingTmux": true,
+    "automaticRepairRequiresExplicitScope": true
+  },
+  "proof": {
+    "staticCanClaimRuntime": false,
+    "ciCanClaimLiveDevice": false,
+    "remoteAckCanClaimAttachment": false,
+    "sessionNameCanClaimIdentity": false,
+    "requiredRuntimeEvidence": [
+      "environment-identity",
+      "selected-topology",
+      "effective-state-readback",
+      "workspace-host-identity",
+      "tmux-server-and-session-identity",
+      "operator-visible-result"
+    ]
+  }
+}
