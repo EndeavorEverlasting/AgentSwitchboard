@@ -8,7 +8,7 @@ The supported operator surface is a repository-owned command file. Do not paste 
 
 ## Canonical setup and launch
 
-From the repository root:
+From a current repository checkout:
 
 ```cmd
 Technician-AgentSwitchboard-Ready.cmd shell
@@ -36,17 +36,19 @@ Hermes remains isolated. Core readiness does not depend on Hermes installation o
 
 Use the tracked validator rather than pasting an inline `if`/`else` script.
 
-Validation-only mode:
-
-```cmd
-Validate-Technician-ExactHead.cmd "<repo-path>" "<remote-ref>" "<expected-sha>" validate
-```
-
-Complete field-readiness mode:
+From a current checkout:
 
 ```cmd
 Validate-Technician-ExactHead.cmd "<repo-path>" "<remote-ref>" "<expected-sha>" ready
 ```
+
+When the current checkout predates `Validate-Technician-ExactHead.cmd`, bootstrap the exact validator from the named commit without switching, resetting, cleaning, or overwriting that checkout:
+
+```powershell
+$repo='<repo-path>'; $sha='<expected-sha>'; $runner=Join-Path $env:TEMP ('AgentSwitchboard-ExactHead-'+$sha.Substring(0,8)+'.ps1'); & git.exe -C $repo fetch --no-tags origin refs/heads/main; if ($LASTEXITCODE -ne 0) { throw 'Fetch failed.' }; $spec=$sha+':scripts/Invoke-TechnicianExactHeadValidation.ps1'; $source=@(& git.exe -C $repo show $spec); if ($LASTEXITCODE -ne 0 -or $source.Count -eq 0) { throw 'Could not extract the exact validator from the named commit.' }; [IO.File]::WriteAllLines($runner,[string[]]$source,[Text.UTF8Encoding]::new($false)); & pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $runner -RepoRoot $repo -RemoteRef 'refs/heads/main' -ExpectedHead $sha -RunReadiness; if ($LASTEXITCODE -ne 0) { throw "Exact-head field readiness failed with exit code $LASTEXITCODE." }
+```
+
+This bootstrap retrieves only the tracked validator from the exact fetched commit. The validator then owns the detached worktree, cross-shell validation, P00, setup, fleet-state proof, and readiness evidence.
 
 `ready` mode requires the explicit remote ref and expected SHA. It then performs one owned sequence:
 
