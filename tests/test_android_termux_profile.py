@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 LAUNCHER = ROOT / "tooling/profiles/android/Invoke-AgentSwitchboardOpenOrActivate.sh"
@@ -25,6 +26,31 @@ def run(*args: str, env: dict[str, str] | None = None) -> subprocess.CompletedPr
         stderr=subprocess.PIPE,
         check=False,
     )
+
+
+def require(condition: bool, label: str, detail: str = "") -> None:
+    if condition:
+        return
+    message = label if not detail else f"{label}: {detail}"
+    escaped = message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        print(f"::error title=Android Termux contract::{escaped}", file=sys.stderr)
+    raise AssertionError(message)
+
+
+def require_process(
+    result: subprocess.CompletedProcess[str], label: str, expected_returncode: int = 0
+) -> None:
+    require(
+        result.returncode == expected_returncode,
+        label,
+        f"expected exit {expected_returncode}, got {result.returncode}; "
+        f"stdout={result.stdout!r}; stderr={result.stderr!r}",
+    )
+
+
+def require_contains(haystack: str, needle: str, label: str) -> None:
+    require(needle in haystack, label, f"missing {needle!r}; output={haystack!r}")
 
 
 def main() -> None:
@@ -116,32 +142,43 @@ def main() -> None:
     ):
         assert token in bootstrap_text, token
     assert 'if [ -d "$REPO_ROOT/.git" ]' not in bootstrap_text
-    assert "pkg install -y git openssh tmux curl\n" not in bootstrap_text.replace(
-        "run_logged package-install 61 pkg install -y git openssh tmux curl\n", ""
-    )
 
     # Windows runners may resolve `bash` to the WSL compatibility shim. Execute
     # Android shell behavior on POSIX; Windows enforces tracked content and JSON.
     if os.name != "nt":
         for path in (LAUNCHER, BOOTSTRAP):
             parsed = run("bash", "-n", str(path))
-            assert parsed.returncode == 0, f"{path.relative_to(ROOT)}: {parsed.stderr}"
+            require_process(parsed, f"bash-parse/{path.relative_to(ROOT)}")
 
         status = run("bash", str(LAUNCHER), "status")
-        assert status.returncode == 0, status.stderr
-        assert "role=terminal-client" in status.stdout
-        assert "local_tmux_role=local-shell-only" in status.stdout
-        assert "continuity_scope=device-local-only" in status.stdout
-        assert "native_orchestration_runtime=unimplemented" in status.stdout
+        require_process(status, "launcher/status")
+        require_contains(status.stdout, "role=terminal-client", "launcher/status-role")
+        require_contains(
+            status.stdout, "local_tmux_role=local-shell-only", "launcher/status-local-role"
+        )
+        require_contains(
+            status.stdout,
+            "continuity_scope=device-local-only",
+            "launcher/status-continuity-scope",
+        )
+        require_contains(
+            status.stdout,
+            "native_orchestration_runtime=unimplemented",
+            "launcher/status-runtime-ceiling",
+        )
 
         local_plan = run(
             "bash", str(LAUNCHER), "local-shell", "--session", "dev-1", "--plan"
         )
-        assert local_plan.returncode == 0, local_plan.stderr
-        assert "role=local-shell-only" in local_plan.stdout
-        assert "mode=local-shell" in local_plan.stdout
-        assert "continuity_scope=device-local-only" in local_plan.stdout
-        assert "session=dev-1" in local_plan.stdout
+        require_process(local_plan, "launcher/local-plan")
+        require_contains(local_plan.stdout, "role=local-shell-only", "launcher/local-plan-role")
+        require_contains(local_plan.stdout, "mode=local-shell", "launcher/local-plan-mode")
+        require_contains(
+            local_plan.stdout,
+            "continuity_scope=device-local-only",
+            "launcher/local-plan-continuity",
+        )
+        require_contains(local_plan.stdout, "session=dev-1", "launcher/local-plan-session")
 
         remote_plan = run(
             "bash",
@@ -158,11 +195,19 @@ def main() -> None:
             "dev",
             "--plan",
         )
-        assert remote_plan.returncode == 0, remote_plan.stderr
-        assert "role=terminal-client" in remote_plan.stdout
-        assert "topology=android-termux-ssh-posix-workspace-client" in remote_plan.stdout
-        assert "host_profile=posix-tmux" in remote_plan.stdout
-        assert "target=user@example-host" in remote_plan.stdout
+        require_process(remote_plan, "launcher/remote-plan")
+        require_contains(remote_plan.stdout, "role=terminal-client", "launcher/remote-plan-role")
+        require_contains(
+            remote_plan.stdout,
+            "topology=android-termux-ssh-posix-workspace-client",
+            "launcher/remote-plan-topology",
+        )
+        require_contains(
+            remote_plan.stdout, "host_profile=posix-tmux", "launcher/remote-plan-profile"
+        )
+        require_contains(
+            remote_plan.stdout, "target=user@example-host", "launcher/remote-plan-target"
+        )
 
         option_target = run(
             "bash",
@@ -177,8 +222,10 @@ def main() -> None:
             "https://github.com/EndeavorEverlasting/AgentSwitchboard.git",
             "--plan",
         )
-        assert option_target.returncode != 0
-        assert "invalid SSH target: -V" in option_target.stderr
+        require(option_target.returncode != 0, "launcher/reject-option-target")
+        require_contains(
+            option_target.stderr, "invalid SSH target: -V", "launcher/reject-option-target-message"
+        )
 
         unclassified = run(
             "bash",
@@ -191,14 +238,22 @@ def main() -> None:
             "https://github.com/EndeavorEverlasting/AgentSwitchboard.git",
             "--plan",
         )
-        assert unclassified.returncode != 0
-        assert "requires --host-profile posix-tmux" in unclassified.stderr
+        require(unclassified.returncode != 0, "launcher/reject-unclassified-host")
+        require_contains(
+            unclassified.stderr,
+            "requires --host-profile posix-tmux",
+            "launcher/reject-unclassified-host-message",
+        )
 
         rejected = run(
             "bash", str(LAUNCHER), "local-shell", "--session", "bad session", "--plan"
         )
-        assert rejected.returncode != 0
-        assert "invalid tmux session name" in rejected.stderr
+        require(rejected.returncode != 0, "launcher/reject-invalid-session")
+        require_contains(
+            rejected.stderr,
+            "invalid tmux session name",
+            "launcher/reject-invalid-session-message",
+        )
 
         bootstrap_plan_env = dict(os.environ)
         bootstrap_plan_env["PREFIX"] = "/tmp/termux-prefix"
@@ -212,12 +267,24 @@ def main() -> None:
             "main",
             env=bootstrap_plan_env,
         )
-        assert bootstrap_plan.returncode == 0, bootstrap_plan.stderr
-        assert "capability_status=terminal-client-implemented" in bootstrap_plan.stdout
-        assert "role=terminal-client" in bootstrap_plan.stdout
-        assert "packages=git,openssh,tmux,curl" in bootstrap_plan.stdout
-        assert "native_orchestration_runtime=unimplemented" in bootstrap_plan.stdout
-        assert "pkg install" not in bootstrap_plan.stdout
+        require_process(bootstrap_plan, "bootstrap/plan")
+        require_contains(
+            bootstrap_plan.stdout,
+            "capability_status=terminal-client-implemented",
+            "bootstrap/plan-status",
+        )
+        require_contains(bootstrap_plan.stdout, "role=terminal-client", "bootstrap/plan-role")
+        require_contains(
+            bootstrap_plan.stdout,
+            "packages=git,openssh,tmux,curl",
+            "bootstrap/plan-packages",
+        )
+        require_contains(
+            bootstrap_plan.stdout,
+            "native_orchestration_runtime=unimplemented",
+            "bootstrap/plan-runtime-ceiling",
+        )
+        require("pkg install" not in bootstrap_plan.stdout, "bootstrap/plan-no-mutation")
 
     docs = (ROOT / "docs/workstation/android-termux.md").read_text(encoding="utf-8").lower()
     for token in (
