@@ -87,9 +87,15 @@ def main() -> None:
         "continuity_scope=device-local-only",
         "remote-preflight.env",
         "printf 'attachment_observed=%s",
+        "''|-*|*[!A-Za-z0-9_.@:%-]*",
+        "elif tmux has-session -t \"$session\"",
+        "create_outcome=existing-after-race",
+        "git -C \"$repo_path\" rev-parse --git-dir",
+        "failed-remote-session-create",
     ):
-        assert token in launcher_text
+        assert token in launcher_text, token
     assert launcher_text.count('"false"') >= 4
+    assert launcher_text.count("tmux has-session -t") >= 6
     assert "eval " not in launcher_text
     assert "role=full-runtime-host" not in launcher_text
 
@@ -99,15 +105,27 @@ def main() -> None:
         "Full AgentSwitchboard runtime is not configured",
         "proof=terminal-client-installed-command-probes",
         "repo_purpose=source-and-terminal-client-files-not-runtime-proof",
+        "run_logged()",
+        "git -C \"$REPO_ROOT\" rev-parse --git-dir",
+        "tail -n 20",
+        "run_logged package-install 61",
+        "run_logged repository-clone 62",
+        "run_logged repository-fetch 63",
+        "run_logged repository-fast-forward 64",
+        "bootstrap-logs",
     ):
-        assert token in bootstrap_text
+        assert token in bootstrap_text, token
+    assert 'if [ -d "$REPO_ROOT/.git" ]' not in bootstrap_text
+    assert "pkg install -y git openssh tmux curl\n" not in bootstrap_text.replace(
+        "run_logged package-install 61 pkg install -y git openssh tmux curl\n", ""
+    )
 
     # Windows runners may resolve `bash` to the WSL compatibility shim. Execute
     # Android shell behavior on POSIX; Windows enforces tracked content and JSON.
     if os.name != "nt":
         for path in (LAUNCHER, BOOTSTRAP):
             parsed = run("bash", "-n", str(path))
-            assert parsed.returncode == 0, parsed.stderr
+            assert parsed.returncode == 0, f"{path.relative_to(ROOT)}: {parsed.stderr}"
 
         status = run("bash", str(LAUNCHER), "status")
         assert status.returncode == 0, status.stderr
@@ -145,6 +163,22 @@ def main() -> None:
         assert "topology=android-termux-ssh-posix-workspace-client" in remote_plan.stdout
         assert "host_profile=posix-tmux" in remote_plan.stdout
         assert "target=user@example-host" in remote_plan.stdout
+
+        option_target = run(
+            "bash",
+            str(LAUNCHER),
+            "remote",
+            "-V",
+            "--host-profile",
+            "posix-tmux",
+            "--repo",
+            "/srv/AgentSwitchboard",
+            "--expected-origin",
+            "https://github.com/EndeavorEverlasting/AgentSwitchboard.git",
+            "--plan",
+        )
+        assert option_target.returncode != 0
+        assert "invalid SSH target: -V" in option_target.stderr
 
         unclassified = run(
             "bash",
