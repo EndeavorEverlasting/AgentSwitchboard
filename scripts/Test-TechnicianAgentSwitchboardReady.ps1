@@ -58,8 +58,6 @@ foreach ($entry in $paths.GetEnumerator()) {
         continue
     }
 
-    # Git pathspecs use forward slashes on every platform even though the
-    # operator-facing manifest and Windows scripts use backslashes.
     $gitRelative = $entry.Value -replace '\\', '/'
     & $gitCommand.Source -C $RootPath ls-files --error-unmatch -- $gitRelative *> $null
     if ($LASTEXITCODE -ne 0) {
@@ -73,6 +71,7 @@ if ($failures.Count -eq 0) {
     $launcher = Get-Content -LiteralPath (Join-Path $RootPath $paths.profileLauncher) -Raw
     $p02 = Get-Content -LiteralPath (Join-Path $RootPath $paths.p02) -Raw
     $p03 = Get-Content -LiteralPath (Join-Path $RootPath $paths.p03) -Raw
+    $exactCmd = Get-Content -LiteralPath (Join-Path $RootPath $paths.exactCmd) -Raw
     $exact = Get-Content -LiteralPath (Join-Path $RootPath $paths.exactValidator) -Raw
 
     foreach ($item in @(
@@ -104,9 +103,24 @@ if ($failures.Count -eq 0) {
     Require-Token -Text $p02 -Token 'technician-ready-summary.json' -Label 'P02 readiness evidence'
     Require-Token -Text $p03 -Token "@('AgentSwitchboard', 'wezterm', 'tmux', 'agy', 'opencode')" -Label 'P03 five-command set'
     Require-Token -Text $p03 -Token 'AgentSwitchboard -ListAgents' -Label 'P03 AgentSwitchboard proof'
-    Require-Token -Text $exact -Token 'worktree add --detach' -Label 'exact-head worktree'
-    Require-Token -Text $exact -Token 'Verified HEAD: $actualHead' -Label 'truthful exact-head report'
-    Require-Token -Text $exact -Token 'LastWriteTimeUtc -ge $p00StartedUtc' -Label 'fresh P00 evidence'
+
+    foreach ($token in @(
+        'worktree add --detach',
+        'Verified HEAD:      $actualHead',
+        'LastWriteTimeUtc -ge $p00StartedUtc',
+        '[switch]$RunReadiness',
+        'Exact-head AgentSwitchboard readiness',
+        'Technician-AgentSwitchboard-Ready.cmd',
+        'LastWriteTimeUtc -ge $readinessStartedUtc',
+        'readiness.startupReadiness.stateObserved',
+        'readiness.commands.AgentSwitchboard.shim',
+        'exact-head-cross-shell-p00-and-agentswitchboard-readiness'
+    )) {
+        Require-Token -Text $exact -Token $token -Label 'exact-head field acceptance'
+    }
+    foreach ($token in @('set "FIELD_MODE=%~4"','"validate" if /I not "%FIELD_MODE%"=="ready"','-RunReadiness','Ready mode requires an explicit expected commit SHA')) {
+        Require-Token -Text $exactCmd -Token $token -Label 'exact-head CMD ready mode'
+    }
 
     foreach ($forbidden in @('git reset', 'git clean', 'git stash', 'push --force')) {
         if ($ready.ToLowerInvariant().Contains($forbidden) -or $exact.ToLowerInvariant().Contains($forbidden)) {
