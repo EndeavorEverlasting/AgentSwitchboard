@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dependency-free Android/Termux profile contracts."""
+"""Dependency-free Android/Termux terminal-client contracts."""
 
 import json
 import os
@@ -30,69 +30,143 @@ def run(*args: str, env: dict[str, str] | None = None) -> subprocess.CompletedPr
 def main() -> None:
     policy = load(".ai/harness/device-profile-launcher.policy.json")
     registry = load(".ai/harness/device-profile-registry.json")
+    environment_policy = load(".ai/harness/environment-capability.policy.json")
     android = {item["profileId"]: item for item in registry["profiles"]}["android"]
 
-    assert android["status"] == "repository-implemented"
+    assert android["status"] == "terminal-client-implemented"
+    assert android["capabilityRole"] == "terminal-client"
     assert android["frontend"] == "termux"
     assert android["canonicalOperation"] == "open-or-activate"
     assert android["canonicalSourcePath"] == str(LAUNCHER.relative_to(ROOT)).replace("\\", "/")
     assert android["installedPath"] == "$PREFIX/bin/agentswitchboard-phone"
     assert android["bootstrapPath"] == BOOTSTRAP.name
     assert android["workspaceBackend"] == "tmux"
+    assert android["localTmuxRole"] == "local-shell-only"
+    assert android["localTmuxScope"] == "device-local-only"
     assert android["continuityTransport"] == "ssh"
+    assert android["crossDeviceContinuityRequiresRemoteWorkspaceHost"] is True
+    assert android["remoteShellClassificationRequired"] is True
+    assert android["nativeOrchestrationRuntime"] == "unimplemented"
+    assert android["nativeAgentRuntime"] == "unproved"
+    assert android["fullRuntimeClaimAllowed"] is False
     assert android["configurationMayDiffer"] is True
 
     android_policy = policy["androidProfile"]
-    assert android_policy["status"] == "repository-implemented"
+    assert android_policy["status"] == "terminal-client-implemented"
+    assert android_policy["capabilityRole"] == "terminal-client"
     assert android_policy["terminalFrontend"] == "termux"
     assert android_policy["workspaceBackend"] == "tmux"
+    assert android_policy["localTmuxScope"] == "device-local-only"
     assert android_policy["continuityTransport"] == "ssh"
+    assert android_policy["supportedRemoteHostProfiles"] == ["posix-tmux"]
+    assert android_policy["remotePreflightRequired"] is True
+    assert android_policy["nativeOrchestrationRuntime"] == "unimplemented"
+    assert android_policy["fullRuntimeClaimAllowed"] is False
     assert android_policy["liveDeviceProofRequired"] is True
     assert policy["profiles"]["android"]["frontend"] == "termux"
+    assert policy["profiles"]["android"]["roleCeiling"] == "terminal-client"
+    assert environment_policy["android"]["currentStatus"] == "terminal-client-implemented"
 
     for path in (LAUNCHER, BOOTSTRAP):
         assert path.is_file(), f"missing {path.relative_to(ROOT)}"
-        text = path.read_text(encoding="utf-8")
-        assert "wezterm" not in text.lower()
+        script = path.read_text(encoding="utf-8")
+        assert "wezterm" not in script.lower()
+        assert "StrictHostKeyChecking=no" not in script
 
     launcher_text = LAUNCHER.read_text(encoding="utf-8")
-    for token in ("local", "ssh", "--session", "--plan", "tmux", "open-or-activate"):
+    for token in (
+        "local-shell",
+        "remote",
+        "--host-profile",
+        "posix-tmux",
+        "--repo",
+        "--expected-origin",
+        "--create",
+        "--plan",
+        "role=terminal-client",
+        "continuity_scope=device-local-only",
+        "remote-preflight.env",
+        "attachment_observed=false",
+    ):
         assert token in launcher_text
     assert "eval " not in launcher_text
-    assert "StrictHostKeyChecking=no" not in launcher_text
+    assert "role=full-runtime-host" not in launcher_text
 
-    # GitHub's Windows runner can resolve `bash` to the WSL compatibility shim
-    # instead of Git Bash. Execute the Android shell surfaces on POSIX only;
-    # Windows still enforces their tracked paths, policy, registry, and content.
+    bootstrap_text = BOOTSTRAP.read_text(encoding="utf-8")
+    for token in (
+        "Android terminal client installed",
+        "Full AgentSwitchboard runtime is not configured",
+        "proof=terminal-client-installed-command-probes",
+        "repo_purpose=source-and-terminal-client-files-not-runtime-proof",
+    ):
+        assert token in bootstrap_text
+
+    # Windows runners may resolve `bash` to the WSL compatibility shim. Execute
+    # Android shell behavior on POSIX; Windows enforces tracked content and JSON.
     if os.name != "nt":
         for path in (LAUNCHER, BOOTSTRAP):
             parsed = run("bash", "-n", str(path))
             assert parsed.returncode == 0, parsed.stderr
 
-        local_plan = run("bash", str(LAUNCHER), "local", "--session", "dev-1", "--plan")
+        status = run("bash", str(LAUNCHER), "status")
+        assert status.returncode == 0, status.stderr
+        assert "role=terminal-client" in status.stdout
+        assert "local_tmux_role=local-shell-only" in status.stdout
+        assert "continuity_scope=device-local-only" in status.stdout
+        assert "native_orchestration_runtime=unimplemented" in status.stdout
+
+        local_plan = run(
+            "bash", str(LAUNCHER), "local-shell", "--session", "dev-1", "--plan"
+        )
         assert local_plan.returncode == 0, local_plan.stderr
-        assert "mode=local" in local_plan.stdout
+        assert "role=local-shell-only" in local_plan.stdout
+        assert "mode=local-shell" in local_plan.stdout
+        assert "continuity_scope=device-local-only" in local_plan.stdout
         assert "session=dev-1" in local_plan.stdout
 
-        ssh_plan = run(
+        remote_plan = run(
             "bash",
             str(LAUNCHER),
-            "ssh",
+            "remote",
             "user@example-host",
+            "--host-profile",
+            "posix-tmux",
+            "--repo",
+            "/srv/AgentSwitchboard",
+            "--expected-origin",
+            "https://github.com/EndeavorEverlasting/AgentSwitchboard.git",
             "--session",
             "dev",
             "--plan",
         )
-        assert ssh_plan.returncode == 0, ssh_plan.stderr
-        assert "mode=ssh" in ssh_plan.stdout
-        assert "target=user@example-host" in ssh_plan.stdout
+        assert remote_plan.returncode == 0, remote_plan.stderr
+        assert "role=terminal-client" in remote_plan.stdout
+        assert "topology=android-termux-ssh-posix-workspace-client" in remote_plan.stdout
+        assert "host_profile=posix-tmux" in remote_plan.stdout
+        assert "target=user@example-host" in remote_plan.stdout
 
-        rejected = run("bash", str(LAUNCHER), "local", "--session", "bad session", "--plan")
+        unclassified = run(
+            "bash",
+            str(LAUNCHER),
+            "remote",
+            "user@example-host",
+            "--repo",
+            "/srv/AgentSwitchboard",
+            "--expected-origin",
+            "https://github.com/EndeavorEverlasting/AgentSwitchboard.git",
+            "--plan",
+        )
+        assert unclassified.returncode != 0
+        assert "requires --host-profile posix-tmux" in unclassified.stderr
+
+        rejected = run(
+            "bash", str(LAUNCHER), "local-shell", "--session", "bad session", "--plan"
+        )
         assert rejected.returncode != 0
         assert "invalid tmux session name" in rejected.stderr
 
-        plan_env = dict(os.environ)
-        plan_env["PREFIX"] = "/tmp/termux-prefix"
+        bootstrap_plan_env = dict(os.environ)
+        bootstrap_plan_env["PREFIX"] = "/tmp/termux-prefix"
         bootstrap_plan = run(
             "bash",
             str(BOOTSTRAP),
@@ -101,24 +175,29 @@ def main() -> None:
             "/tmp/AgentSwitchboard",
             "--ref",
             "main",
-            env=plan_env,
+            env=bootstrap_plan_env,
         )
         assert bootstrap_plan.returncode == 0, bootstrap_plan.stderr
-        assert "profile=android" in bootstrap_plan.stdout
+        assert "capability_status=terminal-client-implemented" in bootstrap_plan.stdout
+        assert "role=terminal-client" in bootstrap_plan.stdout
         assert "packages=git,openssh,tmux,curl" in bootstrap_plan.stdout
+        assert "native_orchestration_runtime=unimplemented" in bootstrap_plan.stdout
         assert "pkg install" not in bootstrap_plan.stdout
 
-    docs = (ROOT / "docs/workstation/android-termux.md").read_text(encoding="utf-8")
+    docs = (ROOT / "docs/workstation/android-termux.md").read_text(encoding="utf-8").lower()
     for token in (
-        "termux",
-        "agentswitchboard-phone local",
-        "agentswitchboard-phone ssh",
-        "wezterm",
+        "terminal-client-implemented",
+        "local-shell-only",
+        "device-local-only",
+        "agentswitchboard-phone local-shell",
+        "--host-profile posix-tmux",
+        "execution hold",
         "proof ceiling",
     ):
-        assert token in docs.lower()
+        assert token in docs
+    assert "the shared continuity boundary is the named" not in docs
 
-    print("PASS: Android Termux profile contracts")
+    print("PASS: Android Termux terminal-client contracts")
 
 
 if __name__ == "__main__":
