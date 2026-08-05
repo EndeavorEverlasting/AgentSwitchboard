@@ -50,7 +50,7 @@ Get-MachineProfileHarnessStatus.cmd
 Test-MachineProfileHarness.cmd
 ```
 
-The status reporter writes JSON and Markdown even when registered components are missing or malformed. It then returns failure without terminating a caller's PowerShell host.
+The status reporter writes JSON and Markdown even when registered components are missing or malformed. It then returns failure without terminating a caller's PowerShell host. Its next-action block records the owner and dependency and emits a location-independent command, so remaining in `C:\Windows\System32` or another directory does not break the handoff.
 
 The pre-commit hook is opt-in and is never installed implicitly:
 
@@ -63,10 +63,12 @@ pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File tooling\profiles\windo
 Use the repository-owned candidate command instead of assembling a long ad hoc Git/CMD snippet:
 
 ```cmd
-Validate-MachineProfileHarnessCandidate.cmd -SourceRepository "C:\path\to\existing-checkout" -WorktreeRoot "C:\path\to\isolated-worktree" -Branch "feature-branch" -ExpectedHead "40-character-sha" -BaseCommit "40-character-base-sha"
+Validate-MachineProfileHarnessCandidate.cmd -SourceRepository "C:\path\to\existing-checkout" -WorktreeRoot "C:\path\to\isolated-worktree" -Branch "feature-branch" -ExpectedHead "40-character-sha" -BaseCommit "40-character-base-sha" -PullRequestNumber 64
 ```
 
 It preserves dirty or separately owned source work, fetches without force, verifies origin, ancestry, branch head, detached worktree head, and clean state, runs the PowerShell and Python harness validators plus existing machine-profile contracts, runs `git diff --check`, resolves the status files from the tracked manifest and artifact registry, prints the Markdown report, opens it in Notepad, and emits `machine-profile-harness-candidate-validation.json`. Existing matching clean worktrees may be reused; unrelated existing directories fail closed.
+
+After successful candidate proof, the report no longer repeats `Test-MachineProfileHarness.cmd`. With `-PullRequestNumber`, its exact next command opens that PR for review. Without a PR number, it opens the branch comparison page to create or locate the review gate. Both commands are executable from any current directory.
 
 ## Chosen workspace directory
 
@@ -102,7 +104,7 @@ Repository identity and path precede PowerShell, WSL repair, setup, and live cer
 
 Repository CMD wrappers use `setlocal`, clear any caller-defined `ERRORLEVEL` environment variable, invoke the owned command, and capture the dynamic exit immediately. This prevents both later-command clobbering and pseudo-variable shadowing.
 
-Every operator block must name its shell. Do not patch a candidate checkout with an untracked one-liner and then invoke a pull wrapper over it. Commit and push the repair on an isolated branch, fetch without force, verify the exact SHA, and then execute.
+Every operator block must name its shell. Do not patch a candidate checkout with an untracked one-liner and then invoke a pull wrapper over it. Commit and push the repair on an isolated branch, fetch without force, verify the exact SHA, and then execute. Do not emit a bare repository-relative next command unless the command first establishes its repository location.
 
 PowerShell 7 NUL removal uses the explicit string overload:
 
@@ -120,4 +122,4 @@ Observed usernames, hostnames, tenant names, role assignments, and resolved path
 
 ## Proof boundary
 
-Harness validation proves component completeness, explicit role routing, local-only path policy, workflow shape, candidate isolation, operator-report rendering, and deterministic checks. It does not prove WSL health, package installation, launcher behavior, authentication, provider response, or a visible working coding environment.
+Harness validation proves component completeness, explicit role routing, local-only path policy, workflow shape, candidate isolation, operator-report rendering, location-independent handoff commands, and deterministic checks. It does not prove WSL health, package installation, launcher behavior, authentication, provider response, or a visible working coding environment.
