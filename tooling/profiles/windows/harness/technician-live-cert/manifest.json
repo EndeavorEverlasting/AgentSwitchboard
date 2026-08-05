@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "harnessId": "agentswitchboard.technician-live-cert-harness.v1",
+  "scope": "Windows technician clickable live-certification and owned repair surfaces",
+  "canonicalOwner": "EndeavorEverlasting/AgentSwitchboard",
+  "entrypoints": {
+    "codebaseMap": "tooling/profiles/windows/harness/technician-live-cert/codebase-map.json",
+    "artifactRegistry": "tooling/profiles/windows/harness/technician-live-cert/artifact-registry.json",
+    "maintenanceWorkflow": "tooling/profiles/windows/harness/technician-live-cert/workflows/maintenance.workflow.json",
+    "fieldFailureRepairWorkflow": "tooling/profiles/windows/harness/technician-live-cert/workflows/field-failure-repair.workflow.json",
+    "schema": "tooling/profiles/windows/harness/technician-live-cert/schemas/technician-live-cert-harness.schema.json",
+    "operatorReportTemplate": "tooling/profiles/windows/harness/technician-live-cert/operator-report.template.md",
+    "skill": ".ai/skills/windows-profile-live-certification/SKILL.md",
+    "surfaceValidator": "scripts/Test-TechnicianLiveCertSurface.ps1",
+    "harnessValidator": "scripts/Test-TechnicianLiveCertHarness.ps1",
+    "pythonValidator": "tests/test_technician_live_cert_harness.py",
+    "statusReporter": "tooling/profiles/windows/Get-TechnicianLiveCertHarnessStatus.ps1",
+    "optInHook": "tooling/profiles/windows/hooks/Invoke-TechnicianLiveCertPreCommit.ps1",
+    "ciWorkflow": ".github/workflows/technician-live-cert-surface.yml",
+    "operatorGuide": "docs/harness/technician-live-cert-harness.md"
+  },
+  "components": [
+    {
+      "id": "codebase-map",
+      "path": "tooling/profiles/windows/harness/technician-live-cert/codebase-map.json",
+      "type": "map"
+    },
+    {
+      "id": "artifact-registry",
+      "path": "tooling/profiles/windows/harness/technician-live-cert/artifact-registry.json",
+      "type": "registry"
+    },
+    {
+      "id": "maintenance-workflow",
+      "path": "tooling/profiles/windows/harness/technician-live-cert/workflows/maintenance.workflow.json",
+      "type": "workflow"
+    },
+    {
+      "id": "field-failure-repair-workflow",
+      "path": "tooling/profiles/windows/harness/technician-live-cert/workflows/field-failure-repair.workflow.json",
+      "type": "workflow"
+    },
+    {
+      "id": "schema",
+      "path": "tooling/profiles/windows/harness/technician-live-cert/schemas/technician-live-cert-harness.schema.json",
+      "type": "schema"
+    },
+    {
+      "id": "operator-report-template",
+      "path": "tooling/profiles/windows/harness/technician-live-cert/operator-report.template.md",
+      "type": "report"
+    },
+    {
+      "id": "surface-validator",
+      "path": "scripts/Test-TechnicianLiveCertSurface.ps1",
+      "type": "validator"
+    },
+    {
+      "id": "harness-validator",
+      "path": "scripts/Test-TechnicianLiveCertHarness.ps1",
+      "type": "validator"
+    },
+    {
+      "id": "python-validator",
+      "path": "tests/test_technician_live_cert_harness.py",
+      "type": "validator"
+    },
+    {
+      "id": "status-reporter",
+      "path": "tooling/profiles/windows/Get-TechnicianLiveCertHarnessStatus.ps1",
+      "type": "reporter"
+    },
+    {
+      "id": "opt-in-hook",
+      "path": "tooling/profiles/windows/hooks/Invoke-TechnicianLiveCertPreCommit.ps1",
+      "type": "hook"
+    },
+    {
+      "id": "skill",
+      "path": ".ai/skills/windows-profile-live-certification/SKILL.md",
+      "type": "skill"
+    },
+    {
+      "id": "ci",
+      "path": ".github/workflows/technician-live-cert-surface.yml",
+      "type": "workflow"
+    },
+    {
+      "id": "operator-guide",
+      "path": "docs/harness/technician-live-cert-harness.md",
+      "type": "documentation"
+    }
+  ],
+  "runtimeCompatibility": {
+    "requiredValidationShells": [
+      "Windows PowerShell 5.1 on windows-latest",
+      "PowerShell 7 on windows-latest",
+      "PowerShell 7 on ubuntu-latest"
+    ],
+    "operatorStageShell": "PowerShell 7 through repository-owned CMD dispatchers",
+    "rootResolutionRule": "Resolve PSScriptRoot in the script body; never in a parameter default expression."
+  },
+  "knownFailureGuards": [
+    {
+      "id": "ambiguous-dotnet-overload",
+      "forbiddenPattern": ".Replace([char]0, '')",
+      "requiredPattern": ".Replace(([char]0).ToString(), [string]::Empty)",
+      "proof": "static source assertion plus executable NUL-padded Ubuntu normalization"
+    },
+    {
+      "id": "psscriptroot-param-default",
+      "forbiddenPattern": "[string]$RootPath = (Split-Path -Parent $PSScriptRoot)",
+      "proof": "Python and PowerShell validators inspect entrypoint parameter blocks"
+    },
+    {
+      "id": "hosted-ci-proof-inflation",
+      "guard": "TECHNICIAN_LIVE_CERT_CI_SURFACE may prove CMD dispatch only and may not claim initialized WSL/Ubuntu runtime"
+    },
+    {
+      "id": "interactive-git-pager",
+      "guard": "All harness Git inspection uses git --no-pager and propagates nonzero exit codes"
+    },
+    {
+      "id": "live-failure-overridden-by-static-pass",
+      "guard": "Observed operator failure remains blocking until the exact command is rerun successfully"
+    }
+  ],
+  "validationOrder": [
+    "python -m unittest tests.test_technician_live_cert_harness",
+    "python -m unittest tests.test_technician_live_cert_surface",
+    "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertSurface.ps1",
+    "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertHarness.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertSurface.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertHarness.ps1",
+    "git --no-pager diff --check"
+  ],
+  "generatedEvidence": {
+    "tracked": false,
+    "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/technician-live-cert",
+    "artifacts": [
+      "runs/<runId>/run.json",
+      "runs/<runId>/<stageId>/stage-result.json",
+      "runs/<runId>/P00/preflight-summary.json",
+      "runs/<runId>/technician-live-cert-stage-matrix.csv",
+      "harness-status/technician-live-cert-harness-status.json",
+      "harness-status/technician-live-cert-harness-status.md"
+    ]
+  },
+  "implicitHookInstallationAllowed": false,
+  "networkAllowedByValidators": false,
+  "targetMutationAllowedByValidators": false,
+  "proofCeiling": "Tracked harness structure, cross-shell parser and contract validation, fixture-safe CMD dispatch, local artifact policy, and exact failure-boundary reporting only. Live WSL initialization, visible WezTerm behavior, tmux attachment, agent launch, repeatability, and operator acceptance require the workstation live-cert sequence."
+}

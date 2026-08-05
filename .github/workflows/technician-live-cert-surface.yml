@@ -3,11 +3,13 @@ name: Technician Live-Cert Surface CI
 on:
   push:
     branches:
-      - feat/technician-clickable-live-cert-cmds
       - main
   pull_request:
     paths:
       - 'tooling/profiles/windows/technician-live-cert/**'
+      - 'tooling/profiles/windows/harness/technician-live-cert/**'
+      - 'tooling/profiles/windows/Get-TechnicianLiveCertHarnessStatus.ps1'
+      - 'tooling/profiles/windows/hooks/Invoke-TechnicianLiveCertPreCommit.ps1'
       - 'Technician-LiveCert-*.cmd'
       - 'Repair-Technician-*.cmd'
       - 'Run-Technician-LiveCert.cmd'
@@ -15,9 +17,13 @@ on:
       - 'Open-TechnicianLiveCertEvidence.cmd'
       - 'Install-TechnicianLiveCertShortcuts.cmd'
       - 'scripts/Test-TechnicianLiveCertSurface.ps1'
+      - 'scripts/Test-TechnicianLiveCertHarness.ps1'
       - 'tests/test_technician_live_cert_surface.py'
+      - 'tests/test_technician_live_cert_harness.py'
+      - '.ai/skills/windows-profile-live-certification/SKILL.md'
       - '.github/workflows/technician-live-cert-surface.yml'
       - 'docs/workstation/technician-live-cert-click-guide.md'
+      - 'docs/harness/technician-live-cert-harness.md'
   workflow_dispatch:
 
 permissions:
@@ -30,6 +36,7 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -37,12 +44,29 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Run Python structural tests
-        run: python tests/test_technician_live_cert_surface.py
+      - name: Run Python live-cert surface tests
+        run: python -m unittest tests.test_technician_live_cert_surface
 
-      - name: Validate surface in PowerShell
+      - name: Run Python live-cert harness tests
+        run: python -m unittest tests.test_technician_live_cert_harness
+
+      - name: Validate surface in PowerShell 7
         shell: pwsh
         run: pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertSurface.ps1
+
+      - name: Validate harness in PowerShell 7
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertHarness.ps1
+
+      - name: Validate surface in Windows PowerShell 5.1
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertSurface.ps1
+
+      - name: Validate harness in Windows PowerShell 5.1
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertHarness.ps1
 
       - name: Validate Windows Profile live-certification doctrine
         shell: pwsh
@@ -79,6 +103,6 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-      - name: Check repository hygiene
+      - name: Check repository hygiene without a pager
         shell: bash
-        run: git diff --check
+        run: git --no-pager diff --check
