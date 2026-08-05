@@ -1,15 +1,17 @@
 # Device Profile Launcher Contract
 
-Canonical source: `EndeavorEverlasting/AgentSwitchboard`
-Pinned contract version: `REPLACE_CONTRACT_VERSION`
-Policy: `.ai/harness/device-profile-launcher.policy.json`
+Canonical source: `EndeavorEverlasting/AgentSwitchboard/docs/governance/device-profile-launcher-contract.md`.
+Machine-readable policy: `.ai/harness/device-profile-launcher.policy.json`.
+Environment authority: `docs/governance/environment-capability-contract.md`.
 
-AgentSwitchboard owns one canonical launcher per platform profile. The Windows Profile is WezTerm-backed and uses idempotent `open-or-activate`. Consumer repositories delegate to the exact canonical launcher and may certify it, but they do not own discovery, activation, duplicate prevention, or raw frontend fallback.
+AgentSwitchboard owns one canonical launcher per platform profile. The Windows Profile is WezTerm-backed and uses idempotent `open-or-activate`. Consumer repositories and desktop shortcuts delegate only; they do not own lifecycle, discovery, activation, duplicate prevention, or raw frontend fallback.
 
-Desktop shortcuts are presentation only and target the canonical launcher. A missing or uncertified launcher is blocked.
+Classify the frontend, transport, workspace host, orchestration runtime, and agent runtime before profile installation or certification.
 
-Windows, Linux, and Android are separate profile implementations. Android configuration may differ; one profile does not prove another profile works.
+A profile frontend does not prove its workspace host, repository, tmux server, orchestration runtime, agent or provider route, authentication, persistence, or live behavior. Matching tmux session names on different hosts do not identify one workspace.
 
-A request claiming installation, build, configuration, repair, certification, or deployment requires tracked implementation, focused validation, commit or GitHub evidence, and an honest proof ceiling. Contract-only doctrine does not prove a launcher exists or that a workspace opened or activated.
+Linux and Android are separate implementations. Local rules define their exact role ceiling and implementation status, but may not silently inherit Windows behavior, substitute a lower-role topology, or claim runtime readiness from repository or package presence.
 
-Validate with `scripts/Test-DeviceProfileLauncherContract.ps1`. Local rules may strengthen this doctrine. They may not weaken it.
+Static contracts and fixtures prove ownership and shape only. Runtime proof requires fresh environment identity, exact workspace-host and runtime identity, effective-state readback, opened or activated behavior, duplicate prevention, and operator-visible evidence.
+
+Validate with the repository-local environment-capability and device-profile validators. Local rules may strengthen this contract but may not weaken canonical ownership, topology, delegation, or proof boundaries.
