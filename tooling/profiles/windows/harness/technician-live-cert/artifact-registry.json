@@ -1,73 +1,22 @@
 {
   "schemaVersion": 1,
   "registryId": "agentswitchboard.technician-live-cert-artifacts.v1",
-  "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/technician-live-cert",
+  "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard",
   "artifacts": [
-    {
-      "artifactId": "live-cert-run-context",
-      "fileName": "runs/<runId>/run.json",
-      "generator": "TechnicianLiveCert.Common.psm1",
-      "tracked": false,
-      "sensitivity": "local-operational",
-      "proofCeiling": "declared workstation run identity, Git head, stage state, and evidence root only"
-    },
-    {
-      "artifactId": "stage-result",
-      "fileName": "runs/<runId>/<stageId>/stage-result.json",
-      "generator": "Invoke-TechnicianLiveCertStage.ps1",
-      "tracked": false,
-      "sensitivity": "local-operational",
-      "proofCeiling": "one stage execution result only"
-    },
-    {
-      "artifactId": "preflight-summary",
-      "fileName": "runs/<runId>/P00/preflight-summary.json",
-      "generator": "stages/P00-Preflight.ps1",
-      "tracked": false,
-      "sensitivity": "local-operational",
-      "proofCeiling": "P00 workstation prerequisite observation; hosted CI surface mode excludes WSL/Ubuntu runtime"
-    },
-    {
-      "artifactId": "stage-matrix",
-      "fileName": "runs/<runId>/technician-live-cert-stage-matrix.csv",
-      "generator": "stages/P08-Finalize.ps1",
-      "tracked": false,
-      "sensitivity": "local-operational",
-      "proofCeiling": "P00-P08 stage ledger only"
-    },
-    {
-      "artifactId": "operator-report",
-      "fileName": "runs/<runId>/technician-live-cert-report.md",
-      "generator": "stages/P08-Finalize.ps1",
-      "tracked": false,
-      "sensitivity": "local-operational",
-      "proofCeiling": "English rendering of observed stage evidence only"
-    },
-    {
-      "artifactId": "harness-status-json",
-      "fileName": "harness-status/technician-live-cert-harness-status.json",
-      "generator": "tooling/profiles/windows/Get-TechnicianLiveCertHarnessStatus.ps1",
-      "tracked": false,
-      "sensitivity": "local-operational",
-      "proofCeiling": "tracked component, known-guard, and validator readiness only"
-    },
-    {
-      "artifactId": "harness-status-report",
-      "fileName": "harness-status/technician-live-cert-harness-status.md",
-      "generator": "tooling/profiles/windows/Get-TechnicianLiveCertHarnessStatus.ps1",
-      "tracked": false,
-      "sensitivity": "local-operational",
-      "proofCeiling": "English rendering of harness readiness only"
-    }
+    {"artifactId":"live-cert-run-context","fileName":"technician-live-cert/runs/<runId>/run.json","generator":"TechnicianLiveCert.Common.psm1","tracked":false,"sensitivity":"local-operational","proofCeiling":"declared workstation run identity, Git head, stage state, and evidence root only"},
+    {"artifactId":"stage-result","fileName":"technician-live-cert/runs/<runId>/<stageId>/stage-result.json","generator":"Invoke-TechnicianLiveCertStage.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"one stage execution result only"},
+    {"artifactId":"preflight-summary","fileName":"technician-live-cert/runs/<runId>/P00/preflight-summary.json","generator":"stages/P00-Preflight.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"P00 workstation prerequisite observation; hosted CI surface mode excludes WSL/Ubuntu runtime"},
+    {"artifactId":"technician-ready-summary","fileName":"technician-ready/runs/<runId>/technician-ready-summary.json","generator":"Invoke-TechnicianAgentSwitchboardReady.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"local tool setup, command shims, fleet-state readiness, fresh-shell command proof, and optional launcher command acknowledgement"},
+    {"artifactId":"startup-readiness","fileName":"technician-ready/runs/<runId>/startup-readiness/agent-startup-readiness-*.json","generator":"Get-AgentSwitchboardStartupReport.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"canonical local fleet-state and adapter readiness only"},
+    {"artifactId":"fresh-shell-agentswitchboard","fileName":"technician-ready/runs/<runId>/fresh-shell-agent-switchboard.txt","generator":"Invoke-TechnicianAgentSwitchboardReady.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"fresh CMD process resolved the repository-owned AgentSwitchboard shim and completed -ListAgents"},
+    {"artifactId":"exact-head-validation","fileName":"exact-head-validation/runs/<runId>/exact-head-validation.json","generator":"Invoke-TechnicianExactHeadValidation.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"actual detached worktree HEAD, cross-shell validators, cleanliness, fresh P00 evidence, and optional fresh AgentSwitchboard readiness evidence"},
+    {"artifactId":"exact-head-report","fileName":"exact-head-validation/runs/<runId>/exact-head-validation.md","generator":"Invoke-TechnicianExactHeadValidation.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"English rendering of the actual verified HEAD, field checks, and optional readiness artifact"},
+    {"artifactId":"fleet-state","fileName":"GnhfFleet/state.json","generator":"tooling/gnhf/Setup-AgentSwitchboard.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"local command and adapter discovery; never credentials, provider authentication, quota, or hosted response"},
+    {"artifactId":"stage-matrix","fileName":"technician-live-cert/runs/<runId>/technician-live-cert-stage-matrix.csv","generator":"stages/P08-Finalize.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"P00-P08 stage ledger only"},
+    {"artifactId":"operator-report","fileName":"technician-live-cert/runs/<runId>/technician-live-cert-report.md","generator":"stages/P08-Finalize.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"English rendering of observed stage evidence only"},
+    {"artifactId":"harness-status-json","fileName":"technician-live-cert/harness-status/technician-live-cert-harness-status.json","generator":"Get-TechnicianLiveCertHarnessStatus.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"tracked component, known-guard, and validator readiness only"},
+    {"artifactId":"harness-status-report","fileName":"technician-live-cert/harness-status/technician-live-cert-harness-status.md","generator":"Get-TechnicianLiveCertHarnessStatus.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"English rendering of harness readiness only"}
   ],
-  "namingConventions": {
-    "runId": "UTC basic timestamp plus random suffix",
-    "stageDirectory": "<runId>/<stageId>",
-    "statusArtifacts": "stable names under harness-status; newest run overwrites only when the operator selects the same output root"
-  },
-  "forbidden": [
-    "Do not commit generated live-cert evidence.",
-    "Do not include credentials, browser tokens, private endpoints, or unredacted private hostnames in tracked fixtures.",
-    "Do not treat a status report as live workstation proof."
-  ]
+  "namingConventions": {"runId":"UTC basic timestamp plus random suffix","stageDirectory":"<runId>/<stageId>","freshEvidence":"field proof must be created after the current stage start timestamp","statusArtifacts":"stable names are allowed only for harness status; field run artifacts use unique run roots"},
+  "forbidden": ["Do not commit generated live-cert, technician-ready, exact-head, or fleet-state evidence.","Do not include credentials, browser tokens, private endpoints, or unredacted private hostnames in tracked fixtures.","Do not execute copied shell prompts, continuation prompts, transcripts, or error output.","Do not print an expected SHA as verified proof; persist the actual worktree HEAD after equality validation.","Do not treat local readiness as provider authentication, quota, hosted response, or operator acceptance."]
 }

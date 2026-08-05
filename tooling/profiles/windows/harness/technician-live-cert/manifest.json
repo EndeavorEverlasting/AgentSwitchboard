@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "harnessId": "agentswitchboard.technician-live-cert-harness.v1",
-  "scope": "Windows technician clickable live-certification and owned repair surfaces",
+  "scope": "Windows technician acquisition, real AgentSwitchboard readiness, exact-head validation, clickable live-certification, and owned repair surfaces",
   "canonicalOwner": "EndeavorEverlasting/AgentSwitchboard",
   "entrypoints": {
     "codebaseMap": "tooling/profiles/windows/harness/technician-live-cert/codebase-map.json",
@@ -17,137 +17,79 @@
     "statusReporter": "tooling/profiles/windows/Get-TechnicianLiveCertHarnessStatus.ps1",
     "optInHook": "tooling/profiles/windows/hooks/Invoke-TechnicianLiveCertPreCommit.ps1",
     "ciWorkflow": ".github/workflows/technician-live-cert-surface.yml",
-    "operatorGuide": "docs/harness/technician-live-cert-harness.md"
+    "operatorGuide": "docs/harness/technician-live-cert-harness.md",
+    "readinessCmd": "Technician-AgentSwitchboard-Ready.cmd",
+    "readinessEngine": "tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1",
+    "readinessValidator": "scripts/Test-TechnicianAgentSwitchboardReady.ps1",
+    "readinessPythonValidator": "tests/test_technician_agentswitchboard_ready.py",
+    "exactHeadCmd": "Validate-Technician-ExactHead.cmd",
+    "exactHeadValidator": "scripts/Invoke-TechnicianExactHeadValidation.ps1",
+    "readinessOperatorGuide": "docs/workstation/technician-agentswitchboard-ready.md",
+    "pullRunCiWorkflow": ".github/workflows/technician-pull-and-run.yml"
   },
   "components": [
-    {
-      "id": "codebase-map",
-      "path": "tooling/profiles/windows/harness/technician-live-cert/codebase-map.json",
-      "type": "map"
-    },
-    {
-      "id": "artifact-registry",
-      "path": "tooling/profiles/windows/harness/technician-live-cert/artifact-registry.json",
-      "type": "registry"
-    },
-    {
-      "id": "maintenance-workflow",
-      "path": "tooling/profiles/windows/harness/technician-live-cert/workflows/maintenance.workflow.json",
-      "type": "workflow"
-    },
-    {
-      "id": "field-failure-repair-workflow",
-      "path": "tooling/profiles/windows/harness/technician-live-cert/workflows/field-failure-repair.workflow.json",
-      "type": "workflow"
-    },
-    {
-      "id": "schema",
-      "path": "tooling/profiles/windows/harness/technician-live-cert/schemas/technician-live-cert-harness.schema.json",
-      "type": "schema"
-    },
-    {
-      "id": "operator-report-template",
-      "path": "tooling/profiles/windows/harness/technician-live-cert/operator-report.template.md",
-      "type": "report"
-    },
-    {
-      "id": "surface-validator",
-      "path": "scripts/Test-TechnicianLiveCertSurface.ps1",
-      "type": "validator"
-    },
-    {
-      "id": "harness-validator",
-      "path": "scripts/Test-TechnicianLiveCertHarness.ps1",
-      "type": "validator"
-    },
-    {
-      "id": "python-validator",
-      "path": "tests/test_technician_live_cert_harness.py",
-      "type": "validator"
-    },
-    {
-      "id": "status-reporter",
-      "path": "tooling/profiles/windows/Get-TechnicianLiveCertHarnessStatus.ps1",
-      "type": "reporter"
-    },
-    {
-      "id": "opt-in-hook",
-      "path": "tooling/profiles/windows/hooks/Invoke-TechnicianLiveCertPreCommit.ps1",
-      "type": "hook"
-    },
-    {
-      "id": "skill",
-      "path": ".ai/skills/windows-profile-live-certification/SKILL.md",
-      "type": "skill"
-    },
-    {
-      "id": "ci",
-      "path": ".github/workflows/technician-live-cert-surface.yml",
-      "type": "workflow"
-    },
-    {
-      "id": "operator-guide",
-      "path": "docs/harness/technician-live-cert-harness.md",
-      "type": "documentation"
-    }
+    {"id":"codebase-map","path":"tooling/profiles/windows/harness/technician-live-cert/codebase-map.json","type":"map"},
+    {"id":"artifact-registry","path":"tooling/profiles/windows/harness/technician-live-cert/artifact-registry.json","type":"registry"},
+    {"id":"maintenance-workflow","path":"tooling/profiles/windows/harness/technician-live-cert/workflows/maintenance.workflow.json","type":"workflow"},
+    {"id":"field-failure-repair-workflow","path":"tooling/profiles/windows/harness/technician-live-cert/workflows/field-failure-repair.workflow.json","type":"workflow"},
+    {"id":"schema","path":"tooling/profiles/windows/harness/technician-live-cert/schemas/technician-live-cert-harness.schema.json","type":"schema"},
+    {"id":"operator-report-template","path":"tooling/profiles/windows/harness/technician-live-cert/operator-report.template.md","type":"report"},
+    {"id":"surface-validator","path":"scripts/Test-TechnicianLiveCertSurface.ps1","type":"validator"},
+    {"id":"harness-validator","path":"scripts/Test-TechnicianLiveCertHarness.ps1","type":"validator"},
+    {"id":"python-validator","path":"tests/test_technician_live_cert_harness.py","type":"validator"},
+    {"id":"status-reporter","path":"tooling/profiles/windows/Get-TechnicianLiveCertHarnessStatus.ps1","type":"reporter"},
+    {"id":"opt-in-hook","path":"tooling/profiles/windows/hooks/Invoke-TechnicianLiveCertPreCommit.ps1","type":"hook"},
+    {"id":"skill","path":".ai/skills/windows-profile-live-certification/SKILL.md","type":"skill"},
+    {"id":"ci","path":".github/workflows/technician-live-cert-surface.yml","type":"workflow"},
+    {"id":"operator-guide","path":"docs/harness/technician-live-cert-harness.md","type":"documentation"},
+    {"id":"technician-ready-cmd","path":"Technician-AgentSwitchboard-Ready.cmd","type":"entrypoint"},
+    {"id":"technician-ready-engine","path":"tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1","type":"implementation"},
+    {"id":"compatibility-setup","path":"tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1","type":"entrypoint"},
+    {"id":"safe-profile-launcher","path":"tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1","type":"implementation"},
+    {"id":"readiness-validator","path":"scripts/Test-TechnicianAgentSwitchboardReady.ps1","type":"validator"},
+    {"id":"readiness-python-validator","path":"tests/test_technician_agentswitchboard_ready.py","type":"validator"},
+    {"id":"exact-head-cmd","path":"Validate-Technician-ExactHead.cmd","type":"entrypoint"},
+    {"id":"exact-head-validator","path":"scripts/Invoke-TechnicianExactHeadValidation.ps1","type":"validator"},
+    {"id":"readiness-operator-guide","path":"docs/workstation/technician-agentswitchboard-ready.md","type":"documentation"},
+    {"id":"pull-run-ci","path":".github/workflows/technician-pull-and-run.yml","type":"workflow"}
   ],
   "runtimeCompatibility": {
-    "requiredValidationShells": [
-      "Windows PowerShell 5.1 on windows-latest",
-      "PowerShell 7 on windows-latest",
-      "PowerShell 7 on ubuntu-latest"
-    ],
+    "requiredValidationShells": ["Windows PowerShell 5.1 on windows-latest","PowerShell 7 on windows-latest","PowerShell 7 on ubuntu-latest"],
     "operatorStageShell": "PowerShell 7 through repository-owned CMD dispatchers",
-    "rootResolutionRule": "Resolve PSScriptRoot in the script body; never in a parameter default expression."
+    "rootResolutionRule": "Resolve PSScriptRoot in the script body; never in a parameter default expression.",
+    "operatorInputRule": "Operators run repository-owned CMD or PS1 files. Shell prompts, continuation prompts, transcripts, and error output are never executable input."
   },
   "knownFailureGuards": [
-    {
-      "id": "ambiguous-dotnet-overload",
-      "forbiddenPattern": ".Replace([char]0, '')",
-      "requiredPattern": ".Replace(([char]0).ToString(), [string]::Empty)",
-      "proof": "static source assertion plus executable NUL-padded Ubuntu normalization"
-    },
-    {
-      "id": "psscriptroot-param-default",
-      "forbiddenPattern": "[string]$RootPath = (Split-Path -Parent $PSScriptRoot)",
-      "proof": "Python and PowerShell validators inspect entrypoint parameter blocks"
-    },
-    {
-      "id": "hosted-ci-proof-inflation",
-      "guard": "TECHNICIAN_LIVE_CERT_CI_SURFACE may prove CMD dispatch only and may not claim initialized WSL/Ubuntu runtime"
-    },
-    {
-      "id": "interactive-git-pager",
-      "guard": "All harness Git inspection uses git --no-pager and propagates nonzero exit codes"
-    },
-    {
-      "id": "live-failure-overridden-by-static-pass",
-      "guard": "Observed operator failure remains blocking until the exact command is rerun successfully"
-    }
+    {"id":"ambiguous-dotnet-overload","forbiddenPattern":".Replace([char]0, '')","requiredPattern":".Replace(([char]0).ToString(), [string]::Empty)","proof":"static source assertion plus executable NUL-padded Ubuntu normalization"},
+    {"id":"psscriptroot-param-default","forbiddenPattern":"[string]$RootPath = (Split-Path -Parent $PSScriptRoot)","proof":"Python and PowerShell validators inspect entrypoint parameter blocks"},
+    {"id":"prompt-transcript-reexecution","forbiddenPatterns":["PS C:\\",">>","+ CategoryInfo","FullyQualifiedErrorId"],"guard":"Operational procedures are tracked scripts invoked by one command; transcript text is evidence only."},
+    {"id":"expected-head-proof-inflation","guard":"Exact-head reports print and persist the actual worktree HEAD after equality verification, never the requested or expected SHA alone."},
+    {"id":"stale-artifact-reuse","guard":"Field validation accepts only evidence created after the current stage start timestamp."},
+    {"id":"tool-only-false-readiness","guard":"P02 and P03 require canonical GNHF fleet state, AgentSwitchboard command resolution, startup readiness, and a fresh-shell AgentSwitchboard -ListAgents probe."},
+    {"id":"single-command-field-acceptance","guard":"Validate-Technician-ExactHead.cmd ready performs exact-head validation, fresh P00 proof, real technician setup, fleet-state proof, and fresh AgentSwitchboard readiness evidence in one repository-owned command."},
+    {"id":"hosted-ci-proof-inflation","guard":"CI surface modes prove dispatch and contracts only; they do not claim live WSL, fleet installation, provider authentication, or visible window behavior."},
+    {"id":"interactive-git-pager","guard":"All harness Git inspection uses git --no-pager and propagates nonzero exit codes."},
+    {"id":"live-failure-overridden-by-static-pass","guard":"Observed operator failure remains blocking until the exact repository-owned command is rerun successfully."}
   ],
   "validationOrder": [
     "python -m unittest tests.test_technician_live_cert_harness",
     "python -m unittest tests.test_technician_live_cert_surface",
+    "python -m unittest tests.test_technician_agentswitchboard_ready",
     "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertSurface.ps1",
     "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertHarness.ps1",
+    "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianAgentSwitchboardReady.ps1",
     "pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertSurface.ps1",
     "pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertHarness.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianAgentSwitchboardReady.ps1",
     "git --no-pager diff --check"
   ],
   "generatedEvidence": {
     "tracked": false,
-    "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/technician-live-cert",
-    "artifacts": [
-      "runs/<runId>/run.json",
-      "runs/<runId>/<stageId>/stage-result.json",
-      "runs/<runId>/P00/preflight-summary.json",
-      "runs/<runId>/technician-live-cert-stage-matrix.csv",
-      "harness-status/technician-live-cert-harness-status.json",
-      "harness-status/technician-live-cert-harness-status.md"
-    ]
+    "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard",
+    "artifacts": ["technician-live-cert/runs/<runId>/run.json","technician-live-cert/runs/<runId>/<stageId>/stage-result.json","technician-live-cert/runs/<runId>/P00/preflight-summary.json","technician-live-cert/runs/<runId>/technician-live-cert-stage-matrix.csv","technician-live-cert/harness-status/technician-live-cert-harness-status.json","technician-live-cert/harness-status/technician-live-cert-harness-status.md","technician-ready/runs/<runId>/technician-ready-summary.json","technician-ready/runs/<runId>/startup-readiness/agent-startup-readiness-*.json","exact-head-validation/runs/<runId>/exact-head-validation.json","exact-head-validation/runs/<runId>/exact-head-validation.md","GnhfFleet/state.json"]
   },
   "implicitHookInstallationAllowed": false,
   "networkAllowedByValidators": false,
   "targetMutationAllowedByValidators": false,
-  "proofCeiling": "Tracked harness structure, cross-shell parser and contract validation, fixture-safe CMD dispatch, local artifact policy, and exact failure-boundary reporting only. Live WSL initialization, visible WezTerm behavior, tmux attachment, agent launch, repeatability, and operator acceptance require the workstation live-cert sequence."
+  "proofCeiling": "Tracked harness structure, cross-shell parser and contract validation, one-command exact-head field execution, local fleet-state readiness, and exact failure-boundary reporting require the workstation live-cert sequence for runtime promotion. Provider authentication, hosted model availability, quota, hosted response, visible window focus, agent task quality, and operator acceptance require separate live observation."
 }

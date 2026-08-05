@@ -54,12 +54,20 @@
         "statusReporter",
         "optInHook",
         "ciWorkflow",
-        "operatorGuide"
+        "operatorGuide",
+        "readinessCmd",
+        "readinessEngine",
+        "readinessValidator",
+        "readinessPythonValidator",
+        "exactHeadCmd",
+        "exactHeadValidator",
+        "readinessOperatorGuide",
+        "pullRunCiWorkflow"
       ]
     },
     "components": {
       "type": "array",
-      "minItems": 14,
+      "minItems": 24,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -88,7 +96,9 @@
               "reporter",
               "hook",
               "skill",
-              "documentation"
+              "documentation",
+              "entrypoint",
+              "implementation"
             ]
           }
         }
@@ -99,11 +109,11 @@
     },
     "knownFailureGuards": {
       "type": "array",
-      "minItems": 5
+      "minItems": 10
     },
     "validationOrder": {
       "type": "array",
-      "minItems": 7,
+      "minItems": 10,
       "items": {
         "type": "string"
       }
@@ -124,7 +134,7 @@
         },
         "artifacts": {
           "type": "array",
-          "minItems": 1,
+          "minItems": 11,
           "items": {
             "type": "string"
           }
