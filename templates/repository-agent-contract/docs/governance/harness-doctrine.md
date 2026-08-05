@@ -8,6 +8,8 @@ Use the executable loop:
 
 `request -> evidence review -> bounded decision -> repo or Git or GitHub mutation -> artifacts -> validation -> report -> next decision`
 
+## Action-commitment
+
 A prompt that claims installation, setup, build, execution, repair, configuration, upgrade, deployment, merge, release, or certification must require the corresponding mutation and proof. Acknowledgment, architecture, a plan, a repository clone, package presence, summary, or handoff is not a substitute.
 
 ## Environment capability
@@ -26,7 +28,13 @@ Read `docs/governance/runtime-event-contract.md`. Register source, typed envelop
 
 ## Device profiles
 
-Read `docs/governance/device-profile-launcher-contract.md` after environment classification. AgentSwitchboard owns one canonical launcher per profile. Consumers delegate only, raw frontend fallback is forbidden, and platform implementations remain separate. Contract-only proof does not prove open-or-activate behavior. Validate with the repository-local environment-capability and device-profile validators.
+Read `docs/governance/device-profile-launcher-contract.md` after environment classification. AgentSwitchboard owns one canonical launcher per profile. Consumers delegate only, raw frontend fallback is forbidden, and platform implementations remain separate. Contract-only proof does not prove open-or-activate behavior.
+
+Validate with:
+
+```powershell
+pwsh -NoLogo -NoProfile -File .\scripts\Test-DeviceProfileLauncherContract.ps1
+```
 
 ## Test-only and provider gates
 
