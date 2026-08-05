@@ -1,0 +1,76 @@
+{
+  "schema": "agentswitchboard.environment-capability-workflow.v1",
+  "workflowId": "environment-capability-certification",
+  "purpose": "Certify only the exact selected topology and role reached by effective-state and operator-visible evidence.",
+  "mutationAllowed": "explicit-task-only",
+  "networkAllowed": "selected-topology-only",
+  "inputs": [
+    "environment-observation.json",
+    "topology-selection.json",
+    "explicit task authority"
+  ],
+  "steps": [
+    {
+      "stepId": "prove-lower-floors",
+      "requires": [
+        "schema validation",
+        "static contract validation",
+        "focused implementation tests"
+      ]
+    },
+    {
+      "stepId": "perform-bounded-mutation",
+      "requires": [
+        "selected topology",
+        "owned mutation paths",
+        "rollback boundary",
+        "no credential persistence"
+      ]
+    },
+    {
+      "stepId": "read-effective-state",
+      "requires": [
+        "installed command identity",
+        "workspace-host identity",
+        "tmux server and session identity when applicable",
+        "repository identity and state",
+        "orchestration and agent runtime status"
+      ]
+    },
+    {
+      "stepId": "observe-operator-result",
+      "requires": [
+        "fresh same-run evidence",
+        "opened or activated result",
+        "user-visible terminal or application behavior"
+      ]
+    },
+    {
+      "stepId": "prove-repeat-or-rollback",
+      "requires": [
+        "idempotence when repeated operation is expected",
+        "rollback proof when mutation can be reversed"
+      ]
+    },
+    {
+      "stepId": "emit-certification",
+      "artifact": "capability-certification.json",
+      "terminalStates": [
+        "PASS_ROLE_CERTIFIED",
+        "BLOCKED_LOWER_FLOOR",
+        "BLOCKED_RUNTIME_NOT_OBSERVED",
+        "REJECTED_STALE_OR_CROSS_HOST_EVIDENCE",
+        "FAILED_MUTATION",
+        "FAILED_ROLLBACK"
+      ]
+    }
+  ],
+  "forbiddenPromotions": [
+    "static test to live device",
+    "command acknowledgement to attachment",
+    "same session name to same tmux server",
+    "terminal client to orchestration runtime",
+    "repository clone to agent readiness"
+  ],
+  "proofCeiling": "Only an explicitly observed topology and role may be certified."
+}

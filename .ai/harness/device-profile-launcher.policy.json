@@ -4,13 +4,18 @@
   "canonicalSource": "docs/governance/device-profile-launcher-contract.md",
   "registry": ".ai/harness/device-profile-registry.json",
   "registrySchema": ".ai/harness/schemas/device-profile-registry.schema.json",
+  "environmentCapabilityPolicy": ".ai/harness/environment-capability.policy.json",
   "validator": "scripts/Test-DeviceProfileLauncherContract.ps1",
   "ownership": {
     "oneCanonicalLauncherPerProfile": true,
     "canonicalOwnerRepository": "EndeavorEverlasting/AgentSwitchboard",
     "consumerIndependentLaunchLogicForbidden": true,
     "desktopShortcutsDelegateOnly": true,
-    "rawExecutableEntryPointsForbidden": ["wezterm", "wezterm.exe", "wezterm-gui.exe"],
+    "rawExecutableEntryPointsForbidden": [
+      "wezterm",
+      "wezterm.exe",
+      "wezterm-gui.exe"
+    ],
     "rawFallbackForbidden": true
   },
   "windowsProfile": {
@@ -22,10 +27,51 @@
     "canonicalSourcePath": "tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1",
     "installedPath": "%LOCALAPPDATA%\\AgentSwitchboard\\profiles\\windows\\Invoke-AgentSwitchboardOpenOrActivate.ps1",
     "consumerCertifier": "EndeavorEverlasting/SysAdminSuite",
-    "allowedOutcomes": ["opened", "activated", "blocked", "failed"]
+    "allowedOutcomes": [
+      "opened",
+      "activated",
+      "blocked",
+      "failed"
+    ]
+  },
+  "androidProfile": {
+    "profileId": "android",
+    "displayName": "Android Profile",
+    "status": "terminal-client-implemented",
+    "capabilityRole": "terminal-client",
+    "terminalFrontend": "termux",
+    "canonicalOperation": "open-or-activate",
+    "canonicalSourcePath": "tooling/profiles/android/Invoke-AgentSwitchboardOpenOrActivate.sh",
+    "bootstrapPath": "Bootstrap-AgentSwitchboard-Termux.sh",
+    "installedPath": "$PREFIX/bin/agentswitchboard-phone",
+    "workspaceBackend": "tmux",
+    "localTmuxRole": "local-shell-only",
+    "localTmuxScope": "device-local-only",
+    "continuityTransport": "ssh",
+    "crossDeviceContinuityRequiresRemoteWorkspaceHost": true,
+    "remoteShellClassificationRequired": true,
+    "supportedRemoteHostProfiles": [
+      "posix-tmux"
+    ],
+    "remotePreflightRequired": true,
+    "nativeOrchestrationRuntime": "unimplemented",
+    "nativeAgentRuntime": "unproved",
+    "fullRuntimeClaimAllowed": false,
+    "allowedOutcomes": [
+      "opened-local-shell",
+      "activated-local-shell",
+      "blocked-remote-preflight",
+      "blocked-session-absent",
+      "created-remote-session-request",
+      "existing-remote-session-request",
+      "remote-transport-ended",
+      "failed"
+    ],
+    "liveDeviceProofRequired": true
   },
   "idempotence": {
     "sameIdentityConverges": true,
+    "sameIdentityRequiresSameHostAndTmuxServer": true,
     "activateExistingBeforeOpen": true,
     "duplicateLogicalWorkspaceForbidden": true,
     "weakProcessHeuristicInsufficient": true,
@@ -43,9 +89,20 @@
     "consumerMayFallbackToRawFrontend": false
   },
   "profiles": {
-    "windows": {"implementationSeparate": true, "frontend": "wezterm"},
-    "linux": {"implementationSeparate": true, "frontend": "profile-defined"},
-    "android": {"implementationSeparate": true, "frontend": "profile-defined", "configurationMayDiffer": true}
+    "windows": {
+      "implementationSeparate": true,
+      "frontend": "wezterm"
+    },
+    "linux": {
+      "implementationSeparate": true,
+      "frontend": "profile-defined"
+    },
+    "android": {
+      "implementationSeparate": true,
+      "frontend": "termux",
+      "configurationMayDiffer": true,
+      "roleCeiling": "terminal-client"
+    }
   },
   "certification": {
     "exactProfileIdRequired": true,
@@ -55,16 +112,31 @@
     "noRawFallbackRequired": true,
     "openedActivatedBlockedFailedFixturesRequired": true,
     "repeatedInvocationIdempotenceRequired": true,
+    "environmentTopologyRequired": true,
     "proofCeilingRequired": true
   },
   "runtimeEvents": {
-    "requiredChain": ["profile-request", "canonical-launcher-resolved", "workspace-discovered", "opened-or-activated", "terminal-result", "evidence-sink"],
+    "requiredChain": [
+      "profile-request",
+      "canonical-launcher-resolved",
+      "workspace-discovered",
+      "opened-or-activated",
+      "terminal-result",
+      "evidence-sink"
+    ],
     "correlationAndCausationRequired": true,
     "staticProofCannotClaimRuntime": true,
     "syntheticProofCannotClaimLiveDevice": true
   },
   "actionCommitment": {
-    "verbs": ["install", "build", "configure", "repair", "certify", "deploy"],
+    "verbs": [
+      "install",
+      "build",
+      "configure",
+      "repair",
+      "certify",
+      "deploy"
+    ],
     "requiresTrackedMutation": true,
     "requiresFocusedValidation": true,
     "requiresCommitOrGitHubEvidence": true,

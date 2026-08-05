@@ -1,14 +1,148 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/.ai/harness/schemas/device-profile-registry.schema.json",
+  "title": "AgentSwitchboard device profile registry",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "registryId", "canonicalOwner", "profiles", "proofCeiling"],
+  "required": [
+    "schema",
+    "registryId",
+    "canonicalOwner",
+    "environmentCapabilityPolicy",
+    "profiles",
+    "proofCeiling"
+  ],
   "properties": {
-    "schema": {"const": "agentswitchboard.device-profile-registry.v1"},
-    "registryId": {"type": "string"},
-    "canonicalOwner": {"type": "string"},
-    "profiles": {"type": "array", "minItems": 3},
-    "proofCeiling": {"type": "string"}
+    "schema": {
+      "const": "agentswitchboard.device-profile-registry.v1"
+    },
+    "registryId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "canonicalOwner": {
+      "const": "EndeavorEverlasting/AgentSwitchboard"
+    },
+    "environmentCapabilityPolicy": {
+      "const": ".ai/harness/environment-capability.policy.json"
+    },
+    "profiles": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "$ref": "#/$defs/profile"
+      }
+    },
+    "proofCeiling": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "profile": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "profileId",
+        "displayName",
+        "status",
+        "ownerRepository",
+        "canonicalOperation",
+        "frontend",
+        "implementationSeparate",
+        "configurationMayDiffer",
+        "canonicalSourcePath",
+        "installedPath",
+        "consumers"
+      ],
+      "properties": {
+        "profileId": {
+          "enum": [
+            "windows",
+            "linux",
+            "android"
+          ]
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "reserved",
+            "contract-only",
+            "terminal-client-implemented",
+            "workspace-host-implemented",
+            "full-runtime-implemented",
+            "runtime-proved"
+          ]
+        },
+        "ownerRepository": {
+          "const": "EndeavorEverlasting/AgentSwitchboard"
+        },
+        "canonicalOperation": {
+          "const": "open-or-activate"
+        },
+        "frontend": {
+          "type": "string",
+          "minLength": 1
+        },
+        "implementationSeparate": {
+          "const": true
+        },
+        "configurationMayDiffer": {
+          "type": "boolean"
+        },
+        "canonicalSourcePath": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "installedPath": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "consumers": {
+          "type": "array"
+        },
+        "capabilityRole": {
+          "enum": [
+            "full-runtime-host",
+            "workspace-host",
+            "terminal-client",
+            "local-shell-only",
+            "transport-only",
+            "unsupported"
+          ]
+        },
+        "localTmuxScope": {
+          "enum": [
+            "device-local-only"
+          ]
+        },
+        "nativeOrchestrationRuntime": {
+          "enum": [
+            "unimplemented",
+            "unproved",
+            "implemented",
+            "runtime-proved"
+          ]
+        },
+        "nativeAgentRuntime": {
+          "enum": [
+            "unimplemented",
+            "unproved",
+            "implemented",
+            "runtime-proved"
+          ]
+        },
+        "fullRuntimeClaimAllowed": {
+          "type": "boolean"
+        }
+      }
+    }
   }
 }

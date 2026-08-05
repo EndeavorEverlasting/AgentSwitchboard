@@ -1,0 +1,23 @@
+{
+  "schema": "agentswitchboard.environment-capability-fixture.v1",
+  "fixtureId": "valid-windows-control-plane",
+  "input": {
+    "frontend": "wezterm",
+    "frontendHost": "windows",
+    "transport": "local-process-boundary",
+    "workspaceHost": "wsl-linux",
+    "workspaceHostIdentityObserved": true,
+    "tmuxServerIdentityObserved": true,
+    "repositoryIdentityObserved": true,
+    "repositoryClean": true,
+    "orchestrationRuntime": "windows-pwsh-gnhf",
+    "orchestrationRuntimeVerified": true,
+    "agentRuntimeVerified": true,
+    "operatorVisibleResultObserved": true
+  },
+  "expected": {
+    "topologyId": "windows-wezterm-wsl-control-plane",
+    "role": "full-runtime-host",
+    "terminalState": "PASS_ROLE_CERTIFIED"
+  }
+}

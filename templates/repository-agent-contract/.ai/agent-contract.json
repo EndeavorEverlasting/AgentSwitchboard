@@ -10,10 +10,23 @@
     "skills": "SKILLS.md",
     "capabilities": "CAPABILITIES.md",
     "triggers": "TRIGGERS.md",
-    "plans": "plans/plan-registry.json"
+    "plans": "plans/plan-registry.json",
+    "environmentCapabilities": "docs/governance/environment-capability-contract.md"
   },
   "skillRoot": ".ai/skills",
   "planRoot": "plans",
+  "environmentCapabilities": {
+    "policy": ".ai/harness/environment-capability.policy.json",
+    "documentation": "docs/governance/environment-capability-contract.md",
+    "fiveLayersRequired": true,
+    "oneTopologyRequired": true,
+    "remotePreflightRequired": true,
+    "universalInstallerAllowed": false,
+    "repositoryPresenceProvesRuntime": false,
+    "sameTmuxNameAcrossHostsProvesIdentity": false,
+    "lowerRoleTopologySubstitutionAllowed": false,
+    "staticOrCiProofCanClaimLiveEnvironment": false
+  },
   "publicPlans": {
     "registry": "plans/plan-registry.json",
     "schema": "plans/schemas/public-plan.schema.json",
@@ -27,9 +40,13 @@
     "documentation": "docs/governance/harness-doctrine.md",
     "validator": "scripts/Test-HarnessDoctrineContract.ps1",
     "actionCommitmentRequired": true,
+    "environmentTopologyRequired": true,
     "testOnlyGnhfMaxWallClockSeconds": 30,
     "testOnlyGnhfMaxIterationSeconds": 30,
-    "deepSeekAllowedRateClasses": ["standard", "discounted"],
+    "deepSeekAllowedRateClasses": [
+      "standard",
+      "discounted"
+    ],
     "deepSeekDefaultAction": "deny"
   },
   "localRulesMayStrengthen": true,

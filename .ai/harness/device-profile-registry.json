@@ -2,6 +2,7 @@
   "schema": "agentswitchboard.device-profile-registry.v1",
   "registryId": "agentswitchboard.device-profiles.v1",
   "canonicalOwner": "EndeavorEverlasting/AgentSwitchboard",
+  "environmentCapabilityPolicy": ".ai/harness/environment-capability.policy.json",
   "profiles": [
     {
       "profileId": "windows",
@@ -39,16 +40,32 @@
     {
       "profileId": "android",
       "displayName": "Android Profile",
-      "status": "reserved",
+      "status": "terminal-client-implemented",
+      "capabilityRole": "terminal-client",
       "ownerRepository": "EndeavorEverlasting/AgentSwitchboard",
       "canonicalOperation": "open-or-activate",
-      "frontend": "profile-defined",
+      "frontend": "termux",
       "implementationSeparate": true,
       "configurationMayDiffer": true,
-      "canonicalSourcePath": null,
-      "installedPath": null,
+      "canonicalSourcePath": "tooling/profiles/android/Invoke-AgentSwitchboardOpenOrActivate.sh",
+      "installedPath": "$PREFIX/bin/agentswitchboard-phone",
+      "bootstrapPath": "Bootstrap-AgentSwitchboard-Termux.sh",
+      "workspaceBackend": "tmux",
+      "localTmuxRole": "local-shell-only",
+      "localTmuxScope": "device-local-only",
+      "continuityTransport": "ssh",
+      "crossDeviceContinuityRequiresRemoteWorkspaceHost": true,
+      "remoteShellClassificationRequired": true,
+      "nativeOrchestrationRuntime": "unimplemented",
+      "nativeAgentRuntime": "unproved",
+      "fullRuntimeClaimAllowed": false,
+      "topologies": [
+        "android-termux-local-shell",
+        "android-termux-ssh-posix-workspace-client"
+      ],
+      "localEvidencePath": "${XDG_STATE_HOME:-$HOME/.local/state}/agentswitchboard/android",
       "consumers": []
     }
   ],
-  "proofCeiling": "The registry proves profile names, ownership, delegation rules, and platform separation only. It does not prove a launcher exists, WezTerm is installed, a window opened or activated, SysAdminSuite certification completed, or any Linux or Android implementation."
+  "proofCeiling": "The registry proves profile names, ownership, delegation rules, platform separation, and tracked Android terminal-client implementation paths. Android is not a proved native AgentSwitchboard orchestration or agent runtime. Phone-local tmux is device-local only; cross-device continuity requires both clients to attach to the same separately classified remote workspace host and tmux server/session identity."
 }

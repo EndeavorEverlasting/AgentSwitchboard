@@ -1,4 +1,4 @@
-name: Device profile launcher contract
+name: Environment capability harness
 
 on:
   pull_request:
@@ -8,19 +8,25 @@ on:
       - "CAPABILITIES.md"
       - "TRIGGERS.md"
       - "CODEBASE_MAP.md"
+      - ".ai/agent-contract.json"
+      - ".ai/harness/environment-capability.policy.json"
+      - ".ai/harness/device-profile-launcher.policy.json"
+      - ".ai/harness/device-profile-registry.json"
+      - ".ai/harness/manifest.json"
+      - ".ai/harness/schemas/device-profile-registry.schema.json"
+      - ".ai/skills/environment-capability-routing/**"
       - "Bootstrap-AgentSwitchboard-Termux.sh"
-      - "docs/governance/**"
-      - "docs/harness/environment-capability-harness.md"
-      - "docs/workstation/android-termux.md"
       - "tooling/profiles/android/**"
       - "tooling/profiles/harness/environment-capability/**"
-      - ".ai/agent-contract.json"
-      - ".ai/harness/**"
-      - "plans/**"
+      - "docs/governance/environment-capability-contract.md"
+      - "docs/governance/device-profile-launcher-contract.md"
+      - "docs/harness/environment-capability-harness.md"
+      - "docs/workstation/android-termux.md"
+      - "templates/repository-agent-contract/**"
       - "scripts/Test-EnvironmentCapabilityHarness.ps1"
       - "scripts/Test-DeviceProfileLauncherContract.ps1"
-      - "scripts/Test-HarnessDoctrineContract.ps1"
       - "tests/test_environment_capability_harness.py"
+      - "tests/test_environment_capability_template.py"
       - "tests/test_android_termux_profile.py"
       - "tests/test_device_profile_launcher_contract.py"
       - ".github/workflows/environment-capability-harness.yml"
@@ -44,7 +50,8 @@ jobs:
           foreach ($file in @(
             'scripts/Test-EnvironmentCapabilityHarness.ps1',
             'scripts/Test-DeviceProfileLauncherContract.ps1',
-            'scripts/Test-HarnessDoctrineContract.ps1'
+            'scripts/Test-HarnessDoctrineContract.ps1',
+            'scripts/Test-AgentDocumentationContract.ps1'
           )) {
             $tokens = $null
             $errors = $null
@@ -54,22 +61,30 @@ jobs:
               exit 1
             }
           }
-      - name: Run environment capability contract
+      - name: Run environment capability contracts
         shell: pwsh
         run: ./scripts/Test-EnvironmentCapabilityHarness.ps1
-      - name: Run device profile contract
+      - name: Run device profile contracts
         shell: pwsh
         run: ./scripts/Test-DeviceProfileLauncherContract.ps1
-      - name: Run canonical doctrine contract
-        shell: pwsh
-        run: ./scripts/Test-HarnessDoctrineContract.ps1
-      - name: Run dependency-free contracts
+      - name: Run doctrine and documentation contracts
         shell: pwsh
         run: |
-          python tests/test_environment_capability_harness.py
-          python tests/test_device_profile_launcher_contract.py
-          python tests/test_android_termux_profile.py
-      - name: Verify clean checkout
+          ./scripts/Test-HarnessDoctrineContract.ps1
+          ./scripts/Test-AgentDocumentationContract.ps1
+      - name: Python environment capability contract
+        shell: pwsh
+        run: python tests/test_environment_capability_harness.py
+      - name: Python template inheritance contract
+        shell: pwsh
+        run: python tests/test_environment_capability_template.py
+      - name: Python Android terminal-client contract
+        shell: pwsh
+        run: python tests/test_android_termux_profile.py
+      - name: Python device profile contract
+        shell: pwsh
+        run: python tests/test_device_profile_launcher_contract.py
+      - name: Verify PR-range hygiene and clean checkout
         shell: pwsh
         run: |
           if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
@@ -90,26 +105,33 @@ jobs:
           set -euo pipefail
           bash -n Bootstrap-AgentSwitchboard-Termux.sh
           bash -n tooling/profiles/android/Invoke-AgentSwitchboardOpenOrActivate.sh
-      - name: Run dependency-free contracts
+      - name: Python environment capability contract
         shell: bash
-        run: |
-          set -euo pipefail
-          python3 tests/test_environment_capability_harness.py
-          python3 tests/test_device_profile_launcher_contract.py
-          python3 tests/test_android_termux_profile.py
+        run: python3 tests/test_environment_capability_harness.py
+      - name: Python template inheritance contract
+        shell: bash
+        run: python3 tests/test_environment_capability_template.py
+      - name: Python Android terminal-client contract
+        shell: bash
+        run: python3 tests/test_android_termux_profile.py
+      - name: Python device profile contract
+        shell: bash
+        run: python3 tests/test_device_profile_launcher_contract.py
       - name: Run PowerShell contracts
         shell: pwsh
         run: |
           ./scripts/Test-EnvironmentCapabilityHarness.ps1
           ./scripts/Test-DeviceProfileLauncherContract.ps1
           ./scripts/Test-HarnessDoctrineContract.ps1
-      - name: Check validators remain offline
+          ./scripts/Test-AgentDocumentationContract.ps1
+      - name: Prove validators remain offline
         shell: bash
         run: |
           set -euo pipefail
           ! grep -E 'Invoke-WebRequest|Invoke-RestMethod|Start-Process|ssh[[:space:]]|wezterm-gui\.exe start|pkg install' \
             scripts/Test-EnvironmentCapabilityHarness.ps1 \
-            tests/test_environment_capability_harness.py
+            tests/test_environment_capability_harness.py \
+            tests/test_environment_capability_template.py
       - name: Full PR-range hygiene
         shell: bash
         run: |

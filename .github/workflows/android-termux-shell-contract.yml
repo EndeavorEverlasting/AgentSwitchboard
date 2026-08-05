@@ -1,0 +1,43 @@
+name: Android Termux shell contract
+
+on:
+  pull_request:
+    paths:
+      - "Bootstrap-AgentSwitchboard-Termux.sh"
+      - "tooling/profiles/android/**"
+      - "tests/test_android_termux_profile.sh"
+      - "tests/test_android_termux_profile.py"
+      - ".github/workflows/android-termux-shell-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-shell-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: false
+      - name: Parse shell harness and implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n tests/test_android_termux_profile.sh
+          bash -n Bootstrap-AgentSwitchboard-Termux.sh
+          bash -n tooling/profiles/android/Invoke-AgentSwitchboardOpenOrActivate.sh
+      - name: Run Android Termux shell behavior contract
+        shell: bash
+        run: bash tests/test_android_termux_profile.sh
+      - name: Verify PR-range hygiene and clean checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git diff --check "${{ github.event.pull_request.base.sha }}" HEAD
+          else
+            git diff --check HEAD^
+          fi
+          test -z "$(git status --short)"

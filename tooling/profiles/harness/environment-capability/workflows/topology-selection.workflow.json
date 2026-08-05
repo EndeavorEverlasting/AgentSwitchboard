@@ -1,0 +1,64 @@
+{
+  "schema": "agentswitchboard.environment-capability-workflow.v1",
+  "workflowId": "topology-selection",
+  "purpose": "Select exactly one registered topology from observed environment evidence and reject unsupported proof promotion.",
+  "mutationAllowed": false,
+  "networkAllowed": false,
+  "inputs": [
+    "environment-observation.json",
+    "environment-capability.registry.json",
+    "environment-capability.policy.json"
+  ],
+  "steps": [
+    {
+      "stepId": "match-platform-and-frontend",
+      "rejectWhen": [
+        "Android is treated as generic Linux",
+        "WezTerm is assumed on Android",
+        "remote shell class is guessed"
+      ]
+    },
+    {
+      "stepId": "match-layer-assignments",
+      "requires": [
+        "frontend",
+        "transport",
+        "workspaceHost",
+        "orchestrationRuntime",
+        "agentRuntime"
+      ]
+    },
+    {
+      "stepId": "calculate-role-ceiling",
+      "rules": [
+        "terminal-client cannot exceed terminal-client",
+        "local Android tmux cannot exceed local-shell-only",
+        "unclassified SSH cannot exceed transport-only",
+        "full-runtime-host requires full implementation and fresh runtime proof"
+      ]
+    },
+    {
+      "stepId": "evaluate-blockers",
+      "blockers": [
+        "unknown host or shell class",
+        "missing tmux on selected workspace host",
+        "unexpected repository origin",
+        "dirty repository when clean state is required",
+        "missing orchestration runtime",
+        "unproved agent runtime",
+        "unsupported persistence boundary"
+      ]
+    },
+    {
+      "stepId": "emit-selection",
+      "artifact": "topology-selection.json",
+      "terminalStates": [
+        "SELECTED",
+        "BLOCKED_NO_MATCHING_TOPOLOGY",
+        "BLOCKED_CAPABILITY_GAP",
+        "REJECTED_FALSE_PROOF_PROMOTION"
+      ]
+    }
+  ],
+  "proofCeiling": "Deterministic topology and role-ceiling selection only."
+}

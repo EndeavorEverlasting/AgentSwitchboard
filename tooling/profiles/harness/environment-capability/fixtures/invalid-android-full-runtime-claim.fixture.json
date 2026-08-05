@@ -1,0 +1,21 @@
+{
+  "schema": "agentswitchboard.environment-capability-fixture.v1",
+  "fixtureId": "invalid-android-full-runtime-claim",
+  "input": {
+    "frontend": "termux",
+    "frontendHost": "android-termux",
+    "transport": "local-process-boundary",
+    "workspaceHost": "android-termux",
+    "repositoryCloned": true,
+    "tmuxInstalled": true,
+    "orchestrationRuntimeVerified": false,
+    "agentRuntimeVerified": false,
+    "claimedRole": "full-runtime-host"
+  },
+  "expected": {
+    "topologyId": "android-termux-local-shell",
+    "roleCeiling": "local-shell-only",
+    "terminalState": "REJECTED_FALSE_PROOF_PROMOTION",
+    "reason": "Repository and tmux presence do not prove the Windows-first orchestration or agent runtime."
+  }
+}

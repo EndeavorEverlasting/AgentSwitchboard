@@ -1,0 +1,21 @@
+{
+  "schema": "agentswitchboard.environment-capability-fixture.v1",
+  "fixtureId": "invalid-local-tmux-continuity-claim",
+  "input": {
+    "frontend": "termux",
+    "frontendHost": "android-termux",
+    "transport": "local-process-boundary",
+    "workspaceHost": "android-termux",
+    "tmuxSessionName": "dev",
+    "otherWorkspaceHost": "wsl-linux",
+    "otherTmuxSessionName": "dev",
+    "sameTmuxServerIdentityObserved": false,
+    "claimedContinuity": "same-workspace"
+  },
+  "expected": {
+    "topologyId": "android-termux-local-shell",
+    "roleCeiling": "local-shell-only",
+    "terminalState": "REJECTED_FALSE_PROOF_PROMOTION",
+    "reason": "Same-named tmux sessions on different hosts are different workspaces."
+  }
+}

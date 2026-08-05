@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "policyId": "agentswitchboard.environment-capability.v1",
+  "canonicalRepository": "EndeavorEverlasting/AgentSwitchboard",
+  "canonicalSource": "docs/governance/environment-capability-contract.md",
+  "layers": [
+    "frontend",
+    "transport",
+    "workspaceHost",
+    "orchestrationRuntime",
+    "agentRuntime"
+  ],
+  "roles": [
+    "full-runtime-host",
+    "workspace-host",
+    "terminal-client",
+    "local-shell-only",
+    "transport-only",
+    "unsupported"
+  ],
+  "invariants": {
+    "oneTopologyRequired": true,
+    "terminalClientIsNotRuntimeHost": true,
+    "repositoryPresenceIsNotRuntimeReadiness": true,
+    "packagePresenceIsNotVerifiedCapability": true,
+    "sshReachabilityIsNotRemoteShellClassification": true,
+    "sameTmuxNameAcrossHostsIsSameSession": false,
+    "phoneLocalTmuxIsCrossDeviceContinuity": false,
+    "commandAckIsNotBehaviorProof": true,
+    "staticOrCiProofIsNotLiveEnvironmentProof": true,
+    "lowerRoleTopologySubstitutionAllowed": false
+  },
+  "autoConfiguration": {
+    "universalInstallerAllowed": false,
+    "requiredOrder": [
+      "observe",
+      "classify-layers",
+      "select-topology",
+      "report-blockers",
+      "bounded-mutation",
+      "effective-state-readback",
+      "focused-validation",
+      "authorized-runtime-certification",
+      "proof-report"
+    ],
+    "unknownEnvironmentAction": "block-and-report",
+    "remotePreflightRequired": true
+  },
+  "localRulesMayStrengthen": true,
+  "localRulesMayWeaken": false,
+  "proofCeiling": "Child contract shape and false-equivalence floor only. Each repository must register and prove its own environment topologies and runtime behavior."
+}

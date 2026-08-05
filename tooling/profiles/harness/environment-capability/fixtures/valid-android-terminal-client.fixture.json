@@ -1,0 +1,27 @@
+{
+  "schema": "agentswitchboard.environment-capability-fixture.v1",
+  "fixtureId": "valid-android-terminal-client",
+  "input": {
+    "frontend": "termux",
+    "frontendHost": "android-termux",
+    "transport": "ssh",
+    "remoteShellClass": "posix",
+    "workspaceHost": "posix-remote",
+    "workspaceHostIdentityObserved": true,
+    "tmuxServerIdentityObserved": true,
+    "repositoryIdentityObserved": true,
+    "repositoryClean": true,
+    "orchestrationRuntimeVerified": false,
+    "agentRuntimeVerified": false,
+    "operatorVisibleResultObserved": true
+  },
+  "expected": {
+    "topologyId": "android-termux-ssh-posix-workspace-client",
+    "role": "terminal-client",
+    "terminalState": "PASS_ROLE_CERTIFIED",
+    "forbiddenClaims": [
+      "full-runtime-host",
+      "native-android-orchestration-runtime"
+    ]
+  }
+}

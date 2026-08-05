@@ -4,6 +4,7 @@
   "canonicalRepository": "EndeavorEverlasting/AgentSwitchboard",
   "canonicalSource": "docs/governance/device-profile-launcher-contract.md",
   "registry": ".ai/harness/device-profile-registry.json",
+  "environmentCapabilityPolicy": ".ai/harness/environment-capability.policy.json",
   "validator": "scripts/Test-DeviceProfileLauncherContract.ps1",
   "oneCanonicalLauncherPerProfile": true,
   "canonicalOwnerRepository": "EndeavorEverlasting/AgentSwitchboard",
@@ -14,7 +15,11 @@
   "rawFrontendFallbackForbidden": true,
   "desktopShortcutsDelegateOnly": true,
   "separatePlatformImplementationsRequired": true,
-  "androidConfigurationMayDiffer": true,
+  "environmentTopologyRequired": true,
+  "sameWorkspaceIdentityRequiresSameHostAndRuntimeOwner": true,
+  "sameTmuxNameAcrossHostsProvesIdentity": false,
+  "repositoryPresenceProvesLauncherOrRuntime": false,
+  "crossProfileSubstitutionForbidden": true,
   "localRulesMayStrengthen": true,
   "localRulesMayWeaken": false
 }
