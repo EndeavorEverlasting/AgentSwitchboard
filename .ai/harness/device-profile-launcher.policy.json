@@ -4,6 +4,7 @@
   "canonicalSource": "docs/governance/device-profile-launcher-contract.md",
   "registry": ".ai/harness/device-profile-registry.json",
   "registrySchema": ".ai/harness/schemas/device-profile-registry.schema.json",
+  "environmentCapabilityPolicy": ".ai/harness/environment-capability.policy.json",
   "validator": "scripts/Test-DeviceProfileLauncherContract.ps1",
   "ownership": {
     "oneCanonicalLauncherPerProfile": true,
@@ -36,25 +37,41 @@
   "androidProfile": {
     "profileId": "android",
     "displayName": "Android Profile",
-    "status": "repository-implemented",
+    "status": "terminal-client-implemented",
+    "capabilityRole": "terminal-client",
     "terminalFrontend": "termux",
     "canonicalOperation": "open-or-activate",
     "canonicalSourcePath": "tooling/profiles/android/Invoke-AgentSwitchboardOpenOrActivate.sh",
     "bootstrapPath": "Bootstrap-AgentSwitchboard-Termux.sh",
     "installedPath": "$PREFIX/bin/agentswitchboard-phone",
     "workspaceBackend": "tmux",
+    "localTmuxRole": "local-shell-only",
+    "localTmuxScope": "device-local-only",
     "continuityTransport": "ssh",
+    "crossDeviceContinuityRequiresRemoteWorkspaceHost": true,
+    "remoteShellClassificationRequired": true,
+    "supportedRemoteHostProfiles": [
+      "posix-tmux"
+    ],
+    "remotePreflightRequired": true,
+    "nativeOrchestrationRuntime": "unimplemented",
+    "nativeAgentRuntime": "unproved",
+    "fullRuntimeClaimAllowed": false,
     "allowedOutcomes": [
-      "opened",
-      "activated",
-      "blocked",
-      "failed",
-      "requested"
+      "opened-local-shell",
+      "activated-local-shell",
+      "blocked-remote-preflight",
+      "blocked-session-absent",
+      "created-remote-session-request",
+      "existing-remote-session-request",
+      "remote-transport-ended",
+      "failed"
     ],
     "liveDeviceProofRequired": true
   },
   "idempotence": {
     "sameIdentityConverges": true,
+    "sameIdentityRequiresSameHostAndTmuxServer": true,
     "activateExistingBeforeOpen": true,
     "duplicateLogicalWorkspaceForbidden": true,
     "weakProcessHeuristicInsufficient": true,
@@ -83,7 +100,8 @@
     "android": {
       "implementationSeparate": true,
       "frontend": "termux",
-      "configurationMayDiffer": true
+      "configurationMayDiffer": true,
+      "roleCeiling": "terminal-client"
     }
   },
   "certification": {
@@ -94,6 +112,7 @@
     "noRawFallbackRequired": true,
     "openedActivatedBlockedFailedFixturesRequired": true,
     "repeatedInvocationIdempotenceRequired": true,
+    "environmentTopologyRequired": true,
     "proofCeilingRequired": true
   },
   "runtimeEvents": {
