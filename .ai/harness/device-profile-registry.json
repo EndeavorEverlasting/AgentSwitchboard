@@ -39,16 +39,20 @@
     {
       "profileId": "android",
       "displayName": "Android Profile",
-      "status": "reserved",
+      "status": "repository-implemented",
       "ownerRepository": "EndeavorEverlasting/AgentSwitchboard",
       "canonicalOperation": "open-or-activate",
-      "frontend": "profile-defined",
+      "frontend": "termux",
       "implementationSeparate": true,
       "configurationMayDiffer": true,
-      "canonicalSourcePath": null,
-      "installedPath": null,
+      "canonicalSourcePath": "tooling/profiles/android/Invoke-AgentSwitchboardOpenOrActivate.sh",
+      "installedPath": "$PREFIX/bin/agentswitchboard-phone",
+      "bootstrapPath": "Bootstrap-AgentSwitchboard-Termux.sh",
+      "workspaceBackend": "tmux",
+      "continuityTransport": "ssh",
+      "localEvidencePath": "${XDG_STATE_HOME:-$HOME/.local/state}/agentswitchboard/android",
       "consumers": []
     }
   ],
-  "proofCeiling": "The registry proves profile names, ownership, delegation rules, and platform separation only. It does not prove a launcher exists, WezTerm is installed, a window opened or activated, SysAdminSuite certification completed, or any Linux or Android implementation."
+  "proofCeiling": "The registry proves profile names, ownership, delegation rules, platform separation, and the tracked Android Termux/tmux/SSH implementation paths. It does not prove Termux is installed on a phone, packages were installed, SSH authentication succeeded, a local or remote tmux workspace opened or activated, Android process persistence, Windows or Linux runtime behavior, or operator acceptance."
 }
