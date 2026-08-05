@@ -1,0 +1,53 @@
+{
+  "schema": "agentswitchboard.environment-capability-artifact-registry.v1",
+  "registryId": "agentswitchboard.environment-capability.artifacts.v1",
+  "trackedGeneratedEvidence": false,
+  "defaultRoot": "operating-system temporary directory/AgentSwitchboard/environment-capability",
+  "artifacts": [
+    {
+      "artifactId": "environment-observation",
+      "fileName": "environment-observation.json",
+      "producer": "environment-intake",
+      "purpose": "Record frontend, operating-system, shell, transport, repository, command, and persistence observations without claiming readiness."
+    },
+    {
+      "artifactId": "topology-selection",
+      "fileName": "topology-selection.json",
+      "producer": "topology-selection",
+      "purpose": "Record the exact registered topology, achieved role ceiling, prerequisites, blockers, and forbidden claims."
+    },
+    {
+      "artifactId": "remote-host-preflight",
+      "fileName": "remote-host-preflight.json",
+      "producer": "remote-preflight",
+      "purpose": "Record remote OS and shell class, tmux, repository, orchestration, agent, persistence, and target identity observations before mutation."
+    },
+    {
+      "artifactId": "capability-certification",
+      "fileName": "capability-certification.json",
+      "producer": "certification",
+      "purpose": "Record effective-state readback and the highest proof level actually reached."
+    },
+    {
+      "artifactId": "operator-report",
+      "fileName": "operator-report.md",
+      "producer": "reporting",
+      "purpose": "Explain current role, working topology, blockers, risks, and one exact next command."
+    },
+    {
+      "artifactId": "final-handoff",
+      "fileName": "final-handoff.json",
+      "producer": "handoff",
+      "purpose": "Preserve exact repository, branch, topology, evidence, failed stage, proof ceiling, and next action."
+    }
+  ],
+  "forbiddenContent": [
+    "credentials",
+    "private keys",
+    "provider tokens",
+    "raw authentication output",
+    "unredacted private hostnames in tracked fixtures",
+    "customer data"
+  ],
+  "proofCeiling": "Artifact registration only. Generated artifacts require an authorized observation or runtime lane."
+}
