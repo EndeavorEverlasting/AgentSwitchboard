@@ -33,10 +33,21 @@ def main() -> None:
     assert windows_policy["terminalFrontend"] == "wezterm"
     assert windows_policy["canonicalOperation"] == "open-or-activate"
     assert windows_policy["consumerCertifier"] == "EndeavorEverlasting/SysAdminSuite"
+
+    android_policy = policy["androidProfile"]
+    assert android_policy["displayName"] == "Android Profile"
+    assert android_policy["status"] == "repository-implemented"
+    assert android_policy["terminalFrontend"] == "termux"
+    assert android_policy["canonicalOperation"] == "open-or-activate"
+    assert android_policy["workspaceBackend"] == "tmux"
+    assert android_policy["continuityTransport"] == "ssh"
+    assert android_policy["liveDeviceProofRequired"] is True
+
     assert policy["idempotence"]["sameIdentityConverges"] is True
     assert policy["idempotence"]["duplicateLogicalWorkspaceForbidden"] is True
     assert policy["delegation"]["consumerMayFallbackToRawFrontend"] is False
     assert policy["profiles"]["android"]["configurationMayDiffer"] is True
+    assert policy["profiles"]["android"]["frontend"] == "termux"
 
     assert schema["additionalProperties"] is False
     profiles = registry["profiles"]
@@ -54,9 +65,19 @@ def main() -> None:
     assert windows["consumers"][0]["repository"] == "EndeavorEverlasting/SysAdminSuite"
     assert windows["consumers"][0]["delegateOnly"] is True
     assert windows["consumers"][0]["rawFallbackAllowed"] is False
+
     assert by_id["linux"]["status"] == "reserved"
-    assert by_id["android"]["status"] == "reserved"
-    assert by_id["android"]["configurationMayDiffer"] is True
+
+    android = by_id["android"]
+    assert android["displayName"] == "Android Profile"
+    assert android["status"] == "repository-implemented"
+    assert android["frontend"] == "termux"
+    assert android["configurationMayDiffer"] is True
+    assert android["canonicalSourcePath"] == "tooling/profiles/android/Invoke-AgentSwitchboardOpenOrActivate.sh"
+    assert android["installedPath"] == "$PREFIX/bin/agentswitchboard-phone"
+    assert android["bootstrapPath"] == "Bootstrap-AgentSwitchboard-Termux.sh"
+    assert android["workspaceBackend"] == "tmux"
+    assert android["continuityTransport"] == "ssh"
 
     assert valid["ownerRepository"] == "EndeavorEverlasting/AgentSwitchboard"
     assert valid["operation"] == "open-or-activate"
@@ -65,12 +86,22 @@ def main() -> None:
     assert invalid["operation"] != "open-or-activate"
 
     doctrine = (ROOT / "docs/governance/device-profile-launcher-contract.md").read_text(encoding="utf-8")
+    android_docs = (ROOT / "docs/workstation/android-termux.md").read_text(encoding="utf-8")
     agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     harness = (ROOT / "docs/governance/harness-doctrine.md").read_text(encoding="utf-8")
     capabilities = (ROOT / "CAPABILITIES.md").read_text(encoding="utf-8")
     triggers = (ROOT / "TRIGGERS.md").read_text(encoding="utf-8")
-    for token in ("Windows Profile", "Linux Profile", "Android Profile", "open-or-activate", "EndeavorEverlasting/SysAdminSuite", "contract-only"):
+    for token in (
+        "Windows Profile",
+        "Linux Profile",
+        "Android Profile",
+        "open-or-activate",
+        "EndeavorEverlasting/SysAdminSuite",
+        "contract-only",
+    ):
         assert token in doctrine
+    for token in ("Termux", "tmux", "SSH", "agentswitchboard-phone", "Proof ceiling"):
+        assert token in android_docs
     assert "device-profile-launcher-contract.md" in agents
     assert "device-profile-launcher-contract.md" in harness
     assert "profile.launcher.contract.validate" in capabilities
