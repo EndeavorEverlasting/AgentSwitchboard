@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/profiles/windows/harness/machine-profile/schemas/machine-profile.schema.json",
+  "title": "AgentSwitchboard Windows machine profile",
+  "type": "object",
+  "required": ["schema", "detectedAt", "profileId", "confidence", "identity", "pathConventions", "tools", "signals", "repository", "reasons", "proofCeiling"],
+  "properties": {
+    "schema": { "const": "agentswitchboard.machine-profile.v1" },
+    "detectedAt": { "type": "string" },
+    "profileId": { "enum": ["enterprise-managed-onedrive", "enterprise-managed-local", "work-or-school-onedrive", "personal-onedrive", "local-windows"] },
+    "confidence": { "enum": ["high", "medium", "low"] },
+    "identity": { "type": "object" },
+    "pathConventions": { "type": "object" },
+    "tools": { "type": "object" },
+    "signals": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "repository": { "type": "object", "required": ["expectedOrigin", "candidates", "recommendedRoot", "selectionPolicy"] },
+    "reasons": { "type": "array", "items": { "type": "string" } },
+    "proofCeiling": { "type": "string" }
+  },
+  "additionalProperties": false
+}

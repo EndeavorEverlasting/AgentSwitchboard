@@ -5,6 +5,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+TOP_BOOTSTRAP_PATH = ROOT / "AgentSwitchboard-Technician-Bootstrap.cmd"
 PARENT_CMD_PATH = ROOT / "Pull-Repo-And-Setup-AgentSwitchboard.cmd"
 CMD_PATH = ROOT / "Pull-And-Run-AgentSwitchboard.cmd"
 SETUP_PATH = ROOT / "tooling" / "profiles" / "windows" / "Setup-TechnicianAgentSwitchboard.ps1"
@@ -28,10 +29,11 @@ def require(text: str, token: str, label: str) -> None:
 
 
 def main() -> None:
-    for path in (PARENT_CMD_PATH, CMD_PATH, SETUP_PATH, LIVE_CERT_FIXTURE, LIVE_CERT_SKILL, DOCTRINE_PATH):
+    for path in (TOP_BOOTSTRAP_PATH, PARENT_CMD_PATH, CMD_PATH, SETUP_PATH, LIVE_CERT_FIXTURE, LIVE_CERT_SKILL, DOCTRINE_PATH):
         if not path.is_file():
             raise AssertionError(f"missing technician contract file: {path}")
 
+    top_bootstrap = TOP_BOOTSTRAP_PATH.read_text(encoding="utf-8")
     parent = PARENT_CMD_PATH.read_text(encoding="utf-8")
     cmd = CMD_PATH.read_text(encoding="utf-8")
     setup = SETUP_PATH.read_text(encoding="utf-8")
@@ -40,22 +42,19 @@ def main() -> None:
     doctrine = DOCTRINE_PATH.read_text(encoding="utf-8")
 
     parent_requirements = {
-        "explicit first command": "This is the first technician command.",
+        "explicit first acquisition command": "This is the first technician repository-acquisition command.",
         "canonical raw bootstrap": "Pull-And-Run-AgentSwitchboard.cmd",
-        "explicit setup handoff": 'call "%BOOTSTRAP_PATH%" setup',
-        "repo path": "%USERPROFILE%\\Desktop\\dev\\AgentSwitchboard",
+        "explicit acquisition handoff": 'call "%BOOTSTRAP_PATH%" acquire',
+        "portable repo path": "%USERPROFILE%\\dev\\AgentSwitchBoard-Live",
         "pull result": "The repository was cloned or safely fast-forwarded",
-        "next PowerShell verification": "wezterm --version",
-        "tmux verification": "tmux -V",
-        "AGY verification": "agy --version",
-        "OpenCode verification": "opencode --version",
+        "setup deferred": "Workstation setup is intentionally deferred",
     }
     for label, token in parent_requirements.items():
         require(parent, token, label)
 
     cmd_requirements = {
         "canonical repository": "https://github.com/EndeavorEverlasting/AgentSwitchboard.git",
-        "user-relative default": "%USERPROFILE%\\Desktop\\dev\\AgentSwitchboard",
+        "portable user-relative default": "%USERPROFILE%\\dev\\AgentSwitchBoard-Live",
         "clone": "git clone --branch",
         "verified-origin fetch": "fetch origin --prune",
         "fast-forward pull": "pull --ff-only",
@@ -67,11 +66,36 @@ def main() -> None:
         "OpenCode mode": '"opencode"',
         "setup mode": '"setup"',
         "explicit Hermes mode": '"hermes"',
+        "acquisition mode": '"acquire"',
+        "acquisition stop": "Workstation setup is intentionally deferred.",
         "PowerShell helper": "Setup-TechnicianAgentSwitchboard.ps1",
         "fresh-shell command guidance": "wezterm, tmux, agy, and opencode",
     }
     for label, token in cmd_requirements.items():
         require(cmd, token, label)
+
+    top_requirements = {
+        "per-machine binding": "repo-path.txt",
+        "portable environment override": "AGENT_SWITCHBOARD_REPO",
+        "portable default": "%USERPROFILE%\\dev\\AgentSwitchBoard-Live",
+        "first-machine WSL repair": "Repair-Technician-WSL-Ubuntu.cmd",
+        "reboot boundary": 'if "%REPAIR_EXIT%"=="3010"',
+        "setup after WSL": 'call "%REPO_ROOT%\\Pull-And-Run-AgentSwitchboard.cmd" setup',
+        "full certificate": 'call "%REPO_ROOT%\\Run-Technician-LiveCert.cmd"',
+    }
+    for label, token in top_requirements.items():
+        require(top_bootstrap, token, label)
+
+    acquire_index = top_bootstrap.index('call "%PARENT_TEMP%"')
+    repair_index = top_bootstrap.index('call "%REPO_ROOT%\\Repair-Technician-WSL-Ubuntu.cmd"')
+    setup_index = top_bootstrap.index('call "%REPO_ROOT%\\Pull-And-Run-AgentSwitchboard.cmd" setup')
+    cert_index = top_bootstrap.index('call "%REPO_ROOT%\\Run-Technician-LiveCert.cmd"')
+    if not (acquire_index < repair_index < setup_index < cert_index):
+        raise AssertionError("first-machine bootstrap order must be acquire -> WSL repair -> setup -> live cert")
+
+    for text in (top_bootstrap, parent, cmd):
+        if '%USERPROFILE%\\Desktop\\dev\\AgentSwitchboard"' in text:
+            raise AssertionError("technician bootstrap must not depend on redirected Desktop as its canonical repo root")
 
     if "fetch --all --prune" in cmd:
         raise AssertionError("technician pull path must fetch only the verified origin remote")
@@ -162,7 +186,7 @@ def main() -> None:
     ):
         require(text, token, label)
 
-    print("PASS: explicit parent pull command, technician setup, and failed live-cert repair contract")
+    print("PASS: portable acquisition -> repair -> setup -> live-cert technician contract")
 
 
 if __name__ == "__main__":

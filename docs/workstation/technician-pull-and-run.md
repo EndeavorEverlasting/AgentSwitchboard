@@ -1,85 +1,72 @@
 # Technician Pull and Run
 
-## Start here — pull the repository first
+## Start here — one portable bootstrap
 
-The technician must begin with the parent bootstrap. Do not start with commands inside the repository, because those files do not exist until this gate completes.
+The technician should not need to know where the repository lives before starting. The production first-machine entrypoint is `AgentSwitchboard-Technician-Bootstrap.cmd`, pinned to `main`.
 
-Open **Command Prompt** and run:
+From **Command Prompt**, PowerShell, Downloads, Desktop, or the user profile, obtain and run the single bootstrap:
 
 ```cmd
-curl.exe -fL https://raw.githubusercontent.com/EndeavorEverlasting/AgentSwitchboard/feat/technician-pull-and-run-cmd/Pull-Repo-And-Setup-AgentSwitchboard.cmd -o "%TEMP%\Pull-Repo-And-Setup-AgentSwitchboard.cmd" && call "%TEMP%\Pull-Repo-And-Setup-AgentSwitchboard.cmd"
+curl.exe -fL https://raw.githubusercontent.com/EndeavorEverlasting/AgentSwitchboard/main/AgentSwitchboard-Technician-Bootstrap.cmd -o "%TEMP%\AgentSwitchboard-Technician-Bootstrap.cmd" && call "%TEMP%\AgentSwitchboard-Technician-Bootstrap.cmd"
 ```
 
-This parent command:
+Git for Windows, PowerShell 7, and `curl.exe` must be available for this first network bootstrap. WSL, Ubuntu, WezTerm, tmux, AGY, and OpenCode are **not** assumed to be ready.
 
-1. downloads the repository bootstrap;
-2. clones AgentSwitchboard to `%USERPROFILE%\Desktop\dev\AgentSwitchboard` when absent;
-3. otherwise validates the origin, fetches, and fast-forwards the branch safely;
-4. runs the core `setup` mode from the freshly pulled repository;
-5. installs or verifies WezTerm, tmux, AGY, and OpenCode;
-6. creates PowerShell-visible command shims;
-7. prints the exact next verification commands.
+## Repository binding across workstations
 
-**Gate:** Do not run any repo-local command below until the parent command reports:
+The bootstrap selects the checkout in this order:
+
+1. explicit first argument;
+2. `AGENT_SWITCHBOARD_REPO` environment override;
+3. the bootstrap directory when it is already a Git checkout;
+4. the current directory when it is already a Git checkout;
+5. the verified per-machine binding at `%LOCALAPPDATA%\AgentSwitchBoard\state\repo-path.txt`;
+6. known historical AgentSwitchBoard checkout candidates;
+7. the portable new-machine default `%USERPROFILE%\dev\AgentSwitchBoard-Live`.
+
+The default intentionally avoids Desktop and OneDrive redirection. Existing healthy checkouts at unusual paths are not moved: run the bootstrap once from that checkout or pass its path explicitly, and the verified path becomes that machine's binding.
+
+The binding file is written only after canonical repository acquisition succeeds. A failed binding write is reported as a warning and is never presented as a pass.
+
+## First-machine execution order
+
+The production bootstrap owns this sequence:
 
 ```text
-[PASS] The repository was cloned or safely fast-forwarded and setup completed.
+resolve/bind repository
+    -> clone or fast-forward main only
+    -> Repair-Technician-WSL-Ubuntu.cmd
+    -> reboot boundary when Windows requires it
+    -> Pull-And-Run-AgentSwitchboard.cmd setup
+    -> Run-Technician-LiveCert.cmd
 ```
 
-## Verify the pulled setup
+This order is deliberate. Repository acquisition must not require a pre-existing WSL installation, and workstation setup must not run until the WSL/Ubuntu prerequisite is healthy.
 
-Close any old PowerShell window. Open a **new PowerShell window** and run:
+### Reboot boundary
 
-```powershell
-wezterm --version
-tmux -V
-agy --version
-opencode --version
-```
+When the WSL repair returns Windows exit code `3010`, the bootstrap stops with **REBOOT REQUIRED**. The repair registers a one-time same-user continuation. It does not automatically reboot the workstation.
 
-All four commands must resolve before launching an agent surface.
+After the reboot and the WSL repair continuation complete, run the same `AgentSwitchboard-Technician-Bootstrap.cmd` again from anywhere. The machine binding resolves the checkout, so the technician does not need to reconstruct the repository path.
 
-## Launch after the pull/setup gate
+## Repository acquisition safety
 
-Only after the parent command and four PowerShell checks pass:
+`Pull-Repo-And-Setup-AgentSwitchboard.cmd` downloads the reviewed `Pull-And-Run-AgentSwitchboard.cmd` and invokes its `acquire` mode. Acquisition:
 
-```cmd
-call "%USERPROFILE%\Desktop\dev\AgentSwitchboard\Pull-And-Run-AgentSwitchboard.cmd" shell
-call "%USERPROFILE%\Desktop\dev\AgentSwitchboard\Pull-And-Run-AgentSwitchboard.cmd" agy
-call "%USERPROFILE%\Desktop\dev\AgentSwitchboard\Pull-And-Run-AgentSwitchboard.cmd" opencode
-```
-
-Hermes is optional and separate:
-
-```cmd
-call "%USERPROFILE%\Desktop\dev\AgentSwitchboard\Pull-And-Run-AgentSwitchboard.cmd" hermes
-```
-
-## What the parent and child CMDs do
-
-`Pull-Repo-And-Setup-AgentSwitchboard.cmd` is the technician's first-entry parent command. It acquires the child bootstrap and requests repository pull plus setup.
-
-`Pull-And-Run-AgentSwitchboard.cmd`:
-
-1. defaults the checkout to `%USERPROFILE%\Desktop\dev\AgentSwitchboard`;
-2. clones `https://github.com/EndeavorEverlasting/AgentSwitchboard.git` when the checkout is absent;
-3. verifies the existing `origin` when the checkout is present;
-4. blocks on local changes or detached Git state;
-5. fetches and uses `git pull --ff-only` for the requested ref;
+1. clones `https://github.com/EndeavorEverlasting/AgentSwitchboard.git` when absent;
+2. verifies the existing `origin` when present;
+3. refuses dirty or detached checkouts;
+4. fetches only the verified `origin` remote;
+5. uses `git pull --ff-only` for the selected ref;
 6. hands off to the freshly pulled repository copy;
-7. installs or resolves WezTerm through the official WinGet package and known WinGet install roots;
-8. verifies the `Ubuntu` WSL distribution;
-9. installs or verifies tmux, Antigravity CLI (`agy`), and OpenCode inside Ubuntu from their official Linux installers;
-10. resolves the absolute WSL path for each tool;
-11. creates repo-owned Windows shims for `wezterm`, `tmux`, `agy`, and `opencode` beneath `%LOCALAPPDATA%\AgentSwitchboard\bin`;
-12. registers the shim directory in the user PATH and verifies the commands from PowerShell;
-13. invokes the canonical AgentSwitchboard Windows Profile launcher when a launch mode is requested.
+7. stops before workstation setup.
 
-It never runs `git reset`, `git clean`, `git stash`, force-push, or destructive tmux cleanup. It does not edit `.wezterm.lua` or `.tmux.conf`.
+It never runs `git reset`, `git clean`, `git stash`, force-push, or destructive tmux cleanup.
 
-## Modes
+## Pull-and-run modes
 
 ```cmd
+Pull-And-Run-AgentSwitchboard.cmd acquire
 Pull-And-Run-AgentSwitchboard.cmd setup
 Pull-And-Run-AgentSwitchboard.cmd shell
 Pull-And-Run-AgentSwitchboard.cmd agy
@@ -87,60 +74,69 @@ Pull-And-Run-AgentSwitchboard.cmd opencode
 Pull-And-Run-AgentSwitchboard.cmd hermes
 ```
 
-- `setup` installs and verifies WezTerm, tmux, AGY, OpenCode, and the PowerShell-visible command shims without launching WezTerm.
+- `acquire` clones or fast-forwards the repository and deliberately stops before workstation mutation.
+- `setup` installs and verifies WezTerm, tmux, AGY, OpenCode, and PowerShell-visible command shims without launching WezTerm.
 - `shell` performs core setup, then opens or activates the canonical `dev` tmux workspace in WezTerm.
 - `agy` performs core setup, opens the canonical workspace, and opens or selects an `agy` tmux window using the resolved absolute WSL command path.
 - `opencode` performs core setup, opens the canonical workspace, and opens or selects an `opencode` tmux window using the resolved absolute WSL command path.
-- `hermes` is isolated from the core path. It installs or resolves native Hermes and runs `hermes setup --portal` with one newline supplied before the browser handoff and a bounded timeout.
+- `hermes` remains optional and isolated from the core path.
 
 AGY, OpenCode, and Hermes authentication remains interactive. The CMD does not read, store, or print provider credentials.
 
+## WSL / Ubuntu first-machine repair
+
+`Repair-Technician-WSL-Ubuntu.cmd` is the canonical first-machine repair. It may request same-user UAC elevation. It:
+
+- enables Windows Subsystem for Linux system-wide;
+- enables Virtual Machine Platform system-wide;
+- treats Windows restart requirements as an explicit `3010` reboot boundary;
+- registers one bounded same-user continuation rather than looping;
+- updates WSL with one bounded web-download fallback;
+- installs and registers Ubuntu for the current Windows user when missing;
+- sets WSL 2 defaults;
+- opens the official Ubuntu first-run initialization when the Linux account still needs to be created;
+- verifies non-interactive Bash before reporting success.
+
+It does not unregister distributions, invent a Linux password, enable passwordless sudo, or automatically restart Windows.
+
 ## Why tmux can run from PowerShell
 
-`tmux` remains installed inside Ubuntu. The setup does not pretend it is a native Windows executable. Instead, it writes an AgentSwitchboard-owned `tmux.cmd` shim that delegates to the exact `/usr/bin/tmux` path inside the selected distribution. The same pattern is used for the WSL-owned AGY and OpenCode commands.
+`tmux` remains installed inside Ubuntu. Setup writes an AgentSwitchboard-owned Windows shim that delegates to the resolved tmux path inside the selected distribution. The same pattern is used for WSL-owned AGY and OpenCode commands.
 
-WezTerm receives its own shim pointing to the resolved Windows executable. This avoids relying on the current terminal inheriting a PATH update performed by WinGet.
+WezTerm receives a shim pointing to the resolved Windows executable. This avoids depending on an already-open shell inheriting PATH changes made during setup.
 
-## Hermes boundary
+## Live-cert sequence
 
-Hermes is no longer part of the default WezTerm/tmux/AGY/OpenCode setup. A Hermes install or browser-auth failure cannot block the requested core stack.
-
-The explicit `hermes` mode supplies a newline to the child process before the browser handoff. If the browser or callback still hangs, the process is bounded and the run writes separate stdout and stderr evidence instead of requiring the technician to recover with Ctrl+C or `/debug`.
-
-## July 22, 2026 live-cert report
-
-The first reported technician deployment is classified as **failed**, despite prior green CI:
-
-| Stage | Observed result |
-|---|---|
-| Repository pull | Pass |
-| OpenCode installation | Pass |
-| Hermes browser handoff | Fail — stalled before website launch and required Ctrl+C or `/debug` |
-| AGY installation | Fail |
-| WezTerm resolution from PowerShell | Fail |
-| tmux resolution from PowerShell | Fail |
-
-The sanitized fixture is stored at:
+After first-machine prerequisites and setup succeed, the bootstrap starts the tracked core live certificate:
 
 ```text
-tooling/profiles/windows/harness/live-certification/fixtures/technician-quickstart-2026-07-22-fail.fixture.json
+P00 Preflight
+P01 Network
+P02 Pull and Setup
+P03 Verify Commands
+P04 Launch Shell
+P05 Launch AGY
+P06 Launch OpenCode
+P07 Repeatability
+P08 Finalize
 ```
 
-The repair is not live-certified until the exact parent remote command is rerun on an authorized technician workstation.
+P09 Hermes remains optional and outside the core certificate.
 
-## Expected prerequisites and blockers
-
-- Git for Windows and PowerShell 7 must already be on `PATH`.
-- When WezTerm is missing and WinGet is available, the CMD installs package `wez.wezterm` and resolves it from PATH, WinGet links, standard install roots, or the WinGet package root.
-- WSL and the `Ubuntu` distribution must already be initialized. When missing, the CMD stops with the exact `wsl --install -d Ubuntu` repair instruction because WSL installation may require elevation and a reboot.
-- Installing tmux inside Ubuntu may prompt for the technician's Ubuntu `sudo` password.
+When a stage fails, the orchestrator stops at the first failed boundary, names the mapped repair CMD, preserves evidence, and prints the exact resume command. Static or CI success never substitutes for target-workstation proof.
 
 ## Evidence
 
-Local, untracked setup evidence is written under:
+Local untracked setup evidence is written beneath:
 
 ```text
 %LOCALAPPDATA%\AgentSwitchboard\technician-quickstart\runs\<run-id>\
 ```
 
-Each run records a transcript and JSON summary. Hermes mode also records bounded portal stdout and stderr. Command acknowledgement proves only that setup and launch requests completed. Authentication, provider responses, visible-window behavior, tmux client attachment, and agent task results require separate runtime observation.
+Technician live-cert evidence is written beneath:
+
+```text
+%LOCALAPPDATA%\AgentSwitchboard\technician-live-cert\runs\<run-id>\
+```
+
+Command acknowledgement proves only that setup or launch requests completed. Authentication, provider response, visible-window behavior, tmux client attachment, repeatability, and field acceptance require their corresponding runtime observations.

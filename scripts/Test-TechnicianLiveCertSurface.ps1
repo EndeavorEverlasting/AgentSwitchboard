@@ -208,9 +208,46 @@ Check ($bootstrap.Contains('set "BRANCH=main"')) 'bootstrap/main-pin' 'First-mac
 Check ($bootstrap.Contains('EXPECTED_PARENT_SHA256=')) 'bootstrap/hash-pin' 'First-machine bootstrap must pin parent SHA-256'
 Check ($bootstrap.Contains('Get-FileHash -Algorithm SHA256')) 'bootstrap/hash-verify' 'First-machine bootstrap must verify SHA-256'
 Check ($bootstrap.Contains('Run-Technician-LiveCert.cmd')) 'bootstrap/full-run' 'Bootstrap must hand off to full live-cert CMD'
+foreach ($token in @(
+    'AGENT_SWITCHBOARD_REPO',
+    'repo-path.txt',
+    '%CD%\.git',
+    'machine binding',
+    'portable default',
+    'Machine repo binding saved',
+    ':load_machine_binding',
+    'ORIGINAL_NO_PAUSE'
+)) {
+    Check ($bootstrap.Contains($token)) "bootstrap/portable/$token" "Bootstrap missing portable repo-binding token $token"
+}
+
+$defaultRepoMatches = [regex]::Matches($bootstrap, '(?mi)^\s*set\s+"DEFAULT_REPO=%USERPROFILE%\\dev\\AgentSwitchBoard-Live"\s*$')
+Check ($defaultRepoMatches.Count -eq 1) 'bootstrap/default-repo-exact' 'Bootstrap must contain exactly one effective portable DEFAULT_REPO assignment'
+$redirectedDefaultMatches = [regex]::Matches($bootstrap, '(?mi)^\s*set\s+"DEFAULT_REPO=.*(?:Desktop|OneDrive).*"\s*$')
+Check ($redirectedDefaultMatches.Count -eq 0) 'bootstrap/no-redirected-default' 'Bootstrap canonical DEFAULT_REPO must not depend on Desktop or OneDrive'
+Check (-not $bootstrap.Contains('if exist "%STATE_FILE%" (')) 'bootstrap/binding-load-no-stale-block-expansion' 'Saved machine binding must not be loaded and validated inside one cmd.exe parenthesized block'
+
+$acquireCallIndex = $bootstrap.IndexOf('call "%PARENT_TEMP%" "%REPO_ROOT%" "%BRANCH%"', [StringComparison]::Ordinal)
+$acquireGateIndex = $bootstrap.IndexOf('if not "%EXITCODE%"=="0"', [StringComparison]::Ordinal)
+$stateWriteIndex = $bootstrap.IndexOf('>"%STATE_FILE%" echo %REPO_ROOT%', [StringComparison]::Ordinal)
+Check ($acquireCallIndex -ge 0 -and $acquireGateIndex -gt $acquireCallIndex -and $stateWriteIndex -gt $acquireGateIndex) 'bootstrap/binding-after-acquisition-gate' 'Machine binding must be persisted only after the canonical acquisition success gate'
+Check ($bootstrap.Contains('if errorlevel 1') -and $bootstrap.Contains('per-machine binding could not be saved')) 'bootstrap/binding-write-truthful' 'Bootstrap must not report a saved binding when the state-file write fails'
+
+$repairIndex = $bootstrap.IndexOf('call "%REPO_ROOT%\Repair-Technician-WSL-Ubuntu.cmd"', [StringComparison]::Ordinal)
+$setupIndex = $bootstrap.IndexOf('call "%REPO_ROOT%\Pull-And-Run-AgentSwitchboard.cmd" setup', [StringComparison]::Ordinal)
+$certIndex = $bootstrap.IndexOf('call "%REPO_ROOT%\Run-Technician-LiveCert.cmd"', [StringComparison]::Ordinal)
+Check ($acquireCallIndex -ge 0 -and $repairIndex -gt $acquireCallIndex -and $setupIndex -gt $repairIndex -and $certIndex -gt $setupIndex) 'bootstrap/first-machine-order' 'First-machine bootstrap order must be acquisition -> WSL repair -> workstation setup -> live cert'
 
 $parentBootstrap = Read-RepoText 'Pull-Repo-And-Setup-AgentSwitchboard.cmd'
 Check ($parentBootstrap.Contains('set "BRANCH=main"')) 'parent-bootstrap/main-pin' 'Parent bootstrap must default to main'
+Check ([regex]::IsMatch($parentBootstrap, '(?mi)^\s*set\s+"REPO_ROOT=%USERPROFILE%\\dev\\AgentSwitchBoard-Live"\s*$')) 'parent-bootstrap/portable-root' 'Parent bootstrap must use the portable canonical repo root'
+Check (-not [regex]::IsMatch($parentBootstrap, '(?mi)^\s*set\s+"REPO_ROOT=.*(?:Desktop|OneDrive).*"\s*$')) 'parent-bootstrap/no-redirected-default' 'Parent bootstrap canonical root must not depend on Desktop or OneDrive'
+Check ($parentBootstrap.Contains('call "%BOOTSTRAP_PATH%" acquire')) 'parent-bootstrap/acquire-only' 'Parent bootstrap must acquire the repo without running workstation setup first'
+
+$pullAndRun = Read-RepoText 'Pull-And-Run-AgentSwitchboard.cmd'
+Check ([regex]::IsMatch($pullAndRun, '(?mi)^\s*set\s+"DEFAULT_REPO=%USERPROFILE%\\dev\\AgentSwitchBoard-Live"\s*$')) 'pull-and-run/portable-root' 'Pull-and-run CMD must share the portable canonical repo root'
+Check (-not [regex]::IsMatch($pullAndRun, '(?mi)^\s*set\s+"DEFAULT_REPO=.*(?:Desktop|OneDrive).*"\s*$')) 'pull-and-run/no-redirected-default' 'Pull-and-run canonical default must not depend on Desktop or OneDrive'
+Check ($pullAndRun.Contains('"acquire"')) 'pull-and-run/acquire-mode' 'Pull-and-run CMD must expose acquisition-only mode for clean first-machine ordering'
 
 $validatorSelf = Read-RepoText 'scripts\Test-TechnicianLiveCertSurface.ps1'
 $paramBoundary = $validatorSelf.IndexOf('Set-StrictMode')

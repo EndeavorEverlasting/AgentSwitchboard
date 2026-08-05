@@ -1,0 +1,16 @@
+{
+  "username": "corp_user27",
+  "userProfile": "C:\\Users\\corp_user27",
+  "computerName": "CORP-LT-0427",
+  "userDomain": "CORP",
+  "azureAdJoined": true,
+  "domainJoined": false,
+  "tenantName": "Example Corporation",
+  "oneDriveCommercial": "C:\\Users\\corp_user27\\OneDrive - Example Corporation",
+  "oneDriveConsumer": null,
+  "oneDrive": "C:\\Users\\corp_user27\\OneDrive - Example Corporation",
+  "desktopPath": "C:\\Users\\corp_user27\\OneDrive - Example Corporation\\Desktop",
+  "documentsPath": "C:\\Users\\corp_user27\\OneDrive - Example Corporation\\Documents",
+  "existingRepositoryRoot": null,
+  "tools": { "curl": true, "git": true, "powershell": true, "pwsh": false, "winget": true, "wsl": false }
+}
