@@ -58,7 +58,13 @@ Static topology does not prove runtime delivery. Runtime claims require correlat
 
 AgentSwitchboard owns one canonical launcher per platform profile. The Windows Profile is WezTerm-backed and uses idempotent `open-or-activate`. Consumer repositories and desktop shortcuts delegate only; they do not own lifecycle, discovery, activation, duplicate prevention, or raw frontend fallback.
 
-Linux and Android are separate implementations. A platform profile does not prove its workspace host, orchestration runtime, agent runtime, provider, or authentication. A missing or uncertified canonical launcher is blocked. Contract-only doctrine does not prove a launcher exists or a workspace opened or activated. Environment topology selection precedes profile certification. Validate with the environment-capability and device-profile contracts.
+Linux and Android are separate implementations. A platform profile does not prove its workspace host, orchestration runtime, agent runtime, provider, or authentication. A missing or uncertified canonical launcher is blocked. Contract-only doctrine does not prove a launcher exists or a workspace opened or activated. Environment topology selection precedes profile certification.
+
+Validate with:
+
+```powershell
+pwsh -NoLogo -NoProfile -File .\scripts\Test-DeviceProfileLauncherContract.ps1
+```
 
 ## Entry points
 
