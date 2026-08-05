@@ -57,9 +57,13 @@ foreach ($entry in $paths.GetEnumerator()) {
         Add-Failure "Missing $($entry.Key): $($entry.Value)"
         continue
     }
-    & $gitCommand.Source -C $RootPath ls-files --error-unmatch -- $entry.Value *> $null
+
+    # Git pathspecs use forward slashes on every platform even though the
+    # operator-facing manifest and Windows scripts use backslashes.
+    $gitRelative = $entry.Value -replace '\\', '/'
+    & $gitCommand.Source -C $RootPath ls-files --error-unmatch -- $gitRelative *> $null
     if ($LASTEXITCODE -ne 0) {
-        Add-Failure "Untracked $($entry.Key): $($entry.Value)"
+        Add-Failure "Untracked $($entry.Key): $gitRelative"
     }
 }
 
