@@ -1,6 +1,6 @@
 ---
 id: machine-profile-bootstrap
-version: 1.1.0
+version: 1.2.0
 status: canonical
 ---
 
@@ -41,8 +41,8 @@ Use when AgentSwitchboard is being installed, repaired, relocated, or diagnosed 
 14. A failed WSL repair blocks setup; a failed setup blocks live certification.
 15. Convert reproduced deterministic failures into focused regression coverage and known-trap guidance.
 16. Report `environmentRoleId`, `profileId`, confidence, reasons, repository-root source, selected root, blockers, branch, HEAD, local evidence path, and proof ceiling.
-17. Generate the English and JSON harness report with `Get-MachineProfileHarnessStatus.cmd`.
-18. For unmerged remote harness work, use `Validate-MachineProfileHarnessCandidate.cmd`; it fetches without force, verifies exact ancestry and head, preserves dirty source work in a detached isolated worktree, runs the owning validators, resolves status artifacts from tracked registries, prints the report, opens it, and propagates failures.
+17. Generate the English and JSON harness report with `Get-MachineProfileHarnessStatus.cmd`. Every emitted command must be location-independent, name its owner and dependency, and remain executable when the caller is outside the repository.
+18. For unmerged remote harness work, use `Validate-MachineProfileHarnessCandidate.cmd`; it fetches without force, verifies exact ancestry and head, preserves dirty source work in a detached isolated worktree, runs the owning validators, resolves status artifacts from tracked registries, prints the report, opens it, and propagates failures. Supply `-PullRequestNumber` when a PR exists so the successful report advances the review gate rather than rerunning completed proof.
 19. Continue through repository acquisition, PowerShell 7 gate, WSL repair, workstation setup, and live certification without reordering those gates.
 
 ## Expected outputs
@@ -79,8 +79,10 @@ git diff --check
 Candidate validation syntax:
 
 ```cmd
-Validate-MachineProfileHarnessCandidate.cmd -SourceRepository "C:\path\to\existing-checkout" -WorktreeRoot "C:\path\to\isolated-worktree" -Branch "feature-branch" -ExpectedHead "40-character-sha" -BaseCommit "40-character-base-sha"
+Validate-MachineProfileHarnessCandidate.cmd -SourceRepository "C:\path\to\existing-checkout" -WorktreeRoot "C:\path\to\isolated-worktree" -Branch "feature-branch" -ExpectedHead "40-character-sha" -BaseCommit "40-character-base-sha" -PullRequestNumber 64
 ```
+
+When `-PullRequestNumber` is omitted, the report emits a location-independent command that opens the branch comparison page so a PR can be created or reviewed.
 
 ## Forbidden scope
 
@@ -91,12 +93,14 @@ Validate-MachineProfileHarnessCandidate.cmd -SourceRepository "C:\path\to\existi
 - No reset, clean, stash, overwrite, force update, or unexpected-origin acceptance.
 - No committed real machine-profile output or resolved path evidence.
 - No stale or shadowed `ERRORLEVEL`, pull-over-local-patch, setup after failed WSL repair, or live certification after failed setup.
+- No bare repository-relative next command when the caller may remain in another directory.
+- No next command that merely reruns proof already completed when review, merge, protected runtime, or deployment is the actual blocker.
 - No package, authentication, provider, launcher, or live-runtime success claim from profile classification or harness validation.
 
 ## Stop and escalate
 
 Stop when Windows PowerShell or `curl.exe` is missing, an explicit path cannot be created, the existing target is nonempty but not a valid checkout, origin is unexpected, dirty ownership is unresolved, the checkout is detached unexpectedly, a prerequisite fails, a reboot is required, or repository acquisition fails.
 
-Escalate with the environment role, profile ID, confidence, repository-root source, selected root, exact blocker, transcript and summary paths, preserved checkout state, branch, HEAD, proof ceiling, and one executable next command.
+Escalate with the environment role, profile ID, confidence, repository-root source, selected root, exact blocker, transcript and summary paths, preserved checkout state, branch, HEAD, proof ceiling, next-action owner, next-action dependency, and one location-independent executable next command.
 
 The proof ceiling is machine observation, deterministic classification, explicit role routing, repository-root recommendation, harness completeness, candidate isolation, workflow selection, status rendering, and bootstrap ordering. Live workstation success still requires repository-owned repair, setup, and certification evidence.
