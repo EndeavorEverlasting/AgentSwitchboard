@@ -8,6 +8,15 @@ for %%I in ("%REPO_ROOT%\.") do set "REPO_ROOT=%%~fI"
 
 set "REMOTE_REF=%~2"
 set "EXPECTED_HEAD=%~3"
+set "FIELD_MODE=%~4"
+if not defined FIELD_MODE set "FIELD_MODE=validate"
+
+if /I not "%FIELD_MODE%"=="validate" if /I not "%FIELD_MODE%"=="ready" (
+  echo [FAIL] Unsupported field mode: %FIELD_MODE%
+  echo Usage: %~nx0 [repo-path] [remote-ref] [expected-sha] [validate^|ready]
+  set "RESULT=2"
+  goto :finish
+)
 
 where pwsh.exe >nul 2>&1
 if errorlevel 1 (
@@ -24,27 +33,48 @@ if not exist "%SCRIPT%" (
   goto :finish
 )
 
-if defined REMOTE_REF goto :with_ref
+if /I "%FIELD_MODE%"=="ready" goto :run_ready
+
+if defined REMOTE_REF goto :validate_with_ref
 pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT%" -RepoRoot "%REPO_ROOT%"
 set "RESULT=%ERRORLEVEL%"
 goto :finish
 
-:with_ref
-if defined EXPECTED_HEAD goto :with_expected
+:validate_with_ref
+if defined EXPECTED_HEAD goto :validate_with_expected
 pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT%" -RepoRoot "%REPO_ROOT%" -RemoteRef "%REMOTE_REF%"
 set "RESULT=%ERRORLEVEL%"
 goto :finish
 
-:with_expected
+:validate_with_expected
 pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT%" -RepoRoot "%REPO_ROOT%" -RemoteRef "%REMOTE_REF%" -ExpectedHead "%EXPECTED_HEAD%"
+set "RESULT=%ERRORLEVEL%"
+goto :finish
+
+:run_ready
+if not defined REMOTE_REF (
+  echo [FAIL] Ready mode requires an explicit remote ref.
+  set "RESULT=2"
+  goto :finish
+)
+if not defined EXPECTED_HEAD (
+  echo [FAIL] Ready mode requires an explicit expected commit SHA.
+  set "RESULT=2"
+  goto :finish
+)
+pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT%" -RepoRoot "%REPO_ROOT%" -RemoteRef "%REMOTE_REF%" -ExpectedHead "%EXPECTED_HEAD%" -RunReadiness
 set "RESULT=%ERRORLEVEL%"
 
 :finish
 echo.
 if "%RESULT%"=="0" (
-  echo [PASS] Exact-head validation completed.
+  if /I "%FIELD_MODE%"=="ready" (
+    echo [PASS] Exact-head validation and AgentSwitchboard readiness completed.
+  ) else (
+    echo [PASS] Exact-head validation completed.
+  )
 ) else (
-  echo [FAIL] Exact-head validation exited with code %RESULT%.
+  echo [FAIL] Exact-head field operation exited with code %RESULT%.
 )
 if not "%AGENT_SWITCHBOARD_NO_PAUSE%"=="1" (
   echo.
