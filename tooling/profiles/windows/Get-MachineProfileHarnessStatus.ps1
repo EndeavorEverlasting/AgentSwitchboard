@@ -73,13 +73,14 @@ if ($manifest -and -not [string]::IsNullOrWhiteSpace([string]$manifest.environme
 }
 
 $status = if ($missing.Count -eq 0 -and $trackedMissing.Count -eq 0 -and $loadErrors.Count -eq 0) { 'ready' } else { 'incomplete' }
+$presentCount = [Math]::Max(0, $required.Count - $missing.Count)
 $result = [ordered]@{
     schema = 'agentswitchboard.machine-profile-harness-status.v1'
     generatedAt = $now.ToUniversalTime().ToString('o')
     status = $status
     repositoryRoot = $RepoRoot
     requiredCount = $required.Count
-    presentCount = $required.Count - $missing.Count
+    presentCount = $presentCount
     missing = @($missing)
     trackedMissing = @($trackedMissing)
     loadErrors = @($loadErrors)
