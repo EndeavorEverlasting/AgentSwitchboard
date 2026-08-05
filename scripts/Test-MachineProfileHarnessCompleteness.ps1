@@ -26,7 +26,8 @@ foreach($artifact in $artifacts.generatedArtifacts){if($artifact.tracked -ne $fa
 $workflows=Read-Json ([string]$manifest.workflowSpecs)
 $workflowIds=@($workflows.workflows | ForEach-Object {$_.workflowId})
 foreach($id in @('machine-profile-task-intake','machine-profile-validation','machine-profile-failure-recovery','machine-profile-handoff')){if($id -notin $workflowIds){throw "Missing workflow: $id"}}
-$text=@($required | ForEach-Object {Get-Content -LiteralPath (Join-Path $repoRoot $_) -Raw}) -join "`n"
+$privacyPaths=@([string]$manifest.codebaseMap,[string]$manifest.environmentRoleRegistry,[string]$manifest.knownTrapsRegistry,[string]$manifest.skill,[string]$manifest.operatorDocumentation)
+$text=@($privacyPaths | ForEach-Object {Get-Content -LiteralPath (Join-Path $repoRoot $_) -Raw}) -join "`n"
 foreach($literal in @('CheeksMcClappeth','pa_rperez26','OneDrive - Northwell Health')){if($text -match [regex]::Escape($literal)){throw "Real machine literal committed: $literal"}}
 $git=Get-Command git -ErrorAction SilentlyContinue
 if($git){foreach($relative in $required){& $git.Source -C $repoRoot ls-files --error-unmatch -- $relative *> $null;if($LASTEXITCODE -ne 0){throw "Harness file is not tracked: $relative"}}}
