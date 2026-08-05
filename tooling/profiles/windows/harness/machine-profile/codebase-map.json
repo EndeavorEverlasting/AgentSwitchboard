@@ -1,5 +1,5 @@
 {
-  "schema": "agentswitchboard.machine-profile-codebase-map.v2",
+  "schema": "agentswitchboard.machine-profile-codebase-map.v1",
   "canonicalOwner": "tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1",
   "entrypoints": [
     "AgentSwitchboard-Technician-Bootstrap.cmd",

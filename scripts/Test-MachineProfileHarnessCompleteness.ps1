@@ -13,7 +13,7 @@ foreach($relative in $required){if(-not(Test-Path -LiteralPath (Join-Path $repoR
 $roles=Read-Json ([string]$manifest.environmentRoleRegistry)
 $expected=@('personal-windows-laptop','desktop-workstation','admin-box-1','admin-box-2')
 $actual=@($roles.roles | ForEach-Object {[string]$_.roleId})
-if((Compare-Object ($expected|Sort-Object) ($actual|Sort-Object)).Count){throw "Role mismatch: $($actual -join ', ')"}
+if(@(Compare-Object ($expected|Sort-Object) ($actual|Sort-Object)).Count){throw "Role mismatch: $($actual -join ', ')"}
 foreach($role in $roles.roles){if($role.pathResolution.committedResolvedPathAllowed -ne $false){throw "Committed path allowed for $($role.roleId)"}}
 $personal=@($roles.roles | Where-Object roleId -eq 'personal-windows-laptop')[0]
 if($personal.pathResolution.workspacePattern -ne '%USERPROFILE%\Desktop\Dev'){throw 'Personal-laptop workspace contract mismatch.'}

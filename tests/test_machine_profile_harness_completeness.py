@@ -5,9 +5,13 @@ import unittest
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def load_json(path):
+def read_text(path):
     with open(os.path.join(REPO_ROOT, path), "r", encoding="utf-8") as handle:
-        return json.load(handle)
+        return handle.read()
+
+
+def load_json(path):
+    return json.loads(read_text(path))
 
 
 class TestMachineProfileHarnessCompleteness(unittest.TestCase):
@@ -44,7 +48,7 @@ class TestMachineProfileHarnessCompleteness(unittest.TestCase):
 
     def test_no_real_machine_literals(self):
         paths = [self.manifest[key] for key in ("codebaseMap", "environmentRoleRegistry", "knownTrapsRegistry", "skill", "operatorDocumentation")]
-        text = "\n".join(open(os.path.join(REPO_ROOT, path), "r", encoding="utf-8").read() for path in paths)
+        text = "\n".join(read_text(path) for path in paths)
         for forbidden in ("CheeksMcClappeth", "pa_rperez26", "OneDrive - Northwell Health"):
             self.assertNotIn(forbidden, text)
 
