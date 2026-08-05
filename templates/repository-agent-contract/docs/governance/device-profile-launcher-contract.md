@@ -14,4 +14,10 @@ Linux and Android are separate implementations. Local rules define their exact r
 
 Static contracts and fixtures prove ownership and shape only. Runtime proof requires fresh environment identity, exact workspace-host and runtime identity, effective-state readback, opened or activated behavior, duplicate prevention, and operator-visible evidence.
 
-Validate with the repository-local environment-capability and device-profile validators. Local rules may strengthen this contract but may not weaken canonical ownership, topology, delegation, or proof boundaries.
+Validate the environment-capability contract with the repository-local validator. Validate the device profile contract with:
+
+```powershell
+pwsh -NoLogo -NoProfile -File .\scripts\Test-DeviceProfileLauncherContract.ps1
+```
+
+Local rules may strengthen this contract but may not weaken canonical ownership, topology, delegation, or proof boundaries.
