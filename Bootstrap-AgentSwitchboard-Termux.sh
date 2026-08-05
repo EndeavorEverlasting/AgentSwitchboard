@@ -9,14 +9,18 @@ PLAN=0
 
 usage() {
   cat <<'EOF'
-Bootstrap AgentSwitchboard for Termux
+Bootstrap the AgentSwitchboard Android terminal client for Termux
 
 Usage:
   Bootstrap-AgentSwitchboard-Termux.sh [--repo PATH] [--ref BRANCH] [--plan]
 
-The bootstrap installs the phone-side package floor, safely acquires or
-fast-forwards AgentSwitchboard, and installs the canonical Android launcher
-as $PREFIX/bin/agentswitchboard-phone.
+This installs the phone-side terminal-client package floor, safely acquires or
+fast-forwards the AgentSwitchboard source checkout, and installs the Android
+terminal launcher as $PREFIX/bin/agentswitchboard-phone.
+
+It does not install or certify the Windows-first AgentSwitchboard orchestration
+runtime, GNHF fleet, coding agents, providers, authentication, or a remote
+workspace host.
 EOF
 }
 
@@ -56,7 +60,7 @@ case "$REF" in
 esac
 
 if [ "$PLAN" -eq 1 ]; then
-  printf 'PLAN profile=android frontend=termux repo=%s ref=%s packages=git,openssh,tmux,curl launcher=%s/bin/agentswitchboard-phone\n' \
+  printf 'PLAN profile=android capability_status=terminal-client-implemented role=terminal-client frontend=termux repo=%s ref=%s packages=git,openssh,tmux,curl launcher=%s/bin/agentswitchboard-phone native_orchestration_runtime=unimplemented\n' \
     "$REPO_ROOT" "$REF" "${PREFIX:-\$PREFIX}"
   exit 0
 fi
@@ -64,7 +68,7 @@ fi
 [ -n "${PREFIX:-}" ] || fail "PREFIX is not set; run this inside Termux"
 command -v pkg >/dev/null 2>&1 || fail "pkg is unavailable; use a supported Termux installation"
 
-printf '[INFO] Installing Termux package floor...\n'
+printf '[INFO] Installing the Android terminal-client package floor...\n'
 pkg install -y git openssh tmux curl
 
 mkdir -p "$(dirname "$REPO_ROOT")"
@@ -85,25 +89,39 @@ else
 fi
 
 launcher_source="$REPO_ROOT/tooling/profiles/android/Invoke-AgentSwitchboardOpenOrActivate.sh"
-[ -f "$launcher_source" ] || fail "Android launcher missing from checkout: $launcher_source"
+[ -f "$launcher_source" ] || fail "Android terminal-client launcher missing from checkout: $launcher_source"
 bash -n "$launcher_source"
 
 install -m 0755 "$launcher_source" "$PREFIX/bin/agentswitchboard-phone"
-"$PREFIX/bin/agentswitchboard-phone" local --plan >/dev/null
-"$PREFIX/bin/agentswitchboard-phone" ssh example-host --plan >/dev/null
+"$PREFIX/bin/agentswitchboard-phone" status >/dev/null
+"$PREFIX/bin/agentswitchboard-phone" local-shell --plan >/dev/null
+"$PREFIX/bin/agentswitchboard-phone" remote example-host \
+  --host-profile posix-tmux \
+  --repo /srv/AgentSwitchboard \
+  --expected-origin "$REPOSITORY_URL" \
+  --plan >/dev/null
 
 state_root="${XDG_STATE_HOME:-$HOME/.local/state}/agentswitchboard/android"
 mkdir -p "$state_root"
 {
   printf 'profile=android\n'
+  printf 'capability_status=terminal-client-implemented\n'
+  printf 'role=terminal-client\n'
   printf 'frontend=termux\n'
+  printf 'transport=ssh\n'
+  printf 'local_tmux_scope=device-local-only\n'
   printf 'repo=%s\n' "$REPO_ROOT"
+  printf 'repo_purpose=source-and-terminal-client-files-not-runtime-proof\n'
   printf 'ref=%s\n' "$REF"
   printf 'launcher=%s\n' "$PREFIX/bin/agentswitchboard-phone"
+  printf 'native_orchestration_runtime=unimplemented\n'
+  printf 'native_agent_runtime=unproved\n'
   printf 'timestamp_utc=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  printf 'proof=installed-command-probes\n'
+  printf 'proof=terminal-client-installed-command-probes\n'
 } > "$state_root/bootstrap-result.env"
 
-printf '[PASS] Android Profile installed.\n'
-printf '[NEXT] Local workspace: agentswitchboard-phone local\n'
-printf '[NEXT] Remote workspace: agentswitchboard-phone ssh <ssh-alias>\n'
+printf '[PASS] Android terminal client installed.\n'
+printf '[LIMIT] Full AgentSwitchboard runtime is not configured on this phone.\n'
+printf '[NEXT] Inspect the capability ceiling: agentswitchboard-phone status\n'
+printf '[OPTIONAL] Phone-local shell only: agentswitchboard-phone local-shell\n'
+printf '[REMOTE] A remote workspace requires a classified host, repository path, expected origin, and successful preflight.\n'
