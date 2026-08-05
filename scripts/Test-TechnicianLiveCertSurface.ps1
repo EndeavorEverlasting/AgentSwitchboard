@@ -1,21 +1,38 @@
 [CmdletBinding()]
 param(
-    [string]$RootPath = (Split-Path -Parent $PSScriptRoot)
+    [string]$RootPath
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$RootPath = (Resolve-Path -LiteralPath $RootPath).Path
-$passes = [System.Collections.Generic.List[string]]::new()
-$failures = [System.Collections.Generic.List[string]]::new()
-
-function Check([bool]$Condition, [string]$Name, [string]$Message) {
-    if ($Condition) { [void]$passes.Add($Name) }
-    else { [void]$failures.Add("${Name}: ${Message}") }
+if ([string]::IsNullOrWhiteSpace($RootPath)) {
+    if ([string]::IsNullOrWhiteSpace($PSScriptRoot)) {
+        throw 'Unable to resolve validator script directory. Supply -RootPath explicitly.'
+    }
+    $RootPath = Split-Path -Parent $PSScriptRoot
 }
 
-function Read-RepoText([string]$RelativePath) {
+$RootPath = (Resolve-Path -LiteralPath $RootPath).Path
+$passes = New-Object 'System.Collections.Generic.List[string]'
+$failures = New-Object 'System.Collections.Generic.List[string]'
+
+function Check {
+    param(
+        [Parameter(Mandatory)][bool]$Condition,
+        [Parameter(Mandatory)][string]$Name,
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Message
+    )
+
+    if ($Condition) {
+        [void]$passes.Add($Name)
+    } else {
+        [void]$failures.Add("${Name}: ${Message}")
+    }
+}
+
+function Read-RepoText {
+    param([Parameter(Mandatory)][string]$RelativePath)
     return Get-Content -LiteralPath (Join-Path $RootPath $RelativePath) -Raw
 }
 
@@ -35,7 +52,7 @@ if (Test-Path -LiteralPath $manifestPath -PathType Leaf) {
         Check (Test-Path -LiteralPath (Join-Path $RootPath $manifest.bootstrapCmd) -PathType Leaf) 'manifest/bootstrapCmd' "$($manifest.bootstrapCmd) missing in root"
 
         foreach ($stage in $manifest.stages) {
-            $stageId = $stage.stageId
+            $stageId = [string]$stage.stageId
             Check (Test-Path -LiteralPath (Join-Path $RootPath $stage.cmd) -PathType Leaf) "stage/${stageId}/cmd" "CMD file $($stage.cmd) missing"
             Check (Test-Path -LiteralPath (Join-Path $RootPath "$baseRelative\$($stage.implementation)") -PathType Leaf) "stage/${stageId}/impl" "Implementation $($stage.implementation) missing"
             if ($stage.manualObservationRequired) {
@@ -43,17 +60,17 @@ if (Test-Path -LiteralPath $manifestPath -PathType Leaf) {
             }
         }
 
-        $stageIds = @($manifest.stages | ForEach-Object { $_.stageId })
+        $stageIds = @($manifest.stages | ForEach-Object { [string]$_.stageId })
         foreach ($repair in $manifest.repairs) {
-            $repairId = $repair.repairId
+            $repairId = [string]$repair.repairId
             Check (Test-Path -LiteralPath (Join-Path $RootPath $repair.cmd) -PathType Leaf) "repair/${repairId}/cmd" "CMD file $($repair.cmd) missing"
             Check (Test-Path -LiteralPath (Join-Path $RootPath "$baseRelative\$($repair.implementation)") -PathType Leaf) "repair/${repairId}/impl" "Implementation $($repair.implementation) missing"
             foreach ($target in $repair.targetsStages) {
-                Check ($stageIds -contains $target) "repair/${repairId}/target/${target}" "Unknown target stage $target"
+                Check ($stageIds -contains [string]$target) "repair/${repairId}/target/${target}" "Unknown target stage $target"
             }
         }
 
-        $p09 = @($manifest.stages | Where-Object stageId -eq 'P09')[0]
+        $p09 = @($manifest.stages | Where-Object { $_.stageId -eq 'P09' })[0]
         Check ($p09.optional -eq $true) 'manifest/hermes-optional' 'P09 Hermes must remain optional'
         Check (-not ($manifest.coreSequence -contains 'P09')) 'manifest/hermes-outside-core' 'P09 must not be part of coreSequence'
     }
@@ -70,8 +87,13 @@ foreach ($schemaName in @(
     $schemaPath = Join-Path $RootPath "$baseRelative\schemas\$schemaName"
     Check (Test-Path -LiteralPath $schemaPath -PathType Leaf) "schema/$schemaName" 'Schema file missing'
     if (Test-Path -LiteralPath $schemaPath -PathType Leaf) {
-        try { $null = Get-Content -LiteralPath $schemaPath -Raw | ConvertFrom-Json; Check $true "schema/$schemaName/json" '' }
-        catch { Check $false "schema/$schemaName/json" $_.Exception.Message }
+        try {
+            $null = Get-Content -LiteralPath $schemaPath -Raw | ConvertFrom-Json
+            Check $true "schema/$schemaName/json" ''
+        }
+        catch {
+            Check $false "schema/$schemaName/json" $_.Exception.Message
+        }
     }
 }
 
@@ -79,19 +101,26 @@ Check (Test-Path -LiteralPath (Join-Path $RootPath 'Open-TechnicianLiveCertEvide
 Check (Test-Path -LiteralPath (Join-Path $RootPath 'Install-TechnicianLiveCertShortcuts.cmd') -PathType Leaf) 'cmd/install-shortcuts' 'Install-TechnicianLiveCertShortcuts.cmd missing'
 
 $gitignorePath = Join-Path $RootPath '.gitignore'
-if (Test-Path -LiteralPath $gitignorePath) {
+if (Test-Path -LiteralPath $gitignorePath -PathType Leaf) {
     $gitignoreText = Get-Content -LiteralPath $gitignorePath -Raw
     Check ($gitignoreText -match 'technician-live-cert/runs') 'gitignore/evidence' '.gitignore must exclude technician live-cert run evidence'
 }
 
-$cmdFiles = Get-ChildItem -Path $RootPath -Filter '*.cmd' | Where-Object { $_.Name -match 'Technician|LiveCert|Repair-Technician' }
+$cmdFiles = Get-ChildItem -LiteralPath $RootPath -Filter '*.cmd' |
+    Where-Object { $_.Name -match 'Technician|LiveCert|Repair-Technician' }
 foreach ($cmd in $cmdFiles) {
     $content = Get-Content -LiteralPath $cmd.FullName -Raw
     Check ($content -match 'exit /b %EXITCODE%' -or $content -match 'exit /b %RESULT%') "cmd/exit-code/$($cmd.Name)" "CMD $($cmd.Name) missing exit-code propagation"
 }
 
 $commonText = Read-RepoText "$baseRelative\TechnicianLiveCert.Common.psm1"
-foreach ($token in @('active-run.json', 'Set-TechnicianLiveCertActiveRun', 'Get-TechnicianLiveCertActiveRunId', 'Clear-TechnicianLiveCertActiveRun', 'Assert-TechnicianLiveCertRunIdentity')) {
+foreach ($token in @(
+    'active-run.json',
+    'Set-TechnicianLiveCertActiveRun',
+    'Get-TechnicianLiveCertActiveRunId',
+    'Clear-TechnicianLiveCertActiveRun',
+    'Assert-TechnicianLiveCertRunIdentity'
+)) {
     Check ($commonText.Contains($token)) "common/$token" "Common module missing $token"
 }
 
@@ -107,17 +136,25 @@ foreach ($token in @('-Verb RunAs', '$OriginSid', 'Same-user elevation failed', 
 }
 
 $unsupportedImports = @()
-Get-ChildItem -LiteralPath (Join-Path $RootPath $baseRelative) -File -Recurse | Where-Object Extension -in @('.ps1', '.psm1') | ForEach-Object {
-    if ((Get-Content -LiteralPath $_.FullName -Raw).Contains('Import-Module -LiteralPath')) {
-        $unsupportedImports += $_.FullName
+Get-ChildItem -LiteralPath (Join-Path $RootPath $baseRelative) -File -Recurse |
+    Where-Object { $_.Extension -in @('.ps1', '.psm1') } |
+    ForEach-Object {
+        if ((Get-Content -LiteralPath $_.FullName -Raw).Contains('Import-Module -LiteralPath')) {
+            $unsupportedImports += $_.FullName
+        }
     }
-}
 Check ($unsupportedImports.Count -eq 0) 'powershell/import-module-path' "Unsupported Import-Module -LiteralPath found: $($unsupportedImports -join ', ')"
 
 $p00 = Read-RepoText "$baseRelative\stages\P00-Preflight.ps1"
 foreach ($token in @('wsl.exe', "'Ubuntu'", 'evidenceWritable', 'accountSid', 'TECHNICIAN_LIVE_CERT_CI_SURFACE')) {
     Check ($p00.Contains($token)) "p00/$token" "P00 missing required contract token $token"
 }
+Check (-not $p00.Contains(".Replace([char]0, '')")) 'p00/no-ambiguous-char-replace' 'P00 contains the char/char Replace overload with an empty replacement'
+Check ($p00.Contains(".Replace(([char]0).ToString(), [string]::Empty)")) 'p00/string-replace' 'P00 must force the string/string Replace overload'
+
+$nullPadded = "U$([char]0)b$([char]0)u$([char]0)n$([char]0)t$([char]0)u$([char]0)"
+$normalized = $nullPadded.Replace(([char]0).ToString(), [string]::Empty)
+Check ($normalized -eq 'Ubuntu') 'p00/null-normalization-behavior' "Expected Ubuntu, found '$normalized'"
 
 $wslRepair = Read-RepoText "$baseRelative\stages\Repair-Technician-WSL-Ubuntu.ps1"
 foreach ($token in @(
@@ -212,10 +249,18 @@ Check ([regex]::IsMatch($pullAndRun, '(?mi)^\s*set\s+"DEFAULT_REPO=%USERPROFILE%
 Check (-not [regex]::IsMatch($pullAndRun, '(?mi)^\s*set\s+"DEFAULT_REPO=.*(?:Desktop|OneDrive).*"\s*$')) 'pull-and-run/no-redirected-default' 'Pull-and-run canonical default must not depend on Desktop or OneDrive'
 Check ($pullAndRun.Contains('"acquire"')) 'pull-and-run/acquire-mode' 'Pull-and-run CMD must expose acquisition-only mode for clean first-machine ordering'
 
+$validatorSelf = Read-RepoText 'scripts\Test-TechnicianLiveCertSurface.ps1'
+$paramBoundary = $validatorSelf.IndexOf('Set-StrictMode')
+$paramSurface = if ($paramBoundary -gt 0) { $validatorSelf.Substring(0, $paramBoundary) } else { $validatorSelf }
+Check (-not $paramSurface.Contains('$PSScriptRoot)')) 'validator/no-psscriptroot-default' 'Validator may not evaluate PSScriptRoot inside a parameter default'
+Check ($validatorSelf.Contains("if ([string]::IsNullOrWhiteSpace(`$RootPath))")) 'validator/runtime-root-resolution' 'Validator must resolve RootPath in the script body'
+
 Write-Host '============================================================' -ForegroundColor Cyan
 Write-Host ' Technician Live-Cert Surface Validation Summary' -ForegroundColor White
+Write-Host " PowerShell: $($PSVersionTable.PSVersion)"
 Write-Host " Passes: $($passes.Count)" -ForegroundColor Green
-Write-Host " Failures: $($failures.Count)" -ForegroundColor $(if ($failures.Count -eq 0) { 'Green' } else { 'Red' })
+$statusColor = if ($failures.Count -eq 0) { 'Green' } else { 'Red' }
+Write-Host " Failures: $($failures.Count)" -ForegroundColor $statusColor
 Write-Host '============================================================' -ForegroundColor Cyan
 
 if ($failures.Count -gt 0) {

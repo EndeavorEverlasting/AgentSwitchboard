@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "agentswitchboard.technician-live-cert-maintenance.v1",
+  "trigger": [
+    "A technician live-cert stage, repair command, validator, manifest, schema, CMD launcher, or report changes.",
+    "A field failure contradicts static or CI evidence.",
+    "A new Windows PowerShell or PowerShell 7 compatibility boundary is introduced."
+  ],
+  "requiredInputs": [
+    "repository root and exact branch",
+    "current HEAD",
+    "dirty-worktree state",
+    "failure output or requested change",
+    "owned and forbidden paths",
+    "proof ceiling"
+  ],
+  "phases": [
+    {
+      "id": "intake",
+      "actions": [
+        "Read AGENTS.md, the live-cert skill, scoped codebase map, scoped manifest, and current operator evidence.",
+        "Run git status --short, git branch --show-current, and git log --oneline --decorate -5 without a pager.",
+        "Preserve unrelated work and use an isolated branch or worktree when another writer owns the checkout."
+      ],
+      "gate": "Repository identity, ownership, and exact failure boundary are recorded."
+    },
+    {
+      "id": "factor",
+      "actions": [
+        "Classify each requirement as reuse, extend, repair, retire, or create.",
+        "Keep operator behavior in stage/repair code, reusable procedure in the skill, deterministic policy in manifests/workflows/schemas, and proof in validators/artifacts.",
+        "Reject prompt-only or documentation-only fixes for executable defects."
+      ],
+      "gate": "One canonical owner exists for every changed behavior and artifact."
+    },
+    {
+      "id": "implement",
+      "actions": [
+        "Repair the defect and add a behavior-level or executable compatibility guard.",
+        "Update the scoped map, registry, workflow, skill, report, or CI only when the change affects those contracts.",
+        "Keep generated evidence outside tracked paths."
+      ],
+      "gate": "The owned vertical slice is complete and no duplicate implementation exists."
+    },
+    {
+      "id": "validate",
+      "actions": [
+        "Run focused Python tests.",
+        "Run the surface and harness validators in Windows PowerShell 5.1.",
+        "Run the same validators in PowerShell 7.",
+        "Run CMD fixture-safe dispatch and git --no-pager diff --check.",
+        "Run broader repository validation only after focused checks pass."
+      ],
+      "gate": "Every required shell and focused validator passes at the exact candidate HEAD."
+    },
+    {
+      "id": "handoff",
+      "actions": [
+        "Record files changed, validator results, proof ceiling, commit SHA, push/PR state, preserved local work, and the exact next command.",
+        "When runtime proof remains, name the workstation stage and artifact that advances it.",
+        "Do not claim live behavior from CI."
+      ],
+      "gate": "A fresh agent can resume without reconstructing the failure or validation order."
+    }
+  ],
+  "failureHandling": {
+    "correctableFailure": "Repair in the same branch and rerun the complete affected gate.",
+    "environmentBlocker": "Record the exact shell, command, exit code, evidence path, and owned repair command.",
+    "collision": "Stop mutation, preserve both branches/worktrees, and assign one convergence owner.",
+    "proofContradiction": "Observed field failure outranks lower proof and remains blocking until exact-command rerun."
+  },
+  "forbidden": [
+    "destructive Git",
+    "implicit hook installation",
+    "tracked local evidence",
+    "secret or private endpoint capture",
+    "runtime proof promotion from hosted CI",
+    "interactive pager dependence",
+    "skipping Windows PowerShell 5.1 compatibility"
+  ]
+}

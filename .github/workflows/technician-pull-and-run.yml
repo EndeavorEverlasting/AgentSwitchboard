@@ -5,15 +5,20 @@ on:
     paths:
       - 'Pull-Repo-And-Setup-AgentSwitchboard.cmd'
       - 'Pull-And-Run-AgentSwitchboard.cmd'
+      - 'AgentSwitchboard-Technician-Bootstrap.cmd'
+      - 'Technician-AgentSwitchboard-Ready.cmd'
+      - 'Validate-Technician-ExactHead.cmd'
       - 'tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1'
-      - 'tooling/profiles/windows/harness/live-certification/fixtures/technician-quickstart-2026-07-22-fail.fixture.json'
+      - 'tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1'
+      - 'tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1'
+      - 'tooling/profiles/windows/technician-live-cert/stages/P02-Pull-And-Setup.ps1'
+      - 'tooling/profiles/windows/technician-live-cert/stages/P03-Verify-Commands.ps1'
+      - 'tooling/profiles/windows/technician-live-cert/Install-TechnicianLiveCertShortcuts.ps1'
+      - 'scripts/Invoke-TechnicianExactHeadValidation.ps1'
+      - 'scripts/Test-TechnicianAgentSwitchboardReady.ps1'
       - 'tests/test_technician_pull_and_run_contract.py'
-      - 'scripts/Test-WindowsProfileLiveCertification.ps1'
-      - 'scripts/Test-EndToEndRuntimeValidationSkill.ps1'
-      - '.ai/skills/windows-profile-live-certification/SKILL.md'
-      - '.ai/skills/end-to-end-runtime-validation/SKILL.md'
-      - 'docs/governance/live-cert-failure-doctrine.md'
-      - 'docs/workstation/technician-pull-and-run.md'
+      - 'tests/test_technician_agentswitchboard_ready.py'
+      - 'docs/workstation/technician-agentswitchboard-ready.md'
       - '.github/workflows/technician-pull-and-run.yml'
   workflow_dispatch:
 
@@ -28,41 +33,34 @@ jobs:
         os: [windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
-
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-
-      - name: Validate parent pull command, portable CMD, and failed live-cert contract
+      - name: Validate portable pull/run and field-failure contract
         run: python tests/test_technician_pull_and_run_contract.py
-
-      - name: Parse technician and validator PowerShell
-        if: runner.os == 'Windows'
+      - name: Validate real technician AgentSwitchboard readiness contract
+        run: python -m unittest tests.test_technician_agentswitchboard_ready
+      - name: Parse technician PowerShell surfaces
         shell: pwsh
         run: |
-          $paths = @(
-            'tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1',
-            'scripts/Test-WindowsProfileLiveCertification.ps1',
-            'scripts/Test-EndToEndRuntimeValidationSkill.ps1'
-          )
+          $paths = @('tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1','tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1','tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1','tooling/profiles/windows/technician-live-cert/stages/P02-Pull-And-Setup.ps1','tooling/profiles/windows/technician-live-cert/stages/P03-Verify-Commands.ps1','tooling/profiles/windows/technician-live-cert/Install-TechnicianLiveCertShortcuts.ps1','scripts/Invoke-TechnicianExactHeadValidation.ps1','scripts/Test-TechnicianAgentSwitchboardReady.ps1')
           foreach ($path in $paths) {
             $tokens = $null
             $errors = $null
-            [void][System.Management.Automation.Language.Parser]::ParseFile(
-              (Resolve-Path $path),
-              [ref]$tokens,
-              [ref]$errors
-            )
-            if ($errors.Count -gt 0) {
-              $errors | Format-List | Out-String | Write-Error
-              exit 1
-            }
+            [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $path),[ref]$tokens,[ref]$errors)
+            if ($errors.Count -gt 0) { $errors | Format-List | Out-String | Write-Error; exit 1 }
           }
-
+      - name: Validate readiness surface in PowerShell 7
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianAgentSwitchboardReady.ps1
+      - name: Validate readiness surface in Windows PowerShell 5.1
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianAgentSwitchboardReady.ps1
       - name: Exercise child CMD argument guard
         if: runner.os == 'Windows'
         shell: cmd
@@ -71,27 +69,30 @@ jobs:
           call Pull-And-Run-AgentSwitchboard.cmd unsupported-mode
           set CMD_RESULT=%ERRORLEVEL%
           if not "%CMD_RESULT%"=="2" exit /b 1
-
+      - name: Exercise readiness CMD surface without workstation mutation
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          set AGENT_SWITCHBOARD_NO_PAUSE=1
+          set TECHNICIAN_AGENTSWITCHBOARD_CI_SURFACE=1
+          call Technician-AgentSwitchboard-Ready.cmd setup "%CD%" "%GITHUB_HEAD_REF%"
+          if errorlevel 1 exit /b 1
       - name: Validate Windows Profile live-certification doctrine
         shell: pwsh
         run: pwsh -NoLogo -NoProfile -File scripts/Test-WindowsProfileLiveCertification.ps1
-
       - name: Validate end-to-end runtime skill
         shell: pwsh
         run: pwsh -NoLogo -NoProfile -File scripts/Test-EndToEndRuntimeValidationSkill.ps1
-
       - name: Validate agent documentation contract
         shell: pwsh
         run: pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1
-
       - name: Validate harness doctrine contract
         shell: pwsh
         run: pwsh -NoLogo -NoProfile -File scripts/Test-HarnessDoctrineContract.ps1
-
-      - name: Check repository hygiene
+      - name: Check repository hygiene without a pager
         shell: bash
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
           if [ -z "$BASE_REF" ]; then BASE_REF=main; fi
-          git diff --check "origin/$BASE_REF...HEAD"
+          git --no-pager diff --check "origin/$BASE_REF...HEAD"

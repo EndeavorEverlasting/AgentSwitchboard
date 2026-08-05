@@ -1,11 +1,21 @@
 [CmdletBinding()]
-param([string]$RootPath = (Split-Path -Parent $PSScriptRoot))
+param(
+    [string]$RootPath
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+if ([string]::IsNullOrWhiteSpace($RootPath)) {
+    if ([string]::IsNullOrWhiteSpace($PSScriptRoot)) {
+        throw 'Unable to resolve validator script directory. Supply -RootPath explicitly.'
+    }
+    $RootPath = Split-Path -Parent $PSScriptRoot
+}
+
 $RootPath = (Resolve-Path -LiteralPath $RootPath).Path
-$passes = [System.Collections.Generic.List[string]]::new()
-$failures = [System.Collections.Generic.List[string]]::new()
+$passes = New-Object 'System.Collections.Generic.List[string]'
+$failures = New-Object 'System.Collections.Generic.List[string]'
 
 function Check {
     param(
@@ -13,28 +23,35 @@ function Check {
         [Parameter(Mandatory)][string]$Name,
         [AllowEmptyString()][string]$Message = ''
     )
-    if ($Condition) { [void]$passes.Add($Name) }
-    else { [void]$failures.Add("$Name`: $Message") }
+    if ($Condition) {
+        [void]$passes.Add($Name)
+    } else {
+        [void]$failures.Add("$Name`: $Message")
+    }
 }
 
 $failureFixture = 'tooling/profiles/windows/harness/live-certification/fixtures/technician-quickstart-2026-07-22-fail.fixture.json'
 $doctrinePath = 'docs/governance/live-cert-failure-doctrine.md'
+$scopedHarnessManifest = 'tooling/profiles/windows/harness/technician-live-cert/manifest.json'
 $requiredFiles = @(
     'tooling/profiles/windows/harness/live-certification/schemas/windows-profile-live-certification.schema.json',
     'tooling/profiles/windows/harness/live-certification/fixtures/valid-open-or-activate-pass.fixture.json',
     'tooling/profiles/windows/harness/live-certification/fixtures/valid-new-instance-pass.fixture.json',
     $failureFixture,
+    $scopedHarnessManifest,
     '.ai/skills/windows-profile-live-certification/SKILL.md',
+    'scripts/Test-TechnicianLiveCertHarness.ps1',
+    'docs/harness/technician-live-cert-harness.md',
     $doctrinePath
 )
 
 foreach ($relativePath in $requiredFiles) {
     $path = Join-Path $RootPath $relativePath
     $exists = Test-Path -LiteralPath $path -PathType Leaf
-    Check $exists "file/$RelativePath" 'required file is missing'
+    Check $exists "file/$relativePath" 'required file is missing'
     if ($exists) {
-        $null = & git -C $RootPath ls-files --error-unmatch -- $RelativePath 2>$null
-        Check ($LASTEXITCODE -eq 0) "tracked/$RelativePath" 'required file is not tracked'
+        $null = & git -C $RootPath ls-files --error-unmatch -- $relativePath 2>$null
+        Check ($LASTEXITCODE -eq 0) "tracked/$relativePath" 'required file is not tracked'
     }
 }
 
@@ -61,7 +78,21 @@ try {
     Check ($schema.'$defs'.certificationResult.required -contains 'proofLevel') 'schema/result-proof-level' 'proofLevel field missing'
     Check ($schema.'$defs'.certificationResult.required -contains 'proofCeiling') 'schema/result-proof-ceiling' 'proofCeiling field missing'
 }
-catch { [void]$failures.Add("schema/semantic: $($_.Exception.Message)") }
+catch {
+    [void]$failures.Add("schema/semantic: $($_.Exception.Message)")
+}
+
+try {
+    $scopedHarness = Get-Content -LiteralPath (Join-Path $RootPath $scopedHarnessManifest) -Raw | ConvertFrom-Json
+    Check ($scopedHarness.harnessId -eq 'agentswitchboard.technician-live-cert-harness.v1') 'scoped-harness/id' 'unexpected scoped harness identity'
+    Check ($scopedHarness.generatedEvidence.tracked -eq $false) 'scoped-harness/evidence-untracked' 'generated technician evidence must remain untracked'
+    Check ($scopedHarness.implicitHookInstallationAllowed -eq $false) 'scoped-harness/hook-opt-in' 'technician hook must remain opt-in'
+    Check ($scopedHarness.runtimeCompatibility.requiredValidationShells -contains 'Windows PowerShell 5.1 on windows-latest') 'scoped-harness/windows-powershell' 'Windows PowerShell 5.1 validation is not registered'
+    Check ($scopedHarness.runtimeCompatibility.requiredValidationShells -contains 'PowerShell 7 on windows-latest') 'scoped-harness/powershell7' 'PowerShell 7 validation is not registered'
+}
+catch {
+    [void]$failures.Add("scoped-harness/semantic: $($_.Exception.Message)")
+}
 
 $fixturePaths = @(
     'tooling/profiles/windows/harness/live-certification/fixtures/valid-open-or-activate-pass.fixture.json',
@@ -87,7 +118,9 @@ foreach ($relativePath in $fixturePaths) {
                 Check ($fixture.proofLevel -eq 'behavior-observed-failure') 'fixture/failure/proof-level' 'failure proof level is dishonest'
             }
         }
-        catch { [void]$failures.Add("fixture/$relativePath exception: $($_.Exception.Message)") }
+        catch {
+            [void]$failures.Add("fixture/$relativePath exception: $($_.Exception.Message)")
+        }
     }
 }
 
@@ -96,8 +129,9 @@ if (Test-Path -LiteralPath $skillPath -PathType Leaf) {
     $skill = Get-Content -LiteralPath $skillPath -Raw
     foreach ($token in @(
         'id: windows-profile-live-certification',
-        'version: 1.1.0',
+        'version: 1.2.0',
         '## Trigger',
+        '## Read first',
         '## Inputs',
         '## Procedure',
         '## Outputs',
@@ -108,7 +142,13 @@ if (Test-Path -LiteralPath $skillPath -PathType Leaf) {
         'exact operator shell',
         'repo-owned shim',
         'browser handoff',
-        'optional agents separately'
+        'optional agents separately',
+        'tooling/profiles/windows/harness/technician-live-cert/manifest.json',
+        'scripts/Test-TechnicianLiveCertHarness.ps1',
+        'Windows PowerShell 5.1',
+        'PowerShell 7',
+        '$PSScriptRoot',
+        'git --no-pager'
     )) {
         Check ($skill.Contains($token)) "skill/$token" 'required skill contract missing'
     }
@@ -128,10 +168,15 @@ if (Test-Path -LiteralPath $doctrinePathFull -PathType Leaf) {
     )) {
         Check ($doctrine.Contains($token)) "doctrine/$token" 'required live-cert doctrine missing'
     }
-}
-else {
+} else {
     Check $false 'doctrine/file' "required doctrine file is missing: $doctrinePath"
 }
+
+$validatorSelf = Get-Content -LiteralPath $PSCommandPath -Raw
+$paramBoundary = $validatorSelf.IndexOf('Set-StrictMode')
+$paramSurface = if ($paramBoundary -gt 0) { $validatorSelf.Substring(0, $paramBoundary) } else { $validatorSelf }
+Check (-not $paramSurface.Contains('$PSScriptRoot)')) 'validator/no-psscriptroot-default' 'Validator may not evaluate PSScriptRoot inside a parameter default'
+Check ($validatorSelf.Contains("if ([string]::IsNullOrWhiteSpace(`$RootPath))")) 'validator/runtime-root-resolution' 'Validator must resolve RootPath in the script body'
 
 Write-Host 'WINDOWS PROFILE LIVE CERTIFICATION HARNESS' -ForegroundColor Cyan
 $passes | ForEach-Object { Write-Host "[PASS] $_" -ForegroundColor Green }
@@ -139,5 +184,7 @@ $failures | ForEach-Object { Write-Host "[FAIL] $_" -ForegroundColor Red }
 Write-Host ''
 Write-Host ("Result: {0} passed / {1} failed" -f $passes.Count, $failures.Count)
 
-if ($failures.Count -gt 0) { exit 1 }
+if ($failures.Count -gt 0) {
+    exit 1
+}
 exit 0

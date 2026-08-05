@@ -58,7 +58,17 @@ if (-not $ciSurfaceOnly) {
     if ($LASTEXITCODE -ne 0) {
         throw 'wsl.exe exists but the WSL platform is not active enough to enumerate distributions. Double-click Repair-Technician-WSL-Ubuntu.cmd; it owns system-wide feature activation and any required reboot continuation.'
     }
-    $distributions = @($rawDistributions | ForEach-Object { ([string]$_).Replace([char]0, '').Trim() } | Where-Object { $_ })
+
+    # wsl.exe emits UTF-16-style NUL padding on some Windows/PowerShell combinations.
+    # Force the string/string Replace overload; char/char cannot represent an empty replacement.
+    $distributions = @(
+        $rawDistributions |
+            ForEach-Object {
+                ([string]$_).Replace(([char]0).ToString(), [string]::Empty).Trim()
+            } |
+            Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) }
+    )
+
     $ubuntuInitialized = $distributions -contains 'Ubuntu'
     if (-not $ubuntuInitialized) {
         throw "The required WSL distribution 'Ubuntu' is not initialized. Double-click Repair-Technician-WSL-Ubuntu.cmd; it owns Ubuntu installation and first-run initialization before P00 is retried."

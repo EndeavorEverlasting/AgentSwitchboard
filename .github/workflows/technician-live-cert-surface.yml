@@ -3,11 +3,13 @@ name: Technician Live-Cert Surface CI
 on:
   push:
     branches:
-      - feat/technician-clickable-live-cert-cmds
       - main
   pull_request:
     paths:
       - 'tooling/profiles/windows/technician-live-cert/**'
+      - 'tooling/profiles/windows/harness/technician-live-cert/**'
+      - 'tooling/profiles/windows/Get-TechnicianLiveCertHarnessStatus.ps1'
+      - 'tooling/profiles/windows/hooks/Invoke-TechnicianLiveCertPreCommit.ps1'
       - 'Technician-LiveCert-*.cmd'
       - 'Repair-Technician-*.cmd'
       - 'Run-Technician-LiveCert.cmd'
@@ -15,9 +17,14 @@ on:
       - 'Open-TechnicianLiveCertEvidence.cmd'
       - 'Install-TechnicianLiveCertShortcuts.cmd'
       - 'scripts/Test-TechnicianLiveCertSurface.ps1'
+      - 'scripts/Test-TechnicianLiveCertHarness.ps1'
+      - 'scripts/Test-WindowsProfileLiveCertification.ps1'
       - 'tests/test_technician_live_cert_surface.py'
+      - 'tests/test_technician_live_cert_harness.py'
+      - '.ai/skills/windows-profile-live-certification/SKILL.md'
       - '.github/workflows/technician-live-cert-surface.yml'
       - 'docs/workstation/technician-live-cert-click-guide.md'
+      - 'docs/harness/technician-live-cert-harness.md'
   workflow_dispatch:
 
 permissions:
@@ -30,19 +37,59 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
-      - name: Run Python structural tests
-        run: python tests/test_technician_live_cert_surface.py
+      - name: Run Python live-cert surface tests
+        shell: pwsh
+        run: |
+          $logPath = Join-Path $PWD 'technician-surface-python.log'
+          $output = @(& python -m unittest tests.test_technician_live_cert_surface 2>&1)
+          $exitCode = $LASTEXITCODE
+          $output | ForEach-Object { [string]$_ } | Tee-Object -FilePath $logPath
+          if ($exitCode -ne 0) {
+            $message = (($output | ForEach-Object { [string]$_ }) -join "`n")
+            $message = $message.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+            Write-Host "::error title=Technician live-cert surface Python failure::$message"
+            exit $exitCode
+          }
 
-      - name: Validate surface in PowerShell
+      - name: Run Python live-cert harness tests
+        shell: pwsh
+        run: |
+          $logPath = Join-Path $PWD 'technician-harness-python.log'
+          $output = @(& python -m unittest tests.test_technician_live_cert_harness 2>&1)
+          $exitCode = $LASTEXITCODE
+          $output | ForEach-Object { [string]$_ } | Tee-Object -FilePath $logPath
+          if ($exitCode -ne 0) {
+            $message = (($output | ForEach-Object { [string]$_ }) -join "`n")
+            $message = $message.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+            Write-Host "::error title=Technician live-cert harness Python failure::$message"
+            exit $exitCode
+          }
+
+      - name: Validate surface in PowerShell 7
         shell: pwsh
         run: pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertSurface.ps1
+
+      - name: Validate harness in PowerShell 7
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertHarness.ps1
+
+      - name: Validate surface in Windows PowerShell 5.1
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertSurface.ps1
+
+      - name: Validate harness in Windows PowerShell 5.1
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertHarness.ps1
 
       - name: Validate Windows Profile live-certification doctrine
         shell: pwsh
@@ -70,15 +117,18 @@ jobs:
             throw "Technician-LiveCert-P00-Preflight.cmd failed with exit code $exitCode. See technician-p00-ci evidence artifact."
           }
 
-      - name: Upload Windows CMD dry-run evidence
-        if: runner.os == 'Windows' && always()
-        uses: actions/upload-artifact@v4
+      - name: Upload validation evidence
+        if: always()
+        uses: actions/upload-artifact@v7
         with:
-          name: technician-p00-ci-${{ github.run_attempt }}
-          path: technician-p00-ci.log
-          if-no-files-found: error
+          name: technician-live-cert-validation-${{ matrix.os }}-${{ github.run_attempt }}
+          path: |
+            technician-surface-python.log
+            technician-harness-python.log
+            technician-p00-ci.log
+          if-no-files-found: warn
           retention-days: 7
 
-      - name: Check repository hygiene
+      - name: Check repository hygiene without a pager
         shell: bash
-        run: git diff --check
+        run: git --no-pager diff --check

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "agentswitchboard.technician-live-cert-field-failure-repair.v1",
+  "trigger": "An exact technician workstation command fails, hangs, false-passes, or produces output inconsistent with repository contracts.",
+  "preconditions": [
+    "The operator supplied the exact command, shell, output, and machine boundary.",
+    "The repository state can be preserved without reset, clean, overwrite, or force push.",
+    "The failure belongs to the technician live-cert or owned repair surface."
+  ],
+  "steps": [
+    {
+      "id": "preserve",
+      "action": "Preserve the failed run directory and capture sanitized failure classification without committing private evidence.",
+      "output": "failure boundary, run ID, stage ID, command, shell, exit identity, evidence path"
+    },
+    {
+      "id": "reproduce-contract",
+      "action": "Identify why existing tests allowed the defect: skipped shell, static token-only check, unexecuted branch, overload ambiguity, path-resolution timing, pager interaction, or proof inflation.",
+      "output": "harness-gap classification"
+    },
+    {
+      "id": "repair",
+      "action": "Repair the executable defect and add the smallest deterministic guard that would have failed before field use.",
+      "output": "tracked code plus validator or fixture"
+    },
+    {
+      "id": "cross-shell-validate",
+      "action": "Run the owning validators in Windows PowerShell 5.1 and PowerShell 7, then run Python contracts and noninteractive Git hygiene.",
+      "output": "cross-shell validation ledger"
+    },
+    {
+      "id": "exact-command-rerun",
+      "action": "Rerun the exact operator command on the affected workstation or a separately authorized equivalent machine.",
+      "output": "new run evidence at the next honest proof level"
+    },
+    {
+      "id": "converge",
+      "action": "Commit, push, open/update the PR, report the exact head, and provide an isolated-worktree command that preserves any local branch.",
+      "output": "GitHub evidence and executable handoff"
+    }
+  ],
+  "stopConditions": [
+    "The failure crosses into unowned product behavior.",
+    "The exact operator shell or machine boundary is unknown.",
+    "Repair requires credentials, private evidence, destructive cleanup, merge, deployment, or live mutation without authority.",
+    "The candidate cannot be validated in every required shell."
+  ],
+  "proofCeiling": "A repaired contract and cross-shell CI do not prove the original workstation path until the exact operator command passes."
+}

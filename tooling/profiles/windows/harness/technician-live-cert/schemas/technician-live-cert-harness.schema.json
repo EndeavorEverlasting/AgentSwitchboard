@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/profiles/windows/harness/technician-live-cert/schemas/technician-live-cert-harness.schema.json",
+  "title": "AgentSwitchboard Technician Live-Cert Harness Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "harnessId",
+    "scope",
+    "canonicalOwner",
+    "entrypoints",
+    "components",
+    "runtimeCompatibility",
+    "knownFailureGuards",
+    "validationOrder",
+    "generatedEvidence",
+    "implicitHookInstallationAllowed",
+    "networkAllowedByValidators",
+    "targetMutationAllowedByValidators",
+    "proofCeiling"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "harnessId": {
+      "const": "agentswitchboard.technician-live-cert-harness.v1"
+    },
+    "scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "canonicalOwner": {
+      "const": "EndeavorEverlasting/AgentSwitchboard"
+    },
+    "entrypoints": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      },
+      "required": [
+        "codebaseMap",
+        "artifactRegistry",
+        "maintenanceWorkflow",
+        "fieldFailureRepairWorkflow",
+        "schema",
+        "operatorReportTemplate",
+        "skill",
+        "surfaceValidator",
+        "harnessValidator",
+        "pythonValidator",
+        "statusReporter",
+        "optInHook",
+        "ciWorkflow",
+        "operatorGuide",
+        "readinessCmd",
+        "readinessEngine",
+        "readinessValidator",
+        "readinessPythonValidator",
+        "exactHeadCmd",
+        "exactHeadValidator",
+        "readinessOperatorGuide",
+        "pullRunCiWorkflow"
+      ]
+    },
+    "components": {
+      "type": "array",
+      "minItems": 24,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "path",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "enum": [
+              "map",
+              "registry",
+              "workflow",
+              "schema",
+              "report",
+              "validator",
+              "reporter",
+              "hook",
+              "skill",
+              "documentation",
+              "entrypoint",
+              "implementation"
+            ]
+          }
+        }
+      }
+    },
+    "runtimeCompatibility": {
+      "type": "object"
+    },
+    "knownFailureGuards": {
+      "type": "array",
+      "minItems": 10
+    },
+    "validationOrder": {
+      "type": "array",
+      "minItems": 10,
+      "items": {
+        "type": "string"
+      }
+    },
+    "generatedEvidence": {
+      "type": "object",
+      "required": [
+        "tracked",
+        "defaultRoot",
+        "artifacts"
+      ],
+      "properties": {
+        "tracked": {
+          "const": false
+        },
+        "defaultRoot": {
+          "type": "string"
+        },
+        "artifacts": {
+          "type": "array",
+          "minItems": 11,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "implicitHookInstallationAllowed": {
+      "const": false
+    },
+    "networkAllowedByValidators": {
+      "const": false
+    },
+    "targetMutationAllowedByValidators": {
+      "const": false
+    },
+    "proofCeiling": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}
