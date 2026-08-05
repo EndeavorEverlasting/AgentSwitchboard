@@ -47,6 +47,7 @@ if ($exists) {
         '## Mandatory sprint declaration',
         '## Launch order and dependency gates',
         '## Broad-stride execution and principle reuse',
+        '## Environment capability and continuity',
         '## Agent-facing interface doctrine (AXI)',
         '## Multi-agent and local-model governance',
         '## Forbidden behaviors',
@@ -123,9 +124,36 @@ if ($exists) {
         'Application behavior remains in code',
         'verified, inferred, or unresolved',
         'Do not weaken a gate',
-        'does not grant merge, release, deployment, or live-target authority'
+        'does not grant merge, release, deployment, authentication, or live-target authority'
     )) {
         Add-Result -Passed $text.Contains($rule) -Name "governance/broad-stride/$rule" -FailureMessage 'required broad-stride or principle-reuse rule is missing'
+    }
+
+    foreach ($rule in @(
+        'Every cross-environment request must classify five layers independently',
+        '**Frontend**',
+        '**Transport**',
+        '**Workspace host**',
+        '**Orchestration runtime**',
+        '**Agent runtime**',
+        'One registered topology and one role ceiling must be selected',
+        '`full-runtime-host`',
+        '`workspace-host`',
+        '`terminal-client`',
+        '`local-shell-only`',
+        '`transport-only`',
+        '`unsupported`',
+        'matching tmux session names on different hosts equal one workspace',
+        'phone-local tmux equals cross-device continuity',
+        'Termux equals generic Linux',
+        'Auto-configuration is not a universal installer',
+        'observe -> classify layers -> select topology -> report blockers -> bounded mutation -> effective-state readback -> focused validation -> authorized runtime certification -> proof report',
+        'A lower-role topology must not be substituted',
+        'terminal-client-implemented',
+        'Native Android AgentSwitchboard orchestration is `unimplemented`',
+        'native agent/provider runtime is `unproved`'
+    )) {
+        Add-Result -Passed $text.Contains($rule) -Name "governance/environment/$rule" -FailureMessage 'required environment-capability rule is missing'
     }
 
     foreach ($rule in @(
@@ -172,7 +200,7 @@ if ($exists) {
         'Re-inventing an established principle',
         'Trivial-only progress',
         'Installing or executing unverified third-party agent snippets',
-        'Claiming privacy, model independence, successful fusion, or continuous validation from configuration intent alone'
+        'Claiming privacy, model independence, successful fusion, continuous validation, cross-device continuity, remote compatibility, or full runtime readiness from configuration intent, repository presence, package presence, session-name equality, transport reachability, command acknowledgement, or hosted CI alone'
     )) {
         Add-Result -Passed $text.Contains($behavior) -Name "governance/forbidden/$behavior" -FailureMessage 'required forbidden behavior is missing'
     }
