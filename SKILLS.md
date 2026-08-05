@@ -28,17 +28,18 @@ Every canonical skill must define:
 ## Resolution order
 
 1. A task explicitly names a valid skill.
-2. A new, repaired, relocated, or differently named Windows box whose repository path, username, company convention, hostname, redirected folders, or OneDrive layout is uncertain selects `machine-profile-bootstrap` before path selection or workstation setup.
-3. Multi-agent, multi-session, multi-wave, or cross-PR coordination selects `public-plan-coordination`; use `plans/plan-registry.json` rather than leaving the coordination state only in chat or a PR description.
-4. A literal request for a **Good Night, Have Fun prompt**, **GNHF prompt**, or to **compile a sprint for Good Night, Have Fun** selects `gnhf-prompt-compilation`. It must not fall through to generic sprint prose.
-5. Interactive PowerShell selects `powershell-interactive-execution`. Continuation keywords must remain in the same submitted statement as the block they continue.
-6. Supplied application, validator, agent, or tool output that must be compared with a prompt kit selects `app-output-contextualization`. It reads provided output only and preserves execution-surface separation.
-7. An operator-facing result that crosses shells, child processes, WSL, tmux, WezTerm, a TUI, a GUI, or another runtime boundary selects `end-to-end-runtime-validation`. Use `runtime-proof` for a bounded observation that does not require the complete operator path.
-8. A Windows Profile request that distinguishes default open-or-activate from an explicit separate instance, or evidence of duplicate WezTerm windows, selects `windows-profile-launch-mode-validation` before any launcher implementation or runtime claim.
-9. A request for a desktop shortcut or CMD installer that must create one genuinely separate tmux/WezTerm instance selects `tmux-new-instance-shortcut`. It preserves the one-launcher boundary and routes live acceptance through `end-to-end-runtime-validation`.
-10. `TRIGGERS.md` maps repository evidence to a skill.
-11. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
-12. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
+2. A request involving a new platform, “any environment,” phone access, cross-device continuation, auto-configuration, SSH, remote tmux, Termux, WSL, or an uncertain frontend/workspace/runtime boundary selects `environment-capability-routing` before installation, launch, or profile claims.
+3. A new, repaired, relocated, or differently named Windows box whose repository path, username, company convention, hostname, redirected folders, or OneDrive layout is uncertain selects `machine-profile-bootstrap` after the environment topology identifies it as a Windows bootstrap lane.
+4. Multi-agent, multi-session, multi-wave, or cross-PR coordination selects `public-plan-coordination`; use `plans/plan-registry.json` rather than leaving the coordination state only in chat or a PR description.
+5. A literal request for a **Good Night, Have Fun prompt**, **GNHF prompt**, or to **compile a sprint for Good Night, Have Fun** selects `gnhf-prompt-compilation`. It must not fall through to generic sprint prose.
+6. Interactive PowerShell selects `powershell-interactive-execution`. Continuation keywords must remain in the same submitted statement as the block they continue.
+7. Supplied application, validator, agent, or tool output that must be compared with a prompt kit selects `app-output-contextualization`. It reads provided output only and preserves execution-surface separation.
+8. An operator-facing result that crosses shells, child processes, WSL, tmux, WezTerm, SSH, Termux, a TUI, a GUI, or another runtime boundary selects `end-to-end-runtime-validation` after `environment-capability-routing` has classified the topology. Use `runtime-proof` for a bounded observation that does not require the complete operator path.
+9. A Windows Profile request that distinguishes default open-or-activate from an explicit separate instance, or evidence of duplicate WezTerm windows, selects `windows-profile-launch-mode-validation` after the environment has been classified.
+10. A request for a desktop shortcut or CMD installer that must create one genuinely separate tmux/WezTerm instance selects `tmux-new-instance-shortcut`. It preserves the one-launcher boundary and routes live acceptance through `end-to-end-runtime-validation`.
+11. `TRIGGERS.md` maps repository evidence to a skill.
+12. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
+13. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
 
 ## Canonical skills
 
@@ -46,21 +47,38 @@ Every canonical skill must define:
 |---|---|---|
 | [`repo-intake`](.ai/skills/repo-intake/SKILL.md) | Recover repository truth and select safe work | new repository, stale context, unknown branch state |
 | [`bounded-sprint`](.ai/skills/bounded-sprint/SKILL.md) | Execute one scoped tracked change through commit/PR | explicit implementation request, ranked sprint selected |
-| [`machine-profile-bootstrap`](.ai/skills/machine-profile-bootstrap/SKILL.md) | Detect Windows identity/path conventions and deterministically acquire AgentSwitchboard at an inferred or explicitly chosen root | new box, new username, missing repo, corporate hostname, redirected Desktop/Documents, OneDrive variation, explicit Dev directory |
+| [`environment-capability-routing`](.ai/skills/environment-capability-routing/SKILL.md) | Separate frontend, transport, workspace host, orchestration runtime, and agent runtime; select one supported topology and role ceiling before mutation | any environment, phone access, cross-device continuity, auto-configure, Termux, SSH, remote tmux, WSL/Linux/Windows ambiguity |
+| [`machine-profile-bootstrap`](.ai/skills/machine-profile-bootstrap/SKILL.md) | Detect Windows identity/path conventions and deterministically acquire AgentSwitchboard at an inferred or explicitly chosen root | classified Windows bootstrap, new box, new username, missing repo, corporate hostname, redirected Desktop/Documents, OneDrive variation, explicit Dev directory |
 | [`public-plan-coordination`](.ai/skills/public-plan-coordination/SKILL.md) | Coordinate public machine-readable work across agents, sessions, waves, branches, and PRs | plan request, sprint map, material ownership/dependency/handoff change |
 | [`gnhf-prompt-compilation`](.ai/skills/gnhf-prompt-compilation/SKILL.md) | Compile one copy-ready bounded `gnhf` PowerShell launch command | “GNHF prompt,” “Good Night, Have Fun prompt,” compile sprint for GNHF |
 | [`powershell-interactive-execution`](.ai/skills/powershell-interactive-execution/SKILL.md) | Produce directory-first PowerShell safe for interactive submission | PowerShell snippet, console steps, interactive command |
 | [`evidence-validation`](.ai/skills/evidence-validation/SKILL.md) | Build honest proof and repair validation gaps | failing checks, review findings, proof request |
 | [`pr-integration`](.ai/skills/pr-integration/SKILL.md) | Reconcile stacked or parallel branches safely | merge request, stacked PRs, consumed upstream work |
 | [`runtime-proof`](.ai/skills/runtime-proof/SKILL.md) | Move from static confidence to observed behavior | launcher, installer, harness, or live-runtime request |
-| [`end-to-end-runtime-validation`](.ai/skills/end-to-end-runtime-validation/SKILL.md) | Prove the exact operator command across every runtime boundary through effective-state and user-experience readback | workstation repair, Windows-to-WSL chain, tmux/WezTerm configuration, cross-process installer or launcher, opaque child failure |
+| [`end-to-end-runtime-validation`](.ai/skills/end-to-end-runtime-validation/SKILL.md) | Prove the exact operator command across every runtime boundary through effective-state and user-experience readback | workstation repair, Windows-to-WSL chain, SSH/Termux path, tmux/WezTerm configuration, cross-process installer or launcher, opaque child failure |
 | [`windows-profile-launch-mode-validation`](.ai/skills/windows-profile-launch-mode-validation/SKILL.md) | Distinguish default workspace convergence, explicit named new instances, and accidental duplicate WezTerm windows | launch-mode request, separate-instance request, duplicate-window evidence, tmux-session identity ambiguity |
 | [`tmux-new-instance-shortcut`](.ai/skills/tmux-new-instance-shortcut/SKILL.md) | Install and validate one owned desktop shortcut that allocates a unique tmux session and separate WezTerm process | desktop shortcut request, clickable CMD installer, one-click separate tmux instance |
 | [`app-output-contextualization`](.ai/skills/app-output-contextualization/SKILL.md) | Parse supplied output, redact it, compare it with a prompt registry, and emit compact agent instructions | app output, logs, JSON, JSONL, validator output, minimal-token routing |
 
+## Environment-capability distinction
+
+A terminal frontend is not a workspace host. A transport is not a shell contract. A repository clone is not an orchestration runtime. A tmux session name is not a cross-host identity. An agent executable is not a verified provider route.
+
+`environment-capability-routing` identifies five layers independently:
+
+1. frontend;
+2. transport;
+3. workspace host;
+4. orchestration runtime;
+5. agent runtime.
+
+It then selects one registered topology and calculates the maximum honest role: `full-runtime-host`, `workspace-host`, `terminal-client`, `local-shell-only`, `transport-only`, or `unsupported`.
+
+The Android implementation is currently `terminal-client-implemented`. Phone-local tmux is `local-shell-only` with `device-local-only` continuity. Cross-device terminal continuity requires both clients to attach to the same separately classified workspace host and tmux server/session identity. Native Android AgentSwitchboard orchestration and agent runtimes remain unimplemented or unproved.
+
 ## Machine-profile distinction
 
-A machine profile is a local observation and path-selection artifact, not a workstation success claim. It detects username, user profile, hostname, domain or Azure AD join signals, tenant name, known-folder redirection, OneDrive roots, tool availability, existing checkout candidates, and a recommended repository root. An explicit operator path always wins. Real machine-profile output stays under `%LOCALAPPDATA%` and is never committed.
+A machine profile is a local Windows observation and path-selection artifact, not a workstation success claim. It detects username, user profile, hostname, domain or Azure AD join signals, tenant name, known-folder redirection, OneDrive roots, tool availability, existing checkout candidates, and a recommended repository root. An explicit operator path always wins. Real machine-profile output stays under `%LOCALAPPDATA%` and is never committed.
 
 `Bootstrap-AgentSwitchboard-In-Directory.cmd` is the reusable chosen-directory front door. It computes `<workspace>\AgentSwitchBoard-Live` and delegates to the canonical technician bootstrap; it does not duplicate Git, WSL, setup, or live-certification logic.
 
@@ -90,7 +108,7 @@ An app-output context packet is a minimized interpretation artifact, not the ori
 
 ## End-to-end distinction
 
-`runtime-proof` can establish one observed behavior in an authorized environment. `end-to-end-runtime-validation` is required when the claim depends on the exact command an operator runs and a chain of shell, process, platform, terminal, TUI, GUI, provider, or application boundaries. The end-to-end skill requires per-stage stdout, stderr, exit identity, effective-state readback, user-visible observation, and idempotence or rollback proof when applicable. A parent exception containing only an exit code is not a complete end-to-end failure report.
+`runtime-proof` can establish one observed behavior in an authorized environment. `end-to-end-runtime-validation` is required when the claim depends on the exact command an operator runs and a chain of shell, process, platform, terminal, TUI, GUI, provider, or application boundaries. The environment topology and role ceiling must be selected first. The end-to-end skill requires per-stage stdout, stderr, exit identity, effective-state readback, user-visible observation, and idempotence or rollback proof when applicable. A parent exception containing only an exit code is not a complete end-to-end failure report.
 
 ## Windows launch-mode distinction
 
@@ -110,5 +128,5 @@ Once an interactive `if` statement is submitted, a later standalone continuation
 - Skills may reference scripts and validators but must not paste their logic.
 - Inputs and outputs should be machine-readable where practical.
 - A skill must state what it cannot prove.
-- A skill that can mutate live targets, deploy, merge, or access secrets requires an explicit escalation boundary.
+- A skill that can mutate live targets, deploy, merge, authenticate, or access secrets requires an explicit escalation boundary.
 - Changes to canonical skills require a version change and validation through `scripts/Test-AgentDocumentationContract.ps1`.
