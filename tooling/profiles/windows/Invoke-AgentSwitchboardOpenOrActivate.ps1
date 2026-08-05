@@ -305,7 +305,9 @@ if ($Operation -eq 'Plan') {
     exit 0
 }
 
-$mutex = [Threading.Mutex]::new($false, 'Local\AgentSwitchboard.TmuxSessionAllocation')
+# Preserve the established cross-launch mutex identity so existing shortcut,
+# open-or-activate, and new-instance callers serialize through one allocator.
+$mutex = [Threading.Mutex]::new($false, 'Local\AgentSwitchboard.TmuxNewInstance')
 $lockAcquired = $false
 $createdSession = $false
 try {
