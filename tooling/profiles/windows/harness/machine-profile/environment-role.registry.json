@@ -1,0 +1,41 @@
+{
+  "schema": "agentswitchboard.windows-environment-role-registry.v1",
+  "registryId": "operator-windows-environment-roles",
+  "assignmentPolicy": "Select a role explicitly or from a local machine binding. Never infer it from username, hostname, OneDrive label, or remembered path.",
+  "roles": [
+    {
+      "roleId": "personal-windows-laptop",
+      "displayName": "Personal Windows laptop",
+      "pathResolution": {"mode": "explicit-workspace-pattern", "workspacePattern": "%USERPROFILE%\\Desktop\\Dev", "repositoryLeaf": "AgentSwitchBoard-Live", "acceptedSources": ["explicit operator path", "AGENT_SWITCHBOARD_REPO", "verified machine binding"], "committedResolvedPathAllowed": false},
+      "bootstrapEntrypoint": "Bootstrap-AgentSwitchboard-In-Directory.cmd \"%USERPROFILE%\\Desktop\\Dev\""
+    },
+    {
+      "roleId": "desktop-workstation",
+      "displayName": "Desktop workstation",
+      "pathResolution": {"mode": "verified-binding-or-explicit", "workspacePattern": null, "repositoryLeaf": "AgentSwitchBoard-Live", "acceptedSources": ["explicit operator path", "AGENT_SWITCHBOARD_REPO", "verified machine binding", "verified existing checkout"], "committedResolvedPathAllowed": false},
+      "bootstrapEntrypoint": "AgentSwitchboard-Technician-Bootstrap.cmd"
+    },
+    {
+      "roleId": "admin-box-1",
+      "displayName": "Admin box 1",
+      "pathResolution": {"mode": "verified-binding-required", "workspacePattern": null, "repositoryLeaf": "AgentSwitchBoard-Live", "acceptedSources": ["explicit operator path", "AGENT_SWITCHBOARD_REPO", "verified machine binding", "verified existing checkout"], "committedResolvedPathAllowed": false},
+      "bootstrapEntrypoint": "AgentSwitchboard-Technician-Bootstrap.cmd"
+    },
+    {
+      "roleId": "admin-box-2",
+      "displayName": "Admin box 2",
+      "pathResolution": {"mode": "verified-binding-required", "workspacePattern": null, "repositoryLeaf": "AgentSwitchBoard-Live", "acceptedSources": ["explicit operator path", "AGENT_SWITCHBOARD_REPO", "verified machine binding", "verified existing checkout"], "committedResolvedPathAllowed": false},
+      "bootstrapEntrypoint": "AgentSwitchboard-Technician-Bootstrap.cmd"
+    }
+  ],
+  "sharedRules": [
+    "Capture the resolved repository root in local evidence before repair or setup.",
+    "Verify origin, branch, HEAD, and dirty state before mutation.",
+    "A failed prerequisite blocks every downstream stage.",
+    "Capture ERRORLEVEL immediately before another cmd.exe command.",
+    "Do not patch a candidate checkout with an untracked one-liner and then pull over it.",
+    "Keep role identity distinct even when two machines share a path convention."
+  ],
+  "localBindingFields": ["environmentRoleId", "repositoryRoot", "workspaceRoot", "origin", "branch", "head", "capturedAt", "evidenceRoot"],
+  "proofCeiling": "Environment-role selection and local binding requirements only."
+}

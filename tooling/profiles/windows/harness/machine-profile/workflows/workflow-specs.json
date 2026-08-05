@@ -1,0 +1,30 @@
+{
+  "schema": "agentswitchboard.machine-profile-workflow-set.v1",
+  "workflows": [
+    {
+      "workflowId": "machine-profile-task-intake",
+      "trigger": "Windows bootstrap, repair, relocation, or path-sensitive troubleshooting.",
+      "steps": ["Read AGENTS.md and focused harness files.", "Declare branch, lane, scope, artifacts, validation, and proof ceiling.", "Select environment role explicitly or record unresolved.", "Read or generate local machine-profile evidence.", "Resolve root by precedence and verify origin, branch, HEAD, and dirty state.", "Use an isolated branch or worktree for separately owned work.", "Choose validation or failure recovery before issuing commands."],
+      "outputs": ["role", "verified repository identity", "selected workflow", "first executable action"]
+    },
+    {
+      "workflowId": "machine-profile-validation",
+      "trigger": "Harness, detector, profile-role, bootstrap-ordering, or path-resolution change.",
+      "steps": ["Run Python harness completeness.", "Run PowerShell harness completeness.", "Run existing machine-profile validators.", "Run affected broader Windows-profile validators.", "Run git diff --check.", "Record commands, exits, artifacts, branch, HEAD, and skipped checks."],
+      "outputs": ["focused results", "broader results", "status artifacts", "proof ceiling"]
+    },
+    {
+      "workflowId": "machine-profile-failure-recovery",
+      "trigger": "Any nonzero detector, repair, setup, live-cert, bootstrap, or harness command.",
+      "steps": ["Stop downstream execution.", "Capture command, shell, immediate exit, transcript, summary, role, root source, branch, HEAD, and dirty state.", "Classify shell, path, Git, prerequisite, deterministic defect, interactive boundary, or external dependency.", "Search known traps and tests.", "Repair only the owning scope on an isolated branch.", "Convert deterministic failures into regression coverage.", "Rerun failed stage, owning validator, then broader safe gate."],
+      "forbidden": ["continuing after failed prerequisite", "stale ERRORLEVEL", "destructive cleanup", "runtime claim from static validation"]
+    },
+    {
+      "workflowId": "machine-profile-handoff",
+      "trigger": "Sprint end, review boundary, reboot boundary, runtime stop, or chat transfer.",
+      "requiredFields": ["repo", "branch", "PR or sprint", "lane", "owned scope", "forbidden scope", "environmentRoleId", "repositoryRootSource", "changes", "files", "artifacts", "validation", "skips", "gaps", "risks", "important paths", "git state", "proof ceiling", "exact next command"],
+      "steps": ["Resolve branch and HEAD from Git.", "Name root source without committing private resolved paths.", "Order next steps by dependency and owner.", "Make the first command non-destructive, exact-ref-verifying, validator-running, artifact-resolving, and exit-preserving."],
+      "outputs": ["operator report", "local handoff", "exact next command"]
+    }
+  ]
+}

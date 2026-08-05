@@ -1,0 +1,21 @@
+{
+  "schema": "agentswitchboard.machine-profile-artifact-registry.v1",
+  "naming": {"tracked": "stable names under tooling/profiles/windows/harness/machine-profile", "generatedRoot": "%TEMP%\\AgentSwitchboard\\machine-profile-harness\\<run-id>", "status": "machine-profile-harness-status.<json|md>"},
+  "trackedArtifacts": [
+    {"id": "manifest", "path": "tooling/profiles/windows/harness/machine-profile/manifest.json", "generate": "maintain with harness changes"},
+    {"id": "codebase-map", "path": "tooling/profiles/windows/harness/machine-profile/codebase-map.json", "generate": "maintain with entrypoint changes"},
+    {"id": "registries", "path": "tooling/profiles/windows/harness/machine-profile/*.registry.json", "generate": "maintain with role, trap, or artifact changes"},
+    {"id": "workflows", "path": "tooling/profiles/windows/harness/machine-profile/workflows/workflow-specs.json", "generate": "maintain with lifecycle changes"},
+    {"id": "schema", "path": "tooling/profiles/windows/harness/machine-profile/schemas/machine-profile-harness.schema.json", "generate": "maintain with contract changes"},
+    {"id": "operator-report-template", "path": "tooling/profiles/windows/harness/machine-profile/reports/operator-report.template.md", "generate": "maintain with report fields"}
+  ],
+  "generatedArtifacts": [
+    {"id": "machine-profile", "path": "%LOCALAPPDATA%\\AgentSwitchboard\\machine-profile\\machine-profile.json", "generator": "Get-AgentSwitchboard-MachineProfile.cmd", "tracked": false, "localPathEvidence": true},
+    {"id": "machine-profile-env-cmd", "path": "%LOCALAPPDATA%\\AgentSwitchboard\\machine-profile\\machine-profile.env.cmd", "generator": "Get-AgentSwitchboard-MachineProfile.cmd", "tracked": false, "localPathEvidence": true},
+    {"id": "machine-profile-env-ps1", "path": "%LOCALAPPDATA%\\AgentSwitchboard\\machine-profile\\machine-profile.env.ps1", "generator": "Get-AgentSwitchboard-MachineProfile.cmd", "tracked": false, "localPathEvidence": true},
+    {"id": "harness-status-json", "path": "%TEMP%\\AgentSwitchboard\\machine-profile-harness\\<run-id>\\machine-profile-harness-status.json", "generator": "Get-MachineProfileHarnessStatus.cmd", "tracked": false, "localPathEvidence": false},
+    {"id": "harness-status-markdown", "path": "%TEMP%\\AgentSwitchboard\\machine-profile-harness\\<run-id>\\machine-profile-harness-status.md", "generator": "Get-MachineProfileHarnessStatus.cmd", "tracked": false, "localPathEvidence": false}
+  ],
+  "retention": "Generated evidence is operator-controlled and untracked. Never commit real machine-profile output.",
+  "proofCeiling": "Artifact registration and local-only evidence policy only."
+}

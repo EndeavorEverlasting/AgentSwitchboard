@@ -1,32 +1,42 @@
 {
-  "schema": "agentswitchboard.machine-profile-codebase-map.v1",
+  "schema": "agentswitchboard.machine-profile-codebase-map.v2",
   "canonicalOwner": "tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1",
+  "purpose": "Route Windows bootstrap and repair through machine-specific local evidence without reusing another box's path assumptions.",
+  "structure": [
+    {"path": "tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1", "purpose": "Canonical detector and local binding writer."},
+    {"path": "tooling/profiles/windows/harness/machine-profile", "purpose": "Maps, registries, workflows, schemas, reports, and completeness contracts."},
+    {"path": "tooling/profiles/windows/technician-live-cert", "purpose": "Repair and certification runtime owner; outside harness mutation scope."},
+    {"path": "scripts", "purpose": "PowerShell validators."},
+    {"path": "tests", "purpose": "Dependency-free Python contracts."},
+    {"path": "docs/workstation", "purpose": "Operator guidance."}
+  ],
   "entrypoints": [
     "AgentSwitchboard-Technician-Bootstrap.cmd",
     "Bootstrap-AgentSwitchboard-In-Directory.cmd",
-    "Get-AgentSwitchboard-MachineProfile.cmd"
+    "Get-AgentSwitchboard-MachineProfile.cmd",
+    "Get-MachineProfileHarnessStatus.cmd",
+    "Test-MachineProfileHarness.cmd"
   ],
-  "contracts": [
+  "configuration": [
+    "tooling/profiles/windows/harness/machine-profile/manifest.json",
     "tooling/profiles/windows/harness/machine-profile/machine-profile.registry.json",
-    "tooling/profiles/windows/harness/machine-profile/schemas/machine-profile.schema.json"
+    "tooling/profiles/windows/harness/machine-profile/environment-role.registry.json",
+    "tooling/profiles/windows/harness/machine-profile/known-traps.registry.json",
+    "tooling/profiles/windows/harness/machine-profile/artifact-registry.json",
+    "tooling/profiles/windows/harness/machine-profile/workflows/workflow-specs.json",
+    "tooling/profiles/windows/harness/machine-profile/schemas/machine-profile-harness.schema.json"
   ],
-  "fixtures": [
-    "tooling/profiles/windows/harness/machine-profile/fixtures/enterprise-onedrive.fixture.json",
-    "tooling/profiles/windows/harness/machine-profile/fixtures/local-windows.fixture.json"
-  ],
-  "validators": [
-    "scripts/Test-MachineProfileBootstrap.ps1",
-    "tests/test_machine_profile_bootstrap.py",
-    ".github/workflows/machine-profile-bootstrap.yml"
-  ],
-  "operatorDocumentation": "docs/workstation/machine-profile-bootstrap.md",
-  "agentSkill": ".ai/skills/machine-profile-bootstrap/SKILL.md",
-  "localArtifacts": [
-    "%LOCALAPPDATA%\\AgentSwitchboard\\machine-profile\\machine-profile.json",
-    "%LOCALAPPDATA%\\AgentSwitchboard\\machine-profile\\machine-profile.env.cmd",
-    "%LOCALAPPDATA%\\AgentSwitchboard\\machine-profile\\machine-profile.env.ps1"
-  ],
-  "collisionBoundary": "This harness owns machine-environment detection, chosen-directory delegation, and repository-root recommendation. It does not own provider credentials, agent routing, package installation, WSL repair, launcher behavior, or live certification.",
-  "privacyBoundary": "Real usernames, hostnames, tenant names, and filesystem paths remain local-only. Only synthetic fixtures may be committed.",
-  "proofCeiling": "Tracked detection logic, deterministic classification, chosen-directory delegation, path recommendation, fixture validation, and bootstrap ordering only."
+  "commands": {
+    "inspect": "Get-MachineProfileHarnessStatus.cmd",
+    "focusedValidate": "Test-MachineProfileHarness.cmd",
+    "existingDetectorValidate": "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\\Test-MachineProfileBootstrap.ps1",
+    "pythonValidate": "python -m unittest tests.test_machine_profile_harness_completeness tests.test_machine_profile_bootstrap",
+    "diffCheck": "git diff --check",
+    "build": "not applicable; contract, script, test, and documentation harness",
+    "deploy": "not owned; bootstrap and live certification remain separate runtime gates"
+  },
+  "knownTraps": "tooling/profiles/windows/harness/machine-profile/known-traps.registry.json",
+  "privacyBoundary": "Real usernames, hostnames, tenant labels, role assignments, and resolved paths stay local. Tracked files use role IDs and environment-variable patterns only.",
+  "collisionBoundary": "Owns role selection, path evidence, workflows, validation, reports, and handoff. Does not own product repair code, credentials, providers, or live target mutation.",
+  "proofCeiling": "Harness structure and deterministic contracts only."
 }
