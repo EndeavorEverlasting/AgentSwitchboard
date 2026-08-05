@@ -8,7 +8,9 @@ param(
 
     [string]$WorktreeRoot,
 
-    [switch]$SkipP00
+    [switch]$SkipP00,
+
+    [switch]$RunReadiness
 )
 
 Set-StrictMode -Version Latest
@@ -233,9 +235,65 @@ try {
         }
     }
 
+    $readinessArtifact = $null
+    $readinessStatus = $null
+    if ($RunReadiness) {
+        $readinessCmd = Join-Path $WorktreeRoot 'Technician-AgentSwitchboard-Ready.cmd'
+        if (-not (Test-Path -LiteralPath $readinessCmd -PathType Leaf)) {
+            throw "Exact-head worktree is missing the readiness command: $readinessCmd"
+        }
+
+        $readinessStartedUtc = [DateTime]::UtcNow
+        Invoke-Check -Name 'Exact-head AgentSwitchboard readiness' -Action {
+            $env:AGENT_SWITCHBOARD_NO_PAUSE = '1'
+            Remove-Item Env:TECHNICIAN_AGENTSWITCHBOARD_CI_SURFACE -ErrorAction SilentlyContinue
+            & cmd.exe /d /c "call `"$readinessCmd`" setup `"$WorktreeRoot`" `"$RemoteRef`""
+        }
+
+        $readinessRunRoot = Join-Path $env:LOCALAPPDATA 'AgentSwitchboard\technician-ready\runs'
+        $readinessArtifact = Get-ChildItem -LiteralPath $readinessRunRoot -Filter 'technician-ready-summary.json' -File -Recurse |
+            Where-Object { $_.LastWriteTimeUtc -ge $readinessStartedUtc } |
+            Sort-Object LastWriteTimeUtc -Descending |
+            Select-Object -First 1
+        if (-not $readinessArtifact) {
+            throw 'Exact-head readiness completed without producing a new technician-ready summary.'
+        }
+
+        $readiness = Get-Content -LiteralPath $readinessArtifact.FullName -Raw | ConvertFrom-Json
+        if ($readiness.status -ne 'success') {
+            throw "Exact-head readiness summary is not successful: $($readinessArtifact.FullName)"
+        }
+        if (-not $readiness.startupReadiness.stateObserved) {
+            throw "Exact-head readiness did not observe canonical fleet state: $($readinessArtifact.FullName)"
+        }
+        if ($readiness.startupReadiness.overallStatus -in @('not-configured', 'blocked')) {
+            throw "Exact-head readiness left AgentSwitchboard unusable: $($readiness.startupReadiness.overallStatus)"
+        }
+        if (-not $readiness.commands.AgentSwitchboard.shim -or -not (Test-Path -LiteralPath $readiness.commands.AgentSwitchboard.shim -PathType Leaf)) {
+            throw "Exact-head readiness did not produce a resolvable AgentSwitchboard command shim: $($readinessArtifact.FullName)"
+        }
+        if (-not (Test-Path -LiteralPath $readiness.fleetStatePath -PathType Leaf)) {
+            throw "Exact-head readiness did not preserve canonical fleet state: $($readiness.fleetStatePath)"
+        }
+        $readinessStatus = $readiness.startupReadiness.overallStatus
+    }
+
     & git.exe --no-pager diff --check
     if ($LASTEXITCODE -ne 0) {
         throw 'Exact-head repository hygiene validation failed.'
+    }
+
+    $proofLevel = if ($RunReadiness) {
+        'exact-head-cross-shell-p00-and-agentswitchboard-readiness'
+    }
+    else {
+        'exact-head-cross-shell-and-p00-field-validation'
+    }
+    $proofCeiling = if ($RunReadiness) {
+        'Proves the named tracked head, validators, repository cleanliness, P00 workstation prerequisites, real technician setup, canonical fleet-state observation, and fresh-shell AgentSwitchboard readiness. It does not prove provider authentication, quota, hosted model availability, hosted response, agent task quality, visible-window focus, or operator acceptance.'
+    }
+    else {
+        'Proves the named tracked head, validators, repository cleanliness, and optional P00 workstation prerequisites. It does not prove technician setup, AgentSwitchboard fleet readiness, provider authentication, hosted response, or operator acceptance.'
     }
 
     $result = [ordered]@{
@@ -249,9 +307,12 @@ try {
         worktreeClean = $true
         checks = $checks
         p00Artifact = if ($preflightArtifact) { $preflightArtifact.FullName } else { $null }
+        readinessRequested = [bool]$RunReadiness
+        readinessStatus = $readinessStatus
+        readinessArtifact = if ($readinessArtifact) { $readinessArtifact.FullName } else { $null }
         status = 'passed'
-        proofLevel = 'exact-head-cross-shell-and-p00-field-validation'
-        proofCeiling = 'Proves the named tracked head, validators, repository cleanliness, and optional P00 workstation prerequisites. It does not prove technician setup, AgentSwitchboard fleet readiness, provider authentication, hosted response, or operator acceptance.'
+        proofLevel = $proofLevel
+        proofCeiling = $proofCeiling
     }
 
     $jsonPath = Join-Path $evidenceRoot 'exact-head-validation.json'
@@ -267,6 +328,9 @@ try {
 - Verified HEAD: ``$actualHead``
 - Worktree: ``$WorktreeRoot``
 - P00 artifact: ``$(if ($preflightArtifact) { $preflightArtifact.FullName } else { 'skipped' })``
+- Readiness requested: **$([bool]$RunReadiness)**
+- Readiness status: ``$(if ($readinessStatus) { $readinessStatus } else { 'not-run' })``
+- Readiness artifact: ``$(if ($readinessArtifact) { $readinessArtifact.FullName } else { 'not-run' })``
 
 | Check | Status | Error |
 |---|---|---|
@@ -274,16 +338,20 @@ $($checkLines -join "`n")
 
 ## Proof ceiling
 
-$($result.proofCeiling)
+$proofCeiling
 "@ | Set-Content -LiteralPath $mdPath -Encoding utf8NoBOM
 
     Write-Host '=== EXACT-HEAD FIELD PROOF ===' -ForegroundColor Green
-    Write-Host "Verified HEAD: $actualHead"
-    Write-Host "Worktree:      $WorktreeRoot"
-    Write-Host "JSON:          $jsonPath"
-    Write-Host "Report:        $mdPath"
+    Write-Host "Verified HEAD:      $actualHead"
+    Write-Host "Worktree:           $WorktreeRoot"
+    Write-Host "JSON:               $jsonPath"
+    Write-Host "Report:             $mdPath"
     if ($preflightArtifact) {
-        Write-Host "P00 artifact:  $($preflightArtifact.FullName)"
+        Write-Host "P00 artifact:       $($preflightArtifact.FullName)"
+    }
+    if ($readinessArtifact) {
+        Write-Host "Readiness status:   $readinessStatus"
+        Write-Host "Readiness artifact: $($readinessArtifact.FullName)"
     }
 }
 finally {
