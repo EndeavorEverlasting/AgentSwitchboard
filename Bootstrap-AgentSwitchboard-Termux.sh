@@ -29,6 +29,22 @@ fail() {
   exit 1
 }
 
+run_logged() {
+  step="$1"
+  failure_code="$2"
+  shift 2
+  log_path="$LOG_ROOT/${step}.log"
+  if "$@" >"$log_path" 2>&1; then
+    printf '[PASS] step=%s log=%s\n' "$step" "$log_path"
+    return 0
+  fi
+  command_rc=$?
+  printf '[FAIL] step=%s command_exit=%s launcher_exit=%s log=%s\n' \
+    "$step" "$command_rc" "$failure_code" "$log_path" >&2
+  tail -n 20 "$log_path" >&2 || true
+  exit "$failure_code"
+}
+
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --repo)
@@ -68,11 +84,15 @@ fi
 [ -n "${PREFIX:-}" ] || fail "PREFIX is not set; run this inside Termux"
 command -v pkg >/dev/null 2>&1 || fail "pkg is unavailable; use a supported Termux installation"
 
-printf '[INFO] Installing the Android terminal-client package floor...\n'
-pkg install -y git openssh tmux curl
+STATE_ROOT="${XDG_STATE_HOME:-$HOME/.local/state}/agentswitchboard/android"
+LOG_ROOT="$STATE_ROOT/bootstrap-logs"
+mkdir -p "$LOG_ROOT"
+
+printf '[INFO] Installing the Android terminal-client package floor.\n'
+run_logged package-install 61 pkg install -y git openssh tmux curl
 
 mkdir -p "$(dirname "$REPO_ROOT")"
-if [ -d "$REPO_ROOT/.git" ]; then
+if git -C "$REPO_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
   origin="$(git -C "$REPO_ROOT" remote get-url origin 2>/dev/null || true)"
   case "$origin" in
     "$REPOSITORY_URL"|"$REPOSITORY_SSH_URL") ;;
@@ -81,11 +101,11 @@ if [ -d "$REPO_ROOT/.git" ]; then
   [ -z "$(git -C "$REPO_ROOT" status --porcelain)" ] || fail "existing checkout is dirty: $REPO_ROOT"
   current_branch="$(git -C "$REPO_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
   [ "$current_branch" = "$REF" ] || fail "existing checkout branch is '$current_branch'; expected '$REF'"
-  git -C "$REPO_ROOT" fetch --prune origin "$REF"
-  git -C "$REPO_ROOT" merge --ff-only "origin/$REF"
+  run_logged repository-fetch 63 git -C "$REPO_ROOT" fetch --prune origin "$REF"
+  run_logged repository-fast-forward 64 git -C "$REPO_ROOT" merge --ff-only "origin/$REF"
 else
   [ ! -e "$REPO_ROOT" ] || fail "repo path exists but is not a Git checkout: $REPO_ROOT"
-  git clone --branch "$REF" --single-branch "$REPOSITORY_URL" "$REPO_ROOT"
+  run_logged repository-clone 62 git clone --branch "$REF" --single-branch "$REPOSITORY_URL" "$REPO_ROOT"
 fi
 
 launcher_source="$REPO_ROOT/tooling/profiles/android/Invoke-AgentSwitchboardOpenOrActivate.sh"
@@ -101,8 +121,6 @@ install -m 0755 "$launcher_source" "$PREFIX/bin/agentswitchboard-phone"
   --expected-origin "$REPOSITORY_URL" \
   --plan >/dev/null
 
-state_root="${XDG_STATE_HOME:-$HOME/.local/state}/agentswitchboard/android"
-mkdir -p "$state_root"
 {
   printf 'profile=android\n'
   printf 'capability_status=terminal-client-implemented\n'
@@ -114,11 +132,12 @@ mkdir -p "$state_root"
   printf 'repo_purpose=source-and-terminal-client-files-not-runtime-proof\n'
   printf 'ref=%s\n' "$REF"
   printf 'launcher=%s\n' "$PREFIX/bin/agentswitchboard-phone"
+  printf 'bootstrap_logs=%s\n' "$LOG_ROOT"
   printf 'native_orchestration_runtime=unimplemented\n'
   printf 'native_agent_runtime=unproved\n'
   printf 'timestamp_utc=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   printf 'proof=terminal-client-installed-command-probes\n'
-} > "$state_root/bootstrap-result.env"
+} > "$STATE_ROOT/bootstrap-result.env"
 
 printf '[PASS] Android terminal client installed.\n'
 printf '[LIMIT] Full AgentSwitchboard runtime is not configured on this phone.\n'
