@@ -10,7 +10,7 @@ Capabilities describe what an agent or tool can technically do in the current en
 - `blocked` — unavailable, unsafe, unauthorized, or failing;
 - `unknown` — not yet probed.
 
-Agents must not infer `verified` from command presence, prior sessions, documentation, or another machine.
+Agents must not infer `verified` from command presence, prior sessions, documentation, repository presence, package installation, another host, or another machine.
 
 ## Canonical capability classes
 
@@ -29,6 +29,36 @@ Agents must not infer `verified` from command presence, prior sessions, document
 | `target.mutate` | external workstation, server, game, or customer target can change | blocked unless explicitly authorized and environment-proven |
 | `secrets.access` | credentials or secret stores are reachable | blocked by default; never persist in Git |
 | `destructive.git` | force-push, reset, branch deletion | blocked unless explicit recovery authorization |
+
+## Environment capability and continuity
+
+| Capability | Activation and output | Guardrail and proof |
+|---|---|---|
+| `environment.capability.read` | inspect the environment policy, topology registry, and current role ceilings | read-only contract evidence; registry presence does not prove the current environment matches a topology |
+| `environment.capability.validate` | validate five-layer separation, status vocabulary, topology registry, workflows, artifacts, fixtures, Android corrections, and false-proof rejection | run `scripts/Test-EnvironmentCapabilityHarness.ps1` and `tests/test_environment_capability_harness.py`; contract and synthetic proof only |
+| `environment.topology.select` | classify frontend, transport, workspace host, orchestration runtime, and agent runtime; return one topology, role ceiling, blockers, and forbidden claims | observation must be current and environment-specific; no mutation; unknown host or shell blocks |
+| `environment.remote.preflight` | inspect a selected remote host’s OS/shell class, tmux, repository, origin, cleanliness, orchestration status, agent status, and persistence | read-only unless repair is explicitly owned; SSH reachability alone is insufficient |
+| `environment.role.certify` | prove the exact selected role through effective-state and operator-visible evidence | requires fresh same-run evidence; static checks, CI, command ACK, package presence, and session-name equality are insufficient |
+
+The five layers are independent:
+
+1. frontend;
+2. transport;
+3. workspace host;
+4. orchestration runtime;
+5. agent runtime.
+
+A terminal frontend is not a workspace host. SSH is not a remote-shell classification. A repository clone is not runtime readiness. A tmux session name is not identity across hosts. An agent command is not a verified provider/model route.
+
+Current Android capability:
+
+- status: `terminal-client-implemented`;
+- maximum implemented role: `terminal-client`;
+- phone-local tmux role: `local-shell-only`;
+- phone-local continuity scope: `device-local-only`;
+- cross-device continuity: requires a separately classified remote workspace host and the same tmux server/session identity;
+- native Android orchestration runtime: `unimplemented`;
+- native Android agent runtime: `unproved`.
 
 ## Public plan and startup capabilities
 
@@ -73,12 +103,14 @@ A runtime event claim records event ID, correlation ID, causation ID, sequence, 
 
 | Capability | Activation and output | Guardrail and proof |
 |---|---|---|
-| `profile.registry.read` | inspect `.ai/harness/device-profile-registry.json` and return Windows, Linux, and Android ownership and status | read-only contract evidence; registry presence does not prove an implementation exists |
-| `profile.launcher.contract.validate` | validate canonical owner, platform separation, Windows `open-or-activate`, delegate-only consumers, idempotence rules, and action-commitment fixtures | run `scripts/Test-DeviceProfileLauncherContract.ps1`; contract proof only |
-| `profile.launcher.open-or-activate` | open one profile workspace or activate its existing owned instance and return `opened`, `activated`, `blocked`, or `failed` | implemented in canonical launcher; live runtime observation remains required for full proof |
-| `profile.consumer.certify` | SysAdminSuite verifies exact profile version, canonical launcher identity, delegation, fixtures, and no competing lifecycle logic | certification belongs in a separate SysAdminSuite adoption PR; file presence and process exit are insufficient |
+| `profile.registry.read` | inspect `.ai/harness/device-profile-registry.json` and return Windows, Linux, and Android ownership, status, environment topology, and role ceiling | read-only contract evidence; registry presence does not prove a live implementation |
+| `profile.launcher.contract.validate` | validate canonical owner, environment-capability linkage, platform separation, Windows `open-or-activate`, Android terminal-client boundaries, delegate-only consumers, host-scoped identity, idempotence rules, and action-commitment fixtures | run `scripts/Test-DeviceProfileLauncherContract.ps1`; contract proof only |
+| `profile.launcher.open-or-activate` | open or activate the exact profile workspace within one selected topology and return a profile-specific outcome | implemented launcher behavior remains bounded by the environment role ceiling; live runtime observation required |
+| `profile.consumer.certify` | SysAdminSuite verifies exact Windows profile version, canonical launcher identity, delegation, fixtures, and no competing lifecycle logic | certification belongs in a separate SysAdminSuite adoption PR; file presence and process exit are insufficient |
 
-The Windows Profile is WezTerm-backed and owned by AgentSwitchboard. Raw WezTerm commands, desktop shortcuts, and SysAdminSuite are presentation or consumer surfaces only. Linux and Android remain separate profiles and may use different configuration.
+The Windows Profile is WezTerm-backed and owned by AgentSwitchboard. Raw WezTerm commands, desktop shortcuts, and SysAdminSuite are presentation or consumer surfaces only.
+
+The Android Profile is currently a Termux terminal client. Phone-local tmux is not cross-device continuity. Remote use requires a classified workspace host and preflight. The Android implementation may not claim GNHF, coding-agent, provider, authentication, or native orchestration readiness.
 
 ## Harness doctrine capabilities
 
@@ -93,7 +125,7 @@ The machine-readable limits and default-deny rules are in `.ai/harness/harness-d
 
 ## Verification requirements
 
-A capability probe must be bounded, low-risk, relevant to the exact environment, recorded with command and limitation, and repeated when the environment or credentials may have changed.
+A capability probe must be bounded, low-risk, relevant to the exact environment, recorded with command and limitation, and repeated when the environment, host, shell, persistence, repository, credentials, provider, or model may have changed.
 
 ## Authority formula
 
@@ -103,11 +135,11 @@ If any term is missing, the action is blocked or escalated.
 
 ## Degradation behavior
 
-When a capability is missing, reuse a healthy alternative when allowed, install or repair only inside explicit scope, record a precise skip or blocker, continue independent safe lanes, and never claim success from a lower-proof fallback.
+When a capability is missing, reuse a healthy alternative when allowed, install or repair only inside explicit scope, record a precise skip or blocker, continue independent safe lanes, and never claim success from a lower-proof fallback or silently substitute a lower-role topology for the requested experience.
 
 ## Provider and agent separation
 
-Record executor, provider, model, subscription, and local compute separately. Harness availability does not prove provider authentication, model reachability, or quota.
+Record executor, provider, model, subscription, endpoint, authentication, and local compute separately. Harness availability does not prove provider authentication, model reachability, quota, privacy, or agent behavior.
 
 ## Provider-routed GNHF capabilities
 
