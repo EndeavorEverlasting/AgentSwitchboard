@@ -36,7 +36,10 @@
 
 {{proofCeiling}}
 
-## Exact next command
+## Exact next action
+
+- Owner: `{{nextActionOwner}}`
+- Dependency: `{{nextActionDependency}}`
 
 ```cmd
 {{nextCommand}}
