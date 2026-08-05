@@ -57,4 +57,5 @@ try{
     if($missingStatus.status -ne 'incomplete' -or $missingStatus.loadErrors.Count -eq 0){throw 'Incomplete reporter artifact lacks failure diagnostics.'}
 }
 finally{Remove-Item -LiteralPath $temp -Recurse -Force -ErrorAction SilentlyContinue}
+$global:LASTEXITCODE=0
 Write-Host '[PASS] Machine-profile operational harness completeness passed.'
