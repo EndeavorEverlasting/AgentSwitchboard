@@ -15,14 +15,17 @@ LIVE_CERT_FIXTURE = ROOT / "tooling" / "profiles" / "windows" / "harness" / "liv
 LIVE_CERT_SKILL = ROOT / ".ai" / "skills" / "windows-profile-live-certification" / "SKILL.md"
 DOCTRINE = ROOT / "docs" / "governance" / "live-cert-failure-doctrine.md"
 
+
 def require(text: str, token: str, label: str) -> None:
     if token not in text:
         raise AssertionError(f"missing {label}: {token}")
 
+
 def main() -> None:
-    for path in (TOP_BOOTSTRAP,PARENT_CMD,PULL_RUN_CMD,READY_CMD,COMPAT_SETUP,READY_ENGINE,PROFILE_LAUNCHER,LIVE_CERT_FIXTURE,LIVE_CERT_SKILL,DOCTRINE):
+    for path in (TOP_BOOTSTRAP, PARENT_CMD, PULL_RUN_CMD, READY_CMD, COMPAT_SETUP, READY_ENGINE, PROFILE_LAUNCHER, LIVE_CERT_FIXTURE, LIVE_CERT_SKILL, DOCTRINE):
         if not path.is_file():
             raise AssertionError(f"missing technician contract file: {path}")
+
     top = TOP_BOOTSTRAP.read_text(encoding="utf-8")
     parent = PARENT_CMD.read_text(encoding="utf-8")
     pull_run = PULL_RUN_CMD.read_text(encoding="utf-8")
@@ -33,44 +36,59 @@ def main() -> None:
     fixture = LIVE_CERT_FIXTURE.read_text(encoding="utf-8")
     skill = LIVE_CERT_SKILL.read_text(encoding="utf-8")
     doctrine = DOCTRINE.read_text(encoding="utf-8")
-    for token in ("This is the first technician repository-acquisition command.","Pull-And-Run-AgentSwitchboard.cmd",'call "%BOOTSTRAP_PATH%" acquire',"%USERPROFILE%\\dev\\AgentSwitchBoard-Live","Workstation setup is intentionally deferred"):
+
+    for token in ("This is the first technician repository-acquisition command.", "Pull-And-Run-AgentSwitchboard.cmd", 'call "%BOOTSTRAP_PATH%" acquire', "%USERPROFILE%\\dev\\AgentSwitchBoard-Live", "Workstation setup is intentionally deferred"):
         require(parent, token, "parent acquisition contract")
-    for token in ("https://github.com/EndeavorEverlasting/AgentSwitchboard.git","%USERPROFILE%\\dev\\AgentSwitchBoard-Live","git clone --branch","fetch origin --prune","pull --ff-only","status --porcelain=v1 --untracked-files=normal","symbolic-ref --quiet --short HEAD","--repo-ready","Setup-TechnicianAgentSwitchboard.ps1"):
+
+    for token in ("https://github.com/EndeavorEverlasting/AgentSwitchboard.git", "%USERPROFILE%\\dev\\AgentSwitchBoard-Live", "git clone --branch", "fetch origin --prune", "pull --ff-only", "status --porcelain=v1 --untracked-files=normal", "symbolic-ref --quiet --short HEAD", "--repo-ready", "Setup-TechnicianAgentSwitchboard.ps1"):
         require(pull_run, token, "portable pull/run contract")
-    for token in ("repo-path.txt","AGENT_SWITCHBOARD_REPO","Repair-Technician-WSL-Ubuntu.cmd",'if "%REPAIR_EXIT%"=="3010"','call "%REPO_ROOT%\\Pull-And-Run-AgentSwitchboard.cmd" setup','call "%REPO_ROOT%\\Run-Technician-LiveCert.cmd"'):
+
+    for token in ("repo-path.txt", "AGENT_SWITCHBOARD_REPO", "Repair-Technician-WSL-Ubuntu.cmd", 'if "%REPAIR_EXIT%"=="3010"', 'call "%REPO_ROOT%\\Pull-And-Run-AgentSwitchboard.cmd" setup', 'call "%REPO_ROOT%\\Run-Technician-LiveCert.cmd"'):
         require(top, token, "first-machine bootstrap")
+
     acquire_index = top.index('call "%PARENT_TEMP%"')
     repair_index = top.index('call "%REPO_ROOT%\\Repair-Technician-WSL-Ubuntu.cmd"')
     setup_index = top.index('call "%REPO_ROOT%\\Pull-And-Run-AgentSwitchboard.cmd" setup')
     cert_index = top.index('call "%REPO_ROOT%\\Run-Technician-LiveCert.cmd"')
     if not (acquire_index < repair_index < setup_index < cert_index):
         raise AssertionError("bootstrap order must remain acquire -> WSL repair -> setup -> live cert")
-    for text in (top,parent,pull_run,ready_cmd,ready):
-        for forbidden in (r"\bgit\s+reset\b",r"\bgit\s+clean\b",r"\bgit\s+stash\b",r"push\s+--force"):
+
+    for text in (top, parent, pull_run, ready_cmd, ready):
+        for forbidden in (r"\bgit\s+reset\b", r"\bgit\s+clean\b", r"\bgit\s+stash\b", r"push\s+--force"):
             if re.search(forbidden, text, re.IGNORECASE):
                 raise AssertionError(f"destructive Git behavior is forbidden: {forbidden}")
-    for token in ("Invoke-TechnicianAgentSwitchboardReady.ps1","AgentSwitchboard technician readiness","AgentSwitchboard -ListAgents"):
+
+    for token in ("Invoke-TechnicianAgentSwitchboardReady.ps1", "AgentSwitchboard technician readiness", "AgentSwitchboard -ListAgents"):
         require(ready_cmd, token, "one-command readiness CMD")
+
     require(compat, "Invoke-TechnicianAgentSwitchboardReady.ps1", "compatibility delegation")
     if ".Replace([char]0, '')" in compat:
         raise AssertionError("compatibility setup must not retain ambiguous NUL replacement")
-    for token in ("Setup-AgentSwitchboard.ps1","Get-AgentSwitchboardStartupReport.ps1","AgentSwitchboard\\GnhfFleet","state.json","Write-CommandShim -Name 'AgentSwitchboard'","AgentSwitchboard.lnk","-ListAgents","fresh-shell-agentswitchboard","stateObserved","proofCeiling"):
+
+    for token in ("Setup-AgentSwitchboard.ps1", "Get-AgentSwitchboardStartupReport.ps1", "AgentSwitchboard\\GnhfFleet", "state.json", "Write-CommandShim -Name 'AgentSwitchboard'", "AgentSwitchboard.lnk", "-ListAgents", "fresh-shell-agentswitchboard", "stateObserved", "proofCeiling"):
         require(ready, token, "real AgentSwitchboard readiness engine")
+
     if ".Replace([char]0, '')" in ready:
         raise AssertionError("readiness engine must force string/string NUL normalization")
     require(ready, ".Replace(([char]0).ToString(), [string]::Empty)", "explicit string/string NUL normalization")
+
     if "$PSScriptRoot" in launcher.split("Set-StrictMode", 1)[0]:
         raise AssertionError("profile launcher must not evaluate PSScriptRoot in parameter defaults")
     if ".Replace([char]0, '')" in launcher:
         raise AssertionError("profile launcher must not use ambiguous NUL replacement")
-    for token in ("windows-profile-launch-plan.v2","windows-profile-launch-result.v2","Local\\AgentSwitchboard.TmuxSessionAllocation","tmux kill-session"):
+
+    for token in ("windows-profile-launch-plan.v2", "windows-profile-launch-result.v2", "Local\\AgentSwitchboard.TmuxNewInstance", "tmux kill-session"):
         require(launcher, token, "profile launcher safety")
-    for token in ('"expectedOutcome": "failed"','"passedStage": "opencode-installation"','"failedStage": "hermes-browser-handoff"','"failedStage": "agy-installation"','"failedStage": "wezterm-command-resolution"','"failedStage": "tmux-command-resolution"','"observedAt": "2026-07-22"'):
+
+    for token in ('"expectedOutcome": "failed"', '"passedStage": "opencode-installation"', '"failedStage": "hermes-browser-handoff"', '"failedStage": "agy-installation"', '"failedStage": "wezterm-command-resolution"', '"failedStage": "tmux-command-resolution"', '"observedAt": "2026-07-22"'):
         require(fixture, token, "sanitized field-failure fixture")
+
     require(skill, "Observed live failure outranks static and CI success", "live failure precedence")
     require(doctrine, "Observed live failure outranks static, synthetic, and CI success", "governance precedence")
     require(doctrine, "Optional agent installation or browser authentication may not block", "optional isolation")
+
     print("PASS: portable acquisition -> prerequisite repair -> real AgentSwitchboard readiness -> live-cert contract")
+
 
 if __name__ == "__main__":
     main()
