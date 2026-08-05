@@ -86,9 +86,10 @@ def main() -> None:
         "role=terminal-client",
         "continuity_scope=device-local-only",
         "remote-preflight.env",
-        "attachment_observed=false",
+        "printf 'attachment_observed=%s",
     ):
         assert token in launcher_text
+    assert launcher_text.count('"false"') >= 4
     assert "eval " not in launcher_text
     assert "role=full-runtime-host" not in launcher_text
 
