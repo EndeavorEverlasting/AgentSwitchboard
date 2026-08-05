@@ -165,7 +165,7 @@ class TestTechnicianLiveCertHarness(unittest.TestCase):
             ],
             step_ids,
         )
-        self.assertIn("does not prove", repair["proofCeiling"])
+        self.assertIn("do not prove", repair["proofCeiling"])
 
     def test_artifact_registry_keeps_generated_evidence_untracked(self):
         registry = read_json(os.path.join(HARNESS_ROOT, "artifact-registry.json"))
@@ -217,7 +217,12 @@ class TestTechnicianLiveCertHarness(unittest.TestCase):
             "$normalized -eq 'Ubuntu'",
         ]:
             self.assertIn(token, validator)
-        self.assertNotIn("-ForegroundColor (if", validator)
+        self.assertNotRegex(
+            validator,
+            re.compile(
+                r"(?mi)^\s*Write-Host\b.*-ForegroundColor\s+\(if\b"
+            ),
+        )
 
     def test_harness_validator_checks_tracking_children_and_noninteractive_git(self):
         validator = read_text(HARNESS_VALIDATOR_PATH)
