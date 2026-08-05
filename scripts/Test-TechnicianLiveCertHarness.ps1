@@ -53,6 +53,17 @@ function Invoke-Checked {
     Add-Result ($exitCode -eq 0) $Name "$FilePath exited with $exitCode"
 }
 
+function Write-GitHubFailureAnnotation {
+    param([Parameter(Mandatory)][string]$Message)
+
+    if ($env:GITHUB_ACTIONS -ne 'true') {
+        return
+    }
+
+    $encoded = $Message.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+    Write-Host "::error title=Technician live-cert harness contract failure::$encoded"
+}
+
 foreach ($component in $manifest.components) {
     $relativePath = [string]$component.path
     $fullPath = Join-Path $RootPath $relativePath
@@ -174,7 +185,10 @@ Write-Host " Failures: $($failures.Count)" -ForegroundColor $statusColor
 Write-Host '============================================================' -ForegroundColor Cyan
 
 if ($failures.Count -gt 0) {
-    $failures | ForEach-Object { Write-Host "  FAIL: $_" -ForegroundColor Red }
+    foreach ($failure in $failures) {
+        Write-Host "  FAIL: $failure" -ForegroundColor Red
+        Write-GitHubFailureAnnotation -Message $failure
+    }
     exit 1
 }
 exit 0
