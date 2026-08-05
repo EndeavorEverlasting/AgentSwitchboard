@@ -2,10 +2,39 @@
   "schemaVersion": 1,
   "policyId": "agentswitchboard.harness-doctrine.v1",
   "canonicalSource": "AGENTS.md",
-  "requiredSprintFields": ["repository", "branchOrWorktree", "prOrSprint", "lane", "ownedScope", "forbiddenScope", "expectedArtifacts", "validationOrder"],
-  "executableLoop": ["request", "evidence-review", "bounded-decision", "repository-or-git-or-github-mutation", "artifacts", "validation", "report", "next-decision"],
+  "requiredSprintFields": [
+    "repository",
+    "branchOrWorktree",
+    "prOrSprint",
+    "lane",
+    "ownedScope",
+    "forbiddenScope",
+    "expectedArtifacts",
+    "validationOrder"
+  ],
+  "executableLoop": [
+    "request",
+    "evidence-review",
+    "bounded-decision",
+    "repository-or-git-or-github-mutation",
+    "artifacts",
+    "validation",
+    "report",
+    "next-decision"
+  ],
   "actionCommitment": {
-    "verbs": ["install", "set up", "build", "execute", "repair", "configure", "upgrade", "deploy", "merge", "release"],
+    "verbs": [
+      "install",
+      "set up",
+      "build",
+      "execute",
+      "repair",
+      "configure",
+      "upgrade",
+      "deploy",
+      "merge",
+      "release"
+    ],
     "requiresTrackedMutation": true,
     "requiresValidationEvidence": true,
     "requiresCommitOrGitHubEvidence": true,
@@ -13,7 +42,13 @@
     "forbidPlanSubstitution": true
   },
   "gnhfTestOnly": {
-    "profiles": ["test", "smoke", "probe", "fixture", "contract"],
+    "profiles": [
+      "test",
+      "smoke",
+      "probe",
+      "fixture",
+      "contract"
+    ],
     "maxWallClockSeconds": 30,
     "maxIterationSeconds": 30,
     "defaultMaxIterations": 1,
@@ -23,8 +58,15 @@
   "deepseekUsageGate": {
     "mode": "known-nonpremium-window-only",
     "timeZone": "UTC",
-    "allowedRateClasses": ["standard", "discounted"],
-    "blockedRateClasses": ["double-usage", "premium-multiplier", "unknown"],
+    "allowedRateClasses": [
+      "standard",
+      "discounted"
+    ],
+    "blockedRateClasses": [
+      "double-usage",
+      "premium-multiplier",
+      "unknown"
+    ],
     "maximumAllowedMultiplier": 1.0,
     "defaultAction": "deny",
     "requireVerifiedSchedule": true,
@@ -34,7 +76,12 @@
       "url": "https://api-docs.deepseek.com/quick_start/pricing/",
       "verifiedAt": "2026-07-18T00:00:00Z",
       "activeTimeOfDayWindowPublished": false,
-      "historicalOffPeakWindowUtc": {"start": "16:30", "end": "00:30", "active": false, "endedAt": "2025-09-05T16:00:00Z"},
+      "historicalOffPeakWindowUtc": {
+        "start": "16:30",
+        "end": "00:30",
+        "active": false,
+        "endedAt": "2025-09-05T16:00:00Z"
+      },
       "note": "The official API page currently publishes flat prices and no active time-of-day multiplier. Any plan-specific double-usage schedule must be supplied as a fresh operator-local schedule; unknown or stale schedule state blocks DeepSeek."
     }
   },
@@ -49,11 +96,33 @@
     "staticProofCannotClaimRuntime": true,
     "runtimeExecutionRequiresExplicitLane": true
   },
+  "environmentCapabilityContract": {
+    "policy": ".ai/harness/environment-capability.policy.json",
+    "documentation": "docs/governance/environment-capability-contract.md",
+    "registry": "tooling/profiles/harness/environment-capability/environment-capability.registry.json",
+    "schema": "tooling/profiles/harness/environment-capability/schemas/environment-capability.schema.json",
+    "skill": ".ai/skills/environment-capability-routing/SKILL.md",
+    "validator": "scripts/Test-EnvironmentCapabilityHarness.ps1",
+    "fiveLayersRequired": true,
+    "oneRegisteredTopologyRequired": true,
+    "universalInstallerForbidden": true,
+    "remotePreflightRequired": true,
+    "repositoryPresenceCannotProveRuntime": true,
+    "sameTmuxNameAcrossHostsCannotProveIdentity": true,
+    "terminalClientCannotClaimRuntimeHost": true,
+    "staticProofCannotClaimLiveEnvironment": true,
+    "androidStatus": "terminal-client-implemented",
+    "androidRoleCeiling": "terminal-client",
+    "androidLocalTmuxScope": "device-local-only",
+    "androidNativeOrchestrationRuntime": "unimplemented",
+    "androidNativeAgentRuntime": "unproved"
+  },
   "deviceProfileLauncherContract": {
     "policy": ".ai/harness/device-profile-launcher.policy.json",
     "documentation": "docs/governance/device-profile-launcher-contract.md",
     "registry": ".ai/harness/device-profile-registry.json",
     "registrySchema": ".ai/harness/schemas/device-profile-registry.schema.json",
+    "environmentCapabilityPolicy": ".ai/harness/environment-capability.policy.json",
     "validator": "scripts/Test-DeviceProfileLauncherContract.ps1",
     "canonicalOwnerRepository": "EndeavorEverlasting/AgentSwitchboard",
     "oneCanonicalLauncherPerProfile": true,
@@ -62,6 +131,8 @@
     "consumerIndependentLaunchLogicForbidden": true,
     "rawFrontendFallbackForbidden": true,
     "crossProfileSubstitutionForbidden": true,
+    "environmentTopologyRequired": true,
+    "androidRoleCeiling": "terminal-client",
     "staticProofCannotClaimOpenOrActivate": true
   },
   "safety": {
@@ -70,6 +141,8 @@
     "reuseExistingContractsBeforeInvention": true,
     "taskSpecificRulesOverrideGenericCloseout": true,
     "noCompletionWithoutProof": true,
-    "noPromptPlanOrHandoffSubstitution": true
+    "noPromptPlanOrHandoffSubstitution": true,
+    "noLowerRoleTopologySubstitution": true,
+    "noCapabilityPromotionFromPresence": true
   }
 }
