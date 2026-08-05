@@ -1,0 +1,130 @@
+name: Environment capability harness
+
+on:
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - "SKILLS.md"
+      - "CAPABILITIES.md"
+      - "TRIGGERS.md"
+      - "CODEBASE_MAP.md"
+      - ".ai/agent-contract.json"
+      - ".ai/harness/environment-capability.policy.json"
+      - ".ai/harness/device-profile-launcher.policy.json"
+      - ".ai/harness/device-profile-registry.json"
+      - ".ai/harness/manifest.json"
+      - ".ai/harness/schemas/device-profile-registry.schema.json"
+      - ".ai/skills/environment-capability-routing/**"
+      - "Bootstrap-AgentSwitchboard-Termux.sh"
+      - "tooling/profiles/android/**"
+      - "tooling/profiles/harness/environment-capability/**"
+      - "docs/governance/environment-capability-contract.md"
+      - "docs/governance/device-profile-launcher-contract.md"
+      - "docs/harness/environment-capability-harness.md"
+      - "docs/workstation/android-termux.md"
+      - "scripts/Test-EnvironmentCapabilityHarness.ps1"
+      - "scripts/Test-DeviceProfileLauncherContract.ps1"
+      - "tests/test_environment_capability_harness.py"
+      - "tests/test_android_termux_profile.py"
+      - "tests/test_device_profile_launcher_contract.py"
+      - ".github/workflows/environment-capability-harness.yml"
+      - ".github/workflows/device-profile-launcher-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: false
+      - name: Parse PowerShell validators
+        shell: pwsh
+        run: |
+          foreach ($file in @(
+            'scripts/Test-EnvironmentCapabilityHarness.ps1',
+            'scripts/Test-DeviceProfileLauncherContract.ps1',
+            'scripts/Test-HarnessDoctrineContract.ps1',
+            'scripts/Test-AgentDocumentationContract.ps1'
+          )) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($file, [ref]$tokens, [ref]$errors)
+            if ($errors.Count) {
+              $errors | ForEach-Object { Write-Error "${file}: $($_.Message)" }
+              exit 1
+            }
+          }
+      - name: Run environment capability contracts
+        shell: pwsh
+        run: ./scripts/Test-EnvironmentCapabilityHarness.ps1
+      - name: Run device profile contracts
+        shell: pwsh
+        run: ./scripts/Test-DeviceProfileLauncherContract.ps1
+      - name: Run doctrine and documentation contracts
+        shell: pwsh
+        run: |
+          ./scripts/Test-HarnessDoctrineContract.ps1
+          ./scripts/Test-AgentDocumentationContract.ps1
+      - name: Run dependency-free contracts
+        shell: pwsh
+        run: |
+          python tests/test_environment_capability_harness.py
+          python tests/test_android_termux_profile.py
+          python tests/test_device_profile_launcher_contract.py
+      - name: Verify PR-range hygiene and clean checkout
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
+            git diff --check "${{ github.event.pull_request.base.sha }}" HEAD
+          }
+          if (git status --short) { throw 'Checkout is dirty after validation.' }
+
+  linux-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: false
+      - name: Parse Android shell surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n Bootstrap-AgentSwitchboard-Termux.sh
+          bash -n tooling/profiles/android/Invoke-AgentSwitchboardOpenOrActivate.sh
+      - name: Run dependency-free contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tests/test_environment_capability_harness.py
+          python3 tests/test_android_termux_profile.py
+          python3 tests/test_device_profile_launcher_contract.py
+      - name: Run PowerShell contracts
+        shell: pwsh
+        run: |
+          ./scripts/Test-EnvironmentCapabilityHarness.ps1
+          ./scripts/Test-DeviceProfileLauncherContract.ps1
+          ./scripts/Test-HarnessDoctrineContract.ps1
+          ./scripts/Test-AgentDocumentationContract.ps1
+      - name: Prove validators remain offline
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -E 'Invoke-WebRequest|Invoke-RestMethod|Start-Process|ssh[[:space:]]|wezterm-gui\.exe start|pkg install' \
+            scripts/Test-EnvironmentCapabilityHarness.ps1 \
+            tests/test_environment_capability_harness.py
+      - name: Full PR-range hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git diff --check "${{ github.event.pull_request.base.sha }}" HEAD
+          else
+            git diff --check HEAD^
+          fi
+          test -z "$(git status --short)"
