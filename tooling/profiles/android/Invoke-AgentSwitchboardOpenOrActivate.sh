@@ -43,7 +43,7 @@ validate_session() {
 
 validate_target() {
   case "$1" in
-    ''|*[!A-Za-z0-9_.@:%-]*) fail "invalid SSH target: $1" ;;
+    ''|-*|*[!A-Za-z0-9_.@:%-]*) fail "invalid SSH target: $1" ;;
   esac
 }
 
@@ -208,11 +208,20 @@ if [ "$mode" = "local-shell" ]; then
   fi
 
   command -v tmux >/dev/null 2>&1 || fail "tmux is missing; run Bootstrap-AgentSwitchboard-Termux.sh"
-  if tmux list-sessions -F '#S' 2>/dev/null | grep -Fxq "$session"; then
+  if tmux has-session -t "$session" 2>/dev/null; then
     outcome="activated-local-shell"
   else
-    tmux new-session -d -s "$session"
-    outcome="opened-local-shell"
+    create_log="$STATE_ROOT/local-session-create.log"
+    mkdir -p "$STATE_ROOT"
+    if tmux new-session -d -s "$session" >"$create_log" 2>&1; then
+      outcome="opened-local-shell"
+    elif tmux has-session -t "$session" 2>/dev/null; then
+      outcome="activated-local-shell"
+    else
+      printf '[FAIL] local tmux session creation failed; log=%s\n' "$create_log" >&2
+      tail -n 20 "$create_log" >&2 || true
+      exit 31
+    fi
   fi
   write_result "$outcome" "$mode" "android-local" "$session" "device-local-only" "false"
   printf '[PASS] outcome=%s role=local-shell-only session=%s\n' "$outcome" "$session"
@@ -260,7 +269,7 @@ if command -v tmux >/dev/null 2>&1; then
   tmux_status="ready"
 fi
 
-if [ -d "$repo_path/.git" ]; then
+if git -C "$repo_path" rev-parse --git-dir >/dev/null 2>&1; then
   repo_status="present"
   actual_origin="$(git -C "$repo_path" remote get-url origin 2>/dev/null || printf missing)"
   if [ "$actual_origin" = "$expected_origin" ]; then
@@ -325,15 +334,40 @@ if [ "$session_status" = "absent" ]; then
     write_result "blocked-session-absent" "$mode" "$target" "$session" "remote-workspace-host" "false"
     fail "remote tmux session '$session' is absent; rerun with --create only when remote session creation is intended"
   fi
-  ssh -T "$target" sh -s -- "$repo_path" "$session" <<'REMOTE_CREATE'
+  set +e
+  remote_create_output="$(ssh -T "$target" sh -s -- "$repo_path" "$session" <<'REMOTE_CREATE'
 set -eu
 repo_path="$1"
 session="$2"
 cd "$repo_path"
-tmux new-session -d -s "$session"
+create_log="${TMPDIR:-/tmp}/agentswitchboard-tmux-create-$$.log"
+if tmux new-session -d -s "$session" >"$create_log" 2>&1; then
+  printf 'create_outcome=created\n'
+elif tmux has-session -t "$session" 2>/dev/null; then
+  printf 'create_outcome=existing-after-race\n'
+else
+  printf 'create_outcome=failed\n' >&2
+  tail -n 20 "$create_log" >&2 || true
+  rm -f "$create_log"
+  exit 51
+fi
+rm -f "$create_log"
 tmux has-session -t "$session"
 REMOTE_CREATE
-  remote_outcome="created-remote-session-request"
+)"
+  remote_create_rc=$?
+  set -e
+  if [ "$remote_create_rc" -ne 0 ]; then
+    write_result "failed-remote-session-create" "$mode" "$target" "$session" "remote-workspace-host" "false"
+    printf '[FAIL] remote tmux session creation failed exit=%s\n' "$remote_create_rc" >&2
+    printf '%s\n' "$remote_create_output" >&2
+    exit 51
+  fi
+  if printf '%s\n' "$remote_create_output" | grep -Fxq 'create_outcome=created'; then
+    remote_outcome="created-remote-session-request"
+  else
+    remote_outcome="existing-remote-session-request"
+  fi
 else
   remote_outcome="existing-remote-session-request"
 fi
