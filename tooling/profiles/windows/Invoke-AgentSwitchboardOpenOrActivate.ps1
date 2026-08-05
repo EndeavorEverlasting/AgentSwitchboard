@@ -140,7 +140,7 @@ function Get-SessionIdentity {
         [Parameter(Mandatory)][string]$SessionPrefix,
         [Parameter(Mandatory)][string]$WorkspacePrefix,
         [Parameter(Mandatory)][string]$ClassPrefix,
-        [Parameter(Mandatory)][string[]]$Sessions,
+        [Parameter(Mandatory)][AllowEmptyCollection()][string[]]$Sessions,
         [Parameter(Mandatory)][string]$RequestedInstanceId,
         [Parameter(Mandatory)][int]$MaximumInstances
     )
@@ -297,7 +297,8 @@ $plan = [ordered]@{
     generatedEvidenceTracked = $false
     proofCeiling = 'Deterministic identity resolution and command construction. Launch mode additionally proves tmux session existence and WezTerm process acknowledgement, not window focus or operator acceptance.'
 }
-$planPath = Join-Path $OutputDirectory 'windows-profile-launch-plan.json'
+$planFileName = if ($Mode -eq 'new-instance') { 'tmux-new-instance-launch-plan.json' } else { 'windows-profile-launch-plan.json' }
+$planPath = Join-Path $OutputDirectory $planFileName
 Write-JsonArtifact -Value $plan -Path $planPath
 
 if ($Operation -eq 'Plan') {
@@ -305,8 +306,6 @@ if ($Operation -eq 'Plan') {
     exit 0
 }
 
-# Preserve the established cross-launch mutex identity so existing shortcut,
-# open-or-activate, and new-instance callers serialize through one allocator.
 $mutex = [Threading.Mutex]::new($false, 'Local\AgentSwitchboard.TmuxNewInstance')
 $lockAcquired = $false
 $createdSession = $false
@@ -356,7 +355,8 @@ try {
         proofLevel = 'command-ack'
         proofCeiling = 'tmux session existence and WezTerm process acknowledgement only; focus, attachment, and operator acceptance remain live runtime proof.'
     }
-    $resultPath = Join-Path $OutputDirectory 'windows-profile-launch-result.json'
+    $resultFileName = if ($Mode -eq 'new-instance') { 'tmux-new-instance-launch-result.json' } else { 'windows-profile-launch-result.json' }
+    $resultPath = Join-Path $OutputDirectory $resultFileName
     Write-JsonArtifact -Value $result -Path $resultPath
     $result | ConvertTo-Json -Depth 12
 }
