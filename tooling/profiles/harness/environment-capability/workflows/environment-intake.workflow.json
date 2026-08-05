@@ -1,0 +1,71 @@
+{
+  "schema": "agentswitchboard.environment-capability-workflow.v1",
+  "workflowId": "environment-intake",
+  "purpose": "Observe an environment without mutation and classify the evidence needed for topology selection.",
+  "mutationAllowed": false,
+  "networkAllowed": false,
+  "steps": [
+    {
+      "stepId": "freeze-request",
+      "requires": [
+        "requested operation",
+        "repository and branch",
+        "operator-visible environment"
+      ],
+      "produces": [
+        "requested capability",
+        "claimed topology if supplied"
+      ]
+    },
+    {
+      "stepId": "observe-frontend",
+      "produces": [
+        "platform class",
+        "frontend identity",
+        "shell identity",
+        "process and persistence constraints"
+      ]
+    },
+    {
+      "stepId": "observe-transport",
+      "produces": [
+        "local or remote boundary",
+        "available transport commands",
+        "authentication status as verified blocked or unknown"
+      ]
+    },
+    {
+      "stepId": "observe-workspace",
+      "produces": [
+        "workspace host identity",
+        "repository path and origin status",
+        "tmux server and session status",
+        "dirty or clean state"
+      ]
+    },
+    {
+      "stepId": "observe-runtimes",
+      "produces": [
+        "orchestration runtime status",
+        "agent runtime status",
+        "provider authentication status"
+      ]
+    },
+    {
+      "stepId": "emit-observation",
+      "artifact": "environment-observation.json",
+      "terminalStates": [
+        "OBSERVED",
+        "BLOCKED_INCOMPLETE_IDENTITY",
+        "BLOCKED_UNSAFE_STATE"
+      ]
+    }
+  ],
+  "forbiddenPromotions": [
+    "command-present to verified",
+    "repository-present to runtime-ready",
+    "tmux-present to cross-device-continuity",
+    "ssh-present to remote-shell-compatible"
+  ],
+  "proofCeiling": "Read-only environment observation only."
+}
