@@ -115,7 +115,7 @@ foreach ($commandName in $commandNames) {
     [void]$results.Add($result)
     if ($probeExit -ne 0 -or -not $result.passed) {
         [void]$failures.Add("$commandName exit=$probeExit error=$($result.error)")
-        Write-Host "FAIL $commandName: $($result.error)" -ForegroundColor Red
+        Write-Host "FAIL ${commandName}: $($result.error)" -ForegroundColor Red
     }
     else {
         Write-Host "PASS $commandName -> $($result.source) :: $($result.output)" -ForegroundColor Green
