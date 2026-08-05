@@ -7,10 +7,11 @@ Triggers convert repository evidence or explicit requests into a reviewed skill 
 1. explicit owner instruction;
 2. repository safety state;
 3. active PR, review, and failing validation;
-4. repository-local routing rules;
-5. canonical fallback mapping.
+4. environment capability and topology blockers;
+5. repository-local routing rules;
+6. canonical fallback mapping.
 
-Safety triggers may narrow or stop work even when a feature trigger is present.
+Safety and capability triggers may narrow or stop work even when a feature trigger is present.
 
 ## Canonical trigger map
 
@@ -19,17 +20,23 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | `repo.new-or-unknown` | unfamiliar repo, placeholder path, stale handoff, uncertain branch | `repo-intake` |
 | `repo.dirty-or-conflicted` | unowned changes, conflicts, detached or unsafe state | preserve and isolate, then `repo-intake` |
 | `sprint.execute` | scoped request with safe owned files | `bounded-sprint` |
+| `environment.capability-request` | any environment, new platform, phone access, cross-device continuity, auto-configure, Termux, SSH, remote tmux, WSL/Linux/Windows ambiguity, or uncertain runtime host | `environment-capability-routing`; classify five layers and select one supported topology before installer, launcher, or runtime work |
+| `environment.remote-request` | SSH target, remote workspace, remote tmux, remote repository, or another machine should host or continue work | `environment-capability-routing` → remote preflight; observe OS/shell, tmux, repository, orchestration, agent, and persistence before mutation |
+| `environment.false-equivalence` | repository clone is treated as runtime readiness; package presence as verified capability; same tmux name across hosts as one workspace; Termux as generic Linux; SSH reachability as POSIX compatibility | `environment-capability-routing` → reject false proof promotion and repair the owning contract or implementation |
 | `plan.coordination-request` | multi-agent, multi-session, multi-wave, cross-PR, sprint-map, launch-pack, or material plan-state request | `public-plan-coordination`; update `plans/` and keep coordination distinct from PR delivery |
 | `startup.readiness-request` | startup or agent availability/configuration request | `startup.readiness.report`; read-only guidance without installation or provider calls |
 | `harness.proof-request` | one-command proof, synthetic validation, composition observer, node/edge coverage, or PASS/SKIP/FAIL request | `harness.proof.aggregate`; run the offline observer and emit untracked JSON plus English evidence |
 | `app.output-context-request` | supplied app, validator, agent, console, JSON, or JSONL output must be minimized and compared with a prompt registry | `app-output-contextualization`; parse supplied output offline, preserve exact execution surface, and emit compact untracked instructions |
 | `runtime.event-contract-change` | event envelope, source, observer, listener, handler, successor, sink, correlation, causation, or runtime topology contract changes | `runtime.event-contract.validate`; update deterministic contracts and run `scripts/Test-RuntimeEventContract.ps1` |
 | `runtime.event-cascade-request` | request claims an event listener works, a trigger cascades, or a source-to-sink handoff completes | use `runtime-proof` after contract validation; require correlated observed artifacts and explicit runtime authority |
-| `profile.launcher-request` | Windows Profile, Linux Profile, Android Profile, WezTerm launcher, open-or-activate, desktop shortcut, duplicate-window prevention, or canonical launcher ownership | `profile.launcher.contract.validate`; inspect the profile registry and require one AgentSwitchboard owner per profile |
+| `profile.launcher-request` | Windows Profile, Linux Profile, Android Profile, WezTerm launcher, Termux terminal client, open-or-activate, desktop shortcut, duplicate-window prevention, or canonical launcher ownership | first select `environment-capability-routing` when the environment or host boundary is not already proved; then run `profile.launcher.contract.validate` |
 | `profile.launch-mode-request` | request distinguishes default open-or-activate from a deliberate separate WezTerm instance, or supplies a named instance identity | `windows-profile-launch-mode-validation`; select exactly one contract workflow and preserve the one-launcher boundary |
 | `profile.duplicate-window-observed` | one operator request produced multiple top-level windows, the same workspace appears unexpectedly twice, or two windows attach to one tmux session | `windows-profile-launch-mode-validation` → `duplicate-window-diagnosis`; require correlated before/after inventories and reject process-count-only conclusions |
 | `profile.tmux-new-instance-shortcut.install` | request asks for a desktop shortcut, clickable CMD installer, or user-local shortcut refresh for a separate tmux instance | `tmux-new-instance-shortcut` → `install-tmux-new-instance-shortcut`; preserve foreign shortcuts, delegate to the canonical launcher, and emit install/readback evidence |
 | `profile.tmux-new-instance-shortcut.double-click` | the installed shortcut is invoked or its resulting window/session behavior must be proved | `tmux-new-instance-shortcut` → `launch-tmux-new-instance`; for completion also use `end-to-end-runtime-validation` across shortcut, PowerShell, WSL, tmux, and WezTerm boundaries |
+| `profile.android.local-shell-request` | operator explicitly wants a shell running only on the Android device | Android topology `android-termux-local-shell`; role ceiling `local-shell-only`; state that the session is device-local and not cross-device continuity |
+| `profile.android.remote-client-request` | Android/Termux should attach to a remote tmux workspace | topology `android-termux-ssh-posix-workspace-client`; require explicit supported host profile, remote preflight, exact repo path/origin, clean state, and explicit create authority |
+| `profile.android.full-runtime-claim` | Android repo clone, tmux, or SSH client is presented as full AgentSwitchboard, GNHF, agent, or provider readiness | reject; native Android full runtime is reserved/unsupported until tracked porting and runtime certification exist |
 | `profile.consumer-certification-request` | SysAdminSuite or another child claims profile consumption or certification | require a separate consumer PR that delegates to the exact canonical launcher and proves no competing lifecycle or raw frontend fallback |
 | `action.claimed` | prompt claims install, setup, build, execute, repair, configure, upgrade, deploy, merge, or release | `action.commitment.validate`; require mutation, validation, and commit or GitHub proof |
 | `powershell.interactive-snippet` | PowerShell intended for interactive copy/paste | `powershell-interactive-execution`; preserve complete syntax units |
@@ -38,16 +45,48 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | `provider.deepseek-request` | selected route uses `deepseek/*` | apply `deepseek.usage-window.evaluate`; block premium, unknown, missing, stale, or unverified state |
 | `review.findings` or `validation.requested` | review findings, proof gap, skipped checks, or contract drift | `evidence-validation` |
 | `integration.requested` | stacked PRs, consumed commits, branch convergence | `pr-integration` |
-| `runtime.requested` | launcher, installer, behavior, harness, or environment proof contained within one bounded runtime | `runtime-proof` |
-| `runtime.end-to-end-request` | exact operator command crosses shells, child processes, WSL, tmux, WezTerm, TUI, GUI, provider, application, installer, launcher, or configuration boundaries | `end-to-end-runtime-validation`; require per-stage diagnostics, effective-state and user-experience readback, idempotence or rollback when applicable, and one exact next command |
+| `runtime.requested` | launcher, installer, behavior, harness, or environment proof contained within one bounded runtime | `runtime-proof` after environment topology selection |
+| `runtime.end-to-end-request` | exact operator command crosses shells, child processes, SSH, WSL, tmux, WezTerm, Termux, TUI, GUI, provider, application, installer, launcher, or configuration boundaries | `end-to-end-runtime-validation`; require selected topology, per-stage diagnostics, effective-state and user-experience readback, idempotence or rollback, and one exact next command |
 | `docs.contract-change` | AGENTS, skills, capabilities, triggers, schemas, governance | `bounded-sprint` plus doctrine and documentation validators |
-| `tool.missing-or-unhealthy` | command absent or bounded probe fails | reuse, repair, install, skip, or block according to scope |
-| `gnhf.runtime-repair-required` | required provider-route capability absent | repair through the capability installer; do not react only to an unpublished version |
+| `tool.missing-or-unhealthy` | command absent or bounded probe fails | reuse, repair, install, skip, or block according to selected topology and scope |
+| `gnhf.runtime-repair-required` | required provider-route capability absent | repair through the capability installer on the actual orchestration host; do not react only to an unpublished version |
 | `gnhf.model-selection-required` | provider-backed run names an exact provider/model | route selection through OpenCode unless the installed GNHF binary exposes a verified model flag |
 | `scope.collision` | two writers own overlapping paths | stop one lane or create isolation |
 | `secret-or-personal-data` | credentials, tokens, customer data, or private evidence | stop, sanitize, and escalate |
-| `live-target-mutation` | external machine, service, deployment, save, or customer target | require explicit authority and runtime-proof boundary |
+| `live-target-mutation` | external machine, service, deployment, save, or customer target | require explicit authority, selected topology, and runtime-proof boundary |
 | `repeated-repair-failure` | bounded retries exhausted | checkpoint and escalate |
+
+## Environment-capability invariant
+
+`environment.capability-request` selects `.ai/skills/environment-capability-routing/SKILL.md` and the environment-capability harness before mutation.
+
+Every request must classify:
+
+`frontend -> transport -> workspace host -> orchestration runtime -> agent runtime`
+
+The route selects exactly one registered topology and one current role ceiling:
+
+- `full-runtime-host`;
+- `workspace-host`;
+- `terminal-client`;
+- `local-shell-only`;
+- `transport-only`;
+- `unsupported`.
+
+The following promotions are forbidden:
+
+- command presence to verified capability;
+- repository presence to orchestration or agent readiness;
+- tmux presence to cross-device continuity;
+- matching tmux session names on different hosts to one workspace;
+- SSH reachability to remote shell compatibility;
+- Termux to generic Linux;
+- terminal client to full runtime host;
+- static or CI proof to live environment success.
+
+Auto-configuration is not a universal installer. It performs observation, layer classification, topology selection, blocker reporting, bounded mutation, effective-state readback, focused validation, explicitly authorized runtime certification, and proof reporting in that order.
+
+`environment.remote-request` is fail-closed. Unknown OS or shell class, missing tmux, absent or unexpected repository, dirty checkout, missing orchestration runtime, unproved agent runtime, ambiguous host identity, or unsupported persistence blocks automatic mutation unless the task explicitly owns that repair.
 
 ## Public plan invariant
 
@@ -79,17 +118,19 @@ Contract and synthetic fixture success do not prove runtime delivery. A runtime 
 
 ## End-to-end runtime invariant
 
-`runtime.end-to-end-request` selects `.ai/skills/end-to-end-runtime-validation/SKILL.md`. The route freezes the exact operator invocation, names each boundary, proves lower floors first, captures each child command with stdout, stderr, exit code, and timing, reads back effective state, observes the requested user experience, and checks idempotence or rollback when applicable.
+`runtime.end-to-end-request` selects `.ai/skills/end-to-end-runtime-validation/SKILL.md` after the environment topology is fixed. The route freezes the exact operator invocation, names each boundary, proves lower floors first, captures each child command with stdout, stderr, exit code, and timing, reads back effective state, observes the requested user experience, and checks idempotence or rollback when applicable.
 
-A parent process error that reports only a child exit code is incomplete evidence. A configuration file, successful parser, passing CI run, parent exit zero, command acknowledgement, or manual workaround cannot promote the operator path to end-to-end success. Repair remains in the same evidence chain, and the complete operator path is rerun after the failed stage is fixed.
+A parent process error that reports only a child exit code is incomplete evidence. A configuration file, successful parser, passing CI run, parent exit zero, command acknowledgement, repository clone, package presence, or manual workaround cannot promote the operator path to end-to-end success. Repair remains in the same evidence chain, and the complete operator path is rerun after the failed stage is fixed.
 
 ## Device profile invariant
 
-`profile.launcher-request` requires `.ai/harness/device-profile-registry.json` and the canonical launcher policy to remain coherent. The Windows Profile is WezTerm-backed, idempotent `open-or-activate`, and owned only by AgentSwitchboard. Linux and Android are separate profile implementations; Android configuration may differ.
+`profile.launcher-request` requires the environment topology, `.ai/harness/device-profile-registry.json`, and the canonical launcher policy to remain coherent. The Windows Profile is WezTerm-backed, idempotent `open-or-activate`, and owned only by AgentSwitchboard. Linux and Android are separate profile implementations.
 
-Raw `wezterm`, `wezterm.exe`, `wezterm-gui.exe`, desktop shortcuts, and consumer repositories are not independent lifecycle owners. SysAdminSuite may locate, invoke, and certify the exact AgentSwitchboard launcher, but a missing or uncertified launcher is `blocked`, not a fallback opportunity.
+The Android profile is `terminal-client-implemented`, with role ceiling `terminal-client`. Phone-local tmux is `local-shell-only` and `device-local-only`. Cross-device continuity requires a separately classified remote workspace host and same tmux server/session identity. Native Android orchestration is unimplemented; native agent runtime is unproved.
 
-Contract success proves ownership and fixture shape only. A runtime claim requires observed evidence for both `opened` and `activated`, duplicate-prevention, and the terminal result. SysAdminSuite certification requires its own tracked consumer PR and validators.
+Raw `wezterm`, `wezterm.exe`, `wezterm-gui.exe`, desktop shortcuts, Android wrappers, and consumer repositories are not independent lifecycle owners. SysAdminSuite may locate, invoke, and certify the exact Windows launcher, but a missing or uncertified launcher is `blocked`, not a fallback opportunity.
+
+Contract success proves ownership and fixture shape only. A runtime claim requires observed environment identity, workspace-host identity, tmux server/session identity, opened or activated behavior, duplicate prevention, and terminal result. SysAdminSuite certification requires its own tracked consumer PR and validators.
 
 ## Windows Profile launch-mode invariant
 
@@ -107,7 +148,7 @@ Contract success proves ownership and fixture shape only. A runtime claim requir
 
 ## Doctrine invariant
 
-`action.claimed` is fail-closed. A prompt that claims action but permits acknowledgment, advice, a plan, summary, or handoff instead of mutation and proof is invalid. Event-listener, cascade, profile, launcher, and certification claims that permit architecture-only output are also invalid.
+`action.claimed` is fail-closed. A prompt that claims action but permits acknowledgment, advice, a plan, summary, or handoff instead of mutation and proof is invalid. Event-listener, cascade, environment, profile, launcher, and certification claims that permit architecture-only output are also invalid.
 
 The PowerShell trigger preserves compound syntax. Test-only GNHF limits apply even when token or iteration caps exist. DeepSeek requires a fresh verified standard or discounted rate state.
 
@@ -117,12 +158,12 @@ A GNHF prompt request is an artifact-type selector and uses `.ai/skills/gnhf-pro
 
 ## Trigger payload
 
-A routed workflow receives repository and branch or worktree, PR or sprint, plan and task when applicable, trigger and evidence, lane, owned and forbidden scope, expected artifacts, acceptance criteria, capabilities and blockers, selected procedure, limits, validation order, evidence requirement, and completion gate.
+A routed workflow receives repository and branch or worktree, PR or sprint, plan and task when applicable, trigger and evidence, lane, owned and forbidden scope, expected artifacts, acceptance criteria, environment topology and role ceiling, capabilities and blockers, selected procedure, limits, validation order, evidence requirement, and completion gate.
 
 ## Automatic stop triggers
 
-Stop or escalate when work would overwrite unowned changes; a required capability is unknown; scope crosses a forbidden boundary; writers collide; a gate exposes security or data-loss risk; merge, deployment, secret, destructive Git, or live mutation lacks authority; retries are exhausted; evidence contradicts the plan; test timing or DeepSeek gates fail; the app graph is broken; app-output context would persist raw or cross-surface data; runtime event evidence is incomplete; an end-to-end stage loses child diagnostics, effective-state readback, rollback safety, or exact environment identity; a launch-mode request is ambiguous, lacks a unique instance identity, creates multiple windows, or reuses one tmux session as two claimed instances; a shortcut collision is foreign, a new-instance route reuses bare `dev`, an explicit instance already exists, session allocation is exhausted, or the WezTerm command omits `--always-new-process`; or a profile has competing owners, raw frontend fallback, independent shortcut logic, cross-profile substitution, or an unproved open-or-activate claim.
+Stop or escalate when work would overwrite unowned changes; a required capability or environment layer is unknown; no registered topology matches; the selected topology has a lower role ceiling than the requested outcome; scope crosses a forbidden boundary; writers collide; a gate exposes security or data-loss risk; merge, deployment, authentication, secret, destructive Git, or live mutation lacks authority; retries are exhausted; evidence contradicts the plan; test timing or DeepSeek gates fail; the app graph is broken; app-output context would persist raw or cross-surface data; runtime event evidence is incomplete; an end-to-end stage loses child diagnostics, effective-state readback, rollback safety, or exact environment identity; a launch-mode request is ambiguous, lacks a unique instance identity, creates multiple windows, or reuses one tmux session as two claimed instances; a shortcut collision is foreign, a new-instance route reuses bare `dev`, an explicit instance already exists, session allocation is exhausted, or the WezTerm command omits `--always-new-process`; an Android route treats local tmux as cross-device continuity, omits remote host classification or preflight, claims native orchestration or agent readiness, or uses same-name sessions as identity; or a profile has competing owners, raw frontend fallback, independent shortcut logic, cross-profile substitution, or an unproved open-or-activate claim.
 
 ## No implicit authority
 
-The presence of a trigger, plan, startup report, event observer, topology registry, profile registry, launch-mode registry, shortcut registry, app-output packet, end-to-end skill, or capability never authorizes installation, push, merge, release, deployment, target mutation, prompt execution, provider access, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.
+The presence of a trigger, plan, startup report, event observer, topology registry, environment registry, profile registry, launch-mode registry, shortcut registry, app-output packet, end-to-end skill, or capability never authorizes installation, push, merge, release, deployment, target mutation, prompt execution, provider access, authentication, secret access, or destructive cleanup unless the task and repository contract explicitly allow it.
