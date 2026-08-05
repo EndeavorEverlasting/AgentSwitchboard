@@ -59,10 +59,13 @@ class TestMachineProfileHarnessCompleteness(unittest.TestCase):
 
     def test_workflows_and_traps_are_complete(self):
         workflows = load_json(self.manifest["workflowSpecs"])
-        self.assertEqual({"machine-profile-task-intake", "machine-profile-validation", "machine-profile-failure-recovery", "machine-profile-handoff"}, {item["workflowId"] for item in workflows["workflows"]})
+        workflow_map = {item["workflowId"]: item for item in workflows["workflows"]}
+        self.assertEqual({"machine-profile-task-intake", "machine-profile-validation", "machine-profile-failure-recovery", "machine-profile-handoff"}, set(workflow_map))
+        handoff_fields = set(workflow_map["machine-profile-handoff"]["requiredFields"])
+        self.assertTrue({"next action owner", "next action dependency", "exact next command"}.issubset(handoff_fields))
         traps = load_json(self.manifest["knownTrapsRegistry"])
         ids = {item["id"] for item in traps["traps"]}
-        self.assertTrue({"shell-mismatch", "errorlevel-clobber", "downstream-after-failure", "unsafe-powershell-null-replace", "remembered-path", "pull-over-local-patch", "path-role-collapse"}.issubset(ids))
+        self.assertTrue({"shell-mismatch", "errorlevel-clobber", "downstream-after-failure", "unsafe-powershell-null-replace", "remembered-path", "pull-over-local-patch", "path-role-collapse", "cwd-relative-next-command"}.issubset(ids))
         null_trap = next(item for item in traps["traps"] if item["id"] == "unsafe-powershell-null-replace")
         self.assertEqual(".Replace(([char]0).ToString(), [string]::Empty)", null_trap["safeExpression"])
 
@@ -81,9 +84,10 @@ class TestMachineProfileHarnessCompleteness(unittest.TestCase):
     def test_reporter_and_candidate_validation_contracts(self):
         reporter = read_text(self.manifest["statusReporter"])
         self.assertIsNone(re.search(r"(?mi)^\s*exit(?:\s|$)", reporter))
-        self.assertIn("loadErrors", reporter)
+        for token in ("loadErrors", "NextCommand", "NextActionOwner", "NextActionDependency", "call \""):
+            self.assertIn(token, reporter)
         candidate = read_text(self.manifest["candidateValidator"])
-        for token in ("fetch", "worktree", "--detach", "artifactRegistry", "diff", "--check"):
+        for token in ("fetch", "worktree", "--detach", "artifactRegistry", "diff", "--check", "PullRequestNumber", "reviewUrl", "NextCommand", 'start ""'):
             self.assertIn(token, candidate)
 
     def test_no_real_machine_literals(self):
