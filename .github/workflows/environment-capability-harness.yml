@@ -22,9 +22,11 @@ on:
       - "docs/governance/device-profile-launcher-contract.md"
       - "docs/harness/environment-capability-harness.md"
       - "docs/workstation/android-termux.md"
+      - "templates/repository-agent-contract/**"
       - "scripts/Test-EnvironmentCapabilityHarness.ps1"
       - "scripts/Test-DeviceProfileLauncherContract.ps1"
       - "tests/test_environment_capability_harness.py"
+      - "tests/test_environment_capability_template.py"
       - "tests/test_android_termux_profile.py"
       - "tests/test_device_profile_launcher_contract.py"
       - ".github/workflows/environment-capability-harness.yml"
@@ -74,6 +76,7 @@ jobs:
         shell: pwsh
         run: |
           python tests/test_environment_capability_harness.py
+          python tests/test_environment_capability_template.py
           python tests/test_android_termux_profile.py
           python tests/test_device_profile_launcher_contract.py
       - name: Verify PR-range hygiene and clean checkout
@@ -102,6 +105,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 tests/test_environment_capability_harness.py
+          python3 tests/test_environment_capability_template.py
           python3 tests/test_android_termux_profile.py
           python3 tests/test_device_profile_launcher_contract.py
       - name: Run PowerShell contracts
@@ -117,7 +121,8 @@ jobs:
           set -euo pipefail
           ! grep -E 'Invoke-WebRequest|Invoke-RestMethod|Start-Process|ssh[[:space:]]|wezterm-gui\.exe start|pkg install' \
             scripts/Test-EnvironmentCapabilityHarness.ps1 \
-            tests/test_environment_capability_harness.py
+            tests/test_environment_capability_harness.py \
+            tests/test_environment_capability_template.py
       - name: Full PR-range hygiene
         shell: bash
         run: |
