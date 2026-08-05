@@ -32,19 +32,41 @@ The command owns these outcomes:
 
 Hermes remains isolated. Core readiness does not depend on Hermes installation or browser authentication unless the operator explicitly selects `hermes`.
 
-## Exact-head validation
+## Exact-head field acceptance
 
-Use the tracked validator rather than pasting an inline `if`/`else` script:
+Use the tracked validator rather than pasting an inline `if`/`else` script.
+
+Validation-only mode:
 
 ```cmd
-Validate-Technician-ExactHead.cmd "<repo-path>" "<remote-ref>" "<expected-sha>"
+Validate-Technician-ExactHead.cmd "<repo-path>" "<remote-ref>" "<expected-sha>" validate
 ```
 
-The validator fetches only the named origin ref, verifies `FETCH_HEAD`, creates or safely reuses a detached worktree, runs Python plus Windows PowerShell 5.1 and PowerShell 7 validators, accepts only fresh P00 evidence, and prints and persists the actual worktree HEAD. It never resets, cleans, stashes, or force-pushes.
+Complete field-readiness mode:
+
+```cmd
+Validate-Technician-ExactHead.cmd "<repo-path>" "<remote-ref>" "<expected-sha>" ready
+```
+
+`ready` mode requires the explicit remote ref and expected SHA. It then performs one owned sequence:
+
+1. Verify the origin URL.
+2. Fetch only the named remote ref.
+3. Compare `FETCH_HEAD` with the expected SHA.
+4. Create or safely reuse an exact detached worktree without modifying the operator checkout.
+5. Run Python, Windows PowerShell 5.1, and PowerShell 7 validators.
+6. Generate the harness-status artifact.
+7. Run P00 and accept only a new preflight artifact created after that invocation began.
+8. Run `Technician-AgentSwitchboard-Ready.cmd setup` from the exact worktree.
+9. Accept only a new technician-ready summary created after readiness began.
+10. Require successful startup readiness, observed canonical fleet state, a real `AgentSwitchboard` command shim, and a usable status other than `not-configured` or `blocked`.
+11. Persist the actual worktree HEAD, P00 artifact, readiness status, and readiness artifact in JSON and Markdown.
+
+The validator never resets, cleans, stashes, force-pushes, or treats the requested SHA as proof. The persisted and displayed verified SHA comes from the detached worktree after equality validation.
 
 ## Evidence
 
-Technician setup is under `%LOCALAPPDATA%\AgentSwitchboard\technician-ready\runs\<runId>`. Exact-head validation is under `%LOCALAPPDATA%\AgentSwitchboard\exact-head-validation\runs\<runId>`. Canonical fleet state is `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\state.json`.
+Technician setup is under `%LOCALAPPDATA%\AgentSwitchboard\technician-ready\runs\<runId>`. Exact-head field acceptance is under `%LOCALAPPDATA%\AgentSwitchboard\exact-head-validation\runs\<runId>`. Canonical fleet state is `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\state.json`.
 
 ## Proof ceiling
 
