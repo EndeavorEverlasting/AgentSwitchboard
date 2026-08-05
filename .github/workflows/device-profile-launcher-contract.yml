@@ -7,12 +7,16 @@ on:
       - "CAPABILITIES.md"
       - "TRIGGERS.md"
       - "CODEBASE_MAP.md"
+      - "Bootstrap-AgentSwitchboard-Termux.sh"
       - "docs/governance/**"
+      - "docs/workstation/android-termux.md"
+      - "tooling/profiles/android/**"
       - ".ai/agent-contract.json"
       - ".ai/harness/**"
       - "plans/**"
       - "scripts/Test-DeviceProfileLauncherContract.ps1"
       - "scripts/Test-HarnessDoctrineContract.ps1"
+      - "tests/test_android_termux_profile.py"
       - "tests/test_device_profile_launcher_contract.py"
       - ".github/workflows/device-profile-launcher-contract.yml"
   workflow_dispatch:
@@ -43,8 +47,10 @@ jobs:
       - name: Run canonical doctrine contract
         shell: pwsh
         run: ./scripts/Test-HarnessDoctrineContract.ps1
-      - name: Run dependency-free contract
-        run: python tests/test_device_profile_launcher_contract.py
+      - name: Run dependency-free contracts
+        run: |
+          python tests/test_device_profile_launcher_contract.py
+          python tests/test_android_termux_profile.py
       - name: Verify clean checkout
         shell: pwsh
         run: |
@@ -58,8 +64,16 @@ jobs:
         with:
           fetch-depth: 0
           show-progress: false
-      - name: Run dependency-free contract
-        run: python3 tests/test_device_profile_launcher_contract.py
+      - name: Parse Android shell surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n Bootstrap-AgentSwitchboard-Termux.sh
+          bash -n tooling/profiles/android/Invoke-AgentSwitchboardOpenOrActivate.sh
+      - name: Run dependency-free contracts
+        run: |
+          python3 tests/test_device_profile_launcher_contract.py
+          python3 tests/test_android_termux_profile.py
       - name: Run PowerShell contract
         shell: pwsh
         run: ./scripts/Test-DeviceProfileLauncherContract.ps1
