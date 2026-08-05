@@ -2,7 +2,10 @@
 param(
     [ValidateSet('Human','Json')][string]$Emit = 'Human',
     [string]$OutputRoot,
-    [string]$RepoRoot
+    [string]$RepoRoot,
+    [string]$NextCommand,
+    [string]$NextActionOwner = 'operator',
+    [string]$NextActionDependency
 )
 
 Set-StrictMode -Version Latest
@@ -27,7 +30,7 @@ $trackedMissing = [System.Collections.Generic.List[string]]::new()
 $required = @()
 $roleIds = @()
 $proofCeiling = 'Harness status reporting only; runtime behavior is not proven.'
-$nextCommand = 'Test-MachineProfileHarness.cmd'
+$validatorRelative = 'Test-MachineProfileHarness.cmd'
 $manifest = $null
 
 try {
@@ -39,7 +42,7 @@ try {
     $keys = @('codebaseMap','machineProfileRegistry','environmentRoleRegistry','knownTrapsRegistry','artifactRegistry','workflowSpecs','schemaPath','skill','operatorDocumentation','operatorReportTemplate','statusReporter','statusCommand','validator','validatorCommand','pythonValidator','candidateValidator','candidateValidatorCommand','preCommitHook','ciWorkflow')
     $required = @($keys | ForEach-Object { [string]$manifest.$_ })
     $proofCeiling = [string]$manifest.proofCeiling
-    $nextCommand = [string]$manifest.validatorCommand
+    $validatorRelative = [string]$manifest.validatorCommand
 }
 catch {
     [void]$loadErrors.Add($_.Exception.Message)
@@ -74,6 +77,18 @@ if ($manifest -and -not [string]::IsNullOrWhiteSpace([string]$manifest.environme
 
 $status = if ($missing.Count -eq 0 -and $trackedMissing.Count -eq 0 -and $loadErrors.Count -eq 0) { 'ready' } else { 'incomplete' }
 $presentCount = [Math]::Max(0, $required.Count - $missing.Count)
+if ([string]::IsNullOrWhiteSpace($NextCommand)) {
+    $validatorPath = Join-Path $RepoRoot $validatorRelative
+    $NextCommand = 'call "' + $validatorPath + '"'
+}
+if ([string]::IsNullOrWhiteSpace($NextActionDependency)) {
+    $NextActionDependency = if ($status -eq 'ready') {
+        'ready harness checkout at the reported repository root'
+    }
+    else {
+        'repair the missing or malformed harness components listed in this report'
+    }
+}
 $result = [ordered]@{
     schema = 'agentswitchboard.machine-profile-harness-status.v1'
     generatedAt = $now.ToUniversalTime().ToString('o')
@@ -86,7 +101,9 @@ $result = [ordered]@{
     loadErrors = @($loadErrors)
     environmentRoles = $roleIds
     proofCeiling = $proofCeiling
-    nextCommand = $nextCommand
+    nextActionOwner = $NextActionOwner
+    nextActionDependency = $NextActionDependency
+    nextCommand = $NextCommand
 }
 $jsonPath = Join-Path $OutputRoot 'machine-profile-harness-status.json'
 $mdPath = Join-Path $OutputRoot 'machine-profile-harness-status.md'
@@ -105,10 +122,13 @@ $result | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $jsonPath -Encoding
     '',
     $proofCeiling,
     '',
-    '## Exact next command',
+    '## Exact next action',
+    '',
+    "- Owner: $NextActionOwner",
+    "- Dependency: $NextActionDependency",
     '',
     '```cmd',
-    $nextCommand,
+    $NextCommand,
     '```'
 ) | Set-Content -LiteralPath $mdPath -Encoding utf8NoBOM
 
@@ -121,7 +141,9 @@ else {
     Write-Host "Roles: $(if($roleIds.Count){$roleIds -join ', '}else{'unavailable'})"
     Write-Host "JSON: $jsonPath"
     Write-Host "Report: $mdPath"
-    Write-Host "NEXT COMMAND: $nextCommand"
+    Write-Host "NEXT OWNER: $NextActionOwner"
+    Write-Host "NEXT DEPENDENCY: $NextActionDependency"
+    Write-Host "NEXT COMMAND: $NextCommand"
 }
 
 if ($status -ne 'ready') {
