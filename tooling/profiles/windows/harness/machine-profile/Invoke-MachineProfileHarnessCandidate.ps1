@@ -5,6 +5,7 @@ param(
     [Parameter(Mandatory)][string]$Branch,
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-fA-F]{40}$')][string]$ExpectedHead,
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-fA-F]{40}$')][string]$BaseCommit,
+    [ValidateRange(0, 2147483647)][int]$PullRequestNumber = 0,
     [string]$OutputRoot,
     [switch]$NoOpen
 )
@@ -27,6 +28,18 @@ if ([string]::IsNullOrWhiteSpace($OutputRoot)) {
 $OutputRoot = [IO.Path]::GetFullPath($OutputRoot)
 $null = New-Item -ItemType Directory -Path $OutputRoot -Force
 
+$repositoryWebRoot = 'https://github.com/EndeavorEverlasting/AgentSwitchboard'
+if ($PullRequestNumber -gt 0) {
+    $reviewUrl = "$repositoryWebRoot/pull/$PullRequestNumber"
+}
+else {
+    $escapedBranch = [Uri]::EscapeDataString($Branch)
+    $reviewUrl = "$repositoryWebRoot/compare/main...$escapedBranch`?expand=1"
+}
+$nextActionOwner = 'operator/reviewer'
+$nextActionDependency = "candidate validation success at $($ExpectedHead.ToLowerInvariant()); PR review or merge remains the next unproven gate"
+$nextCommand = 'start "" "' + $reviewUrl + '"'
+
 $script:ExitCode = 0
 $summary = [ordered]@{
     schema = 'agentswitchboard.machine-profile-harness-candidate-validation.v1'
@@ -39,11 +52,16 @@ $summary = [ordered]@{
     branch = $Branch
     expectedHead = $ExpectedHead.ToLowerInvariant()
     baseCommit = $BaseCommit.ToLowerInvariant()
+    pullRequestNumber = $PullRequestNumber
+    reviewUrl = $reviewUrl
     fetchedHead = $null
     actualHead = $null
     checks = [ordered]@{}
     statusJson = $null
     statusMarkdown = $null
+    nextActionOwner = $nextActionOwner
+    nextActionDependency = $nextActionDependency
+    nextCommand = $nextCommand
     error = $null
 }
 $candidateSummaryPath = Join-Path $OutputRoot 'machine-profile-harness-candidate-validation.json'
@@ -170,7 +188,9 @@ try {
     }
 
     $statusScript = Join-Path $worktree ([string]$manifest.statusReporter)
-    Invoke-CheckedCommand -Name 'operator-status-report' -Command { & $pwsh -NoLogo -NoProfile -File $statusScript -RepoRoot $worktree -Emit Human -OutputRoot $OutputRoot }
+    Invoke-CheckedCommand -Name 'operator-status-report' -Command {
+        & $pwsh -NoLogo -NoProfile -File $statusScript -RepoRoot $worktree -Emit Human -OutputRoot $OutputRoot -NextCommand $nextCommand -NextActionOwner $nextActionOwner -NextActionDependency $nextActionDependency
+    }
 
     $jsonArtifact = @($artifactRegistry.generatedArtifacts | Where-Object id -eq 'harness-status-json')[0]
     $markdownArtifact = @($artifactRegistry.generatedArtifacts | Where-Object id -eq 'harness-status-markdown')[0]
@@ -183,6 +203,15 @@ try {
     $summary.statusJson = $statusJson
     $summary.statusMarkdown = $statusMarkdown
     $summary.checks.artifactResolution = 'passed'
+
+    $statusResult = Get-Content -LiteralPath $statusJson -Raw | ConvertFrom-Json
+    if ([string]$statusResult.nextCommand -ne $nextCommand) {
+        throw 'Status report did not preserve the candidate review command.'
+    }
+    if ([string]$statusResult.nextActionOwner -ne $nextActionOwner) {
+        throw 'Status report did not preserve the candidate next-action owner.'
+    }
+    $summary.checks.handoffCommand = 'passed'
 
     Get-Content -LiteralPath $statusMarkdown
     if (-not $NoOpen) {
