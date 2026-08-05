@@ -66,7 +66,7 @@ class TestTechnicianAgentSwitchboardReady(unittest.TestCase):
         self.assertIn("if ([string]::IsNullOrWhiteSpace($ManifestPath))", text)
         self.assertIn("windows-profile-launch-plan.v2", text)
         self.assertIn("windows-profile-launch-result.v2", text)
-        self.assertIn("Local\\AgentSwitchboard.TmuxSessionAllocation", text)
+        self.assertIn("Local\\AgentSwitchboard.TmuxNewInstance", text)
         self.assertIn("tmux kill-session", text)
         self.assertIn("ProcessStartInfo", text)
 
