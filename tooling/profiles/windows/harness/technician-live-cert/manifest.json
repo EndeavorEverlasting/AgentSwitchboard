@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 1,
   "harnessId": "agentswitchboard.technician-live-cert-harness.v1",
   "scope": "Windows technician acquisition, real AgentSwitchboard readiness, exact-head validation, clickable live-certification, and owned repair surfaces",
   "canonicalOwner": "EndeavorEverlasting/AgentSwitchboard",
@@ -66,6 +66,7 @@
     {"id":"expected-head-proof-inflation","guard":"Exact-head reports print and persist the actual worktree HEAD after equality verification, never the requested or expected SHA alone."},
     {"id":"stale-artifact-reuse","guard":"Field validation accepts only evidence created after the current stage start timestamp."},
     {"id":"tool-only-false-readiness","guard":"P02 and P03 require canonical GNHF fleet state, AgentSwitchboard command resolution, startup readiness, and a fresh-shell AgentSwitchboard -ListAgents probe."},
+    {"id":"single-command-field-acceptance","guard":"Validate-Technician-ExactHead.cmd ready performs exact-head validation, fresh P00 proof, real technician setup, fleet-state proof, and fresh AgentSwitchboard readiness evidence in one repository-owned command."},
     {"id":"hosted-ci-proof-inflation","guard":"CI surface modes prove dispatch and contracts only; they do not claim live WSL, fleet installation, provider authentication, or visible window behavior."},
     {"id":"interactive-git-pager","guard":"All harness Git inspection uses git --no-pager and propagates nonzero exit codes."},
     {"id":"live-failure-overridden-by-static-pass","guard":"Observed operator failure remains blocking until the exact repository-owned command is rerun successfully."}
@@ -90,5 +91,5 @@
   "implicitHookInstallationAllowed": false,
   "networkAllowedByValidators": false,
   "targetMutationAllowedByValidators": false,
-  "proofCeiling": "Tracked harness structure, cross-shell parser and contract validation, one-command exact-head field execution, local fleet-state readiness, and exact failure-boundary reporting. Provider authentication, hosted model availability, quota, hosted response, visible window focus, agent task quality, and operator acceptance require separate live observation."
+  "proofCeiling": "Tracked harness structure, cross-shell parser and contract validation, one-command exact-head field execution, local fleet-state readiness, and exact failure-boundary reporting require the workstation live-cert sequence for runtime promotion. Provider authentication, hosted model availability, quota, hosted response, visible window focus, agent task quality, and operator acceptance require separate live observation."
 }
