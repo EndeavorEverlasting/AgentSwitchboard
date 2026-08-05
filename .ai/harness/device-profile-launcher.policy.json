@@ -10,7 +10,11 @@
     "canonicalOwnerRepository": "EndeavorEverlasting/AgentSwitchboard",
     "consumerIndependentLaunchLogicForbidden": true,
     "desktopShortcutsDelegateOnly": true,
-    "rawExecutableEntryPointsForbidden": ["wezterm", "wezterm.exe", "wezterm-gui.exe"],
+    "rawExecutableEntryPointsForbidden": [
+      "wezterm",
+      "wezterm.exe",
+      "wezterm-gui.exe"
+    ],
     "rawFallbackForbidden": true
   },
   "windowsProfile": {
@@ -22,7 +26,32 @@
     "canonicalSourcePath": "tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1",
     "installedPath": "%LOCALAPPDATA%\\AgentSwitchboard\\profiles\\windows\\Invoke-AgentSwitchboardOpenOrActivate.ps1",
     "consumerCertifier": "EndeavorEverlasting/SysAdminSuite",
-    "allowedOutcomes": ["opened", "activated", "blocked", "failed"]
+    "allowedOutcomes": [
+      "opened",
+      "activated",
+      "blocked",
+      "failed"
+    ]
+  },
+  "androidProfile": {
+    "profileId": "android",
+    "displayName": "Android Profile",
+    "status": "repository-implemented",
+    "terminalFrontend": "termux",
+    "canonicalOperation": "open-or-activate",
+    "canonicalSourcePath": "tooling/profiles/android/Invoke-AgentSwitchboardOpenOrActivate.sh",
+    "bootstrapPath": "Bootstrap-AgentSwitchboard-Termux.sh",
+    "installedPath": "$PREFIX/bin/agentswitchboard-phone",
+    "workspaceBackend": "tmux",
+    "continuityTransport": "ssh",
+    "allowedOutcomes": [
+      "opened",
+      "activated",
+      "blocked",
+      "failed",
+      "requested"
+    ],
+    "liveDeviceProofRequired": true
   },
   "idempotence": {
     "sameIdentityConverges": true,
@@ -43,9 +72,19 @@
     "consumerMayFallbackToRawFrontend": false
   },
   "profiles": {
-    "windows": {"implementationSeparate": true, "frontend": "wezterm"},
-    "linux": {"implementationSeparate": true, "frontend": "profile-defined"},
-    "android": {"implementationSeparate": true, "frontend": "profile-defined", "configurationMayDiffer": true}
+    "windows": {
+      "implementationSeparate": true,
+      "frontend": "wezterm"
+    },
+    "linux": {
+      "implementationSeparate": true,
+      "frontend": "profile-defined"
+    },
+    "android": {
+      "implementationSeparate": true,
+      "frontend": "termux",
+      "configurationMayDiffer": true
+    }
   },
   "certification": {
     "exactProfileIdRequired": true,
@@ -58,13 +97,27 @@
     "proofCeilingRequired": true
   },
   "runtimeEvents": {
-    "requiredChain": ["profile-request", "canonical-launcher-resolved", "workspace-discovered", "opened-or-activated", "terminal-result", "evidence-sink"],
+    "requiredChain": [
+      "profile-request",
+      "canonical-launcher-resolved",
+      "workspace-discovered",
+      "opened-or-activated",
+      "terminal-result",
+      "evidence-sink"
+    ],
     "correlationAndCausationRequired": true,
     "staticProofCannotClaimRuntime": true,
     "syntheticProofCannotClaimLiveDevice": true
   },
   "actionCommitment": {
-    "verbs": ["install", "build", "configure", "repair", "certify", "deploy"],
+    "verbs": [
+      "install",
+      "build",
+      "configure",
+      "repair",
+      "certify",
+      "deploy"
+    ],
     "requiresTrackedMutation": true,
     "requiresFocusedValidation": true,
     "requiresCommitOrGitHubEvidence": true,
