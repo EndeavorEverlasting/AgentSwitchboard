@@ -1,0 +1,21 @@
+{
+  "schema": "agentswitchboard.environment-capability-fixture.v1",
+  "fixtureId": "invalid-unclassified-ssh-target",
+  "input": {
+    "frontend": "termux",
+    "frontendHost": "android-termux",
+    "transport": "ssh",
+    "sshReachable": true,
+    "remoteShellClass": "unknown",
+    "workspaceHost": "unknown",
+    "tmuxStatus": "unknown",
+    "repositoryStatus": "unknown",
+    "claimedAction": "create-and-attach-tmux"
+  },
+  "expected": {
+    "topologyId": null,
+    "roleCeiling": "transport-only",
+    "terminalState": "BLOCKED_CAPABILITY_GAP",
+    "reason": "SSH reachability does not prove a POSIX shell, tmux, or repository-compatible workspace host."
+  }
+}
