@@ -24,7 +24,7 @@ The canonical machine-readable entrypoint is:
 A failure is not reduced to “the script does not work.” Classify the exact boundary:
 
 - **Parameter-binding timing:** `$PSScriptRoot` or another automatic variable was evaluated in a parameter default before the script body established context.
-- **Ambiguous .NET overload:** PowerShell selected a `char,char` overload where the code intended `string,string`; an empty string cannot become one character.
+- **Ambiguous .NET overload:** PowerShell selected a `char/char` overload where the code intended `string/string`; an empty string cannot become one character.
 - **Skipped shell:** a validator passed in PowerShell 7 but was never executed in Windows PowerShell 5.1, or vice versa.
 - **Unexecuted runtime branch:** hosted CI used `TECHNICIAN_LIVE_CERT_CI_SURFACE=1` and therefore did not prove real WSL/Ubuntu execution.
 - **Interactive tooling:** `git diff` opened a pager and automation depended on terminal state.
