@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 1,
   "registryId": "agentswitchboard.technician-live-cert-artifacts.v1",
   "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard",
   "artifacts": [
@@ -9,8 +9,8 @@
     {"artifactId":"technician-ready-summary","fileName":"technician-ready/runs/<runId>/technician-ready-summary.json","generator":"Invoke-TechnicianAgentSwitchboardReady.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"local tool setup, command shims, fleet-state readiness, fresh-shell command proof, and optional launcher command acknowledgement"},
     {"artifactId":"startup-readiness","fileName":"technician-ready/runs/<runId>/startup-readiness/agent-startup-readiness-*.json","generator":"Get-AgentSwitchboardStartupReport.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"canonical local fleet-state and adapter readiness only"},
     {"artifactId":"fresh-shell-agentswitchboard","fileName":"technician-ready/runs/<runId>/fresh-shell-agent-switchboard.txt","generator":"Invoke-TechnicianAgentSwitchboardReady.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"fresh CMD process resolved the repository-owned AgentSwitchboard shim and completed -ListAgents"},
-    {"artifactId":"exact-head-validation","fileName":"exact-head-validation/runs/<runId>/exact-head-validation.json","generator":"Invoke-TechnicianExactHeadValidation.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"actual detached worktree HEAD, cross-shell validators, cleanliness, and optional fresh P00 evidence"},
-    {"artifactId":"exact-head-report","fileName":"exact-head-validation/runs/<runId>/exact-head-validation.md","generator":"Invoke-TechnicianExactHeadValidation.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"English rendering of the actual verified HEAD and field checks"},
+    {"artifactId":"exact-head-validation","fileName":"exact-head-validation/runs/<runId>/exact-head-validation.json","generator":"Invoke-TechnicianExactHeadValidation.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"actual detached worktree HEAD, cross-shell validators, cleanliness, fresh P00 evidence, and optional fresh AgentSwitchboard readiness evidence"},
+    {"artifactId":"exact-head-report","fileName":"exact-head-validation/runs/<runId>/exact-head-validation.md","generator":"Invoke-TechnicianExactHeadValidation.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"English rendering of the actual verified HEAD, field checks, and optional readiness artifact"},
     {"artifactId":"fleet-state","fileName":"GnhfFleet/state.json","generator":"tooling/gnhf/Setup-AgentSwitchboard.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"local command and adapter discovery; never credentials, provider authentication, quota, or hosted response"},
     {"artifactId":"stage-matrix","fileName":"technician-live-cert/runs/<runId>/technician-live-cert-stage-matrix.csv","generator":"stages/P08-Finalize.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"P00-P08 stage ledger only"},
     {"artifactId":"operator-report","fileName":"technician-live-cert/runs/<runId>/technician-live-cert-report.md","generator":"stages/P08-Finalize.ps1","tracked":false,"sensitivity":"local-operational","proofCeiling":"English rendering of observed stage evidence only"},
