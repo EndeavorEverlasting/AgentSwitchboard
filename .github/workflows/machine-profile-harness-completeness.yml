@@ -12,6 +12,7 @@ on:
       - 'docs/workstation/machine-profile-bootstrap.md'
       - 'Get-MachineProfileHarnessStatus.cmd'
       - 'Test-MachineProfileHarness.cmd'
+      - 'Validate-MachineProfileHarnessCandidate.cmd'
       - '.github/workflows/machine-profile-harness-completeness.yml'
   push:
     branches: [main]

@@ -1,8 +1,18 @@
 import json
 import os
+import re
+import subprocess
 import unittest
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+REQUIRED_KEYS = [
+    "codebaseMap", "machineProfileRegistry", "environmentRoleRegistry",
+    "knownTrapsRegistry", "artifactRegistry", "workflowSpecs", "schemaPath",
+    "skill", "operatorDocumentation", "operatorReportTemplate",
+    "statusReporter", "statusCommand", "validator", "validatorCommand",
+    "pythonValidator", "candidateValidator", "candidateValidatorCommand",
+    "preCommitHook", "ciWorkflow",
+]
 
 
 def read_text(path):
@@ -18,10 +28,26 @@ class TestMachineProfileHarnessCompleteness(unittest.TestCase):
     def setUp(self):
         self.manifest = load_json("tooling/profiles/windows/harness/machine-profile/manifest.json")
 
-    def test_registered_files_exist(self):
-        keys = ["codebaseMap", "machineProfileRegistry", "environmentRoleRegistry", "knownTrapsRegistry", "artifactRegistry", "workflowSpecs", "schemaPath", "skill", "operatorDocumentation", "operatorReportTemplate", "statusReporter", "statusCommand", "validator", "validatorCommand", "pythonValidator", "preCommitHook", "ciWorkflow"]
-        missing = [self.manifest[key] for key in keys if not os.path.isfile(os.path.join(REPO_ROOT, self.manifest[key]))]
+    def test_manifest_contract_and_safety_flags(self):
+        self.assertEqual("agentswitchboard.machine-profile-harness-manifest.v1", self.manifest["schema"])
+        self.assertFalse(self.manifest["generatedEvidenceTracked"])
+        self.assertFalse(self.manifest["implicitHookInstallationAllowed"])
+        self.assertFalse(self.manifest["productMutationAllowed"])
+        self.assertFalse(self.manifest["secretsAllowed"])
+
+    def test_registered_files_exist_and_are_tracked(self):
+        missing = [self.manifest[key] for key in REQUIRED_KEYS if not os.path.isfile(os.path.join(REPO_ROOT, self.manifest[key]))]
         self.assertEqual([], missing)
+        for key in REQUIRED_KEYS:
+            path = self.manifest[key]
+            completed = subprocess.run(
+                ["git", "ls-files", "--error-unmatch", "--", path],
+                cwd=REPO_ROOT,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(0, completed.returncode, f"Untracked harness file: {path}\n{completed.stderr}")
 
     def test_roles_are_exact_and_paths_local_only(self):
         registry = load_json(self.manifest["environmentRoleRegistry"])
@@ -45,6 +71,20 @@ class TestMachineProfileHarnessCompleteness(unittest.TestCase):
         self.assertTrue(registry["generatedArtifacts"])
         for artifact in registry["generatedArtifacts"]:
             self.assertFalse(artifact["tracked"])
+
+    def test_wrappers_are_errorlevel_shadow_safe(self):
+        for key in ("statusCommand", "validatorCommand", "candidateValidatorCommand"):
+            wrapper = read_text(self.manifest[key])
+            self.assertIn('set "ERRORLEVEL="', wrapper)
+            self.assertIn('set "_rc=%ERRORLEVEL%"', wrapper)
+
+    def test_reporter_and_candidate_validation_contracts(self):
+        reporter = read_text(self.manifest["statusReporter"])
+        self.assertIsNone(re.search(r"(?mi)^\s*exit(?:\s|$)", reporter))
+        self.assertIn("loadErrors", reporter)
+        candidate = read_text(self.manifest["candidateValidator"])
+        for token in ("fetch", "worktree", "--detach", "artifactRegistry", "diff", "--check"):
+            self.assertIn(token, candidate)
 
     def test_no_real_machine_literals(self):
         paths = [self.manifest[key] for key in ("codebaseMap", "environmentRoleRegistry", "knownTrapsRegistry", "skill", "operatorDocumentation")]

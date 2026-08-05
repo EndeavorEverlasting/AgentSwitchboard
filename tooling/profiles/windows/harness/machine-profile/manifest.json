@@ -17,11 +17,13 @@
   "validator": "scripts/Test-MachineProfileHarnessCompleteness.ps1",
   "validatorCommand": "Test-MachineProfileHarness.cmd",
   "pythonValidator": "tests/test_machine_profile_harness_completeness.py",
+  "candidateValidator": "tooling/profiles/windows/harness/machine-profile/Invoke-MachineProfileHarnessCandidate.ps1",
+  "candidateValidatorCommand": "Validate-MachineProfileHarnessCandidate.cmd",
   "preCommitHook": "tooling/profiles/windows/hooks/Invoke-MachineProfileHarnessPreCommit.ps1",
   "ciWorkflow": ".github/workflows/machine-profile-harness-completeness.yml",
   "generatedEvidenceTracked": false,
   "implicitHookInstallationAllowed": false,
   "productMutationAllowed": false,
   "secretsAllowed": false,
-  "proofCeiling": "Tracked harness completeness, explicit environment-role routing, local-only path policy, workflow selection, deterministic validation, operator reporting, and clean handoff shape. No WSL, package, launcher, authentication, provider, or visible-runtime proof."
+  "proofCeiling": "Tracked harness completeness, explicit environment-role routing, local-only path policy, workflow selection, deterministic validation, operator reporting, candidate isolation, and clean handoff shape. No WSL, package, launcher, authentication, provider, or visible-runtime proof."
 }

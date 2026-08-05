@@ -4,10 +4,10 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 $repoRoot=Split-Path -Parent $PSScriptRoot
 function Read-Json([string]$Relative){$path=Join-Path $repoRoot $Relative;if(-not(Test-Path -LiteralPath $path -PathType Leaf)){throw "Missing harness component: $Relative"};Get-Content -LiteralPath $path -Raw | ConvertFrom-Json}
-$manifest=Read-Json 'tooling\profiles\windows\harness\machine-profile\manifest.json'
+$manifest=Read-Json 'tooling/profiles/windows/harness/machine-profile/manifest.json'
 if($manifest.schema -ne 'agentswitchboard.machine-profile-harness-manifest.v1'){throw 'Unexpected manifest schema.'}
 if($manifest.productMutationAllowed -ne $false -or $manifest.secretsAllowed -ne $false -or $manifest.implicitHookInstallationAllowed -ne $false){throw 'Harness safety flags are invalid.'}
-$keys=@('codebaseMap','machineProfileRegistry','environmentRoleRegistry','knownTrapsRegistry','artifactRegistry','workflowSpecs','schemaPath','skill','operatorDocumentation','operatorReportTemplate','statusReporter','statusCommand','validator','validatorCommand','pythonValidator','preCommitHook','ciWorkflow')
+$keys=@('codebaseMap','machineProfileRegistry','environmentRoleRegistry','knownTrapsRegistry','artifactRegistry','workflowSpecs','schemaPath','skill','operatorDocumentation','operatorReportTemplate','statusReporter','statusCommand','validator','validatorCommand','pythonValidator','candidateValidator','candidateValidatorCommand','preCommitHook','ciWorkflow')
 $required=@($keys | ForEach-Object {[string]$manifest.$_})
 foreach($relative in $required){if(-not(Test-Path -LiteralPath (Join-Path $repoRoot $relative) -PathType Leaf)){throw "Missing registered file: $relative"}}
 $roles=Read-Json ([string]$manifest.environmentRoleRegistry)
@@ -29,8 +29,32 @@ foreach($id in @('machine-profile-task-intake','machine-profile-validation','mac
 $privacyPaths=@([string]$manifest.codebaseMap,[string]$manifest.environmentRoleRegistry,[string]$manifest.knownTrapsRegistry,[string]$manifest.skill,[string]$manifest.operatorDocumentation)
 $text=@($privacyPaths | ForEach-Object {Get-Content -LiteralPath (Join-Path $repoRoot $_) -Raw}) -join "`n"
 foreach($literal in @('CheeksMcClappeth','pa_rperez26','OneDrive - Northwell Health')){if($text -match [regex]::Escape($literal)){throw "Real machine literal committed: $literal"}}
+foreach($wrapper in @([string]$manifest.statusCommand,[string]$manifest.validatorCommand,[string]$manifest.candidateValidatorCommand)){$wrapperText=Get-Content -LiteralPath (Join-Path $repoRoot $wrapper) -Raw;if($wrapperText -notmatch 'set "ERRORLEVEL="'){throw "Wrapper does not clear a shadowing ERRORLEVEL variable: $wrapper"}}
+$reporterText=Get-Content -LiteralPath (Join-Path $repoRoot ([string]$manifest.statusReporter)) -Raw
+if($reporterText -match '(?mi)^\s*exit(?:\s|$)'){throw 'Status reporter must not terminate a hosting PowerShell process.'}
+$candidateText=Get-Content -LiteralPath (Join-Path $repoRoot ([string]$manifest.candidateValidator)) -Raw
+foreach($token in @('fetch', 'worktree', 'add', '--detach', 'artifactRegistry', 'diff', '--check')){if($candidateText -notmatch [regex]::Escape($token)){throw "Candidate validator is missing token: $token"}}
 $git=Get-Command git -ErrorAction SilentlyContinue
 if($git){foreach($relative in $required){& $git.Source -C $repoRoot ls-files --error-unmatch -- $relative *> $null;if($LASTEXITCODE -ne 0){throw "Harness file is not tracked: $relative"}}}
 $temp=Join-Path ([IO.Path]::GetTempPath()) ('agentswitchboard-machine-profile-harness-'+[guid]::NewGuid().ToString('N'))
-try{$pwsh=(Get-Command pwsh -ErrorAction Stop).Source;$statusScript=Join-Path $repoRoot 'tooling\profiles\windows\Get-MachineProfileHarnessStatus.ps1';& $pwsh -NoLogo -NoProfile -File $statusScript -Emit Json -OutputRoot $temp | Out-Null;$statusExit=$LASTEXITCODE;if($statusExit -ne 0){throw "Status reporter failed: $statusExit"};foreach($name in @('machine-profile-harness-status.json','machine-profile-harness-status.md')){if(-not(Test-Path -LiteralPath (Join-Path $temp $name) -PathType Leaf)){throw "Missing status artifact: $name"}}}finally{Remove-Item -LiteralPath $temp -Recurse -Force -ErrorAction SilentlyContinue}
+try{
+    $pwsh=(Get-Command pwsh -ErrorAction Stop).Source
+    $statusScript=Join-Path $repoRoot ([string]$manifest.statusReporter)
+    $readyOutput=Join-Path $temp 'ready'
+    & $pwsh -NoLogo -NoProfile -File $statusScript -RepoRoot $repoRoot -Emit Json -OutputRoot $readyOutput | Out-Null
+    $statusExit=$LASTEXITCODE
+    if($statusExit -ne 0){throw "Status reporter failed: $statusExit"}
+    foreach($name in @('machine-profile-harness-status.json','machine-profile-harness-status.md')){if(-not(Test-Path -LiteralPath (Join-Path $readyOutput $name) -PathType Leaf)){throw "Missing status artifact: $name"}}
+
+    $missingRepo=Join-Path $temp 'missing-repo'
+    $missingOutput=Join-Path $temp 'missing-output'
+    $null=New-Item -ItemType Directory -Path $missingRepo -Force
+    & $pwsh -NoLogo -NoProfile -File $statusScript -RepoRoot $missingRepo -Emit Json -OutputRoot $missingOutput *> $null
+    $missingExit=$LASTEXITCODE
+    if($missingExit -eq 0){throw 'Incomplete reporter fixture unexpectedly succeeded.'}
+    foreach($name in @('machine-profile-harness-status.json','machine-profile-harness-status.md')){if(-not(Test-Path -LiteralPath (Join-Path $missingOutput $name) -PathType Leaf)){throw "Incomplete reporter did not produce: $name"}}
+    $missingStatus=Get-Content -LiteralPath (Join-Path $missingOutput 'machine-profile-harness-status.json') -Raw | ConvertFrom-Json
+    if($missingStatus.status -ne 'incomplete' -or $missingStatus.loadErrors.Count -eq 0){throw 'Incomplete reporter artifact lacks failure diagnostics.'}
+}
+finally{Remove-Item -LiteralPath $temp -Recurse -Force -ErrorAction SilentlyContinue}
 Write-Host '[PASS] Machine-profile operational harness completeness passed.'

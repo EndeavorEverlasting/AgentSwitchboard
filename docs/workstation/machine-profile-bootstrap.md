@@ -50,11 +50,23 @@ Get-MachineProfileHarnessStatus.cmd
 Test-MachineProfileHarness.cmd
 ```
 
+The status reporter writes JSON and Markdown even when registered components are missing or malformed. It then returns failure without terminating a caller's PowerShell host.
+
 The pre-commit hook is opt-in and is never installed implicitly:
 
 ```powershell
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File tooling\profiles\windows\hooks\Invoke-MachineProfileHarnessPreCommit.ps1
+pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File tooling\profiles\windows\hooks\Invoke-MachineProfileHarnessPreCommit.ps1
 ```
+
+## Validate an unmerged candidate safely
+
+Use the repository-owned candidate command instead of assembling a long ad hoc Git/CMD snippet:
+
+```cmd
+Validate-MachineProfileHarnessCandidate.cmd -SourceRepository "C:\path\to\existing-checkout" -WorktreeRoot "C:\path\to\isolated-worktree" -Branch "feature-branch" -ExpectedHead "40-character-sha" -BaseCommit "40-character-base-sha"
+```
+
+It preserves dirty or separately owned source work, fetches without force, verifies origin, ancestry, branch head, detached worktree head, and clean state, runs the PowerShell and Python harness validators plus existing machine-profile contracts, runs `git diff --check`, resolves the status files from the tracked manifest and artifact registry, prints the Markdown report, opens it in Notepad, and emits `machine-profile-harness-candidate-validation.json`. Existing matching clean worktrees may be reused; unrelated existing directories fail closed.
 
 ## Chosen workspace directory
 
@@ -88,13 +100,7 @@ The wrapper creates the workspace directory when absent, computes the explicit r
 
 Repository identity and path precede PowerShell, WSL repair, setup, and live certification. A failed prerequisite blocks every downstream stage.
 
-In cmd.exe, capture the owning exit code immediately:
-
-```cmd
-call ".\Repair-Technician-WSL-Ubuntu.cmd"
-set "WSL_RC=%ERRORLEVEL%"
-echo WSL_REPAIR_EXIT=%WSL_RC%
-```
+Repository CMD wrappers use `setlocal`, clear any caller-defined `ERRORLEVEL` environment variable, invoke the owned command, and capture the dynamic exit immediately. This prevents both later-command clobbering and pseudo-variable shadowing.
 
 Every operator block must name its shell. Do not patch a candidate checkout with an untracked one-liner and then invoke a pull wrapper over it. Commit and push the repair on an isolated branch, fetch without force, verify the exact SHA, and then execute.
 
@@ -114,4 +120,4 @@ Observed usernames, hostnames, tenant names, role assignments, and resolved path
 
 ## Proof boundary
 
-Harness validation proves component completeness, explicit role routing, local-only path policy, workflow shape, operator-report rendering, and deterministic checks. It does not prove WSL health, package installation, launcher behavior, authentication, provider response, or a visible working coding environment.
+Harness validation proves component completeness, explicit role routing, local-only path policy, workflow shape, candidate isolation, operator-report rendering, and deterministic checks. It does not prove WSL health, package installation, launcher behavior, authentication, provider response, or a visible working coding environment.

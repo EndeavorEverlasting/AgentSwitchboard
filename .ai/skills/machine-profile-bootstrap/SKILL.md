@@ -37,12 +37,13 @@ Use when AgentSwitchboard is being installed, repaired, relocated, or diagnosed 
 10. Preserve registry precedence: explicit path, environment override, verified machine binding, verified existing checkout, stable `%USERPROFILE%\dev\AgentSwitchBoard-Live` default.
 11. Verify origin, branch, HEAD, and dirty state before mutation. Use an isolated worktree or branch for separately owned work.
 12. Select the intake, validation, failure-recovery, or handoff workflow matching the current state.
-13. In cmd.exe, capture `ERRORLEVEL` immediately with `set "RC=%ERRORLEVEL%"` before another command.
+13. In cmd.exe, use repository wrappers that clear any caller-defined `ERRORLEVEL` variable and capture the dynamic exit immediately after the owned command.
 14. A failed WSL repair blocks setup; a failed setup blocks live certification.
 15. Convert reproduced deterministic failures into focused regression coverage and known-trap guidance.
 16. Report `environmentRoleId`, `profileId`, confidence, reasons, repository-root source, selected root, blockers, branch, HEAD, local evidence path, and proof ceiling.
 17. Generate the English and JSON harness report with `Get-MachineProfileHarnessStatus.cmd`.
-18. Continue through repository acquisition, PowerShell 7 gate, WSL repair, workstation setup, and live certification without reordering those gates.
+18. For unmerged remote harness work, use `Validate-MachineProfileHarnessCandidate.cmd`; it fetches without force, verifies exact ancestry and head, preserves dirty source work in a detached isolated worktree, runs the owning validators, resolves status artifacts from tracked registries, prints the report, opens it, and propagates failures.
+19. Continue through repository acquisition, PowerShell 7 gate, WSL repair, workstation setup, and live certification without reordering those gates.
 
 ## Expected outputs
 
@@ -53,7 +54,7 @@ Tracked:
 - known-traps and artifact registries;
 - intake, validation, failure-recovery, and handoff workflows;
 - schemas and synthetic fixtures;
-- operator report template, status reporter, hook, PowerShell and Python validators, CI, and operator documentation.
+- operator report template, status reporter, hook, candidate validator, PowerShell and Python validators, CI, and operator documentation.
 
 Generated and untracked:
 
@@ -61,17 +62,24 @@ Generated and untracked:
 - `machine-profile.env.cmd`;
 - `machine-profile.env.ps1`;
 - `machine-profile-harness-status.json`;
-- `machine-profile-harness-status.md`.
+- `machine-profile-harness-status.md`;
+- `machine-profile-harness-candidate-validation.json`.
 
 ## Deterministic validation
 
 ```cmd
+Test-MachineProfileHarness.cmd
 python -m unittest tests.test_machine_profile_harness_completeness
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\Test-MachineProfileHarnessCompleteness.ps1
 python -m unittest tests.test_machine_profile_bootstrap
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\Test-MachineProfileBootstrap.ps1
 python -m unittest tests.test_technician_live_cert_surface
 git diff --check
+```
+
+Candidate validation syntax:
+
+```cmd
+Validate-MachineProfileHarnessCandidate.cmd -SourceRepository "C:\path\to\existing-checkout" -WorktreeRoot "C:\path\to\isolated-worktree" -Branch "feature-branch" -ExpectedHead "40-character-sha" -BaseCommit "40-character-base-sha"
 ```
 
 ## Forbidden scope
@@ -82,13 +90,13 @@ git diff --check
 - No silent movement of an existing checkout.
 - No reset, clean, stash, overwrite, force update, or unexpected-origin acceptance.
 - No committed real machine-profile output or resolved path evidence.
-- No stale `ERRORLEVEL`, pull-over-local-patch, setup after failed WSL repair, or live certification after failed setup.
+- No stale or shadowed `ERRORLEVEL`, pull-over-local-patch, setup after failed WSL repair, or live certification after failed setup.
 - No package, authentication, provider, launcher, or live-runtime success claim from profile classification or harness validation.
 
 ## Stop and escalate
 
-Stop when Windows PowerShell or `curl.exe` is missing, an explicit path cannot be created, the existing target is nonempty but not a valid checkout, origin is unexpected, dirty ownership is unresolved, the checkout is detached, a prerequisite fails, a reboot is required, or repository acquisition fails.
+Stop when Windows PowerShell or `curl.exe` is missing, an explicit path cannot be created, the existing target is nonempty but not a valid checkout, origin is unexpected, dirty ownership is unresolved, the checkout is detached unexpectedly, a prerequisite fails, a reboot is required, or repository acquisition fails.
 
 Escalate with the environment role, profile ID, confidence, repository-root source, selected root, exact blocker, transcript and summary paths, preserved checkout state, branch, HEAD, proof ceiling, and one executable next command.
 
-The proof ceiling is machine observation, deterministic classification, explicit role routing, repository-root recommendation, harness completeness, workflow selection, status rendering, and bootstrap ordering. Live workstation success still requires repository-owned repair, setup, and certification evidence.
+The proof ceiling is machine observation, deterministic classification, explicit role routing, repository-root recommendation, harness completeness, candidate isolation, workflow selection, status rendering, and bootstrap ordering. Live workstation success still requires repository-owned repair, setup, and certification evidence.
