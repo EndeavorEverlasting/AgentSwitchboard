@@ -1,0 +1,49 @@
+{
+  "schema": "agentswitchboard.environment-capability-codebase-map.v1",
+  "owner": "EndeavorEverlasting/AgentSwitchboard",
+  "mission": "Classify the exact environment topology before installing, launching, or claiming AgentSwitchboard continuity across Windows, WSL, Linux, Android, Termux, SSH, tmux, or agent runtimes.",
+  "canonicalSources": {
+    "doctrine": "docs/governance/environment-capability-contract.md",
+    "policy": ".ai/harness/environment-capability.policy.json",
+    "registry": "tooling/profiles/harness/environment-capability/environment-capability.registry.json",
+    "schema": "tooling/profiles/harness/environment-capability/schemas/environment-capability.schema.json",
+    "skill": ".ai/skills/environment-capability-routing/SKILL.md"
+  },
+  "implementationSurfaces": {
+    "androidBootstrap": "Bootstrap-AgentSwitchboard-Termux.sh",
+    "androidLauncher": "tooling/profiles/android/Invoke-AgentSwitchboardOpenOrActivate.sh",
+    "windowsLauncher": "tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1",
+    "deviceProfileRegistry": ".ai/harness/device-profile-registry.json",
+    "deviceProfilePolicy": ".ai/harness/device-profile-launcher.policy.json"
+  },
+  "workflows": [
+    "tooling/profiles/harness/environment-capability/workflows/environment-intake.workflow.json",
+    "tooling/profiles/harness/environment-capability/workflows/topology-selection.workflow.json",
+    "tooling/profiles/harness/environment-capability/workflows/certification.workflow.json"
+  ],
+  "fixtures": [
+    "tooling/profiles/harness/environment-capability/fixtures/valid-windows-control-plane.fixture.json",
+    "tooling/profiles/harness/environment-capability/fixtures/valid-android-terminal-client.fixture.json",
+    "tooling/profiles/harness/environment-capability/fixtures/invalid-android-full-runtime-claim.fixture.json",
+    "tooling/profiles/harness/environment-capability/fixtures/invalid-local-tmux-continuity-claim.fixture.json",
+    "tooling/profiles/harness/environment-capability/fixtures/invalid-unclassified-ssh-target.fixture.json"
+  ],
+  "validators": [
+    "scripts/Test-EnvironmentCapabilityHarness.ps1",
+    "tests/test_environment_capability_harness.py"
+  ],
+  "operatorGuide": "docs/harness/environment-capability-harness.md",
+  "generatedEvidence": {
+    "tracked": false,
+    "defaultRoot": "operating-system temporary directory/AgentSwitchboard/environment-capability",
+    "artifacts": [
+      "environment-observation.json",
+      "topology-selection.json",
+      "remote-host-preflight.json",
+      "capability-certification.json",
+      "operator-report.md",
+      "final-handoff.json"
+    ]
+  },
+  "proofCeiling": "Topology registration and deterministic classification contracts only. No live environment is proved by this map."
+}
