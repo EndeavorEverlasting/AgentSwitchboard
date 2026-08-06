@@ -6,23 +6,33 @@ status: canonical
 
 # Operator Command Envelope
 
-## Deterministic trigger
+## Trigger
 
 Trigger ID: `operator.command-artifact`
 
-Select this skill whenever an agent provides an operator-facing executable command, exact next command, workstation recovery command, terminal handoff, or executable code block. This skill is shell-agnostic: it owns presentation hygiene and does not own shell grammar.
+Use this skill whenever an agent provides a copy/paste shell command, an exact next command, a workstation recovery command, a terminal handoff, or an operator-facing executable code block. This skill is shell-agnostic: it owns presentation hygiene and does not own shell grammar.
 
 When the target shell is PowerShell and delivery is interactive copy/paste, `powershell-interactive-execution` is mandatory and becomes the primary syntax-boundary owner. The two skills compose; neither substitutes for the other.
 
-## Required inputs
+## Read first
+
+1. `tooling/profiles/windows/harness/technician-live-cert/operator-command-contract.json`
+2. `tooling/profiles/windows/harness/technician-live-cert/fixtures/operator-command-contamination.fixture.json`
+3. `tooling/profiles/windows/harness/technician-live-cert/artifact-registry.json`
+4. `tooling/skills/harness/command-delivery/skill-factoring.registry.json`
+5. `.ai/skills/powershell-interactive-execution/SKILL.md` when the target is interactive PowerShell
+6. The selected workflow and the exact shell and delivery mode in which the operator will run the command
+
+## Inputs
 
 - exact target shell and delivery mode;
-- command artifact or candidate path;
-- repository and branch/worktree boundary when applicable;
+- repository and branch or detached-worktree boundary;
 - fixed ref and commit SHA when known;
-- command owner and dependency;
+- command owner;
+- dependency or blocker being advanced;
 - expected artifact or observable proof;
-- completion gate.
+- completion gate;
+- candidate handoff file when one exists.
 
 ## Preconditions
 
@@ -32,22 +42,56 @@ When the target shell is PowerShell and delivery is interactive copy/paste, `pow
 
 ## Procedure
 
-1. Prefer a repository-owned CMD, PS1, or tracked launcher over a long inline bootstrap.
-2. Name the shell outside the executable block.
-3. Put executable input only inside the block and begin at the first executable character.
-4. Never include a PowerShell prompt, Command Prompt prompt, WSL/POSIX prompt, continuation prompt, transcript, stack trace, error metadata, expected output, or explanatory prose in executable input.
-5. Keep owner, dependency, expected artifact, proof ceiling, and completion gate outside executable input.
-6. Carry forward verified repository, ref, SHA, and path values; leave only genuinely unknown values explicit.
-7. For interactive PowerShell, require `powershell-interactive-execution` and run both command-envelope and skill-factoring validators.
-8. When a stale checkout lacks a local launcher, use the registered stale-checkout bootstrap rather than pretending the launcher exists.
-9. Treat each newly observed contamination or submission-boundary failure as a fixture-backed harness repair.
+1. Prefer a repository-owned CMD, PS1, or other tracked launcher over a long inline bootstrap.
+2. Name the shell outside the code fence.
+3. Put executable input only inside the code fence.
+4. Begin at the first executable character. Never include a PowerShell prompt, Command Prompt prompt, WSL prompt, tmux prompt, or continuation prompt.
+5. Never copy the operator's current prompt into the command, even when repeating their terminal context.
+6. Never mix stdout, stderr, stack traces, `At line` diagnostics, category metadata, expected output, or explanatory prose into the executable block.
+7. Keep the owner, dependency, expected artifact, and completion gate outside the block.
+8. Carry known repository, ref, SHA, and path values into the command. Leave only genuinely unknown runtime values explicit.
+9. For interactive PowerShell, require `powershell-interactive-execution`; validate syntax-unit boundaries in addition to this envelope.
+10. When a stale checkout lacks the needed entrypoint, prefer the registered stale-checkout bootstrap. Do not pretend a missing local launcher exists or improvise a transcript-shaped command.
+11. Validate registered command surfaces and any candidate handoff file with `scripts/Test-OperatorCommandEnvelope.ps1`.
+12. Validate interactive PowerShell candidates with `scripts/Test-SkillFactoringContracts.ps1`.
+13. When a violation is found, publish the sanitized command from the report, not the contaminated original.
+14. Treat a new contamination or submission-boundary incident as a field-failure repair: preserve evidence privately, add a minimized synthetic fixture, repair the harness, and rerun the owning validators.
 
-## Produced outputs
+## Required output shape
 
-- prompt-free executable command content;
-- operator metadata outside executable input;
-- sanitized JSON and Markdown validation reports;
-- explicit shell-specific composition when required.
+State the shell, owner, dependency, expected artifact, and completion gate in prose. Then provide exactly one prompt-free executable block.
+
+```powershell
+& '.\Validate-Technician-ExactHead.cmd' 'C:\Work\AgentSwitchBoard-Live' 'refs/heads/main' '<verified-sha>' ready
+```
+
+Do not put a rendered shell prompt before that command. Do not append terminal output after it in the same block.
+
+## Deterministic validation
+
+```powershell
+python -m unittest tests.test_operator_command_envelope
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\Test-OperatorCommandEnvelope.ps1
+pwsh -NoLogo -NoProfile -File scripts/Test-OperatorCommandEnvelope.ps1
+python -m unittest tests.test_skill_factoring_contracts
+pwsh -NoLogo -NoProfile -File scripts/Test-SkillFactoringContracts.ps1
+```
+
+Validate a draft handoff artifact with both relevant owners:
+
+```powershell
+pwsh -NoLogo -NoProfile -File scripts/Test-OperatorCommandEnvelope.ps1 -CandidatePath '<handoff-file>'
+pwsh -NoLogo -NoProfile -File scripts/Test-SkillFactoringContracts.ps1 -CandidatePath '<handoff-file>' -CandidateDeliveryMode interactive-copy-paste
+```
+
+## Outputs
+
+- prompt-free executable command;
+- owner and dependency statement;
+- expected artifact and completion gate;
+- explicit shell-specific composition when required;
+- untracked JSON and Markdown validation reports;
+- minimized synthetic fixture when a new contamination class is discovered.
 
 ## Guardrails
 
@@ -62,22 +106,22 @@ When the target shell is PowerShell and delivery is interactive copy/paste, `pow
 - `tooling/profiles/windows/harness/technician-live-cert/operator-command-contract.json`
 - `scripts/Test-OperatorCommandEnvelope.ps1`
 - `tests/test_operator_command_envelope.py`
+- `tooling/skills/harness/command-delivery/skill-factoring.registry.json`
 
-## Deterministic validation
+## Forbidden
 
-```powershell
-python -m unittest tests.test_operator_command_envelope
-pwsh -NoLogo -NoProfile -File scripts/Test-OperatorCommandEnvelope.ps1
-pwsh -NoLogo -NoProfile -File scripts/Test-SkillFactoringContracts.ps1
-```
-
-## Forbidden conditions
-
-- Shell prompt or terminal transcript inside executable input.
-- Detached PowerShell continuation keywords presented as safe interactive commands.
-- Shell-specific syntax rules duplicated here instead of delegated to their canonical owner.
-- A command acknowledgement or validation pass promoted to runtime behavior proof.
+- shell prompts inside executable blocks;
+- duplicated prompts;
+- continuation prompts;
+- terminal transcripts presented as commands;
+- PowerShell error headers or metadata inside executable blocks;
+- explanatory labels such as `Run:` inside the block;
+- detached PowerShell continuation keywords presented as safe interactive commands;
+- shell-specific syntax rules duplicated here instead of delegated to their canonical owner;
+- private usernames, hostnames, credentials, or production output in fixtures;
+- claiming workstation success from envelope validation;
+- asking the operator to reconstruct or edit a long command manually.
 
 ## Proof ceiling
 
-This skill proves command-presentation hygiene for registered and candidate artifacts. It does not prove shell parsing, command execution, state mutation, runtime behavior, or operator acceptance.
+This skill and its validator prove command-presentation hygiene for registered surfaces and supplied candidate files. They do not prove shell parsing, command execution, state mutation, runtime behavior, or operator acceptance.
