@@ -112,10 +112,12 @@ try {
         'duplicate-powershell-prompt',
         'powershell-prompt-prefix',
         'cmd-prompt-prefix',
+        'posix-shell-prompt-prefix',
         'continuation-prompt',
         'powershell-error-location',
         'powershell-error-metadata',
-        'powershell-error-header'
+        'powershell-error-header',
+        'instruction-prose-in-command-block'
     )) {
         Check ($requiredRule -in $ruleIds) "operator-command/rule/$requiredRule" 'required contamination rule missing'
     }
@@ -156,6 +158,8 @@ foreach ($relativePath in $fixturePaths) {
 
 $operatorFixtureText = Get-Content -LiteralPath (Join-Path $RootPath $operatorCommandFixture) -Raw
 Check ($operatorFixtureText.Contains('bad-duplicated-powershell-prompt')) 'operator-fixture/duplicated-prompt' 'duplicated prompt case missing'
+Check ($operatorFixtureText.Contains('bad-duplicated-unix-powershell-prompt')) 'operator-fixture/unix-powershell-prompt' 'Unix PowerShell prompt case missing'
+Check ($operatorFixtureText.Contains('bad-wsl-shell-prompt')) 'operator-fixture/wsl-prompt' 'WSL prompt case missing'
 Check ($operatorFixtureText.Contains('Get-Process : A positional parameter')) 'operator-fixture/get-process-alias' 'Get-Process alias symptom missing'
 Check (-not $operatorFixtureText.Contains('pa_rperez26')) 'operator-fixture/private-user' 'private operator username must not be tracked'
 Check (-not $operatorFixtureText.Contains('Northwell')) 'operator-fixture/private-org' 'private organization evidence must not be tracked'
