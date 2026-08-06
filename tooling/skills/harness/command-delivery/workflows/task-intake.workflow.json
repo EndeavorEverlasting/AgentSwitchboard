@@ -1,0 +1,47 @@
+{
+  "schema": "agentswitchboard.command-delivery-workflow.v1",
+  "workflowId": "command-delivery.task-intake",
+  "trigger": "new command-delivery task, unknown repository state, or fresh-agent pickup",
+  "requiredInputs": [
+    "repositoryRoot",
+    "task",
+    "ownedScope",
+    "forbiddenScope",
+    "targetShell",
+    "deliveryMode"
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "action": "Read AGENTS.md, focused codebase map, manifest, registries, and operator guide before mutation.",
+      "owner": "agent",
+      "artifact": "selected repository and harness identity"
+    },
+    {
+      "order": 2,
+      "action": "Inspect Git state, active PR, recent history, and collision boundaries; preserve unrelated work with an isolated branch or worktree.",
+      "owner": "agent",
+      "artifact": "safe write boundary"
+    },
+    {
+      "order": 3,
+      "action": "Route exactly one primary skill and required composed skills from the registry and trigger fixtures.",
+      "owner": "skill router",
+      "artifact": "selected primary and composed skills"
+    },
+    {
+      "order": 4,
+      "action": "Run the status reporter and record missing components before implementation.",
+      "owner": "status reporter",
+      "artifact": "command-delivery-harness-status.json"
+    }
+  ],
+  "outputs": [
+    "verified repository identity",
+    "safe branch or worktree",
+    "selected skill route",
+    "initial status artifact"
+  ],
+  "failurePolicy": "Stop before mutation when repository identity, ownership, authority, or collision state is unresolved.",
+  "proofCeiling": "Read-only intake, deterministic route selection, and observed repository state only."
+}

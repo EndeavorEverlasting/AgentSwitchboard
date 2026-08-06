@@ -1,0 +1,48 @@
+{
+  "schema": "agentswitchboard.command-delivery-workflow.v1",
+  "workflowId": "command-delivery.handoff",
+  "trigger": "agent, chat, branch, or operator ownership changes",
+  "requiredInputs": [
+    "repositoryRoot",
+    "branch",
+    "head",
+    "pr",
+    "validationResults",
+    "knownGaps",
+    "nextCommand"
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "action": "Run the status reporter to emit current JSON, Markdown, and handoff artifacts.",
+      "owner": "outgoing agent",
+      "command": "pwsh -NoLogo -NoProfile -File tooling/skills/Get-CommandDeliveryHarnessStatus.ps1"
+    },
+    {
+      "order": 2,
+      "action": "Record exact branch, HEAD, PR, files, validators, skipped checks, preserved worktrees, blockers, proof achieved, and proof ceiling.",
+      "owner": "outgoing agent",
+      "artifact": "command-delivery-handoff.json"
+    },
+    {
+      "order": 3,
+      "action": "Provide one exact command that advances the first unproven gate and resolves its canonical artifact.",
+      "owner": "outgoing agent",
+      "artifact": "next command"
+    },
+    {
+      "order": 4,
+      "action": "Require the receiving agent to re-read AGENTS.md, codebase map, manifest, workflows, and current Git/PR state.",
+      "owner": "incoming agent",
+      "artifact": "fresh intake"
+    }
+  ],
+  "outputs": [
+    "command-delivery-harness-status.json",
+    "command-delivery-harness-status.md",
+    "command-delivery-handoff.json",
+    "exact next command"
+  ],
+  "failurePolicy": "Do not claim completion when a validator, outer entrypoint, hosted check, review, merge, or operator-runtime gate remains unproved.",
+  "proofCeiling": "Compressed repository continuation state; the receiver must refresh every mutable fact."
+}

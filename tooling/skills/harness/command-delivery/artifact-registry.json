@@ -1,0 +1,84 @@
+{
+  "schema": "agentswitchboard.command-delivery-artifacts.v1",
+  "registryId": "agentswitchboard.command-delivery-artifacts.v1",
+  "tracked": false,
+  "sensitivity": "local-operational",
+  "roots": {
+    "skillFactoring": "%LOCALAPPDATA%/AgentSwitchboard/skill-factoring",
+    "harnessStatus": "%LOCALAPPDATA%/AgentSwitchboard/command-delivery-harness",
+    "entrypointProof": "%TEMP%/AgentSwitchboard/command-delivery-entrypoint/<run-id>"
+  },
+  "naming": {
+    "runId": "<UTC timestamp>-<head-prefix>",
+    "status": "command-delivery-harness-status.<ext>",
+    "handoff": "command-delivery-handoff.json",
+    "entrypoint": "command-delivery-entrypoint-result.<ext>"
+  },
+  "artifacts": [
+    {
+      "artifactId": "skill-factoring-json",
+      "fileName": "skill-factoring-report.json",
+      "root": "skillFactoring",
+      "artifactType": "validation-result",
+      "generateWith": "Test-SkillFactoringContracts.cmd",
+      "proofCeiling": "routing, registry-schema, fixture, and candidate syntax-unit findings"
+    },
+    {
+      "artifactId": "skill-factoring-markdown",
+      "fileName": "skill-factoring-report.md",
+      "root": "skillFactoring",
+      "artifactType": "operator-report",
+      "generateWith": "Test-SkillFactoringContracts.cmd",
+      "proofCeiling": "English rendering of the focused validation result"
+    },
+    {
+      "artifactId": "command-delivery-status-json",
+      "fileName": "command-delivery-harness-status.json",
+      "root": "harnessStatus",
+      "artifactType": "status",
+      "generateWith": "tooling/skills/Get-CommandDeliveryHarnessStatus.ps1",
+      "proofCeiling": "tracked component readiness and observed Git identity"
+    },
+    {
+      "artifactId": "command-delivery-status-markdown",
+      "fileName": "command-delivery-harness-status.md",
+      "root": "harnessStatus",
+      "artifactType": "operator-report",
+      "generateWith": "tooling/skills/Get-CommandDeliveryHarnessStatus.ps1",
+      "proofCeiling": "English rendering of working, broken, missing, and next action"
+    },
+    {
+      "artifactId": "command-delivery-handoff",
+      "fileName": "command-delivery-handoff.json",
+      "root": "harnessStatus",
+      "artifactType": "handoff",
+      "generateWith": "tooling/skills/Get-CommandDeliveryHarnessStatus.ps1",
+      "proofCeiling": "compressed continuation state; receiver must re-inspect repository and runtime"
+    },
+    {
+      "artifactId": "command-delivery-entrypoint-json",
+      "fileName": "command-delivery-entrypoint-result.json",
+      "root": "entrypointProof",
+      "artifactType": "entrypoint-proof",
+      "generateWith": "scripts/Test-CommandDeliveryEntrypoint.ps1",
+      "proofCeiling": "one exact CMD-to-PowerShell execution from one temporary spaced path"
+    },
+    {
+      "artifactId": "command-delivery-entrypoint-markdown",
+      "fileName": "command-delivery-entrypoint-result.md",
+      "root": "entrypointProof",
+      "artifactType": "operator-report",
+      "generateWith": "scripts/Test-CommandDeliveryEntrypoint.ps1",
+      "proofCeiling": "English rendering of one exact outer-entrypoint run"
+    }
+  ],
+  "forbiddenContent": [
+    "credentials",
+    "private hostnames",
+    "customer data",
+    "raw terminal transcripts",
+    "unredacted command lines containing secrets",
+    "machine-local evidence committed as authority"
+  ],
+  "proofCeiling": "Artifact identity, location, generator, sensitivity, and per-artifact proof ceilings only."
+}

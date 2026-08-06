@@ -1,24 +1,31 @@
-# Command-Delivery Skill Factoring
+# Command-Delivery Operational Harness
 
 ## Purpose
 
-This harness prevents operator-facing command guidance from depending on overlapping prose conventions. It assigns each concern one owner and makes interactive PowerShell submission boundaries executable contract checks.
+This harness lets a fresh agent inspect command-delivery ownership, select the right workflow, run deterministic validators, avoid known shell-boundary traps, produce local artifacts, and hand off without relying on chat memory.
 
-The field defect that motivated this refactor was a PowerShell assignment submitted as an `if` block, then a separate `elseif`, then a separate `else`. PowerShell executed the completed first statement and treated the later continuation keywords as orphan commands. The repository described the rule, but no composed router or candidate validator forced agents to apply it.
+The original field defect was a PowerShell assignment submitted as an `if` block, then a separate `elseif`, then a separate `else`. A later field defect proved a second boundary: the inner PowerShell validator could be correct while the CMD wrapper corrupted a quoted `%~dp0` path before PowerShell received it.
 
-## Ownership
+## Start here
 
-| Skill | Disposition | Canonical responsibility |
-|---|---|---|
-| `powershell-interactive-execution` | **SPLIT** | PowerShell grammar, structural completeness, and physical submission boundaries |
-| `operator-command-envelope` | **REWIRE** | Prompt-free, transcript-free, shell-agnostic executable presentation |
-| `repo-intake` | **KEEP** | Repository identity and safe branch/worktree boundary |
-| `gnhf-prompt-compilation` | **REWIRE** | Bounded GNHF launch artifact |
-| `stale-checkout-exact-head-bootstrap` | **REWIRE** | Exact-ref bootstrap and delegated artifact readback |
-| `windows-profile-live-certification` | **REWIRE** | Workstation proof chain |
-| `end-to-end-runtime-validation` | **REWIRE** | Observed cross-boundary behavior proof |
+1. Read `AGENTS.md`.
+2. Read `tooling/skills/harness/command-delivery/codebase-map.json`.
+3. Read `tooling/skills/harness/command-delivery/manifest.json`.
+4. Select one workflow under `tooling/skills/harness/command-delivery/workflows/`.
+5. Select the deterministic primary skill through `skill-factoring.registry.json`.
+6. Run `tooling/skills/Get-CommandDeliveryHarnessStatus.ps1`.
+7. Run the validation order in the manifest before commit or handoff.
 
-The machine-readable contracts live in `tooling/skills/harness/command-delivery/skill-factoring.registry.json` and are validated against the complete declared JSON schema. The registry cannot add unknown top-level properties, omit artifact policy, duplicate skill ownership, or declare a primary trigger absent from `TRIGGERS.md`.
+## Components
+
+- **Codebase map:** focused directories, entrypoints, commands, and known traps.
+- **Workflow specs:** task intake, validation before commit, failure recovery, and handoff.
+- **Skill and capability registries:** one primary owner plus explicit composed capabilities.
+- **Artifact registry:** local roots, names, generators, sensitivity, and proof ceilings.
+- **Validators:** routing, schema, syntax, completeness, documentation, and the actual CMD outer entrypoint.
+- **Hooks:** opt-in pre-commit and pre-push checks; never installed implicitly.
+- **Scoped skills:** `powershell-interactive-execution`, `operator-command-envelope`, and composed workflow owners.
+- **Operator reports:** status JSON, English Markdown, compact handoff JSON, and exact-entrypoint proof.
 
 ## Deterministic routing
 
@@ -28,14 +35,14 @@ A PowerShell operator command routes primarily to `powershell-interactive-execut
 
 ## Interactive PowerShell boundary
 
-### Allowed
+Allowed:
 
 - guard clauses with no continuation dependency;
 - one physical-line `if/elseif/else` or `try/catch/finally`;
 - one outer `& { ... }` script block with every continuation attached to the preceding brace;
 - structurally complete multiline compound syntax in a saved `.ps1` file.
 
-### Rejected
+Rejected:
 
 - a later snippet beginning with `elseif`, `else`, `catch`, or `finally`;
 - a continuation keyword starting on a new physical line in an interactive artifact;
@@ -44,33 +51,79 @@ A PowerShell operator command routes primarily to `powershell-interactive-execut
 - one compound statement divided across multiple code fences or submissions;
 - an unterminated Markdown fence.
 
-Relative candidate paths are resolved against the supplied repository root, not the caller's current directory.
+## CMD-to-PowerShell path boundary
+
+A CMD launcher must not pass quoted `%~dp0` directly to a native child process. `%~dp0` ends with a directory separator, which can contaminate the closing quote during native argument parsing. Normalize the launcher root to a fully qualified path without a trailing separator, then pass that normalized variable.
+
+The canonical form is:
+
+```cmd
+for %%I in ("%~dp0.") do set "ROOT=%%~fI"
+"%PSHOST%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\Test-SkillFactoringContracts.ps1" -RootPath "%ROOT%" %*
+```
+
+An inner PS1 pass does not prove the outer CMD entrypoint. The actual CMD must execute from a representative path containing spaces and produce the canonical report before launcher success is claimed.
+
+## Workflows
+
+- `task-intake.workflow.json` — inspect law and state, choose isolation, route one primary skill, and create initial status.
+- `validation-before-commit.workflow.json` — run unit, completeness, exact-entrypoint, documentation, hook, and diff checks.
+- `failure-recovery.workflow.json` — preserve evidence, classify the failed boundary, repair the canonical owner, add regression proof, and rerun the outer entrypoint.
+- `handoff.workflow.json` — emit current status and handoff artifacts with one exact next command.
 
 ## Entrypoints
-
-The Windows front door prefers PowerShell 7 and falls back to Windows PowerShell 5.1:
 
 ```cmd
 Test-SkillFactoringContracts.cmd
 ```
 
-Validate a proposed Markdown handoff before sending it:
+```powershell
+pwsh -NoLogo -NoProfile -File scripts/Test-CommandDeliveryHarnessCompleteness.ps1
+pwsh -NoLogo -NoProfile -File scripts/Test-CommandDeliveryEntrypoint.ps1
+pwsh -NoLogo -NoProfile -File tooling/skills/Get-CommandDeliveryHarnessStatus.ps1
+```
+
+Validate a proposed Markdown handoff:
 
 ```powershell
 pwsh -NoLogo -NoProfile -File scripts/Test-SkillFactoringContracts.ps1 -CandidatePath '.\handoff.md' -CandidateDeliveryMode interactive-copy-paste
 ```
 
-Generated JSON and Markdown reports are local-only under `%LOCALAPPDATA%\AgentSwitchboard\skill-factoring` by default. Candidate command contents are not copied into the report.
+## Hooks
+
+The hooks are opt-in and are never installed automatically:
+
+```powershell
+pwsh -NoLogo -NoProfile -File tooling/skills/hooks/Invoke-CommandDeliveryHarnessPreCommit.ps1
+pwsh -NoLogo -NoProfile -File tooling/skills/hooks/Invoke-CommandDeliveryHarnessPrePush.ps1
+```
+
+## Artifacts
+
+The canonical artifact registry is `tooling/skills/harness/command-delivery/artifact-registry.json`.
+
+Generated evidence remains outside tracked authority:
+
+- `%LOCALAPPDATA%\AgentSwitchboard\skill-factoring\`
+- `%LOCALAPPDATA%\AgentSwitchboard\command-delivery-harness\`
+- `%TEMP%\AgentSwitchboard\command-delivery-entrypoint\<run-id>\`
 
 ## Validation
 
 ```powershell
-python -m unittest tests.test_skill_factoring_contracts
+python -m unittest tests.test_skill_factoring_contracts tests.test_command_delivery_harness
+pwsh -NoLogo -NoProfile -File scripts/Test-CommandDeliveryHarnessCompleteness.ps1
 pwsh -NoLogo -NoProfile -File scripts/Test-SkillFactoringContracts.ps1
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\Test-SkillFactoringContracts.ps1
+pwsh -NoLogo -NoProfile -File scripts/Test-CommandDeliveryEntrypoint.ps1
+pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1
 git --no-pager diff --check
 ```
 
+## Failure handling
+
+Do not substitute a direct PS1 run for a failed CMD proof. A direct invocation may diagnose the inner layer, but completion requires repairing and rerunning the actual outer launcher. Preserve the failed worktree until its evidence has been classified.
+
 ## Proof ceiling
 
-A passing result proves tracked ownership, complete registry-schema conformance, canonical trigger registration, unique primary routing, positive and negative fixture classification, and structural syntax-unit safety for validated candidate artifacts. It does not prove the command succeeds on an operator workstation or produces the intended runtime behavior.
+A passing completeness result proves tracked harness structure and deterministic contracts. A passing entrypoint result additionally proves one exact CMD-to-PowerShell execution from one observed spaced path. Neither proves arbitrary operator commands, target mutation, provider behavior, deployment, or operator acceptance.

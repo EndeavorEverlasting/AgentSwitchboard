@@ -11,6 +11,7 @@ if not defined PSHOST (
   )
   set "PSHOST=powershell.exe"
 )
-"%PSHOST%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\Test-SkillFactoringContracts.ps1" -RootPath "%~dp0" %*
+for %%I in ("%~dp0.") do set "ROOT=%%~fI"
+"%PSHOST%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\Test-SkillFactoringContracts.ps1" -RootPath "%ROOT%" %*
 set "RESULT=%ERRORLEVEL%"
 endlocal & exit /b %RESULT%

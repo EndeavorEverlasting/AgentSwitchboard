@@ -1,0 +1,50 @@
+{
+  "schema": "agentswitchboard.command-delivery-workflow.v1",
+  "workflowId": "command-delivery.validation-before-commit",
+  "trigger": "tracked command-delivery harness or skill change is ready for validation",
+  "requiredInputs": [
+    "repositoryRoot",
+    "branch",
+    "changedPaths"
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "action": "Run dependency-free skill and harness tests.",
+      "owner": "validator",
+      "command": "python -m unittest tests.test_skill_factoring_contracts tests.test_command_delivery_harness"
+    },
+    {
+      "order": 2,
+      "action": "Run focused PowerShell completeness and skill validators.",
+      "owner": "validator",
+      "command": "pwsh -NoLogo -NoProfile -File scripts/Test-CommandDeliveryHarnessCompleteness.ps1"
+    },
+    {
+      "order": 3,
+      "action": "On Windows, execute the actual CMD entrypoint from a detached path containing spaces.",
+      "owner": "entrypoint validator",
+      "command": "pwsh -NoLogo -NoProfile -File scripts/Test-CommandDeliveryEntrypoint.ps1"
+    },
+    {
+      "order": 4,
+      "action": "Run documentation and diff hygiene checks.",
+      "owner": "validator",
+      "command": "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1; git diff --check"
+    },
+    {
+      "order": 5,
+      "action": "Run the opt-in pre-commit hook against staged changes.",
+      "owner": "hook",
+      "command": "pwsh -NoLogo -NoProfile -File tooling/skills/hooks/Invoke-CommandDeliveryHarnessPreCommit.ps1"
+    }
+  ],
+  "outputs": [
+    "skill-factoring reports",
+    "harness status and handoff",
+    "entrypoint proof on Windows",
+    "clean validator exits"
+  ],
+  "failurePolicy": "Preserve the first failing artifact, repair its owning layer, and rerun the complete affected entrypoint; do not promote an inner-layer pass.",
+  "proofCeiling": "Tracked contract, exact tested wrapper in the observed Windows environment, and repository hygiene only."
+}

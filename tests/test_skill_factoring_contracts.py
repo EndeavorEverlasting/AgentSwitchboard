@@ -101,6 +101,13 @@ class SkillFactoringContractTests(unittest.TestCase):
         self.assertIn('set "PSHOST=powershell.exe"', text)
         self.assertIn('"%PSHOST%" -NoLogo -NoProfile', text)
 
+    def test_cmd_entrypoint_normalizes_dp0_before_native_handoff(self) -> None:
+        text = (ROOT / "Test-SkillFactoringContracts.cmd").read_text(encoding="utf-8")
+        self.assertIn('for %%I in ("%~dp0.") do set "ROOT=%%~fI"', text)
+        self.assertIn('-File "%ROOT%\\scripts\\Test-SkillFactoringContracts.ps1"', text)
+        self.assertIn('-RootPath "%ROOT%"', text)
+        self.assertNotIn('-RootPath "%~dp0"', text)
+
 
 if __name__ == "__main__":
     unittest.main()

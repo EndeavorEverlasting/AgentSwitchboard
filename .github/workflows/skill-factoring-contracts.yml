@@ -8,7 +8,10 @@ on:
       - '.ai/skills/stale-checkout-exact-head-bootstrap/**'
       - 'tooling/skills/**'
       - 'scripts/Test-SkillFactoringContracts.ps1'
+      - 'scripts/Test-CommandDeliveryHarnessCompleteness.ps1'
+      - 'scripts/Test-CommandDeliveryEntrypoint.ps1'
       - 'tests/test_skill_factoring_contracts.py'
+      - 'tests/test_command_delivery_harness.py'
       - 'Test-SkillFactoringContracts.cmd'
       - 'docs/harness/command-delivery-skill-factoring.md'
       - '.github/workflows/skill-factoring-contracts.yml'
@@ -34,18 +37,35 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Run dependency-free skill factoring tests
+      - name: Run dependency-free command-delivery tests
         shell: pwsh
-        run: python -m unittest tests.test_skill_factoring_contracts
+        run: python -m unittest tests.test_skill_factoring_contracts tests.test_command_delivery_harness
+
+      - name: Validate complete command-delivery harness
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-CommandDeliveryHarnessCompleteness.ps1 -RootPath $PWD -OutputRoot (Join-Path $PWD 'command-delivery-report/completeness')
 
       - name: Validate skill routing and boundaries in PowerShell 7
         shell: pwsh
-        run: pwsh -NoLogo -NoProfile -File scripts/Test-SkillFactoringContracts.ps1 -RootPath $PWD -OutputRoot (Join-Path $PWD 'skill-factoring-report/pwsh')
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-SkillFactoringContracts.ps1 -RootPath $PWD -OutputRoot (Join-Path $PWD 'command-delivery-report/pwsh')
 
       - name: Validate skill routing and boundaries in Windows PowerShell 5.1
         if: runner.os == 'Windows'
         shell: pwsh
-        run: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\Test-SkillFactoringContracts.ps1 -RootPath $PWD -OutputRoot (Join-Path $PWD 'skill-factoring-report/windows-powershell')
+        run: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\Test-SkillFactoringContracts.ps1 -RootPath $PWD -OutputRoot (Join-Path $PWD 'command-delivery-report/windows-powershell')
+
+      - name: Prove actual CMD entrypoint from a path containing spaces
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-CommandDeliveryEntrypoint.ps1 -RootPath $PWD -OutputRoot (Join-Path $PWD 'command-delivery-report/entrypoint')
+
+      - name: Render operator status and handoff
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File tooling/skills/Get-CommandDeliveryHarnessStatus.ps1 -RootPath $PWD -OutputDirectory (Join-Path $PWD 'command-delivery-report/status')
+
+      - name: Run opt-in pre-commit hook
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File tooling/skills/hooks/Invoke-CommandDeliveryHarnessPreCommit.ps1 -RootPath $PWD
 
       - name: Validate agent documentation contract
         shell: pwsh
@@ -59,7 +79,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: skill-factoring-${{ matrix.os }}-${{ github.run_attempt }}
-          path: skill-factoring-report/**
+          name: command-delivery-${{ matrix.os }}-${{ github.run_attempt }}
+          path: command-delivery-report/**
           if-no-files-found: warn
           retention-days: 7

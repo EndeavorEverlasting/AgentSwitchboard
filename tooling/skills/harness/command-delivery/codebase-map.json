@@ -1,0 +1,52 @@
+{
+  "schema": "agentswitchboard.command-delivery-codebase-map.v1",
+  "harnessId": "agentswitchboard.command-delivery-harness.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "purpose": "Route command-delivery work, validate PowerShell boundaries, prove the outer launcher, generate local evidence, and hand off cleanly.",
+  "entrypoints": {
+    "manifest": "tooling/skills/harness/command-delivery/manifest.json",
+    "skills": "tooling/skills/harness/command-delivery/skill-factoring.registry.json",
+    "capabilities": "tooling/skills/harness/command-delivery/capability-registry.json",
+    "artifacts": "tooling/skills/harness/command-delivery/artifact-registry.json",
+    "intake": "tooling/skills/harness/command-delivery/workflows/task-intake.workflow.json",
+    "validate": "tooling/skills/harness/command-delivery/workflows/validation-before-commit.workflow.json",
+    "recover": "tooling/skills/harness/command-delivery/workflows/failure-recovery.workflow.json",
+    "handoff": "tooling/skills/harness/command-delivery/workflows/handoff.workflow.json",
+    "skillValidator": "scripts/Test-SkillFactoringContracts.ps1",
+    "completeness": "scripts/Test-CommandDeliveryHarnessCompleteness.ps1",
+    "entrypointProof": "scripts/Test-CommandDeliveryEntrypoint.ps1",
+    "status": "tooling/skills/Get-CommandDeliveryHarnessStatus.ps1",
+    "cmd": "Test-SkillFactoringContracts.cmd",
+    "preCommit": "tooling/skills/hooks/Invoke-CommandDeliveryHarnessPreCommit.ps1",
+    "prePush": "tooling/skills/hooks/Invoke-CommandDeliveryHarnessPrePush.ps1",
+    "guide": "docs/harness/command-delivery-skill-factoring.md"
+  },
+  "directories": [
+    {"path": "tooling/skills/harness/command-delivery", "purpose": "Maps, registries, workflows, fixtures, schemas, and report templates."},
+    {"path": ".ai/skills", "purpose": "Scoped procedure; deterministic behavior stays in code."},
+    {"path": "scripts", "purpose": "Validators and exact-entrypoint proof."},
+    {"path": "tests", "purpose": "Dependency-free contracts."},
+    {"path": "tooling/skills/hooks", "purpose": "Opt-in hooks; never installed implicitly."},
+    {"path": "docs/harness", "purpose": "Operator state and handoff guidance."},
+    {"path": ".github/workflows", "purpose": "Windows and Linux exact-head checks."}
+  ],
+  "commands": [
+    {"name": "Inspect status", "command": "pwsh -NoLogo -NoProfile -File tooling/skills/Get-CommandDeliveryHarnessStatus.ps1", "proof": "component readiness and Git identity"},
+    {"name": "Focused completeness", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-CommandDeliveryHarnessCompleteness.ps1", "proof": "component and contract consistency"},
+    {"name": "Skill routing and syntax", "command": "Test-SkillFactoringContracts.cmd", "proof": "routing, schema, fixtures, and syntax units"},
+    {"name": "Outer entrypoint proof", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-CommandDeliveryEntrypoint.ps1", "proof": "actual CMD works from a path containing spaces"},
+    {"name": "Pre-commit", "command": "pwsh -NoLogo -NoProfile -File tooling/skills/hooks/Invoke-CommandDeliveryHarnessPreCommit.ps1", "proof": "focused checks and staged hygiene"},
+    {"name": "Pre-push", "command": "pwsh -NoLogo -NoProfile -File tooling/skills/hooks/Invoke-CommandDeliveryHarnessPrePush.ps1", "proof": "focused checks and Windows outer entrypoint"},
+    {"name": "Build", "command": "none; scripts and contracts", "proof": "not applicable"},
+    {"name": "Deploy", "command": "none; forbidden in this lane", "proof": "no deployment authority"}
+  ],
+  "knownTraps": [
+    "Quoted %~dp0 is unsafe as a native child argument because it ends with a separator; normalize %~dp0. first.",
+    "An inner PS1 PASS does not prove the outer CMD entrypoint.",
+    "Exercise launchers from a representative path containing spaces.",
+    "Do not split if/elseif/else or try/catch/finally across interactive submissions.",
+    "Generated reports and handoffs must remain untracked.",
+    "Static and CI proof do not prove target-workstation behavior."
+  ],
+  "proofCeiling": "Tracked harness structure, deterministic contracts, and one observed CMD-to-PowerShell spaced-path execution only."
+}

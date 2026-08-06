@@ -1,0 +1,53 @@
+{
+  "schema": "agentswitchboard.command-delivery-workflow.v1",
+  "workflowId": "command-delivery.failure-recovery",
+  "trigger": "validator, launcher, wrapper, or operator command fails",
+  "requiredInputs": [
+    "repositoryRoot",
+    "failedCommand",
+    "exitCode",
+    "stderr",
+    "evidencePath",
+    "expectedArtifact"
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "action": "Preserve the failed worktree and local evidence; do not clean unrelated state.",
+      "owner": "failure handler",
+      "artifact": "failure checkpoint"
+    },
+    {
+      "order": 2,
+      "action": "Classify the failing boundary: routing, syntax, CMD/native argument transport, PowerShell wrapper, validator, artifact resolution, or runtime.",
+      "owner": "failure handler",
+      "artifact": "boundary classification"
+    },
+    {
+      "order": 3,
+      "action": "Repair the canonical owner rather than bypassing the gate or weakening a fixture.",
+      "owner": "component owner",
+      "artifact": "tracked repair"
+    },
+    {
+      "order": 4,
+      "action": "Add a minimized positive or negative regression fixture or executable boundary test.",
+      "owner": "validator owner",
+      "artifact": "regression proof"
+    },
+    {
+      "order": 5,
+      "action": "Rerun the actual outer entrypoint and require the canonical artifact.",
+      "owner": "entrypoint validator",
+      "artifact": "fresh entrypoint proof"
+    }
+  ],
+  "outputs": [
+    "failure classification",
+    "tracked repair",
+    "regression test",
+    "fresh canonical artifact"
+  ],
+  "failurePolicy": "An inner script pass cannot close a failure observed at an outer launcher or shell boundary.",
+  "proofCeiling": "Repair and rerun evidence for the observed boundary only; no target-runtime promotion."
+}

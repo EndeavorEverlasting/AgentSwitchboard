@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "registryId": "agentswitchboard.command-delivery-capabilities.v1",
   "capabilities": [
     {
@@ -37,6 +37,33 @@
       "output": "one primary skill and zero or more required composed skills",
       "guardrail": "duplicate trigger ownership and ambiguous primary activation fail validation",
       "proofCeiling": "deterministic routing contract only"
+    },
+    {
+      "id": "command.entrypoint.spaced-path.validate",
+      "ownerSkill": "operator-command-envelope",
+      "implementation": "scripts/Test-CommandDeliveryEntrypoint.ps1",
+      "activation": "repository-owned CMD delegates to PowerShell or another native child",
+      "output": "command-delivery-entrypoint-result.json and command-delivery-entrypoint-result.md",
+      "guardrail": "execute the actual outer launcher from a detached path containing spaces and require its canonical report",
+      "proofCeiling": "one observed outer-entrypoint execution only"
+    },
+    {
+      "id": "command.harness.completeness.validate",
+      "ownerSkill": "operator-command-envelope",
+      "implementation": "scripts/Test-CommandDeliveryHarnessCompleteness.ps1",
+      "activation": "command-delivery harness component or contract changes",
+      "output": "focused validation reports and status",
+      "guardrail": "manifest components, workflows, artifacts, hooks, tests, and docs must remain coherent",
+      "proofCeiling": "tracked harness completeness only"
+    },
+    {
+      "id": "command.harness.status.report",
+      "ownerSkill": "operator-command-envelope",
+      "implementation": "tooling/skills/Get-CommandDeliveryHarnessStatus.ps1",
+      "activation": "fresh-agent intake, handoff, or operator status request",
+      "output": "status JSON, status Markdown, and handoff JSON",
+      "guardrail": "reports are local-operational, untracked, and do not promote runtime proof",
+      "proofCeiling": "observed repository readiness and Git identity only"
     }
   ]
 }
