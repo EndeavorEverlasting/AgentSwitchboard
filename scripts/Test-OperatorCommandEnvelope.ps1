@@ -23,6 +23,7 @@ $contractPath = Join-Path $RootPath $contractRelative
 if (-not (Test-Path -LiteralPath $contractPath -PathType Leaf)) {
     throw "Operator-command contract is missing: $contractPath"
 }
+
 $contract = Get-Content -LiteralPath $contractPath -Raw | ConvertFrom-Json
 if ($contract.contractId -ne 'agentswitchboard.operator-command-envelope.v1') {
     throw "Unexpected operator-command contract ID '$($contract.contractId)'."
@@ -44,11 +45,12 @@ foreach ($requiredRuleId in $requiredRuleIds) {
         throw "Operator-command contract is missing required rule '$requiredRuleId'."
     }
 }
-if ([string]$contract.fixturePath -ne 'tooling/profiles/windows/harness/technician-live-cert/fixtures/operator-command-contamination.fixture.json') {
-    throw "Unexpected operator-command fixture path '$($contract.fixturePath)'."
-}
 
-$fixturePath = Join-Path $RootPath ([string]$contract.fixturePath)
+$fixtureRelative = [string]$contract.fixturePath
+if ($fixtureRelative -ne 'tooling/profiles/windows/harness/technician-live-cert/fixtures/operator-command-contamination.fixture.json') {
+    throw "Unexpected operator-command fixture path '$fixtureRelative'."
+}
+$fixturePath = Join-Path $RootPath $fixtureRelative
 if (-not (Test-Path -LiteralPath $fixturePath -PathType Leaf)) {
     throw "Operator-command contamination fixture is missing: $fixturePath"
 }
@@ -64,9 +66,9 @@ if ([string]::IsNullOrWhiteSpace($OutputRoot)) {
 }
 $OutputRoot = [System.IO.Path]::GetFullPath($OutputRoot)
 
-$violations = New-Object 'System.Collections.Generic.List[object]'
-$fixtureFailures = New-Object 'System.Collections.Generic.List[object]'
-$scannedSources = New-Object 'System.Collections.Generic.List[object]'
+$violations = @()
+$fixtureFailures = @()
+$scannedSources = @()
 
 function Get-SanitizedExcerpt {
     param([AllowEmptyString()][string]$Text)
@@ -101,13 +103,13 @@ function Get-SanitizedExcerpt {
 function Get-RuleIds {
     param([AllowEmptyString()][string]$Text)
 
-    $matches = New-Object 'System.Collections.Generic.List[string]'
+    $matches = @()
     foreach ($rule in $contract.rules) {
         if ([regex]::IsMatch($Text, [string]$rule.pattern)) {
-            [void]$matches.Add([string]$rule.id)
+            $matches += [string]$rule.id
         }
     }
-    return @($matches)
+    return $matches
 }
 
 function Get-MarkdownCommandLines {
@@ -120,7 +122,8 @@ function Get-MarkdownCommandLines {
     $insideFence = $false
     $fenceMarker = ''
     $fenceLanguage = ''
-    $records = New-Object 'System.Collections.Generic.List[object]'
+    $records = @()
+    $allowedLanguages = @($contract.fenceLanguages | ForEach-Object { ([string]$_).ToLowerInvariant() })
 
     for ($index = 0; $index -lt $lines.Count; $index++) {
         $line = [string]$lines[$index]
@@ -142,19 +145,18 @@ function Get-MarkdownCommandLines {
             continue
         }
 
-        $allowed = @($contract.fenceLanguages | ForEach-Object { ([string]$_).ToLowerInvariant() })
-        if ($allowed -contains $fenceLanguage) {
-            [void]$records.Add([pscustomobject]@{
+        if ($allowedLanguages -contains $fenceLanguage) {
+            $records += [pscustomobject]@{
                 path = $DisplayPath
                 line = $index + 1
                 language = $fenceLanguage
                 text = $line
-            })
+            }
         }
     }
 
     if ($insideFence) {
-        [void]$violations.Add([pscustomobject]@{
+        $script:violations += [pscustomobject]@{
             path = $DisplayPath
             line = $lines.Count
             language = $fenceLanguage
@@ -163,10 +165,10 @@ function Get-MarkdownCommandLines {
             message = 'A command fence was opened but not closed.'
             excerpt = ''
             sanitizedCommand = ''
-        })
+        }
     }
 
-    return @($records)
+    return $records
 }
 
 function Get-PlainTextLines {
@@ -175,21 +177,21 @@ function Get-PlainTextLines {
         [Parameter(Mandatory)][string]$DisplayPath
     )
 
+    $records = @()
     $lines = @(Get-Content -LiteralPath $Path)
-    $records = New-Object 'System.Collections.Generic.List[object]'
     for ($index = 0; $index -lt $lines.Count; $index++) {
-        [void]$records.Add([pscustomobject]@{
+        $records += [pscustomobject]@{
             path = $DisplayPath
             line = $index + 1
             language = 'plain'
             text = [string]$lines[$index]
-        })
+        }
     }
-    return @($records)
+    return $records
 }
 
 function Test-Records {
-    param([Parameter(Mandatory)][object[]]$Records)
+    param([Parameter(Mandatory)][AllowEmptyCollection()][object[]]$Records)
 
     foreach ($record in $Records) {
         if ([string]::IsNullOrWhiteSpace([string]$record.text)) {
@@ -197,28 +199,31 @@ function Test-Records {
         }
 
         foreach ($rule in $contract.rules) {
-            if ([regex]::IsMatch([string]$record.text, [string]$rule.pattern)) {
-                $redactedOriginal = Get-SanitizedExcerpt -Text ([string]$record.text)
-                $sanitizedCommand = if ([string]$rule.id -in @(
-                    'duplicate-powershell-prompt',
-                    'powershell-prompt-prefix',
-                    'cmd-prompt-prefix'
-                )) {
-                    $redactedOriginal
-                }
-                else {
-                    ''
-                }
-                [void]$violations.Add([pscustomobject]@{
-                    path = [string]$record.path
-                    line = [int]$record.line
-                    language = [string]$record.language
-                    ruleId = [string]$rule.id
-                    severity = [string]$rule.severity
-                    message = [string]$rule.message
-                    excerpt = $redactedOriginal
-                    sanitizedCommand = $sanitizedCommand
-                })
+            if (-not [regex]::IsMatch([string]$record.text, [string]$rule.pattern)) {
+                continue
+            }
+
+            $redactedOriginal = Get-SanitizedExcerpt -Text ([string]$record.text)
+            $sanitizedCommand = if ([string]$rule.id -in @(
+                'duplicate-powershell-prompt',
+                'powershell-prompt-prefix',
+                'cmd-prompt-prefix'
+            )) {
+                $redactedOriginal
+            }
+            else {
+                ''
+            }
+
+            $script:violations += [pscustomobject]@{
+                path = [string]$record.path
+                line = [int]$record.line
+                language = [string]$record.language
+                ruleId = [string]$rule.id
+                severity = [string]$rule.severity
+                message = [string]$rule.message
+                excerpt = $redactedOriginal
+                sanitizedCommand = $sanitizedCommand
             }
         }
     }
@@ -231,21 +236,21 @@ foreach ($case in $fixture.cases) {
     $unexpected = @($actual | Where-Object { $_ -notin $expected })
 
     if ($missing.Count -gt 0 -or $unexpected.Count -gt 0) {
-        [void]$fixtureFailures.Add([pscustomobject]@{
+        $fixtureFailures += [pscustomobject]@{
             caseId = [string]$case.id
             missingRuleIds = $missing
             unexpectedRuleIds = $unexpected
-        })
+        }
     }
 }
 
-$sourcePaths = New-Object 'System.Collections.Generic.List[string]'
+$sourcePaths = @()
 foreach ($relativePath in $contract.scanPaths) {
-    [void]$sourcePaths.Add((Join-Path $RootPath ([string]$relativePath)))
+    $sourcePaths += Join-Path $RootPath ([string]$relativePath)
 }
 foreach ($candidate in @($CandidatePath)) {
     if (-not [string]::IsNullOrWhiteSpace($candidate)) {
-        [void]$sourcePaths.Add([System.IO.Path]::GetFullPath($candidate))
+        $sourcePaths += [System.IO.Path]::GetFullPath($candidate)
     }
 }
 
@@ -255,14 +260,15 @@ foreach ($sourcePath in $sourcePaths) {
         [System.StringComparison]::OrdinalIgnoreCase
     )
     $displayPath = if ($isRepositorySource) {
-        ($sourcePath.Substring($RootPath.Length) -replace '^[\\/]+', '').Replace('\\', '/')
+        $relative = $sourcePath.Substring($RootPath.Length) -replace '^[\\/]+', ''
+        $relative -replace '\\', '/'
     }
     else {
         [regex]::Replace($sourcePath, '(?i)C:\\Users\\[^\\\r\n]+', 'C:\Users\<redacted>')
     }
 
     if (-not (Test-Path -LiteralPath $sourcePath -PathType Leaf)) {
-        [void]$violations.Add([pscustomobject]@{
+        $violations += [pscustomobject]@{
             path = $displayPath
             line = 0
             language = ''
@@ -271,7 +277,7 @@ foreach ($sourcePath in $sourcePaths) {
             message = 'A registered operator-command surface is missing.'
             excerpt = ''
             sanitizedCommand = ''
-        })
+        }
         continue
     }
 
@@ -283,11 +289,11 @@ foreach ($sourcePath in $sourcePaths) {
         @(Get-PlainTextLines -Path $sourcePath -DisplayPath $displayPath)
     }
 
-    [void]$scannedSources.Add([pscustomobject]@{
+    $scannedSources += [pscustomobject]@{
         path = $displayPath
         lineCount = @(Get-Content -LiteralPath $sourcePath).Count
         candidateLineCount = $records.Count
-    })
+    }
     Test-Records -Records $records
 }
 
@@ -304,13 +310,13 @@ $result = [ordered]@{
     repository = 'EndeavorEverlasting/AgentSwitchboard'
     root = $RootPath
     status = $status
-    contract = $contractRelative.Replace('\', '/')
-    fixture = ([string]$contract.fixturePath)
-    scannedSources = @($scannedSources)
+    contract = $contractRelative -replace '\\', '/'
+    fixture = $fixtureRelative
+    scannedSources = $scannedSources
     violationCount = $violations.Count
     fixtureFailureCount = $fixtureFailures.Count
-    violations = @($violations)
-    fixtureFailures = @($fixtureFailures)
+    violations = $violations
+    fixtureFailures = $fixtureFailures
     proofCeiling = [string]$contract.proofCeiling
     nextCommand = if ($status -eq 'PASS') {
         'pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertHarness.ps1'
@@ -340,7 +346,8 @@ if (-not $NoReport) {
     }
     else {
         @($violations | ForEach-Object {
-            '| {0} | {1} | {2} | `{3}` |' -f $_.ruleId, $_.path, $_.line, $_.sanitizedCommand.Replace('|', '\|')
+            $safeCommand = ([string]$_.sanitizedCommand).Replace('|', '\|')
+            '| {0} | {1} | {2} | `{3}` |' -f $_.ruleId, $_.path, $_.line, $safeCommand
         })
     }
     $fixtureLines = if ($fixtureFailures.Count -eq 0) {
@@ -390,8 +397,7 @@ if ($env:GITHUB_ACTIONS -eq 'true') {
         Write-Host "::error file=$($violation.path),line=$($violation.line),title=Operator command envelope violation::$message"
     }
     foreach ($fixtureFailure in $fixtureFailures) {
-        $message = "Fixture $($fixtureFailure.caseId) failed command-envelope classification."
-        Write-Host "::error title=Operator command fixture failure::$message"
+        Write-Host "::error title=Operator command fixture failure::Fixture $($fixtureFailure.caseId) failed command-envelope classification."
     }
 }
 
