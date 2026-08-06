@@ -1,16 +1,22 @@
 {
-  "schemaVersion": 1,
-  "contractId": "agentswitchboard.technician-bootstrap-order.v1",
-  "owner": "tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1",
-  "purpose": "Fail closed unless the Windows workstation bootstrap establishes WezTerm, WSL/Ubuntu, and tmux before agent CLIs, GNHF fleet setup, or launcher execution.",
-  "orderedGates": [
+  "schemaVersion": 2,
+  "contractId": "agentswitchboard.technician-bootstrap-order.v2",
+  "frontDoor": "Technician-AgentSwitchboard-Ready.cmd",
+  "bootstrapOwner": "tooling/profiles/windows/Invoke-TechnicianBootstrapPrerequisites.ps1",
+  "runtimeOwner": "tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1",
+  "purpose": "Fail closed unless the Windows front door establishes WezTerm, WSL/Ubuntu, and tmux before the higher runtime setup engine can execute.",
+  "bootstrapGates": [
     {
-      "id": "wezterm-ready",
-      "token": "Add-Step -Name 'wezterm' -Status 'passed'"
+      "id": "wezterm-version-readback",
+      "token": "$wezTermVersion = Invoke-BoundedProcess"
     },
     {
-      "id": "wsl-distribution-ready",
-      "token": "Add-Step -Name 'wsl-distribution' -Status 'passed'"
+      "id": "wezterm-pass",
+      "token": "PASS: WezTerm prerequisite"
+    },
+    {
+      "id": "wsl-distribution-readback",
+      "token": "$rawDistributions = @(& $wslPath --list --quiet)"
     },
     {
       "id": "tmux-install-gate",
@@ -21,55 +27,33 @@
       "token": "tmux -V"
     },
     {
-      "id": "agy-install",
-      "token": "if ! command -v agy >/dev/null 2>&1; then"
-    },
-    {
-      "id": "opencode-install",
-      "token": "if ! command -v opencode >/dev/null 2>&1; then"
-    },
-    {
-      "id": "tmux-command-shim",
-      "token": "tmux = Write-CommandShim -Name 'tmux'"
-    },
-    {
-      "id": "gnhf-setup",
-      "token": "'-File', $gnhfSetup"
-    },
-    {
-      "id": "gnhf-fleet-state",
-      "token": "Add-Step -Name 'gnhf-fleet-state' -Status 'passed'"
-    },
-    {
-      "id": "windows-profile-launch",
-      "token": "-Operation Launch"
+      "id": "tmux-pass",
+      "token": "PASS: tmux prerequisite"
     }
   ],
-  "requiredRelations": [
+  "frontDoorGates": [
     {
-      "before": "wezterm-ready",
-      "after": "tmux-install-gate"
+      "id": "bootstrap-invocation",
+      "token": "-File \"%BOOTSTRAP%\" -RepoRoot"
     },
     {
-      "before": "tmux-version-readback",
-      "after": "agy-install"
+      "id": "bootstrap-failure-stop",
+      "token": "if not \"%RESULT%\"==\"0\" goto :finish"
     },
     {
-      "before": "tmux-version-readback",
-      "after": "opencode-install"
-    },
-    {
-      "before": "tmux-command-shim",
-      "after": "gnhf-setup"
-    },
-    {
-      "before": "gnhf-fleet-state",
-      "after": "windows-profile-launch"
+      "id": "runtime-invocation",
+      "token": "-File \"%ENGINE%\" -Mode"
     }
+  ],
+  "higherRuntimeTokens": [
+    "if ! command -v agy >/dev/null 2>&1; then",
+    "if ! command -v opencode >/dev/null 2>&1; then",
+    "'-File', $gnhfSetup",
+    "-Operation Launch"
   ],
   "generatedEvidence": {
     "tracked": false,
     "defaultRoot": "operating-system temporary directory/AgentSwitchboard/technician-bootstrap-order"
   },
-  "proofCeiling": "Static repository ordering, token ownership, PowerShell parsing, and deterministic contract validation only. No package installation, WSL mutation, tmux session, WezTerm window, provider response, or operator acceptance is proven."
+  "proofCeiling": "Static front-door ordering, prerequisite ownership, token uniqueness, PowerShell parsing, and deterministic contract validation only. No package installation, WSL mutation, tmux session, WezTerm window, provider response, or operator acceptance is proven."
 }
