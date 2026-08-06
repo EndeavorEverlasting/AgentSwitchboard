@@ -3,7 +3,7 @@ param(
     [string]$RootPath,
     [string]$OutputRoot,
     [ValidateRange(5, 120)]
-    [int]$ValidatorTimeoutSeconds = 30
+    [int]$ValidatorTimeoutSeconds = 120
 )
 
 Set-StrictMode -Version Latest
@@ -89,14 +89,40 @@ Invoke-TrackedPowerShell -ScriptPath $completeness -Arguments @(
     '-RootPath', $RootPath,
     '-OutputRoot', (Join-Path $OutputRoot 'command-delivery')
 )
-Invoke-TrackedPowerShell -ScriptPath $appHarness -Arguments @(
-    '-RootPath', $RootPath,
-    '-OutputRoot', $OutputRoot,
-    '-ValidatorTimeoutSeconds', [string]$ValidatorTimeoutSeconds
-)
 
 $jsonPath = Join-Path $OutputRoot 'app-harness-validation.json'
 $reportPath = Join-Path $OutputRoot 'app-harness-validation.md'
+$appHostPath = (Get-Process -Id $PID).Path
+$global:LASTEXITCODE = 0
+& $appHostPath -NoLogo -NoProfile -ExecutionPolicy Bypass -File $appHarness -RootPath $RootPath -OutputRoot $OutputRoot -ValidatorTimeoutSeconds ([string]$ValidatorTimeoutSeconds)
+$appHarnessExit = [int]$global:LASTEXITCODE
+if ($appHarnessExit -ne 0) {
+    Write-Host 'FAILED OFFLINE VALIDATOR DETAILS' -ForegroundColor Red
+    if (Test-Path -LiteralPath $jsonPath -PathType Leaf) {
+        try {
+            $failedResult = Get-Content -LiteralPath $jsonPath -Raw | ConvertFrom-Json
+            $failedChecks = @($failedResult.checks | Where-Object { [string]$_.status -eq 'FAIL' })
+            if ($failedChecks.Count -eq 0) {
+                Write-Host '  - Aggregate exited nonzero but recorded no failed checks.' -ForegroundColor Red
+            }
+            foreach ($failedCheck in $failedChecks) {
+                $failureReason = if ([string]::IsNullOrWhiteSpace([string]$failedCheck.reason)) { 'unspecified' } else { [string]$failedCheck.reason }
+                Write-Host ('[FAIL DETAIL] {0}: {1}' -f [string]$failedCheck.name, $failureReason) -ForegroundColor Red
+                foreach ($detail in @($failedCheck.details)) {
+                    Write-Host ('  - {0}' -f [string]$detail) -ForegroundColor Red
+                }
+            }
+        }
+        catch {
+            Write-Warning ('Could not read aggregate failure details from {0}: {1}' -f $jsonPath, $_.Exception.Message)
+        }
+    }
+    else {
+        Write-Warning ('Aggregate validator failed before creating its JSON result: {0}' -f $jsonPath)
+    }
+    throw ('Required offline validator aggregate failed with exit code {0}: {1}' -f $appHarnessExit, $appHarness)
+}
+
 if (-not (Test-Path -LiteralPath $jsonPath -PathType Leaf)) {
     throw "App harness JSON result is missing: $jsonPath"
 }

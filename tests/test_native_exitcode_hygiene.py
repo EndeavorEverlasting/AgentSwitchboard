@@ -46,6 +46,17 @@ class NativeExitCodeHygieneTests(unittest.TestCase):
                     f"{relative} contains ambiguous PowerShell variable-colon interpolation; use ${{name}}:",
                 )
 
+    def test_one_command_proof_surfaces_child_failures(self) -> None:
+        proof = (ROOT / "scripts/Test-AppHarnessOneCommandProof.ps1").read_text(encoding="utf-8")
+        self.assertIn("[int]$ValidatorTimeoutSeconds = 120", proof)
+        self.assertIn("FAILED OFFLINE VALIDATOR DETAILS", proof)
+        self.assertIn("$failedCheck.details", proof)
+        self.assertIn("Required offline validator aggregate failed", proof)
+        self.assertLess(
+            proof.index("FAILED OFFLINE VALIDATOR DETAILS"),
+            proof.index("Required offline validator aggregate failed"),
+        )
+
     def test_entrypoint_retains_spaced_worktree_proof(self) -> None:
         entrypoint = (ROOT / "scripts/Test-CommandDeliveryEntrypoint.ps1").read_text(encoding="utf-8")
         self.assertIn("Test-SkillFactoringContracts.cmd", entrypoint)
