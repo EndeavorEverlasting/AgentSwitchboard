@@ -7,6 +7,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$global:LASTEXITCODE = 0
 
 if ($env:OS -ne 'Windows_NT') {
     Write-Host 'SKIP: CMD outer-entrypoint proof requires Windows.' -ForegroundColor Yellow

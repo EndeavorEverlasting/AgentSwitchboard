@@ -105,13 +105,19 @@ def main() -> None:
         assert required_target in observed_targets, f"observer edge missing: {required_target}"
 
     script_path = ROOT / "scripts/Test-AppHarness.ps1"
+    proof_path = ROOT / "scripts/Test-AppHarnessOneCommandProof.ps1"
+    command_delivery_path = ROOT / "scripts/Test-CommandDeliveryHarnessCompleteness.ps1"
     cmd_path = ROOT / "Test-AppHarness.cmd"
     template_path = ROOT / ".ai/harness/app-harness-report.template.md"
     assert script_path.is_file()
+    assert proof_path.is_file()
+    assert command_delivery_path.is_file()
     assert cmd_path.is_file()
     assert template_path.is_file()
 
     script = script_path.read_text(encoding="utf-8")
+    proof = proof_path.read_text(encoding="utf-8")
+    command_delivery = command_delivery_path.read_text(encoding="utf-8")
     cmd = cmd_path.read_text(encoding="utf-8")
     template = template_path.read_text(encoding="utf-8")
 
@@ -129,7 +135,19 @@ def main() -> None:
     ):
         assert token in script, f"validator contract token missing: {token}"
 
-    forbidden_script_tokens = (
+    for token in (
+        "Test-CommandDeliveryHarnessCompleteness.ps1",
+        "Test-AppHarness.ps1",
+        "app-harness-validation.json",
+        "app-harness-validation.md",
+        "offline-synthetic-harness",
+        "lsp_project_not_loaded",
+        "ONE-COMMAND HARNESS PROOF: PASS",
+        "$global:LASTEXITCODE = 0",
+    ):
+        assert token in proof, f"one-command proof token missing: {token}"
+
+    forbidden_tokens = (
         "Invoke-WebRequest",
         "Invoke-RestMethod",
         "Start-Process",
@@ -144,12 +162,20 @@ def main() -> None:
         "Start-Gnhf",
         "Get-AgentSwitchboardStartupReport",
         "AgentSwitchboard.cmd",
+        "explorer.exe",
+        "msedge.exe",
+        "chrome.exe",
     )
-    for token in forbidden_script_tokens:
+    for token in forbidden_tokens:
         assert token not in script, f"offline validator contains forbidden execution surface: {token}"
+        assert token not in proof, f"one-command proof contains forbidden execution surface: {token}"
 
-    assert "pwsh" in cmd.lower()
-    assert "scripts\\Test-AppHarness.ps1" in cmd
+    assert "$global:LASTEXITCODE = 0" in command_delivery
+    assert "pwsh.exe" in cmd.lower()
+    assert 'for %%I in ("%~dp0.") do set "ROOT=%%~fI"' in cmd
+    assert "scripts\\Test-AppHarnessOneCommandProof.ps1" in cmd
+    assert '-RootPath "%ROOT%"' in cmd
+    assert "%~dp0scripts" not in cmd
     for token in ("start ", "cmd /c", "explorer", "http://", "https://", "AgentSwitchboard.cmd"):
         assert token.lower() not in cmd.lower(), f"one-command entrypoint can launch forbidden surface: {token}"
 

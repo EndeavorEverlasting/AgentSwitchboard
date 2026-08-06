@@ -6,6 +6,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$global:LASTEXITCODE = 0
 
 $GitCommand = if ($env:OS -eq 'Windows_NT') { 'git.exe' } else { 'git' }
 $PowerShellHost = if (Get-Command pwsh -ErrorAction SilentlyContinue) {
@@ -30,7 +31,7 @@ if ([string]::IsNullOrWhiteSpace($OutputRoot)) {
 }
 $null = New-Item -ItemType Directory -Path $OutputRoot -Force
 
-& python -m unittest tests.test_skill_factoring_contracts tests.test_command_delivery_harness
+& python -m unittest tests.test_skill_factoring_contracts tests.test_command_delivery_harness tests.test_native_exitcode_hygiene
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $skillValidator = Join-Path $PSScriptRoot 'Test-SkillFactoringContracts.ps1'

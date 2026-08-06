@@ -5,13 +5,18 @@ on:
     paths:
       - 'Test-AppHarness.cmd'
       - 'scripts/Test-AppHarness.ps1'
+      - 'scripts/Test-AppHarnessOneCommandProof.ps1'
+      - 'scripts/Test-CommandDeliveryHarnessCompleteness.ps1'
+      - 'scripts/Test-CommandDeliveryEntrypoint.ps1'
       - 'tests/test_app_harness_validator.py'
+      - 'tests/test_native_exitcode_hygiene.py'
       - '.ai/harness/app-composition.graph.json'
       - '.ai/harness/app-harness-report.template.md'
       - '.ai/harness/manifest.json'
       - '.ai/harness/artifact-registry.json'
       - '.ai/harness/schemas/app-composition-graph.schema.json'
       - '.ai/harness/schemas/app-harness-validation.schema.json'
+      - 'tooling/skills/harness/command-delivery/**'
       - 'CAPABILITIES.md'
       - 'TRIGGERS.md'
       - 'plans/**'
@@ -29,24 +34,28 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Parse aggregate validator
+      - name: Parse aggregate and proof validators
         shell: pwsh
         run: |
-          $tokens = $null
-          $errors = $null
-          [void][System.Management.Automation.Language.Parser]::ParseFile(
-            (Join-Path $PWD 'scripts/Test-AppHarness.ps1'),
-            [ref]$tokens,
-            [ref]$errors
-          )
-          if ($errors.Count -gt 0) { throw ($errors -join [Environment]::NewLine) }
+          foreach ($relative in @('scripts/Test-AppHarness.ps1', 'scripts/Test-AppHarnessOneCommandProof.ps1', 'scripts/Test-CommandDeliveryHarnessCompleteness.ps1', 'scripts/Test-CommandDeliveryEntrypoint.ps1')) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Join-Path $PWD $relative),
+              [ref]$tokens,
+              [ref]$errors
+            )
+            if ($errors.Count -gt 0) { throw "$relative`n$($errors -join [Environment]::NewLine)" }
+          }
 
       - name: Run one-command offline harness proof
         shell: pwsh
         run: |
           $output = Join-Path $env:RUNNER_TEMP 'app-harness-windows'
-          & .\scripts\Test-AppHarness.ps1 -OutputRoot $output
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $global:LASTEXITCODE = 0
+          & .\Test-AppHarness.cmd -OutputRoot $output
+          $exitCode = [int]$global:LASTEXITCODE
+          if ($exitCode -ne 0) { exit $exitCode }
           $result = Get-Content -LiteralPath (Join-Path $output 'app-harness-validation.json') -Raw | ConvertFrom-Json
           if ($result.summary.failed -ne 0) { throw 'aggregate harness reported failures' }
           if (@($result.checks | Where-Object status -eq 'SKIP').Count -lt 1) { throw 'expected honest optional dependency skip' }
@@ -54,13 +63,24 @@ jobs:
           if ($result.runContext.networkAllowed -or $result.runContext.runtimeAllowed -or $result.runContext.mutationAllowed) { throw 'unsafe run context' }
 
       - name: Run dependency-free static contracts
-        run: python tests/test_app_harness_validator.py
+        run: |
+          python tests/test_app_harness_validator.py
+          python tests/test_native_exitcode_hygiene.py
 
       - name: Verify checkout remains clean
         shell: pwsh
         run: |
           $dirty = git status --porcelain=v1
           if ($dirty) { throw "validator mutated checkout:`n$dirty" }
+
+      - name: Upload offline proof artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-harness-windows-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/app-harness-windows/**
+          if-no-files-found: warn
+          retention-days: 7
 
   linux-offline-harness:
     runs-on: ubuntu-latest
@@ -70,13 +90,15 @@ jobs:
           fetch-depth: 0
 
       - name: Run dependency-free static contracts
-        run: python3 tests/test_app_harness_validator.py
+        run: |
+          python3 tests/test_app_harness_validator.py
+          python3 tests/test_native_exitcode_hygiene.py
 
-      - name: Run aggregate observer
+      - name: Run aggregate one-command proof wrapper
         shell: pwsh
         run: |
           $output = Join-Path $env:RUNNER_TEMP 'app-harness-linux'
-          & ./scripts/Test-AppHarness.ps1 -OutputRoot $output
+          & ./scripts/Test-AppHarnessOneCommandProof.ps1 -OutputRoot $output
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $jsonPath = Join-Path $output 'app-harness-validation.json'
           $reportPath = Join-Path $output 'app-harness-validation.md'
@@ -92,3 +114,12 @@ jobs:
         run: |
           git diff --check "origin/${{ github.base_ref }}...HEAD"
           test -z "$(git status --porcelain=v1)"
+
+      - name: Upload offline proof artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-harness-linux-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/app-harness-linux/**
+          if-no-files-found: warn
+          retention-days: 7
