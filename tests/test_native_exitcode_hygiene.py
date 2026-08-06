@@ -46,6 +46,12 @@ class NativeExitCodeHygieneTests(unittest.TestCase):
                     f"{relative} contains ambiguous PowerShell variable-colon interpolation; use ${{name}}:",
                 )
 
+    def test_one_command_proof_delimits_exit_code_before_colon(self) -> None:
+        proof = (ROOT / "scripts/Test-AppHarnessOneCommandProof.ps1").read_text(encoding="utf-8")
+        self.assertIn("exit code ${exitCode}:", proof)
+        self.assertNotIn("exit code $exitCode:", proof)
+        self.assertIn("exit code ${staticExit}:", proof)
+
     def test_one_command_proof_surfaces_child_failures(self) -> None:
         proof = (ROOT / "scripts/Test-AppHarnessOneCommandProof.ps1").read_text(encoding="utf-8")
         self.assertIn("[int]$ValidatorTimeoutSeconds = 120", proof)
