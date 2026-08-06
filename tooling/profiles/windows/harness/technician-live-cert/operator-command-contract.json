@@ -28,13 +28,13 @@
     {
       "id": "duplicate-powershell-prompt",
       "severity": "error",
-      "pattern": "(?i)\\bPS\\s+[A-Z]:\\\\[^>\\r\\n]*>\\s+PS\\s+[A-Z]:\\\\[^>\\r\\n]*>",
+      "pattern": "(?i)^\\s*PS\\s+(?:[A-Z]:\\\\|/|~(?:/|\\\\)|\\\\\\\\)[^>\\r\\n]*>\\s+PS\\s+(?:[A-Z]:\\\\|/|~(?:/|\\\\)|\\\\\\\\)[^>\\r\\n]*>",
       "message": "A duplicated PowerShell prompt was presented as executable input."
     },
     {
       "id": "powershell-prompt-prefix",
       "severity": "error",
-      "pattern": "(?i)^\\s*PS\\s+[A-Z]:\\\\[^>\\r\\n]*>\\s*",
+      "pattern": "(?i)^\\s*PS\\s+(?:[A-Z]:\\\\|/|~(?:/|\\\\)|\\\\\\\\)[^>\\r\\n]*>\\s*",
       "message": "A PowerShell prompt prefix was presented as executable input."
     },
     {
@@ -42,6 +42,12 @@
       "severity": "error",
       "pattern": "(?i)^\\s*[A-Z]:\\\\[^>\\r\\n]*>\\s*",
       "message": "A Command Prompt prefix was presented as executable input."
+    },
+    {
+      "id": "posix-shell-prompt-prefix",
+      "severity": "error",
+      "pattern": "^\\s*(?:\\[[^\\]\\r\\n]+@[^\\]\\r\\n]+\\s+[^\\]\\r\\n]*\\]|[A-Za-z0-9._-]+@[A-Za-z0-9._-]+:[^$#\\r\\n]*)(?:\\$|#)\\s+",
+      "message": "A POSIX or WSL shell prompt prefix was presented as executable input."
     },
     {
       "id": "continuation-prompt",
@@ -76,14 +82,51 @@
   ],
   "sanitization": {
     "stripPromptPatterns": [
-      "(?i)^\\s*PS\\s+[A-Z]:\\\\[^>\\r\\n]*>\\s*",
+      "(?i)^\\s*PS\\s+(?:[A-Z]:\\\\|/|~(?:/|\\\\)|\\\\\\\\)[^>\\r\\n]*>\\s*",
       "(?i)^\\s*[A-Z]:\\\\[^>\\r\\n]*>\\s*",
+      "^\\s*(?:\\[[^\\]\\r\\n]+@[^\\]\\r\\n]+\\s+[^\\]\\r\\n]*\\]|[A-Za-z0-9._-]+@[A-Za-z0-9._-]+:[^$#\\r\\n]*)(?:\\$|#)\\s+",
       "^\\s*>>\\s*"
     ],
     "redactPatterns": [
       {
-        "pattern": "(?i)C:\\\\Users\\\\[^\\\\\\r\\n]+",
+        "pattern": "(?i)C:\\\\Users\\\\(?!<redacted>)[^\\\\\\s'\";]+",
         "replacement": "C:\\\\Users\\\\<redacted>"
+      },
+      {
+        "pattern": "(?i)/(?:home|Users)/(?!<redacted>)[^/\\s'\";]+",
+        "replacement": "/home/<redacted>"
+      },
+      {
+        "pattern": "(?i)\\\\\\\\[^\\\\\\s'\";]+\\\\[^\\\\\\s'\";]+",
+        "replacement": "\\\\\\\\<redacted>\\\\<redacted>"
+      },
+      {
+        "pattern": "(?i)(://)[^/@:\\s]+:[^/@\\s]+@",
+        "replacement": "$1<redacted>@"
+      },
+      {
+        "pattern": "(?i)(\\$env:[A-Z0-9_]*(?:TOKEN|SECRET|PASSWORD|PASSWD|API_?KEY|CREDENTIAL|AUTH)[A-Z0-9_]*\\s*=\\s*)(?:'[^']*'|\"[^\"]*\"|[^;\\s]+)",
+        "replacement": "$1<redacted>"
+      },
+      {
+        "pattern": "(?i)(--?(?:token|secret|password|passwd|api[-_]?key|credential|authorization)(?:=|\\s+))(?:'[^']*'|\"[^\"]*\"|\\S+)",
+        "replacement": "$1<redacted>"
+      },
+      {
+        "pattern": "(?i)(Bearer\\s+)[A-Za-z0-9._~+/-]+=*",
+        "replacement": "$1<redacted>"
+      },
+      {
+        "pattern": "(?i)\\b(?:gh[pousr]_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16})\\b",
+        "replacement": "<redacted-token>"
+      },
+      {
+        "pattern": "(?i)\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\b",
+        "replacement": "<redacted-identity>"
+      },
+      {
+        "pattern": "(?i)\\b(?:[A-Z0-9-]+\\.)+(?:local|internal|corp|lan|net|com|org|edu)\\b",
+        "replacement": "<redacted-host>"
       }
     ],
     "maximumExcerptCharacters": 240
@@ -103,5 +146,5 @@
     "json": "operator-command-envelope-report.json",
     "markdown": "operator-command-envelope-report.md"
   },
-  "proofCeiling": "Proves that registered operator-facing command blocks and supplied candidate files are free of known prompt, continuation, transcript, and PowerShell error-output contamination. It does not prove the command succeeds on a workstation."
+  "proofCeiling": "Proves that registered operator-facing command blocks and supplied candidate files are free of known cross-platform prompt, continuation, transcript, and PowerShell error-output contamination, while candidate-derived report content remains redacted. It does not prove the command succeeds on a workstation."
 }
