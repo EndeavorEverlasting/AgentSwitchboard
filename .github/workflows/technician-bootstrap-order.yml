@@ -3,6 +3,8 @@ name: Technician bootstrap order
 on:
   push:
     paths:
+      - 'Technician-AgentSwitchboard-Ready.cmd'
+      - 'tooling/profiles/windows/Invoke-TechnicianBootstrapPrerequisites.ps1'
       - 'tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1'
       - 'tooling/profiles/windows/harness/technician-ready/**'
       - 'scripts/Test-TechnicianBootstrapOrder.ps1'
@@ -12,6 +14,8 @@ on:
       - '.github/workflows/technician-bootstrap-order.yml'
   pull_request:
     paths:
+      - 'Technician-AgentSwitchboard-Ready.cmd'
+      - 'tooling/profiles/windows/Invoke-TechnicianBootstrapPrerequisites.ps1'
       - 'tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1'
       - 'tooling/profiles/windows/harness/technician-ready/**'
       - 'scripts/Test-TechnicianBootstrapOrder.ps1'
@@ -40,6 +44,9 @@ jobs:
       - name: PowerShell order validator
         shell: pwsh
         run: ./scripts/Test-TechnicianBootstrapOrder.ps1 -RootPath .
+
+      - name: Existing technician readiness contracts
+        run: python -m unittest tests.test_technician_agentswitchboard_ready -v
 
       - name: Diff whitespace
         shell: bash
