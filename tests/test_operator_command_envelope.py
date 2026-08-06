@@ -112,8 +112,8 @@ class TestOperatorCommandEnvelope(unittest.TestCase):
             "duplicate-powershell-prompt",
             "missing-operator-surface",
             "CandidatePath",
-            "operator-command-envelope-report.json",
-            "operator-command-envelope-report.md",
+            "$contract.generatedEvidence.json",
+            "$contract.generatedEvidence.markdown",
             "GITHUB_ACTIONS",
         ]:
             self.assertIn(token, text)
