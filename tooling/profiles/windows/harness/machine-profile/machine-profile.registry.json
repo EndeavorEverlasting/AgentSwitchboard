@@ -2,6 +2,8 @@
   "schema": "agentswitchboard.machine-profile-registry.v1",
   "registryId": "windows-machine-profile-detection",
   "canonicalDetector": "tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1",
+  "operationalHarness": "tooling/profiles/windows/harness/machine-profile/manifest.json",
+  "environmentRoleRegistry": "tooling/profiles/windows/harness/machine-profile/environment-role.registry.json",
   "profiles": [
     {
       "profileId": "enterprise-managed-onedrive",
@@ -41,6 +43,6 @@
     "stable user-local dev root"
   ],
   "localEvidenceRoot": "%LOCALAPPDATA%\\AgentSwitchboard\\machine-profile",
-  "privacy": "Observed usernames, hostnames, tenant names, and paths are local evidence only and must never be committed.",
+  "privacy": "Observed usernames, hostnames, tenant names, environment-role assignments, and resolved paths are local evidence only and must never be committed.",
   "proofCeiling": "Classification and deterministic path-selection contract only; no package, login, provider, or live-runtime proof."
 }

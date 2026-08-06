@@ -1,6 +1,12 @@
 # Machine-profile bootstrap
 
-AgentSwitchboard must not guess a repository path from a remembered username, company, hostname, Desktop layout, or OneDrive folder name.
+AgentSwitchboard must not guess a repository path from a remembered username, company, hostname, Desktop layout, OneDrive folder name, or another machine's checkout.
+
+## Supported Windows environment roles
+
+The focused operational harness recognizes `personal-windows-laptop`, `desktop-workstation`, `admin-box-1`, and `admin-box-2`. Role identity is explicit or comes from a local machine binding. It is never inferred from a username, hostname substring, tenant label, or path. The desktop workstation and admin boxes remain distinct roles even when two machines share a checkout-root convention.
+
+The personal-laptop role supports an explicit `%USERPROFILE%\Desktop\Dev` workspace with repository leaf `AgentSwitchBoard-Live`; the resolved username and absolute path remain local-only. Desktop and admin roles require an explicit path, `AGENT_SWITCHBOARD_REPO`, verified machine binding, or verified existing checkout.
 
 ## Canonical detector
 
@@ -25,6 +31,44 @@ Repository selection is deterministic:
 5. `%USERPROFILE%\dev\AgentSwitchBoard-Live`.
 
 OneDrive and redirected known folders are evidence used to understand the machine. They are not the default location for a new checkout. This prevents different corporate naming and redirection conventions from silently changing the canonical repository root.
+
+## Operational harness
+
+Read these focused files before issuing path-sensitive commands:
+
+- `tooling/profiles/windows/harness/machine-profile/manifest.json`
+- `tooling/profiles/windows/harness/machine-profile/codebase-map.json`
+- `tooling/profiles/windows/harness/machine-profile/environment-role.registry.json`
+- `tooling/profiles/windows/harness/machine-profile/known-traps.registry.json`
+- `tooling/profiles/windows/harness/machine-profile/workflows/workflow-specs.json`
+- `.ai/skills/machine-profile-bootstrap/SKILL.md`
+
+Generate the operator status artifacts and run completeness validation:
+
+```cmd
+Get-MachineProfileHarnessStatus.cmd
+Test-MachineProfileHarness.cmd
+```
+
+The status reporter writes JSON and Markdown even when registered components are missing or malformed. It then returns failure without terminating a caller's PowerShell host. Its next-action block records the owner and dependency and emits a location-independent command, so remaining in `C:\Windows\System32` or another directory does not break the handoff.
+
+The pre-commit hook is opt-in and is never installed implicitly:
+
+```powershell
+pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File tooling\profiles\windows\hooks\Invoke-MachineProfileHarnessPreCommit.ps1
+```
+
+## Validate an unmerged candidate safely
+
+Use the repository-owned candidate command instead of assembling a long ad hoc Git/CMD snippet:
+
+```cmd
+Validate-MachineProfileHarnessCandidate.cmd -SourceRepository "C:\path\to\existing-checkout" -WorktreeRoot "C:\path\to\isolated-worktree" -Branch "feature-branch" -ExpectedHead "40-character-sha" -BaseCommit "40-character-base-sha" -PullRequestNumber 64
+```
+
+It preserves dirty or separately owned source work, fetches without force, verifies origin, ancestry, branch head, detached worktree head, and clean state, runs the PowerShell and Python harness validators plus existing machine-profile contracts, runs `git diff --check`, resolves the status files from the tracked manifest and artifact registry, prints the Markdown report, opens it in Notepad, and emits `machine-profile-harness-candidate-validation.json`. Existing matching clean worktrees may be reused; unrelated existing directories fail closed.
+
+After successful candidate proof, the report no longer repeats `Test-MachineProfileHarness.cmd`. With `-PullRequestNumber`, its exact next command opens that PR for review. Without a PR number, it opens the branch comparison page to create or locate the review gate. Both commands are executable from any current directory.
 
 ## Chosen workspace directory
 
@@ -54,8 +98,28 @@ curl.exe -fL https://raw.githubusercontent.com/EndeavorEverlasting/AgentSwitchbo
 
 The wrapper creates the workspace directory when absent, computes the explicit repository root, downloads the canonical technician bootstrap from an immutable commit, verifies its exact Git blob identity, and only then executes it. It does not duplicate Git, WSL, setup, or live-certification logic.
 
+## Failure ordering and shell discipline
+
+Repository identity and path precede PowerShell, WSL repair, setup, and live certification. A failed prerequisite blocks every downstream stage.
+
+Repository CMD wrappers use `setlocal`, clear any caller-defined `ERRORLEVEL` environment variable, invoke the owned command, and capture the dynamic exit immediately. This prevents both later-command clobbering and pseudo-variable shadowing.
+
+Every operator block must name its shell. Do not patch a candidate checkout with an untracked one-liner and then invoke a pull wrapper over it. Commit and push the repair on an isolated branch, fetch without force, verify the exact SHA, and then execute. Do not emit a bare repository-relative next command unless the command first establishes its repository location.
+
+PowerShell 7 NUL removal uses the explicit string overload:
+
+```powershell
+.Replace(([char]0).ToString(), [string]::Empty)
+```
+
+The ambiguous `.Replace([char]0, '')` call binds to the char/char overload and can fail.
+
 ## Bootstrap ordering
 
 The technician bootstrap runs profile detection before repository acquisition using Windows PowerShell, so PowerShell 7 is no longer a prerequisite for cloning the missing repository. PowerShell 7 remains required before WSL repair, workstation setup, and live certification.
 
-Observed usernames, hostnames, tenant names, and paths are never committed. Synthetic fixtures are the only profile identities tracked by the repository.
+Observed usernames, hostnames, tenant names, role assignments, and resolved paths are never committed. Synthetic fixtures, role IDs, and environment-variable patterns are the only tracked identities.
+
+## Proof boundary
+
+Harness validation proves component completeness, explicit role routing, local-only path policy, workflow shape, candidate isolation, operator-report rendering, location-independent handoff commands, and deterministic checks. It does not prove WSL health, package installation, launcher behavior, authentication, provider response, or a visible working coding environment.

@@ -1,0 +1,13 @@
+{
+  "schema": "agentswitchboard.machine-profile-known-traps.v1",
+  "traps": [
+    {"id": "shell-mismatch", "signal": "PowerShell syntax is pasted into cmd.exe or cmd.exe syntax into PowerShell.", "avoid": "Declare the shell for every operator block and use only that shell's quoting and variables."},
+    {"id": "errorlevel-clobber", "signal": "The displayed exit code belongs to a later command or a caller-defined ERRORLEVEL environment variable.", "avoid": "Use setlocal wrappers, clear the shadowing ERRORLEVEL variable before the owned command, and capture the dynamic exit immediately afterward."},
+    {"id": "downstream-after-failure", "signal": "Setup or live certification runs after a nonzero prerequisite.", "avoid": "Stop at the first failed dependency and preserve transcript and summary evidence."},
+    {"id": "unsafe-powershell-null-replace", "signal": "PowerShell 7 cannot convert an empty string to System.Char.", "unsafeExpression": ".Replace([char]0, '')", "safeExpression": ".Replace(([char]0).ToString(), [string]::Empty)", "avoid": "Use the explicit string/string overload and add focused regression coverage."},
+    {"id": "remembered-path", "signal": "A prior machine's username, redirected Desktop, OneDrive label, or checkout root is reused.", "avoid": "Resolve the environment role and local machine binding or require an explicit path."},
+    {"id": "pull-over-local-patch", "signal": "A local emergency patch is followed by pull-and-run against the same checkout.", "avoid": "Commit and push on an isolated branch, fetch without force, verify exact SHA, then execute."},
+    {"id": "path-role-collapse", "signal": "Machines sharing a path convention are treated as one environment.", "avoid": "Maintain separate desktop-workstation, admin-box-1, and admin-box-2 bindings."},
+    {"id": "cwd-relative-next-command", "signal": "A report emits a bare repository command that fails when the operator remains in another directory such as C:\\Windows\\System32.", "avoid": "Emit a location-independent command with an absolute repository path, name the owner and dependency, and after candidate proof advance the review or merge gate instead of rerunning the same proof."}
+  ]
+}

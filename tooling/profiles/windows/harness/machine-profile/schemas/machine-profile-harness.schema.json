@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/profiles/windows/harness/machine-profile/schemas/machine-profile-harness.schema.json",
+  "title": "Windows machine-profile operational harness",
+  "type": "object",
+  "oneOf": [
+    {
+      "required": ["schema", "harnessId", "canonicalOwner", "validator", "proofCeiling"],
+      "properties": {"schema": {"const": "agentswitchboard.machine-profile-harness-manifest.v1"}, "harnessId": {"type": "string", "minLength": 1}, "canonicalOwner": {"type": "string", "minLength": 1}, "validator": {"type": "string", "minLength": 1}, "proofCeiling": {"type": "string", "minLength": 1}}
+    },
+    {
+      "required": ["schema", "registryId", "roles", "assignmentPolicy"],
+      "properties": {"schema": {"const": "agentswitchboard.windows-environment-role-registry.v1"}, "registryId": {"type": "string"}, "assignmentPolicy": {"type": "string"}, "roles": {"type": "array", "minItems": 4, "items": {"type": "object", "required": ["roleId", "pathResolution", "bootstrapEntrypoint"]}}}
+    }
+  ]
+}
