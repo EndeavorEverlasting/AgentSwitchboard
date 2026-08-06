@@ -1,6 +1,15 @@
 name: Technician bootstrap order
 
 on:
+  push:
+    paths:
+      - 'tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1'
+      - 'tooling/profiles/windows/harness/technician-ready/**'
+      - 'scripts/Test-TechnicianBootstrapOrder.ps1'
+      - 'Test-TechnicianBootstrapOrder.cmd'
+      - 'tests/test_technician_bootstrap_order.py'
+      - 'docs/harness/technician-bootstrap-order.md'
+      - '.github/workflows/technician-bootstrap-order.yml'
   pull_request:
     paths:
       - 'tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1'
