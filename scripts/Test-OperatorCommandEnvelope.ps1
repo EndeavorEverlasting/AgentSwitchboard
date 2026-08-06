@@ -32,6 +32,7 @@ $requiredRuleIds = @(
     'duplicate-powershell-prompt',
     'powershell-prompt-prefix',
     'cmd-prompt-prefix',
+    'posix-shell-prompt-prefix',
     'continuation-prompt',
     'powershell-error-location',
     'powershell-error-metadata',
@@ -73,16 +74,24 @@ function Get-SanitizedExcerpt {
     param([AllowEmptyString()][string]$Text)
 
     $sanitized = $Text
-    for ($pass = 0; $pass -lt 4; $pass++) {
+    for ($pass = 0; $pass -lt 6; $pass++) {
         $before = $sanitized
         foreach ($pattern in $contract.sanitization.stripPromptPatterns) {
             $sanitized = [regex]::Replace($sanitized, [string]$pattern, '')
         }
-        if ($sanitized -eq $before) { break }
+        if ($sanitized -eq $before) {
+            break
+        }
     }
+
     foreach ($redaction in $contract.sanitization.redactPatterns) {
-        $sanitized = [regex]::Replace($sanitized, [string]$redaction.pattern, [string]$redaction.replacement)
+        $sanitized = [regex]::Replace(
+            $sanitized,
+            [string]$redaction.pattern,
+            [string]$redaction.replacement
+        )
     }
+
     $sanitized = $sanitized.Trim()
     $maximum = [int]$contract.sanitization.maximumExcerptCharacters
     if ($sanitized.Length -gt $maximum) {
@@ -106,7 +115,8 @@ function Get-RuleIds {
 function Get-MarkdownCommandLines {
     param(
         [Parameter(Mandatory)][string]$Path,
-        [Parameter(Mandatory)][string]$DisplayPath
+        [Parameter(Mandatory)][string]$DisplayPath,
+        [Parameter(Mandatory)][bool]$IsCandidate
     )
 
     $lines = @(Get-Content -LiteralPath $Path)
@@ -128,7 +138,9 @@ function Get-MarkdownCommandLines {
             continue
         }
 
-        if ([regex]::IsMatch($line, ('^\s*' + [regex]::Escape($fenceMarker) + '\s*$'))) {
+        $fenceCharacter = [regex]::Escape($fenceMarker.Substring(0, 1))
+        $closePattern = '^\s*' + $fenceCharacter + '{' + $fenceMarker.Length + ',}\s*$'
+        if ([regex]::IsMatch($line, $closePattern)) {
             $insideFence = $false
             $fenceMarker = ''
             $fenceLanguage = ''
@@ -141,6 +153,7 @@ function Get-MarkdownCommandLines {
                 line = $index + 1
                 language = $fenceLanguage
                 text = $line
+                isCandidate = $IsCandidate
             }
         }
     }
@@ -163,7 +176,8 @@ function Get-MarkdownCommandLines {
 function Get-PlainTextLines {
     param(
         [Parameter(Mandatory)][string]$Path,
-        [Parameter(Mandatory)][string]$DisplayPath
+        [Parameter(Mandatory)][string]$DisplayPath,
+        [Parameter(Mandatory)][bool]$IsCandidate
     )
 
     $lines = @(Get-Content -LiteralPath $Path)
@@ -174,6 +188,7 @@ function Get-PlainTextLines {
             line = $index + 1
             language = 'plain'
             text = [string]$lines[$index]
+            isCandidate = $IsCandidate
         }
     }
     return @($records)
@@ -183,16 +198,34 @@ function Test-Records {
     param([Parameter(Mandatory)][AllowEmptyCollection()][object[]]$Records)
 
     foreach ($record in @($Records)) {
-        if ([string]::IsNullOrWhiteSpace([string]$record.text)) { continue }
-        foreach ($rule in $contract.rules) {
-            if (-not [regex]::IsMatch([string]$record.text, [string]$rule.pattern)) { continue }
+        if ([string]::IsNullOrWhiteSpace([string]$record.text)) {
+            continue
+        }
 
-            $redactedOriginal = Get-SanitizedExcerpt -Text ([string]$record.text)
-            $sanitizedCommand = if ([string]$rule.id -in @(
+        foreach ($rule in $contract.rules) {
+            if (-not [regex]::IsMatch([string]$record.text, [string]$rule.pattern)) {
+                continue
+            }
+
+            $isCandidate = [bool]$record.isCandidate
+            $redactedOriginal = if ($isCandidate) {
+                '<candidate-content-redacted>'
+            }
+            else {
+                Get-SanitizedExcerpt -Text ([string]$record.text)
+            }
+
+            $sanitizedCommand = if (-not $isCandidate -and [string]$rule.id -in @(
                 'duplicate-powershell-prompt',
                 'powershell-prompt-prefix',
-                'cmd-prompt-prefix'
-            )) { $redactedOriginal } else { '' }
+                'cmd-prompt-prefix',
+                'posix-shell-prompt-prefix'
+            )) {
+                $redactedOriginal
+            }
+            else {
+                ''
+            }
 
             $script:violations += [pscustomobject]@{
                 path = [string]$record.path
@@ -222,24 +255,60 @@ foreach ($case in $fixture.cases) {
     }
 }
 
-$sourcePaths = @()
-foreach ($relativePath in $contract.scanPaths) {
-    $sourcePaths += Join-Path $RootPath ([string]$relativePath)
-}
-foreach ($candidate in @($CandidatePath)) {
-    if (-not [string]::IsNullOrWhiteSpace($candidate)) {
-        $sourcePaths += [System.IO.Path]::GetFullPath($candidate)
+$privacyProbes = @(
+    [pscustomobject]@{
+        id = 'windows-env-secret'
+        text = "PS C:\Users\operator\repo> `$env:API_KEY='secret-value'; git status"
+        forbidden = @('operator', 'secret-value')
+    },
+    [pscustomobject]@{
+        id = 'unix-bearer-secret'
+        text = 'PS /home/operator/repo> curl -H "Authorization: Bearer abcdefghijklmnopqrstuvwxyz" https://private.example.internal'
+        forbidden = @('/home/operator', 'abcdefghijklmnopqrstuvwxyz', 'private.example.internal')
+    },
+    [pscustomobject]@{
+        id = 'unc-cli-secret'
+        text = 'PS \\fileserver\private\repo> tool --token ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
+        forbidden = @('fileserver', 'private', 'ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890')
+    }
+)
+foreach ($probe in $privacyProbes) {
+    $sanitizedProbe = Get-SanitizedExcerpt -Text ([string]$probe.text)
+    $leaked = @($probe.forbidden | Where-Object { $sanitizedProbe.Contains([string]$_) })
+    if (@($leaked).Count -gt 0) {
+        $fixtureFailures += [pscustomobject]@{
+            caseId = "privacy/$($probe.id)"
+            missingRuleIds = @('privacy-redaction')
+            unexpectedRuleIds = $leaked
+        }
     }
 }
 
-foreach ($sourcePath in @($sourcePaths)) {
-    $isRepositorySource = $sourcePath.StartsWith($RootPath, [System.StringComparison]::OrdinalIgnoreCase)
-    $displayPath = if ($isRepositorySource) {
-        (($sourcePath.Substring($RootPath.Length) -replace '^[\\/]+', '') -replace '\\', '/')
+$sourceEntries = @()
+foreach ($relativePath in $contract.scanPaths) {
+    $sourceEntries += [pscustomobject]@{
+        path = Join-Path $RootPath ([string]$relativePath)
+        displayPath = ([string]$relativePath).Replace('\', '/')
+        isCandidate = $false
     }
-    else {
-        [regex]::Replace($sourcePath, '(?i)C:\\Users\\[^\\\r\n]+', 'C:\Users\<redacted>')
+}
+
+$candidateIndex = 0
+foreach ($candidate in @($CandidatePath)) {
+    if (-not [string]::IsNullOrWhiteSpace($candidate)) {
+        $candidateIndex++
+        $sourceEntries += [pscustomobject]@{
+            path = [System.IO.Path]::GetFullPath($candidate)
+            displayPath = "<candidate-$candidateIndex>"
+            isCandidate = $true
+        }
     }
+}
+
+foreach ($source in @($sourceEntries)) {
+    $sourcePath = [string]$source.path
+    $displayPath = [string]$source.displayPath
+    $isCandidate = [bool]$source.isCandidate
 
     if (-not (Test-Path -LiteralPath $sourcePath -PathType Leaf)) {
         $violations += [pscustomobject]@{
@@ -258,10 +327,10 @@ foreach ($sourcePath in @($sourcePaths)) {
     $extension = [System.IO.Path]::GetExtension($sourcePath).ToLowerInvariant()
     $records = @(
         if ($extension -in @('.md', '.markdown')) {
-            Get-MarkdownCommandLines -Path $sourcePath -DisplayPath $displayPath
+            Get-MarkdownCommandLines -Path $sourcePath -DisplayPath $displayPath -IsCandidate $isCandidate
         }
         else {
-            Get-PlainTextLines -Path $sourcePath -DisplayPath $displayPath
+            Get-PlainTextLines -Path $sourcePath -DisplayPath $displayPath -IsCandidate $isCandidate
         }
     )
 
@@ -269,11 +338,18 @@ foreach ($sourcePath in @($sourcePaths)) {
         path = $displayPath
         lineCount = @(Get-Content -LiteralPath $sourcePath).Count
         candidateLineCount = @($records).Count
+        candidate = $isCandidate
     }
     Test-Records -Records @($records)
 }
 
-$status = if (@($violations).Count -eq 0 -and @($fixtureFailures).Count -eq 0) { 'PASS' } else { 'FAIL' }
+$status = if (@($violations).Count -eq 0 -and @($fixtureFailures).Count -eq 0) {
+    'PASS'
+}
+else {
+    'FAIL'
+}
+
 $result = [ordered]@{
     schema = 'agentswitchboard.operator-command-envelope-report.v1'
     generatedAt = (Get-Date).ToUniversalTime().ToString('o')
@@ -302,6 +378,7 @@ if (-not $NoReport) {
     if (-not (Test-Path -LiteralPath $OutputRoot -PathType Container)) {
         $null = New-Item -ItemType Directory -Path $OutputRoot -Force
     }
+
     $encoding = New-Object System.Text.UTF8Encoding($false)
     [System.IO.File]::WriteAllText($jsonPath, ($result | ConvertTo-Json -Depth 12), $encoding)
 
@@ -361,7 +438,7 @@ if ($env:GITHUB_ACTIONS -eq 'true') {
         Write-Host "::error file=$($violation.path),line=$($violation.line),title=Operator command envelope violation::$message"
     }
     foreach ($fixtureFailure in @($fixtureFailures)) {
-        Write-Host "::error title=Operator command fixture failure::Fixture $($fixtureFailure.caseId) failed command-envelope classification."
+        Write-Host "::error title=Operator command fixture failure::Fixture $($fixtureFailure.caseId) failed command-envelope classification or privacy validation."
     }
 }
 
@@ -377,6 +454,10 @@ if (-not $NoReport) {
 }
 Write-Host '============================================================' -ForegroundColor Cyan
 
-if ($PassThru) { return [pscustomobject]$result }
-if ($status -ne 'PASS') { exit 1 }
+if ($PassThru) {
+    return [pscustomobject]$result
+}
+if ($status -ne 'PASS') {
+    exit 1
+}
 exit 0
