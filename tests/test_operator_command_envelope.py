@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import json
-import os
 import re
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -51,13 +51,17 @@ def command_lines(path: Path, allowed_languages: set[str]):
                 marker = match.group("marker")
                 language = match.group("lang").lower()
             continue
-        if re.match(r"^\s*" + re.escape(marker) + r"\s*$", line):
+
+        close_pattern = rf"^\s*{re.escape(marker[0])}{{{len(marker)},}}\s*$"
+        if re.match(close_pattern, line):
             inside = False
             marker = ""
             language = ""
             continue
+
         if language in allowed_languages:
             yield number, language, line
+
     if inside:
         raise AssertionError(f"unterminated command fence: {path}")
 
@@ -80,16 +84,62 @@ class TestOperatorCommandEnvelope(unittest.TestCase):
         self.assertFalse(self.contract["generatedEvidence"]["tracked"])
         self.assertIn("does not prove the command succeeds", self.contract["proofCeiling"])
 
-    def test_fixture_reproduces_prompt_and_transcript_failures(self):
+    def test_fixture_reproduces_cross_platform_prompt_and_transcript_failures(self):
         for case in self.fixture["cases"]:
             actual = rule_matches(self.contract, case["text"])
             expected = sorted(case["expectedRuleIds"])
             self.assertEqual(expected, actual, case["id"])
 
+        case_ids = {case["id"] for case in self.fixture["cases"]}
+        for required in [
+            "bad-duplicated-powershell-prompt",
+            "bad-duplicated-unix-powershell-prompt",
+            "bad-unix-powershell-prompt",
+            "bad-wsl-shell-prompt",
+            "bad-bracketed-posix-prompt",
+        ]:
+            self.assertIn(required, case_ids)
+
         fixture_text = read_text(FIXTURE)
-        self.assertNotRegex(fixture_text, re.compile(r"C:\\\\Users\\\\[^<]"))
+        ordinary_windows_user = re.compile(
+            r"(?i)C:\\Users\\(?!<redacted>)[^\\\r\n]+"
+        )
+        self.assertRegex(r"C:\Users\alice\repo", ordinary_windows_user)
+        self.assertNotRegex(fixture_text, ordinary_windows_user)
         self.assertNotIn("pa_rperez26", fixture_text)
         self.assertNotIn("Northwell", fixture_text)
+
+    def test_markdown_parser_accepts_longer_closing_fence(self):
+        allowed = {language.lower() for language in self.contract["fenceLanguages"]}
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "handoff.md"
+            path.write_text(
+                "```powershell\nGet-Date\n````\n\n~~~~bash\nprintf ok\n~~~~~~\n",
+                encoding="utf-8",
+            )
+            records = list(command_lines(path, allowed))
+        self.assertEqual(
+            [(2, "powershell", "Get-Date"), (6, "bash", "printf ok")],
+            records,
+        )
+
+    def test_redaction_contract_covers_paths_identities_hosts_and_secrets(self):
+        patterns = [entry["pattern"] for entry in self.contract["sanitization"]["redactPatterns"]]
+        samples = [
+            r"C:\Users\alice\repo",
+            "/home/alice/repo",
+            r"\\fileserver\private\repo",
+            "alice@example.internal",
+            "$env:API_KEY='secret-value'",
+            "tool --token ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",
+            "Authorization: Bearer abcdefghijklmnopqrstuvwxyz",
+            "sk-ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",
+        ]
+        for sample in samples:
+            self.assertTrue(
+                any(re.search(pattern, sample) for pattern in patterns),
+                sample,
+            )
 
     def test_registered_operator_surfaces_exist_and_are_clean(self):
         allowed = {language.lower() for language in self.contract["fenceLanguages"]}
@@ -100,7 +150,7 @@ class TestOperatorCommandEnvelope(unittest.TestCase):
                 matches = rule_matches(self.contract, line)
                 self.assertEqual([], matches, f"{relative}:{line_number}: {matches}")
 
-    def test_validator_is_cross_shell_and_fixture_backed(self):
+    def test_validator_is_cross_shell_fixture_backed_and_candidate_private(self):
         text = read_text(VALIDATOR)
         boundary = text.index("Set-StrictMode")
         self.assertNotIn("$PSScriptRoot", text[:boundary])
@@ -110,8 +160,13 @@ class TestOperatorCommandEnvelope(unittest.TestCase):
             "Get-MarkdownCommandLines",
             "Get-SanitizedExcerpt",
             "duplicate-powershell-prompt",
+            "posix-shell-prompt-prefix",
             "missing-operator-surface",
             "CandidatePath",
+            "<candidate-content-redacted>",
+            "<candidate-$candidateIndex>",
+            "$fenceMarker.Length + ',}'",
+            "$privacyProbes",
             "$contract.generatedEvidence.json",
             "$contract.generatedEvidence.markdown",
             "GITHUB_ACTIONS",
@@ -144,11 +199,15 @@ class TestOperatorCommandEnvelope(unittest.TestCase):
 
         hook = read_text(HOOK)
         self.assertIn("Test-OperatorCommandEnvelope.ps1", hook)
-        self.assertIn("operator-command-envelope-report", hook)
+        self.assertIn("CandidatePath", hook)
+        self.assertIn("commit-tree", hook)
+        self.assertIn("worktree add --detach", hook)
 
         status = read_text(STATUS)
         self.assertIn("operator-command-envelope", status)
         self.assertIn("Test-OperatorCommandEnvelope.ps1", status)
+        self.assertIn("catch", status)
+        self.assertIn("errorType", status)
 
         ci = read_text(CI)
         for token in [
