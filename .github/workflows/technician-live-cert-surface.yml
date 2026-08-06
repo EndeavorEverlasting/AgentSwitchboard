@@ -99,9 +99,21 @@ jobs:
         shell: pwsh
         run: pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertSurface.ps1
 
-      - name: Validate harness in PowerShell 7
+      - name: Validate harness in PowerShell 7 from external working directory
         shell: pwsh
-        run: pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertHarness.ps1
+        run: |
+          $root = $PWD.Path
+          Push-Location -LiteralPath $env:RUNNER_TEMP
+          try {
+            & pwsh -NoLogo -NoProfile -File (Join-Path $root 'scripts/Test-TechnicianLiveCertHarness.ps1') -RootPath $root
+            $exitCode = $LASTEXITCODE
+          }
+          finally {
+            Pop-Location
+          }
+          if ($exitCode -ne 0) {
+            exit $exitCode
+          }
 
       - name: Validate operator commands in Windows PowerShell 5.1
         if: runner.os == 'Windows'
@@ -113,10 +125,22 @@ jobs:
         shell: pwsh
         run: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertSurface.ps1
 
-      - name: Validate harness in Windows PowerShell 5.1
+      - name: Validate harness in Windows PowerShell 5.1 from external working directory
         if: runner.os == 'Windows'
         shell: pwsh
-        run: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertHarness.ps1
+        run: |
+          $root = $PWD.Path
+          Push-Location -LiteralPath $env:RUNNER_TEMP
+          try {
+            & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'scripts\Test-TechnicianLiveCertHarness.ps1') -RootPath $root
+            $exitCode = $LASTEXITCODE
+          }
+          finally {
+            Pop-Location
+          }
+          if ($exitCode -ne 0) {
+            exit $exitCode
+          }
 
       - name: Validate Windows Profile live-certification doctrine
         shell: pwsh
