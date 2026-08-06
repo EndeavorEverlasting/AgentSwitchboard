@@ -6,6 +6,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$GitCommand = if ($env:OS -eq 'Windows_NT') { 'git.exe' } else { 'git' }
 
 if ([string]::IsNullOrWhiteSpace($RootPath)) {
     $RootPath = Split-Path -Parent $PSScriptRoot
@@ -45,7 +46,7 @@ foreach ($component in $manifest.components) {
     if (-not (Test-Path -LiteralPath $componentPath -PathType Leaf)) {
         throw "Missing harness component: $($component.path)"
     }
-    & git.exe -C $RootPath ls-files --error-unmatch -- ([string]$component.path) *> $null
+    & $GitCommand -C $RootPath ls-files --error-unmatch -- ([string]$component.path) *> $null
     if ($LASTEXITCODE -ne 0) {
         throw "Harness component is not tracked: $($component.path)"
     }

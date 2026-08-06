@@ -3,13 +3,14 @@ param([string]$RootPath)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$GitCommand = if ($env:OS -eq 'Windows_NT') { 'git.exe' } else { 'git' }
 
 if ([string]::IsNullOrWhiteSpace($RootPath)) {
     $RootPath = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
 }
 $RootPath = (Resolve-Path -LiteralPath $RootPath).Path
 
-$staged = @(& git.exe -C $RootPath diff --cached --name-only --diff-filter=ACMR)
+$staged = @(& $GitCommand -C $RootPath diff --cached --name-only --diff-filter=ACMR)
 if ($LASTEXITCODE -ne 0) {
     throw 'Could not inspect the staged file list.'
 }
@@ -41,7 +42,7 @@ if ($LASTEXITCODE -ne 0) {
     throw "Stale-checkout exact-head validation failed with exit code $LASTEXITCODE."
 }
 
-& git.exe -C $RootPath --no-pager diff --cached --check
+& $GitCommand -C $RootPath --no-pager diff --cached --check
 if ($LASTEXITCODE -ne 0) {
     throw 'Staged diff hygiene failed.'
 }

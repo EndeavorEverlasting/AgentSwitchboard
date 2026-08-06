@@ -105,6 +105,15 @@ class StaleCheckoutExactHeadBootstrapTests(unittest.TestCase):
         self.assertNotIn("-Encoding utf8NoBOM", source)
         self.assertIn("New-Object Text.UTF8Encoding($false)", source)
 
+        for relative in [
+            "scripts/Test-StaleCheckoutExactHeadBootstrap.ps1",
+            "tooling/profiles/windows/Get-StaleCheckoutExactHeadHarnessStatus.ps1",
+            "tooling/profiles/windows/hooks/Invoke-StaleCheckoutExactHeadPreCommit.ps1",
+        ]:
+            shared_source = (ROOT / relative).read_text(encoding="utf-8")
+            self.assertIn("$GitCommand = if ($env:OS -eq 'Windows_NT')", shared_source)
+            self.assertIn("& $GitCommand", shared_source)
+
     def test_engine_only_promotes_fresh_delegated_artifact(self) -> None:
         source = ENGINE.read_text(encoding="utf-8")
         self.assertRegex(source, r"Where-Object \{ \$_\.LastWriteTimeUtc -ge \$startedUtc \}")

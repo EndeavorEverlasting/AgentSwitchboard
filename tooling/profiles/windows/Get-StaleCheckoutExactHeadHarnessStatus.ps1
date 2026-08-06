@@ -6,6 +6,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$GitCommand = if ($env:OS -eq 'Windows_NT') { 'git.exe' } else { 'git' }
 
 function Write-Utf8NoBom {
     param(
@@ -46,7 +47,7 @@ foreach ($component in $components) {
     $exists = Test-Path -LiteralPath $path -PathType Leaf
     $tracked = $false
     if ($exists) {
-        & git.exe -C $RootPath ls-files --error-unmatch -- ([string]$component.path) *> $null
+        & $GitCommand -C $RootPath ls-files --error-unmatch -- ([string]$component.path) *> $null
         $tracked = $LASTEXITCODE -eq 0
     }
     if (-not $exists) {
