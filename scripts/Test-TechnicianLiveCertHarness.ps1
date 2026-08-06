@@ -136,6 +136,7 @@ foreach ($requiredRule in @(
     'duplicate-powershell-prompt',
     'powershell-prompt-prefix',
     'cmd-prompt-prefix',
+    'posix-shell-prompt-prefix',
     'continuation-prompt',
     'powershell-error-location',
     'powershell-error-metadata',
@@ -149,6 +150,7 @@ $fixtureText = Get-Content -LiteralPath (Join-Path $RootPath $manifest.entrypoin
 Add-Result (-not $fixtureText.Contains('pa_rperez26')) 'operator-command/fixture/no-private-user' 'Fixture contains an operator username'
 Add-Result (-not $fixtureText.Contains('Northwell')) 'operator-command/fixture/no-private-org' 'Fixture contains private organization evidence'
 Add-Result ($fixtureText.Contains('bad-duplicated-powershell-prompt')) 'operator-command/fixture/duplicated-prompt' 'Duplicated prompt fixture is missing'
+Add-Result ($fixtureText.Contains('bad-wsl-shell-prompt')) 'operator-command/fixture/wsl-prompt' 'WSL prompt fixture is missing'
 Add-Result ($fixtureText.Contains('Get-Process : A positional parameter')) 'operator-command/fixture/get-process-alias' 'Get-Process prompt-contamination symptom fixture is missing'
 
 $operatorGuide = Get-Content -LiteralPath (Join-Path $RootPath $manifest.entrypoints.operatorGuide) -Raw
