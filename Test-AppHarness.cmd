@@ -8,6 +8,11 @@ if not defined PSHOST (
   exit /b 23
 )
 for %%I in ("%~dp0.") do set "ROOT=%%~fI"
+set "OBSERVER=%ROOT%\scripts\Test-AppHarness.ps1"
+if not exist "%OBSERVER%" (
+  echo [FAIL] Canonical app-harness observer is missing: %OBSERVER%
+  exit /b 24
+)
 "%PSHOST%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\Test-AppHarnessOneCommandProof.ps1" -RootPath "%ROOT%" %*
 set "RESULT=%ERRORLEVEL%"
 endlocal & exit /b %RESULT%
