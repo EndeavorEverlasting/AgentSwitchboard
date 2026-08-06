@@ -47,11 +47,31 @@ function Invoke-Checked {
     param(
         [Parameter(Mandatory)][string]$FilePath,
         [Parameter(Mandatory)][string[]]$ArgumentList,
-        [Parameter(Mandatory)][string]$Name
+        [Parameter(Mandatory)][string]$Name,
+        [Parameter(Mandatory)][string]$WorkingDirectory
     )
-    & $FilePath @ArgumentList
-    $exitCode = $LASTEXITCODE
-    Add-Result ($exitCode -eq 0) $Name "$FilePath exited with $exitCode"
+
+    $locationPushed = $false
+    try {
+        Push-Location -LiteralPath $WorkingDirectory
+        $locationPushed = $true
+        & $FilePath @ArgumentList
+        $exitCode = $LASTEXITCODE
+        if ($null -eq $exitCode) {
+            $exitCode = 0
+        }
+    }
+    catch {
+        Add-Result $false $Name "$FilePath failed from '$WorkingDirectory': $($_.Exception.Message)"
+        return
+    }
+    finally {
+        if ($locationPushed) {
+            Pop-Location
+        }
+    }
+
+    Add-Result ($exitCode -eq 0) $Name "$FilePath exited with $exitCode from '$WorkingDirectory'"
 }
 
 function Write-GitHubFailureAnnotation {
@@ -175,10 +195,12 @@ $workflowText = Get-Content -LiteralPath (Join-Path $RootPath $manifest.entrypoi
 foreach ($token in @(
     'powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-OperatorCommandEnvelope.ps1',
     'powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertSurface.ps1',
-    'powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertHarness.ps1',
+    'Validate harness in Windows PowerShell 5.1 from external working directory',
     'pwsh -NoLogo -NoProfile -File scripts/Test-OperatorCommandEnvelope.ps1',
     'pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertSurface.ps1',
-    'pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertHarness.ps1',
+    'Validate harness in PowerShell 7 from external working directory',
+    'Push-Location -LiteralPath $env:RUNNER_TEMP',
+    '-RootPath $root',
     'python -m unittest tests.test_operator_command_envelope',
     'python -m unittest tests.test_technician_live_cert_harness',
     'git --no-pager diff --check',
@@ -205,7 +227,7 @@ if (-not $SkipChildValidators) {
     $currentPowerShell = (Get-Process -Id $PID).Path
 
     $operatorValidator = Join-Path $RootPath $manifest.entrypoints.operatorCommandValidator
-    Invoke-Checked $currentPowerShell @(
+    Invoke-Checked -FilePath $currentPowerShell -ArgumentList @(
         '-NoLogo',
         '-NoProfile',
         '-ExecutionPolicy',
@@ -215,10 +237,10 @@ if (-not $SkipChildValidators) {
         '-RootPath',
         $RootPath,
         '-NoReport'
-    ) 'child/operator-command-validator'
+    ) -Name 'child/operator-command-validator' -WorkingDirectory $RootPath
 
     $surfaceValidator = Join-Path $RootPath $manifest.entrypoints.surfaceValidator
-    Invoke-Checked $currentPowerShell @(
+    Invoke-Checked -FilePath $currentPowerShell -ArgumentList @(
         '-NoLogo',
         '-NoProfile',
         '-ExecutionPolicy',
@@ -227,13 +249,13 @@ if (-not $SkipChildValidators) {
         $surfaceValidator,
         '-RootPath',
         $RootPath
-    ) 'child/surface-validator'
+    ) -Name 'child/surface-validator' -WorkingDirectory $RootPath
 
     $python = Get-Command python -ErrorAction SilentlyContinue
     if ($python) {
-        Invoke-Checked $python.Source @('-m', 'unittest', 'tests.test_operator_command_envelope') 'child/python-operator-command'
-        Invoke-Checked $python.Source @('-m', 'unittest', 'tests.test_technician_live_cert_harness') 'child/python-harness'
-        Invoke-Checked $python.Source @('-m', 'unittest', 'tests.test_technician_live_cert_surface') 'child/python-surface'
+        Invoke-Checked -FilePath $python.Source -ArgumentList @('-m', 'unittest', 'tests.test_operator_command_envelope') -Name 'child/python-operator-command' -WorkingDirectory $RootPath
+        Invoke-Checked -FilePath $python.Source -ArgumentList @('-m', 'unittest', 'tests.test_technician_live_cert_harness') -Name 'child/python-harness' -WorkingDirectory $RootPath
+        Invoke-Checked -FilePath $python.Source -ArgumentList @('-m', 'unittest', 'tests.test_technician_live_cert_surface') -Name 'child/python-surface' -WorkingDirectory $RootPath
     }
     else {
         Add-Result $false 'child/python' 'python is unavailable'
