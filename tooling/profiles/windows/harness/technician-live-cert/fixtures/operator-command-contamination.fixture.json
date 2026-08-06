@@ -11,8 +11,23 @@
       ]
     },
     {
+      "id": "bad-duplicated-unix-powershell-prompt",
+      "text": "PS /home/operator/repo> PS /home/operator/repo> git status",
+      "expectedRuleIds": [
+        "duplicate-powershell-prompt",
+        "powershell-prompt-prefix"
+      ]
+    },
+    {
       "id": "bad-single-powershell-prompt",
       "text": "PS C:\\Work\\AgentSwitchBoard-Live> git status --short",
+      "expectedRuleIds": [
+        "powershell-prompt-prefix"
+      ]
+    },
+    {
+      "id": "bad-unix-powershell-prompt",
+      "text": "PS /home/operator/repo> git status --short",
       "expectedRuleIds": [
         "powershell-prompt-prefix"
       ]
@@ -22,6 +37,20 @@
       "text": "C:\\Work\\AgentSwitchBoard-Live>git status --short",
       "expectedRuleIds": [
         "cmd-prompt-prefix"
+      ]
+    },
+    {
+      "id": "bad-wsl-shell-prompt",
+      "text": "operator@workbox:/mnt/c/Work/repo$ git status --short",
+      "expectedRuleIds": [
+        "posix-shell-prompt-prefix"
+      ]
+    },
+    {
+      "id": "bad-bracketed-posix-prompt",
+      "text": "[operator@workbox repo]$ git status --short",
+      "expectedRuleIds": [
+        "posix-shell-prompt-prefix"
       ]
     },
     {
@@ -72,6 +101,11 @@
       "expectedRuleIds": []
     },
     {
+      "id": "good-unix-powershell-command",
+      "text": "$repo='/home/operator/repo'; & git -C $repo status --short",
+      "expectedRuleIds": []
+    },
+    {
       "id": "good-cmd-command",
       "text": "git -C \"C:\\Work\\AgentSwitchBoard-Live\" status --short",
       "expectedRuleIds": []
@@ -83,5 +117,5 @@
     }
   ],
   "privacy": "Synthetic paths only. No operator usernames, private hostnames, credentials, tokens, or copied production output.",
-  "proofCeiling": "Exercises known command-contamination signatures only."
+  "proofCeiling": "Exercises known cross-platform command-contamination signatures only."
 }
