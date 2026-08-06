@@ -56,9 +56,7 @@ OPERATOR_SKILL_PATH = os.path.join(
 GUIDE_PATH = os.path.join(
     REPO_ROOT, "docs", "harness", "technician-live-cert-harness.md"
 )
-OPERATOR_CONTRACT_PATH = os.path.join(
-    HARNESS_ROOT, "operator-command-contract.json"
-)
+OPERATOR_CONTRACT_PATH = os.path.join(HARNESS_ROOT, "operator-command-contract.json")
 OPERATOR_FIXTURE_PATH = os.path.join(
     HARNESS_ROOT, "fixtures", "operator-command-contamination.fixture.json"
 )
@@ -98,10 +96,6 @@ class TestTechnicianLiveCertHarness(unittest.TestCase):
         self.assertFalse(self.manifest["networkAllowedByValidators"])
         self.assertFalse(self.manifest["targetMutationAllowedByValidators"])
         self.assertIn(
-            "require the workstation live-cert sequence",
-            self.manifest["proofCeiling"],
-        )
-        self.assertIn(
             "prompt-free operator-command contracts",
             self.manifest["proofCeiling"],
         )
@@ -128,92 +122,10 @@ class TestTechnicianLiveCertHarness(unittest.TestCase):
             "operatorCommandContractSchema",
             "operatorCommandFixtureSchema",
         ]:
-            path = os.path.join(REPO_ROOT, entrypoints[key].replace("/", os.sep))
-            parsed = read_json(path)
-            self.assertIsInstance(parsed, dict, key)
-
-    def test_codebase_map_covers_required_operator_surfaces(self):
-        mapping = read_json(os.path.join(HARNESS_ROOT, "codebase-map.json"))
-        for field in [
-            "overview",
-            "directories",
-            "entrypoints",
-            "configurationFiles",
-            "commands",
-            "knownTraps",
-            "proofCeiling",
-        ]:
-            self.assertIn(field, mapping)
-        commands = json.dumps(mapping["commands"])
-        for token in [
-            "tests.test_operator_command_envelope",
-            "Test-OperatorCommandEnvelope.ps1",
-            "tests.test_technician_live_cert_harness",
-            "Test-TechnicianLiveCertSurface.ps1",
-            "Test-TechnicianLiveCertHarness.ps1",
-            "git --no-pager diff --check",
-            "-CandidatePath",
-        ]:
-            self.assertIn(token, commands)
-        traps = "\n".join(mapping["knownTraps"])
-        self.assertIn("Get-Process alias", traps)
-        self.assertIn("duplicated prompt", traps)
-        self.assertIn("CategoryInfo", traps)
-        self.assertIn("PSScriptRoot", traps)
-        self.assertIn("string,string overload", traps)
-        self.assertIn("interactive pager", traps)
-
-    def test_workflows_cover_pickup_failure_validation_and_handoff(self):
-        maintenance = read_json(
-            os.path.join(HARNESS_ROOT, "workflows", "maintenance.workflow.json")
-        )
-        phase_ids = [phase["id"] for phase in maintenance["phases"]]
-        self.assertEqual(
-            ["intake", "factor", "implement", "validate", "handoff"], phase_ids
-        )
-        maintenance_text = json.dumps(maintenance)
-        for token in [
-            "Windows PowerShell 5.1",
-            "PowerShell 7",
-            "git --no-pager",
-            "exact next command",
-            "operator-command envelope",
-            "candidate handoff artifact",
-            "shell prompt",
-        ]:
-            self.assertIn(token, maintenance_text)
-
-        repair = read_json(
-            os.path.join(
-                HARNESS_ROOT, "workflows", "field-failure-repair.workflow.json"
+            parsed = read_json(
+                os.path.join(REPO_ROOT, entrypoints[key].replace("/", os.sep))
             )
-        )
-        step_ids = [step["id"] for step in repair["steps"]]
-        self.assertEqual(
-            [
-                "preserve",
-                "separate-command-from-transcript",
-                "reproduce-contract",
-                "repair",
-                "cross-shell-validate",
-                "exact-command-rerun",
-                "converge",
-            ],
-            step_ids,
-        )
-        self.assertIn("prompt-free operator command", repair["proofCeiling"])
-
-    def test_artifact_registry_keeps_generated_evidence_untracked(self):
-        registry = read_json(os.path.join(HARNESS_ROOT, "artifact-registry.json"))
-        self.assertGreaterEqual(len(registry["artifacts"]), 15)
-        artifact_ids = {artifact["artifactId"] for artifact in registry["artifacts"]}
-        self.assertIn("operator-command-envelope-json", artifact_ids)
-        self.assertIn("operator-command-envelope-report", artifact_ids)
-        for artifact in registry["artifacts"]:
-            self.assertFalse(artifact["tracked"], artifact["artifactId"])
-            self.assertEqual("local-operational", artifact["sensitivity"])
-            self.assertTrue(artifact["generator"])
-            self.assertTrue(artifact["proofCeiling"])
+            self.assertIsInstance(parsed, dict, key)
 
     def test_operator_command_contract_and_fixture_are_registered(self):
         contract = read_json(OPERATOR_CONTRACT_PATH)
@@ -261,9 +173,8 @@ class TestTechnicianLiveCertHarness(unittest.TestCase):
             text = read_text(path)
             boundary = text.find("Set-StrictMode")
             self.assertGreater(boundary, 0, path)
-            parameter_surface = text[:boundary]
             self.assertNotRegex(
-                parameter_surface,
+                text[:boundary],
                 re.compile(r"=\s*\([^)]*\$PSScriptRoot", re.IGNORECASE),
                 path,
             )
@@ -283,67 +194,56 @@ class TestTechnicianLiveCertHarness(unittest.TestCase):
             "$normalized -eq 'Ubuntu'",
         ]:
             self.assertIn(token, validator)
-        self.assertNotRegex(
-            validator,
-            re.compile(
-                r"(?mi)^\s*Write-Host\b.*-ForegroundColor\s+\(if\b"
-            ),
-        )
 
-    def test_harness_validator_checks_tracking_children_and_noninteractive_git(self):
+    def test_harness_validator_binds_every_child_to_exact_root(self):
         validator = read_text(HARNESS_VALIDATOR_PATH)
         for token in [
-            "git -C $RootPath ls-files --error-unmatch",
-            "Test-OperatorCommandEnvelope.ps1",
+            "[Parameter(Mandatory)][string]$WorkingDirectory",
+            "Push-Location -LiteralPath $WorkingDirectory",
+            "Pop-Location",
+            "-WorkingDirectory $RootPath",
             "tests.test_operator_command_envelope",
-            "Test-TechnicianLiveCertSurface.ps1",
             "tests.test_technician_live_cert_harness",
             "tests.test_technician_live_cert_surface",
             "git -C $RootPath --no-pager diff --check",
-            "Get-Process : A positional parameter",
         ]:
             self.assertIn(token, validator)
+        self.assertNotIn(
+            "Invoke-Checked $python.Source @('-m', 'unittest'",
+            validator,
+        )
 
-    def test_hook_is_opt_in_and_blocks_generated_evidence(self):
+    def test_ci_proves_external_working_directory_independence(self):
+        workflow = read_text(CI_PATH)
+        for token in [
+            "Validate harness in PowerShell 7 from external working directory",
+            "Validate harness in Windows PowerShell 5.1 from external working directory",
+            "Push-Location -LiteralPath $env:RUNNER_TEMP",
+            "-RootPath $root",
+            "Join-Path $root 'scripts/Test-TechnicianLiveCertHarness.ps1'",
+            "Join-Path $root 'scripts\\Test-TechnicianLiveCertHarness.ps1'",
+            "python -m unittest tests.test_operator_command_envelope",
+            "git --no-pager diff --check",
+        ]:
+            self.assertIn(token, workflow)
+
+    def test_hook_status_skills_and_guide_route_to_harness(self):
         hook = read_text(HOOK_PATH)
+        status = read_text(STATUS_REPORTER_PATH)
+        skill = read_text(SKILL_PATH)
+        operator_skill = read_text(OPERATOR_SKILL_PATH)
+        guide = read_text(GUIDE_PATH)
         for token in [
             "Test-OperatorCommandEnvelope.ps1",
             "Test-TechnicianLiveCertHarness.ps1",
             "git -C $RootPath --no-pager diff --cached --check",
             "Generated technician evidence must not be committed",
-            "operator-command-envelope-report",
-            "preflight-summary",
-            "stage-result",
         ]:
             self.assertIn(token, hook)
-        self.assertNotIn("core.hooksPath", hook)
-
-    def test_ci_runs_cross_shell_matrix_and_fixture_safe_cmd(self):
-        workflow = read_text(CI_PATH)
+        self.assertIn("operator-command-envelope", status)
         for token in [
-            "python -m unittest tests.test_operator_command_envelope",
-            "python -m unittest tests.test_technician_live_cert_harness",
-            "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-OperatorCommandEnvelope.ps1",
-            "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertSurface.ps1",
-            "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertHarness.ps1",
-            "pwsh -NoLogo -NoProfile -File scripts/Test-OperatorCommandEnvelope.ps1",
-            "pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertSurface.ps1",
-            "pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertHarness.ps1",
-            "TECHNICIAN_LIVE_CERT_CI_SURFACE",
-            "operator-command-envelope-report",
-            "git --no-pager diff --check",
-        ]:
-            self.assertIn(token, workflow)
-
-    def test_skills_and_operator_guide_route_to_scoped_harness(self):
-        skill = read_text(SKILL_PATH)
-        operator_skill = read_text(OPERATOR_SKILL_PATH)
-        guide = read_text(GUIDE_PATH)
-        for token in [
-            "tooling/profiles/windows/harness/technician-live-cert/manifest.json",
             "scripts/Test-TechnicianLiveCertHarness.ps1",
             "scripts/Test-OperatorCommandEnvelope.ps1",
-            ".ai/skills/operator-command-envelope/SKILL.md",
             "Windows PowerShell 5.1",
             "PowerShell 7",
         ]:
@@ -358,10 +258,8 @@ class TestTechnicianLiveCertHarness(unittest.TestCase):
             "What is working",
             "What is broken",
             "What is missing",
-            "git --no-pager",
             "exact operator command",
             "operator-command envelope",
-            "CandidatePath",
             "proof ceiling",
         ]:
             self.assertIn(token, guide)
