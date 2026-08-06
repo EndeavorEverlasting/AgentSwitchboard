@@ -15,6 +15,15 @@
 
 {{guardTable}}
 
+## Operator-command envelope
+
+- Status: **{{operatorCommandStatus}}**
+- Registered sources scanned: **{{operatorCommandSourceCount}}**
+- Violations: **{{operatorCommandViolationCount}}**
+- Fixture failures: **{{operatorCommandFixtureFailureCount}}**
+
+{{operatorCommandViolationTable}}
+
 ## Validator results
 
 {{validatorTable}}
@@ -30,6 +39,13 @@
 ## Missing
 
 {{missing}}
+
+## Owner, dependency, artifact, and completion gate
+
+- Owner: {{nextOwner}}
+- Dependency: {{nextDependency}}
+- Expected artifact: {{nextArtifact}}
+- Completion gate: {{nextCompletionGate}}
 
 ## Exact next command
 

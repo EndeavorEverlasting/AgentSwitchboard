@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "contractId": "agentswitchboard.operator-command-envelope.v1",
+  "scope": "Copy/paste commands, exact-next-command handoffs, operator reports, scoped skills, and technician harness documentation.",
+  "canonicalOwner": "EndeavorEverlasting/AgentSwitchboard",
+  "fixturePath": "tooling/profiles/windows/harness/technician-live-cert/fixtures/operator-command-contamination.fixture.json",
+  "reportTemplate": "tooling/profiles/windows/harness/technician-live-cert/operator-command-report.template.md",
+  "scanPaths": [
+    "docs/harness/technician-live-cert-harness.md",
+    "docs/workstation/technician-agentswitchboard-ready.md",
+    ".ai/skills/windows-profile-live-certification/SKILL.md",
+    ".ai/skills/operator-command-envelope/SKILL.md",
+    "tooling/profiles/windows/harness/technician-live-cert/operator-report.template.md",
+    "tooling/profiles/windows/harness/technician-live-cert/operator-command-report.template.md"
+  ],
+  "scanMode": "markdown-fenced-code",
+  "fenceLanguages": [
+    "",
+    "powershell",
+    "pwsh",
+    "cmd",
+    "batch",
+    "bash",
+    "sh",
+    "shell"
+  ],
+  "rules": [
+    {
+      "id": "duplicate-powershell-prompt",
+      "severity": "error",
+      "pattern": "(?i)\\bPS\\s+[A-Z]:\\\\[^>\\r\\n]*>\\s+PS\\s+[A-Z]:\\\\[^>\\r\\n]*>",
+      "message": "A duplicated PowerShell prompt was presented as executable input."
+    },
+    {
+      "id": "powershell-prompt-prefix",
+      "severity": "error",
+      "pattern": "(?i)^\\s*PS\\s+[A-Z]:\\\\[^>\\r\\n]*>\\s*",
+      "message": "A PowerShell prompt prefix was presented as executable input."
+    },
+    {
+      "id": "cmd-prompt-prefix",
+      "severity": "error",
+      "pattern": "(?i)^\\s*[A-Z]:\\\\[^>\\r\\n]*>\\s*",
+      "message": "A Command Prompt prefix was presented as executable input."
+    },
+    {
+      "id": "continuation-prompt",
+      "severity": "error",
+      "pattern": "^\\s*>>\\s*",
+      "message": "A PowerShell continuation prompt was presented as executable input."
+    },
+    {
+      "id": "powershell-error-location",
+      "severity": "error",
+      "pattern": "(?i)^\\s*At line:\\d+\\s+char:\\d+",
+      "message": "PowerShell error-location output was presented as executable input."
+    },
+    {
+      "id": "powershell-error-metadata",
+      "severity": "error",
+      "pattern": "(?i)^\\s*\\+\\s+(?:CategoryInfo|FullyQualifiedErrorId)\\b",
+      "message": "PowerShell error metadata was presented as executable input."
+    },
+    {
+      "id": "powershell-error-header",
+      "severity": "error",
+      "pattern": "(?i)^\\s*[A-Za-z][A-Za-z0-9-]*\\s*:\\s+(?:A positional parameter|The term|Cannot bind|Parameter set|Exception|An error occurred)\\b",
+      "message": "PowerShell diagnostic output was presented as executable input."
+    },
+    {
+      "id": "instruction-prose-in-command-block",
+      "severity": "error",
+      "pattern": "(?i)^\\s*(?:run|paste|copy|expected output|output|result|note)\\s*:\\s+",
+      "message": "Instructional prose was mixed into an executable command block."
+    }
+  ],
+  "sanitization": {
+    "stripPromptPatterns": [
+      "(?i)^\\s*PS\\s+[A-Z]:\\\\[^>\\r\\n]*>\\s*",
+      "(?i)^\\s*[A-Z]:\\\\[^>\\r\\n]*>\\s*",
+      "^\\s*>>\\s*"
+    ],
+    "redactPatterns": [
+      {
+        "pattern": "(?i)C:\\\\Users\\\\[^\\\\\\r\\n]+",
+        "replacement": "C:\\\\Users\\\\<redacted>"
+      }
+    ],
+    "maximumExcerptCharacters": 240
+  },
+  "presentationRequirements": [
+    "Name the shell outside the code fence.",
+    "Put executable input only inside the code fence.",
+    "Begin the command at the first non-whitespace character; never include PS, CMD, WSL, tmux, or continuation prompts.",
+    "Never mix stdout, stderr, stack traces, transcript lines, or expected output into the command block.",
+    "Prefer a repository-owned CMD or PS1 entrypoint over a long inline bootstrap.",
+    "Carry fixed repository, ref, and SHA values into the command while leaving genuinely unknown runtime values explicit.",
+    "State the owner, dependency, expected artifact, and completion gate outside the command block."
+  ],
+  "generatedEvidence": {
+    "tracked": false,
+    "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/technician-live-cert/operator-command-envelope",
+    "json": "operator-command-envelope-report.json",
+    "markdown": "operator-command-envelope-report.md"
+  },
+  "proofCeiling": "Proves that registered operator-facing command blocks and supplied candidate files are free of known prompt, continuation, transcript, and PowerShell error-output contamination. It does not prove the command succeeds on a workstation."
+}

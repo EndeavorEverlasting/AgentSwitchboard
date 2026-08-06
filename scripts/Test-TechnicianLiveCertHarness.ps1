@@ -37,7 +37,8 @@ function Add-Result {
     )
     if ($Condition) {
         [void]$passes.Add($Name)
-    } else {
+    }
+    else {
         [void]$failures.Add("${Name}: ${Message}")
     }
 }
@@ -70,9 +71,10 @@ foreach ($component in $manifest.components) {
     Add-Result (Test-Path -LiteralPath $fullPath -PathType Leaf) "component/$($component.id)/exists" "Missing $relativePath"
 
     if (Test-Path -LiteralPath $fullPath -PathType Leaf) {
-        & git -C $RootPath ls-files --error-unmatch -- $relativePath *> $null
+        $gitRelative = $relativePath.Replace('\', '/')
+        & git -C $RootPath ls-files --error-unmatch -- $gitRelative *> $null
         $trackedExit = $LASTEXITCODE
-        Add-Result ($trackedExit -eq 0) "component/$($component.id)/tracked" "$relativePath is not tracked in the Git index"
+        Add-Result ($trackedExit -eq 0) "component/$($component.id)/tracked" "$gitRelative is not tracked in the Git index"
     }
 }
 
@@ -82,7 +84,11 @@ $jsonPaths = @(
     [string]$manifest.entrypoints.artifactRegistry,
     [string]$manifest.entrypoints.maintenanceWorkflow,
     [string]$manifest.entrypoints.fieldFailureRepairWorkflow,
-    [string]$manifest.entrypoints.schema
+    [string]$manifest.entrypoints.schema,
+    [string]$manifest.entrypoints.operatorCommandContract,
+    [string]$manifest.entrypoints.operatorCommandFixture,
+    [string]$manifest.entrypoints.operatorCommandContractSchema,
+    [string]$manifest.entrypoints.operatorCommandFixtureSchema
 )
 foreach ($relativePath in $jsonPaths) {
     $fullPath = Join-Path $RootPath $relativePath
@@ -102,6 +108,29 @@ Add-Result ($manifest.implicitHookInstallationAllowed -eq $false) 'hooks/opt-in-
 Add-Result ($manifest.networkAllowedByValidators -eq $false) 'validators/no-network' 'Focused validators must remain offline'
 Add-Result ($manifest.targetMutationAllowedByValidators -eq $false) 'validators/no-target-mutation' 'Focused validators must not mutate targets'
 
+$operatorContract = Get-Content -LiteralPath (Join-Path $RootPath $manifest.entrypoints.operatorCommandContract) -Raw | ConvertFrom-Json
+Add-Result ($operatorContract.contractId -eq 'agentswitchboard.operator-command-envelope.v1') 'operator-command/contract-id' 'Unexpected operator-command contract'
+Add-Result ($operatorContract.generatedEvidence.tracked -eq $false) 'operator-command/evidence-untracked' 'Operator-command reports must remain untracked'
+$ruleIds = @($operatorContract.rules | ForEach-Object { [string]$_.id })
+foreach ($requiredRule in @(
+    'duplicate-powershell-prompt',
+    'powershell-prompt-prefix',
+    'cmd-prompt-prefix',
+    'continuation-prompt',
+    'powershell-error-location',
+    'powershell-error-metadata',
+    'powershell-error-header',
+    'instruction-prose-in-command-block'
+)) {
+    Add-Result ($requiredRule -in $ruleIds) "operator-command/rule/$requiredRule" "Missing rule $requiredRule"
+}
+
+$fixtureText = Get-Content -LiteralPath (Join-Path $RootPath $manifest.entrypoints.operatorCommandFixture) -Raw
+Add-Result (-not $fixtureText.Contains('pa_rperez26')) 'operator-command/fixture/no-private-user' 'Fixture contains an operator username'
+Add-Result (-not $fixtureText.Contains('Northwell')) 'operator-command/fixture/no-private-org' 'Fixture contains private organization evidence'
+Add-Result ($fixtureText.Contains('bad-duplicated-powershell-prompt')) 'operator-command/fixture/duplicated-prompt' 'Duplicated prompt fixture is missing'
+Add-Result ($fixtureText.Contains('Get-Process : A positional parameter')) 'operator-command/fixture/get-process-alias' 'Get-Process prompt-contamination symptom fixture is missing'
+
 $operatorGuide = Get-Content -LiteralPath (Join-Path $RootPath $manifest.entrypoints.operatorGuide) -Raw
 foreach ($token in @(
     'Windows PowerShell 5.1',
@@ -110,7 +139,10 @@ foreach ($token in @(
     'PSScriptRoot',
     'string/string',
     'proof ceiling',
-    'exact operator command'
+    'exact operator command',
+    'operator-command envelope',
+    'shell prompt',
+    'CandidatePath'
 )) {
     Add-Result ($operatorGuide.Contains($token)) "operator-guide/$token" "Operator guide missing '$token'"
 }
@@ -119,25 +151,44 @@ $skill = Get-Content -LiteralPath (Join-Path $RootPath $manifest.entrypoints.ski
 foreach ($token in @(
     'tooling/profiles/windows/harness/technician-live-cert/manifest.json',
     'scripts/Test-TechnicianLiveCertHarness.ps1',
+    'scripts/Test-OperatorCommandEnvelope.ps1',
+    '.ai/skills/operator-command-envelope/SKILL.md',
     'Windows PowerShell 5.1',
     'PowerShell 7'
 )) {
     Add-Result ($skill.Contains($token)) "skill/$token" "Live-cert skill missing '$token'"
 }
 
+$operatorSkill = Get-Content -LiteralPath (Join-Path $RootPath $manifest.entrypoints.operatorCommandSkill) -Raw
+foreach ($token in @(
+    'Name the shell outside the code fence',
+    'Begin at the first executable character',
+    'Never include a PowerShell prompt',
+    'Never mix stdout, stderr, stack traces',
+    'Test-OperatorCommandEnvelope.ps1 -CandidatePath',
+    'owner, dependency, expected artifact, and completion gate'
+)) {
+    Add-Result ($operatorSkill.Contains($token)) "operator-command-skill/$token" "Operator-command skill missing '$token'"
+}
+
 $workflowText = Get-Content -LiteralPath (Join-Path $RootPath $manifest.entrypoints.ciWorkflow) -Raw
 foreach ($token in @(
+    'powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-OperatorCommandEnvelope.ps1',
     'powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertSurface.ps1',
     'powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertHarness.ps1',
+    'pwsh -NoLogo -NoProfile -File scripts/Test-OperatorCommandEnvelope.ps1',
     'pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertSurface.ps1',
     'pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertHarness.ps1',
+    'python -m unittest tests.test_operator_command_envelope',
     'python -m unittest tests.test_technician_live_cert_harness',
-    'git --no-pager diff --check'
+    'git --no-pager diff --check',
+    'operator-command-envelope-report'
 )) {
     Add-Result ($workflowText.Contains($token)) "ci/$token" "CI workflow missing '$token'"
 }
 
 $entrypointScripts = @(
+    'scripts\Test-OperatorCommandEnvelope.ps1',
     'scripts\Test-TechnicianLiveCertSurface.ps1',
     'scripts\Test-TechnicianLiveCertHarness.ps1',
     'tooling\profiles\windows\Get-TechnicianLiveCertHarnessStatus.ps1',
@@ -151,8 +202,22 @@ foreach ($relativePath in $entrypointScripts) {
 }
 
 if (-not $SkipChildValidators) {
-    $surfaceValidator = Join-Path $RootPath $manifest.entrypoints.surfaceValidator
     $currentPowerShell = (Get-Process -Id $PID).Path
+
+    $operatorValidator = Join-Path $RootPath $manifest.entrypoints.operatorCommandValidator
+    Invoke-Checked $currentPowerShell @(
+        '-NoLogo',
+        '-NoProfile',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-File',
+        $operatorValidator,
+        '-RootPath',
+        $RootPath,
+        '-NoReport'
+    ) 'child/operator-command-validator'
+
+    $surfaceValidator = Join-Path $RootPath $manifest.entrypoints.surfaceValidator
     Invoke-Checked $currentPowerShell @(
         '-NoLogo',
         '-NoProfile',
@@ -166,9 +231,11 @@ if (-not $SkipChildValidators) {
 
     $python = Get-Command python -ErrorAction SilentlyContinue
     if ($python) {
+        Invoke-Checked $python.Source @('-m', 'unittest', 'tests.test_operator_command_envelope') 'child/python-operator-command'
         Invoke-Checked $python.Source @('-m', 'unittest', 'tests.test_technician_live_cert_harness') 'child/python-harness'
         Invoke-Checked $python.Source @('-m', 'unittest', 'tests.test_technician_live_cert_surface') 'child/python-surface'
-    } else {
+    }
+    else {
         Add-Result $false 'child/python' 'python is unavailable'
     }
 }

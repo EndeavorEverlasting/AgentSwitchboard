@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "agentswitchboard.operator-command-contamination-fixture.v1",
+  "cases": [
+    {
+      "id": "bad-duplicated-powershell-prompt",
+      "text": "PS C:\\Work\\AgentSwitchBoard-Live> PS C:\\Work\\AgentSwitchBoard-Live>$repo='C:\\Work\\AgentSwitchBoard-Live'; git status",
+      "expectedRuleIds": [
+        "duplicate-powershell-prompt",
+        "powershell-prompt-prefix"
+      ]
+    },
+    {
+      "id": "bad-single-powershell-prompt",
+      "text": "PS C:\\Work\\AgentSwitchBoard-Live> git status --short",
+      "expectedRuleIds": [
+        "powershell-prompt-prefix"
+      ]
+    },
+    {
+      "id": "bad-command-prompt",
+      "text": "C:\\Work\\AgentSwitchBoard-Live>git status --short",
+      "expectedRuleIds": [
+        "cmd-prompt-prefix"
+      ]
+    },
+    {
+      "id": "bad-continuation-prompt",
+      "text": ">> else { throw 'failed' }",
+      "expectedRuleIds": [
+        "continuation-prompt"
+      ]
+    },
+    {
+      "id": "bad-powershell-error-header",
+      "text": "Get-Process : A positional parameter cannot be found that accepts argument '-'.",
+      "expectedRuleIds": [
+        "powershell-error-header"
+      ]
+    },
+    {
+      "id": "bad-powershell-error-location",
+      "text": "At line:1 char:1",
+      "expectedRuleIds": [
+        "powershell-error-location"
+      ]
+    },
+    {
+      "id": "bad-powershell-error-category",
+      "text": "+ CategoryInfo          : InvalidArgument: (:) [Get-Process], ParentContainsErrorRecordException",
+      "expectedRuleIds": [
+        "powershell-error-metadata"
+      ]
+    },
+    {
+      "id": "bad-powershell-error-id",
+      "text": "+ FullyQualifiedErrorId : PositionalParameterNotFound,Microsoft.PowerShell.Commands.GetProcessCommand",
+      "expectedRuleIds": [
+        "powershell-error-metadata"
+      ]
+    },
+    {
+      "id": "bad-instruction-prose",
+      "text": "Run: git status --short",
+      "expectedRuleIds": [
+        "instruction-prose-in-command-block"
+      ]
+    },
+    {
+      "id": "good-powershell-command",
+      "text": "$repo='C:\\Work\\AgentSwitchBoard-Live'; & git.exe -C $repo status --short",
+      "expectedRuleIds": []
+    },
+    {
+      "id": "good-cmd-command",
+      "text": "git -C \"C:\\Work\\AgentSwitchBoard-Live\" status --short",
+      "expectedRuleIds": []
+    },
+    {
+      "id": "good-path-literal",
+      "text": "Write-Host 'PS C:\\Work\\AgentSwitchBoard-Live>'",
+      "expectedRuleIds": []
+    }
+  ],
+  "privacy": "Synthetic paths only. No operator usernames, private hostnames, credentials, tokens, or copied production output.",
+  "proofCeiling": "Exercises known command-contamination signatures only."
+}

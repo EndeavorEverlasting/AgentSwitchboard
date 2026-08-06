@@ -14,6 +14,12 @@ if ([string]::IsNullOrWhiteSpace($RootPath)) {
 }
 $RootPath = (Resolve-Path -LiteralPath $RootPath).Path
 
+$operatorValidator = Join-Path $RootPath 'scripts\Test-OperatorCommandEnvelope.ps1'
+& $operatorValidator -RootPath $RootPath
+if ($LASTEXITCODE -ne 0) {
+    throw "Operator command envelope validation failed with exit code $LASTEXITCODE."
+}
+
 $validator = Join-Path $RootPath 'scripts\Test-TechnicianLiveCertHarness.ps1'
 & $validator -RootPath $RootPath
 if ($LASTEXITCODE -ne 0) {
@@ -34,6 +40,7 @@ $forbidden = @(
     $staged | Where-Object {
         $_ -match '(^|/)(runs|evidence|logs?)/' -or
         $_ -match 'technician-live-cert-harness-status\.(json|md)$' -or
+        $_ -match 'operator-command-envelope-report\.(json|md)$' -or
         $_ -match 'preflight-summary\.json$' -or
         $_ -match 'stage-result\.json$'
     }

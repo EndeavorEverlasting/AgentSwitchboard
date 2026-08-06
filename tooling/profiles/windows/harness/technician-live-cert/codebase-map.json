@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "mapId": "agentswitchboard.technician-live-cert-codebase-map.v1",
-  "overview": "Scoped harness for the Windows technician P00-P09 live-certification surface and its owned repair commands.",
+  "overview": "Scoped harness for the Windows technician P00-P09 live-certification surface, prompt-free operator-command handoffs, and owned repair commands.",
   "directories": [
     {
       "path": "tooling/profiles/windows/technician-live-cert",
@@ -9,7 +9,11 @@
     },
     {
       "path": "tooling/profiles/windows/harness/technician-live-cert",
-      "purpose": "Scoped maps, workflows, artifact policy, schema, and operator-report template."
+      "purpose": "Scoped maps, workflows, artifact policy, operator-command contract, fixtures, schema, and report templates."
+    },
+    {
+      "path": "tooling/profiles/windows/harness/technician-live-cert/fixtures",
+      "purpose": "Synthetic, privacy-safe field-failure fixtures that prove harness guards without committing operator evidence."
     },
     {
       "path": "tooling/profiles/windows/hooks",
@@ -17,19 +21,23 @@
     },
     {
       "path": "scripts",
-      "purpose": "Repository-root validation entrypoints."
+      "purpose": "Repository-root validation entrypoints, including the operator-command envelope validator."
     },
     {
       "path": "tests",
-      "purpose": "Dependency-free Python contract and completeness tests."
+      "purpose": "Dependency-free Python contract, fixture, and completeness tests."
+    },
+    {
+      "path": ".ai/skills",
+      "purpose": "Scoped repeatable procedures for live certification and prompt-free operator command delivery."
     },
     {
       "path": "docs/harness",
-      "purpose": "Human-readable state, workflow, failure, and proof guidance."
+      "purpose": "Human-readable state, workflow, failure, command-envelope, and proof guidance."
     },
     {
       "path": ".github/workflows",
-      "purpose": "Windows PowerShell 5.1, PowerShell 7, Linux, Python, CMD dry-run, and diff-hygiene CI."
+      "purpose": "Windows PowerShell 5.1, PowerShell 7, Linux, Python, CMD dry-run, operator-command fixture, and diff-hygiene CI."
     }
   ],
   "entrypoints": [
@@ -46,6 +54,10 @@
       "purpose": "Owned WSL/Ubuntu first-machine repair with reboot continuation."
     },
     {
+      "path": "scripts/Test-OperatorCommandEnvelope.ps1",
+      "purpose": "Fixture-backed parser for prompt, continuation, transcript, and PowerShell error-output contamination in operator command blocks."
+    },
+    {
       "path": "scripts/Test-TechnicianLiveCertSurface.ps1",
       "purpose": "Focused surface contract validator."
     },
@@ -55,7 +67,7 @@
     },
     {
       "path": "tooling/profiles/windows/Get-TechnicianLiveCertHarnessStatus.ps1",
-      "purpose": "Read-only JSON and English status report."
+      "purpose": "Read-only JSON and English status report including operator-command envelope state."
     }
   ],
   "configurationFiles": [
@@ -63,20 +75,30 @@
     "tooling/profiles/windows/technician-live-cert/schemas/technician-live-cert-manifest.schema.json",
     "tooling/profiles/windows/harness/technician-live-cert/manifest.json",
     "tooling/profiles/windows/harness/technician-live-cert/artifact-registry.json",
-    "tooling/profiles/windows/harness/technician-live-cert/schemas/technician-live-cert-harness.schema.json"
+    "tooling/profiles/windows/harness/technician-live-cert/operator-command-contract.json",
+    "tooling/profiles/windows/harness/technician-live-cert/fixtures/operator-command-contamination.fixture.json",
+    "tooling/profiles/windows/harness/technician-live-cert/schemas/technician-live-cert-harness.schema.json",
+    "tooling/profiles/windows/harness/technician-live-cert/schemas/operator-command-contract.schema.json",
+    "tooling/profiles/windows/harness/technician-live-cert/schemas/operator-command-fixture.schema.json"
   ],
   "commands": {
     "focusedPython": [
+      "python -m unittest tests.test_operator_command_envelope",
       "python -m unittest tests.test_technician_live_cert_harness",
       "python -m unittest tests.test_technician_live_cert_surface"
     ],
     "windowsPowerShell51": [
+      "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\\Test-OperatorCommandEnvelope.ps1",
       "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\\Test-TechnicianLiveCertSurface.ps1",
       "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\\Test-TechnicianLiveCertHarness.ps1"
     ],
     "powerShell7": [
+      "pwsh -NoLogo -NoProfile -File scripts/Test-OperatorCommandEnvelope.ps1",
       "pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertSurface.ps1",
       "pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertHarness.ps1"
+    ],
+    "candidateHandoff": [
+      "pwsh -NoLogo -NoProfile -File scripts/Test-OperatorCommandEnvelope.ps1 -CandidatePath '<handoff-file>'"
     ],
     "operatorStatus": [
       "pwsh -NoLogo -NoProfile -File tooling/profiles/windows/Get-TechnicianLiveCertHarnessStatus.ps1"
@@ -87,6 +109,9 @@
     ]
   },
   "knownTraps": [
+    "A PowerShell prompt such as PS C:\\Work\\Repo> is terminal output, not part of the command; copying it causes PowerShell to resolve PS as the Get-Process alias.",
+    "A duplicated prompt can survive a visual scan and still turn the first token into Get-Process; validate the command block with Test-OperatorCommandEnvelope.ps1.",
+    "PowerShell continuation prompts, At line diagnostics, CategoryInfo, FullyQualifiedErrorId, and stderr text are evidence only and must never appear in executable blocks.",
     "PSScriptRoot can be empty while a parameter default expression is evaluated in Windows PowerShell 5.1; resolve it in the script body.",
     "System.String.Replace can bind to char,char when passed [char]0 and an empty string; force the string,string overload.",
     "Hosted CI skips real WSL/Ubuntu runtime and cannot promote P00 workstation proof.",
@@ -94,5 +119,5 @@
     "A stage may not pass from process creation alone; child exit, effective-state readback, and required observation remain mandatory.",
     "Generated run evidence contains local account and path data and must remain untracked."
   ],
-  "proofCeiling": "Tracked harness structure, cross-shell parser and contract validation, fixture-safe CMD dispatch, local artifact policy, and exact failure-boundary reporting only. Live WSL initialization, visible WezTerm behavior, tmux attachment, agent launch, repeatability, and operator acceptance require the workstation live-cert sequence."
+  "proofCeiling": "Tracked harness structure, prompt-free registered operator command blocks, cross-shell parser and contract validation, fixture-safe CMD dispatch, local artifact policy, and exact failure-boundary reporting only. Live command execution, WSL initialization, visible WezTerm behavior, tmux attachment, agent launch, repeatability, and operator acceptance require the workstation live-cert sequence."
 }

@@ -25,7 +25,8 @@ function Check {
     )
     if ($Condition) {
         [void]$passes.Add($Name)
-    } else {
+    }
+    else {
         [void]$failures.Add("$Name`: $Message")
     }
 }
@@ -33,13 +34,19 @@ function Check {
 $failureFixture = 'tooling/profiles/windows/harness/live-certification/fixtures/technician-quickstart-2026-07-22-fail.fixture.json'
 $doctrinePath = 'docs/governance/live-cert-failure-doctrine.md'
 $scopedHarnessManifest = 'tooling/profiles/windows/harness/technician-live-cert/manifest.json'
+$operatorCommandContract = 'tooling/profiles/windows/harness/technician-live-cert/operator-command-contract.json'
+$operatorCommandFixture = 'tooling/profiles/windows/harness/technician-live-cert/fixtures/operator-command-contamination.fixture.json'
 $requiredFiles = @(
     'tooling/profiles/windows/harness/live-certification/schemas/windows-profile-live-certification.schema.json',
     'tooling/profiles/windows/harness/live-certification/fixtures/valid-open-or-activate-pass.fixture.json',
     'tooling/profiles/windows/harness/live-certification/fixtures/valid-new-instance-pass.fixture.json',
     $failureFixture,
     $scopedHarnessManifest,
+    $operatorCommandContract,
+    $operatorCommandFixture,
     '.ai/skills/windows-profile-live-certification/SKILL.md',
+    '.ai/skills/operator-command-envelope/SKILL.md',
+    'scripts/Test-OperatorCommandEnvelope.ps1',
     'scripts/Test-TechnicianLiveCertHarness.ps1',
     'docs/harness/technician-live-cert-harness.md',
     $doctrinePath
@@ -50,7 +57,8 @@ foreach ($relativePath in $requiredFiles) {
     $exists = Test-Path -LiteralPath $path -PathType Leaf
     Check $exists "file/$relativePath" 'required file is missing'
     if ($exists) {
-        $null = & git -C $RootPath ls-files --error-unmatch -- $relativePath 2>$null
+        $gitRelative = $relativePath.Replace('\', '/')
+        $null = & git -C $RootPath ls-files --error-unmatch -- $gitRelative 2>$null
         Check ($LASTEXITCODE -eq 0) "tracked/$relativePath" 'required file is not tracked'
     }
 }
@@ -89,9 +97,31 @@ try {
     Check ($scopedHarness.implicitHookInstallationAllowed -eq $false) 'scoped-harness/hook-opt-in' 'technician hook must remain opt-in'
     Check ($scopedHarness.runtimeCompatibility.requiredValidationShells -contains 'Windows PowerShell 5.1 on windows-latest') 'scoped-harness/windows-powershell' 'Windows PowerShell 5.1 validation is not registered'
     Check ($scopedHarness.runtimeCompatibility.requiredValidationShells -contains 'PowerShell 7 on windows-latest') 'scoped-harness/powershell7' 'PowerShell 7 validation is not registered'
+    Check ($scopedHarness.entrypoints.operatorCommandValidator -eq 'scripts/Test-OperatorCommandEnvelope.ps1') 'scoped-harness/operator-command-validator' 'operator-command validator is not registered'
+    Check ($scopedHarness.entrypoints.operatorCommandSkill -eq '.ai/skills/operator-command-envelope/SKILL.md') 'scoped-harness/operator-command-skill' 'operator-command skill is not registered'
 }
 catch {
     [void]$failures.Add("scoped-harness/semantic: $($_.Exception.Message)")
+}
+
+try {
+    $commandContract = Get-Content -LiteralPath (Join-Path $RootPath $operatorCommandContract) -Raw | ConvertFrom-Json
+    Check ($commandContract.contractId -eq 'agentswitchboard.operator-command-envelope.v1') 'operator-command/id' 'unexpected operator-command contract identity'
+    $ruleIds = @($commandContract.rules | ForEach-Object { [string]$_.id })
+    foreach ($requiredRule in @(
+        'duplicate-powershell-prompt',
+        'powershell-prompt-prefix',
+        'cmd-prompt-prefix',
+        'continuation-prompt',
+        'powershell-error-location',
+        'powershell-error-metadata',
+        'powershell-error-header'
+    )) {
+        Check ($requiredRule -in $ruleIds) "operator-command/rule/$requiredRule" 'required contamination rule missing'
+    }
+}
+catch {
+    [void]$failures.Add("operator-command/semantic: $($_.Exception.Message)")
 }
 
 $fixturePaths = @(
@@ -124,12 +154,18 @@ foreach ($relativePath in $fixturePaths) {
     }
 }
 
+$operatorFixtureText = Get-Content -LiteralPath (Join-Path $RootPath $operatorCommandFixture) -Raw
+Check ($operatorFixtureText.Contains('bad-duplicated-powershell-prompt')) 'operator-fixture/duplicated-prompt' 'duplicated prompt case missing'
+Check ($operatorFixtureText.Contains('Get-Process : A positional parameter')) 'operator-fixture/get-process-alias' 'Get-Process alias symptom missing'
+Check (-not $operatorFixtureText.Contains('pa_rperez26')) 'operator-fixture/private-user' 'private operator username must not be tracked'
+Check (-not $operatorFixtureText.Contains('Northwell')) 'operator-fixture/private-org' 'private organization evidence must not be tracked'
+
 $skillPath = Join-Path $RootPath '.ai/skills/windows-profile-live-certification/SKILL.md'
 if (Test-Path -LiteralPath $skillPath -PathType Leaf) {
     $skill = Get-Content -LiteralPath $skillPath -Raw
     foreach ($token in @(
         'id: windows-profile-live-certification',
-        'version: 1.2.0',
+        'version: 1.3.0',
         '## Trigger',
         '## Read first',
         '## Inputs',
@@ -144,6 +180,8 @@ if (Test-Path -LiteralPath $skillPath -PathType Leaf) {
         'browser handoff',
         'optional agents separately',
         'tooling/profiles/windows/harness/technician-live-cert/manifest.json',
+        '.ai/skills/operator-command-envelope/SKILL.md',
+        'scripts/Test-OperatorCommandEnvelope.ps1',
         'scripts/Test-TechnicianLiveCertHarness.ps1',
         'Windows PowerShell 5.1',
         'PowerShell 7',
@@ -151,6 +189,21 @@ if (Test-Path -LiteralPath $skillPath -PathType Leaf) {
         'git --no-pager'
     )) {
         Check ($skill.Contains($token)) "skill/$token" 'required skill contract missing'
+    }
+}
+
+$operatorSkillPath = Join-Path $RootPath '.ai/skills/operator-command-envelope/SKILL.md'
+if (Test-Path -LiteralPath $operatorSkillPath -PathType Leaf) {
+    $operatorSkill = Get-Content -LiteralPath $operatorSkillPath -Raw
+    foreach ($token in @(
+        'id: operator-command-envelope',
+        'Name the shell outside the code fence',
+        'Begin at the first executable character',
+        'Never include a PowerShell prompt',
+        'Never mix stdout, stderr, stack traces',
+        'Test-OperatorCommandEnvelope.ps1 -CandidatePath'
+    )) {
+        Check ($operatorSkill.Contains($token)) "operator-skill/$token" 'required operator-command skill contract missing'
     }
 }
 
@@ -168,7 +221,8 @@ if (Test-Path -LiteralPath $doctrinePathFull -PathType Leaf) {
     )) {
         Check ($doctrine.Contains($token)) "doctrine/$token" 'required live-cert doctrine missing'
     }
-} else {
+}
+else {
     Check $false 'doctrine/file' "required doctrine file is missing: $doctrinePath"
 }
 

@@ -2,8 +2,9 @@
   "schemaVersion": 1,
   "workflowId": "agentswitchboard.technician-live-cert-maintenance.v1",
   "trigger": [
-    "A technician live-cert stage, repair command, validator, manifest, schema, CMD launcher, or report changes.",
+    "A technician live-cert stage, repair command, validator, manifest, schema, CMD launcher, report, exact-next-command handoff, or scoped skill changes.",
     "A field failure contradicts static or CI evidence.",
+    "An operator command includes a shell prompt, duplicated prompt, continuation prompt, transcript, stack trace, or PowerShell diagnostic output.",
     "A new Windows PowerShell or PowerShell 7 compatibility boundary is introduced."
   ],
   "requiredInputs": [
@@ -11,6 +12,8 @@
     "current HEAD",
     "dirty-worktree state",
     "failure output or requested change",
+    "exact operator shell",
+    "candidate command or handoff artifact",
     "owned and forbidden paths",
     "proof ceiling"
   ],
@@ -18,53 +21,61 @@
     {
       "id": "intake",
       "actions": [
-        "Read AGENTS.md, the live-cert skill, scoped codebase map, scoped manifest, and current operator evidence.",
+        "Read AGENTS.md, the selected skill, scoped codebase map, scoped manifest, operator-command contract, and current operator evidence.",
         "Run git status --short, git branch --show-current, and git log --oneline --decorate -5 without a pager.",
+        "Separate executable input from the operator's prompt, output, and error transcript before attempting reproduction.",
         "Preserve unrelated work and use an isolated branch or worktree when another writer owns the checkout."
       ],
-      "gate": "Repository identity, ownership, and exact failure boundary are recorded."
+      "gate": "Repository identity, ownership, exact shell, sanitized command, and failure boundary are recorded."
     },
     {
       "id": "factor",
       "actions": [
         "Classify each requirement as reuse, extend, repair, retire, or create.",
-        "Keep operator behavior in stage/repair code, reusable procedure in the skill, deterministic policy in manifests/workflows/schemas, and proof in validators/artifacts.",
-        "Reject prompt-only or documentation-only fixes for executable defects."
+        "Keep operator behavior in stage/repair code, reusable procedure in scoped skills, deterministic command presentation in the operator-command contract, and proof in validators/artifacts.",
+        "Prefer a repository-owned CMD or PS1 entrypoint over a long inline bootstrap.",
+        "Reject prompt-only, documentation-only, or visual-review-only fixes for executable or command-presentation defects."
       ],
-      "gate": "One canonical owner exists for every changed behavior and artifact."
+      "gate": "One canonical owner exists for every changed behavior, command surface, and artifact."
     },
     {
       "id": "implement",
       "actions": [
         "Repair the defect and add a behavior-level or executable compatibility guard.",
-        "Update the scoped map, registry, workflow, skill, report, or CI only when the change affects those contracts.",
-        "Keep generated evidence outside tracked paths."
+        "For command contamination, add or update a minimized synthetic fixture and require a sanitized replacement command.",
+        "Update the scoped map, registry, workflow, skill, report, or CI when the change affects those contracts.",
+        "Keep generated evidence outside tracked paths and keep private operator transcripts out of fixtures."
       ],
-      "gate": "The owned vertical slice is complete and no duplicate implementation exists."
+      "gate": "The owned vertical slice is complete, fixture-backed, and no duplicate implementation exists."
     },
     {
       "id": "validate",
       "actions": [
+        "Run the operator-command envelope Python and PowerShell validators.",
         "Run focused Python tests.",
         "Run the surface and harness validators in Windows PowerShell 5.1.",
         "Run the same validators in PowerShell 7.",
+        "Validate any candidate handoff artifact with -CandidatePath.",
         "Run CMD fixture-safe dispatch and git --no-pager diff --check.",
         "Run broader repository validation only after focused checks pass."
       ],
-      "gate": "Every required shell and focused validator passes at the exact candidate HEAD."
+      "gate": "Every required shell, fixture, registered command surface, and focused validator passes at the exact candidate HEAD."
     },
     {
       "id": "handoff",
       "actions": [
         "Record files changed, validator results, proof ceiling, commit SHA, push/PR state, preserved local work, and the exact next command.",
+        "Name the shell, owner, dependency, expected artifact, and completion gate outside the command block.",
+        "Put executable input only inside the command block; omit prompts, output, transcript text, and expected results.",
         "When runtime proof remains, name the workstation stage and artifact that advances it.",
         "Do not claim live behavior from CI."
       ],
-      "gate": "A fresh agent can resume without reconstructing the failure or validation order."
+      "gate": "A fresh agent can resume without reconstructing the failure, editing a transcript-shaped command, or guessing the validation order."
     }
   ],
   "failureHandling": {
     "correctableFailure": "Repair in the same branch and rerun the complete affected gate.",
+    "operatorCommandContamination": "Preserve the original privately, classify it with the fixture-backed validator, publish only the sanitized command, and add a synthetic fixture when the signature is new.",
     "environmentBlocker": "Record the exact shell, command, exit code, evidence path, and owned repair command.",
     "collision": "Stop mutation, preserve both branches/worktrees, and assign one convergence owner.",
     "proofContradiction": "Observed field failure outranks lower proof and remains blocking until exact-command rerun."
@@ -74,8 +85,10 @@
     "implicit hook installation",
     "tracked local evidence",
     "secret or private endpoint capture",
+    "private usernames or hostnames in fixtures",
     "runtime proof promotion from hosted CI",
     "interactive pager dependence",
-    "skipping Windows PowerShell 5.1 compatibility"
+    "skipping Windows PowerShell 5.1 compatibility",
+    "shell prompts or transcript text in executable handoff blocks"
   ]
 }

@@ -19,7 +19,8 @@ $RootPath = (Resolve-Path -LiteralPath $RootPath).Path
 if ([string]::IsNullOrWhiteSpace($OutputRoot)) {
     $base = if ($env:LOCALAPPDATA) {
         Join-Path $env:LOCALAPPDATA 'AgentSwitchboard\technician-live-cert\harness-status'
-    } else {
+    }
+    else {
         Join-Path ([System.IO.Path]::GetTempPath()) 'AgentSwitchboard/technician-live-cert/harness-status'
     }
     $OutputRoot = $base
@@ -38,7 +39,8 @@ foreach ($component in $manifest.components) {
     $exists = Test-Path -LiteralPath $fullPath -PathType Leaf
     $tracked = $false
     if ($exists) {
-        & git -C $RootPath ls-files --error-unmatch -- $relativePath *> $null
+        $gitRelative = $relativePath.Replace('\', '/')
+        & git -C $RootPath ls-files --error-unmatch -- $gitRelative *> $null
         $tracked = ($LASTEXITCODE -eq 0)
     }
     $componentRows += [pscustomobject]@{
@@ -53,6 +55,28 @@ foreach ($component in $manifest.components) {
 
 $p00Text = Get-Content -LiteralPath (Join-Path $RootPath 'tooling\profiles\windows\technician-live-cert\stages\P00-Preflight.ps1') -Raw
 $surfaceText = Get-Content -LiteralPath (Join-Path $RootPath 'scripts\Test-TechnicianLiveCertSurface.ps1') -Raw
+$ciText = Get-Content -LiteralPath (Join-Path $RootPath '.github\workflows\technician-live-cert-surface.yml') -Raw
+
+$operatorValidatorPath = Join-Path $RootPath 'scripts\Test-OperatorCommandEnvelope.ps1'
+$operatorCommandEnvelope = & $operatorValidatorPath -RootPath $RootPath -PassThru -NoReport
+if ($null -eq $operatorCommandEnvelope) {
+    $operatorCommandEnvelope = [pscustomobject]@{
+        status = 'FAIL'
+        violationCount = 1
+        fixtureFailureCount = 1
+        scannedSources = @()
+        proofCeiling = 'Operator-command validator returned no structured result.'
+    }
+}
+
+$strictIndex = $surfaceText.IndexOf('Set-StrictMode')
+$surfaceParameterText = if ($strictIndex -gt 0) {
+    $surfaceText.Substring(0, $strictIndex)
+}
+else {
+    $surfaceText
+}
+
 $guardRows = @(
     [pscustomobject]@{
         id = 'ambiguous-dotnet-overload'
@@ -61,12 +85,17 @@ $guardRows = @(
     },
     [pscustomobject]@{
         id = 'psscriptroot-param-default'
-        passed = (-not ($surfaceText.Substring(0, [Math]::Max(0, $surfaceText.IndexOf('Set-StrictMode'))).Contains('$PSScriptRoot)'))
+        passed = (-not $surfaceParameterText.Contains('$PSScriptRoot'))
         detail = 'Validator resolves repository root in the script body.'
     },
     [pscustomobject]@{
+        id = 'operator-command-envelope'
+        passed = ([string]$operatorCommandEnvelope.status -eq 'PASS')
+        detail = "Prompt/transcript validator scanned $(@($operatorCommandEnvelope.scannedSources).Count) sources; violations=$($operatorCommandEnvelope.violationCount); fixtureFailures=$($operatorCommandEnvelope.fixtureFailureCount)."
+    },
+    [pscustomobject]@{
         id = 'interactive-git-pager'
-        passed = ((Get-Content -LiteralPath (Join-Path $RootPath '.github\workflows\technician-live-cert-surface.yml') -Raw).Contains('git --no-pager diff --check'))
+        passed = $ciText.Contains('git --no-pager diff --check')
         detail = 'Automation disables the Git pager.'
     }
 )
@@ -88,12 +117,23 @@ $result = [ordered]@{
     status = $status
     components = $componentRows
     guards = $guardRows
+    operatorCommandEnvelope = [ordered]@{
+        status = [string]$operatorCommandEnvelope.status
+        scannedSourceCount = @($operatorCommandEnvelope.scannedSources).Count
+        violationCount = [int]$operatorCommandEnvelope.violationCount
+        fixtureFailureCount = [int]$operatorCommandEnvelope.fixtureFailureCount
+        proofCeiling = [string]$operatorCommandEnvelope.proofCeiling
+    }
     blockedCount = $blocked.Count
     failedGuardCount = $failedGuards.Count
     proofCeiling = [string]$manifest.proofCeiling
     nextCommand = if ($status -eq 'READY_FOR_VALIDATION') {
         'powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\Test-TechnicianLiveCertHarness.ps1'
-    } else {
+    }
+    elseif ([string]$operatorCommandEnvelope.status -ne 'PASS') {
+        'pwsh -NoLogo -NoProfile -File scripts/Test-OperatorCommandEnvelope.ps1'
+    }
+    else {
         'pwsh -NoLogo -NoProfile -File tooling/profiles/windows/Get-TechnicianLiveCertHarnessStatus.ps1'
     }
 }
@@ -108,10 +148,10 @@ $guardLines = @($guardRows | ForEach-Object { "| $($_.id) | $($_.passed) | $($_.
 $markdown = @"
 # Technician Live-Cert Harness Status
 
-- Repository: `EndeavorEverlasting/AgentSwitchboard`
-- Branch: `$branch`
-- HEAD: `$head`
-- Generated: `$($result.generatedAt)`
+- Repository: ``EndeavorEverlasting/AgentSwitchboard``
+- Branch: ``$branch``
+- HEAD: ``$head``
+- Generated: ``$($result.generatedAt)``
 - Status: **$status**
 - Proof ceiling: $($result.proofCeiling)
 
@@ -127,6 +167,14 @@ $($componentLines -join "`n")
 |---|---:|---|
 $($guardLines -join "`n")
 
+## Operator-command envelope
+
+- Status: **$($result.operatorCommandEnvelope.status)**
+- Registered sources scanned: **$($result.operatorCommandEnvelope.scannedSourceCount)**
+- Violations: **$($result.operatorCommandEnvelope.violationCount)**
+- Fixture failures: **$($result.operatorCommandEnvelope.fixtureFailureCount)**
+- Proof ceiling: $($result.operatorCommandEnvelope.proofCeiling)
+
 ## Exact next command
 
 ~~~powershell
@@ -140,6 +188,7 @@ Write-Host ' Technician Live-Cert Harness Status' -ForegroundColor White
 Write-Host " Status: $status"
 Write-Host " Components blocked: $($blocked.Count)"
 Write-Host " Guards failed: $($failedGuards.Count)"
+Write-Host " Operator-command violations: $($result.operatorCommandEnvelope.violationCount)"
 Write-Host " JSON: $jsonPath"
 Write-Host " Report: $mdPath"
 Write-Host '============================================================' -ForegroundColor Cyan

@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/profiles/windows/harness/technician-live-cert/schemas/operator-command-fixture.schema.json",
+  "title": "AgentSwitchboard Operator Command Contamination Fixture",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "fixtureId",
+    "cases",
+    "privacy",
+    "proofCeiling"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "fixtureId": {
+      "const": "agentswitchboard.operator-command-contamination-fixture.v1"
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "text",
+          "expectedRuleIds"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^(bad|good)-[a-z0-9-]+$"
+          },
+          "text": {
+            "type": "string"
+          },
+          "expectedRuleIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9-]+$"
+            }
+          }
+        }
+      }
+    },
+    "privacy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "proofCeiling": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

@@ -62,12 +62,20 @@
         "exactHeadCmd",
         "exactHeadValidator",
         "readinessOperatorGuide",
-        "pullRunCiWorkflow"
+        "pullRunCiWorkflow",
+        "operatorCommandContract",
+        "operatorCommandFixture",
+        "operatorCommandValidator",
+        "operatorCommandPythonValidator",
+        "operatorCommandSkill",
+        "operatorCommandReportTemplate",
+        "operatorCommandContractSchema",
+        "operatorCommandFixtureSchema"
       ]
     },
     "components": {
       "type": "array",
-      "minItems": 24,
+      "minItems": 32,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -98,22 +106,30 @@
               "skill",
               "documentation",
               "entrypoint",
-              "implementation"
+              "implementation",
+              "fixture"
             ]
           }
         }
       }
     },
     "runtimeCompatibility": {
-      "type": "object"
+      "type": "object",
+      "required": [
+        "requiredValidationShells",
+        "operatorStageShell",
+        "rootResolutionRule",
+        "operatorInputRule",
+        "operatorCommandValidator"
+      ]
     },
     "knownFailureGuards": {
       "type": "array",
-      "minItems": 10
+      "minItems": 11
     },
     "validationOrder": {
       "type": "array",
-      "minItems": 10,
+      "minItems": 13,
       "items": {
         "type": "string"
       }
@@ -134,7 +150,7 @@
         },
         "artifacts": {
           "type": "array",
-          "minItems": 11,
+          "minItems": 13,
           "items": {
             "type": "string"
           }
