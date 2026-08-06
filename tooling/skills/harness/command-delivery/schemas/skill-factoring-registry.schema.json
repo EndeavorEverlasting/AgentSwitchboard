@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentswitchboard.local/schemas/skill-factoring-registry.schema.json",
+  "type": "object",
+  "required": ["schemaVersion", "registryId", "canonicalOwners", "dispositions", "primaryTriggerPrecedence", "artifactPolicy"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "registryId": {"const": "agentswitchboard.command-delivery-skill-factoring.v1"},
+    "canonicalOwners": {"type": "object", "minProperties": 4},
+    "dispositions": {
+      "type": "array",
+      "minItems": 7,
+      "items": {
+        "type": "object",
+        "required": ["skillId", "disposition", "deterministicTrigger", "requiredInputs", "producedOutputs", "preconditions", "forbiddenConditions", "guardrails", "owningFiles", "proofCeiling"],
+        "properties": {
+          "skillId": {"type": "string", "minLength": 1},
+          "disposition": {"enum": ["KEEP", "SPLIT", "MERGE", "RETIRE", "REWIRE"]},
+          "deterministicTrigger": {"type": "string", "minLength": 1},
+          "requiredInputs": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "producedOutputs": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "preconditions": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "forbiddenConditions": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "guardrails": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "owningFiles": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "proofCeiling": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": true
+      }
+    },
+    "primaryTriggerPrecedence": {"type": "array", "minItems": 7, "items": {"type": "string"}, "uniqueItems": true},
+    "artifactPolicy": {"type": "object", "required": ["tracked", "defaultRoot", "json", "markdown"]}
+  },
+  "additionalProperties": false
+}

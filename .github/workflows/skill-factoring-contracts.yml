@@ -1,0 +1,65 @@
+name: Skill Factoring Contracts
+
+on:
+  pull_request:
+    paths:
+      - '.ai/skills/powershell-interactive-execution/**'
+      - '.ai/skills/operator-command-envelope/**'
+      - '.ai/skills/stale-checkout-exact-head-bootstrap/**'
+      - 'tooling/skills/**'
+      - 'scripts/Test-SkillFactoringContracts.ps1'
+      - 'tests/test_skill_factoring_contracts.py'
+      - 'Test-SkillFactoringContracts.cmd'
+      - 'docs/harness/command-delivery-skill-factoring.md'
+      - '.github/workflows/skill-factoring-contracts.yml'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Run dependency-free skill factoring tests
+        shell: pwsh
+        run: python -m unittest tests.test_skill_factoring_contracts
+
+      - name: Validate skill routing and boundaries in PowerShell 7
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-SkillFactoringContracts.ps1 -RootPath $PWD -OutputRoot (Join-Path $PWD 'skill-factoring-report/pwsh')
+
+      - name: Validate skill routing and boundaries in Windows PowerShell 5.1
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\Test-SkillFactoringContracts.ps1 -RootPath $PWD -OutputRoot (Join-Path $PWD 'skill-factoring-report/windows-powershell')
+
+      - name: Validate agent documentation contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1
+
+      - name: Check repository hygiene
+        shell: bash
+        run: git --no-pager diff --check
+
+      - name: Upload focused reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: skill-factoring-${{ matrix.os }}-${{ github.run_attempt }}
+          path: skill-factoring-report/**
+          if-no-files-found: warn
+          retention-days: 7

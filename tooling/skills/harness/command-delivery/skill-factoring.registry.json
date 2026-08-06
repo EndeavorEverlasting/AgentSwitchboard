@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "registryId": "agentswitchboard.command-delivery-skill-factoring.v1",
+  "scope": "Operator-facing command delivery, interactive PowerShell submission boundaries, and composed routing for command-producing skills",
+  "canonicalOwners": {
+    "interactivePowerShell": ".ai/skills/powershell-interactive-execution/SKILL.md",
+    "shellAgnosticEnvelope": ".ai/skills/operator-command-envelope/SKILL.md",
+    "repositoryState": ".ai/skills/repo-intake/SKILL.md",
+    "runtimeProof": ".ai/skills/end-to-end-runtime-validation/SKILL.md"
+  },
+  "dispositions": [
+    {
+      "skillId": "powershell-interactive-execution",
+      "disposition": "SPLIT",
+      "deterministicTrigger": "powershell.interactive-snippet",
+      "requiredInputs": ["targetShell", "deliveryMode", "commandTextOrCandidatePath", "submissionBoundary"],
+      "producedOutputs": ["one syntactically complete interactive PowerShell artifact", "boundary validation result"],
+      "preconditions": ["targetShell is PowerShell", "deliveryMode is interactive-copy-paste"],
+      "forbiddenConditions": ["standalone continuation keyword", "ambiguous multi-submit compound statement", "prompt or transcript in executable input"],
+      "guardrails": ["prefer guard clauses", "attach continuation keywords to the preceding closing brace", "wrap necessary multiline compound statements in one outer script block", "validate candidate artifacts before handoff"],
+      "owningFiles": [".ai/skills/powershell-interactive-execution/SKILL.md", "tooling/skills/skill_factoring_contracts.py", "scripts/Test-SkillFactoringContracts.ps1"],
+      "delegates": ["operator-command-envelope for shell-agnostic presentation", "repo-intake for repository identity and safe path selection", "bounded-sprint for tracked mutation lifecycle"],
+      "proofCeiling": "Proves interactive PowerShell syntax-unit and submission-boundary safety for validated artifacts; it does not prove command success on the operator machine."
+    },
+    {
+      "skillId": "operator-command-envelope",
+      "disposition": "REWIRE",
+      "deterministicTrigger": "operator.command-artifact",
+      "requiredInputs": ["targetShell", "operatorFacing", "commandArtifact", "owner", "dependency", "expectedArtifact", "completionGate"],
+      "producedOutputs": ["prompt-free executable block", "operator metadata outside executable input"],
+      "preconditions": ["artifact is intended for an operator to execute"],
+      "forbiddenConditions": ["shell prompt contamination", "terminal transcript contamination", "claiming shell-specific syntax ownership"],
+      "guardrails": ["delegate PowerShell interactive syntax to powershell-interactive-execution", "prefer repository-owned launchers", "validate registered command surfaces"],
+      "owningFiles": [".ai/skills/operator-command-envelope/SKILL.md", "scripts/Test-OperatorCommandEnvelope.ps1"],
+      "requiresWhen": [{"condition": "targetShell=powershell and deliveryMode=interactive-copy-paste", "skillId": "powershell-interactive-execution"}],
+      "proofCeiling": "Proves command-presentation hygiene; it does not prove shell parsing, runtime execution, or target behavior."
+    },
+    {
+      "skillId": "repo-intake",
+      "disposition": "KEEP",
+      "deterministicTrigger": "repo.new-or-unknown",
+      "requiredInputs": ["repositoryHint", "currentDirectory", "branchState"],
+      "producedOutputs": ["verified repository identity", "safe branch or worktree boundary"],
+      "preconditions": ["repository identity or state is uncertain"],
+      "forbiddenConditions": ["guessing paths", "overwriting unowned work"],
+      "guardrails": ["read-only intake before mutation", "preserve dirty work"],
+      "owningFiles": [".ai/skills/repo-intake/SKILL.md"],
+      "proofCeiling": "Proves repository identity and state observed during intake; it does not prove later mutation or runtime success."
+    },
+    {
+      "skillId": "gnhf-prompt-compilation",
+      "disposition": "REWIRE",
+      "deterministicTrigger": "gnhf.prompt-request",
+      "requiredInputs": ["repository", "objective", "executionShell", "bounds", "stopCondition"],
+      "producedOutputs": ["one copy-ready bounded GNHF launch artifact"],
+      "preconditions": ["owner explicitly requests a GNHF launch artifact"],
+      "forbiddenConditions": ["generic sprint prose substituted for launcher", "unbounded execution"],
+      "guardrails": ["compose with powershell-interactive-execution for interactive PowerShell delivery", "compose with operator-command-envelope for presentation"],
+      "owningFiles": [".ai/skills/gnhf-prompt-compilation/SKILL.md"],
+      "requiresWhen": [{"condition": "executionShell=powershell", "skillId": "powershell-interactive-execution"}, {"condition": "operatorFacing=true", "skillId": "operator-command-envelope"}],
+      "proofCeiling": "Proves launch-artifact contract shape; it does not prove provider availability, execution, or delivery."
+    },
+    {
+      "skillId": "stale-checkout-exact-head-bootstrap",
+      "disposition": "REWIRE",
+      "deterministicTrigger": "technician.stale-checkout-exact-head",
+      "requiredInputs": ["sourceRepository", "remoteRef", "expectedHead", "mode"],
+      "producedOutputs": ["bootstrap report", "delegated exact-head report"],
+      "preconditions": ["verified checkout exists", "required exact-head launcher is absent or stale"],
+      "forbiddenConditions": ["switching or cleaning source checkout", "running a missing launcher"],
+      "guardrails": ["extract deterministic engine from exact fetched commit", "compose operator handoff with powershell-interactive-execution and operator-command-envelope"],
+      "owningFiles": [".ai/skills/stale-checkout-exact-head-bootstrap/SKILL.md", "scripts/Invoke-StaleCheckoutExactHeadBootstrap.ps1"],
+      "requiresWhen": [{"condition": "operatorFacing=true", "skillId": "operator-command-envelope"}, {"condition": "deliveryMode=interactive-copy-paste", "skillId": "powershell-interactive-execution"}],
+      "proofCeiling": "Proves safe delegation from a stale checkout to the exact validator and fresh artifact readback; it does not exceed the delegated proof."
+    },
+    {
+      "skillId": "windows-profile-live-certification",
+      "disposition": "REWIRE",
+      "deterministicTrigger": "profile.workstation-certification-request",
+      "requiredInputs": ["exactCommit", "operatorCommand", "executionShell", "runtimeIdentity", "evidenceRoot"],
+      "producedOutputs": ["stage ledger", "operator report", "runtime proof classification"],
+      "preconditions": ["workstation certification or field failure is requested"],
+      "forbiddenConditions": ["static proof promoted to live proof", "reimplementing interactive command syntax"],
+      "guardrails": ["delegate interactive PowerShell artifacts", "preserve exact command and child diagnostics"],
+      "owningFiles": [".ai/skills/windows-profile-live-certification/SKILL.md"],
+      "requiresWhen": [{"condition": "operatorCommand=true", "skillId": "operator-command-envelope"}, {"condition": "executionShell=powershell and deliveryMode=interactive-copy-paste", "skillId": "powershell-interactive-execution"}],
+      "proofCeiling": "Bounded by observed workstation evidence and may not be promoted by command construction alone."
+    },
+    {
+      "skillId": "end-to-end-runtime-validation",
+      "disposition": "REWIRE",
+      "deterministicTrigger": "runtime.end-to-end-request",
+      "requiredInputs": ["exactOperatorCommand", "runtimeBoundaries", "environmentIdentity", "expectedBehavior"],
+      "producedOutputs": ["per-stage evidence", "effective-state readback", "user-visible observation"],
+      "preconditions": ["claim crosses one or more shell, process, platform, terminal, TUI, or GUI boundaries"],
+      "forbiddenConditions": ["command acknowledgement promoted to behavior proof", "owning command syntax presentation"],
+      "guardrails": ["delegate operator presentation and interactive PowerShell syntax", "retain runtime proof ownership"],
+      "owningFiles": [".ai/skills/end-to-end-runtime-validation/SKILL.md"],
+      "requiresWhen": [{"condition": "operatorCommand=true", "skillId": "operator-command-envelope"}, {"condition": "executionShell=powershell and deliveryMode=interactive-copy-paste", "skillId": "powershell-interactive-execution"}],
+      "proofCeiling": "Proves only the observed end-to-end chain captured for the exact run and environment."
+    }
+  ],
+  "primaryTriggerPrecedence": [
+    "gnhf.prompt-request",
+    "technician.stale-checkout-exact-head",
+    "runtime.end-to-end-request",
+    "profile.workstation-certification-request",
+    "repo.new-or-unknown",
+    "powershell.interactive-snippet",
+    "operator.command-artifact"
+  ],
+  "artifactPolicy": {
+    "tracked": false,
+    "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/skill-factoring",
+    "json": "skill-factoring-report.json",
+    "markdown": "skill-factoring-report.md"
+  }
+}

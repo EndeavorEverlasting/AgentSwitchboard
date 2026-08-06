@@ -1,72 +1,123 @@
 ---
 id: powershell-interactive-execution
-version: 1.0.1
+version: 2.0.0
 status: canonical
 ---
 
 # PowerShell Interactive Execution
 
-## Trigger
+## Deterministic trigger
 
-Use whenever PowerShell commands are intended to be pasted or entered interactively, especially when the operator may submit the snippet one block at a time.
+Trigger ID: `powershell.interactive-snippet`
 
-## Inputs
+Select this skill only when executable PowerShell is intended for interactive copy/paste or direct entry at a PowerShell prompt. A saved `.ps1` implementation, explanatory prose, terminal output, or another shell does not activate this skill.
 
-- intended PowerShell version and execution domain;
-- target repository or working directory;
-- whether the artifact will be pasted interactively, saved as a script, or executed as one complete script block;
-- external commands whose exit codes must be preserved;
-- owned mutation and validation scope.
+The generic presentation layer is owned by `operator-command-envelope`. Repository identity and safe branch/worktree selection are owned by `repo-intake` and `bounded-sprint`. This skill owns PowerShell grammar and interactive submission boundaries only.
+
+## Required inputs
+
+- exact target shell: Windows PowerShell 5.1 or PowerShell 7;
+- delivery mode: `interactive-copy-paste` or `script-file`;
+- command text or candidate artifact path;
+- intended submission boundary: one physical line, one outer script block, or a saved file;
+- native commands whose exit codes must be preserved.
+
+## Preconditions
+
+- The target shell is PowerShell.
+- The operator is expected to execute the artifact interactively when `deliveryMode=interactive-copy-paste`.
+- Repository identity, authority, and mutation scope have already been resolved by the owning workflow.
+- The artifact is validated before it is presented as copy-ready.
 
 ## Procedure
 
-1. Resolve, validate, and enter the intended directory before Git, installation, validation, or implementation logic.
-2. For interactive snippets, avoid `else`, `elseif`, `catch`, and `finally` when a guard clause or second independent condition is clear.
-3. When a compound construct is necessary, emit it in the same syntactic submission as the block it continues. Keep `} else {`, `} elseif (...) {`, `} catch {`, and `} finally {` attached to the preceding block. Prefer wrapping the entire runnable snippet in `& { ... }` so the operator pastes it once.
-4. Never instruct the operator to submit a closing `}` and then paste `else {` as a later command. PowerShell executes the completed first statement immediately, leaving the later keyword syntactically orphaned.
-5. Prefer guard clauses:
+1. Prefer a repository-owned `.cmd` or `.ps1` entrypoint over a long interactive bootstrap.
+2. Prefer guard clauses when later logic does not require a continuation keyword.
+3. Never split `if`/`elseif`/`else` or `try`/`catch`/`finally` across separate interactive submissions.
+4. Keep every continuation keyword attached to the preceding closing brace on the same physical line: `} elseif (...) {`, `} else {`, `} catch {`, and `} finally {`.
+5. When a multiline compound statement is unavoidable, enclose the complete statement in one outer `& { ... }` script block so PowerShell cannot execute the first completed inner block before the rest of the paste arrives.
+6. A one-physical-line compound statement is acceptable when readable and bounded.
+7. Capture `$LASTEXITCODE` immediately after a native command when later logic depends on it.
+8. Validate the final candidate through `scripts/Test-SkillFactoringContracts.ps1 -CandidatePath <path>`.
+
+## Safe forms
+
+Guard clause with no continuation dependency:
 
 ```powershell
-if (-not $Condition) {
-    throw "Required condition was not met."
+if (-not $repo) {
+    throw 'Repository could not be resolved.'
 }
-
-# Continue only after the guard passes.
+$head = (& git.exe -C $repo rev-parse HEAD).Trim()
 ```
 
-6. When selecting between branches interactively, compute a value or use two explicit conditions when that is clearer than a compound block.
-7. Capture `$LASTEXITCODE` immediately after a native command when later logic depends on it.
-8. Avoid fragile line-continuation backticks when a single-line command, splatting, an argument array, or a complete script block is practical.
-9. Preserve existing work before branch, worktree, merge, rebase, reset, or cleanup operations.
-10. Label the shell context and provide the exact expected next state.
+One physical line:
 
-## Outputs
+```powershell
+if($a){$x=1}elseif($b){$x=2}else{$x=3}
+```
 
-- a directory-first PowerShell snippet;
-- no detached continuation keyword in an interactive sequence;
-- explicit native-command exit handling;
-- bounded validation and final-state checks;
-- one exact next command when follow-up is required.
+Atomic multiline compound statement:
+
+```powershell
+& {
+    if ($a) {
+        $x = 1
+    } elseif ($b) {
+        $x = 2
+    } else {
+        $x = 3
+    }
+}
+```
+
+## Produced outputs
+
+- one syntactically complete interactive PowerShell artifact;
+- no detached `elseif`, `else`, `catch`, or `finally` submission;
+- explicit submission-boundary classification;
+- immediate native-command exit-code handling;
+- deterministic validation report when a candidate artifact is supplied.
+
+## Guardrails
+
+- A multiline interactive compound statement must be one outer `& { ... }` block.
+- Continuation keywords must remain on the same physical line as the preceding closing brace.
+- Multiple code fences or commands must not divide one compound statement.
+- Script-file syntax is not falsely rejected as interactive syntax.
+- Shell prompts, transcripts, and diagnostics remain the responsibility of `operator-command-envelope` and its validator.
+- Application logic remains in scripts, modules, schemas, registries, and workflows—not in this skill.
+
+## Owning files
+
+- `.ai/skills/powershell-interactive-execution/SKILL.md`
+- `tooling/skills/harness/command-delivery/skill-factoring.registry.json`
+- `tooling/skills/skill_factoring_contracts.py`
+- `scripts/Test-SkillFactoringContracts.ps1`
+- `tests/test_skill_factoring_contracts.py`
 
 ## Deterministic validation
 
-A user-facing interactive PowerShell artifact must pass these checks:
+```powershell
+python -m unittest tests.test_skill_factoring_contracts
+pwsh -NoLogo -NoProfile -File scripts/Test-SkillFactoringContracts.ps1
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\Test-SkillFactoringContracts.ps1
+```
 
-- directory resolution and `Set-Location -LiteralPath` occur before repository logic;
-- no snippet boundary occurs between `}` and `else`, `elseif`, `catch`, or `finally`;
-- a necessary compound construct is delivered as one complete block, preferably `& { ... }`;
-- native exit codes are captured before another native command can overwrite them;
-- destructive Git operations are absent unless explicitly authorized;
-- paths use `$HOME`, `$env:LOCALAPPDATA`, `$PSScriptRoot`, or another validated variable rather than a hardcoded username.
+Validate one handoff artifact:
 
-## Forbidden scope
+```powershell
+pwsh -NoLogo -NoProfile -File scripts/Test-SkillFactoringContracts.ps1 -CandidatePath '<handoff.md>' -CandidateDeliveryMode interactive-copy-paste
+```
 
-- No standalone `else`, `elseif`, `catch`, or `finally` command in an interactive sequence.
-- No reliance on the inherited working directory.
-- No hardcoded workstation username when variables are available.
-- No reset, discard, force-push, or branch deletion as an incidental recovery step.
-- No claim that a multiline example is safe to paste piecemeal when syntax requires one submission.
+## Forbidden conditions
 
-## Stop and escalate
+- A snippet begins with standalone `elseif`, `else`, `catch`, or `finally`.
+- One compound statement is split across multiple interactive submissions or code fences.
+- A multiline compound statement with continuation keywords is emitted without an outer `& { ... }` block.
+- A continuation keyword starts a new physical line after the preceding block closes.
+- The skill claims repository selection, runtime proof, provider routing, or product behavior ownership.
 
-Stop and rewrite the artifact when interactive submission boundaries are ambiguous, when a continuation keyword could become detached, or when branch recovery would require destructive Git. Preserve the current state and provide one safe, complete script block instead.
+## Proof ceiling
+
+This skill and its validator prove interactive PowerShell syntax-unit and submission-boundary safety for the validated artifact. They do not prove the command succeeds, mutates the intended state, or produces runtime behavior on the operator machine.

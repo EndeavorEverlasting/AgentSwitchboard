@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "id": "positive-interactive-powershell-command",
+      "input": {"intent": "command", "shell": "powershell", "deliveryMode": "interactive-copy-paste", "operatorFacing": true},
+      "expectedPrimary": "powershell-interactive-execution",
+      "expectedRequired": ["operator-command-envelope"]
+    },
+    {
+      "id": "positive-shell-agnostic-operator-command",
+      "input": {"intent": "command", "shell": "bash", "deliveryMode": "interactive-copy-paste", "operatorFacing": true},
+      "expectedPrimary": "operator-command-envelope",
+      "expectedRequired": []
+    },
+    {
+      "id": "positive-gnhf-powershell",
+      "input": {"intent": "gnhf-prompt", "shell": "powershell", "deliveryMode": "interactive-copy-paste", "operatorFacing": true},
+      "expectedPrimary": "gnhf-prompt-compilation",
+      "expectedRequired": ["operator-command-envelope", "powershell-interactive-execution"]
+    },
+    {
+      "id": "positive-stale-checkout-bootstrap",
+      "input": {"intent": "stale-checkout-exact-head", "shell": "powershell", "deliveryMode": "interactive-copy-paste", "operatorFacing": true},
+      "expectedPrimary": "stale-checkout-exact-head-bootstrap",
+      "expectedRequired": ["operator-command-envelope", "powershell-interactive-execution"]
+    },
+    {
+      "id": "positive-end-to-end-runtime",
+      "input": {"intent": "runtime-end-to-end", "shell": "powershell", "deliveryMode": "interactive-copy-paste", "operatorFacing": true},
+      "expectedPrimary": "end-to-end-runtime-validation",
+      "expectedRequired": ["operator-command-envelope", "powershell-interactive-execution"]
+    },
+    {
+      "id": "positive-workstation-certification",
+      "input": {"intent": "workstation-certification", "shell": "powershell", "deliveryMode": "interactive-copy-paste", "operatorFacing": true},
+      "expectedPrimary": "windows-profile-live-certification",
+      "expectedRequired": ["operator-command-envelope", "powershell-interactive-execution"]
+    },
+    {
+      "id": "positive-repo-intake",
+      "input": {"intent": "repo-intake", "shell": "powershell", "deliveryMode": "none", "operatorFacing": false},
+      "expectedPrimary": "repo-intake",
+      "expectedRequired": []
+    },
+    {
+      "id": "negative-powershell-explanation",
+      "input": {"intent": "explanation", "shell": "powershell", "deliveryMode": "none", "operatorFacing": false},
+      "expectedPrimary": null,
+      "expectedRequired": []
+    },
+    {
+      "id": "negative-script-file-implementation",
+      "input": {"intent": "implementation", "shell": "powershell", "deliveryMode": "script-file", "operatorFacing": false},
+      "expectedPrimary": null,
+      "expectedRequired": []
+    },
+    {
+      "id": "negative-terminal-output-only",
+      "input": {"intent": "terminal-output", "shell": "powershell", "deliveryMode": "evidence", "operatorFacing": false},
+      "expectedPrimary": null,
+      "expectedRequired": []
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "id": "pass-guard-clause",
+      "deliveryMode": "interactive-copy-paste",
+      "snippets": ["if (-not $repo) {\n    throw 'Repository missing.'\n}\n$head = git rev-parse HEAD"],
+      "expected": "PASS"
+    },
+    {
+      "id": "pass-one-line-if-elseif-else",
+      "deliveryMode": "interactive-copy-paste",
+      "snippets": ["if($a){$x=1}elseif($b){$x=2}else{$x=3}"],
+      "expected": "PASS"
+    },
+    {
+      "id": "pass-outer-scriptblock-with-attached-continuations",
+      "deliveryMode": "interactive-copy-paste",
+      "snippets": ["& {\n    if ($a) {\n        $x = 1\n    } elseif ($b) {\n        $x = 2\n    } else {\n        $x = 3\n    }\n}"],
+      "expected": "PASS"
+    },
+    {
+      "id": "pass-script-file-newline-continuation",
+      "deliveryMode": "script-file",
+      "snippets": ["if ($a) {\n    $x = 1\n}\nelseif ($b) {\n    $x = 2\n}\nelse {\n    $x = 3\n}"],
+      "expected": "PASS"
+    },
+    {
+      "id": "fail-original-detached-elseif-and-else",
+      "deliveryMode": "interactive-copy-paste",
+      "snippets": ["$repo = if ($env:ROOT) {\n    $env:ROOT\n}", "elseif (Test-Path '.repo-path') {\n    Get-Content '.repo-path'\n}", "else {\n    git rev-parse --show-toplevel\n}"],
+      "expected": "FAIL",
+      "expectedRule": "detached-continuation-snippet"
+    },
+    {
+      "id": "fail-newline-elseif-in-interactive-block",
+      "deliveryMode": "interactive-copy-paste",
+      "snippets": ["if ($a) {\n    $x = 1\n}\nelseif ($b) {\n    $x = 2\n}"],
+      "expected": "FAIL",
+      "expectedRule": "continuation-not-attached"
+    },
+    {
+      "id": "fail-unwrapped-multiline-else",
+      "deliveryMode": "interactive-copy-paste",
+      "snippets": ["if ($a) {\n    $x = 1\n} else {\n    $x = 2\n}"],
+      "expected": "FAIL",
+      "expectedRule": "compound-block-not-atomic"
+    },
+    {
+      "id": "fail-detached-catch",
+      "deliveryMode": "interactive-copy-paste",
+      "snippets": ["try {\n    Invoke-Thing\n}", "catch {\n    throw\n}"],
+      "expected": "FAIL",
+      "expectedRule": "detached-continuation-snippet"
+    },
+    {
+      "id": "fail-detached-finally",
+      "deliveryMode": "interactive-copy-paste",
+      "snippets": ["try {\n    Invoke-Thing\n} catch {\n    throw\n}", "finally {\n    Pop-Location\n}"],
+      "expected": "FAIL",
+      "expectedRule": "detached-continuation-snippet"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "harnessId": "agentswitchboard.command-delivery-skill-factoring.v1",
+  "scope": "Skill ownership, deterministic routing, and interactive PowerShell command boundaries",
+  "entrypoints": {
+    "registry": "tooling/skills/harness/command-delivery/skill-factoring.registry.json",
+    "capabilities": "tooling/skills/harness/command-delivery/capability-registry.json",
+    "routingFixtures": "tooling/skills/harness/command-delivery/fixtures/routing-cases.fixture.json",
+    "boundaryFixtures": "tooling/skills/harness/command-delivery/fixtures/powershell-boundary-cases.fixture.json",
+    "schema": "tooling/skills/harness/command-delivery/schemas/skill-factoring-registry.schema.json",
+    "pythonValidator": "tooling/skills/skill_factoring_contracts.py",
+    "pythonTests": "tests/test_skill_factoring_contracts.py",
+    "powerShellValidator": "scripts/Test-SkillFactoringContracts.ps1",
+    "cmdEntrypoint": "Test-SkillFactoringContracts.cmd",
+    "operatorGuide": "docs/harness/command-delivery-skill-factoring.md",
+    "ci": ".github/workflows/skill-factoring-contracts.yml"
+  },
+  "components": [
+    "tooling/skills/harness/command-delivery/skill-factoring.registry.json",
+    "tooling/skills/harness/command-delivery/capability-registry.json",
+    "tooling/skills/harness/command-delivery/fixtures/routing-cases.fixture.json",
+    "tooling/skills/harness/command-delivery/fixtures/powershell-boundary-cases.fixture.json",
+    "tooling/skills/harness/command-delivery/schemas/skill-factoring-registry.schema.json",
+    "tooling/skills/skill_factoring_contracts.py",
+    "scripts/Test-SkillFactoringContracts.ps1",
+    "tests/test_skill_factoring_contracts.py",
+    ".ai/skills/powershell-interactive-execution/SKILL.md",
+    ".ai/skills/operator-command-envelope/SKILL.md",
+    ".ai/skills/stale-checkout-exact-head-bootstrap/SKILL.md",
+    "docs/harness/command-delivery-skill-factoring.md",
+    ".github/workflows/skill-factoring-contracts.yml",
+    "Test-SkillFactoringContracts.cmd"
+  ],
+  "validationOrder": [
+    "python -m unittest tests.test_skill_factoring_contracts",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-SkillFactoringContracts.ps1",
+    "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\\Test-SkillFactoringContracts.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1",
+    "git --no-pager diff --check"
+  ],
+  "generatedEvidence": {
+    "tracked": false,
+    "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/skill-factoring",
+    "artifacts": ["skill-factoring-report.json", "skill-factoring-report.md"]
+  },
+  "proofCeiling": "Tracked ownership, deterministic trigger routing, fixture classification, candidate interactive PowerShell boundary validation, cross-shell parser execution, and repository hygiene only."
+}

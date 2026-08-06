@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "registryId": "agentswitchboard.command-delivery-capabilities.v1",
+  "capabilities": [
+    {
+      "id": "powershell.interactive.compose",
+      "ownerSkill": "powershell-interactive-execution",
+      "implementation": "tooling/skills/skill_factoring_contracts.py",
+      "activation": "target shell is PowerShell and delivery mode is interactive-copy-paste",
+      "output": "one complete syntax unit plus boundary finding",
+      "guardrail": "reject detached continuation keywords and non-atomic multiline compound statements",
+      "proofCeiling": "artifact syntax-unit proof only"
+    },
+    {
+      "id": "powershell.interactive.candidate.validate",
+      "ownerSkill": "powershell-interactive-execution",
+      "implementation": "scripts/Test-SkillFactoringContracts.ps1",
+      "activation": "candidate handoff path supplied",
+      "output": "skill-factoring-report.json and skill-factoring-report.md",
+      "guardrail": "candidate content is read locally and report stores findings rather than command contents",
+      "proofCeiling": "candidate boundary validation only"
+    },
+    {
+      "id": "operator.command-envelope.validate",
+      "ownerSkill": "operator-command-envelope",
+      "implementation": "scripts/Test-OperatorCommandEnvelope.ps1",
+      "activation": "operator-facing executable artifact",
+      "output": "sanitized envelope report",
+      "guardrail": "shell-specific syntax is delegated to the owning skill",
+      "proofCeiling": "presentation hygiene only"
+    },
+    {
+      "id": "skill.routing.resolve",
+      "ownerSkill": "powershell-interactive-execution",
+      "implementation": "tooling/skills/skill_factoring_contracts.py",
+      "activation": "command-delivery routing payload",
+      "output": "one primary skill and zero or more required composed skills",
+      "guardrail": "duplicate trigger ownership and ambiguous primary activation fail validation",
+      "proofCeiling": "deterministic routing contract only"
+    }
+  ]
+}

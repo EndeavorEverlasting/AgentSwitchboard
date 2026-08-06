@@ -1,14 +1,16 @@
 ---
 id: stale-checkout-exact-head-bootstrap
-version: 1.0.0
+version: 1.1.0
 status: canonical
 ---
 
 # Stale-Checkout Exact-Head Bootstrap
 
-## Trigger
+## Deterministic trigger
 
-Use this skill when an operator has a verified AgentSwitchboard checkout, but that checkout predates `Validate-Technician-ExactHead.cmd` or another required exact-head harness entrypoint.
+Trigger ID: `technician.stale-checkout-exact-head`
+
+Select this skill when a verified AgentSwitchboard checkout exists but predates a required exact-head harness entrypoint, especially `Validate-Technician-ExactHead.cmd`.
 
 ## Required inputs
 
@@ -18,13 +20,20 @@ Use this skill when an operator has a verified AgentSwitchboard checkout, but th
 - requested mode: `validate` or `ready`;
 - target Windows machine role and proof ceiling.
 
-## Read first
+## Preconditions
 
-1. `tooling/profiles/windows/harness/stale-checkout-exact-head/manifest.json`
-2. `tooling/profiles/windows/harness/stale-checkout-exact-head/workflows/bootstrap.workflow.json`
-3. `tooling/profiles/windows/harness/stale-checkout-exact-head/artifact-registry.json`
-4. `tooling/profiles/windows/harness/technician-live-cert/artifact-registry.json`
-5. `.ai/skills/operator-command-envelope/SKILL.md`
+- The source checkout is a canonical AgentSwitchboard repository.
+- The source checkout is preserved as read-only evidence.
+- Git and PowerShell 7 are available.
+- The expected remote ref and SHA are explicit.
+
+## Required composition
+
+- `operator-command-envelope` owns the operator-facing executable envelope.
+- `powershell-interactive-execution` owns the interactive PowerShell submission boundary.
+- The exact-head validator owns detached worktree creation, cross-shell validation, P00/readiness execution, and proof artifacts.
+
+The operator handoff must pass both `scripts/Test-OperatorCommandEnvelope.ps1` and `scripts/Test-SkillFactoringContracts.ps1`. A missing local launcher is never invoked directly.
 
 ## Procedure
 
@@ -32,13 +41,13 @@ Use this skill when an operator has a verified AgentSwitchboard checkout, but th
 2. Verify the origin is canonical AgentSwitchboard.
 3. Fetch only the explicit remote ref without force or tags.
 4. Require `FETCH_HEAD` to equal the expected SHA.
-5. Extract or run `scripts/Invoke-StaleCheckoutExactHeadBootstrap.ps1` from that exact commit.
-6. Let the bootstrap create a detached temporary validator and invoke `Validate-Technician-ExactHead.cmd` from the exact fetched head.
+5. Extract `scripts/Invoke-StaleCheckoutExactHeadBootstrap.ps1` from that exact commit.
+6. Execute the extracted engine as one atomic PowerShell submission or a saved temporary script—not as separated `if`/`elseif`/`else` blocks.
 7. Require a fresh exact-head JSON artifact whose `verifiedHead` equals the expected SHA.
-8. Publish the bootstrap report and delegated exact-head report paths.
-9. Remove only a clean temporary validator created by the current run. Preserve any unproved or dirty path.
+8. Publish the bootstrap and delegated exact-head report paths.
+9. Remove only a temporary runner created by the current run; preserve anything not proved safe to remove.
 
-## Outputs
+## Produced outputs
 
 - local bootstrap JSON and Markdown reports;
 - delegated exact-head JSON and Markdown reports;
@@ -46,22 +55,36 @@ Use this skill when an operator has a verified AgentSwitchboard checkout, but th
 - source-checkout preservation statement;
 - exact blocker or next command.
 
-## Forbidden
+## Guardrails
 
-- guessing a repository path or branch;
-- running a missing local launcher as though it existed;
-- force fetch, reset, clean, stash, branch switching, or destructive worktree removal;
-- executing copied prompts, transcripts, or error output;
-- claiming exact-head proof from fetch success, launcher acknowledgement, or stale artifacts;
-- committing generated local evidence.
+- No force fetch, reset, clean, stash, branch switch, or destructive worktree removal.
+- No missing-launcher assumption.
+- No multiline interactive compound statement unless enclosed in one outer script block.
+- No proof promotion from fetch success or process acknowledgement.
+- Generated evidence remains local and untracked.
+
+## Owning files
+
+- `.ai/skills/stale-checkout-exact-head-bootstrap/SKILL.md`
+- `Bootstrap-Technician-ExactHead.cmd`
+- `scripts/Invoke-StaleCheckoutExactHeadBootstrap.ps1`
+- `tooling/profiles/windows/harness/stale-checkout-exact-head/manifest.json`
 
 ## Deterministic validation
 
 ```powershell
 python -m unittest tests.test_stale_checkout_exact_head_bootstrap
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\Test-StaleCheckoutExactHeadBootstrap.ps1
+python -m unittest tests.test_skill_factoring_contracts
 pwsh -NoLogo -NoProfile -File scripts/Test-StaleCheckoutExactHeadBootstrap.ps1
+pwsh -NoLogo -NoProfile -File scripts/Test-SkillFactoringContracts.ps1
 ```
+
+## Forbidden conditions
+
+- Guessing repository path, branch, or SHA.
+- Running a launcher absent from the source checkout.
+- Splitting an interactive compound statement across submissions.
+- Claiming exact-head proof without fresh artifact readback.
 
 ## Proof ceiling
 
