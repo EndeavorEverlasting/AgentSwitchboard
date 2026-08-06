@@ -58,15 +58,32 @@ $surfaceText = Get-Content -LiteralPath (Join-Path $RootPath 'scripts\Test-Techn
 $ciText = Get-Content -LiteralPath (Join-Path $RootPath '.github\workflows\technician-live-cert-surface.yml') -Raw
 
 $operatorValidatorPath = Join-Path $RootPath 'scripts\Test-OperatorCommandEnvelope.ps1'
-$operatorCommandEnvelope = & $operatorValidatorPath -RootPath $RootPath -PassThru -NoReport
+$operatorCommandEnvelope = $null
+try {
+    $operatorCommandEnvelope = & $operatorValidatorPath -RootPath $RootPath -PassThru -NoReport
+}
+catch {
+    $operatorCommandEnvelope = [pscustomobject]@{
+        status = 'FAIL'
+        violationCount = 1
+        fixtureFailureCount = 1
+        scannedSources = @()
+        errorType = $_.Exception.GetType().FullName
+        proofCeiling = 'Operator-command validator failed before producing structured output.'
+    }
+}
 if ($null -eq $operatorCommandEnvelope) {
     $operatorCommandEnvelope = [pscustomobject]@{
         status = 'FAIL'
         violationCount = 1
         fixtureFailureCount = 1
         scannedSources = @()
+        errorType = 'NoStructuredResult'
         proofCeiling = 'Operator-command validator returned no structured result.'
     }
+}
+if (-not ($operatorCommandEnvelope.PSObject.Properties.Name -contains 'errorType')) {
+    $operatorCommandEnvelope | Add-Member -NotePropertyName errorType -NotePropertyValue ''
 }
 
 $strictIndex = $surfaceText.IndexOf('Set-StrictMode')
@@ -91,7 +108,7 @@ $guardRows = @(
     [pscustomobject]@{
         id = 'operator-command-envelope'
         passed = ([string]$operatorCommandEnvelope.status -eq 'PASS')
-        detail = "Prompt/transcript validator scanned $(@($operatorCommandEnvelope.scannedSources).Count) sources; violations=$($operatorCommandEnvelope.violationCount); fixtureFailures=$($operatorCommandEnvelope.fixtureFailureCount)."
+        detail = "Prompt/transcript validator scanned $(@($operatorCommandEnvelope.scannedSources).Count) sources; violations=$($operatorCommandEnvelope.violationCount); fixtureFailures=$($operatorCommandEnvelope.fixtureFailureCount); errorType=$($operatorCommandEnvelope.errorType)."
     },
     [pscustomobject]@{
         id = 'interactive-git-pager'
@@ -122,6 +139,7 @@ $result = [ordered]@{
         scannedSourceCount = @($operatorCommandEnvelope.scannedSources).Count
         violationCount = [int]$operatorCommandEnvelope.violationCount
         fixtureFailureCount = [int]$operatorCommandEnvelope.fixtureFailureCount
+        errorType = [string]$operatorCommandEnvelope.errorType
         proofCeiling = [string]$operatorCommandEnvelope.proofCeiling
     }
     blockedCount = $blocked.Count
@@ -173,6 +191,7 @@ $($guardLines -join "`n")
 - Registered sources scanned: **$($result.operatorCommandEnvelope.scannedSourceCount)**
 - Violations: **$($result.operatorCommandEnvelope.violationCount)**
 - Fixture failures: **$($result.operatorCommandEnvelope.fixtureFailureCount)**
+- Error type: ``$($result.operatorCommandEnvelope.errorType)``
 - Proof ceiling: $($result.operatorCommandEnvelope.proofCeiling)
 
 ## Exact next command
@@ -189,6 +208,7 @@ Write-Host " Status: $status"
 Write-Host " Components blocked: $($blocked.Count)"
 Write-Host " Guards failed: $($failedGuards.Count)"
 Write-Host " Operator-command violations: $($result.operatorCommandEnvelope.violationCount)"
+Write-Host " Operator-command error type: $($result.operatorCommandEnvelope.errorType)"
 Write-Host " JSON: $jsonPath"
 Write-Host " Report: $mdPath"
 Write-Host '============================================================' -ForegroundColor Cyan
