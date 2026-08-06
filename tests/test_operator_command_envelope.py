@@ -165,7 +165,7 @@ class TestOperatorCommandEnvelope(unittest.TestCase):
             "CandidatePath",
             "<candidate-content-redacted>",
             "<candidate-$candidateIndex>",
-            "$fenceMarker.Length + ',}'",
+            "$closePattern = '^\\s*' + $fenceCharacter + '{' + $fenceMarker.Length + ',}\\s*$'",
             "$privacyProbes",
             "$contract.generatedEvidence.json",
             "$contract.generatedEvidence.markdown",
