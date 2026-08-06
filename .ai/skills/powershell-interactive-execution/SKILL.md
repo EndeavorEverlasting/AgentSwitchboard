@@ -6,7 +6,7 @@ status: canonical
 
 # PowerShell Interactive Execution
 
-## Deterministic trigger
+## Trigger
 
 Trigger ID: `powershell.interactive-snippet`
 
@@ -14,7 +14,7 @@ Select this skill only when executable PowerShell is intended for interactive co
 
 The generic presentation layer is owned by `operator-command-envelope`. Repository identity and safe branch/worktree selection are owned by `repo-intake` and `bounded-sprint`. This skill owns PowerShell grammar and interactive submission boundaries only.
 
-## Required inputs
+## Inputs
 
 - exact target shell: Windows PowerShell 5.1 or PowerShell 7;
 - delivery mode: `interactive-copy-paste` or `script-file`;
@@ -29,12 +29,14 @@ The generic presentation layer is owned by `operator-command-envelope`. Reposito
 - Repository identity, authority, and mutation scope have already been resolved by the owning workflow.
 - The artifact is validated before it is presented as copy-ready.
 
+Repository and path selection remain delegated. When the final artifact itself must change directory, it validates the path and uses `Set-Location -LiteralPath` before repository commands. It never embeds a hardcoded workstation username.
+
 ## Procedure
 
 1. Prefer a repository-owned `.cmd` or `.ps1` entrypoint over a long interactive bootstrap.
 2. Prefer guard clauses when later logic does not require a continuation keyword.
-3. Never split `if`/`elseif`/`else` or `try`/`catch`/`finally` across separate interactive submissions.
-4. Keep every continuation keyword attached to the preceding closing brace on the same physical line: `} elseif (...) {`, `} else {`, `} catch {`, and `} finally {`.
+3. Keep each compound statement in the same syntactic submission. Never split `if`/`elseif`/`else` or `try`/`catch`/`finally` across separate interactive submissions.
+4. Keep every continuation keyword attached to the preceding closing brace on the same physical line: `} elseif (...) {`, `} else {`, `} catch {`, and `} finally {`. Never instruct the operator to submit a closing `}` and then enter the continuation later.
 5. When a multiline compound statement is unavoidable, enclose the complete statement in one outer `& { ... }` script block so PowerShell cannot execute the first completed inner block before the rest of the paste arrives.
 6. A one-physical-line compound statement is acceptable when readable and bounded.
 7. Capture `$LASTEXITCODE` immediately after a native command when later logic depends on it.
@@ -71,7 +73,7 @@ Atomic multiline compound statement:
 }
 ```
 
-## Produced outputs
+## Outputs
 
 - one syntactically complete interactive PowerShell artifact;
 - no detached `elseif`, `else`, `catch`, or `finally` submission;
@@ -110,13 +112,17 @@ Validate one handoff artifact:
 pwsh -NoLogo -NoProfile -File scripts/Test-SkillFactoringContracts.ps1 -CandidatePath '<handoff.md>' -CandidateDeliveryMode interactive-copy-paste
 ```
 
-## Forbidden conditions
+## Forbidden scope
 
-- A snippet begins with standalone `elseif`, `else`, `catch`, or `finally`.
+- No standalone `elseif`, `else`, `catch`, or `finally` command is permitted in an interactive sequence.
 - One compound statement is split across multiple interactive submissions or code fences.
 - A multiline compound statement with continuation keywords is emitted without an outer `& { ... }` block.
 - A continuation keyword starts a new physical line after the preceding block closes.
 - The skill claims repository selection, runtime proof, provider routing, or product behavior ownership.
+
+## Stop and escalate
+
+Stop and rewrite the artifact when the submission boundary is ambiguous, a continuation keyword can become detached, the target shell is uncertain, or safe execution would require repository/path guessing or destructive recovery. Preserve state and emit one complete repository-owned script or one atomic PowerShell submission instead.
 
 ## Proof ceiling
 

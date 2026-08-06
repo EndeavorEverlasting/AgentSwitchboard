@@ -200,7 +200,7 @@ def validate_skill_boundaries(root: Path) -> list[Finding]:
         ".ai/skills/powershell-interactive-execution/SKILL.md": [
             "Trigger ID: `powershell.interactive-snippet`",
             "## Preconditions",
-            "## Produced outputs",
+            "## Outputs",
             "## Owning files",
             "scripts/Test-SkillFactoringContracts.ps1",
             "} elseif",
