@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "agentswitchboard.stale-checkout-exact-head-cases.v1",
+  "cases": [
+    {
+      "id": "stale-checkout-missing-launcher",
+      "condition": "The source checkout does not contain Validate-Technician-ExactHead.cmd but the exact fetched head does.",
+      "expected": "PASS_EXACT_HEAD_DELEGATED"
+    },
+    {
+      "id": "remote-head-mismatch",
+      "condition": "FETCH_HEAD differs from the explicit expected SHA.",
+      "expected": "BLOCKED_HEAD_MISMATCH"
+    },
+    {
+      "id": "unexpected-origin",
+      "condition": "The source checkout origin is not canonical AgentSwitchboard.",
+      "expected": "BLOCKED_UNEXPECTED_ORIGIN"
+    },
+    {
+      "id": "dirty-source-checkout",
+      "condition": "The source checkout contains unrelated dirty work.",
+      "expected": "PASS_SOURCE_PRESERVED"
+    },
+    {
+      "id": "stale-or-missing-delegated-artifact",
+      "condition": "The delegated validator exits zero without a fresh exact-head JSON artifact.",
+      "expected": "BLOCKED_ARTIFACT_MISSING"
+    }
+  ]
+}

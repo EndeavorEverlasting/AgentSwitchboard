@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "registryId": "agentswitchboard.stale-checkout-exact-head-artifacts.v1",
+  "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard",
+  "artifacts": [
+    {
+      "artifactId": "bootstrap-result-json",
+      "fileName": "stale-checkout-exact-head/runs/<runId>/stale-checkout-bootstrap.json",
+      "generator": "scripts/Invoke-StaleCheckoutExactHeadBootstrap.ps1",
+      "tracked": false,
+      "sensitivity": "local-operational",
+      "proofCeiling": "Stale-checkout preservation, exact fetch, delegation, and fresh artifact readback only"
+    },
+    {
+      "artifactId": "bootstrap-result-report",
+      "fileName": "stale-checkout-exact-head/runs/<runId>/stale-checkout-bootstrap.md",
+      "generator": "scripts/Invoke-StaleCheckoutExactHeadBootstrap.ps1",
+      "tracked": false,
+      "sensitivity": "local-operational",
+      "proofCeiling": "English rendering of bootstrap and delegated artifact identity only"
+    },
+    {
+      "artifactId": "harness-status-json",
+      "fileName": "stale-checkout-exact-head/harness-status/stale-checkout-exact-head-harness-status.json",
+      "generator": "tooling/profiles/windows/Get-StaleCheckoutExactHeadHarnessStatus.ps1",
+      "tracked": false,
+      "sensitivity": "local-operational",
+      "proofCeiling": "Tracked component and contract readiness only"
+    },
+    {
+      "artifactId": "harness-status-report",
+      "fileName": "stale-checkout-exact-head/harness-status/stale-checkout-exact-head-harness-status.md",
+      "generator": "tooling/profiles/windows/Get-StaleCheckoutExactHeadHarnessStatus.ps1",
+      "tracked": false,
+      "sensitivity": "local-operational",
+      "proofCeiling": "English rendering of harness completeness only"
+    }
+  ],
+  "namingConventions": {
+    "runId": "UTC basic timestamp plus expected-head eight-character suffix",
+    "stableStatusNames": "Allowed only beneath the harness-status directory",
+    "fieldEvidence": "Unique run directory; never tracked"
+  },
+  "forbidden": [
+    "Do not commit generated bootstrap or exact-head evidence.",
+    "Do not persist credentials, tokens, private endpoints, or copied terminal transcripts.",
+    "Do not claim more proof than the delegated exact-head artifact provides."
+  ]
+}

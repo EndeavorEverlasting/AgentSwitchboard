@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "agentswitchboard.stale-checkout-exact-head-bootstrap.v1",
+  "trigger": "The verified current checkout does not contain Validate-Technician-ExactHead.cmd or predates the exact-head field harness.",
+  "preconditions": [
+    "A local AgentSwitchboard Git checkout exists.",
+    "The checkout origin is one of the canonical AgentSwitchboard origins.",
+    "The remote ref and exact expected SHA are known.",
+    "git.exe and pwsh.exe are available."
+  ],
+  "steps": [
+    "Read the source checkout status and recent log without changing it.",
+    "Fetch the explicit remote ref without tags or force.",
+    "Require FETCH_HEAD to equal the expected SHA.",
+    "Extract the exact-head validator from the verified commit into a temporary UTF-8 file.",
+    "Invoke the extracted exact-head validator while passing the preserved source checkout.",
+    "Require a fresh exact-head JSON artifact whose verifiedHead equals the expected SHA.",
+    "Write local bootstrap JSON and Markdown reports.",
+    "Remove only the temporary extracted validator after execution."
+  ],
+  "failureHandling": [
+    "Unexpected origin blocks before remote code extraction or execution.",
+    "Head mismatch blocks before worktree creation.",
+    "The source checkout remains read-only regardless of dirty state.",
+    "A nonzero delegated validator exit is propagated.",
+    "Missing or stale delegated artifacts block success."
+  ],
+  "handoff": {
+    "required": [
+      "source repository",
+      "remote ref",
+      "expected and fetched SHA",
+      "temporary validator disposition",
+      "delegated validation artifact",
+      "proof level",
+      "proof ceiling",
+      "exact next command"
+    ]
+  },
+  "forbidden": [
+    "reset",
+    "clean",
+    "stash",
+    "force fetch",
+    "source checkout branch switch",
+    "tracking generated evidence",
+    "success from fetch or launcher acknowledgement alone"
+  ]
+}
