@@ -21,7 +21,7 @@ function Invoke-TrackedPowerShell {
     & $hostPath -NoLogo -NoProfile -ExecutionPolicy Bypass -File $ScriptPath @Arguments
     $exitCode = [int]$global:LASTEXITCODE
     if ($exitCode -ne 0) {
-        throw "Required offline validator failed with exit code $exitCode: $ScriptPath"
+        throw "Required offline validator failed with exit code ${exitCode}: $ScriptPath"
     }
 }
 
@@ -74,7 +74,7 @@ $global:LASTEXITCODE = 0
 & $python.Source $staticContract
 $staticExit = [int]$global:LASTEXITCODE
 if ($staticExit -ne 0) {
-    throw "App harness static contract failed with exit code $staticExit: $staticContract"
+    throw "App harness static contract failed with exit code ${staticExit}: $staticContract"
 }
 
 $completeness = Join-Path $RootPath 'scripts/Test-CommandDeliveryHarnessCompleteness.ps1'
