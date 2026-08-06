@@ -6,6 +6,7 @@
   "properties": {
     "schemaVersion": {"const": 1},
     "registryId": {"const": "agentswitchboard.command-delivery-skill-factoring.v1"},
+    "scope": {"type": "string", "minLength": 1},
     "canonicalOwners": {"type": "object", "minProperties": 4},
     "dispositions": {
       "type": "array",
@@ -23,13 +24,25 @@
           "forbiddenConditions": {"type": "array", "minItems": 1, "items": {"type": "string"}},
           "guardrails": {"type": "array", "minItems": 1, "items": {"type": "string"}},
           "owningFiles": {"type": "array", "minItems": 1, "items": {"type": "string"}},
-          "proofCeiling": {"type": "string", "minLength": 1}
+          "proofCeiling": {"type": "string", "minLength": 1},
+          "delegates": {"type": "array", "items": {"type": "string"}},
+          "requiresWhen": {"type": "array", "items": {"type": "object"}}
         },
-        "additionalProperties": true
+        "additionalProperties": false
       }
     },
     "primaryTriggerPrecedence": {"type": "array", "minItems": 7, "items": {"type": "string"}, "uniqueItems": true},
-    "artifactPolicy": {"type": "object", "required": ["tracked", "defaultRoot", "json", "markdown"]}
+    "artifactPolicy": {
+      "type": "object",
+      "required": ["tracked", "defaultRoot", "json", "markdown"],
+      "properties": {
+        "tracked": {"type": "boolean"},
+        "defaultRoot": {"type": "string", "minLength": 1},
+        "json": {"type": "string", "minLength": 1},
+        "markdown": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    }
   },
   "additionalProperties": false
 }

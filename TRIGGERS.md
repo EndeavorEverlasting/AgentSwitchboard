@@ -31,8 +31,11 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | `profile.tmux-new-instance-shortcut.install` | request asks for a desktop shortcut, clickable CMD installer, or user-local shortcut refresh for a separate tmux instance | `tmux-new-instance-shortcut` → `install-tmux-new-instance-shortcut`; preserve foreign shortcuts, delegate to the canonical launcher, and emit install/readback evidence |
 | `profile.tmux-new-instance-shortcut.double-click` | the installed shortcut is invoked or its resulting window/session behavior must be proved | `tmux-new-instance-shortcut` → `launch-tmux-new-instance`; for completion also use `end-to-end-runtime-validation` across shortcut, PowerShell, WSL, tmux, and WezTerm boundaries |
 | `profile.consumer-certification-request` | SysAdminSuite or another child claims profile consumption or certification | require a separate consumer PR that delegates to the exact canonical launcher and proves no competing lifecycle or raw frontend fallback |
+| `profile.workstation-certification-request` | exact workstation command, field failure, or technician readiness path requires cross-shell certification | `windows-profile-live-certification`; compose `operator-command-envelope` and `powershell-interactive-execution` for interactive PowerShell handoffs |
 | `action.claimed` | prompt claims install, setup, build, execute, repair, configure, upgrade, deploy, merge, or release | `action.commitment.validate`; require mutation, validation, and commit or GitHub proof |
+| `operator.command-artifact` | operator-facing executable command, exact next command, recovery command, or terminal handoff | `operator-command-envelope`; when interactive PowerShell is selected, also require `powershell-interactive-execution` |
 | `powershell.interactive-snippet` | PowerShell intended for interactive copy/paste | `powershell-interactive-execution`; preserve complete syntax units |
+| `technician.stale-checkout-exact-head` | verified AgentSwitchboard checkout predates the required exact-head launcher or validator | `stale-checkout-exact-head-bootstrap`; preserve the source checkout and compose both command-delivery skills |
 | `gnhf.prompt-request` | explicit GNHF prompt request | `gnhf-prompt-compilation`; output a copy-ready launch artifact |
 | `gnhf.test-only` | test, smoke, provider probe, fixture, or contract-only run | apply `gnhf.test-timeout.enforce`; one iteration and at most 30 seconds wall clock or per iteration |
 | `provider.deepseek-request` | selected route uses `deepseek/*` | apply `deepseek.usage-window.evaluate`; block premium, unknown, missing, stale, or unverified state |
@@ -71,7 +74,7 @@ The route hashes but does not copy raw output, redacts common credentials and pr
 
 ## Runtime event invariant
 
-`runtime.event-contract-change` requires the typed envelope, runtime topology, correlation and causation rules, artifact policy, doctrine references, and focused validator to remain coherent.
+`runtime.event-contract-change` requires the typed envelope, runtime topology, correlation and causation rules, artifact policy, doctrine references, and proof boundaries to remain coherent.
 
 `runtime.event-cascade-request` is a higher proof request. Before runtime execution it must name the registered source, observer, handler, successor or terminal event, and evidence sink. Root events use their event ID as correlation and no causation; successors inherit correlation, identify the immediate parent as causation, and advance sequence.
 

@@ -1,10 +1,11 @@
 {
   "schemaVersion": 1,
   "harnessId": "agentswitchboard.command-delivery-skill-factoring.v1",
-  "scope": "Skill ownership, deterministic routing, and interactive PowerShell command boundaries",
+  "scope": "Skill ownership, deterministic routing, canonical trigger registration, and interactive PowerShell command boundaries",
   "entrypoints": {
     "registry": "tooling/skills/harness/command-delivery/skill-factoring.registry.json",
     "capabilities": "tooling/skills/harness/command-delivery/capability-registry.json",
+    "canonicalTriggerMap": "TRIGGERS.md",
     "routingFixtures": "tooling/skills/harness/command-delivery/fixtures/routing-cases.fixture.json",
     "boundaryFixtures": "tooling/skills/harness/command-delivery/fixtures/powershell-boundary-cases.fixture.json",
     "schema": "tooling/skills/harness/command-delivery/schemas/skill-factoring-registry.schema.json",
@@ -18,6 +19,7 @@
   "components": [
     "tooling/skills/harness/command-delivery/skill-factoring.registry.json",
     "tooling/skills/harness/command-delivery/capability-registry.json",
+    "TRIGGERS.md",
     "tooling/skills/harness/command-delivery/fixtures/routing-cases.fixture.json",
     "tooling/skills/harness/command-delivery/fixtures/powershell-boundary-cases.fixture.json",
     "tooling/skills/harness/command-delivery/schemas/skill-factoring-registry.schema.json",
@@ -43,5 +45,5 @@
     "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/skill-factoring",
     "artifacts": ["skill-factoring-report.json", "skill-factoring-report.md"]
   },
-  "proofCeiling": "Tracked ownership, deterministic trigger routing, fixture classification, candidate interactive PowerShell boundary validation, cross-shell parser execution, and repository hygiene only."
+  "proofCeiling": "Tracked ownership, complete registry-schema validation, canonical trigger routing, fixture classification, candidate interactive PowerShell syntax-unit validation, cross-shell parser execution, and repository hygiene only."
 }

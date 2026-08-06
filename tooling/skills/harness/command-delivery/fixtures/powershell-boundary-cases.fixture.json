@@ -59,6 +59,13 @@
       "snippets": ["try {\n    Invoke-Thing\n} catch {\n    throw\n}", "finally {\n    Pop-Location\n}"],
       "expected": "FAIL",
       "expectedRule": "detached-continuation-snippet"
+    },
+    {
+      "id": "fail-incomplete-if-block",
+      "deliveryMode": "interactive-copy-paste",
+      "snippets": ["if ($a) {\n    Write-Host 'x'"],
+      "expected": "FAIL",
+      "expectedRule": "incomplete-powershell-syntax"
     }
   ]
 }

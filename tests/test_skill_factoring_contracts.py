@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+import copy
 import importlib.util
 import json
-import tempfile
-import unittest
 import sys
+import unittest
 from pathlib import Path
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "tooling" / "skills" / "skill_factoring_contracts.py"
@@ -13,12 +13,12 @@ assert SPEC and SPEC.loader
 MODULE = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = MODULE
 SPEC.loader.exec_module(MODULE)
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class SkillFactoringContractTests(unittest.TestCase):
     def test_routing_fixtures_are_deterministic(self) -> None:
-        fixture_path = Path(__file__).resolve().parents[1] / MODULE.ROUTING_FIXTURE_PATH
-        cases = json.loads(fixture_path.read_text(encoding="utf-8"))["cases"]
+        cases = json.loads((ROOT / MODULE.ROUTING_FIXTURE_PATH).read_text(encoding="utf-8"))["cases"]
         for case in cases:
             with self.subTest(case=case["id"]):
                 primary, required = MODULE.route_case(case["input"])
@@ -26,8 +26,7 @@ class SkillFactoringContractTests(unittest.TestCase):
                 self.assertEqual(sorted(case.get("expectedRequired", [])), required)
 
     def test_boundary_fixtures_match_expected_results(self) -> None:
-        fixture_path = Path(__file__).resolve().parents[1] / MODULE.BOUNDARY_FIXTURE_PATH
-        cases = json.loads(fixture_path.read_text(encoding="utf-8"))["cases"]
+        cases = json.loads((ROOT / MODULE.BOUNDARY_FIXTURE_PATH).read_text(encoding="utf-8"))["cases"]
         for case in cases:
             with self.subTest(case=case["id"]):
                 result = MODULE.validate_interactive_powershell(case["snippets"], case["deliveryMode"])
@@ -45,6 +44,11 @@ class SkillFactoringContractTests(unittest.TestCase):
         self.assertEqual("FAIL", result.status)
         self.assertEqual("detached-continuation-snippet", result.rule)
 
+    def test_incomplete_powershell_is_rejected_before_early_pass(self) -> None:
+        result = MODULE.validate_interactive_powershell(["if ($a) {\n  Write-Host x"], "interactive-copy-paste")
+        self.assertEqual("FAIL", result.status)
+        self.assertEqual("incomplete-powershell-syntax", result.rule)
+
     def test_atomic_outer_scriptblock_is_accepted(self) -> None:
         snippet = "& {\n  if ($a) {\n    1\n  } elseif ($b) {\n    2\n  } else {\n    3\n  }\n}"
         result = MODULE.validate_interactive_powershell([snippet], "interactive-copy-paste")
@@ -58,6 +62,44 @@ class SkillFactoringContractTests(unittest.TestCase):
     def test_candidate_markdown_blocks_are_extracted(self) -> None:
         text = "Before\n```powershell\nif (-not $a) { throw 'x' }\n```\nAfter\n"
         self.assertEqual(["if (-not $a) { throw 'x' }"], MODULE.extract_powershell_blocks(text))
+
+    def test_unterminated_markdown_fence_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Unterminated Markdown fence"):
+            MODULE.extract_powershell_blocks("```powershell\nWrite-Host x\n")
+
+    def test_relative_candidate_resolves_against_root(self) -> None:
+        candidate = ROOT / "relative-handoff.md"
+        candidate.write_text("```powershell\nWrite-Host x\n```\n", encoding="utf-8")
+        try:
+            self.assertEqual(candidate.resolve(), MODULE.resolve_candidate_path(ROOT, Path("relative-handoff.md")))
+        finally:
+            candidate.unlink()
+
+    def test_registry_schema_is_loaded_and_enforced(self) -> None:
+        registry = json.loads((ROOT / MODULE.REGISTRY_PATH).read_text(encoding="utf-8"))
+        schema = json.loads((ROOT / MODULE.SCHEMA_PATH).read_text(encoding="utf-8"))
+        invalid = copy.deepcopy(registry)
+        invalid.pop("artifactPolicy")
+        invalid["unexpected"] = True
+        errors = MODULE.validate_json_schema(invalid, schema)
+        self.assertTrue(any("artifactPolicy" in error for error in errors))
+        self.assertTrue(any("unexpected" in error for error in errors))
+
+    def test_unterminated_candidate_fails_contract(self) -> None:
+        candidate = ROOT / "unterminated-handoff.md"
+        candidate.write_text("```powershell\nWrite-Host x\n", encoding="utf-8")
+        try:
+            findings, _ = MODULE.run_contracts(ROOT, Path("unterminated-handoff.md"))
+            self.assertTrue(any(f.check == "candidate/markdown-fence" and f.status == "FAIL" for f in findings))
+        finally:
+            candidate.unlink()
+
+    def test_cmd_entrypoint_supports_both_powershell_hosts(self) -> None:
+        text = (ROOT / "Test-SkillFactoringContracts.cmd").read_text(encoding="utf-8")
+        self.assertIn("where pwsh.exe", text)
+        self.assertIn("where powershell.exe", text)
+        self.assertIn('set "PSHOST=powershell.exe"', text)
+        self.assertIn('"%PSHOST%" -NoLogo -NoProfile', text)
 
 
 if __name__ == "__main__":
