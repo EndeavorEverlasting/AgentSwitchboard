@@ -24,6 +24,7 @@ $relevantPrefixes = @(
     'tooling/profiles/windows/harness/technician-ready/',
     'tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1',
     'tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPreCommit.ps1',
+    'tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPrePush.ps1',
     'scripts/Test-TechnicianBootstrapOrder',
     'tests/test_technician_bootstrap_order',
     '.ai/skills/technician-bootstrap-order-validation/',
