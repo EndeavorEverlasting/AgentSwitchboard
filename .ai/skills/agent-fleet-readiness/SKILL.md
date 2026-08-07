@@ -26,7 +26,7 @@ Use before telling an operator to run `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet
 
 1. **Separate terminal readiness from fleet readiness.** A live WezTerm/WSL/tmux path does not establish that GNHF fleet state or the installed AgentSwitchboard launcher exists.
 2. **Resolve the repository root before Git or setup.** Verify the chosen directory exists, contains `.git`, and contains `tooling/gnhf/Setup-AgentSwitchboard.ps1`. Reject stale hard-coded user-profile paths rather than running Git from the wrong directory.
-3. **Keep shell boundaries explicit.** `irm` is a PowerShell alias, not a CMD command. A CMD parser error for a PowerShell-only command is `shell-command-mismatch`, not a Hermes/provider failure.
+3. **Keep shell boundaries explicit.** irm is a PowerShell alias, not a CMD command. A CMD parser error for a PowerShell-only command is `shell-command-mismatch`, not a Hermes/provider failure.
 4. **Inspect both installed-state surfaces before post-setup commands.** Check `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\state.json` and `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\agent-switchboard.cmd` as files. Never hand off `-ListAgents` before this classification.
 5. **Classify deterministically.** Neither exists = `not-bootstrapped`; exactly one exists = `partial-or-inconsistent`; both exist = `installed-unclassified`.
 6. **Prefer non-blocking core autoconfig when Hermes is not the priority.** Invoke repository-owned `tooling/gnhf/Setup-AgentSwitchboard.ps1 -InstallOpenCodeAndCopilot -SkipHermesInstall`. This uses existing product behavior, records Hermes unavailable/skipped/blocked in setup evidence, and continues the core fleet. Mark Hermes `TBD`/deferred; do not manually install or retry it in this lane.
