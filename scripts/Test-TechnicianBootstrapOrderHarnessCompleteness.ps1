@@ -18,6 +18,26 @@ $registryPath = Join-Path $RootPath 'tooling\profiles\windows\harness\technician
 $failures = [Collections.Generic.List[string]]::new()
 $checks = [Collections.Generic.List[object]]::new()
 $registry = $null
+$mandatoryPaths = @(
+    'tooling/profiles/windows/harness/technician-ready/bootstrap-order.contract.json',
+    'tooling/profiles/windows/harness/technician-ready/harness.registry.json',
+    'tooling/profiles/windows/harness/technician-ready/codebase-map.json',
+    'tooling/profiles/windows/harness/technician-ready/artifact-registry.json',
+    'tooling/profiles/windows/harness/technician-ready/skill-routing.registry.json',
+    'tooling/profiles/windows/harness/technician-ready/operator-report.template.md',
+    'tooling/profiles/windows/harness/technician-ready/workflows/intake.workflow.json',
+    'tooling/profiles/windows/harness/technician-ready/workflows/validate-change.workflow.json',
+    'tooling/profiles/windows/harness/technician-ready/workflows/repair-failure.workflow.json',
+    'tooling/profiles/windows/harness/technician-ready/workflows/handoff.workflow.json',
+    '.ai/skills/technician-bootstrap-order-validation/SKILL.md',
+    'tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1',
+    'tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPreCommit.ps1',
+    'scripts/Test-TechnicianBootstrapOrderHarnessCompleteness.ps1',
+    'tests/test_technician_bootstrap_order_harness.py',
+    'Test-TechnicianBootstrapOrderHarness.cmd',
+    'docs/harness/technician-bootstrap-order-harness.md',
+    '.github/workflows/technician-bootstrap-order.yml'
+)
 
 function Add-Check {
     param([string]$Name, [bool]$Passed, [string]$Detail)
@@ -33,15 +53,19 @@ if (-not (Test-Path -LiteralPath $registryPath -PathType Leaf)) {
 }
 
 if ($failures.Count -eq 0) {
-    $missing = @()
-    foreach ($relativePath in @($registry.requiredPaths)) {
-        if (-not (Test-Path -LiteralPath (Join-Path $RootPath ([string]$relativePath)) -PathType Leaf)) { $missing += [string]$relativePath }
-    }
-    Add-Check 'required-components' ($missing.Count -eq 0) $(if ($missing.Count -eq 0) { 'all registered files exist' } else { $missing -join ', ' })
+    $registeredPaths = @($registry.requiredPaths | ForEach-Object { [string]$_ })
+    $unregisteredMandatory = @($mandatoryPaths | Where-Object { $_ -notin $registeredPaths })
+    Add-Check 'canonical-registration-floor' ($unregisteredMandatory.Count -eq 0) $(if ($unregisteredMandatory.Count -eq 0) { 'all mandatory harness owners remain registered' } else { $unregisteredMandatory -join ', ' })
 
-    $jsonPaths = @($registry.requiredPaths | Where-Object { ([string]$_).EndsWith('.json', [StringComparison]::OrdinalIgnoreCase) })
+    $missingMandatory = @($mandatoryPaths | Where-Object { -not (Test-Path -LiteralPath (Join-Path $RootPath $_) -PathType Leaf) })
+    Add-Check 'canonical-component-floor' ($missingMandatory.Count -eq 0) $(if ($missingMandatory.Count -eq 0) { 'all mandatory harness owners exist' } else { $missingMandatory -join ', ' })
+
+    $missingRegistered = @($registeredPaths | Where-Object { -not (Test-Path -LiteralPath (Join-Path $RootPath $_) -PathType Leaf) })
+    Add-Check 'registered-components' ($missingRegistered.Count -eq 0) $(if ($missingRegistered.Count -eq 0) { 'all registered files exist' } else { $missingRegistered -join ', ' })
+
+    $jsonPaths = @($registeredPaths | Where-Object { $_.EndsWith('.json', [StringComparison]::OrdinalIgnoreCase) })
     foreach ($relativePath in $jsonPaths) {
-        try { $null = Get-Content -LiteralPath (Join-Path $RootPath ([string]$relativePath)) -Raw | ConvertFrom-Json; Add-Check ("json:{0}" -f $relativePath) $true 'parsed' }
+        try { $null = Get-Content -LiteralPath (Join-Path $RootPath $relativePath) -Raw | ConvertFrom-Json; Add-Check ("json:{0}" -f $relativePath) $true 'parsed' }
         catch { Add-Check ("json:{0}" -f $relativePath) $false $_.Exception.Message }
     }
 
@@ -65,8 +89,13 @@ if ($failures.Count -eq 0) {
     }
 
     $hookText = Get-Content -LiteralPath (Join-Path $RootPath 'tooling\profiles\windows\hooks\Invoke-TechnicianBootstrapOrderPreCommit.ps1') -Raw
-    foreach ($token in @('tests.test_technician_bootstrap_order_harness', 'Test-TechnicianBootstrapOrderHarnessCompleteness.ps1', 'Test-TechnicianBootstrapOrder.ps1', 'diff --cached --check')) {
-        Add-Check ("hook-token:{0}" -f $token) ($hookText.Contains($token)) 'opt-in hook must run focused validation'
+    foreach ($token in @('Test-TechnicianBootstrapOrderHarness.cmd', 'tests.test_technician_bootstrap_order_harness', 'Test-TechnicianBootstrapOrderHarnessCompleteness.ps1', 'Test-TechnicianBootstrapOrder.ps1', 'Push-Location -LiteralPath $RootPath', 'diff --cached --check')) {
+        Add-Check ("hook-token:{0}" -f $token) ($hookText.Contains($token)) 'opt-in hook must cover the full focused validation surface'
+    }
+
+    $cmdText = Get-Content -LiteralPath (Join-Path $RootPath 'Test-TechnicianBootstrapOrderHarness.cmd') -Raw
+    foreach ($token in @('pushd "%ROOT%"', 'python -m unittest tests.test_technician_bootstrap_order_harness -v', 'popd')) {
+        Add-Check ("cmd-token:{0}" -f $token) ($cmdText.Contains($token)) 'operator validator must be location-independent and restore caller location'
     }
 
     foreach ($relativePath in @(

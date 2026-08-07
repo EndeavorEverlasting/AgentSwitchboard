@@ -15,6 +15,27 @@ CI = ROOT / ".github" / "workflows" / "technician-bootstrap-order.yml"
 HOOK = ROOT / "tooling" / "profiles" / "windows" / "hooks" / "Invoke-TechnicianBootstrapOrderPreCommit.ps1"
 STATUS = ROOT / "tooling" / "profiles" / "windows" / "Get-TechnicianBootstrapOrderHarnessStatus.ps1"
 VALIDATOR = ROOT / "scripts" / "Test-TechnicianBootstrapOrderHarnessCompleteness.ps1"
+CMD = ROOT / "Test-TechnicianBootstrapOrderHarness.cmd"
+MANDATORY_PATHS = {
+    "tooling/profiles/windows/harness/technician-ready/bootstrap-order.contract.json",
+    "tooling/profiles/windows/harness/technician-ready/harness.registry.json",
+    "tooling/profiles/windows/harness/technician-ready/codebase-map.json",
+    "tooling/profiles/windows/harness/technician-ready/artifact-registry.json",
+    "tooling/profiles/windows/harness/technician-ready/skill-routing.registry.json",
+    "tooling/profiles/windows/harness/technician-ready/operator-report.template.md",
+    "tooling/profiles/windows/harness/technician-ready/workflows/intake.workflow.json",
+    "tooling/profiles/windows/harness/technician-ready/workflows/validate-change.workflow.json",
+    "tooling/profiles/windows/harness/technician-ready/workflows/repair-failure.workflow.json",
+    "tooling/profiles/windows/harness/technician-ready/workflows/handoff.workflow.json",
+    ".ai/skills/technician-bootstrap-order-validation/SKILL.md",
+    "tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1",
+    "tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPreCommit.ps1",
+    "scripts/Test-TechnicianBootstrapOrderHarnessCompleteness.ps1",
+    "tests/test_technician_bootstrap_order_harness.py",
+    "Test-TechnicianBootstrapOrderHarness.cmd",
+    "docs/harness/technician-bootstrap-order-harness.md",
+    ".github/workflows/technician-bootstrap-order.yml",
+}
 
 
 def load(path: Path) -> dict:
@@ -28,8 +49,13 @@ class TechnicianBootstrapOrderHarnessTests(unittest.TestCase):
         self.routing = load(ROUTING)
         self.map = load(CODEBASE_MAP)
 
-    def test_registered_component_files_exist(self) -> None:
-        missing = [path for path in self.registry["requiredPaths"] if not (ROOT / path).is_file()]
+    def test_registry_cannot_drop_canonical_owners(self) -> None:
+        registered = set(self.registry["requiredPaths"])
+        self.assertTrue(MANDATORY_PATHS <= registered, sorted(MANDATORY_PATHS - registered))
+
+    def test_registered_and_mandatory_component_files_exist(self) -> None:
+        required = set(self.registry["requiredPaths"]) | MANDATORY_PATHS
+        missing = [path for path in sorted(required) if not (ROOT / path).is_file()]
         self.assertEqual([], missing)
 
     def test_machine_readable_harness_files_parse(self) -> None:
@@ -80,15 +106,26 @@ class TechnicianBootstrapOrderHarnessTests(unittest.TestCase):
         ):
             self.assertIn(token, text)
 
-    def test_opt_in_hook_runs_focused_floor(self) -> None:
+    def test_opt_in_hook_runs_full_focused_floor_from_repo_root(self) -> None:
         text = HOOK.read_text(encoding="utf-8")
         self.assertIn("diff --cached --name-only", text)
+        self.assertIn("Test-TechnicianBootstrapOrderHarness.cmd", text)
+        self.assertIn("Push-Location -LiteralPath $RootPath", text)
+        self.assertIn("finally", text)
+        self.assertIn("Pop-Location", text)
         self.assertIn("tests.test_technician_bootstrap_order_harness", text)
         self.assertIn("Test-TechnicianBootstrapOrderHarnessCompleteness.ps1", text)
         self.assertIn("Test-TechnicianBootstrapOrder.ps1", text)
         self.assertIn("diff --cached --check", text)
         self.assertNotIn("git reset", text.lower())
         self.assertNotIn("git clean", text.lower())
+
+    def test_operator_cmd_is_location_independent(self) -> None:
+        text = CMD.read_text(encoding="utf-8")
+        self.assertIn('pushd "%ROOT%"', text)
+        self.assertIn("python -m unittest tests.test_technician_bootstrap_order_harness -v", text)
+        self.assertIn("popd", text)
+        self.assertLess(text.index('pushd "%ROOT%"'), text.index("python -m unittest tests.test_technician_bootstrap_order_harness -v"))
 
     def test_status_and_validator_write_only_outside_repo_by_default(self) -> None:
         for path in (STATUS, VALIDATOR):
