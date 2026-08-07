@@ -1,0 +1,42 @@
+{
+  "schema": "agentswitchboard.operator-command-delivery-codebase-map.v1",
+  "harnessId": "agentswitchboard.operator-command-delivery-harness.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "status": "tracked-contract",
+  "purpose": "Prevent copy-paste operator commands from being corrupted, closing the interactive shell, or relying on an unverified remote file/ref before runtime work begins.",
+  "entrypoints": {
+    "artifactRegistry": "tooling/profiles/windows/harness/operator-command-delivery/artifact-registry.json",
+    "verifyWorkflow": "tooling/profiles/windows/harness/operator-command-delivery/workflows/verify-command-delivery.workflow.json",
+    "failureWorkflow": "tooling/profiles/windows/harness/operator-command-delivery/workflows/handle-command-delivery-failure.workflow.json",
+    "operatorReport": "tooling/profiles/windows/harness/operator-command-delivery/operator-report.template.md",
+    "prePushHook": "tooling/profiles/windows/harness/operator-command-delivery/hooks/pre-push.ps1",
+    "skill": ".ai/skills/operator-command-delivery/SKILL.md",
+    "validator": "scripts/Test-OperatorCommandDeliveryHarnessCompleteness.ps1",
+    "pythonContract": "tests/test_operator_command_delivery_harness.py",
+    "ci": ".github/workflows/operator-command-delivery-harness.yml",
+    "operatorGuide": "docs/harness/operator-command-delivery.md"
+  },
+  "directories": [
+    {"path": "tooling/profiles/windows/harness/operator-command-delivery", "purpose": "Command-delivery maps, workflows, fixtures, report template, and opt-in hook."},
+    {"path": ".ai/skills/operator-command-delivery", "purpose": "Scoped procedure for producing and verifying copy-paste operator commands."},
+    {"path": "scripts", "purpose": "PowerShell completeness validator."},
+    {"path": "tests", "purpose": "Dependency-free command integrity contract."},
+    {"path": "docs/harness", "purpose": "Human-readable command-delivery state and recovery guide."},
+    {"path": ".github/workflows", "purpose": "Windows/Linux exact-head harness validation."}
+  ],
+  "commands": [
+    {"name": "Focused completeness", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-OperatorCommandDeliveryHarnessCompleteness.ps1", "effect": "read-only", "proof": "tracked harness completeness and PowerShell command-integrity rules"},
+    {"name": "Dependency-free contract", "command": "python -m unittest tests.test_operator_command_delivery_harness", "effect": "read-only", "proof": "maps, workflows, fixtures, reports, hook, skill, and forbidden-token detection"},
+    {"name": "Diff hygiene", "command": "git --no-pager diff --check", "effect": "read-only", "proof": "patch and whitespace hygiene"}
+  ],
+  "knownTraps": [
+    "PowerShell environment references are $env:NAME. A backslash before the colon, such as $env\\:TEMP, is command corruption and must fail validation.",
+    "Do not paste prompt markers, PS C:\\ prompts, continuation prompts, transcript decorations, or escaped URL punctuation into operator commands.",
+    "A top-level exit in an interactive PowerShell command can close the operator terminal and destroy visible diagnostics. Run exit-propagating work in a child process and print the captured exit code in the parent shell.",
+    "Remote GitHub content must not be treated as present merely because a commit or PR was reported. Resolve the ref and the exact file through a read request before handing off the command.",
+    "For gh api content retrieval with parameters, use an explicit GET request and field argument instead of depending on an interpolated query string.",
+    "Generated runtime evidence remains outside the repository and must not be committed.",
+    "Static command validation proves transport integrity only; it does not prove the target runtime, GUI visibility, tmux attachment, provider authentication, or operator acceptance."
+  ],
+  "proofCeiling": "Tracked command-delivery contracts, deterministic corruption detection, source-resolution requirements, safe interactive-shell semantics, and CI validation. Live operator execution remains separate runtime proof."
+}
