@@ -32,13 +32,14 @@ Every canonical skill must define:
 3. Multi-agent, multi-session, multi-wave, or cross-PR coordination selects `public-plan-coordination`; use `plans/plan-registry.json` rather than leaving the coordination state only in chat or a PR description.
 4. A literal request for a **Good Night, Have Fun prompt**, **GNHF prompt**, or to **compile a sprint for Good Night, Have Fun** selects `gnhf-prompt-compilation`. It must not fall through to generic sprint prose.
 5. Interactive PowerShell selects `powershell-interactive-execution`. Continuation keywords must remain in the same submitted statement as the block they continue.
-6. Supplied application, validator, agent, or tool output that must be compared with a prompt kit selects `app-output-contextualization`. It reads provided output only and preserves execution-surface separation.
-7. An operator-facing result that crosses shells, child processes, WSL, tmux, WezTerm, a TUI, a GUI, or another runtime boundary selects `end-to-end-runtime-validation`. Use `runtime-proof` for a bounded observation that does not require the complete operator path.
-8. A Windows Profile request that distinguishes default open-or-activate from an explicit separate instance, or evidence of duplicate WezTerm windows, selects `windows-profile-launch-mode-validation` before any launcher implementation or runtime claim.
-9. A request for a desktop shortcut or CMD installer that must create one genuinely separate tmux/WezTerm instance selects `tmux-new-instance-shortcut`. It preserves the one-launcher boundary and routes live acceptance through `end-to-end-runtime-validation`.
-10. `TRIGGERS.md` maps repository evidence to a skill.
-11. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
-12. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
+6. A copy-paste operator command that downloads, resolves, launches, installs, repairs, or crosses a child-process boundary selects `operator-command-delivery` before publication. The exact candidate command must be validated, not only a canned fixture.
+7. Supplied application, validator, agent, or tool output that must be compared with a prompt kit selects `app-output-contextualization`. It reads provided output only and preserves execution-surface separation.
+8. An operator-facing result that crosses shells, child processes, WSL, tmux, WezTerm, a TUI, a GUI, or another runtime boundary selects `end-to-end-runtime-validation`. Use `runtime-proof` for a bounded observation that does not require the complete operator path.
+9. A Windows Profile request that distinguishes default open-or-activate from an explicit separate instance, or evidence of duplicate WezTerm windows, selects `windows-profile-launch-mode-validation` before any launcher implementation or runtime claim.
+10. A request for a desktop shortcut or CMD installer that must create one genuinely separate tmux/WezTerm instance selects `tmux-new-instance-shortcut`. It preserves the one-launcher boundary and routes live acceptance through `end-to-end-runtime-validation`.
+11. `TRIGGERS.md` maps repository evidence to a skill.
+12. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
+13. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
 
 ## Canonical skills
 
@@ -50,6 +51,7 @@ Every canonical skill must define:
 | [`public-plan-coordination`](.ai/skills/public-plan-coordination/SKILL.md) | Coordinate public machine-readable work across agents, sessions, waves, branches, and PRs | plan request, sprint map, material ownership/dependency/handoff change |
 | [`gnhf-prompt-compilation`](.ai/skills/gnhf-prompt-compilation/SKILL.md) | Compile one copy-ready bounded `gnhf` PowerShell launch command | “GNHF prompt,” “Good Night, Have Fun prompt,” compile sprint for GNHF |
 | [`powershell-interactive-execution`](.ai/skills/powershell-interactive-execution/SKILL.md) | Produce directory-first PowerShell safe for interactive submission | PowerShell snippet, console steps, interactive command |
+| [`operator-command-delivery`](.ai/skills/operator-command-delivery/SKILL.md) | Verify exact source identity, candidate command text, child executable launchability, parent-shell safety, and evidence routing before publishing operator commands | copy-paste command, HTTP 404, malformed PowerShell transport, blocked child launch, lost diagnostics |
 | [`evidence-validation`](.ai/skills/evidence-validation/SKILL.md) | Build honest proof and repair validation gaps | failing checks, review findings, proof request |
 | [`pr-integration`](.ai/skills/pr-integration/SKILL.md) | Reconcile stacked or parallel branches safely | merge request, stacked PRs, consumed upstream work |
 | [`runtime-proof`](.ai/skills/runtime-proof/SKILL.md) | Move from static confidence to observed behavior | launcher, installer, harness, or live-runtime request |
