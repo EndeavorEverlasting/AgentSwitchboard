@@ -60,7 +60,7 @@ jobs:
           $out = Join-Path $env:RUNNER_TEMP 'operator-child-launch'
           & pwsh -NoLogo -NoProfile -File scripts/Test-OperatorChildExecutableLaunch.ps1 `
             -ExecutablePath $pwsh `
-            -ArgumentList @('-NoLogo','-NoProfile','-Command','$PSVersionTable.PSVersion.ToString()') `
+            -ArgumentList '--version' `
             -Label 'pwsh' `
             -OutputRoot $out
           if ($LASTEXITCODE -ne 0) { throw "Child executable probe failed: $LASTEXITCODE" }
