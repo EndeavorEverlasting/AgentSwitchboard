@@ -12,6 +12,14 @@ Shell: {{SHELL}}
 - Resolution result: {{SOURCE_RESULT}}
 - Read semantics: explicit GET; no assumed remote content path
 
+## Child executable launch
+
+- Exact executable: {{CHILD_EXECUTABLE}}
+- Bounded probe: {{CHILD_LAUNCH_PROBE}}
+- Launch result: {{CHILD_LAUNCH_RESULT}}
+- Start error: {{CHILD_START_ERROR}}
+- Launch artifact: {{CHILD_LAUNCH_ARTIFACT}}
+
 ## Transport integrity
 
 - PowerShell environment tokens: {{ENV_TOKEN_RESULT}}
