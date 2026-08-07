@@ -3,25 +3,45 @@ name: Technician bootstrap order
 on:
   push:
     paths:
+      - 'SKILLS.md'
+      - 'TRIGGERS.md'
       - 'Technician-AgentSwitchboard-Ready.cmd'
       - 'tooling/profiles/windows/Invoke-TechnicianBootstrapPrerequisites.ps1'
       - 'tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1'
       - 'tooling/profiles/windows/harness/technician-ready/**'
+      - 'tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1'
+      - 'tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPreCommit.ps1'
+      - 'tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPrePush.ps1'
       - 'scripts/Test-TechnicianBootstrapOrder.ps1'
+      - 'scripts/Test-TechnicianBootstrapOrderHarnessCompleteness.ps1'
       - 'Test-TechnicianBootstrapOrder.cmd'
+      - 'Test-TechnicianBootstrapOrderHarness.cmd'
       - 'tests/test_technician_bootstrap_order.py'
+      - 'tests/test_technician_bootstrap_order_harness.py'
+      - '.ai/skills/technician-bootstrap-order-validation/SKILL.md'
       - 'docs/harness/technician-bootstrap-order.md'
+      - 'docs/harness/technician-bootstrap-order-harness.md'
       - '.github/workflows/technician-bootstrap-order.yml'
   pull_request:
     paths:
+      - 'SKILLS.md'
+      - 'TRIGGERS.md'
       - 'Technician-AgentSwitchboard-Ready.cmd'
       - 'tooling/profiles/windows/Invoke-TechnicianBootstrapPrerequisites.ps1'
       - 'tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1'
       - 'tooling/profiles/windows/harness/technician-ready/**'
+      - 'tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1'
+      - 'tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPreCommit.ps1'
+      - 'tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPrePush.ps1'
       - 'scripts/Test-TechnicianBootstrapOrder.ps1'
+      - 'scripts/Test-TechnicianBootstrapOrderHarnessCompleteness.ps1'
       - 'Test-TechnicianBootstrapOrder.cmd'
+      - 'Test-TechnicianBootstrapOrderHarness.cmd'
       - 'tests/test_technician_bootstrap_order.py'
+      - 'tests/test_technician_bootstrap_order_harness.py'
+      - '.ai/skills/technician-bootstrap-order-validation/SKILL.md'
       - 'docs/harness/technician-bootstrap-order.md'
+      - 'docs/harness/technician-bootstrap-order-harness.md'
       - '.github/workflows/technician-bootstrap-order.yml'
   workflow_dispatch:
 
@@ -38,8 +58,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Harness dependency-free contracts
+        run: python -m unittest tests.test_technician_bootstrap_order_harness -v
+
       - name: Python order contracts
         run: python -m unittest tests.test_technician_bootstrap_order -v
+
+      - name: Harness completeness validator
+        shell: pwsh
+        run: ./scripts/Test-TechnicianBootstrapOrderHarnessCompleteness.ps1 -RootPath . -NoWrite
 
       - name: PowerShell order validator
         shell: pwsh
@@ -47,6 +74,14 @@ jobs:
 
       - name: Existing technician readiness contracts
         run: python -m unittest tests.test_technician_agentswitchboard_ready -v
+
+      - name: Agent documentation contract
+        shell: pwsh
+        run: ./scripts/Test-AgentDocumentationContract.ps1 -RootPath .
+
+      - name: Harness component status readback
+        shell: pwsh
+        run: ./tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1 -RootPath . -NoWrite
 
       - name: Diff whitespace
         shell: bash

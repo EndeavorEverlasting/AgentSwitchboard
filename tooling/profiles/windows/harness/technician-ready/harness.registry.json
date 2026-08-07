@@ -1,0 +1,87 @@
+{
+  "schema": "agentswitchboard.technician-bootstrap-order-harness.v1",
+  "harnessId": "agentswitchboard.technician-bootstrap-order-harness.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "status": "contract-ready-runtime-unproven",
+  "purpose": "Make the technician bootstrap-order surface inspectable, routable, reproducibly validated, failure-aware, artifact-producing, and handoff-safe without claiming workstation runtime behavior.",
+  "canonicalOwners": {
+    "governance": "AGENTS.md",
+    "skillCatalog": "SKILLS.md",
+    "triggerMap": "TRIGGERS.md",
+    "bootstrapOrderContract": "tooling/profiles/windows/harness/technician-ready/bootstrap-order.contract.json",
+    "frontDoor": "Technician-AgentSwitchboard-Ready.cmd",
+    "prerequisiteGate": "tooling/profiles/windows/Invoke-TechnicianBootstrapPrerequisites.ps1",
+    "runtimeEngine": "tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1",
+    "focusedValidator": "scripts/Test-TechnicianBootstrapOrder.ps1",
+    "harnessCompletenessValidator": "scripts/Test-TechnicianBootstrapOrderHarnessCompleteness.ps1",
+    "preCommitHook": "tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPreCommit.ps1",
+    "prePushHook": "tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPrePush.ps1"
+  },
+  "requiredPaths": [
+    "SKILLS.md",
+    "TRIGGERS.md",
+    "tooling/profiles/windows/harness/technician-ready/bootstrap-order.contract.json",
+    "tooling/profiles/windows/harness/technician-ready/harness.registry.json",
+    "tooling/profiles/windows/harness/technician-ready/codebase-map.json",
+    "tooling/profiles/windows/harness/technician-ready/artifact-registry.json",
+    "tooling/profiles/windows/harness/technician-ready/skill-routing.registry.json",
+    "tooling/profiles/windows/harness/technician-ready/operator-report.template.md",
+    "tooling/profiles/windows/harness/technician-ready/workflows/intake.workflow.json",
+    "tooling/profiles/windows/harness/technician-ready/workflows/validate-change.workflow.json",
+    "tooling/profiles/windows/harness/technician-ready/workflows/repair-failure.workflow.json",
+    "tooling/profiles/windows/harness/technician-ready/workflows/handoff.workflow.json",
+    ".ai/skills/technician-bootstrap-order-validation/SKILL.md",
+    "tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1",
+    "tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPreCommit.ps1",
+    "tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPrePush.ps1",
+    "scripts/Test-TechnicianBootstrapOrderHarnessCompleteness.ps1",
+    "tests/test_technician_bootstrap_order_harness.py",
+    "Test-TechnicianBootstrapOrderHarness.cmd",
+    "docs/harness/technician-bootstrap-order-harness.md",
+    ".github/workflows/technician-bootstrap-order.yml"
+  ],
+  "workflowIds": [
+    "technician-bootstrap-order-intake",
+    "technician-bootstrap-order-validate-change",
+    "technician-bootstrap-order-repair-failure",
+    "technician-bootstrap-order-handoff"
+  ],
+  "validationOrder": [
+    "python -m unittest tests.test_technician_bootstrap_order_harness -v",
+    "python -m unittest tests.test_technician_bootstrap_order -v",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianBootstrapOrderHarnessCompleteness.ps1 -RootPath . -NoWrite",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianBootstrapOrder.ps1 -RootPath .",
+    "python -m unittest tests.test_technician_agentswitchboard_ready -v",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1 -RootPath .",
+    "pwsh -NoLogo -NoProfile -File tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1 -RootPath . -NoWrite",
+    "git diff --check"
+  ],
+  "refactorCoupling": {
+    "policy": "source-anchor-contract-and-validator-coupled",
+    "ownerPaths": [
+      "Technician-AgentSwitchboard-Ready.cmd",
+      "tooling/profiles/windows/Invoke-TechnicianBootstrapPrerequisites.ps1",
+      "tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1"
+    ],
+    "coupledPaths": [
+      "tooling/profiles/windows/harness/technician-ready/bootstrap-order.contract.json",
+      "tests/test_technician_bootstrap_order.py",
+      "scripts/Test-TechnicianBootstrapOrder.ps1",
+      "tests/test_technician_bootstrap_order_harness.py",
+      "scripts/Test-TechnicianBootstrapOrderHarnessCompleteness.ps1"
+    ],
+    "rule": "A semantic refactor of an owner path that invalidates an anchored source token must update the contract and affected validators in the same change. The gate may not be weakened merely to preserve a pass."
+  },
+  "knownTraps": [
+    "Do not move AGY, OpenCode, GNHF, launcher, or other higher-runtime setup into the prerequisite gate.",
+    "Do not weaken or delete an ordering assertion because a product refactor changes source tokens; update the contract and validators with the semantic refactor.",
+    "Do not add a scoped skill without making it reachable from canonical SKILLS.md and TRIGGERS.md intake surfaces.",
+    "Do not treat component presence as validation readiness; the status reporter reports component state only and the owning validators establish correctness.",
+    "Do not treat CI success as proof that WezTerm installed, WSL mutated, tmux ran, a window opened, or an operator accepted the result.",
+    "Do not install hooks implicitly; pre-commit and pre-push helpers are opt-in only.",
+    "Do not push from detached HEAD; the pre-push gate requires an attached outgoing branch and can pin an expected HEAD.",
+    "Do not write generated validation or status evidence into the repository.",
+    "Do not use destructive Git or force updates to recover from a failed validation."
+  ],
+  "proofCeiling": "Tracked harness structure, canonical workflow discoverability, source-contract coupling, deterministic static validation, report generation, and CI execution only. No live workstation, package-install, WSL, tmux-session, terminal-window, provider, or operator-acceptance behavior is proven."
+}

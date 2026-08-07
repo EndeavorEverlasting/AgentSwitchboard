@@ -1,0 +1,20 @@
+{
+  "schema": "agentswitchboard.technician-bootstrap-order-workflow.v1",
+  "workflowId": "technician-bootstrap-order-validate-change",
+  "trigger": ["tracked bootstrap-order harness change", "source-owner refactor affecting order contract", "pre-commit validation"],
+  "inputs": ["exact changed-file set", "harness registry validation order", "bootstrap-order contract", "source owners"],
+  "steps": [
+    "run dependency-free harness contracts",
+    "run existing bootstrap-order Python contracts",
+    "run harness completeness validator",
+    "run focused PowerShell bootstrap-order validator",
+    "run existing technician readiness contracts",
+    "run read-only harness status",
+    "run git diff --check",
+    "if an owner source changed and an anchor moved, update the semantic contract and affected validators in the same change instead of weakening the gate",
+    "record exact HEAD and generated local artifact paths"
+  ],
+  "outputs": ["focused validator results", "harness validation artifact", "operator status report", "diff hygiene result", "exact proof ceiling"],
+  "stopConditions": ["any required validator fails", "generated evidence appears tracked", "source refactor invalidates contract without coupled validator update", "runtime proof is being inferred from static validation"],
+  "proofCeiling": "Static and synthetic repository validation only."
+}

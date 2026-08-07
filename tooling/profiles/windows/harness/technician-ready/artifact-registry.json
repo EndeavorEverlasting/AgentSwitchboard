@@ -1,0 +1,22 @@
+{
+  "schema": "agentswitchboard.technician-bootstrap-order-artifacts.v1",
+  "registryId": "agentswitchboard.technician-bootstrap-order-artifacts.v1",
+  "defaultRunRoot": "%LOCALAPPDATA%/AgentSwitchboard/technician-bootstrap-order/runs/<run-id>",
+  "tracked": false,
+  "sensitivity": "local-operational",
+  "naming": {
+    "runId": "<UTC yyyyMMddTHHmmssZ>-<8-character suffix>",
+    "validationJson": "bootstrap-order-harness-validation.json",
+    "statusJson": "bootstrap-order-harness-status.json",
+    "statusMarkdown": "bootstrap-order-harness-status.md",
+    "handoffMarkdown": "bootstrap-order-handoff.md"
+  },
+  "artifacts": [
+    {"artifactId": "bootstrap-order-harness-validation", "fileName": "bootstrap-order-harness-validation.json", "artifactType": "validation-result", "generateWith": "pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianBootstrapOrderHarnessCompleteness.ps1 -RootPath . -OutputDirectory <run-root>", "proofCeiling": "Focused component, registry, workflow, parser, and coupling checks only."},
+    {"artifactId": "bootstrap-order-harness-status-json", "fileName": "bootstrap-order-harness-status.json", "artifactType": "status-json", "generateWith": "pwsh -NoLogo -NoProfile -File tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1 -RootPath . -OutputDirectory <run-root>", "proofCeiling": "Repository component readiness and current Git identity only."},
+    {"artifactId": "bootstrap-order-harness-status-markdown", "fileName": "bootstrap-order-harness-status.md", "artifactType": "operator-report", "generateWith": "pwsh -NoLogo -NoProfile -File tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1 -RootPath . -OutputDirectory <run-root>", "proofCeiling": "English repository state, gaps, and next action only."},
+    {"artifactId": "bootstrap-order-handoff", "fileName": "bootstrap-order-handoff.md", "artifactType": "handoff", "generateWith": "Follow tooling/profiles/windows/harness/technician-ready/workflows/handoff.workflow.json using the status report and exact validation results.", "proofCeiling": "Compressed continuation record; receiving agent must re-inspect exact repository state."}
+  ],
+  "forbiddenContent": ["credentials", "provider tokens", "customer data", "private hostnames", "raw terminal scrollback", "full environment dumps", "unreviewed workstation screenshots"],
+  "proofCeiling": "Canonical local artifact names, locations, generators, sensitivity, and proof ceilings only."
+}

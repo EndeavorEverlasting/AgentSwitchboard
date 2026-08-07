@@ -1,0 +1,18 @@
+{
+  "schema": "agentswitchboard.technician-bootstrap-order-workflow.v1",
+  "workflowId": "technician-bootstrap-order-intake",
+  "trigger": ["new technician bootstrap-order task", "resumed bootstrap-order task", "fresh agent enters focused lane"],
+  "inputs": ["AGENTS.md", "CODEBASE_MAP.md", "bootstrap-order contract", "harness registry", "current branch and exact HEAD", "open PR/CI state when applicable"],
+  "steps": [
+    "verify repository identity and exact branch/head before mutation",
+    "read AGENTS.md without modifying it",
+    "read the focused codebase map, harness registry, skill routing registry, and order contract",
+    "classify the requested work as harness, product, governance, runtime proof, or blocked",
+    "select the focused workflow from skill-routing.registry.json",
+    "run the status reporter with -NoWrite before changing tracked files",
+    "preserve unrelated work and use an isolated branch/worktree when another writer exists"
+  ],
+  "outputs": ["declared lane and ownership", "selected workflow id", "exact repository identity", "initial status classification"],
+  "stopConditions": ["repository identity mismatch", "governance change required", "product-code mutation required by a harness-only sprint", "red dependency owned by another branch", "destructive Git would be required"],
+  "proofCeiling": "Read-only task classification and repository readiness only."
+}

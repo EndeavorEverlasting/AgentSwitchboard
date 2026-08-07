@@ -1,0 +1,70 @@
+{
+  "schema": "agentswitchboard.technician-bootstrap-order-codebase-map.v1",
+  "harnessId": "agentswitchboard.technician-bootstrap-order-harness.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "status": "contract-ready-runtime-unproven",
+  "purpose": "Focused map for the technician prerequisite ordering and its harness infrastructure.",
+  "entrypoints": {
+    "canonicalSkillCatalog": "SKILLS.md",
+    "canonicalTriggers": "TRIGGERS.md",
+    "operatorFrontDoor": "Technician-AgentSwitchboard-Ready.cmd",
+    "prerequisiteGate": "tooling/profiles/windows/Invoke-TechnicianBootstrapPrerequisites.ps1",
+    "runtimeEngine": "tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1",
+    "orderContract": "tooling/profiles/windows/harness/technician-ready/bootstrap-order.contract.json",
+    "harnessRegistry": "tooling/profiles/windows/harness/technician-ready/harness.registry.json",
+    "artifactRegistry": "tooling/profiles/windows/harness/technician-ready/artifact-registry.json",
+    "skillRouting": "tooling/profiles/windows/harness/technician-ready/skill-routing.registry.json",
+    "skill": ".ai/skills/technician-bootstrap-order-validation/SKILL.md",
+    "focusedValidator": "scripts/Test-TechnicianBootstrapOrder.ps1",
+    "completenessValidator": "scripts/Test-TechnicianBootstrapOrderHarnessCompleteness.ps1",
+    "pythonContracts": "tests/test_technician_bootstrap_order_harness.py",
+    "statusReporter": "tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1",
+    "preCommitHook": "tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPreCommit.ps1",
+    "prePushHook": "tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPrePush.ps1",
+    "operatorValidator": "Test-TechnicianBootstrapOrderHarness.cmd",
+    "ci": ".github/workflows/technician-bootstrap-order.yml",
+    "operatorGuide": "docs/harness/technician-bootstrap-order-harness.md"
+  },
+  "directories": [
+    {"path": "tooling/profiles/windows/harness/technician-ready", "purpose": "Focused contracts, registries, maps, workflows, and report template."},
+    {"path": "tooling/profiles/windows", "purpose": "Windows technician prerequisite/runtime owners and component-status reporter."},
+    {"path": "tooling/profiles/windows/hooks", "purpose": "Opt-in pre-commit and pre-push validation helpers; never installed implicitly."},
+    {"path": ".ai/skills", "purpose": "Scoped repeatable agent procedures selected through canonical SKILLS.md/TRIGGERS.md routing."},
+    {"path": "scripts", "purpose": "Focused PowerShell completeness and order validation."},
+    {"path": "tests", "purpose": "Dependency-free harness and ordering contracts."},
+    {"path": "docs/harness", "purpose": "English working state, traps, failure behavior, and proof ceilings."},
+    {"path": ".github/workflows", "purpose": "Windows and Ubuntu exact-head validation."}
+  ],
+  "configurationFiles": [
+    "SKILLS.md",
+    "TRIGGERS.md",
+    "tooling/profiles/windows/harness/technician-ready/bootstrap-order.contract.json",
+    "tooling/profiles/windows/harness/technician-ready/harness.registry.json",
+    "tooling/profiles/windows/harness/technician-ready/artifact-registry.json",
+    "tooling/profiles/windows/harness/technician-ready/skill-routing.registry.json"
+  ],
+  "commands": [
+    {"name": "Harness completeness", "command": "Test-TechnicianBootstrapOrderHarness.cmd", "effect": "read-only repository validation plus local temp report", "proof": "component presence, canonical routing, registry/workflow coupling, focused static order checks, documentation contract, and diff hygiene"},
+    {"name": "Pre-push validation", "command": "pwsh -NoLogo -NoProfile -File tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPrePush.ps1 -ExpectedHead <sha>", "effect": "read-only tracked-state and outgoing-range validation plus local temp report", "proof": "attached outgoing branch identity, optional exact HEAD, clean harness-owned tracked state, canonical harness validation, and outgoing commit-range diff hygiene"},
+    {"name": "Dependency-free harness contracts", "command": "python -m unittest tests.test_technician_bootstrap_order_harness -v", "effect": "read-only", "proof": "registry, workflow, artifact, skill, hook, canonical routing, and CI contract semantics"},
+    {"name": "Existing order contracts", "command": "python -m unittest tests.test_technician_bootstrap_order -v", "effect": "read-only", "proof": "front-door and prerequisite ordering contract"},
+    {"name": "Focused PowerShell order validator", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianBootstrapOrder.ps1 -RootPath .", "effect": "read-only", "proof": "source token ordering and PowerShell parseability"},
+    {"name": "Agent documentation contract", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1 -RootPath .", "effect": "read-only", "proof": "canonical documentation and skill-routing floor"},
+    {"name": "Component status report", "command": "pwsh -NoLogo -NoProfile -File tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1 -RootPath .", "effect": "writes local temp JSON/Markdown unless -NoWrite is supplied", "proof": "component presence and Git identity only; validation readiness is deliberately not claimed"},
+    {"name": "Diff hygiene", "command": "git diff --check", "effect": "read-only", "proof": "patch whitespace hygiene"}
+  ],
+  "deploy": {
+    "command": null,
+    "reason": "Deployment and live workstation mutation are outside this harness-infrastructure sprint."
+  },
+  "knownTraps": [
+    "The prerequisite gate must finish WezTerm and tmux proof before the runtime engine begins higher setup.",
+    "Static source anchors are intentionally refactor-coupled; semantic refactors update contract and validators together.",
+    "The scoped skill must remain reachable from canonical SKILLS.md and TRIGGERS.md.",
+    "Component-complete is not validation-ready; validators and exact-head CI establish correctness.",
+    "A pre-push proof requires an attached outgoing branch; detached proof worktrees are for validation evidence, not delivery.",
+    "A green repository harness does not prove runtime installation, WSL state, tmux behavior, visible windows, providers, or operator acceptance.",
+    "Generated status and validation artifacts stay outside tracked repository authority."
+  ],
+  "proofCeiling": "Repository and CI harness readiness only; live workstation proof is separate."
+}

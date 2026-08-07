@@ -1,0 +1,17 @@
+{
+  "schema": "agentswitchboard.technician-bootstrap-order-workflow.v1",
+  "workflowId": "technician-bootstrap-order-handoff",
+  "trigger": ["chat boundary", "agent boundary", "PR ready for review", "runtime proof moves to a separately authorized lane"],
+  "inputs": ["exact repo/branch/head", "status JSON/Markdown", "validation artifact", "PR state", "remaining blocker or next gate"],
+  "steps": [
+    "rerun or verify current exact-head focused validation before handoff",
+    "generate the operator status report from the canonical status reporter",
+    "record working, broken, missing, and proof ceiling separately",
+    "record local artifact paths without embedding sensitive content",
+    "name the exact next owner, dependency, command, expected artifact, and completion gate",
+    "require the receiver to re-inspect repository state rather than trusting stale handoff claims"
+  ],
+  "outputs": ["bootstrap-order-handoff.md", "exact next command", "owner and dependency", "proof ceiling"],
+  "stopConditions": ["current exact-head validation is red", "head changed after validation", "next action would claim runtime proof without an authorized runtime lane"],
+  "proofCeiling": "Cross-session continuation metadata only."
+}

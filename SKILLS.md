@@ -36,9 +36,10 @@ Every canonical skill must define:
 7. An operator-facing result that crosses shells, child processes, WSL, tmux, WezTerm, a TUI, a GUI, or another runtime boundary selects `end-to-end-runtime-validation`. Use `runtime-proof` for a bounded observation that does not require the complete operator path.
 8. A Windows Profile request that distinguishes default open-or-activate from an explicit separate instance, or evidence of duplicate WezTerm windows, selects `windows-profile-launch-mode-validation` before any launcher implementation or runtime claim.
 9. A request for a desktop shortcut or CMD installer that must create one genuinely separate tmux/WezTerm instance selects `tmux-new-instance-shortcut`. It preserves the one-launcher boundary and routes live acceptance through `end-to-end-runtime-validation`.
-10. `TRIGGERS.md` maps repository evidence to a skill.
-11. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
-12. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
+10. A technician bootstrap-order, prerequisite-gate, source-anchor refactor, or focused bootstrap-order validation task selects `technician-bootstrap-order-validation`. The focused skill routes new work, tracked changes, red validation, and handoff through its registered workflows and never weakens a correct source-order gate merely to recover green CI.
+11. `TRIGGERS.md` maps repository evidence to a skill.
+12. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
+13. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
 
 ## Canonical skills
 
@@ -57,6 +58,7 @@ Every canonical skill must define:
 | [`windows-profile-launch-mode-validation`](.ai/skills/windows-profile-launch-mode-validation/SKILL.md) | Distinguish default workspace convergence, explicit named new instances, and accidental duplicate WezTerm windows | launch-mode request, separate-instance request, duplicate-window evidence, tmux-session identity ambiguity |
 | [`tmux-new-instance-shortcut`](.ai/skills/tmux-new-instance-shortcut/SKILL.md) | Install and validate one owned desktop shortcut that allocates a unique tmux session and separate WezTerm process | desktop shortcut request, clickable CMD installer, one-click separate tmux instance |
 | [`app-output-contextualization`](.ai/skills/app-output-contextualization/SKILL.md) | Parse supplied output, redact it, compare it with a prompt registry, and emit compact agent instructions | app output, logs, JSON, JSONL, validator output, minimal-token routing |
+| [`technician-bootstrap-order-validation`](.ai/skills/technician-bootstrap-order-validation/SKILL.md) | Keep technician prerequisite ordering inspectable, refactor-coupled, and fully validated | bootstrap order, prerequisite gate, source-anchor refactor, failing technician-bootstrap-order validation |
 
 ## Machine-profile distinction
 
@@ -99,6 +101,12 @@ The default Windows Profile operation remains `open-or-activate`: one logical wo
 ## tmux shortcut distinction
 
 `tmux-new-instance-shortcut` owns the user-facing installer and explicit separate-instance shortcut. The CMD and `.lnk` are presentation surfaces only: they delegate to `tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1`. Automatic allocation reserves `dev` and selects `dev-1`, `dev-2`, and later unused positive suffixes. The shortcut installer proves installation and readback; a double-click result requires end-to-end runtime validation.
+
+## Technician bootstrap-order distinction
+
+`technician-bootstrap-order-validation` owns the focused harness procedure for the Windows prerequisite sequence and its source-order contract. The contract deliberately anchors source tokens so ordering and ownership can be checked without mutating a workstation. If a semantic refactor moves a valid anchor, the same change must update the contract and affected validators; deleting or weakening a correct gate merely to retain green CI is invalid.
+
+The component-status reporter proves only registered file presence and Git identity. It does not establish repository validation readiness, WezTerm installation, WSL mutation, tmux execution, visible-window behavior, provider behavior, or operator acceptance. Those claims require the owning validator sequence and, for live behavior, the appropriate runtime-proof lane.
 
 ## PowerShell interactive distinction
 
