@@ -10,40 +10,41 @@
   "steps": [
     {
       "id": "preserve",
-      "action": "Preserve the failed run directory and capture sanitized failure classification without committing private evidence.",
-      "output": "failure boundary, run ID, stage ID, command, shell, exit identity, evidence path"
+      "action": "Preserve the failed run directory and capture sanitized failure classification without committing private evidence. When failure occurs before repository identity is proven, preserve the shell output and run Test-Technician-Toolchain-Preflight.cmd before any fetch, pull, or worktree operation.",
+      "output": "failure boundary, run ID when available, command, shell, exit identity, evidence path"
     },
     {
       "id": "reproduce-contract",
-      "action": "Identify why existing tests allowed the defect: skipped shell, static token-only check, unexecuted branch, overload ambiguity, path-resolution timing, pager interaction, or proof inflation.",
-      "output": "harness-gap classification"
+      "action": "Identify why existing tests allowed the defect: blocked or misresolved executable, skipped shell, static token-only check, unexecuted branch, overload ambiguity, path-resolution timing, pager interaction, or proof inflation. PATH/Get-Command presence alone is insufficient for an executable dependency.",
+      "output": "harness-gap classification plus toolchain-preflight JSON/Markdown when executable launch is implicated"
     },
     {
       "id": "repair",
-      "action": "Repair the executable defect and add the smallest deterministic guard that would have failed before field use.",
-      "output": "tracked code plus validator or fixture"
+      "action": "Repair the executable defect and add the smallest deterministic guard that would have failed before field use. Harness-only toolchain failures are repaired in validators, registries, workflows, hooks, skills, reports, or entrypoint wrappers without unrelated product mutation.",
+      "output": "tracked harness code plus validator or fixture"
     },
     {
       "id": "cross-shell-validate",
-      "action": "Run the owning validators in Windows PowerShell 5.1 and PowerShell 7, then run Python contracts and noninteractive Git hygiene.",
+      "action": "Run the owning validators in Windows PowerShell 5.1 and PowerShell 7, including bounded Windows toolchain launch proof when relevant, then run Python contracts and noninteractive Git hygiene.",
       "output": "cross-shell validation ledger"
     },
     {
       "id": "exact-command-rerun",
-      "action": "Rerun the exact operator command on the affected workstation or a separately authorized equivalent machine.",
+      "action": "Rerun the exact operator command on the affected workstation or a separately authorized equivalent machine only after the failing prerequisite is proven healthy.",
       "output": "new run evidence at the next honest proof level"
     },
     {
       "id": "converge",
-      "action": "Commit, push, open/update the PR, report the exact head, and provide an isolated-worktree command that preserves any local branch.",
+      "action": "Commit, push, open/update the PR, report the exact head, and provide an isolated-worktree command that preserves any local branch. If Git itself is blocked, provide a no-Git toolchain diagnostic command first rather than pretending fetch is executable.",
       "output": "GitHub evidence and executable handoff"
     }
   ],
   "stopConditions": [
     "The failure crosses into unowned product behavior.",
     "The exact operator shell or machine boundary is unknown.",
+    "Windows cannot launch any concrete Git executable; repository synchronization remains blocked until that prerequisite is repaired.",
     "Repair requires credentials, private evidence, destructive cleanup, merge, deployment, or live mutation without authority.",
     "The candidate cannot be validated in every required shell."
   ],
-  "proofCeiling": "A repaired contract and cross-shell CI do not prove the original workstation path until the exact operator command passes."
+  "proofCeiling": "A repaired contract and cross-shell CI do not prove the original workstation path until the exact operator command passes. A successful toolchain preflight proves executable launch only, not fetch or runtime behavior."
 }
