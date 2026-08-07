@@ -1,6 +1,6 @@
 ---
 id: end-to-end-runtime-validation
-version: 1.1.0
+version: 1.2.0
 status: canonical
 ---
 
@@ -20,6 +20,7 @@ This skill is narrower than `runtime-proof`: `runtime-proof` establishes observe
 - preconditions, required tools, versions, configuration paths, active sessions, and command-resolution expectations in each shell;
 - authorized mutations, forbidden mutations, and evidence root;
 - required interactive input, browser handoff, callback, timeout, and cancellation behavior;
+- cold-start versus warm-start intent, including any expected one-time OS, GUI, consent, firewall, location, URI-handler, first-run, or application prompts;
 - rollback, backup, cleanup, and idempotence requirements;
 - lower-level parser, static, unit, contract, and dry-run validators;
 - wall-clock, retry, and process-tree termination limits.
@@ -31,22 +32,23 @@ This skill is narrower than `runtime-proof`: `runtime-proof` establishes observe
 3. **Enumerate every boundary.** Write the chain explicitly, for example: `Command Prompt -> pulled CMD -> pwsh child -> wsl.exe -> Ubuntu -> bash -lc -> tmux server -> WezTerm -> provider browser handoff`. Name the command, expected input, expected output, timeout, and failure identity for each stage.
 4. **Preflight boundaries independently.** Verify command resolution in the exact promised shell, version, distribution identity, quoting, filesystem translation, permissions, required files, tmux server or session state, browser prerequisites, and rollback assets before mutation. Presence in WSL does not prove PowerShell readiness; use an explicit `wsl.exe` invocation or a repo-owned shim when the operator is promised a direct PowerShell command.
 5. **Separate optional stages.** An optional agent, provider, installer, or browser-auth flow may not block a narrower explicitly requested core path. Optional surfaces require their own mode, timeout, stage result, and proof ceiling.
-6. **Model interactive input.** A required Enter, newline, confirmation, browser launch, or callback is part of the deterministic contract. Inject the declared input exactly once, preserve child output, bound the wait, and classify the exact handoff stage when it fails. Do not make Ctrl+C, `/debug`, or manual reconstruction the normal recovery path.
-7. **Execute the exact operator command once.** Use bounded waits and terminate owned child process trees on timeout. Do not introduce a blind retry or silently change parameters after failure.
-8. **Preserve stage output.** Capture stdout, stderr, exit code, start and finish times, and the exact command for every child boundary. Never collapse a failed child process into only `exit code 1`, and never discard the child output before constructing the operator report.
-9. **Read back effective state.** Validate the consumer-visible result rather than configuration intent. Examples include `Get-Command` in the promised PowerShell process, exact executable or shim target, WSL `command -v`, `wezterm ls-fonts`, a clean WezTerm configuration load, `tmux show-options`, session and pane state, generated artifact identity, or the application’s own status interface.
-10. **Observe the user experience.** Confirm the expected terminal, TUI, GUI, window, pane, browser, status bar, launcher, or artifact outcome. Absence of an error is not sufficient when the requested behavior is visual or interactive.
-11. **Prove idempotence and rollback.** Re-run only when the contract requires an idempotence check and the first run reached a known safe state. Verify that a second run does not duplicate loaders, hooks, PATH entries, shims, sessions, windows, or configuration entries. Exercise rollback or restore validation when the change can impair startup or operator access.
-12. **Classify and repair in the same context.** Mark each stage `pass`, `fail`, `blocked`, or `skipped-with-reason`. Observed live failure outranks lower-floor success for the same operator path. Preserve independently passing stages, repair the deterministic failure in the same branch and evidence chain, then rerun the failed stage and the complete operator path.
-13. **Emit the handoff.** Report the exact failed or successful stage, command, exit code, bounded stdout and stderr paths or excerpts, effective-state readback, required input result, rollback state, idempotence result, final proof level, remaining risks, and one exact next command.
+6. **Model interactive input.** A required Enter, newline, confirmation, browser launch, callback, or OS/GUI consent prompt is part of the runtime boundary contract. Inject only input the workflow owns; otherwise record the prompt and operator choice, preserve child output, bound the wait, and classify the exact handoff stage when it fails. Do not make Ctrl+C, `/debug`, or manual reconstruction the normal recovery path.
+7. **Classify cold-start and warm-start behavior.** Treat a one-time OS or application prompt, first-run initialization, consent dialog, firewall/location request, URI-handler confirmation, or similar GUI interruption as an explicit interactive boundary. Record whether the prompt appeared, its category or exact text when safely available, the operator choice, and elapsed delay separately from downstream child state. Do not infer that a particular choice is a prerequisite from one correlated failure. If a first attempt times out while an interactive prompt is present and a later prompt-free attempt succeeds, record the first attempt as `interactive-gate-observed` and the later attempt as `warm-start-success`; cold-start handling remains unproved until the first-launch path is reproduced or the prompt is deterministically handled.
+8. **Execute the exact operator command once per declared attempt.** Use bounded waits and terminate owned child process trees on timeout. Do not introduce a blind retry or silently change parameters after failure. A second run is allowed only as an explicitly labeled warm-start, idempotence, or repaired-path observation after the first attempt has durable evidence and a known safe state.
+9. **Preserve stage output.** Capture stdout, stderr, exit code, start and finish times, and the exact command for every child boundary. Never collapse a failed child process into only `exit code 1`, and never discard the child output before constructing the operator report.
+10. **Read back effective state.** Validate the consumer-visible result rather than configuration intent. Examples include `Get-Command` in the promised PowerShell process, exact executable or shim target, WSL `command -v`, `wezterm ls-fonts`, a clean WezTerm configuration load, `tmux show-options`, session and pane state, generated artifact identity, or the application’s own status interface.
+11. **Observe the user experience.** Confirm the expected terminal, TUI, GUI, window, pane, browser, status bar, launcher, prompt, or artifact outcome. Absence of an error is not sufficient when the requested behavior is visual or interactive.
+12. **Prove idempotence and rollback.** Re-run only when the contract requires an idempotence or warm-start check and the first run reached a known safe state. Verify that a second run does not duplicate loaders, hooks, PATH entries, shims, sessions, windows, or configuration entries. Exercise rollback or restore validation when the change can impair startup or operator access.
+13. **Classify and repair in the same context.** Mark each stage `pass`, `fail`, `blocked`, or `skipped-with-reason`. Observed live failure outranks lower-floor success for the same operator path. Preserve independently passing stages, repair the deterministic failure in the same branch and evidence chain, then rerun the failed stage and the complete operator path.
+14. **Emit the handoff.** Report the exact failed or successful stage, command, exit code, bounded stdout and stderr paths or excerpts, effective-state readback, required input result, cold-start/warm-start classification, interactive-prompt result, rollback state, idempotence result, final proof level, remaining risks, and one exact next command.
 
 ## Outputs
 
-- `end-to-end-run-context.json` with host, shell, boundary chain, limits, and proof ceiling;
+- `end-to-end-run-context.json` with host, shell, boundary chain, limits, cold-start/warm-start classification, and proof ceiling;
 - `end-to-end-stage-ledger.json` with one record per boundary;
 - bounded stdout and stderr artifacts for each stage;
 - shell-specific command-resolution and effective PATH or shim evidence;
-- interactive-input and browser-handoff result;
+- interactive-input, first-launch prompt, consent, and browser-handoff result when applicable;
 - before-and-after effective-state evidence;
 - rollback and idempotence result;
 - English operator report identifying what worked, what failed, what remains unproved, and the next command;
@@ -60,16 +62,18 @@ End-to-end success requires all mandatory stages to pass, the exact operator com
 
 For a nested child failure, the stage ledger must retain the child command, exit code, stdout, stderr, boundary identity, required input state, and timeout result. A report that says only `tmux verification failed with exit code 1` is incomplete evidence and must not be presented as a diagnosable operator handoff.
 
+A first-launch prompt is not automatically a prerequisite and a prompt-free second run does not prove cold-start behavior. When an interactive prompt overlaps a timeout, preserve the failed artifact, label the prompt observation separately, and distinguish `interactive-gate-observed`, `warm-start-success`, and fully reproduced cold-start success. Do not retroactively claim that an operator choice caused success unless the causal relationship is actually proved.
+
 Validation order is:
 
 1. parser, schema, lint, and static checks;
 2. focused unit and contract checks;
 3. plan or dry-run behavior;
 4. independent command-resolution and boundary preflights;
-5. exact operator invocation;
-6. interactive-input and browser-handoff observation when applicable;
+5. exact operator invocation with cold-start/warm-start intent declared;
+6. interactive-input, first-launch prompt, consent, and browser-handoff observation when applicable;
 7. effective-state and user-experience readback;
-8. idempotence and rollback checks when required;
+8. idempotence, warm-start, and rollback checks when required;
 9. broader safe repository validators;
 10. clean-state, diff-hygiene, commit, push, and PR evidence for a writing sprint.
 
@@ -78,6 +82,8 @@ Validation order is:
 - No runtime success claim from static inspection, CI alone, configuration intent, file existence, command presence in another shell, or parent exit code alone.
 - No suppression, truncation without disclosure, or replacement of child stderr with a generic exception.
 - No blind retry, unbounded wait, orphaned child process, or automatic expansion to another host, distribution, profile, provider, account, or live target.
+- No claim that a first-launch prompt choice was required merely because one prompted attempt failed and a later prompt-free attempt succeeded.
+- No promotion of warm-start success into cold-start proof when the first-launch interactive path remains unresolved.
 - No optional agent or browser-auth stage blocking an explicitly narrower requested core path.
 - No mutation of unowned configuration, sessions, repositories, credentials, customer data, or default branches.
 - No manual operator workaround presented as proof that the automated path works.
@@ -85,6 +91,6 @@ Validation order is:
 
 ## Stop and escalate
 
-Stop when the exact environment cannot be identified, a lower floor fails, rollback is missing, a boundary cannot preserve diagnostics, the observed state contradicts the expected state, the process tree cannot be bounded, required interactive input cannot be represented safely, permissions or credentials would be exposed, a second run would enter unknown partial state, or repair attempts reach their declared limit.
+Stop when the exact environment cannot be identified, a lower floor fails, rollback is missing, a boundary cannot preserve diagnostics, the observed state contradicts the expected state, the process tree cannot be bounded, required interactive input cannot be represented safely, a first-launch prompt cannot be observed or classified without unsafe automation, permissions or credentials would be exposed, a second run would enter unknown partial state, or repair attempts reach their declared limit.
 
-Escalate with the last known safe state, exact failed stage, command, exit code, stdout and stderr evidence, required-input result, rollback status, and one safe diagnostic command. Do not ask the operator to rerun an opaque failing script merely to recover evidence the script should have retained.
+Escalate with the last known safe state, exact failed stage, command, exit code, stdout and stderr evidence, required-input result, cold-start/warm-start classification, interactive-prompt result, rollback status, and one safe diagnostic command. Do not ask the operator to rerun an opaque failing script merely to recover evidence the script should have retained.
