@@ -1,0 +1,23 @@
+{
+  "schema": "agentswitchboard.operator-command-delivery-workflow.v1",
+  "workflowId": "handle-operator-command-delivery-failure",
+  "trigger": "An operator command fails before the intended runtime gate, including 404 source lookup, malformed PowerShell tokens, missing downloaded files, blocked child executable launch, terminal closure, or lost visible diagnostics.",
+  "owner": "agent repairing the command-delivery boundary",
+  "steps": [
+    {"order": 1, "action": "Classify the earliest observed failure boundary: source-resolution, transport-corruption, shell-control, child-executable-launch, prerequisite-missing, downstream-runtime, or evidence-resolution.", "gate": "One boundary is named without promoting downstream proof; Access is denied before the downstream artifact is child-executable-launch, not downstream runtime."},
+    {"order": 2, "action": "Preserve the failed command and exact stderr/stdout as local operational evidence; do not commit operator-machine data.", "gate": "Failure evidence is available for comparison."},
+    {"order": 3, "action": "Re-resolve the requested repository ref and every required file independently of the failed command.", "gate": "The source exists or the exact missing ref/file is identified."},
+    {"order": 4, "action": "Resolve the exact executable path at the failed child boundary and run the bounded child-executable launch probe before retrying the downstream wrapper.", "gate": "A child-executable-launch-result artifact identifies passed, blocked, timed-out, or child-nonzero without requiring the downstream runtime."},
+    {"order": 5, "action": "Run the focused command-delivery validator against the repaired command form and regression fixtures.", "gate": "Transport, shell-control, and blocked-child-launch fixtures behave deterministically."},
+    {"order": 6, "action": "Repair harness maps, workflows, registries, skill, report, hook, or validators when the failure class was not already enforced.", "gate": "A fresh agent can discover the trap before reproducing it."},
+    {"order": 7, "action": "Commit and push the harness repair on an isolated branch; open or update the owning PR.", "gate": "Tracked GitHub evidence exists."},
+    {"order": 8, "action": "Only after harness validation and successful required executable launch proof, provide the smallest executable operator command that advances to the previously unproven runtime gate.", "gate": "The command preserves the parent terminal and prints both the child-launch artifact and canonical downstream artifact."}
+  ],
+  "stopConditions": [
+    "Source ref or required file cannot be resolved.",
+    "A required external executable is present but cannot be concretely launched; stop at child-executable-launch until that workstation boundary is repaired.",
+    "Repair would require product-code mutation outside the declared lane.",
+    "The next proof requires credentials, protected runtime access, destructive reset, or another unauthorized capability."
+  ],
+  "proofCeiling": "Failure classification, concrete child-executable launch evidence, and harness repair only. Runtime success must be earned again from the downstream owning artifact."
+}

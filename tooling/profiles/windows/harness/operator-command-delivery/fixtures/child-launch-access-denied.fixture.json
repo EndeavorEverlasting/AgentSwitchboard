@@ -1,0 +1,11 @@
+{
+  "schema": "agentswitchboard.operator-child-executable-launch-fixture.v1",
+  "label": "pwsh",
+  "executablePath": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+  "arguments": ["-NoLogo", "-NoProfile", "-Command", "$PSVersionTable.PSVersion.ToString()"],
+  "startError": "Access is denied.",
+  "observedWrapperExitCode": 5,
+  "downstreamArtifactProduced": false,
+  "expectedClassification": "child-executable-launch-blocked",
+  "expectedRuntimeProof": false
+}
