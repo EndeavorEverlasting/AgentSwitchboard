@@ -23,29 +23,26 @@ if ([string]::IsNullOrWhiteSpace($OutputRoot)) {
 }
 $null = New-Item -ItemType Directory -Path $OutputRoot -Force
 
-$candidatePaths = New-Object 'System.Collections.Generic.List[string]'
-function Add-Candidate {
-    param([string]$Path)
-    if ([string]::IsNullOrWhiteSpace($Path)) { return }
-    $full = [Environment]::ExpandEnvironmentVariables($Path)
-    if ($candidatePaths -notcontains $full) { [void]$candidatePaths.Add($full) }
-}
-
-Add-Candidate (Join-Path $env:ProgramFiles 'Git\cmd\git.exe')
-Add-Candidate (Join-Path $env:ProgramFiles 'Git\bin\git.exe')
+$candidatePaths = @(
+    (Join-Path $env:ProgramFiles 'Git\cmd\git.exe'),
+    (Join-Path $env:ProgramFiles 'Git\bin\git.exe')
+)
 if (${env:ProgramFiles(x86)}) {
-    Add-Candidate (Join-Path ${env:ProgramFiles(x86)} 'Git\cmd\git.exe')
+    $candidatePaths += (Join-Path ${env:ProgramFiles(x86)} 'Git\cmd\git.exe')
 }
 if ($env:LOCALAPPDATA) {
-    Add-Candidate (Join-Path $env:LOCALAPPDATA 'Programs\Git\cmd\git.exe')
+    $candidatePaths += (Join-Path $env:LOCALAPPDATA 'Programs\Git\cmd\git.exe')
 }
-Get-Command git.exe -All -ErrorAction SilentlyContinue | ForEach-Object { Add-Candidate $_.Source }
+$candidatePaths += @(Get-Command git.exe -All -ErrorAction SilentlyContinue | ForEach-Object { [string]$_.Source })
+$candidatePaths = @($candidatePaths |
+    ForEach-Object { if (-not [string]::IsNullOrWhiteSpace([string]$_)) { [Environment]::ExpandEnvironmentVariables([string]$_) } } |
+    Select-Object -Unique)
 
-$rows = New-Object 'System.Collections.Generic.List[object]'
+$rows = @()
 $selected = $null
 foreach ($path in $candidatePaths) {
     $row = [ordered]@{
-        path = $path
+        path = [string]$path
         exists = Test-Path -LiteralPath $path -PathType Leaf
         source = if ($path -like '*\WindowsApps\*') { 'app-execution-alias-or-windowsapps' } else { 'filesystem-or-path' }
         fileVersion = $null
@@ -65,7 +62,7 @@ foreach ($path in $candidatePaths) {
         try { $row.signatureStatus = [string](Get-AuthenticodeSignature -LiteralPath $path -ErrorAction Stop).Status } catch { $row.signatureStatus = 'unavailable' }
 
         $psi = New-Object System.Diagnostics.ProcessStartInfo
-        $psi.FileName = $path
+        $psi.FileName = [string]$path
         $psi.Arguments = '--version'
         $psi.UseShellExecute = $false
         $psi.CreateNoWindow = $true
@@ -85,16 +82,16 @@ foreach ($path in $candidatePaths) {
         $row.stderr = $process.StandardError.ReadToEnd().Trim()
         $row.exitCode = $process.ExitCode
         $row.usable = ($row.exitCode -eq 0 -and $row.stdout -match '^git version\s+')
-        if ($row.usable -and -not $selected) { $selected = $path }
+        if ($row.usable -and -not $selected) { $selected = [string]$path }
     }
     catch {
         $row.error = $_.Exception.Message
     }
-    [void]$rows.Add([pscustomobject]$row)
+    $rows += [pscustomobject]$row
 }
 
 $status = if ($selected) { 'passed' } else { 'blocked' }
-$result = [ordered]@{
+$resultObject = [pscustomobject][ordered]@{
     schema = 'agentswitchboard.windows-toolchain-launch-preflight.v1'
     generatedAt = (Get-Date).ToUniversalTime().ToString('o')
     status = $status
@@ -106,7 +103,7 @@ $result = [ordered]@{
 }
 $jsonPath = Join-Path $OutputRoot 'windows-toolchain-launch-preflight.json'
 $mdPath = Join-Path $OutputRoot 'windows-toolchain-launch-preflight.md'
-$result | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $jsonPath -Encoding UTF8
+$resultObject | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $jsonPath -Encoding UTF8
 
 $lines = @($rows | ForEach-Object {
     '| `{0}` | {1} | {2} | {3} | {4} | {5} |' -f $_.path, $_.exists, $_.launched, $_.exitCode, $_.usable, ($_.error -replace '\|','/')
@@ -117,7 +114,7 @@ $markdown = @"
 - Status: **$status**
 - Selected Git: `$(if($selected){$selected}else{'none'})`
 - Timeout: ${TimeoutSeconds}s
-- Proof level: `$($result.proofLevel)`
+- Proof level: `$($resultObject.proofLevel)`
 
 ## Candidates
 
@@ -127,7 +124,7 @@ $($lines -join "`n")
 
 ## Proof ceiling
 
-$($result.proofCeiling)
+$($resultObject.proofCeiling)
 "@
 Set-Content -LiteralPath $mdPath -Value $markdown -Encoding UTF8
 
@@ -139,6 +136,9 @@ Write-Host " JSON: $jsonPath"
 Write-Host " Report: $mdPath"
 Write-Host '============================================================' -ForegroundColor Cyan
 
-if ($PassThru) { return [pscustomobject]$result }
+if ($PassThru) {
+    Write-Output $resultObject
+    return
+}
 if (-not $selected) { exit 31 }
 exit 0
