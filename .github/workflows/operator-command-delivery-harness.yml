@@ -1,0 +1,63 @@
+name: operator command delivery harness
+
+on:
+  pull_request:
+    paths:
+      - 'tooling/profiles/windows/harness/operator-command-delivery/**'
+      - '.ai/skills/operator-command-delivery/**'
+      - 'docs/harness/operator-command-delivery.md'
+      - 'scripts/Test-OperatorCommandDeliveryHarnessCompleteness.ps1'
+      - 'tests/test_operator_command_delivery_harness.py'
+      - '.github/workflows/operator-command-delivery-harness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Validate dependency-free harness contract
+        run: python -m unittest tests.test_operator_command_delivery_harness
+      - name: Validate PowerShell harness completeness
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-OperatorCommandDeliveryHarnessCompleteness.ps1
+      - name: Parse tracked PowerShell harness surfaces
+        shell: pwsh
+        run: |
+          $paths = @(
+            'scripts/Test-OperatorCommandDeliveryHarnessCompleteness.ps1',
+            'tooling/profiles/windows/harness/operator-command-delivery/hooks/pre-push.ps1',
+            'tooling/profiles/windows/harness/operator-command-delivery/fixtures/valid-powershell-command.fixture.ps1'
+          )
+          foreach ($path in $paths) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $path), [ref]$tokens, [ref]$errors)
+            if ($errors.Count -gt 0) {
+              $errors | Format-List | Out-String | Write-Error
+              throw "PowerShell parse failed: $path"
+            }
+          }
+      - name: Exercise opt-in pre-push hook
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File tooling/profiles/windows/harness/operator-command-delivery/hooks/pre-push.ps1
+      - name: Check repository hygiene without a pager
+        shell: bash
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ -z "$BASE_REF" ]; then BASE_REF=main; fi
+          git --no-pager diff --check "origin/$BASE_REF...HEAD"
