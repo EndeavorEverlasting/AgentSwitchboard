@@ -2,14 +2,16 @@
 
 ## Purpose
 
-This harness protects the boundary between repository evidence and a command pasted into an operator shell. It exists because a command can be correct in source yet fail before the intended runtime when a ref/file is not independently resolved, punctuation is escaped during transport, prompt text is copied, or a top-level `exit` closes the interactive shell.
+This harness protects the boundary between repository evidence and a command pasted into an operator shell. It exists because a command can be correct in source yet fail before the intended runtime when a ref/file is not independently resolved, punctuation is escaped during transport, prompt text is copied, a top-level `exit` closes the interactive shell, or a discovered executable cannot actually start.
 
 ## Current state
 
 - **Working:** tracked map, artifact registry, verification workflow, failure workflow, fixtures, opt-in pre-push hook, scoped skill, human report template, PowerShell completeness validator, Python contract, and CI.
 - **Working:** the positive fixture uses canonical PowerShell environment syntax and explicit `gh api --method GET` source reads.
-- **Working:** the negative fixture preserves the known corruption class and must be rejected deterministically.
-- **Missing by design:** this harness does not execute product launchers, install WSL, open WezTerm, attach tmux, authenticate providers, or claim operator acceptance.
+- **Working:** the corruption fixture preserves malformed command transport and must be rejected deterministically.
+- **Working:** `scripts/Test-OperatorChildExecutableLaunch.ps1` concretely probes the exact child executable with `UseShellExecute=false`, bounded arguments, timeout, stdout/stderr capture, and durable JSON evidence.
+- **Working:** the access-denied fixture preserves the boundary where files are present but a required child executable cannot start.
+- **Missing by design:** this harness does not repair Windows execution policy, install product prerequisites, open WezTerm, attach tmux, authenticate providers, or claim operator acceptance.
 
 ## Required operator-command shape
 
@@ -17,13 +19,15 @@ For a Windows PowerShell operator command that needs repository files from GitHu
 
 1. Resolve the intended source ref to an exact commit.
 2. Resolve each required file at that exact commit before execution.
-3. Use explicit GET semantics for parameterized GitHub API reads.
-4. Use `$env:NAME` exactly for environment variables.
-5. Run exit-propagating work in a child process so the interactive parent shell stays open.
-6. Capture and print the child exit code.
-7. Resolve and print the downstream canonical artifact after the child completes.
+3. Resolve the exact path of every external executable the command must use before downstream runtime work.
+4. Concretely launch each exact executable with bounded side-effect-free arguments and persist `child-executable-launch-result.json`. Discovery through `where`, `Get-Command`, file existence, download success, or version metadata without process creation is not launch proof.
+5. Use explicit GET semantics for parameterized GitHub API reads.
+6. Use `$env:NAME` exactly for environment variables.
+7. Run exit-propagating work in a child process so the interactive parent shell stays open.
+8. Capture and print the child exit code.
+9. Resolve and print the child-launch artifact and downstream canonical artifact after execution.
 
-A safe retrieval fragment follows this form:
+A safe source-resolution fragment follows this form:
 
 ```powershell
 $resolved = gh api --method GET 'repos/EndeavorEverlasting/AgentSwitchboard/commits/main' --jq '.sha'
@@ -32,7 +36,7 @@ $content = gh api --method GET 'repos/EndeavorEverlasting/AgentSwitchboard/conte
 if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($content)) { throw 'Unable to resolve launcher file.' }
 ```
 
-The complete operator command should additionally verify every file it downloads, run the child launcher through `cmd.exe /d /c` or another explicit child boundary when appropriate, capture `$LASTEXITCODE`, and print the canonical runtime artifact. It must not end the interactive parent command with `exit`.
+Before a wrapper depends on PowerShell 7, for example, run `scripts/Test-OperatorChildExecutableLaunch.ps1` from a shell that is already known to work and probe the exact `pwsh.exe` with a side-effect-free version command. If process creation returns `Access is denied`, stop there. Do not retry the downstream wrapper and do not call it a tmux failure when no tmux artifact was produced.
 
 ## Known traps
 
@@ -41,7 +45,9 @@ The complete operator command should additionally verify every file it downloads
 - A commit SHA resolving successfully does not prove a named file exists at that commit.
 - A PR merge message does not replace an exact file read.
 - Query-string interpolation in a copy-paste command is avoidable; prefer explicit GET request parameters.
-- Static source verification does not prove the downstream app is open or usable.
+- `where` and `Get-Command` prove discovery, not process creation.
+- `Access is denied` before a downstream artifact exists belongs to `child-executable-launch`, not `downstream-runtime`.
+- Static source verification and child-process launch proof do not prove the downstream app is open or usable.
 
 ## Validation
 
@@ -60,8 +66,8 @@ It is never installed implicitly.
 
 ## Failure recovery
 
-When a command fails before the intended runtime gate, preserve the failed command and earliest stderr/stdout, classify the boundary, re-resolve source identity and files independently, repair the harness if the failure class was unenforced, rerun focused validators, then issue the smallest repaired command. Do not skip directly to a higher runtime claim.
+When a command fails before the intended runtime gate, preserve the failed command and earliest stderr/stdout, classify the boundary, re-resolve source identity and files independently, concretely probe the exact executable at the first failed child boundary, repair the harness if the failure class was unenforced, rerun focused validators, then issue the smallest repaired command. Do not skip directly to a higher runtime claim.
 
 ## Proof ceiling
 
-Passing this harness proves command-source resolution rules, transport-integrity contracts, interactive-shell safety rules, component discoverability, and deterministic regression detection. It does not prove the downstream runtime until the owning runtime artifact passes its own gate.
+Passing this harness proves command-source resolution rules, bounded launchability of explicitly probed child executables, transport-integrity contracts, interactive-shell safety rules, component discoverability, and deterministic regression detection. It does not prove the downstream runtime until the owning runtime artifact passes its own gate.
