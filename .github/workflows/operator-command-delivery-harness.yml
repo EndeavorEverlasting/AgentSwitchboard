@@ -7,6 +7,7 @@ on:
       - '.ai/skills/operator-command-delivery/**'
       - 'docs/harness/operator-command-delivery.md'
       - 'scripts/Test-OperatorCommandDeliveryHarnessCompleteness.ps1'
+      - 'scripts/Test-OperatorChildExecutableLaunch.ps1'
       - 'tests/test_operator_command_delivery_harness.py'
       - '.github/workflows/operator-command-delivery-harness.yml'
   workflow_dispatch:
@@ -39,6 +40,7 @@ jobs:
         run: |
           $paths = @(
             'scripts/Test-OperatorCommandDeliveryHarnessCompleteness.ps1',
+            'scripts/Test-OperatorChildExecutableLaunch.ps1',
             'tooling/profiles/windows/harness/operator-command-delivery/hooks/pre-push.ps1',
             'tooling/profiles/windows/harness/operator-command-delivery/fixtures/valid-powershell-command.fixture.ps1'
           )
@@ -51,6 +53,21 @@ jobs:
               throw "PowerShell parse failed: $path"
             }
           }
+      - name: Prove concrete pwsh child launch
+        shell: pwsh
+        run: |
+          $pwsh = (Get-Command pwsh -ErrorAction Stop).Source
+          $out = Join-Path $env:RUNNER_TEMP 'operator-child-launch'
+          & pwsh -NoLogo -NoProfile -File scripts/Test-OperatorChildExecutableLaunch.ps1 `
+            -ExecutablePath $pwsh `
+            -ArgumentList @('-NoLogo','-NoProfile','-Command','$PSVersionTable.PSVersion.ToString()') `
+            -Label 'pwsh' `
+            -OutputRoot $out
+          if ($LASTEXITCODE -ne 0) { throw "Child executable probe failed: $LASTEXITCODE" }
+          $artifact = Join-Path $out 'child-executable-launch-result.json'
+          if (-not (Test-Path -LiteralPath $artifact -PathType Leaf)) { throw "Missing child launch artifact: $artifact" }
+          $result = Get-Content -LiteralPath $artifact -Raw | ConvertFrom-Json
+          if ($result.status -ne 'passed' -or $result.proofLevel -ne 'child-executable-launch') { throw "Unexpected child launch result: $($result.status) / $($result.proofLevel)" }
       - name: Exercise opt-in pre-push hook
         shell: pwsh
         run: pwsh -NoLogo -NoProfile -File tooling/profiles/windows/harness/operator-command-delivery/hooks/pre-push.ps1
