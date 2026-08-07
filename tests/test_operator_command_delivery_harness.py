@@ -22,11 +22,13 @@ class OperatorCommandDeliveryHarnessContract(unittest.TestCase):
             HARNESS / "workflows" / "handle-command-delivery-failure.workflow.json",
             HARNESS / "fixtures" / "valid-powershell-command.fixture.ps1",
             HARNESS / "fixtures" / "invalid-corrupted-command.fixture.txt",
+            HARNESS / "fixtures" / "child-launch-access-denied.fixture.json",
             HARNESS / "operator-report.template.md",
             HARNESS / "hooks" / "pre-push.ps1",
             ROOT / ".ai" / "skills" / "operator-command-delivery" / "SKILL.md",
             ROOT / "docs" / "harness" / "operator-command-delivery.md",
             ROOT / "scripts" / "Test-OperatorCommandDeliveryHarnessCompleteness.ps1",
+            ROOT / "scripts" / "Test-OperatorChildExecutableLaunch.ps1",
             ROOT / ".github" / "workflows" / "operator-command-delivery-harness.yml",
         ]
         for path in required:
@@ -37,14 +39,23 @@ class OperatorCommandDeliveryHarnessContract(unittest.TestCase):
         artifacts = json.loads(text(HARNESS / "artifact-registry.json"))
         verify = json.loads(text(HARNESS / "workflows" / "verify-command-delivery.workflow.json"))
         failure = json.loads(text(HARNESS / "workflows" / "handle-command-delivery-failure.workflow.json"))
+        blocked = json.loads(text(HARNESS / "fixtures" / "child-launch-access-denied.fixture.json"))
         self.assertEqual("agentswitchboard.operator-command-delivery-harness.v1", codebase["harnessId"])
         self.assertEqual("tracked-contract", codebase["status"])
+        self.assertEqual("scripts/Test-OperatorChildExecutableLaunch.ps1", codebase["entrypoints"]["childExecutableProbe"])
         self.assertFalse(artifacts["tracked"])
         self.assertEqual("local-operational", artifacts["sensitivity"])
-        self.assertGreaterEqual(len(verify["steps"]), 8)
-        self.assertGreaterEqual(len(failure["steps"]), 7)
-        self.assertIn("proofCeiling", verify)
-        self.assertIn("proofCeiling", failure)
+        self.assertIn("child-executable-launch-result", {a["artifactId"] for a in artifacts["artifacts"]})
+        self.assertIn("childExecutableLaunchArtifacts", artifacts["requiredResultFields"])
+        self.assertGreaterEqual(len(verify["steps"]), 10)
+        self.assertGreaterEqual(len(failure["steps"]), 8)
+        self.assertIn("child-executable-launch", json.dumps(verify))
+        self.assertIn("child-executable-launch", json.dumps(failure))
+        self.assertEqual("Access is denied.", blocked["startError"])
+        self.assertEqual(5, blocked["observedWrapperExitCode"])
+        self.assertFalse(blocked["downstreamArtifactProduced"])
+        self.assertEqual("child-executable-launch-blocked", blocked["expectedClassification"])
+        self.assertFalse(blocked["expectedRuntimeProof"])
 
     def test_positive_fixture_is_safe_for_copy_paste(self) -> None:
         fixture = text(HARNESS / "fixtures" / "valid-powershell-command.fixture.ps1")
@@ -63,7 +74,7 @@ class OperatorCommandDeliveryHarnessContract(unittest.TestCase):
         self.assertNotRegex(fixture, r"(?m)^\s*exit\s+")
         self.assertNotRegex(fixture, r"contents/[^\s\"']+\?ref=")
 
-    def test_negative_fixture_preserves_exact_regressions(self) -> None:
+    def test_negative_fixture_preserves_transport_regressions(self) -> None:
         fixture = text(HARNESS / "fixtures" / "invalid-corrupted-command.fixture.txt")
         self.assertRegex(fixture, r"\$env\\:TEMP")
         self.assertRegex(fixture, r"\$env\\:LOCALAPPDATA")
@@ -71,7 +82,25 @@ class OperatorCommandDeliveryHarnessContract(unittest.TestCase):
         self.assertRegex(fixture, r"contents/[^\s\"']+\?ref=")
         self.assertIn("exit $LASTEXITCODE", fixture)
 
-    def test_skill_and_report_are_operational(self) -> None:
+    def test_child_executable_probe_is_concrete_bounded_and_durable(self) -> None:
+        probe = text(ROOT / "scripts" / "Test-OperatorChildExecutableLaunch.ps1")
+        for token in (
+            "ProcessStartInfo",
+            "UseShellExecute = $false",
+            "RedirectStandardOutput = $true",
+            "RedirectStandardError = $true",
+            "WaitForExit",
+            "child-executable-launch-result.json",
+            "child-executable-launch-blocked",
+            "$env:LOCALAPPDATA",
+            "STATUS=",
+            "ARTIFACT=",
+        ):
+            self.assertIn(token, probe, token)
+        self.assertNotIn("Start-Process", probe)
+        self.assertIn("[ValidateRange(1, 120)][int]$TimeoutSeconds", probe)
+
+    def test_skill_workflows_and_report_require_launch_proof(self) -> None:
         skill = text(ROOT / ".ai" / "skills" / "operator-command-delivery" / "SKILL.md")
         for heading in (
             "## Trigger",
@@ -84,10 +113,30 @@ class OperatorCommandDeliveryHarnessContract(unittest.TestCase):
             "## Stop and escalate",
         ):
             self.assertIn(heading, skill)
+        for token in (
+            "Test-OperatorChildExecutableLaunch.ps1",
+            "where",
+            "Get-Command",
+            "UseShellExecute=false",
+            "child-executable-launch",
+        ):
+            self.assertIn(token, skill, token)
+
+        verify = text(HARNESS / "workflows" / "verify-command-delivery.workflow.json")
+        failure = text(HARNESS / "workflows" / "handle-command-delivery-failure.workflow.json")
+        for body in (verify, failure):
+            self.assertIn("child-executable-launch", body)
+            self.assertIn("Access is denied", body)
+        self.assertIn("UseShellExecute=false", verify)
+
         report = text(HARNESS / "operator-report.template.md")
         for placeholder in (
             "{{STATUS}}",
             "{{RESOLVED_COMMIT}}",
+            "{{CHILD_EXECUTABLE}}",
+            "{{CHILD_LAUNCH_RESULT}}",
+            "{{CHILD_START_ERROR}}",
+            "{{CHILD_LAUNCH_ARTIFACT}}",
             "{{CHILD_EXIT_CODE}}",
             "{{DOWNSTREAM_ARTIFACT}}",
             "{{PROOF_CEILING}}",
@@ -108,6 +157,9 @@ class OperatorCommandDeliveryHarnessContract(unittest.TestCase):
         guide = text(ROOT / "docs" / "harness" / "operator-command-delivery.md")
         self.assertIn("Open-AgentSwitchboard-Tmux.ps1", guide)
         self.assertIn("does not prove the downstream runtime", guide)
+        self.assertIn("where", guide)
+        self.assertIn("Get-Command", guide)
+        self.assertIn("Access is denied", guide)
 
 
 if __name__ == "__main__":
