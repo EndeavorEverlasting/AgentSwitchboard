@@ -1,7 +1,7 @@
 ---
 id: agent-fleet-readiness
 version: 1.0.0
-status: scoped
+status: experimental
 ---
 
 # Agent Fleet Readiness
