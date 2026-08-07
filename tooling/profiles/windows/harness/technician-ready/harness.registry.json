@@ -6,6 +6,8 @@
   "purpose": "Make the technician bootstrap-order surface inspectable, routable, reproducibly validated, failure-aware, artifact-producing, and handoff-safe without claiming workstation runtime behavior.",
   "canonicalOwners": {
     "governance": "AGENTS.md",
+    "skillCatalog": "SKILLS.md",
+    "triggerMap": "TRIGGERS.md",
     "bootstrapOrderContract": "tooling/profiles/windows/harness/technician-ready/bootstrap-order.contract.json",
     "frontDoor": "Technician-AgentSwitchboard-Ready.cmd",
     "prerequisiteGate": "tooling/profiles/windows/Invoke-TechnicianBootstrapPrerequisites.ps1",
@@ -14,6 +16,8 @@
     "harnessCompletenessValidator": "scripts/Test-TechnicianBootstrapOrderHarnessCompleteness.ps1"
   },
   "requiredPaths": [
+    "SKILLS.md",
+    "TRIGGERS.md",
     "tooling/profiles/windows/harness/technician-ready/bootstrap-order.contract.json",
     "tooling/profiles/windows/harness/technician-ready/harness.registry.json",
     "tooling/profiles/windows/harness/technician-ready/codebase-map.json",
@@ -45,6 +49,7 @@
     "pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianBootstrapOrderHarnessCompleteness.ps1 -RootPath . -NoWrite",
     "pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianBootstrapOrder.ps1 -RootPath .",
     "python -m unittest tests.test_technician_agentswitchboard_ready -v",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1 -RootPath .",
     "pwsh -NoLogo -NoProfile -File tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1 -RootPath . -NoWrite",
     "git diff --check"
   ],
@@ -67,10 +72,12 @@
   "knownTraps": [
     "Do not move AGY, OpenCode, GNHF, launcher, or other higher-runtime setup into the prerequisite gate.",
     "Do not weaken or delete an ordering assertion because a product refactor changes source tokens; update the contract and validators with the semantic refactor.",
+    "Do not add a scoped skill without making it reachable from canonical SKILLS.md and TRIGGERS.md intake surfaces.",
+    "Do not treat component presence as validation readiness; the status reporter reports component state only and the owning validators establish correctness.",
     "Do not treat CI success as proof that WezTerm installed, WSL mutated, tmux ran, a window opened, or an operator accepted the result.",
     "Do not install hooks implicitly; the pre-commit helper is opt-in only.",
     "Do not write generated validation or status evidence into the repository.",
     "Do not use destructive Git or force updates to recover from a failed validation."
   ],
-  "proofCeiling": "Tracked harness structure, workflow selection, source-contract coupling, deterministic static validation, report generation, and CI execution only. No live workstation, package-install, WSL, tmux-session, terminal-window, provider, or operator-acceptance behavior is proven."
+  "proofCeiling": "Tracked harness structure, canonical workflow discoverability, source-contract coupling, deterministic static validation, report generation, and CI execution only. No live workstation, package-install, WSL, tmux-session, terminal-window, provider, or operator-acceptance behavior is proven."
 }

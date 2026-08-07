@@ -19,6 +19,8 @@ $failures = [Collections.Generic.List[string]]::new()
 $checks = [Collections.Generic.List[object]]::new()
 $registry = $null
 $mandatoryPaths = @(
+    'SKILLS.md',
+    'TRIGGERS.md',
     'tooling/profiles/windows/harness/technician-ready/bootstrap-order.contract.json',
     'tooling/profiles/windows/harness/technician-ready/harness.registry.json',
     'tooling/profiles/windows/harness/technician-ready/codebase-map.json',
@@ -75,27 +77,32 @@ if ($failures.Count -eq 0) {
         Add-Check ("workflow-route:{0}" -f $workflowId) ($workflowId -in $routeIds) 'workflow must be routed'
     }
 
+    $skillsText = Get-Content -LiteralPath (Join-Path $RootPath 'SKILLS.md') -Raw
+    Add-Check 'canonical-skill-catalog-route' ($skillsText.Contains('technician-bootstrap-order-validation')) 'SKILLS.md must expose the focused skill to fresh-agent intake'
+    $triggersText = Get-Content -LiteralPath (Join-Path $RootPath 'TRIGGERS.md') -Raw
+    Add-Check 'canonical-trigger-route' ($triggersText.Contains('bootstrap.order-contract-change') -and $triggersText.Contains('technician-bootstrap-order-validation')) 'TRIGGERS.md must map bootstrap-order evidence to the focused skill'
+
     $artifactRegistry = Get-Content -LiteralPath (Join-Path $RootPath 'tooling\profiles\windows\harness\technician-ready\artifact-registry.json') -Raw | ConvertFrom-Json
     Add-Check 'artifacts-untracked' (-not [bool]$artifactRegistry.tracked) 'generated evidence must remain untracked'
 
     $workflowText = Get-Content -LiteralPath (Join-Path $RootPath '.github\workflows\technician-bootstrap-order.yml') -Raw
-    foreach ($token in @('tests.test_technician_bootstrap_order_harness', 'Test-TechnicianBootstrapOrderHarnessCompleteness.ps1', 'Get-TechnicianBootstrapOrderHarnessStatus.ps1', 'tests.test_technician_bootstrap_order', 'tests.test_technician_agentswitchboard_ready', 'git diff --check')) {
-        Add-Check ("ci-token:{0}" -f $token) ($workflowText.Contains($token)) 'CI must run the focused floor'
+    foreach ($token in @('SKILLS.md', 'TRIGGERS.md', 'tests.test_technician_bootstrap_order_harness', 'Test-TechnicianBootstrapOrderHarnessCompleteness.ps1', 'Get-TechnicianBootstrapOrderHarnessStatus.ps1', 'tests.test_technician_bootstrap_order', 'tests.test_technician_agentswitchboard_ready', 'Test-AgentDocumentationContract.ps1', 'git diff --check')) {
+        Add-Check ("ci-token:{0}" -f $token) ($workflowText.Contains($token)) 'CI must run the full focused floor'
     }
 
     $skillText = Get-Content -LiteralPath (Join-Path $RootPath '.ai\skills\technician-bootstrap-order-validation\SKILL.md') -Raw
-    foreach ($token in @('repair-failure', 'validate-change', 'handoff', 'Never weaken', 'Proof ceiling')) {
-        Add-Check ("skill-token:{0}" -f $token) ($skillText.Contains($token)) 'skill must preserve routing and gate integrity'
+    foreach ($token in @('id: technician-bootstrap-order-validation', 'version: 1.0.0', 'status: canonical', '## Trigger', '## Inputs', '## Procedure', '## Outputs', '## Deterministic validation', '## Forbidden scope', '## Stop and escalate', 'Never weaken', '## Proof ceiling')) {
+        Add-Check ("skill-token:{0}" -f $token) ($skillText.Contains($token)) 'skill must satisfy the canonical skill contract and preserve gate integrity'
     }
 
     $hookText = Get-Content -LiteralPath (Join-Path $RootPath 'tooling\profiles\windows\hooks\Invoke-TechnicianBootstrapOrderPreCommit.ps1') -Raw
-    foreach ($token in @('Test-TechnicianBootstrapOrderHarness.cmd', 'tests.test_technician_bootstrap_order_harness', 'Test-TechnicianBootstrapOrderHarnessCompleteness.ps1', 'Test-TechnicianBootstrapOrder.ps1', 'Push-Location -LiteralPath $RootPath', 'diff --cached --check')) {
+    foreach ($token in @('SKILLS.md', 'TRIGGERS.md', 'Test-TechnicianBootstrapOrderHarness.cmd', 'tests.test_technician_bootstrap_order_harness', 'tests.test_technician_bootstrap_order', 'Test-TechnicianBootstrapOrderHarnessCompleteness.ps1', 'Test-TechnicianBootstrapOrder.ps1', 'tests.test_technician_agentswitchboard_ready', 'Test-AgentDocumentationContract.ps1', 'Get-TechnicianBootstrapOrderHarnessStatus.ps1', 'Push-Location -LiteralPath $RootPath', 'diff --cached --check')) {
         Add-Check ("hook-token:{0}" -f $token) ($hookText.Contains($token)) 'opt-in hook must cover the full focused validation surface'
     }
 
     $cmdText = Get-Content -LiteralPath (Join-Path $RootPath 'Test-TechnicianBootstrapOrderHarness.cmd') -Raw
-    foreach ($token in @('pushd "%ROOT%"', 'python -m unittest tests.test_technician_bootstrap_order_harness -v', 'popd')) {
-        Add-Check ("cmd-token:{0}" -f $token) ($cmdText.Contains($token)) 'operator validator must be location-independent and restore caller location'
+    foreach ($token in @('pushd "%ROOT%"', 'python -m unittest tests.test_technician_bootstrap_order_harness -v', 'Test-AgentDocumentationContract.ps1', 'popd')) {
+        Add-Check ("cmd-token:{0}" -f $token) ($cmdText.Contains($token)) 'operator validator must be location-independent and run the full documented floor'
     }
 
     foreach ($relativePath in @(

@@ -38,9 +38,7 @@ $components = @(
 $missingComponents = @($components | Where-Object { -not $_.exists })
 
 $branchLines = @(& git -C $RootPath branch --show-current 2>$null)
-if ($LASTEXITCODE -ne 0) {
-    throw 'Unable to resolve the current Git branch state.'
-}
+if ($LASTEXITCODE -ne 0) { throw 'Unable to resolve the current Git branch state.' }
 $branch = if ($branchLines.Count -gt 0 -and -not [string]::IsNullOrWhiteSpace([string]$branchLines[0])) {
     ([string]$branchLines[0]).Trim()
 } elseif (-not [string]::IsNullOrWhiteSpace($env:GITHUB_HEAD_REF)) {
@@ -54,19 +52,18 @@ if ($LASTEXITCODE -ne 0 -or $headLines.Count -eq 0 -or [string]::IsNullOrWhiteSp
     throw 'Unable to resolve the current Git HEAD.'
 }
 $head = ([string]$headLines[0]).Trim()
-$status = if ($missingComponents.Count -eq 0) { 'repository-ready' } else { 'incomplete' }
+$componentStatus = if ($missingComponents.Count -eq 0) { 'components-complete-validation-unproven' } else { 'components-incomplete' }
 
 $working = @(
-    'Focused codebase map, workflow specs, artifact registry, skill routing, scoped skill, validators, opt-in hook, status reporter, operator guide, and CI are registered.',
+    'Focused codebase map, workflow specs, artifact registry, canonical skill routing, scoped skill, validators, opt-in hook, component-status reporter, operator guide, and CI are registered.',
     'The front door remains contractually gated so the prerequisite stage must return zero before the higher runtime engine is invoked.',
     'Source-token anchors are explicitly refactor-coupled: semantic source refactors update the contract and affected validators together.',
     'Generated validation and status evidence is local-operational and untracked.'
 )
 $broken = @()
-if ($missingComponents.Count -gt 0) {
-    $broken += "Missing tracked harness components: $($missingComponents.path -join ', ')"
-}
+if ($missingComponents.Count -gt 0) { $broken += "Missing tracked harness components: $($missingComponents.path -join ', ')" }
 $unproven = @(
+    'This reporter does not execute the validation order; component-complete is not a correctness or readiness claim.',
     'No live WezTerm installation is proven by this harness.',
     'No WSL mutation or tmux session execution is proven by this harness.',
     'No visible terminal-window, provider, deployment, or operator-acceptance result is proven by this harness.'
@@ -76,7 +73,8 @@ $nextArtifact = 'bootstrap-order-harness-validation.json plus bootstrap-order-ha
 
 $result = [ordered]@{
     schema = 'agentswitchboard.technician-bootstrap-order-harness-status.v1'
-    status = $status
+    status = $componentStatus
+    validationState = 'unproven-by-status-reporter'
     repository = [string]$registry.repository
     branch = $branch
     head = $head
@@ -90,18 +88,19 @@ $result = [ordered]@{
     nextDependency = 'current exact HEAD remains unchanged'
     nextCommand = $nextCommand
     nextArtifact = $nextArtifact
-    nextGate = 'focused completeness, order contracts, readiness contracts, and diff hygiene all pass at the same exact HEAD'
+    nextGate = 'run the registered validation order and require every focused, readiness, documentation, status, and diff gate to pass at the same exact HEAD'
 }
 
-Write-Host 'TECHNICIAN BOOTSTRAP-ORDER HARNESS' -ForegroundColor Cyan
-Write-Host ("Status: {0}" -f $status)
+Write-Host 'TECHNICIAN BOOTSTRAP-ORDER HARNESS COMPONENT STATUS' -ForegroundColor Cyan
+Write-Host ("Status: {0}" -f $componentStatus)
+Write-Host 'Validation: unproven-by-status-reporter'
 Write-Host ("Branch: {0}" -f $result.branch)
 Write-Host ("HEAD: {0}" -f $result.head)
 Write-Host ("Components: {0}/{1} present" -f ($components.Count - $missingComponents.Count), $components.Count)
 Write-Host 'Working:'
 $working | ForEach-Object { Write-Host ("- {0}" -f $_) }
 Write-Host 'Broken:'
-if ($broken.Count -eq 0) { Write-Host '- none detected by repository component inspection' } else { $broken | ForEach-Object { Write-Host ("- {0}" -f $_) } }
+if ($broken.Count -eq 0) { Write-Host '- none detected by component inspection' } else { $broken | ForEach-Object { Write-Host ("- {0}" -f $_) } }
 Write-Host 'Missing / unproven:'
 $unproven | ForEach-Object { Write-Host ("- {0}" -f $_) }
 Write-Host ("Next: {0}" -f $nextCommand)
@@ -116,10 +115,10 @@ if (-not $NoWrite) {
     $jsonPath = Join-Path $OutputDirectory 'bootstrap-order-harness-status.json'
     $mdPath = Join-Path $OutputDirectory 'bootstrap-order-harness-status.md'
     $result | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $jsonPath -Encoding utf8
-    $lines = @('# Technician Bootstrap-Order Harness Report','',('- Repository: `{0}`' -f $result.repository),('- Branch: `{0}`' -f $result.branch),('- HEAD: `{0}`' -f $result.head),('- Status: `{0}`' -f $result.status),('- Components: {0}/{1}' -f ($components.Count - $missingComponents.Count), $components.Count),'','## Working')
+    $lines = @('# Technician Bootstrap-Order Harness Component Report','',('- Repository: `{0}`' -f $result.repository),('- Branch: `{0}`' -f $result.branch),('- HEAD: `{0}`' -f $result.head),('- Component status: `{0}`' -f $result.status),('- Validation: `{0}`' -f $result.validationState),('- Components: {0}/{1}' -f ($components.Count - $missingComponents.Count), $components.Count),'','## Working')
     $lines += @($working | ForEach-Object { '- ' + $_ })
     $lines += @('', '## Broken')
-    if ($broken.Count -eq 0) { $lines += '- none detected by repository component inspection' } else { $lines += @($broken | ForEach-Object { '- ' + $_ }) }
+    if ($broken.Count -eq 0) { $lines += '- none detected by component inspection' } else { $lines += @($broken | ForEach-Object { '- ' + $_ }) }
     $lines += @('', '## Missing / unproven')
     $lines += @($unproven | ForEach-Object { '- ' + $_ })
     $lines += @('', '## Proof ceiling', [string]$result.proofCeiling)

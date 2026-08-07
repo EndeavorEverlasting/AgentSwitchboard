@@ -3,6 +3,8 @@ name: Technician bootstrap order
 on:
   push:
     paths:
+      - 'SKILLS.md'
+      - 'TRIGGERS.md'
       - 'Technician-AgentSwitchboard-Ready.cmd'
       - 'tooling/profiles/windows/Invoke-TechnicianBootstrapPrerequisites.ps1'
       - 'tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1'
@@ -21,6 +23,8 @@ on:
       - '.github/workflows/technician-bootstrap-order.yml'
   pull_request:
     paths:
+      - 'SKILLS.md'
+      - 'TRIGGERS.md'
       - 'Technician-AgentSwitchboard-Ready.cmd'
       - 'tooling/profiles/windows/Invoke-TechnicianBootstrapPrerequisites.ps1'
       - 'tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1'
@@ -69,7 +73,11 @@ jobs:
       - name: Existing technician readiness contracts
         run: python -m unittest tests.test_technician_agentswitchboard_ready -v
 
-      - name: Harness status readback
+      - name: Agent documentation contract
+        shell: pwsh
+        run: ./scripts/Test-AgentDocumentationContract.ps1 -RootPath .
+
+      - name: Harness component status readback
         shell: pwsh
         run: ./tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1 -RootPath . -NoWrite
 

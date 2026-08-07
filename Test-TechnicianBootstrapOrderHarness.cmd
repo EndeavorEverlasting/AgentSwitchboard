@@ -21,14 +21,6 @@ if not defined RUNID (
 )
 set "RUNDIR=%OUTROOT%\%RUNID%"
 
-pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\Test-TechnicianBootstrapOrderHarnessCompleteness.ps1" -RootPath "%ROOT%" -OutputDirectory "%RUNDIR%"
-set "RESULT=%ERRORLEVEL%"
-if not "%RESULT%"=="0" goto :finish
-
-pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\Test-TechnicianBootstrapOrder.ps1" -RootPath "%ROOT%"
-set "RESULT=%ERRORLEVEL%"
-if not "%RESULT%"=="0" goto :finish
-
 python -m unittest tests.test_technician_bootstrap_order_harness -v
 set "RESULT=%ERRORLEVEL%"
 if not "%RESULT%"=="0" goto :finish
@@ -37,7 +29,19 @@ python -m unittest tests.test_technician_bootstrap_order -v
 set "RESULT=%ERRORLEVEL%"
 if not "%RESULT%"=="0" goto :finish
 
+pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\Test-TechnicianBootstrapOrderHarnessCompleteness.ps1" -RootPath "%ROOT%" -OutputDirectory "%RUNDIR%"
+set "RESULT=%ERRORLEVEL%"
+if not "%RESULT%"=="0" goto :finish
+
+pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\Test-TechnicianBootstrapOrder.ps1" -RootPath "%ROOT%"
+set "RESULT=%ERRORLEVEL%"
+if not "%RESULT%"=="0" goto :finish
+
 python -m unittest tests.test_technician_agentswitchboard_ready -v
+set "RESULT=%ERRORLEVEL%"
+if not "%RESULT%"=="0" goto :finish
+
+pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\Test-AgentDocumentationContract.ps1" -RootPath "%ROOT%"
 set "RESULT=%ERRORLEVEL%"
 if not "%RESULT%"=="0" goto :finish
 

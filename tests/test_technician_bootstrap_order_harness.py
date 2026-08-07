@@ -11,12 +11,15 @@ ARTIFACTS = HARNESS / "artifact-registry.json"
 ROUTING = HARNESS / "skill-routing.registry.json"
 CODEBASE_MAP = HARNESS / "codebase-map.json"
 SKILL = ROOT / ".ai" / "skills" / "technician-bootstrap-order-validation" / "SKILL.md"
+SKILLS = ROOT / "SKILLS.md"
+TRIGGERS = ROOT / "TRIGGERS.md"
 CI = ROOT / ".github" / "workflows" / "technician-bootstrap-order.yml"
 HOOK = ROOT / "tooling" / "profiles" / "windows" / "hooks" / "Invoke-TechnicianBootstrapOrderPreCommit.ps1"
 STATUS = ROOT / "tooling" / "profiles" / "windows" / "Get-TechnicianBootstrapOrderHarnessStatus.ps1"
 VALIDATOR = ROOT / "scripts" / "Test-TechnicianBootstrapOrderHarnessCompleteness.ps1"
 CMD = ROOT / "Test-TechnicianBootstrapOrderHarness.cmd"
 MANDATORY_PATHS = {
+    "SKILLS.md", "TRIGGERS.md",
     "tooling/profiles/windows/harness/technician-ready/bootstrap-order.contract.json",
     "tooling/profiles/windows/harness/technician-ready/harness.registry.json",
     "tooling/profiles/windows/harness/technician-ready/codebase-map.json",
@@ -55,14 +58,11 @@ class TechnicianBootstrapOrderHarnessTests(unittest.TestCase):
 
     def test_registered_and_mandatory_component_files_exist(self) -> None:
         required = set(self.registry["requiredPaths"]) | MANDATORY_PATHS
-        missing = [path for path in sorted(required) if not (ROOT / path).is_file()]
-        self.assertEqual([], missing)
+        self.assertEqual([], [path for path in sorted(required) if not (ROOT / path).is_file()])
 
     def test_machine_readable_harness_files_parse(self) -> None:
-        json_paths = [ROOT / path for path in self.registry["requiredPaths"] if path.endswith(".json")]
-        for path in json_paths:
-            with self.subTest(path=path):
-                self.assertIsInstance(load(path), dict)
+        for path in [ROOT / path for path in self.registry["requiredPaths"] if path.endswith(".json")]:
+            with self.subTest(path=path): self.assertIsInstance(load(path), dict)
 
     def test_workflows_are_routed_and_unique(self) -> None:
         expected = self.registry["workflowIds"]
@@ -71,6 +71,13 @@ class TechnicianBootstrapOrderHarnessTests(unittest.TestCase):
         self.assertEqual(set(expected), set(routes))
         actual = {load(path)["workflowId"] for path in (HARNESS / "workflows").glob("*.workflow.json")}
         self.assertEqual(set(expected), actual)
+
+    def test_canonical_intake_routes_focused_skill(self) -> None:
+        skills = SKILLS.read_text(encoding="utf-8")
+        triggers = TRIGGERS.read_text(encoding="utf-8")
+        self.assertIn("technician-bootstrap-order-validation", skills)
+        self.assertIn("bootstrap.order-contract-change", triggers)
+        self.assertIn("technician-bootstrap-order-validation", triggers)
 
     def test_artifacts_are_local_and_untracked(self) -> None:
         self.assertFalse(self.artifacts["tracked"])
@@ -88,44 +95,39 @@ class TechnicianBootstrapOrderHarnessTests(unittest.TestCase):
         self.assertIn("must update the contract and affected validators in the same change", coupling["rule"])
         self.assertIn("may not be weakened", coupling["rule"])
 
-    def test_skill_preserves_gate_integrity_and_handoff(self) -> None:
+    def test_skill_satisfies_canonical_contract_and_gate_integrity(self) -> None:
         text = SKILL.read_text(encoding="utf-8")
-        for token in ("repair-failure", "validate-change", "handoff", "Never weaken", "Proof ceiling"):
+        for token in ("id: technician-bootstrap-order-validation", "version: 1.0.0", "status: canonical", "## Trigger", "## Inputs", "## Procedure", "## Outputs", "## Deterministic validation", "## Forbidden scope", "## Stop and escalate", "Never weaken", "## Proof ceiling"):
             self.assertIn(token, text)
 
     def test_ci_runs_new_and_existing_floor(self) -> None:
         text = CI.read_text(encoding="utf-8")
-        for token in (
-            "tests.test_technician_bootstrap_order_harness",
-            "Test-TechnicianBootstrapOrderHarnessCompleteness.ps1",
-            "Get-TechnicianBootstrapOrderHarnessStatus.ps1",
-            "tests.test_technician_bootstrap_order",
-            "Test-TechnicianBootstrapOrder.ps1",
-            "tests.test_technician_agentswitchboard_ready",
-            "git diff --check",
-        ):
+        for token in ("SKILLS.md", "TRIGGERS.md", "tests.test_technician_bootstrap_order_harness", "Test-TechnicianBootstrapOrderHarnessCompleteness.ps1", "Get-TechnicianBootstrapOrderHarnessStatus.ps1", "tests.test_technician_bootstrap_order", "Test-TechnicianBootstrapOrder.ps1", "tests.test_technician_agentswitchboard_ready", "Test-AgentDocumentationContract.ps1", "git diff --check"):
             self.assertIn(token, text)
 
-    def test_opt_in_hook_runs_full_focused_floor_from_repo_root(self) -> None:
+    def test_opt_in_hook_runs_complete_focused_order_from_repo_root(self) -> None:
         text = HOOK.read_text(encoding="utf-8")
-        self.assertIn("diff --cached --name-only", text)
-        self.assertIn("Test-TechnicianBootstrapOrderHarness.cmd", text)
-        self.assertIn("Push-Location -LiteralPath $RootPath", text)
-        self.assertIn("finally", text)
-        self.assertIn("Pop-Location", text)
-        self.assertIn("tests.test_technician_bootstrap_order_harness", text)
-        self.assertIn("Test-TechnicianBootstrapOrderHarnessCompleteness.ps1", text)
-        self.assertIn("Test-TechnicianBootstrapOrder.ps1", text)
-        self.assertIn("diff --cached --check", text)
+        tokens = ["tests.test_technician_bootstrap_order_harness", "tests.test_technician_bootstrap_order", "Test-TechnicianBootstrapOrderHarnessCompleteness.ps1", "Test-TechnicianBootstrapOrder.ps1", "tests.test_technician_agentswitchboard_ready", "Test-AgentDocumentationContract.ps1", "Get-TechnicianBootstrapOrderHarnessStatus.ps1", "diff --cached --check"]
+        for token in ("SKILLS.md", "TRIGGERS.md", "Test-TechnicianBootstrapOrderHarness.cmd", "Push-Location -LiteralPath $RootPath", "finally", "Pop-Location", *tokens): self.assertIn(token, text)
+        positions = [text.index(token) for token in tokens]
+        self.assertEqual(positions, sorted(positions))
         self.assertNotIn("git reset", text.lower())
         self.assertNotIn("git clean", text.lower())
 
-    def test_operator_cmd_is_location_independent(self) -> None:
+    def test_operator_cmd_is_location_independent_and_runs_documentation_floor(self) -> None:
         text = CMD.read_text(encoding="utf-8")
         self.assertIn('pushd "%ROOT%"', text)
         self.assertIn("python -m unittest tests.test_technician_bootstrap_order_harness -v", text)
+        self.assertIn("Test-AgentDocumentationContract.ps1", text)
         self.assertIn("popd", text)
         self.assertLess(text.index('pushd "%ROOT%"'), text.index("python -m unittest tests.test_technician_bootstrap_order_harness -v"))
+
+    def test_status_reports_component_state_not_validation_readiness(self) -> None:
+        text = STATUS.read_text(encoding="utf-8")
+        self.assertIn("components-complete-validation-unproven", text)
+        self.assertIn("unproven-by-status-reporter", text)
+        self.assertIn("does not execute the validation order", text)
+        self.assertNotIn("repository-ready", text)
 
     def test_status_and_validator_write_only_outside_repo_by_default(self) -> None:
         for path in (STATUS, VALIDATOR):
@@ -148,10 +150,9 @@ class TechnicianBootstrapOrderHarnessTests(unittest.TestCase):
     def test_codebase_map_names_build_test_and_no_deploy(self) -> None:
         names = {item["name"] for item in self.map["commands"]}
         self.assertIn("Harness completeness", names)
-        self.assertIn("Existing order contracts", names)
+        self.assertIn("Agent documentation contract", names)
         self.assertIsNone(self.map["deploy"]["command"])
         self.assertIn("outside this harness-infrastructure sprint", self.map["deploy"]["reason"])
 
 
-if __name__ == "__main__":
-    unittest.main()
+if __name__ == "__main__": unittest.main()
