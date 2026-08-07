@@ -62,7 +62,8 @@ class TechnicianBootstrapOrderHarnessTests(unittest.TestCase):
 
     def test_machine_readable_harness_files_parse(self) -> None:
         for path in [ROOT / path for path in self.registry["requiredPaths"] if path.endswith(".json")]:
-            with self.subTest(path=path): self.assertIsInstance(load(path), dict)
+            with self.subTest(path=path):
+                self.assertIsInstance(load(path), dict)
 
     def test_workflows_are_routed_and_unique(self) -> None:
         expected = self.registry["workflowIds"]
@@ -107,9 +108,19 @@ class TechnicianBootstrapOrderHarnessTests(unittest.TestCase):
 
     def test_opt_in_hook_runs_complete_focused_order_from_repo_root(self) -> None:
         text = HOOK.read_text(encoding="utf-8")
-        tokens = ["tests.test_technician_bootstrap_order_harness", "tests.test_technician_bootstrap_order", "Test-TechnicianBootstrapOrderHarnessCompleteness.ps1", "Test-TechnicianBootstrapOrder.ps1", "tests.test_technician_agentswitchboard_ready", "Test-AgentDocumentationContract.ps1", "Get-TechnicianBootstrapOrderHarnessStatus.ps1", "diff --cached --check"]
-        for token in ("SKILLS.md", "TRIGGERS.md", "Test-TechnicianBootstrapOrderHarness.cmd", "Push-Location -LiteralPath $RootPath", "finally", "Pop-Location", *tokens): self.assertIn(token, text)
-        positions = [text.index(token) for token in tokens]
+        execution_tokens = [
+            "& python -m unittest tests.test_technician_bootstrap_order_harness -v",
+            "& python -m unittest tests.test_technician_bootstrap_order -v",
+            "& pwsh -NoLogo -NoProfile -File (Join-Path $RootPath 'scripts/Test-TechnicianBootstrapOrderHarnessCompleteness.ps1')",
+            "& pwsh -NoLogo -NoProfile -File (Join-Path $RootPath 'scripts/Test-TechnicianBootstrapOrder.ps1')",
+            "& python -m unittest tests.test_technician_agentswitchboard_ready -v",
+            "& pwsh -NoLogo -NoProfile -File (Join-Path $RootPath 'scripts/Test-AgentDocumentationContract.ps1')",
+            "& pwsh -NoLogo -NoProfile -File (Join-Path $RootPath 'tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1')",
+            "& git -C $RootPath diff --cached --check",
+        ]
+        for token in ("SKILLS.md", "TRIGGERS.md", "Test-TechnicianBootstrapOrderHarness.cmd", "Push-Location -LiteralPath $RootPath", "finally", "Pop-Location", *execution_tokens):
+            self.assertIn(token, text)
+        positions = [text.index(token) for token in execution_tokens]
         self.assertEqual(positions, sorted(positions))
         self.assertNotIn("git reset", text.lower())
         self.assertNotIn("git clean", text.lower())
@@ -155,4 +166,5 @@ class TechnicianBootstrapOrderHarnessTests(unittest.TestCase):
         self.assertIn("outside this harness-infrastructure sprint", self.map["deploy"]["reason"])
 
 
-if __name__ == "__main__": unittest.main()
+if __name__ == "__main__":
+    unittest.main()
