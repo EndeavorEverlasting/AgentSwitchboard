@@ -1,0 +1,88 @@
+{
+  "schema": "agentswitchboard.agent-fleet-readiness-artifact-registry.v1",
+  "harnessId": "agentswitchboard.agent-fleet-readiness-harness.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "artifacts": [
+    {
+      "artifactId": "fleet-state",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\state.json",
+      "producer": "tooling/gnhf/Setup-AgentSwitchboard.ps1",
+      "purpose": "Installed fleet adapter discovery/readiness state consumed by Start-AgentSwitchboard.ps1 and startup reporting.",
+      "tracked": false
+    },
+    {
+      "artifactId": "installed-operator-launcher",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\agent-switchboard.cmd",
+      "producer": "tooling/gnhf/Start-AgentSwitchboard.ps1 via Install-OperatorLauncher",
+      "purpose": "Reusable post-bootstrap operator entrypoint. Presence alone is insufficient; pair with fleet-state and readiness output.",
+      "tracked": false
+    },
+    {
+      "artifactId": "setup-summary",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\setup-logs\\<timestamp>\\setup-summary.json",
+      "producer": "tooling/gnhf/Setup-AgentSwitchboard.ps1",
+      "purpose": "Machine-readable bootstrap/repair result including step statuses, agents, install root, and error state.",
+      "tracked": false
+    },
+    {
+      "artifactId": "setup-transcript",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\setup-logs\\<timestamp>\\setup-transcript.txt",
+      "producer": "tooling/gnhf/Setup-AgentSwitchboard.ps1",
+      "purpose": "Human diagnostic transcript for bootstrap/repair attempts.",
+      "tracked": false
+    },
+    {
+      "artifactId": "startup-readiness-json",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\reports\\startup\\agent-startup-readiness-<timestamp>.json",
+      "producer": "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
+      "purpose": "Machine-readable local adapter readiness; does not prove provider authentication or hosted response.",
+      "tracked": false
+    },
+    {
+      "artifactId": "startup-readiness-markdown",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\reports\\startup\\agent-startup-readiness-<timestamp>.md",
+      "producer": "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
+      "purpose": "English-language startup/readiness report with next actions per agent.",
+      "tracked": false
+    },
+    {
+      "artifactId": "provider-route-proof",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\logs\\provider-routes\\<timestamp>-<sprint-name>.json",
+      "producer": "tooling/gnhf/Start-AgentSwitchboard.ps1",
+      "purpose": "Launch-time route evidence for provider-specific paths such as DeepSeek through OpenCode.",
+      "tracked": false
+    }
+  ],
+  "stateGates": [
+    {
+      "state": "not-bootstrapped",
+      "condition": "fleet-state missing AND installed-operator-launcher missing",
+      "nextWorkflow": "bootstrap-or-list-readiness",
+      "requiredAction": "run repository-owned setup/bootstrap"
+    },
+    {
+      "state": "partial-or-inconsistent",
+      "condition": "exactly one of fleet-state or installed-operator-launcher exists",
+      "nextWorkflow": "bootstrap-or-list-readiness",
+      "requiredAction": "run repository-owned setup in repair/reuse mode; do not fabricate the missing surface"
+    },
+    {
+      "state": "installed-unclassified",
+      "condition": "fleet-state exists AND installed-operator-launcher exists",
+      "nextWorkflow": "bootstrap-or-list-readiness",
+      "requiredAction": "run -ListAgents/readiness before choosing an agent"
+    },
+    {
+      "state": "adapter-ready",
+      "condition": "readiness output reports requested adapter ready or verification-required",
+      "nextWorkflow": "pick-up-agent-task",
+      "requiredAction": "apply target-repository cleanliness, prompt, provider, and stop-condition gates before sprint launch"
+    }
+  ],
+  "namingConventions": [
+    "Generated setup and readiness evidence is local-operational and untracked.",
+    "Timestamped run directories/files are producer-owned; agents resolve them through this registry or producer output instead of guessing paths.",
+    "Do not copy machine-specific paths, credentials, provider secrets, or raw runtime logs into tracked milestone docs.",
+    "A launcher path is an installed surface, not proof of readiness by itself."
+  ]
+}
