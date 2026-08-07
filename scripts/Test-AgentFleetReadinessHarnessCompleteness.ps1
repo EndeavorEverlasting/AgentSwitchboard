@@ -114,6 +114,7 @@ $skillText = Get-Content -LiteralPath (Join-Path $RootPath '.ai/skills/agent-fle
 foreach ($token in @(
     'id: agent-fleet-readiness',
     'version: 1.0.0',
+    'status: experimental',
     'Separate terminal readiness from fleet readiness',
     'Inspect both installed-state surfaces before post-setup commands',
     'not-bootstrapped',
@@ -124,6 +125,18 @@ foreach ($token in @(
     'No post-setup launcher command before installed-state classification'
 )) {
     Add-Check ($skillText.Contains($token)) "skill/$token" 'required readiness rule is missing'
+}
+
+$rootMapText = Get-Content -LiteralPath (Join-Path $RootPath 'CODEBASE_MAP.md') -Raw
+foreach ($token in @(
+    '## Agent fleet readiness harness',
+    'tooling/profiles/windows/harness/agent-fleet-readiness/codebase-map.json',
+    '.ai/skills/agent-fleet-readiness/SKILL.md',
+    'not-bootstrapped',
+    'partial-or-inconsistent',
+    'Canonical `SKILLS.md`/`TRIGGERS.md` routing remains unchanged'
+)) {
+    Add-Check ($rootMapText.Contains($token)) "root-map/$token" 'root codebase map does not expose the scoped harness or P00 boundary'
 }
 
 $guideText = Get-Content -LiteralPath (Join-Path $RootPath 'docs/harness/agent-fleet-readiness.md') -Raw
