@@ -1,0 +1,44 @@
+{
+  "schema": "agentswitchboard.operator-command-delivery-artifact-registry.v1",
+  "harnessId": "agentswitchboard.operator-command-delivery-harness.v1",
+  "tracked": false,
+  "sensitivity": "local-operational",
+  "artifacts": [
+    {
+      "artifactId": "operator-command-delivery-report",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\operator-command-delivery\\runs\\<runId>\\operator-command-delivery-report.md",
+      "producer": "operator command workflow or owning runtime command",
+      "purpose": "Human-readable command identity, source verification, validation status, exit code, and next action."
+    },
+    {
+      "artifactId": "operator-command-delivery-result",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\operator-command-delivery\\runs\\<runId>\\operator-command-delivery-result.json",
+      "producer": "operator command workflow or owning runtime command",
+      "purpose": "Machine-readable command source, exact ref, exact file list, integrity checks, child exit code, and proof ceiling."
+    },
+    {
+      "artifactId": "downstream-runtime-artifact",
+      "pathPattern": "resolved from the downstream harness registry, manifest, workflow, or operator documentation",
+      "producer": "downstream owning launcher or validator",
+      "purpose": "Canonical runtime evidence; command delivery must print or open it when the downstream command succeeds."
+    }
+  ],
+  "namingConventions": {
+    "runId": "UTC timestamp plus short random suffix",
+    "generatedEvidenceTracked": false,
+    "repoLocalGeneratedEvidenceAllowed": false
+  },
+  "requiredResultFields": [
+    "schema",
+    "runId",
+    "repository",
+    "requestedRef",
+    "resolvedCommit",
+    "files",
+    "transportChecks",
+    "childExitCode",
+    "status",
+    "proofLevel",
+    "proofCeiling"
+  ]
+}
