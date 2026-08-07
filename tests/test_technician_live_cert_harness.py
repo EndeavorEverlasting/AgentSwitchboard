@@ -26,6 +26,9 @@ SURFACE_VALIDATOR_PATH = os.path.join(
 HARNESS_VALIDATOR_PATH = os.path.join(
     REPO_ROOT, "scripts", "Test-TechnicianLiveCertHarness.ps1"
 )
+TOOLCHAIN_VALIDATOR_PATH = os.path.join(
+    REPO_ROOT, "scripts", "Test-WindowsToolchainLaunch.ps1"
+)
 STATUS_REPORTER_PATH = os.path.join(
     REPO_ROOT,
     "tooling",
@@ -83,10 +86,12 @@ class TestTechnicianLiveCertHarness(unittest.TestCase):
         self.assertFalse(self.manifest["networkAllowedByValidators"])
         self.assertFalse(self.manifest["targetMutationAllowedByValidators"])
         self.assertIn("require the workstation live-cert sequence", self.manifest["proofCeiling"])
+        guards = {guard["id"] for guard in self.manifest["knownFailureGuards"]}
+        self.assertIn("git-executable-launch-blocked", guards)
 
     def test_all_registered_components_exist(self):
         components = self.manifest["components"]
-        self.assertGreaterEqual(len(components), 14)
+        self.assertGreaterEqual(len(components), 26)
         ids = [component["id"] for component in components]
         self.assertEqual(len(ids), len(set(ids)))
         for component in components:
@@ -121,12 +126,14 @@ class TestTechnicianLiveCertHarness(unittest.TestCase):
         commands = json.dumps(mapping["commands"])
         for token in [
             "tests.test_technician_live_cert_harness",
+            "Test-WindowsToolchainLaunch.ps1",
             "Test-TechnicianLiveCertSurface.ps1",
             "Test-TechnicianLiveCertHarness.ps1",
             "git --no-pager diff --check",
         ]:
             self.assertIn(token, commands)
         traps = "\n".join(mapping["knownTraps"])
+        self.assertIn("PATH resolution does not prove Windows can launch", traps)
         self.assertIn("PSScriptRoot", traps)
         self.assertIn("string,string overload", traps)
         self.assertIn("interactive pager", traps)
@@ -165,11 +172,17 @@ class TestTechnicianLiveCertHarness(unittest.TestCase):
             ],
             step_ids,
         )
+        repair_text = json.dumps(repair)
+        self.assertIn("Test-Technician-Toolchain-Preflight.cmd", repair_text)
+        self.assertIn("Windows cannot launch any concrete Git executable", repair_text)
         self.assertIn("do not prove", repair["proofCeiling"])
 
     def test_artifact_registry_keeps_generated_evidence_untracked(self):
         registry = read_json(os.path.join(HARNESS_ROOT, "artifact-registry.json"))
-        self.assertGreaterEqual(len(registry["artifacts"]), 7)
+        self.assertGreaterEqual(len(registry["artifacts"]), 9)
+        ids = {artifact["artifactId"] for artifact in registry["artifacts"]}
+        self.assertIn("toolchain-launch-preflight-json", ids)
+        self.assertIn("toolchain-launch-preflight-report", ids)
         for artifact in registry["artifacts"]:
             self.assertFalse(artifact["tracked"], artifact["artifactId"])
             self.assertEqual("local-operational", artifact["sensitivity"])
@@ -224,16 +237,45 @@ class TestTechnicianLiveCertHarness(unittest.TestCase):
             ),
         )
 
-    def test_harness_validator_checks_tracking_children_and_noninteractive_git(self):
-        validator = read_text(HARNESS_VALIDATOR_PATH)
+    def test_toolchain_validator_executes_bounded_no_shell_git_probe(self):
+        validator = read_text(TOOLCHAIN_VALIDATOR_PATH)
         for token in [
-            "git -C $RootPath ls-files --error-unmatch",
-            "Test-TechnicianLiveCertSurface.ps1",
-            "tests.test_technician_live_cert_harness",
-            "tests.test_technician_live_cert_surface",
-            "git -C $RootPath --no-pager diff --check",
+            "Get-Command git.exe -All",
+            "System.Diagnostics.ProcessStartInfo",
+            "$psi.UseShellExecute = $false",
+            "$psi.RedirectStandardOutput = $true",
+            "$process.WaitForExit($TimeoutSeconds * 1000)",
+            "$psi.Arguments = '--version'",
+            "git-executable-launch-and-version-observed",
         ]:
             self.assertIn(token, validator)
+
+    def test_harness_validator_uses_proven_git_path_and_runs_children(self):
+        validator = read_text(HARNESS_VALIDATOR_PATH)
+        for token in [
+            "toolchain/git-launch",
+            "$gitPath -C $RootPath ls-files --error-unmatch",
+            "Test-TechnicianLiveCertSurface.ps1",
+            "tests.test_technician_live_cert_harness",
+            "tests.test_windows_toolchain_launch_harness",
+            "tests.test_technician_live_cert_surface",
+            "$gitPath -C $RootPath --no-pager diff --check",
+        ]:
+            self.assertIn(token, validator)
+        self.assertNotIn("& git -C $RootPath ls-files --error-unmatch", validator)
+        self.assertNotIn("& git -C $RootPath --no-pager diff --check", validator)
+
+    def test_status_reporter_degrades_when_git_launch_is_blocked(self):
+        reporter = read_text(STATUS_REPORTER_PATH)
+        for token in [
+            "toolchainPreflightValidator",
+            "blocked-git-unavailable",
+            "Git launch:",
+            "Selected Git:",
+            "Test-Technician-Toolchain-Preflight.cmd",
+            "UNAVAILABLE",
+        ]:
+            self.assertIn(token, reporter)
 
     def test_hook_is_opt_in_and_blocks_generated_evidence(self):
         hook = read_text(HOOK_PATH)
@@ -251,6 +293,9 @@ class TestTechnicianLiveCertHarness(unittest.TestCase):
         workflow = read_text(CI_PATH)
         for token in [
             "python -m unittest tests.test_technician_live_cert_harness",
+            "python -m unittest tests.test_windows_toolchain_launch_harness",
+            "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-WindowsToolchainLaunch.ps1",
+            "pwsh -NoLogo -NoProfile -File scripts/Test-WindowsToolchainLaunch.ps1",
             "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertSurface.ps1",
             "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertHarness.ps1",
             "pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertSurface.ps1",
@@ -268,6 +313,7 @@ class TestTechnicianLiveCertHarness(unittest.TestCase):
             "scripts/Test-TechnicianLiveCertHarness.ps1",
             "Windows PowerShell 5.1",
             "PowerShell 7",
+            "Test-Technician-Toolchain-Preflight.cmd",
         ]:
             self.assertIn(token, skill)
         for token in [
@@ -277,6 +323,7 @@ class TestTechnicianLiveCertHarness(unittest.TestCase):
             "git --no-pager",
             "exact operator command",
             "proof ceiling",
+            "Test-Technician-Toolchain-Preflight.cmd",
         ]:
             self.assertIn(token, guide)
 
