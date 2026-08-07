@@ -65,66 +65,69 @@ try {
         $result.status = 'surface-passed'
         $result.proofLevel = 'surface-only'
         $result.proofCeiling = 'Proves the child-executable launch probe can load and emit its evidence contract without starting the requested executable.'
-        return
-    }
-
-    $resolved = (Resolve-Path -LiteralPath $ExecutablePath -ErrorAction Stop).Path
-    $result.executablePath = $resolved
-
-    $psi = [Diagnostics.ProcessStartInfo]::new()
-    $psi.FileName = $resolved
-    $psi.UseShellExecute = $false
-    $psi.RedirectStandardOutput = $true
-    $psi.RedirectStandardError = $true
-    $psi.CreateNoWindow = $true
-    if ($ArgumentList.Count -gt 0) {
-        $psi.Arguments = (@($ArgumentList | ForEach-Object { ConvertTo-NativeArgument -Value ([string]$_) }) -join ' ')
-    }
-
-    $process = [Diagnostics.Process]::new()
-    $process.StartInfo = $psi
-    try {
-        [void]$process.Start()
-    }
-    catch {
-        $result.status = 'blocked'
-        $result.startError = $_.Exception.Message
-        $result.stderr = $_.Exception.Message
-        $result.proofLevel = 'child-executable-launch-blocked'
-        $result.proofCeiling = 'The exact executable path was resolved, but process creation was blocked before downstream runtime work began.'
-        $exitCode = 41
-        return
-    }
-
-    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
-    $stderrTask = $process.StandardError.ReadToEndAsync()
-    if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
-        $result.status = 'timed-out'
-        $result.timedOut = $true
-        $result.proofLevel = 'child-executable-launch-timeout'
-        $result.proofCeiling = 'The executable started but did not complete the bounded probe in time; downstream runtime work remains unproven.'
-        try { $process.Kill() } catch {}
-        try { $process.WaitForExit() } catch {}
-        $exitCode = 42
     }
     else {
-        $result.exitCode = $process.ExitCode
-        if ($process.ExitCode -eq 0) {
-            $result.status = 'passed'
-            $result.proofLevel = 'child-executable-launch'
-            $result.proofCeiling = 'Proves this exact executable can start and complete only the supplied bounded arguments. It does not prove downstream launcher, tmux, GUI, provider, or operator behavior.'
+        $resolved = (Resolve-Path -LiteralPath $ExecutablePath -ErrorAction Stop).Path
+        $result.executablePath = $resolved
+
+        $psi = [Diagnostics.ProcessStartInfo]::new()
+        $psi.FileName = $resolved
+        $psi.UseShellExecute = $false
+        $psi.RedirectStandardOutput = $true
+        $psi.RedirectStandardError = $true
+        $psi.CreateNoWindow = $true
+        if ($ArgumentList.Count -gt 0) {
+            $psi.Arguments = (@($ArgumentList | ForEach-Object { ConvertTo-NativeArgument -Value ([string]$_) }) -join ' ')
         }
-        else {
-            $result.status = 'child-nonzero'
-            $result.proofLevel = 'child-executable-launched-nonzero'
-            $result.proofCeiling = 'Proves process creation succeeded, but the bounded child command returned nonzero; downstream runtime work remains unproven.'
-            $exitCode = $process.ExitCode
-            if ($exitCode -lt 1 -or $exitCode -gt 255) { $exitCode = 43 }
+
+        $process = [Diagnostics.Process]::new()
+        $process.StartInfo = $psi
+        $startedProcess = $false
+        try {
+            [void]$process.Start()
+            $startedProcess = $true
+        }
+        catch {
+            $result.status = 'blocked'
+            $result.startError = $_.Exception.Message
+            $result.stderr = $_.Exception.Message
+            $result.proofLevel = 'child-executable-launch-blocked'
+            $result.proofCeiling = 'The exact executable path was resolved, but process creation was blocked before downstream runtime work began.'
+            $exitCode = 41
+        }
+
+        if ($startedProcess) {
+            $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+            $stderrTask = $process.StandardError.ReadToEndAsync()
+            if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
+                $result.status = 'timed-out'
+                $result.timedOut = $true
+                $result.proofLevel = 'child-executable-launch-timeout'
+                $result.proofCeiling = 'The executable started but did not complete the bounded probe in time; downstream runtime work remains unproven.'
+                try { $process.Kill() } catch {}
+                try { $process.WaitForExit() } catch {}
+                $exitCode = 42
+            }
+            else {
+                $result.exitCode = $process.ExitCode
+                if ($process.ExitCode -eq 0) {
+                    $result.status = 'passed'
+                    $result.proofLevel = 'child-executable-launch'
+                    $result.proofCeiling = 'Proves this exact executable can start and complete only the supplied bounded arguments. It does not prove downstream launcher, tmux, GUI, provider, or operator behavior.'
+                }
+                else {
+                    $result.status = 'child-nonzero'
+                    $result.proofLevel = 'child-executable-launched-nonzero'
+                    $result.proofCeiling = 'Proves process creation succeeded, but the bounded child command returned nonzero; downstream runtime work remains unproven.'
+                    $exitCode = $process.ExitCode
+                    if ($exitCode -lt 1 -or $exitCode -gt 255) { $exitCode = 43 }
+                }
+            }
+
+            $result.stdout = Limit-Text -Value ($stdoutTask.GetAwaiter().GetResult()).Trim()
+            $result.stderr = Limit-Text -Value ($stderrTask.GetAwaiter().GetResult()).Trim()
         }
     }
-
-    $result.stdout = Limit-Text -Value ($stdoutTask.GetAwaiter().GetResult()).Trim()
-    $result.stderr = Limit-Text -Value ($stderrTask.GetAwaiter().GetResult()).Trim()
 }
 catch {
     if ($result.status -eq 'running') {
