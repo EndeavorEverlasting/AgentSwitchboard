@@ -1,22 +1,25 @@
 {
   "schema": "agentswitchboard.agent-fleet-readiness-workflow.v1",
   "workflowId": "handle-readiness-failure",
-  "purpose": "Classify and recover from fleet setup/readiness failures without mislabeling them as agent, provider, tmux, or target-repository failures.",
+  "purpose": "Classify and recover from fleet setup/readiness failures without mislabeling stale paths, shell mistakes, optional Hermes problems, provider failures, tmux state, or target-repository gates.",
   "steps": [
-    {"order": 1, "name": "preserve evidence", "action": "Capture exact command, exit code, setup-summary/setup-transcript or startup-readiness artifact, and installed state observations before retrying."},
-    {"order": 2, "name": "classify boundary", "classes": {
-      "launcher-missing": "post-setup launcher absent; bootstrap/readiness-state failure",
-      "state-missing": "fleet state absent; bootstrap/readiness-state failure",
-      "partial-install": "exactly one of state or launcher exists; repair/reuse setup required",
-      "adapter-blocked": "fleet installed but requested adapter unavailable",
-      "provider-verification": "adapter available but authentication/model/quota/hosted response remains launch-time proof",
-      "target-repo-dirty": "target repository does not satisfy GNHF launch contract",
-      "sprint-runtime": "fleet and target gates passed; failure occurred after sprint launch"
+    {"order":1,"name":"preserve evidence","action":"Capture exact command, shell, current directory, exit code, setup-summary/setup-transcript or startup-readiness artifact, and installed state observations before retrying."},
+    {"order":2,"name":"classify boundary","classes":{
+      "repository-path-invalid":"selected directory is missing or is not the expected repository root; repair path discovery before Git/setup",
+      "shell-command-mismatch":"command belongs to a different shell, such as PowerShell irm used in cmd.exe; repair delivery syntax before diagnosing product/provider state",
+      "hermes-deferred":"Hermes unavailable, skipped, blocked, or hanging while core setup is the priority; use -SkipHermesInstall, record Hermes=TBD, continue core proof",
+      "launcher-missing":"post-setup launcher absent; bootstrap/readiness-state failure",
+      "state-missing":"fleet state absent; bootstrap/readiness-state failure",
+      "partial-install":"exactly one of state or launcher exists; repair/reuse setup required",
+      "adapter-blocked":"fleet installed but requested non-optional adapter unavailable",
+      "provider-verification":"adapter available but authentication/model/quota/hosted response remains launch-time proof",
+      "target-repo-dirty":"target repository does not satisfy GNHF launch contract",
+      "sprint-runtime":"fleet and target gates passed; failure occurred after sprint launch"
     }},
-    {"order": 3, "name": "repair owning boundary only", "action": "Use repository-owned setup/readiness surfaces for bootstrap problems; provider tool flow for provider problems; target-repo preservation/isolation for dirty work; sprint evidence for runtime problems."},
-    {"order": 4, "name": "avoid proof inflation", "action": "Do not call a missing installed launcher an agent failure; do not call tmux attachment proof fleet installation proof; do not call adapter readiness hosted-response proof."},
-    {"order": 5, "name": "rerun exact failed gate", "action": "After repair, rerun only from a known safe state and preserve the first failed artifact as a separate attempt."},
-    {"order": 6, "name": "handoff", "action": "Report boundary, evidence path, repaired state, remaining unproved gate, and one exact next command."}
+    {"order":3,"name":"repair owning boundary only","action":"Repair repository discovery for path failures; repair shell delivery for parser failures; defer Hermes through the repository-owned skip flag; use setup/readiness surfaces for core bootstrap problems; provider flow for provider problems; target-repo isolation for dirty work."},
+    {"order":4,"name":"avoid proof inflation","action":"Do not call a stale path an installer failure, a CMD parser error a Hermes failure, a missing installed launcher an agent failure, tmux attachment fleet installation proof, or adapter readiness hosted-response proof."},
+    {"order":5,"name":"rerun exact failed gate","action":"After repair, rerun only from a known safe state and preserve the first failed artifact as a separate attempt. Do not retry Hermes in the core-autoconfig lane after it has been deferred."},
+    {"order":6,"name":"handoff","action":"Report boundary, shell, resolved repo root, evidence path, Hermes deferred/TBD state when applicable, repaired state, remaining unproved gate, and one exact next command."}
   ],
   "proofCeiling": "Failure classification and recovery routing only; success requires observed artifacts from the repaired owning boundary."
 }
