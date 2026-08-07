@@ -10,8 +10,12 @@ $ErrorActionPreference = 'Stop'
 $global:LASTEXITCODE = 0
 
 if ([string]::IsNullOrWhiteSpace($RootPath)) {
-    $RootPath = [string](& git -C $PSScriptRoot rev-parse --show-toplevel 2>$null)
-    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($RootPath)) {
+    $rootLines = @(& git -C $PSScriptRoot rev-parse --show-toplevel 2>$null)
+    if ($LASTEXITCODE -ne 0 -or $rootLines.Count -eq 0) {
+        throw 'Unable to resolve the AgentSwitchboard repository root.'
+    }
+    $RootPath = ([string]$rootLines[0]).Trim()
+    if ([string]::IsNullOrWhiteSpace($RootPath)) {
         throw 'Unable to resolve the AgentSwitchboard repository root.'
     }
 }
@@ -23,15 +27,33 @@ if (-not (Test-Path -LiteralPath $registryPath -PathType Leaf)) {
 }
 $registry = Get-Content -LiteralPath $registryPath -Raw | ConvertFrom-Json
 
-$components = foreach ($relativePath in @($registry.requiredPaths)) {
-    [pscustomobject]@{
-        path = [string]$relativePath
-        exists = Test-Path -LiteralPath (Join-Path $RootPath ([string]$relativePath)) -PathType Leaf
+$components = @(
+    foreach ($relativePath in @($registry.requiredPaths)) {
+        [pscustomobject]@{
+            path = [string]$relativePath
+            exists = Test-Path -LiteralPath (Join-Path $RootPath ([string]$relativePath)) -PathType Leaf
+        }
     }
-}
+)
 $missingComponents = @($components | Where-Object { -not $_.exists })
-$branch = [string](& git -C $RootPath branch --show-current 2>$null)
-$head = [string](& git -C $RootPath rev-parse HEAD 2>$null)
+
+$branchLines = @(& git -C $RootPath branch --show-current 2>$null)
+if ($LASTEXITCODE -ne 0) {
+    throw 'Unable to resolve the current Git branch state.'
+}
+$branch = if ($branchLines.Count -gt 0 -and -not [string]::IsNullOrWhiteSpace([string]$branchLines[0])) {
+    ([string]$branchLines[0]).Trim()
+} elseif (-not [string]::IsNullOrWhiteSpace($env:GITHUB_HEAD_REF)) {
+    ([string]$env:GITHUB_HEAD_REF).Trim()
+} else {
+    '<detached>'
+}
+
+$headLines = @(& git -C $RootPath rev-parse HEAD 2>$null)
+if ($LASTEXITCODE -ne 0 -or $headLines.Count -eq 0 -or [string]::IsNullOrWhiteSpace([string]$headLines[0])) {
+    throw 'Unable to resolve the current Git HEAD.'
+}
+$head = ([string]$headLines[0]).Trim()
 $status = if ($missingComponents.Count -eq 0) { 'repository-ready' } else { 'incomplete' }
 
 $working = @(
@@ -56,8 +78,8 @@ $result = [ordered]@{
     schema = 'agentswitchboard.technician-bootstrap-order-harness-status.v1'
     status = $status
     repository = [string]$registry.repository
-    branch = $branch.Trim()
-    head = $head.Trim()
+    branch = $branch
+    head = $head
     components = @($components)
     missing = @($missingComponents | ForEach-Object { $_.path })
     working = $working
