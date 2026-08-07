@@ -44,7 +44,7 @@
     {"name": "Diff hygiene", "command": "git --no-pager diff --check", "effect": "read-only", "proof": "patch and whitespace hygiene"}
   ],
   "knownTraps": [
-    "Do not invoke %LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\agent-switchboard.cmd until both the installed launcher and state.json have been checked. A missing launcher is a bootstrap/readiness-state failure, not an agent failure.",
+    "Do not invoke the post-setup launcher at %LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\agent-switchboard.cmd until both the installed launcher and state.json have been checked. A missing launcher is a bootstrap/readiness-state failure, not an agent failure.",
     "A successful tmux/WezTerm/WSL proof does not prove the GNHF fleet is installed. Terminal readiness and agent-fleet readiness are separate gates.",
     "If state.json is missing, run the repository-owned setup/bootstrap workflow before listing agents or launching a sprint.",
     "If exactly one of state.json or agent-switchboard.cmd exists, classify the installation as inconsistent/partial and run setup in repair mode; do not synthesize or copy the missing file manually.",
