@@ -33,7 +33,7 @@ class TestWindowsToolchainLaunchHarness(unittest.TestCase):
         guards = {item["id"] for item in manifest["knownFailureGuards"]}
         self.assertIn("git-executable-launch-blocked", guards)
 
-    def test_preflight_executes_concrete_git_with_bounded_wait(self):
+    def test_preflight_executes_concrete_git_with_bounded_wait_and_cleanup(self):
         script = text(SCRIPT)
         for token in [
             "Get-Command git.exe -All",
@@ -41,6 +41,9 @@ class TestWindowsToolchainLaunchHarness(unittest.TestCase):
             "$psi.UseShellExecute = $false",
             "$psi.RedirectStandardOutput = $true",
             "$process.WaitForExit($TimeoutSeconds * 1000)",
+            "$process.WaitForExit(1000)",
+            "terminationConfirmed",
+            "terminationError",
             "$psi.Arguments = '--version'",
             "windows-toolchain-launch-preflight.json",
             "windows-toolchain-launch-preflight.md",
@@ -48,13 +51,19 @@ class TestWindowsToolchainLaunchHarness(unittest.TestCase):
         ]:
             self.assertIn(token, script)
         self.assertIn("[ValidateRange(1,30)][int]$TimeoutSeconds = 5", script)
+        self.assertNotIn("$process.WaitForExit()", script)
 
-    def test_cmd_wrapper_preserves_child_exit(self):
+    def test_cmd_wrapper_preserves_child_exit_and_has_inbox_fallback(self):
         wrapper = text(CMD)
         for token in [
             'set "ERRORLEVEL="',
             'set "RESULT=0"',
             "where pwsh.exe",
+            "where powershell.exe",
+            ":run_pwsh",
+            ":run_windows_powershell",
+            "pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass",
+            "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass",
             "scripts\\Test-WindowsToolchainLaunch.ps1",
             'set "RESULT=%ERRORLEVEL%"',
             "endlocal & exit /b %RESULT%",
