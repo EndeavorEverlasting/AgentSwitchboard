@@ -5,6 +5,9 @@
 - HEAD: `{{head}}`
 - Generated: `{{generatedAt}}`
 - Status: **{{status}}**
+- Git launch: `{{toolchainStatus}}`
+- Selected Git: `{{selectedGit}}`
+- Toolchain evidence: `{{toolchainEvidence}}`
 - Proof ceiling: {{proofCeiling}}
 
 ## Components
@@ -33,6 +36,6 @@
 
 ## Exact next command
 
-```powershell
+```cmd
 {{nextCommand}}
 ```

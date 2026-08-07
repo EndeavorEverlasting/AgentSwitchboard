@@ -64,15 +64,51 @@ function Write-GitHubFailureAnnotation {
     Write-Host "::error title=Technician live-cert harness contract failure::$encoded"
 }
 
+$gitPath = $null
+if ($env:OS -eq 'Windows_NT') {
+    $toolchainValidator = Join-Path $RootPath ([string]$manifest.entrypoints.toolchainPreflightValidator)
+    try {
+        $toolchainResult = & $toolchainValidator -PassThru
+        $gitPath = [string]$toolchainResult.selectedGit
+        Add-Result ($toolchainResult.status -eq 'passed' -and -not [string]::IsNullOrWhiteSpace($gitPath)) 'toolchain/git-launch' 'Windows could not prove a concrete Git executable launch.'
+    }
+    catch {
+        Add-Result $false 'toolchain/git-launch' $_.Exception.Message
+    }
+}
+else {
+    $git = Get-Command git -ErrorAction SilentlyContinue
+    if ($git) { $gitPath = $git.Source }
+    Add-Result (-not [string]::IsNullOrWhiteSpace($gitPath)) 'toolchain/git-discovery-nonwindows' 'git is unavailable on the non-Windows validation host.'
+}
+
+$toolchainText = Get-Content -LiteralPath (Join-Path $RootPath ([string]$manifest.entrypoints.toolchainPreflightValidator)) -Raw
+foreach ($token in @(
+    'Get-Command git.exe -All',
+    'System.Diagnostics.ProcessStartInfo',
+    '$psi.UseShellExecute = $false',
+    '$process.WaitForExit($TimeoutSeconds * 1000)',
+    "`$psi.Arguments = '--version'",
+    'windows-toolchain-launch-preflight.json',
+    'windows-toolchain-launch-preflight.md'
+)) {
+    Add-Result ($toolchainText.Contains($token)) "toolchain-contract/$token" "Toolchain preflight missing '$token'"
+}
+
 foreach ($component in $manifest.components) {
     $relativePath = [string]$component.path
     $fullPath = Join-Path $RootPath $relativePath
     Add-Result (Test-Path -LiteralPath $fullPath -PathType Leaf) "component/$($component.id)/exists" "Missing $relativePath"
 
     if (Test-Path -LiteralPath $fullPath -PathType Leaf) {
-        & git -C $RootPath ls-files --error-unmatch -- $relativePath *> $null
-        $trackedExit = $LASTEXITCODE
-        Add-Result ($trackedExit -eq 0) "component/$($component.id)/tracked" "$relativePath is not tracked in the Git index"
+        if ($gitPath) {
+            & $gitPath -C $RootPath ls-files --error-unmatch -- $relativePath *> $null
+            $trackedExit = $LASTEXITCODE
+            Add-Result ($trackedExit -eq 0) "component/$($component.id)/tracked" "$relativePath is not tracked in the Git index"
+        }
+        else {
+            Add-Result $false "component/$($component.id)/tracked" 'Git launch/discovery prerequisite is unavailable.'
+        }
     }
 }
 
@@ -101,6 +137,7 @@ Add-Result ($manifest.generatedEvidence.tracked -eq $false) 'evidence/untracked'
 Add-Result ($manifest.implicitHookInstallationAllowed -eq $false) 'hooks/opt-in-only' 'Hook installation must remain opt-in'
 Add-Result ($manifest.networkAllowedByValidators -eq $false) 'validators/no-network' 'Focused validators must remain offline'
 Add-Result ($manifest.targetMutationAllowedByValidators -eq $false) 'validators/no-target-mutation' 'Focused validators must not mutate targets'
+Add-Result ('git-executable-launch-blocked' -in @($manifest.knownFailureGuards.id)) 'guards/git-executable-launch-blocked' 'Manifest must register the executable launch failure guard.'
 
 $operatorGuide = Get-Content -LiteralPath (Join-Path $RootPath $manifest.entrypoints.operatorGuide) -Raw
 foreach ($token in @(
@@ -110,7 +147,9 @@ foreach ($token in @(
     'PSScriptRoot',
     'string/string',
     'proof ceiling',
-    'exact operator command'
+    'exact operator command',
+    'Test-Technician-Toolchain-Preflight.cmd',
+    'PATH or `Get-Command`'
 )) {
     Add-Result ($operatorGuide.Contains($token)) "operator-guide/$token" "Operator guide missing '$token'"
 }
@@ -120,7 +159,9 @@ foreach ($token in @(
     'tooling/profiles/windows/harness/technician-live-cert/manifest.json',
     'scripts/Test-TechnicianLiveCertHarness.ps1',
     'Windows PowerShell 5.1',
-    'PowerShell 7'
+    'PowerShell 7',
+    'Test-Technician-Toolchain-Preflight.cmd',
+    'PATH`, `where`, or `Get-Command`'
 )) {
     Add-Result ($skill.Contains($token)) "skill/$token" "Live-cert skill missing '$token'"
 }
@@ -132,6 +173,8 @@ foreach ($token in @(
     'pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertSurface.ps1',
     'pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertHarness.ps1',
     'python -m unittest tests.test_technician_live_cert_harness',
+    'python -m unittest tests.test_windows_toolchain_launch_harness',
+    'scripts/Test-WindowsToolchainLaunch.ps1',
     'git --no-pager diff --check'
 )) {
     Add-Result ($workflowText.Contains($token)) "ci/$token" "CI workflow missing '$token'"
@@ -167,18 +210,25 @@ if (-not $SkipChildValidators) {
     $python = Get-Command python -ErrorAction SilentlyContinue
     if ($python) {
         Invoke-Checked $python.Source @('-m', 'unittest', 'tests.test_technician_live_cert_harness') 'child/python-harness'
+        Invoke-Checked $python.Source @('-m', 'unittest', 'tests.test_windows_toolchain_launch_harness') 'child/python-toolchain-launch'
         Invoke-Checked $python.Source @('-m', 'unittest', 'tests.test_technician_live_cert_surface') 'child/python-surface'
     } else {
         Add-Result $false 'child/python' 'python is unavailable'
     }
 }
 
-& git -C $RootPath --no-pager diff --check
-Add-Result ($LASTEXITCODE -eq 0) 'git/diff-check' "git diff --check exited with $LASTEXITCODE"
+if ($gitPath) {
+    & $gitPath -C $RootPath --no-pager diff --check
+    Add-Result ($LASTEXITCODE -eq 0) 'git/diff-check' "git diff --check exited with $LASTEXITCODE"
+}
+else {
+    Add-Result $false 'git/diff-check' 'Git launch/discovery prerequisite is unavailable.'
+}
 
 Write-Host '============================================================' -ForegroundColor Cyan
 Write-Host ' Technician Live-Cert Harness Validation Summary' -ForegroundColor White
 Write-Host " PowerShell: $($PSVersionTable.PSVersion)"
+Write-Host " Git: $(if($gitPath){$gitPath}else{'UNAVAILABLE'})"
 Write-Host " Passes: $($passes.Count)" -ForegroundColor Green
 $statusColor = if ($failures.Count -eq 0) { 'Green' } else { 'Red' }
 Write-Host " Failures: $($failures.Count)" -ForegroundColor $statusColor

@@ -1,62 +1,25 @@
 {
   "schemaVersion": 1,
   "mapId": "agentswitchboard.technician-live-cert-codebase-map.v1",
-  "overview": "Scoped harness for the Windows technician P00-P09 live-certification surface and its owned repair commands.",
+  "overview": "Scoped harness for the Windows technician P00-P09 live-certification surface, exact-head readiness, executable toolchain launch preflight, and owned repair commands.",
   "directories": [
-    {
-      "path": "tooling/profiles/windows/technician-live-cert",
-      "purpose": "Stage dispatcher, repair dispatcher, shared module, manifest, schemas, stage implementations, and report template."
-    },
-    {
-      "path": "tooling/profiles/windows/harness/technician-live-cert",
-      "purpose": "Scoped maps, workflows, artifact policy, schema, and operator-report template."
-    },
-    {
-      "path": "tooling/profiles/windows/hooks",
-      "purpose": "Opt-in pre-commit validators; never installed implicitly."
-    },
-    {
-      "path": "scripts",
-      "purpose": "Repository-root validation entrypoints."
-    },
-    {
-      "path": "tests",
-      "purpose": "Dependency-free Python contract and completeness tests."
-    },
-    {
-      "path": "docs/harness",
-      "purpose": "Human-readable state, workflow, failure, and proof guidance."
-    },
-    {
-      "path": ".github/workflows",
-      "purpose": "Windows PowerShell 5.1, PowerShell 7, Linux, Python, CMD dry-run, and diff-hygiene CI."
-    }
+    {"path":"tooling/profiles/windows/technician-live-cert","purpose":"Stage dispatcher, repair dispatcher, shared module, manifest, schemas, stage implementations, and report template."},
+    {"path":"tooling/profiles/windows/harness/technician-live-cert","purpose":"Scoped maps, workflows, artifact policy, schema, and operator-report template."},
+    {"path":"tooling/profiles/windows/hooks","purpose":"Opt-in pre-commit validators; never installed implicitly."},
+    {"path":"scripts","purpose":"Repository-root validation entrypoints, including bounded Windows toolchain launch proof."},
+    {"path":"tests","purpose":"Dependency-free Python contract and completeness tests."},
+    {"path":"docs/harness","purpose":"Human-readable state, workflow, failure, and proof guidance."},
+    {"path":".github/workflows","purpose":"Windows PowerShell 5.1, PowerShell 7, Linux, Python, CMD dry-run, toolchain launch, and diff-hygiene CI."}
   ],
   "entrypoints": [
-    {
-      "path": "Run-Technician-LiveCert.cmd",
-      "purpose": "Full P00-P08 operator run."
-    },
-    {
-      "path": "Technician-LiveCert-P00-Preflight.cmd",
-      "purpose": "Start a new run and prove workstation prerequisites."
-    },
-    {
-      "path": "Repair-Technician-WSL-Ubuntu.cmd",
-      "purpose": "Owned WSL/Ubuntu first-machine repair with reboot continuation."
-    },
-    {
-      "path": "scripts/Test-TechnicianLiveCertSurface.ps1",
-      "purpose": "Focused surface contract validator."
-    },
-    {
-      "path": "scripts/Test-TechnicianLiveCertHarness.ps1",
-      "purpose": "Harness completeness and integration validator."
-    },
-    {
-      "path": "tooling/profiles/windows/Get-TechnicianLiveCertHarnessStatus.ps1",
-      "purpose": "Read-only JSON and English status report."
-    }
+    {"path":"Run-Technician-LiveCert.cmd","purpose":"Full P00-P08 operator run."},
+    {"path":"Technician-LiveCert-P00-Preflight.cmd","purpose":"Start a new run and prove workstation prerequisites."},
+    {"path":"Repair-Technician-WSL-Ubuntu.cmd","purpose":"Owned WSL/Ubuntu first-machine repair with reboot continuation."},
+    {"path":"Test-Technician-Toolchain-Preflight.cmd","purpose":"Before fetch/worktree/runtime work, prove Windows can actually launch a concrete Git executable and persist diagnostic evidence."},
+    {"path":"scripts/Test-WindowsToolchainLaunch.ps1","purpose":"Bounded Git executable discovery and launch validator; emits JSON and Markdown diagnostics without network or target mutation."},
+    {"path":"scripts/Test-TechnicianLiveCertSurface.ps1","purpose":"Focused surface contract validator."},
+    {"path":"scripts/Test-TechnicianLiveCertHarness.ps1","purpose":"Harness completeness and integration validator."},
+    {"path":"tooling/profiles/windows/Get-TechnicianLiveCertHarnessStatus.ps1","purpose":"Read-only JSON and English status report."}
   ],
   "configurationFiles": [
     "tooling/profiles/windows/technician-live-cert/technician-live-cert.manifest.json",
@@ -66,27 +29,19 @@
     "tooling/profiles/windows/harness/technician-live-cert/schemas/technician-live-cert-harness.schema.json"
   ],
   "commands": {
-    "focusedPython": [
-      "python -m unittest tests.test_technician_live_cert_harness",
-      "python -m unittest tests.test_technician_live_cert_surface"
+    "toolchainPreflight": [
+      "Test-Technician-Toolchain-Preflight.cmd",
+      "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\\Test-WindowsToolchainLaunch.ps1",
+      "pwsh -NoLogo -NoProfile -File scripts/Test-WindowsToolchainLaunch.ps1"
     ],
-    "windowsPowerShell51": [
-      "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\\Test-TechnicianLiveCertSurface.ps1",
-      "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\\Test-TechnicianLiveCertHarness.ps1"
-    ],
-    "powerShell7": [
-      "pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertSurface.ps1",
-      "pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertHarness.ps1"
-    ],
-    "operatorStatus": [
-      "pwsh -NoLogo -NoProfile -File tooling/profiles/windows/Get-TechnicianLiveCertHarnessStatus.ps1"
-    ],
-    "hygiene": [
-      "git --no-pager diff --check",
-      "pwsh -NoLogo -NoProfile -File tooling/profiles/windows/hooks/Invoke-TechnicianLiveCertPreCommit.ps1"
-    ]
+    "focusedPython": ["python -m unittest tests.test_technician_live_cert_harness","python -m unittest tests.test_technician_live_cert_surface"],
+    "windowsPowerShell51": ["powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\\Test-TechnicianLiveCertSurface.ps1","powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\\Test-TechnicianLiveCertHarness.ps1"],
+    "powerShell7": ["pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertSurface.ps1","pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertHarness.ps1"],
+    "operatorStatus": ["pwsh -NoLogo -NoProfile -File tooling/profiles/windows/Get-TechnicianLiveCertHarnessStatus.ps1"],
+    "hygiene": ["git --no-pager diff --check","pwsh -NoLogo -NoProfile -File tooling/profiles/windows/hooks/Invoke-TechnicianLiveCertPreCommit.ps1"]
   },
   "knownTraps": [
+    "Get-Command or PATH resolution does not prove Windows can launch an executable; prove git.exe with a bounded no-shell process start and preserve candidate/error evidence before fetch or worktree mutation.",
     "PSScriptRoot can be empty while a parameter default expression is evaluated in Windows PowerShell 5.1; resolve it in the script body.",
     "System.String.Replace can bind to char,char when passed [char]0 and an empty string; force the string,string overload.",
     "Hosted CI skips real WSL/Ubuntu runtime and cannot promote P00 workstation proof.",
@@ -94,5 +49,5 @@
     "A stage may not pass from process creation alone; child exit, effective-state readback, and required observation remain mandatory.",
     "Generated run evidence contains local account and path data and must remain untracked."
   ],
-  "proofCeiling": "Tracked harness structure, cross-shell parser and contract validation, fixture-safe CMD dispatch, local artifact policy, and exact failure-boundary reporting only. Live WSL initialization, visible WezTerm behavior, tmux attachment, agent launch, repeatability, and operator acceptance require the workstation live-cert sequence."
+  "proofCeiling": "Tracked harness structure, cross-shell parser and contract validation, fixture-safe CMD dispatch, bounded Git executable launch proof, local artifact policy, and exact failure-boundary reporting only. Live repository fetch, WSL initialization, visible WezTerm behavior, tmux attachment, agent launch, repeatability, and operator acceptance require their owning runtime sequence."
 }
