@@ -20,6 +20,7 @@
     "pythonContracts": "tests/test_technician_bootstrap_order_harness.py",
     "statusReporter": "tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1",
     "preCommitHook": "tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPreCommit.ps1",
+    "prePushHook": "tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPrePush.ps1",
     "operatorValidator": "Test-TechnicianBootstrapOrderHarness.cmd",
     "ci": ".github/workflows/technician-bootstrap-order.yml",
     "operatorGuide": "docs/harness/technician-bootstrap-order-harness.md"
@@ -27,7 +28,7 @@
   "directories": [
     {"path": "tooling/profiles/windows/harness/technician-ready", "purpose": "Focused contracts, registries, maps, workflows, and report template."},
     {"path": "tooling/profiles/windows", "purpose": "Windows technician prerequisite/runtime owners and component-status reporter."},
-    {"path": "tooling/profiles/windows/hooks", "purpose": "Opt-in validation helpers; never installed implicitly."},
+    {"path": "tooling/profiles/windows/hooks", "purpose": "Opt-in pre-commit and pre-push validation helpers; never installed implicitly."},
     {"path": ".ai/skills", "purpose": "Scoped repeatable agent procedures selected through canonical SKILLS.md/TRIGGERS.md routing."},
     {"path": "scripts", "purpose": "Focused PowerShell completeness and order validation."},
     {"path": "tests", "purpose": "Dependency-free harness and ordering contracts."},
@@ -44,6 +45,7 @@
   ],
   "commands": [
     {"name": "Harness completeness", "command": "Test-TechnicianBootstrapOrderHarness.cmd", "effect": "read-only repository validation plus local temp report", "proof": "component presence, canonical routing, registry/workflow coupling, focused static order checks, documentation contract, and diff hygiene"},
+    {"name": "Pre-push validation", "command": "pwsh -NoLogo -NoProfile -File tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPrePush.ps1 -ExpectedHead <sha>", "effect": "read-only tracked-state and outgoing-range validation plus local temp report", "proof": "attached outgoing branch identity, optional exact HEAD, clean harness-owned tracked state, canonical harness validation, and outgoing commit-range diff hygiene"},
     {"name": "Dependency-free harness contracts", "command": "python -m unittest tests.test_technician_bootstrap_order_harness -v", "effect": "read-only", "proof": "registry, workflow, artifact, skill, hook, canonical routing, and CI contract semantics"},
     {"name": "Existing order contracts", "command": "python -m unittest tests.test_technician_bootstrap_order -v", "effect": "read-only", "proof": "front-door and prerequisite ordering contract"},
     {"name": "Focused PowerShell order validator", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianBootstrapOrder.ps1 -RootPath .", "effect": "read-only", "proof": "source token ordering and PowerShell parseability"},
@@ -60,6 +62,7 @@
     "Static source anchors are intentionally refactor-coupled; semantic refactors update contract and validators together.",
     "The scoped skill must remain reachable from canonical SKILLS.md and TRIGGERS.md.",
     "Component-complete is not validation-ready; validators and exact-head CI establish correctness.",
+    "A pre-push proof requires an attached outgoing branch; detached proof worktrees are for validation evidence, not delivery.",
     "A green repository harness does not prove runtime installation, WSL state, tmux behavior, visible windows, providers, or operator acceptance.",
     "Generated status and validation artifacts stay outside tracked repository authority."
   ],
