@@ -97,6 +97,17 @@ class TechnicianBootstrapOrderHarnessTests(unittest.TestCase):
             self.assertIn("[System.IO.Path]::GetTempPath()", text)
             self.assertNotIn("Set-Content -LiteralPath (Join-Path $RootPath", text)
 
+    def test_status_handles_detached_head_without_null_trim(self) -> None:
+        text = STATUS.read_text(encoding="utf-8")
+        self.assertIn("$branchLines = @(& git -C $RootPath branch --show-current", text)
+        self.assertIn("$env:GITHUB_HEAD_REF", text)
+        self.assertIn("'<detached>'", text)
+        self.assertIn("$headLines = @(& git -C $RootPath rev-parse HEAD", text)
+        self.assertIn("branch = $branch", text)
+        self.assertIn("head = $head", text)
+        self.assertNotIn("branch = $branch.Trim()", text)
+        self.assertNotIn("head = $head.Trim()", text)
+
     def test_codebase_map_names_build_test_and_no_deploy(self) -> None:
         names = {item["name"] for item in self.map["commands"]}
         self.assertIn("Harness completeness", names)
