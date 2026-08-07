@@ -15,6 +15,7 @@ SKILLS = ROOT / "SKILLS.md"
 TRIGGERS = ROOT / "TRIGGERS.md"
 CI = ROOT / ".github" / "workflows" / "technician-bootstrap-order.yml"
 HOOK = ROOT / "tooling" / "profiles" / "windows" / "hooks" / "Invoke-TechnicianBootstrapOrderPreCommit.ps1"
+PRE_PUSH = ROOT / "tooling" / "profiles" / "windows" / "hooks" / "Invoke-TechnicianBootstrapOrderPrePush.ps1"
 STATUS = ROOT / "tooling" / "profiles" / "windows" / "Get-TechnicianBootstrapOrderHarnessStatus.ps1"
 VALIDATOR = ROOT / "scripts" / "Test-TechnicianBootstrapOrderHarnessCompleteness.ps1"
 CMD = ROOT / "Test-TechnicianBootstrapOrderHarness.cmd"
@@ -33,6 +34,7 @@ MANDATORY_PATHS = {
     ".ai/skills/technician-bootstrap-order-validation/SKILL.md",
     "tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1",
     "tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPreCommit.ps1",
+    "tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPrePush.ps1",
     "scripts/Test-TechnicianBootstrapOrderHarnessCompleteness.ps1",
     "tests/test_technician_bootstrap_order_harness.py",
     "Test-TechnicianBootstrapOrderHarness.cmd",
@@ -55,6 +57,10 @@ class TechnicianBootstrapOrderHarnessTests(unittest.TestCase):
     def test_registry_cannot_drop_canonical_owners(self) -> None:
         registered = set(self.registry["requiredPaths"])
         self.assertTrue(MANDATORY_PATHS <= registered, sorted(MANDATORY_PATHS - registered))
+        self.assertEqual(
+            "tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPrePush.ps1",
+            self.registry["canonicalOwners"]["prePushHook"],
+        )
 
     def test_registered_and_mandatory_component_files_exist(self) -> None:
         required = set(self.registry["requiredPaths"]) | MANDATORY_PATHS
@@ -103,7 +109,7 @@ class TechnicianBootstrapOrderHarnessTests(unittest.TestCase):
 
     def test_ci_runs_new_and_existing_floor(self) -> None:
         text = CI.read_text(encoding="utf-8")
-        for token in ("SKILLS.md", "TRIGGERS.md", "tests.test_technician_bootstrap_order_harness", "Test-TechnicianBootstrapOrderHarnessCompleteness.ps1", "Get-TechnicianBootstrapOrderHarnessStatus.ps1", "tests.test_technician_bootstrap_order", "Test-TechnicianBootstrapOrder.ps1", "tests.test_technician_agentswitchboard_ready", "Test-AgentDocumentationContract.ps1", "git diff --check"):
+        for token in ("SKILLS.md", "TRIGGERS.md", "Invoke-TechnicianBootstrapOrderPrePush.ps1", "tests.test_technician_bootstrap_order_harness", "Test-TechnicianBootstrapOrderHarnessCompleteness.ps1", "Get-TechnicianBootstrapOrderHarnessStatus.ps1", "tests.test_technician_bootstrap_order", "Test-TechnicianBootstrapOrder.ps1", "tests.test_technician_agentswitchboard_ready", "Test-AgentDocumentationContract.ps1", "git diff --check"):
             self.assertIn(token, text)
 
     def test_opt_in_hook_runs_complete_focused_order_from_repo_root(self) -> None:
@@ -118,12 +124,30 @@ class TechnicianBootstrapOrderHarnessTests(unittest.TestCase):
             "& pwsh -NoLogo -NoProfile -File (Join-Path $RootPath 'tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1')",
             "& git -C $RootPath diff --cached --check",
         ]
-        for token in ("SKILLS.md", "TRIGGERS.md", "Test-TechnicianBootstrapOrderHarness.cmd", "Push-Location -LiteralPath $RootPath", "finally", "Pop-Location", *execution_tokens):
+        for token in ("SKILLS.md", "TRIGGERS.md", "Invoke-TechnicianBootstrapOrderPrePush.ps1", "Test-TechnicianBootstrapOrderHarness.cmd", "Push-Location -LiteralPath $RootPath", "finally", "Pop-Location", *execution_tokens):
             self.assertIn(token, text)
         positions = [text.index(token) for token in execution_tokens]
         self.assertEqual(positions, sorted(positions))
         self.assertNotIn("git reset", text.lower())
         self.assertNotIn("git clean", text.lower())
+
+    def test_pre_push_gate_pins_outgoing_identity_and_full_harness(self) -> None:
+        text = PRE_PUSH.read_text(encoding="utf-8")
+        for token in (
+            "ExpectedHead",
+            "branch --show-current",
+            "status --porcelain --untracked-files=no",
+            "Test-TechnicianBootstrapOrderHarness.cmd",
+            "merge-base",
+            "diff --check",
+            "Push-Location -LiteralPath $RootPath",
+            "HEAD changed during pre-push validation",
+            "PASS: technician bootstrap-order pre-push gate passed.",
+        ):
+            self.assertIn(token, text)
+        lower = text.lower()
+        for forbidden in ("git reset", "git clean", "git stash", "push --force", "git push"):
+            self.assertNotIn(forbidden, lower)
 
     def test_operator_cmd_is_location_independent_and_runs_documentation_floor(self) -> None:
         text = CMD.read_text(encoding="utf-8")
@@ -161,7 +185,12 @@ class TechnicianBootstrapOrderHarnessTests(unittest.TestCase):
     def test_codebase_map_names_build_test_and_no_deploy(self) -> None:
         names = {item["name"] for item in self.map["commands"]}
         self.assertIn("Harness completeness", names)
+        self.assertIn("Pre-push validation", names)
         self.assertIn("Agent documentation contract", names)
+        self.assertEqual(
+            "tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPrePush.ps1",
+            self.map["entrypoints"]["prePushHook"],
+        )
         self.assertIsNone(self.map["deploy"]["command"])
         self.assertIn("outside this harness-infrastructure sprint", self.map["deploy"]["reason"])
 
