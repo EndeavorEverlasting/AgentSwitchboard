@@ -25,7 +25,9 @@
     "exactHeadCmd": "Validate-Technician-ExactHead.cmd",
     "exactHeadValidator": "scripts/Invoke-TechnicianExactHeadValidation.ps1",
     "readinessOperatorGuide": "docs/workstation/technician-agentswitchboard-ready.md",
-    "pullRunCiWorkflow": ".github/workflows/technician-pull-and-run.yml"
+    "pullRunCiWorkflow": ".github/workflows/technician-pull-and-run.yml",
+    "toolchainPreflightCmd": "Test-Technician-Toolchain-Preflight.cmd",
+    "toolchainPreflightValidator": "scripts/Test-WindowsToolchainLaunch.ps1"
   },
   "components": [
     {"id":"codebase-map","path":"tooling/profiles/windows/harness/technician-live-cert/codebase-map.json","type":"map"},
@@ -51,7 +53,9 @@
     {"id":"exact-head-cmd","path":"Validate-Technician-ExactHead.cmd","type":"entrypoint"},
     {"id":"exact-head-validator","path":"scripts/Invoke-TechnicianExactHeadValidation.ps1","type":"validator"},
     {"id":"readiness-operator-guide","path":"docs/workstation/technician-agentswitchboard-ready.md","type":"documentation"},
-    {"id":"pull-run-ci","path":".github/workflows/technician-pull-and-run.yml","type":"workflow"}
+    {"id":"pull-run-ci","path":".github/workflows/technician-pull-and-run.yml","type":"workflow"},
+    {"id":"toolchain-preflight-cmd","path":"Test-Technician-Toolchain-Preflight.cmd","type":"entrypoint"},
+    {"id":"toolchain-preflight-validator","path":"scripts/Test-WindowsToolchainLaunch.ps1","type":"validator"}
   ],
   "runtimeCompatibility": {
     "requiredValidationShells": ["Windows PowerShell 5.1 on windows-latest","PowerShell 7 on windows-latest","PowerShell 7 on ubuntu-latest"],
@@ -69,12 +73,15 @@
     {"id":"single-command-field-acceptance","guard":"Validate-Technician-ExactHead.cmd ready performs exact-head validation, fresh P00 proof, real technician setup, fleet-state proof, and fresh AgentSwitchboard readiness evidence in one repository-owned command."},
     {"id":"hosted-ci-proof-inflation","guard":"CI surface modes prove dispatch and contracts only; they do not claim live WSL, fleet installation, provider authentication, or visible window behavior."},
     {"id":"interactive-git-pager","guard":"All harness Git inspection uses git --no-pager and propagates nonzero exit codes."},
-    {"id":"live-failure-overridden-by-static-pass","guard":"Observed operator failure remains blocking until the exact repository-owned command is rerun successfully."}
+    {"id":"live-failure-overridden-by-static-pass","guard":"Observed operator failure remains blocking until the exact repository-owned command is rerun successfully."},
+    {"id":"git-executable-launch-blocked","guard":"Before fetch, worktree, or runtime proof, Windows toolchain preflight must resolve a concrete git.exe, launch git --version without shell mediation, bound the wait, and persist candidate/error evidence. PATH presence alone is not proof of executable usability."}
   ],
   "validationOrder": [
     "python -m unittest tests.test_technician_live_cert_harness",
     "python -m unittest tests.test_technician_live_cert_surface",
     "python -m unittest tests.test_technician_agentswitchboard_ready",
+    "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-WindowsToolchainLaunch.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-WindowsToolchainLaunch.ps1",
     "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertSurface.ps1",
     "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertHarness.ps1",
     "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianAgentSwitchboardReady.ps1",
@@ -86,7 +93,7 @@
   "generatedEvidence": {
     "tracked": false,
     "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard",
-    "artifacts": ["technician-live-cert/runs/<runId>/run.json","technician-live-cert/runs/<runId>/<stageId>/stage-result.json","technician-live-cert/runs/<runId>/P00/preflight-summary.json","technician-live-cert/runs/<runId>/technician-live-cert-stage-matrix.csv","technician-live-cert/harness-status/technician-live-cert-harness-status.json","technician-live-cert/harness-status/technician-live-cert-harness-status.md","technician-ready/runs/<runId>/technician-ready-summary.json","technician-ready/runs/<runId>/startup-readiness/agent-startup-readiness-*.json","exact-head-validation/runs/<runId>/exact-head-validation.json","exact-head-validation/runs/<runId>/exact-head-validation.md","GnhfFleet/state.json"]
+    "artifacts": ["technician-live-cert/runs/<runId>/run.json","technician-live-cert/runs/<runId>/<stageId>/stage-result.json","technician-live-cert/runs/<runId>/P00/preflight-summary.json","technician-live-cert/runs/<runId>/technician-live-cert-stage-matrix.csv","technician-live-cert/harness-status/technician-live-cert-harness-status.json","technician-live-cert/harness-status/technician-live-cert-harness-status.md","technician-live-cert/toolchain-preflight/<runId>/windows-toolchain-launch-preflight.json","technician-live-cert/toolchain-preflight/<runId>/windows-toolchain-launch-preflight.md","technician-ready/runs/<runId>/technician-ready-summary.json","technician-ready/runs/<runId>/startup-readiness/agent-startup-readiness-*.json","exact-head-validation/runs/<runId>/exact-head-validation.json","exact-head-validation/runs/<runId>/exact-head-validation.md","GnhfFleet/state.json"]
   },
   "implicitHookInstallationAllowed": false,
   "networkAllowedByValidators": false,
