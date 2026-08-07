@@ -1,0 +1,40 @@
+{
+  "schema": "agentswitchboard.agent-fleet-readiness-workflow.v1",
+  "workflowId": "pick-up-agent-task",
+  "purpose": "Turn a user work request into a bounded AgentSwitchboard sprint only after fleet readiness, target repository safety, prompt, and provider gates are observed.",
+  "inputs": [
+    "target repository path",
+    "requested agent or selection criteria",
+    "bounded sprint prompt or prompt path",
+    "owned scope",
+    "forbidden scope",
+    "validation commands",
+    "observable StopWhen condition",
+    "push preference"
+  ],
+  "preconditions": [
+    "bootstrap-or-list-readiness workflow classified fleet as installed",
+    "requested adapter is READY/adapter-ready or explicitly verification-required with a launch-time probe",
+    "target repository identity is verified",
+    "target repository checkout satisfies the GNHF cleanliness contract",
+    "prompt is explicit for non-AgentSwitchboard repositories"
+  ],
+  "steps": [
+    {"order": 1, "name": "verify target repository", "action": "Resolve exact local path, repository identity, current branch/status, and nearest rules. Preserve unrelated dirty work; do not reset or stash automatically."},
+    {"order": 2, "name": "select agent from observed readiness", "action": "Choose only an adapter present in current readiness output. Do not infer readiness from tool installation or an earlier chat."},
+    {"order": 3, "name": "freeze bounded sprint", "action": "Record mission, owned scope, forbidden scope, expected artifacts, validation, iteration/token bounds, StopWhen, proof ceiling, and push behavior."},
+    {"order": 4, "name": "validate prompt source", "action": "For AgentSwitchboard, a bundled role prompt may be used. For every other repository, require -Prompt or -PromptPath so a repository-specific work order is explicit."},
+    {"order": 5, "name": "respect provider boundary", "action": "If the route is verification-required, preserve interactive authentication/model/quota/spawnability checks. Adapter readiness is not hosted-response proof."},
+    {"order": 6, "name": "launch bounded sprint", "action": "Invoke installed agent-switchboard.cmd with RepoPath, Agent, Prompt/PromptPath, Name, MaxIterations, MaxTokens, StopWhen, and PushBranch only when explicitly intended."},
+    {"order": 7, "name": "resolve output", "action": "Read launcher summary, generated GNHF worktree/branch status, commit, validation evidence, and provider-route proof when applicable."},
+    {"order": 8, "name": "handoff", "action": "Use handoff-agent-task workflow. Report what changed, proof earned, remaining gaps, preserved work, and the next executable gate."}
+  ],
+  "forbidden": [
+    "launching work because tmux is live while fleet state is unproved",
+    "launching a blocked or unknown adapter",
+    "using AgentSwitchboard bundled prompts against another repository without an explicit work prompt",
+    "automatic force-push, merge, deployment, or reset of user work",
+    "claiming provider success from adapter readiness alone"
+  ],
+  "proofCeiling": "Defines a safe sprint-launch sequence. A completed sprint still requires actual launcher, worktree, commit, validation, and provider evidence before higher proof can be claimed."
+}
