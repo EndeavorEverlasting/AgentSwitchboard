@@ -118,11 +118,11 @@ class AgentFleetReadinessHarnessTests(unittest.TestCase):
 
     def test_no_private_machine_paths_or_secrets_in_harness(self):
         forbidden = [
-            "CheeksMcClappeth",
-            "pa_rperez26",
-            "BEGIN PRIVATE KEY",
-            "ghp_",
-            "sk-",
+            "Cheeks" + "McClappeth",
+            "pa_" + "rperez26",
+            "BEGIN PRIVATE " + "KEY",
+            "ghp" + "_",
+            "sk" + "-",
         ]
         for path in REQUIRED:
             if path.suffix.lower() not in {".json", ".md", ".ps1", ".py", ".yml"}:
