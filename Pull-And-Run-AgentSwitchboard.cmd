@@ -202,7 +202,7 @@ if errorlevel 1 (
 )
 
 if /I "%MODE%"=="acquire" (
-  echo [PASS] Repository acquisition completed with a concretely proved Git executable.
+  echo [PASS] Repository acquisition completed without requiring PowerShell 7; concrete Git launch proof passed.
   echo [INFO] Git executable: %AGENT_SWITCHBOARD_GIT_EXE%
   echo [INFO] Workstation setup is intentionally deferred.
   set "RESULT=0"
