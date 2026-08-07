@@ -55,9 +55,10 @@ $head = ([string]$headLines[0]).Trim()
 $componentStatus = if ($missingComponents.Count -eq 0) { 'components-complete-validation-unproven' } else { 'components-incomplete' }
 
 $working = @(
-    'Focused codebase map, workflow specs, artifact registry, canonical skill routing, scoped skill, validators, opt-in hook, component-status reporter, operator guide, and CI are registered.',
+    'Focused codebase map, workflow specs, artifact registry, canonical skill routing, scoped skill, validators, opt-in pre-commit/pre-push hooks, component-status reporter, operator guide, and CI are registered.',
     'The front door remains contractually gated so the prerequisite stage must return zero before the higher runtime engine is invoked.',
     'Source-token anchors are explicitly refactor-coupled: semantic source refactors update the contract and affected validators together.',
+    'The pre-push helper pins an attached outgoing branch/head, rejects dirty harness-owned tracked state, runs the canonical harness, and checks the outgoing commit range without pushing.',
     'Generated validation and status evidence is local-operational and untracked.'
 )
 $broken = @()
