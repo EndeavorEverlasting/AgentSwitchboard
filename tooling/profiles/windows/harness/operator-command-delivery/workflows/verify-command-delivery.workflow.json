@@ -1,0 +1,19 @@
+{
+  "schema": "agentswitchboard.operator-command-delivery-workflow.v1",
+  "workflowId": "verify-operator-command-delivery",
+  "trigger": "Before handing an operator a copy-paste command that downloads, validates, launches, installs, repairs, or proves runtime behavior.",
+  "owner": "agent producing the operator command",
+  "steps": [
+    {"order": 1, "action": "Resolve repository, requested ref, and exact commit through a read-only source query.", "gate": "resolvedCommit is non-empty and current for the intended source."},
+    {"order": 2, "action": "Resolve every required remote file at that exact commit before command delivery.", "gate": "all required files return successfully; no assumed path or remembered ref is accepted."},
+    {"order": 3, "action": "Validate command text for PowerShell transport corruption.", "gate": "No $env\\:NAME token, escaped URL scheme, prompt marker, transcript marker, or malformed continuation marker is present."},
+    {"order": 4, "action": "Validate interactive-shell safety.", "gate": "The parent copy-paste command does not call top-level exit; exit-propagating work runs in a child process and the parent captures and prints the child exit code."},
+    {"order": 5, "action": "Use explicit request semantics for remote content retrieval.", "gate": "gh api parameterized content retrieval uses --method GET with -f ref=<resolvedCommit>, or an equivalently explicit read-only API contract."},
+    {"order": 6, "action": "Preserve durable evidence before advancing across a process, terminal, TUI, or GUI boundary.", "gate": "The canonical evidence path is resolved from a tracked registry, manifest, workflow, or operator guide and is printed after execution."},
+    {"order": 7, "action": "Execute the owning validator before publishing the command when repository execution is available; otherwise use exact-head CI and state the proof ceiling.", "gate": "Focused validator passes or command delivery stops."},
+    {"order": 8, "action": "Deliver one copy-paste command without prompt text or Markdown escape characters inside the command body.", "gate": "The operator can paste the command verbatim into the declared shell."}
+  ],
+  "successor": "downstream owning runtime workflow",
+  "artifacts": ["operator-command-delivery-result", "operator-command-delivery-report", "downstream-runtime-artifact"],
+  "proofCeiling": "Proves that command text, remote source identity, file resolution, interactive-shell semantics, and evidence routing are coherent. It does not prove the downstream runtime until the operator executes it and its owning evidence gate passes."
+}
