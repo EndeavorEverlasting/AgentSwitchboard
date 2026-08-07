@@ -19,6 +19,18 @@ If Termux is installed and you want **phone-local coding**, continue at [`androi
 
 If Termux is installed and you want **the same tmux workspace from phone and laptop/server**, use [`android-ssh-tmux-live-cert.md`](android-ssh-tmux-live-cert.md).
 
+## Android documentation validation owner
+
+Run the focused documentation and shell contracts from the repository root:
+
+```bash
+python3 tests/test_android_termux_docs.py
+python3 tests/test_android_termux_profile.py
+bash tests/test_android_termux_profile.sh
+```
+
+The owning CI gate is `.github/workflows/android-termux-shell-contract.yml`. These checks prove tracked documentation/CLI consistency and offline shell contracts; they do not prove a live phone, SSH login, visible tmux attachment, or agent/provider behavior.
+
 ## Environment truth rule
 
 For cross-environment work, classify:
