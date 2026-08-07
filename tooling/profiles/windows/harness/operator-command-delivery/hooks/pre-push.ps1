@@ -4,7 +4,7 @@ param()
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$repoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))))
+$repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..\..\..\..\..')).Path
 $validator = Join-Path $repoRoot 'scripts\Test-OperatorCommandDeliveryHarnessCompleteness.ps1'
 $pythonTest = Join-Path $repoRoot 'tests\test_operator_command_delivery_harness.py'
 
