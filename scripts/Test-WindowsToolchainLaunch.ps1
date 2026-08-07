@@ -49,6 +49,8 @@ foreach ($path in $candidatePaths) {
         signatureStatus = $null
         launched = $false
         timedOut = $false
+        terminationConfirmed = $null
+        terminationError = $null
         exitCode = $null
         stdout = $null
         stderr = $null
@@ -74,9 +76,24 @@ foreach ($path in $candidatePaths) {
         $row.launched = $true
         if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
             $row.timedOut = $true
-            try { $process.Kill() } catch {}
-            try { $process.WaitForExit() } catch {}
-            throw "git --version exceeded the ${TimeoutSeconds}s bound"
+            try {
+                $process.Kill()
+            }
+            catch {
+                $row.terminationError = $_.Exception.Message
+            }
+            try {
+                $row.terminationConfirmed = $process.WaitForExit(1000)
+            }
+            catch {
+                $row.terminationConfirmed = $false
+                $extra = $_.Exception.Message
+                $row.terminationError = if ($row.terminationError) { "$($row.terminationError) | $extra" } else { $extra }
+            }
+            if (-not $row.terminationConfirmed) {
+                throw "git --version exceeded the ${TimeoutSeconds}s bound and process termination was not confirmed within 1s. $($row.terminationError)"
+            }
+            throw "git --version exceeded the ${TimeoutSeconds}s bound; termination was confirmed within 1s."
         }
         $row.stdout = $process.StandardOutput.ReadToEnd().Trim()
         $row.stderr = $process.StandardError.ReadToEnd().Trim()
