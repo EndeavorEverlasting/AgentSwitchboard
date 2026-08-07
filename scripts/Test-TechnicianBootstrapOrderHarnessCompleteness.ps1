@@ -34,6 +34,7 @@ $mandatoryPaths = @(
     '.ai/skills/technician-bootstrap-order-validation/SKILL.md',
     'tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1',
     'tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPreCommit.ps1',
+    'tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPrePush.ps1',
     'scripts/Test-TechnicianBootstrapOrderHarnessCompleteness.ps1',
     'tests/test_technician_bootstrap_order_harness.py',
     'Test-TechnicianBootstrapOrderHarness.cmd',
@@ -86,8 +87,8 @@ if ($failures.Count -eq 0) {
     Add-Check 'artifacts-untracked' (-not [bool]$artifactRegistry.tracked) 'generated evidence must remain untracked'
 
     $workflowText = Get-Content -LiteralPath (Join-Path $RootPath '.github\workflows\technician-bootstrap-order.yml') -Raw
-    foreach ($token in @('SKILLS.md', 'TRIGGERS.md', 'tests.test_technician_bootstrap_order_harness', 'Test-TechnicianBootstrapOrderHarnessCompleteness.ps1', 'Get-TechnicianBootstrapOrderHarnessStatus.ps1', 'tests.test_technician_bootstrap_order', 'tests.test_technician_agentswitchboard_ready', 'Test-AgentDocumentationContract.ps1', 'git diff --check')) {
-        Add-Check ("ci-token:{0}" -f $token) ($workflowText.Contains($token)) 'CI must run the full focused floor'
+    foreach ($token in @('SKILLS.md', 'TRIGGERS.md', 'Invoke-TechnicianBootstrapOrderPrePush.ps1', 'tests.test_technician_bootstrap_order_harness', 'Test-TechnicianBootstrapOrderHarnessCompleteness.ps1', 'Get-TechnicianBootstrapOrderHarnessStatus.ps1', 'tests.test_technician_bootstrap_order', 'tests.test_technician_agentswitchboard_ready', 'Test-AgentDocumentationContract.ps1', 'git diff --check')) {
+        Add-Check ("ci-token:{0}" -f $token) ($workflowText.Contains($token)) 'CI must cover the full focused floor and all owned hooks'
     }
 
     $skillText = Get-Content -LiteralPath (Join-Path $RootPath '.ai\skills\technician-bootstrap-order-validation\SKILL.md') -Raw
@@ -96,8 +97,16 @@ if ($failures.Count -eq 0) {
     }
 
     $hookText = Get-Content -LiteralPath (Join-Path $RootPath 'tooling\profiles\windows\hooks\Invoke-TechnicianBootstrapOrderPreCommit.ps1') -Raw
-    foreach ($token in @('SKILLS.md', 'TRIGGERS.md', 'Test-TechnicianBootstrapOrderHarness.cmd', 'tests.test_technician_bootstrap_order_harness', 'tests.test_technician_bootstrap_order', 'Test-TechnicianBootstrapOrderHarnessCompleteness.ps1', 'Test-TechnicianBootstrapOrder.ps1', 'tests.test_technician_agentswitchboard_ready', 'Test-AgentDocumentationContract.ps1', 'Get-TechnicianBootstrapOrderHarnessStatus.ps1', 'Push-Location -LiteralPath $RootPath', 'diff --cached --check')) {
-        Add-Check ("hook-token:{0}" -f $token) ($hookText.Contains($token)) 'opt-in hook must cover the full focused validation surface'
+    foreach ($token in @('SKILLS.md', 'TRIGGERS.md', 'Invoke-TechnicianBootstrapOrderPrePush.ps1', 'Test-TechnicianBootstrapOrderHarness.cmd', 'tests.test_technician_bootstrap_order_harness', 'tests.test_technician_bootstrap_order', 'Test-TechnicianBootstrapOrderHarnessCompleteness.ps1', 'Test-TechnicianBootstrapOrder.ps1', 'tests.test_technician_agentswitchboard_ready', 'Test-AgentDocumentationContract.ps1', 'Get-TechnicianBootstrapOrderHarnessStatus.ps1', 'Push-Location -LiteralPath $RootPath', 'diff --cached --check')) {
+        Add-Check ("precommit-hook-token:{0}" -f $token) ($hookText.Contains($token)) 'opt-in pre-commit hook must cover the full focused validation surface and pre-push owner'
+    }
+
+    $prePushText = Get-Content -LiteralPath (Join-Path $RootPath 'tooling\profiles\windows\hooks\Invoke-TechnicianBootstrapOrderPrePush.ps1') -Raw
+    foreach ($token in @('ExpectedHead', 'branch --show-current', 'status --porcelain --untracked-files=no', 'Test-TechnicianBootstrapOrderHarness.cmd', 'merge-base', 'diff --check', 'Push-Location -LiteralPath $RootPath', 'HEAD changed during pre-push validation')) {
+        Add-Check ("prepush-hook-token:{0}" -f $token) ($prePushText.Contains($token)) 'opt-in pre-push hook must pin outgoing identity, reject dirty harness-owned state, run the canonical harness, and validate the outgoing range'
+    }
+    foreach ($forbidden in @('git reset', 'git clean', 'git stash', 'push --force', 'git push')) {
+        Add-Check ("prepush-hook-forbidden:{0}" -f $forbidden) (-not $prePushText.ToLowerInvariant().Contains($forbidden)) 'pre-push validation must not mutate or deliver repository state'
     }
 
     $cmdText = Get-Content -LiteralPath (Join-Path $RootPath 'Test-TechnicianBootstrapOrderHarness.cmd') -Raw
@@ -108,6 +117,7 @@ if ($failures.Count -eq 0) {
     foreach ($relativePath in @(
         'tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1',
         'tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPreCommit.ps1',
+        'tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPrePush.ps1',
         'scripts/Test-TechnicianBootstrapOrderHarnessCompleteness.ps1'
     )) {
         $tokens = $null
