@@ -33,7 +33,7 @@ run_success() {
   label="$1"
   shift
   set +e
-  output="$($@ 2>&1)"
+  output="$("$@" 2>&1)"
   rc=$?
   set -e
   [ "$rc" -eq 0 ] || fail "$label" "exit=$rc output=$output"
@@ -44,7 +44,7 @@ run_failure() {
   label="$1"
   shift
   set +e
-  output="$($@ 2>&1)"
+  output="$("$@" 2>&1)"
   rc=$?
   set -e
   [ "$rc" -ne 0 ] || fail "$label" "expected failure; output=$output"
