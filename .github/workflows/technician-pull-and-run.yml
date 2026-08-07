@@ -16,6 +16,7 @@ on:
       - 'tooling/profiles/windows/technician-live-cert/Install-TechnicianLiveCertShortcuts.ps1'
       - 'scripts/Invoke-TechnicianExactHeadValidation.ps1'
       - 'scripts/Test-TechnicianAgentSwitchboardReady.ps1'
+      - 'scripts/Test-WindowsToolchainLaunch.ps1'
       - 'tests/test_technician_pull_and_run_contract.py'
       - 'tests/test_technician_agentswitchboard_ready.py'
       - 'docs/workstation/technician-agentswitchboard-ready.md'
@@ -44,10 +45,22 @@ jobs:
         run: python tests/test_technician_pull_and_run_contract.py
       - name: Validate real technician AgentSwitchboard readiness contract
         run: python -m unittest tests.test_technician_agentswitchboard_ready
+      - name: Prove acquisition Git prerequisite in Windows PowerShell 5.1
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-WindowsToolchainLaunch.ps1 -OutputRoot "$env:RUNNER_TEMP\pull-and-run-toolchain-preflight"
+      - name: Exercise repository-ready acquisition handoff with real preflight
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          set AGENT_SWITCHBOARD_NO_PAUSE=1
+          call Pull-And-Run-AgentSwitchboard.cmd --repo-ready acquire "%CD%" "main"
+          set CMD_RESULT=%ERRORLEVEL%
+          if not "%CMD_RESULT%"=="0" exit /b %CMD_RESULT%
       - name: Parse technician PowerShell surfaces
         shell: pwsh
         run: |
-          $paths = @('tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1','tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1','tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1','tooling/profiles/windows/technician-live-cert/stages/P02-Pull-And-Setup.ps1','tooling/profiles/windows/technician-live-cert/stages/P03-Verify-Commands.ps1','tooling/profiles/windows/technician-live-cert/Install-TechnicianLiveCertShortcuts.ps1','scripts/Invoke-TechnicianExactHeadValidation.ps1','scripts/Test-TechnicianAgentSwitchboardReady.ps1')
+          $paths = @('tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1','tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1','tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1','tooling/profiles/windows/technician-live-cert/stages/P02-Pull-And-Setup.ps1','tooling/profiles/windows/technician-live-cert/stages/P03-Verify-Commands.ps1','tooling/profiles/windows/technician-live-cert/Install-TechnicianLiveCertShortcuts.ps1','scripts/Invoke-TechnicianExactHeadValidation.ps1','scripts/Test-TechnicianAgentSwitchboardReady.ps1','scripts/Test-WindowsToolchainLaunch.ps1')
           foreach ($path in $paths) {
             $tokens = $null
             $errors = $null

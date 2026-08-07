@@ -14,6 +14,7 @@ PROFILE_LAUNCHER = ROOT / "tooling" / "profiles" / "windows" / "Invoke-AgentSwit
 LIVE_CERT_FIXTURE = ROOT / "tooling" / "profiles" / "windows" / "harness" / "live-certification" / "fixtures" / "technician-quickstart-2026-07-22-fail.fixture.json"
 LIVE_CERT_SKILL = ROOT / ".ai" / "skills" / "windows-profile-live-certification" / "SKILL.md"
 DOCTRINE = ROOT / "docs" / "governance" / "live-cert-failure-doctrine.md"
+TOOLCHAIN_PREFLIGHT = ROOT / "scripts" / "Test-WindowsToolchainLaunch.ps1"
 
 
 def require(text: str, token: str, label: str) -> None:
@@ -21,8 +22,17 @@ def require(text: str, token: str, label: str) -> None:
         raise AssertionError(f"missing {label}: {token}")
 
 
+def reject_bare_git(text: str, label: str) -> None:
+    if re.search(r"(?im)^\s*git(?:\.exe)?\s", text):
+        raise AssertionError(f"{label} must not invoke bare Git from a command line")
+    if re.search(r"`\s*git(?:\.exe)?\s", text, re.IGNORECASE):
+        raise AssertionError(f"{label} must not invoke bare Git from command substitution")
+    if re.search(r"(?im)^\s*where\s+git\.exe\b", text):
+        raise AssertionError(f"{label} must not treat PATH discovery as Git launch proof")
+
+
 def main() -> None:
-    for path in (TOP_BOOTSTRAP, PARENT_CMD, PULL_RUN_CMD, READY_CMD, COMPAT_SETUP, READY_ENGINE, PROFILE_LAUNCHER, LIVE_CERT_FIXTURE, LIVE_CERT_SKILL, DOCTRINE):
+    for path in (TOP_BOOTSTRAP, PARENT_CMD, PULL_RUN_CMD, READY_CMD, COMPAT_SETUP, READY_ENGINE, PROFILE_LAUNCHER, LIVE_CERT_FIXTURE, LIVE_CERT_SKILL, DOCTRINE, TOOLCHAIN_PREFLIGHT):
         if not path.is_file():
             raise AssertionError(f"missing technician contract file: {path}")
 
@@ -36,12 +46,38 @@ def main() -> None:
     fixture = LIVE_CERT_FIXTURE.read_text(encoding="utf-8")
     skill = LIVE_CERT_SKILL.read_text(encoding="utf-8")
     doctrine = DOCTRINE.read_text(encoding="utf-8")
+    toolchain_preflight = TOOLCHAIN_PREFLIGHT.read_text(encoding="utf-8")
 
     for token in ("This is the first technician repository-acquisition command.", "Pull-And-Run-AgentSwitchboard.cmd", 'call "%BOOTSTRAP_PATH%" acquire', "%USERPROFILE%\\dev\\AgentSwitchBoard-Live", "Workstation setup is intentionally deferred"):
         require(parent, token, "parent acquisition contract")
 
-    for token in ("https://github.com/EndeavorEverlasting/AgentSwitchboard.git", "%USERPROFILE%\\dev\\AgentSwitchBoard-Live", "git clone --branch", "fetch origin --prune", "pull --ff-only", "status --porcelain=v1 --untracked-files=normal", "symbolic-ref --quiet --short HEAD", "--repo-ready", "Setup-TechnicianAgentSwitchboard.ps1"):
+    for token in (
+        "https://github.com/EndeavorEverlasting/AgentSwitchboard.git",
+        "%USERPROFILE%\\dev\\AgentSwitchBoard-Live",
+        "TOOLCHAIN_PREFLIGHT_REF=19c671837c51c2893e9eade92c340bb67e970cee",
+        "EXPECTED_TOOLCHAIN_PREFLIGHT_BLOB=7110b9c6141971d93987cdb07f1ffc397e2e9f2e",
+        "Test-WindowsToolchainLaunch.ps1",
+        "windows-toolchain-launch-preflight.json",
+        "AGENT_SWITCHBOARD_GIT_EXE",
+        '"%AGENT_SWITCHBOARD_GIT_EXE%" clone --branch',
+        '"%AGENT_SWITCHBOARD_GIT_EXE%" -C "%REPO_ROOT%" fetch origin --prune',
+        '"%AGENT_SWITCHBOARD_GIT_EXE%" -C "%REPO_ROOT%" pull --ff-only',
+        '"%AGENT_SWITCHBOARD_GIT_EXE%" -C "%REPO_ROOT%" status --porcelain=v1 --untracked-files=normal',
+        '"%AGENT_SWITCHBOARD_GIT_EXE%" -C "%REPO_ROOT%" symbolic-ref --quiet --short HEAD',
+        "No fetch, pull, switch, status, origin lookup, or clone was attempted.",
+        "--repo-ready",
+        "Setup-TechnicianAgentSwitchboard.ps1",
+    ):
         require(pull_run, token, "portable pull/run contract")
+
+    for token in ("UseShellExecute = $false", "git --version", "selectedGit", "windows-toolchain-launch-preflight.json", "exit 31"):
+        require(toolchain_preflight, token, "concrete Git launch preflight")
+
+    reject_bare_git(pull_run, "portable pull/run acquisition")
+    if pull_run.index("call :resolve_git") > pull_run.index('"%AGENT_SWITCHBOARD_GIT_EXE%" -C "%REPO_ROOT%" remote get-url origin'):
+        raise AssertionError("Git launch preflight must run before the first repository Git command")
+    if pull_run.index("ACTUAL_TOOLCHAIN_PREFLIGHT_BLOB") > pull_run.index('powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%TOOLCHAIN_PREFLIGHT_PATH%"'):
+        raise AssertionError("downloaded Git-launch preflight identity must be checked before execution")
 
     for token in ("repo-path.txt", "AGENT_SWITCHBOARD_REPO", "Repair-Technician-WSL-Ubuntu.cmd", 'if "%REPAIR_EXIT%"=="3010"', 'call "%REPO_ROOT%\\Pull-And-Run-AgentSwitchboard.cmd" setup', 'call "%REPO_ROOT%\\Run-Technician-LiveCert.cmd"'):
         require(top, token, "first-machine bootstrap")
@@ -87,7 +123,7 @@ def main() -> None:
     require(doctrine, "Observed live failure outranks static, synthetic, and CI success", "governance precedence")
     require(doctrine, "Optional agent installation or browser authentication may not block", "optional isolation")
 
-    print("PASS: portable acquisition -> prerequisite repair -> real AgentSwitchboard readiness -> live-cert contract")
+    print("PASS: concrete Git launch proof -> portable acquisition -> prerequisite repair -> real AgentSwitchboard readiness -> live-cert contract")
 
 
 if __name__ == "__main__":
