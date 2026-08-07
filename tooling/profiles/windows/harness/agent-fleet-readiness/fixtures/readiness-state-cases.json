@@ -1,0 +1,46 @@
+{
+  "schema": "agentswitchboard.agent-fleet-readiness-fixtures.v1",
+  "cases": [
+    {
+      "name": "not-bootstrapped",
+      "fleetStateExists": false,
+      "launcherExists": false,
+      "expectedClassification": "not-bootstrapped",
+      "expectedNextAction": "bootstrap-or-repair",
+      "mustNotSuggest": "-ListAgents"
+    },
+    {
+      "name": "partial-state-only",
+      "fleetStateExists": true,
+      "launcherExists": false,
+      "expectedClassification": "partial-or-inconsistent",
+      "expectedNextAction": "bootstrap-or-repair",
+      "mustNotSuggest": "launch-sprint"
+    },
+    {
+      "name": "partial-launcher-only",
+      "fleetStateExists": false,
+      "launcherExists": true,
+      "expectedClassification": "partial-or-inconsistent",
+      "expectedNextAction": "bootstrap-or-repair",
+      "mustNotSuggest": "launch-sprint"
+    },
+    {
+      "name": "installed-unclassified",
+      "fleetStateExists": true,
+      "launcherExists": true,
+      "expectedClassification": "installed-unclassified",
+      "expectedNextAction": "list-readiness",
+      "mustNotSuggest": "launch-sprint-before-readiness"
+    },
+    {
+      "name": "adapter-ready-provider-unproved",
+      "fleetStateExists": true,
+      "launcherExists": true,
+      "readiness": "verification-required",
+      "expectedClassification": "adapter-ready-provider-unproved",
+      "expectedNextAction": "launch-time-provider-probe",
+      "mustNotClaim": "hosted-response-proven"
+    }
+  ]
+}
