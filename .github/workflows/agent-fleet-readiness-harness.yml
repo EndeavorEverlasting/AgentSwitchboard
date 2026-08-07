@@ -3,6 +3,7 @@ name: agent fleet readiness harness
 on:
   pull_request:
     paths:
+      - 'CODEBASE_MAP.md'
       - 'tooling/profiles/windows/harness/agent-fleet-readiness/**'
       - '.ai/skills/agent-fleet-readiness/**'
       - 'docs/harness/agent-fleet-readiness.md'
