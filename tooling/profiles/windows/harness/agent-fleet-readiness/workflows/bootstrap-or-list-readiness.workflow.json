@@ -1,0 +1,76 @@
+{
+  "schema": "agentswitchboard.agent-fleet-readiness-workflow.v1",
+  "workflowId": "bootstrap-or-list-readiness",
+  "purpose": "Choose bootstrap/repair versus post-setup readiness listing from observed installed state instead of assuming the reusable fleet launcher exists.",
+  "inputs": [
+    "repository root",
+    "%LOCALAPPDATA% install root",
+    "current target repository when known"
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "name": "resolve repository-owned surfaces",
+      "required": [
+        "Setup-AgentSwitchboard.cmd",
+        "tooling/gnhf/Setup-AgentSwitchboard.ps1",
+        "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
+        "tooling/gnhf/Start-AgentSwitchboard.ps1"
+      ],
+      "stopIfMissing": true
+    },
+    {
+      "order": 2,
+      "name": "observe installed state",
+      "checks": [
+        "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\state.json exists as file",
+        "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\agent-switchboard.cmd exists as file"
+      ],
+      "rule": "Do not invoke the post-setup launcher before these checks are classified."
+    },
+    {
+      "order": 3,
+      "name": "classify bootstrap state",
+      "branches": {
+        "neither exists": "not-bootstrapped",
+        "exactly one exists": "partial-or-inconsistent",
+        "both exist": "installed-unclassified"
+      }
+    },
+    {
+      "order": 4,
+      "name": "bootstrap or repair when required",
+      "when": ["not-bootstrapped", "partial-or-inconsistent"],
+      "action": "Run repository-owned Setup-AgentSwitchboard.cmd or Setup-AgentSwitchboard.ps1 from a safe exact repository state. Reuse healthy components. Preserve setup-summary.json and setup-transcript.txt.",
+      "forbidden": ["manually fabricate state.json", "manually copy agent-switchboard.cmd as a substitute for setup", "reset unrelated operator work"]
+    },
+    {
+      "order": 5,
+      "name": "verify installed surfaces after setup",
+      "checks": [
+        "setup result is not failed",
+        "fleet state exists",
+        "installed operator launcher exists"
+      ],
+      "stopIfFailed": true
+    },
+    {
+      "order": 6,
+      "name": "list readiness",
+      "when": ["installed-unclassified", "successful bootstrap/repair"],
+      "action": "Invoke installed agent-switchboard.cmd -ListAgents or repository startup report.",
+      "proof": "adapter readiness only"
+    },
+    {
+      "order": 7,
+      "name": "route next action",
+      "rules": [
+        "READY/adapter-ready -> pick-up-agent-task workflow",
+        "verification-required -> preserve launch-time provider/model probe requirement",
+        "BLOCKED/not-configured/unknown -> follow recorded setup/readiness guidance; do not launch work"
+      ]
+    }
+  ],
+  "artifacts": ["fleet-state", "installed-operator-launcher", "setup-summary", "setup-transcript", "startup-readiness-json", "startup-readiness-markdown"],
+  "proofCeiling": "Proves deterministic state classification and the required next workflow. Runtime bootstrap success requires observed setup artifacts; agent/provider success remains unproved."
+}
