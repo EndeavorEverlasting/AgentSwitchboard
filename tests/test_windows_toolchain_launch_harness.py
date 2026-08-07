@@ -53,10 +53,11 @@ class TestWindowsToolchainLaunchHarness(unittest.TestCase):
         wrapper = text(CMD)
         for token in [
             'set "ERRORLEVEL="',
+            'set "RESULT=0"',
             "where pwsh.exe",
             "scripts\\Test-WindowsToolchainLaunch.ps1",
-            'set "_rc=%ERRORLEVEL%"',
-            "endlocal & exit /b %_rc%",
+            'set "RESULT=%ERRORLEVEL%"',
+            "endlocal & exit /b %RESULT%",
         ]:
             self.assertIn(token, wrapper)
 
