@@ -27,9 +27,7 @@ function Add-Failure([string]$Message) { [void]$failures.Add($Message) }
 
 foreach ($relative in $required) {
     $path = Join-Path $repoRoot $relative
-    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
-        Add-Failure "missing tracked harness component: $relative"
-    }
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { Add-Failure "missing tracked harness component: $relative" }
 }
 
 foreach ($relative in @(
@@ -79,21 +77,24 @@ if (Test-Path -LiteralPath $blockedPath -PathType Leaf) {
 $probePath = Join-Path $repoRoot 'scripts/Test-OperatorChildExecutableLaunch.ps1'
 if (Test-Path -LiteralPath $probePath -PathType Leaf) {
     $probe = Get-Content -LiteralPath $probePath -Raw
-    foreach ($token in @('ProcessStartInfo','UseShellExecute = $false','RedirectStandardOutput = $true','RedirectStandardError = $true','WaitForExit','child-executable-launch-result.json','child-executable-launch-blocked','STATUS=','ARTIFACT=')) {
+    foreach ($token in @('ProcessStartInfo','UseShellExecute = $false','RedirectStandardOutput = $true','RedirectStandardError = $true','WaitForExit','child-executable-launch-result.json','child-executable-launch-blocked','STATUS=','ARTIFACT=','$env:LOCALAPPDATA')) {
         if (-not $probe.Contains($token)) { Add-Failure "child executable probe missing token: $token" }
     }
     if ($probe -match '\bStart-Process\b') { Add-Failure 'child executable probe may not hide launch semantics behind Start-Process' }
-    if (-not $probe.Contains("$env:LOCALAPPDATA")) { Add-Failure 'child executable probe must write durable local operational evidence' }
 }
 
 $verifyPath = Join-Path $repoRoot 'tooling/profiles/windows/harness/operator-command-delivery/workflows/verify-command-delivery.workflow.json'
+if (Test-Path -LiteralPath $verifyPath -PathType Leaf) {
+    $verify = Get-Content -LiteralPath $verifyPath -Raw
+    foreach ($token in @('child-executable-launch','UseShellExecute=false','Access is denied')) {
+        if (-not $verify.Contains($token)) { Add-Failure "verification workflow missing executable launch rule: $token" }
+    }
+}
 $failurePath = Join-Path $repoRoot 'tooling/profiles/windows/harness/operator-command-delivery/workflows/handle-command-delivery-failure.workflow.json'
-foreach ($path in @($verifyPath, $failurePath)) {
-    if (Test-Path -LiteralPath $path -PathType Leaf) {
-        $workflow = Get-Content -LiteralPath $path -Raw
-        foreach ($token in @('child-executable-launch','UseShellExecute=false','Access is denied')) {
-            if (-not $workflow.Contains($token)) { Add-Failure "workflow missing executable launch rule '$token': $path" }
-        }
+if (Test-Path -LiteralPath $failurePath -PathType Leaf) {
+    $failure = Get-Content -LiteralPath $failurePath -Raw
+    foreach ($token in @('child-executable-launch','Access is denied','downstream artifact')) {
+        if (-not $failure.Contains($token)) { Add-Failure "failure workflow missing launch classification rule: $token" }
     }
 }
 
