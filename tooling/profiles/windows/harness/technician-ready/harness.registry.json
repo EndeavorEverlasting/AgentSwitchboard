@@ -13,7 +13,9 @@
     "prerequisiteGate": "tooling/profiles/windows/Invoke-TechnicianBootstrapPrerequisites.ps1",
     "runtimeEngine": "tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1",
     "focusedValidator": "scripts/Test-TechnicianBootstrapOrder.ps1",
-    "harnessCompletenessValidator": "scripts/Test-TechnicianBootstrapOrderHarnessCompleteness.ps1"
+    "harnessCompletenessValidator": "scripts/Test-TechnicianBootstrapOrderHarnessCompleteness.ps1",
+    "preCommitHook": "tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPreCommit.ps1",
+    "prePushHook": "tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPrePush.ps1"
   },
   "requiredPaths": [
     "SKILLS.md",
@@ -31,6 +33,7 @@
     ".ai/skills/technician-bootstrap-order-validation/SKILL.md",
     "tooling/profiles/windows/Get-TechnicianBootstrapOrderHarnessStatus.ps1",
     "tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPreCommit.ps1",
+    "tooling/profiles/windows/hooks/Invoke-TechnicianBootstrapOrderPrePush.ps1",
     "scripts/Test-TechnicianBootstrapOrderHarnessCompleteness.ps1",
     "tests/test_technician_bootstrap_order_harness.py",
     "Test-TechnicianBootstrapOrderHarness.cmd",
@@ -75,7 +78,8 @@
     "Do not add a scoped skill without making it reachable from canonical SKILLS.md and TRIGGERS.md intake surfaces.",
     "Do not treat component presence as validation readiness; the status reporter reports component state only and the owning validators establish correctness.",
     "Do not treat CI success as proof that WezTerm installed, WSL mutated, tmux ran, a window opened, or an operator accepted the result.",
-    "Do not install hooks implicitly; the pre-commit helper is opt-in only.",
+    "Do not install hooks implicitly; pre-commit and pre-push helpers are opt-in only.",
+    "Do not push from detached HEAD; the pre-push gate requires an attached outgoing branch and can pin an expected HEAD.",
     "Do not write generated validation or status evidence into the repository.",
     "Do not use destructive Git or force updates to recover from a failed validation."
   ],
