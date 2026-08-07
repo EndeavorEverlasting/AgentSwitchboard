@@ -88,6 +88,7 @@ class AgentFleetReadinessHarnessTests(unittest.TestCase):
     def test_skill_contains_state_gate_and_provider_boundaries(self):
         text = (ROOT / ".ai" / "skills" / "agent-fleet-readiness" / "SKILL.md").read_text(encoding="utf-8")
         for token in [
+            "status: experimental",
             "Separate terminal readiness from fleet readiness",
             "Inspect both installed-state surfaces before post-setup commands",
             "not-bootstrapped",
@@ -96,6 +97,18 @@ class AgentFleetReadinessHarnessTests(unittest.TestCase):
             "Keep provider proof separate",
             "Require an explicit task prompt outside AgentSwitchboard",
             "No post-setup launcher command before installed-state classification",
+        ]:
+            self.assertIn(token, text)
+
+    def test_root_map_exposes_harness_without_mutating_p00_routing(self):
+        text = (ROOT / "CODEBASE_MAP.md").read_text(encoding="utf-8")
+        for token in [
+            "## Agent fleet readiness harness",
+            "tooling/profiles/windows/harness/agent-fleet-readiness/codebase-map.json",
+            ".ai/skills/agent-fleet-readiness/SKILL.md",
+            "not-bootstrapped",
+            "partial-or-inconsistent",
+            "Canonical `SKILLS.md`/`TRIGGERS.md` routing remains unchanged",
         ]:
             self.assertIn(token, text)
 
