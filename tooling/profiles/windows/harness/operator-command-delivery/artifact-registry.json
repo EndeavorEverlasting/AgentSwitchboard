@@ -8,13 +8,19 @@
       "artifactId": "operator-command-delivery-report",
       "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\operator-command-delivery\\runs\\<runId>\\operator-command-delivery-report.md",
       "producer": "operator command workflow or owning runtime command",
-      "purpose": "Human-readable command identity, source verification, validation status, exit code, and next action."
+      "purpose": "Human-readable command identity, source verification, child-executable launch status, exit code, and next action."
     },
     {
       "artifactId": "operator-command-delivery-result",
       "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\operator-command-delivery\\runs\\<runId>\\operator-command-delivery-result.json",
       "producer": "operator command workflow or owning runtime command",
-      "purpose": "Machine-readable command source, exact ref, exact file list, integrity checks, child exit code, and proof ceiling."
+      "purpose": "Machine-readable command source, exact ref, exact file list, transport checks, child launch evidence, exit code, and proof ceiling."
+    },
+    {
+      "artifactId": "child-executable-launch-result",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\operator-command-delivery\\runs\\<runId>\\child-executable-launch-result.json",
+      "producer": "scripts/Test-OperatorChildExecutableLaunch.ps1",
+      "purpose": "Concrete bounded process-start evidence for the exact executable required by an operator command before downstream runtime work begins."
     },
     {
       "artifactId": "downstream-runtime-artifact",
@@ -36,9 +42,24 @@
     "resolvedCommit",
     "files",
     "transportChecks",
+    "childExecutableLaunchArtifacts",
     "childExitCode",
     "status",
     "proofLevel",
     "proofCeiling"
+  ],
+  "requiredChildLaunchFields": [
+    "schema",
+    "runId",
+    "label",
+    "executablePath",
+    "arguments",
+    "status",
+    "startError",
+    "exitCode",
+    "timedOut",
+    "proofLevel",
+    "proofCeiling",
+    "evidencePath"
   ]
 }
