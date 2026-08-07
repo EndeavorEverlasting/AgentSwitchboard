@@ -1,0 +1,54 @@
+name: tmux live-proof contract
+
+on:
+  pull_request:
+    paths:
+      - 'Open-AgentSwitchboard-Tmux.cmd'
+      - 'Open-AgentSwitchboard-Tmux.ps1'
+      - 'tests/test_tmux_live_proof_contract.py'
+      - '.github/workflows/tmux-live-proof-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Validate tmux live-proof contract
+        run: python -m unittest tests.test_tmux_live_proof_contract
+      - name: Validate existing technician readiness contract
+        run: python -m unittest tests.test_technician_agentswitchboard_ready
+      - name: Validate existing tmux shortcut contract
+        run: python tests/test_tmux_new_instance_shortcut_harness.py
+      - name: Parse tmux live-proof PowerShell
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path 'Open-AgentSwitchboard-Tmux.ps1'),[ref]$tokens,[ref]$errors)
+          if ($errors.Count -gt 0) { $errors | Format-List | Out-String | Write-Error; exit 1 }
+      - name: Exercise non-mutating tmux live-proof surface
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File Open-AgentSwitchboard-Tmux.ps1 -SurfaceOnly -OutputRoot "$env:RUNNER_TEMP\tmux-live-proof-surface"
+      - name: Check repository hygiene without a pager
+        shell: bash
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ -z "$BASE_REF" ]; then BASE_REF=main; fi
+          git --no-pager diff --check "origin/$BASE_REF...HEAD"
