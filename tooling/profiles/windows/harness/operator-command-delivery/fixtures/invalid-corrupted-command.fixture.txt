@@ -1,0 +1,1 @@
+PS C:\Users\Example> $d=Join-Path $env\:TEMP 'broken'; $p=Join-Path $env\:LOCALAPPDATA 'AgentSwitchboard'; gh api "repos/EndeavorEverlasting/AgentSwitchboard/contents/Open-AgentSwitchboard-Tmux.ps1?ref=$ref"; exit $LASTEXITCODE
