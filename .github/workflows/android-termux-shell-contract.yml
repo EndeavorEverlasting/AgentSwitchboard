@@ -5,8 +5,12 @@ on:
     paths:
       - "Bootstrap-AgentSwitchboard-Termux.sh"
       - "tooling/profiles/android/**"
+      - "docs/workstation/android-termux.md"
+      - "docs/workstation/android-ssh-tmux-live-cert.md"
+      - "docs/workstation/README.md"
       - "tests/test_android_termux_profile.sh"
       - "tests/test_android_termux_profile.py"
+      - "tests/test_android_termux_docs.py"
       - ".github/workflows/android-termux-shell-contract.yml"
   workflow_dispatch:
 
@@ -31,6 +35,12 @@ jobs:
       - name: Run Android Termux shell behavior contract
         shell: bash
         run: bash tests/test_android_termux_profile.sh
+      - name: Run Android Termux Python contract
+        shell: bash
+        run: python3 tests/test_android_termux_profile.py
+      - name: Run Android Termux operator documentation contract
+        shell: bash
+        run: python3 tests/test_android_termux_docs.py
       - name: Verify PR-range hygiene and clean checkout
         shell: bash
         run: |
