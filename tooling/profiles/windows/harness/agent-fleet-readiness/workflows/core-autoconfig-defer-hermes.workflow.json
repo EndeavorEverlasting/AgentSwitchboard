@@ -2,17 +2,70 @@
   "schema": "agentswitchboard.agent-fleet-readiness-workflow.v1",
   "workflowId": "core-autoconfig-defer-hermes",
   "purpose": "Complete core AgentSwitchboard autoconfiguration without allowing Hermes installation or repair to block the operator. Hermes is recorded as deferred/TBD and may be repaired later.",
-  "inputs": ["verified AgentSwitchboard repository root", "PowerShell 7", "%LOCALAPPDATA% install root"],
-  "steps": [
-    {"order":1,"name":"resolve repository root","action":"Verify the selected directory contains .git and tooling/gnhf/Setup-AgentSwitchboard.ps1 before any fetch or setup command. Reject stale hard-coded user-profile paths."},
-    {"order":2,"name":"select shell","action":"Run setup from PowerShell 7. PowerShell aliases such as irm are not CMD commands; do not paste a PowerShell installer pipeline into cmd.exe."},
-    {"order":3,"name":"defer Hermes","action":"Invoke tooling/gnhf/Setup-AgentSwitchboard.ps1 with -InstallOpenCodeAndCopilot -SkipHermesInstall. Do not manually install Hermes during the core-autoconfig lane."},
-    {"order":4,"name":"preserve setup evidence","action":"Resolve the fresh setup-summary.json and setup-transcript.txt from the artifact registry. Hermes skipped/blocked is acceptable only when the core fleet install completed and the setup itself did not fail."},
-    {"order":5,"name":"prove core installed surfaces","checks":["state.json exists","agent-switchboard.cmd exists"],"stopIfFailed":true},
-    {"order":6,"name":"list readiness","action":"Run the installed agent-switchboard.cmd -ListAgents or the repository startup report. Mark Hermes TBD/deferred when unavailable; continue with other READY adapters."},
-    {"order":7,"name":"handoff","action":"Report repository root, setup artifact paths, Hermes=TBD/deferred, observed READY adapters, and the exact next bounded-work command."}
+  "inputs": [
+    "verified AgentSwitchboard repository root",
+    "PowerShell 7",
+    "%LOCALAPPDATA% install root"
   ],
-  "forbidden": ["blocking core setup on Hermes", "manual Hermes installation during this workflow", "running git outside a verified repository root", "using CMD for a PowerShell-only installer pipeline", "destructive cleanup"],
-  "artifacts": ["setup-summary", "setup-transcript", "fleet-state", "installed-operator-launcher", "startup-readiness-json", "startup-readiness-markdown"],
-  "proofCeiling": "Proves the deterministic non-blocking core-autoconfig route and its required evidence. It does not prove Hermes availability, provider authentication, or hosted model response."
+  "steps": [
+    {
+      "order": 1,
+      "name": "resolve repository root",
+      "action": "Verify the selected directory contains .git and tooling/gnhf/Setup-AgentSwitchboard.ps1 before any fetch or setup command. Reject stale hard-coded user-profile paths."
+    },
+    {
+      "order": 2,
+      "name": "select shell",
+      "action": "Run setup from PowerShell 7. PowerShell aliases such as irm are not CMD commands; do not paste a PowerShell installer pipeline into cmd.exe."
+    },
+    {
+      "order": 3,
+      "name": "defer Hermes",
+      "action": "Invoke tooling/gnhf/Setup-AgentSwitchboard.ps1 with -InstallOpenCodeAndCopilot -SkipHermesInstall. Do not manually install Hermes during the core-autoconfig lane."
+    },
+    {
+      "order": 4,
+      "name": "preserve setup evidence",
+      "action": "Resolve the fresh setup-summary.json and setup-transcript.txt from the artifact registry. Hermes skipped/blocked is acceptable only when the core fleet install completed and the setup itself did not fail."
+    },
+    {
+      "order": 5,
+      "name": "prove core installed authority",
+      "checks": [
+        "state.json exists",
+        "Start-AgentSwitchboard.ps1 exists"
+      ],
+      "compatibilityCheck": "Observe agent-switchboard.cmd separately. A missing or access-denied CMD shim does not invalidate healthy core authority files.",
+      "stopIfFailed": true
+    },
+    {
+      "order": 6,
+      "name": "prove readiness through PowerShell",
+      "action": "Run the prove-readiness-through-powershell workflow. Mark Hermes TBD/deferred when unavailable; continue with other READY adapters. Do not retry a CMD shim after Access is denied / exit 5."
+    },
+    {
+      "order": 7,
+      "name": "handoff",
+      "action": "Report repository root, setup artifact paths, installed PowerShell operator state, optional CMD shim state, Hermes=TBD/deferred when applicable, observed READY adapters, and the exact next bounded-work command."
+    }
+  ],
+  "forbidden": [
+    "blocking core setup on Hermes",
+    "manual Hermes installation during this workflow",
+    "running git outside a verified repository root",
+    "using CMD for a PowerShell-only installer pipeline",
+    "requiring CMD-shim execution for core readiness",
+    "retrying a CMD shim after Access is denied / exit 5",
+    "destructive cleanup"
+  ],
+  "artifacts": [
+    "setup-summary",
+    "setup-transcript",
+    "fleet-state",
+    "installed-operator-implementation",
+    "installed-operator-launcher",
+    "startup-readiness-json",
+    "startup-readiness-markdown"
+  ],
+  "proofCeiling": "Proves the deterministic non-blocking core-autoconfig route, PowerShell readiness authority, CMD-shim recovery routing, and required evidence. It does not prove provider authentication or hosted model response."
 }

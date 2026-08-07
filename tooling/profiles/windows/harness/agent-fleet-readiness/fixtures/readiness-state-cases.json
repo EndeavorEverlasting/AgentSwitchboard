@@ -1,13 +1,99 @@
 {
   "schema": "agentswitchboard.agent-fleet-readiness-fixtures.v1",
   "cases": [
-    {"name":"not-bootstrapped","fleetStateExists":false,"launcherExists":false,"expectedClassification":"not-bootstrapped","expectedNextAction":"bootstrap-or-repair","mustNotSuggest":"-ListAgents"},
-    {"name":"partial-state-only","fleetStateExists":true,"launcherExists":false,"expectedClassification":"partial-or-inconsistent","expectedNextAction":"bootstrap-or-repair","mustNotSuggest":"launch-sprint"},
-    {"name":"partial-launcher-only","fleetStateExists":false,"launcherExists":true,"expectedClassification":"partial-or-inconsistent","expectedNextAction":"bootstrap-or-repair","mustNotSuggest":"launch-sprint"},
-    {"name":"installed-unclassified","fleetStateExists":true,"launcherExists":true,"expectedClassification":"installed-unclassified","expectedNextAction":"list-readiness","mustNotSuggest":"launch-sprint-before-readiness"},
-    {"name":"adapter-ready-provider-unproved","fleetStateExists":true,"launcherExists":true,"readiness":"verification-required","expectedClassification":"adapter-ready-provider-unproved","expectedNextAction":"launch-time-provider-probe","mustNotClaim":"hosted-response-proven"},
-    {"name":"stale-repository-path","repositoryRootValid":false,"expectedClassification":"repository-path-invalid","expectedNextAction":"resolve-repository-root","mustNotSuggest":"git-fetch-or-setup"},
-    {"name":"powershell-command-pasted-into-cmd","shell":"cmd.exe","commandFamily":"PowerShell","expectedClassification":"shell-command-mismatch","expectedNextAction":"rerun-in-pwsh","mustNotClaim":"Hermes-installer-failed"},
-    {"name":"hermes-unavailable-core-autoconfig","fleetStateExists":true,"launcherExists":true,"hermesAvailable":false,"hermesSetupStatus":"skipped","coreSetupFailed":false,"expectedClassification":"core-ready-hermes-deferred","expectedNextAction":"list-readiness","hermesLabel":"TBD","mustNotSuggest":"retry-Hermes-before-core-readiness"}
+    {
+      "name": "not-bootstrapped",
+      "fleetStateExists": false,
+      "readinessLauncherExists": false,
+      "cmdShimExists": false,
+      "expectedClassification": "not-bootstrapped",
+      "expectedNextAction": "bootstrap-or-repair",
+      "mustNotSuggest": "-ListAgents"
+    },
+    {
+      "name": "partial-state-only",
+      "fleetStateExists": true,
+      "readinessLauncherExists": false,
+      "cmdShimExists": true,
+      "expectedClassification": "partial-or-inconsistent",
+      "expectedNextAction": "bootstrap-or-repair",
+      "mustNotSuggest": "launch-sprint"
+    },
+    {
+      "name": "partial-readiness-launcher-only",
+      "fleetStateExists": false,
+      "readinessLauncherExists": true,
+      "cmdShimExists": true,
+      "expectedClassification": "partial-or-inconsistent",
+      "expectedNextAction": "bootstrap-or-repair",
+      "mustNotSuggest": "launch-sprint"
+    },
+    {
+      "name": "installed-unclassified",
+      "fleetStateExists": true,
+      "readinessLauncherExists": true,
+      "cmdShimExists": true,
+      "expectedClassification": "installed-unclassified",
+      "expectedNextAction": "prove-readiness-through-powershell",
+      "mustNotSuggest": "launch-sprint-before-readiness"
+    },
+    {
+      "name": "cmd-shim-access-denied-powershell-ready",
+      "fleetStateExists": true,
+      "readinessLauncherExists": true,
+      "cmdShimExists": true,
+      "cmdShimExitCode": 5,
+      "cmdShimEvidence": "Access is denied.",
+      "expectedClassification": "cmd-shim-blocked",
+      "expectedNextAction": "prove-readiness-through-powershell",
+      "mustNotClaim": "fleet-blocked"
+    },
+    {
+      "name": "cmd-shim-missing-powershell-ready",
+      "fleetStateExists": true,
+      "readinessLauncherExists": true,
+      "cmdShimExists": false,
+      "expectedClassification": "cmd-shim-blocked",
+      "expectedNextAction": "prove-readiness-through-powershell",
+      "mustNotSuggest": "rerun-setup-solely-for-cmd-shim"
+    },
+    {
+      "name": "adapter-ready-provider-unproved",
+      "fleetStateExists": true,
+      "readinessLauncherExists": true,
+      "cmdShimExists": false,
+      "readiness": "verification-required",
+      "expectedClassification": "adapter-ready-provider-unproved",
+      "expectedNextAction": "launch-time-provider-probe",
+      "mustNotClaim": "hosted-response-proven"
+    },
+    {
+      "name": "stale-repository-path",
+      "repositoryRootValid": false,
+      "expectedClassification": "repository-path-invalid",
+      "expectedNextAction": "resolve-repository-root",
+      "mustNotSuggest": "git-fetch-or-setup"
+    },
+    {
+      "name": "powershell-command-pasted-into-cmd",
+      "shell": "cmd.exe",
+      "commandFamily": "PowerShell",
+      "expectedClassification": "shell-command-mismatch",
+      "expectedNextAction": "rerun-in-pwsh",
+      "mustNotClaim": "Hermes-installer-failed"
+    },
+    {
+      "name": "hermes-unavailable-core-autoconfig",
+      "fleetStateExists": true,
+      "readinessLauncherExists": true,
+      "cmdShimExists": false,
+      "hermesAvailable": false,
+      "hermesSetupStatus": "skipped",
+      "coreSetupFailed": false,
+      "expectedClassification": "core-ready-hermes-deferred",
+      "expectedNextAction": "prove-readiness-through-powershell",
+      "hermesLabel": "TBD",
+      "mustNotSuggest": "retry-Hermes-before-core-readiness"
+    }
   ]
 }

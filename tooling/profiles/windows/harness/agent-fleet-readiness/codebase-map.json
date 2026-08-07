@@ -3,7 +3,7 @@
   "harnessId": "agentswitchboard.agent-fleet-readiness-harness.v1",
   "repository": "EndeavorEverlasting/AgentSwitchboard",
   "status": "tracked-contract",
-  "purpose": "Prevent premature post-setup commands, stale-repository-path failures, shell-boundary mistakes, and optional Hermes setup from blocking core AgentSwitchboard autoconfiguration.",
+  "purpose": "Prevent premature post-setup commands, stale-repository-path failures, shell-boundary mistakes, optional Hermes setup, and blocked Windows CMD compatibility shims from being misclassified as core fleet failure.",
   "entrypoints": {
     "rootSetupLauncher": "Setup-AgentSwitchboard.cmd",
     "setupLauncher": "tooling/gnhf/Setup-AgentSwitchboard.cmd",
@@ -15,6 +15,7 @@
     "artifactRegistry": "tooling/profiles/windows/harness/agent-fleet-readiness/artifact-registry.json",
     "pickupWorkflow": "tooling/profiles/windows/harness/agent-fleet-readiness/workflows/pick-up-agent-task.workflow.json",
     "readinessWorkflow": "tooling/profiles/windows/harness/agent-fleet-readiness/workflows/bootstrap-or-list-readiness.workflow.json",
+    "readinessProofWorkflow": "tooling/profiles/windows/harness/agent-fleet-readiness/workflows/prove-readiness-through-powershell.workflow.json",
     "coreAutoconfigWorkflow": "tooling/profiles/windows/harness/agent-fleet-readiness/workflows/core-autoconfig-defer-hermes.workflow.json",
     "failureWorkflow": "tooling/profiles/windows/harness/agent-fleet-readiness/workflows/handle-readiness-failure.workflow.json",
     "handoffWorkflow": "tooling/profiles/windows/harness/agent-fleet-readiness/workflows/handoff-agent-task.workflow.json",
@@ -27,34 +28,108 @@
     "operatorGuide": "docs/harness/agent-fleet-readiness.md"
   },
   "directories": [
-    {"path": "tooling/gnhf", "purpose": "Repository-owned setup, readiness, GNHF sprint, fleet, and status implementations."},
-    {"path": "tooling/profiles/windows/harness/agent-fleet-readiness", "purpose": "Lifecycle map, workflows, registry, fixtures, report, and opt-in hook for fleet bootstrap and task launch readiness."},
-    {"path": ".ai/skills/agent-fleet-readiness", "purpose": "Scoped procedure for bootstrap, non-blocking core autoconfig, readiness, provider verification, and bounded sprint launch."},
-    {"path": "scripts", "purpose": "Deterministic harness completeness validation."},
-    {"path": "tests", "purpose": "Dependency-free lifecycle and regression contract."},
-    {"path": "docs/harness", "purpose": "Human-readable fleet readiness and failure-recovery guide."},
-    {"path": ".github/workflows", "purpose": "Windows/Linux exact-head validation for the harness."}
+    {
+      "path": "tooling/gnhf",
+      "purpose": "Repository-owned setup, PowerShell readiness implementation, GNHF sprint, fleet, and status implementations."
+    },
+    {
+      "path": "tooling/profiles/windows/harness/agent-fleet-readiness",
+      "purpose": "Lifecycle map, workflows, registry, fixtures, report, and opt-in hook for fleet bootstrap, Windows command-boundary recovery, and task launch readiness."
+    },
+    {
+      "path": ".ai/skills/agent-fleet-readiness",
+      "purpose": "Scoped procedure for bootstrap, non-blocking core autoconfig, PowerShell-first readiness proof, provider verification, and bounded sprint launch."
+    },
+    {
+      "path": "scripts",
+      "purpose": "Deterministic harness completeness validation."
+    },
+    {
+      "path": "tests",
+      "purpose": "Dependency-free lifecycle and regression contract."
+    },
+    {
+      "path": "docs/harness",
+      "purpose": "Human-readable fleet readiness and failure-recovery guide."
+    },
+    {
+      "path": ".github/workflows",
+      "purpose": "Windows/Linux exact-head validation for the harness."
+    }
   ],
   "commands": [
-    {"name": "Read-only startup orientation", "command": "AgentSwitchboard.cmd", "effect": "read-only", "proof": "local fleet-state/readiness report only"},
-    {"name": "Core autoconfig with Hermes deferred", "command": "pwsh -NoLogo -NoProfile -File tooling/gnhf/Setup-AgentSwitchboard.ps1 -InstallOpenCodeAndCopilot -SkipHermesInstall", "effect": "installs/repairs core fleet while explicitly deferring Hermes", "proof": "setup summary/transcript plus installed core fleet surfaces; Hermes remains TBD"},
-    {"name": "Full bootstrap or repair fleet", "command": "Setup-AgentSwitchboard.cmd", "effect": "installs or repairs repository-owned fleet dependencies while reusing healthy state", "proof": "setup transcript/summary plus installed fleet state; not provider response proof"},
-    {"name": "List installed fleet readiness", "command": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\agent-switchboard.cmd -ListAgents", "effect": "read-only after bootstrap", "proof": "adapter readiness derived from installed fleet state"},
-    {"name": "Focused harness completeness", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-AgentFleetReadinessHarnessCompleteness.ps1", "effect": "read-only", "proof": "tracked harness completeness and lifecycle routing"},
-    {"name": "Dependency-free contract", "command": "python -m unittest tests.test_agent_fleet_readiness_harness", "effect": "read-only", "proof": "state-gate, workflow, artifact, report, skill, and forbidden-regression contract"},
-    {"name": "Existing GNHF fleet contracts", "command": "pwsh -NoLogo -NoProfile -File tooling/gnhf/Test-GnhfFleetContracts.ps1", "effect": "read-only deterministic validation", "proof": "existing fleet implementation contracts"},
-    {"name": "Existing Hermes setup contracts", "command": "pwsh -NoLogo -NoProfile -File tooling/gnhf/Test-HermesSetupContracts.ps1", "effect": "read-only deterministic validation", "proof": "existing SkipHermesInstall and graceful Hermes failure contract"},
-    {"name": "Diff hygiene", "command": "git --no-pager diff --check", "effect": "read-only", "proof": "patch and whitespace hygiene"}
+    {
+      "name": "Read-only startup orientation",
+      "command": "AgentSwitchboard.cmd",
+      "effect": "read-only",
+      "proof": "local fleet-state/readiness report only; root CMD remains an operator surface but is not the installed readiness authority"
+    },
+    {
+      "name": "Core autoconfig with Hermes deferred",
+      "command": "pwsh -NoLogo -NoProfile -File tooling/gnhf/Setup-AgentSwitchboard.ps1 -InstallOpenCodeAndCopilot -SkipHermesInstall",
+      "effect": "installs/repairs core fleet while explicitly deferring Hermes",
+      "proof": "setup summary/transcript plus installed core fleet surfaces; Hermes remains TBD when unavailable"
+    },
+    {
+      "name": "Full bootstrap or repair fleet",
+      "command": "Setup-AgentSwitchboard.cmd",
+      "effect": "installs or repairs repository-owned fleet dependencies while reusing healthy state",
+      "proof": "setup transcript/summary plus installed fleet state; not provider response proof"
+    },
+    {
+      "name": "List installed fleet readiness (canonical Windows proof)",
+      "command": "pwsh -NoLogo -NoProfile -File \"%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\Start-AgentSwitchboard.ps1\" -ListAgents",
+      "effect": "read-only after bootstrap",
+      "proof": "adapter readiness from the repository-owned PowerShell implementation without depending on CMD shim execution"
+    },
+    {
+      "name": "Installed CMD compatibility shim",
+      "command": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\agent-switchboard.cmd -ListAgents",
+      "effect": "read-only compatibility surface",
+      "proof": "only valid when Windows permits CMD shim execution; access denied/exit 5 routes to PowerShell readiness proof"
+    },
+    {
+      "name": "Focused harness completeness",
+      "command": "pwsh -NoLogo -NoProfile -File scripts/Test-AgentFleetReadinessHarnessCompleteness.ps1",
+      "effect": "read-only",
+      "proof": "tracked harness completeness and lifecycle routing"
+    },
+    {
+      "name": "Dependency-free contract",
+      "command": "python -m unittest tests.test_agent_fleet_readiness_harness",
+      "effect": "read-only",
+      "proof": "state-gate, workflow, artifact, report, skill, and forbidden-regression contract"
+    },
+    {
+      "name": "Existing GNHF fleet contracts",
+      "command": "pwsh -NoLogo -NoProfile -File tooling/gnhf/Test-GnhfFleetContracts.ps1",
+      "effect": "read-only deterministic validation",
+      "proof": "existing fleet implementation contracts"
+    },
+    {
+      "name": "Existing Hermes setup contracts",
+      "command": "pwsh -NoLogo -NoProfile -File tooling/gnhf/Test-HermesSetupContracts.ps1",
+      "effect": "read-only deterministic validation",
+      "proof": "existing SkipHermesInstall and graceful Hermes failure contract"
+    },
+    {
+      "name": "Diff hygiene",
+      "command": "git --no-pager diff --check",
+      "effect": "read-only",
+      "proof": "patch and whitespace hygiene"
+    }
   ],
   "knownTraps": [
-    "Do not invoke the post-setup launcher at %LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\agent-switchboard.cmd until both the installed launcher and state.json have been checked. A missing launcher is a bootstrap/readiness-state failure, not an agent failure.",
+    "The installed readiness authority on Windows is Start-AgentSwitchboard.ps1 plus state.json. Do not make agent-switchboard.cmd execution a prerequisite for core readiness.",
     "A successful tmux/WezTerm/WSL proof does not prove the GNHF fleet is installed. Terminal readiness and agent-fleet readiness are separate gates.",
     "Reject stale hard-coded repository paths before Git or setup. The active user profile and the selected directory must be observed, and the repository root must contain .git plus the repo-owned setup implementation.",
     "PowerShell aliases such as irm are not CMD commands. Do not paste PowerShell-only installer pipelines into cmd.exe or infer a provider failure from a shell-parser error.",
     "Hermes is optional for core autoconfig. When Hermes is unavailable, hanging, or not a priority, use the repository-owned -SkipHermesInstall path, record Hermes as deferred/TBD, and continue proving the core fleet.",
     "Do not manually install Hermes during the core-autoconfig workflow. Repair it later in its own bounded lane using preserved setup evidence.",
+    "On policy-restricted Windows systems, invoking the installed agent-switchboard.cmd through cmd.exe may return Access is denied with exit 5 even when state.json and Start-AgentSwitchboard.ps1 are healthy. Classify this as cmd-shim-blocked and run the installed PowerShell implementation through pwsh; do not rerun setup or blame an agent.",
     "If state.json is missing, run the repository-owned setup/bootstrap workflow before listing agents or launching a sprint.",
-    "If exactly one of state.json or agent-switchboard.cmd exists, classify the installation as inconsistent/partial and run setup in repair mode; do not synthesize or copy the missing file manually.",
+    "If exactly one of state.json or Start-AgentSwitchboard.ps1 exists, classify the installation as inconsistent/partial and run setup in repair mode; do not synthesize or copy the missing file manually.",
+    "A missing or blocked agent-switchboard.cmd compatibility shim does not make the core fleet partial when state.json and Start-AgentSwitchboard.ps1 exist.",
     "Adapter READY does not prove provider authentication, exact model availability, quota, or hosted response. Preserve launch-time provider probes and interactive authentication boundaries.",
     "For non-AgentSwitchboard target repositories, always supply -Prompt or -PromptPath; bundled default prompts are intentionally scoped to AgentSwitchboard only.",
     "The target repository must satisfy the GNHF clean-checkout contract before sprint launch. Preserve unrelated dirty work rather than stashing, resetting, or overwriting it.",
@@ -62,5 +137,5 @@
     "Setup and readiness artifacts belong under the registered local paths and must not be committed to the repository.",
     "A post-setup command shown before setup state is proved is an operator-command sequencing defect even if the command would be correct after bootstrap."
   ],
-  "proofCeiling": "Tracked lifecycle contracts can prove deterministic bootstrap/readiness routing, non-blocking Hermes deferral, repository/shell boundary rules, artifact ownership, command ordering, and CI validation. They do not prove that a particular workstation is bootstrapped, authenticated, provider-responsive, Hermes-ready, or capable of completing a repository sprint until corresponding runtime evidence is observed."
+  "proofCeiling": "Tracked lifecycle contracts can prove deterministic bootstrap/readiness routing, non-blocking Hermes deferral, repository/shell/CMD-shim boundary rules, artifact ownership, command ordering, and CI validation. They do not prove that a particular workstation is bootstrapped, authenticated, provider-responsive, Hermes-ready, or capable of completing a repository sprint until corresponding runtime evidence is observed."
 }
