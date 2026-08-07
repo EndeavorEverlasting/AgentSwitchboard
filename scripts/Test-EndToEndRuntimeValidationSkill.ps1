@@ -43,7 +43,7 @@ $contractText = Read-RequiredText '.ai/agent-contract.json'
 if ($null -ne $skillText) {
     foreach ($token in @(
         'id: end-to-end-runtime-validation',
-        'version: 1.1.0',
+        'version: 1.2.0',
         'status: canonical',
         '## Trigger',
         '## Inputs',
@@ -63,6 +63,13 @@ if ($null -ne $skillText) {
         'Model interactive input',
         'browser handoff',
         'optional agent',
+        'cold-start',
+        'warm-start',
+        'interactive-gate-observed',
+        'warm-start-success',
+        'Do not infer that a particular choice is a prerequisite from one correlated failure',
+        'A first-launch prompt is not automatically a prerequisite',
+        'No promotion of warm-start success into cold-start proof',
         'Observed live failure outranks lower-floor success',
         'Process creation, command acknowledgement, configuration-file presence',
         'No runtime success claim from static inspection, CI alone',
