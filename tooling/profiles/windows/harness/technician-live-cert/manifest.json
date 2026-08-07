@@ -78,6 +78,7 @@
   ],
   "validationOrder": [
     "python -m unittest tests.test_technician_live_cert_harness",
+    "python -m unittest tests.test_windows_toolchain_launch_harness",
     "python -m unittest tests.test_technician_live_cert_surface",
     "python -m unittest tests.test_technician_agentswitchboard_ready",
     "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-WindowsToolchainLaunch.ps1",
