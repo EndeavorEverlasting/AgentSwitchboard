@@ -8,8 +8,9 @@ $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..\..\..\..\
 $validator = Join-Path $repoRoot 'scripts\Test-AgentFleetReadinessHarnessCompleteness.ps1'
 $pythonTest = Join-Path $repoRoot 'tests\test_agent_fleet_readiness_harness.py'
 $productContract = Join-Path $repoRoot 'tooling\gnhf\Test-GnhfFleetContracts.ps1'
+$hermesContract = Join-Path $repoRoot 'tooling\gnhf\Test-HermesSetupContracts.ps1'
 
-foreach ($path in @($validator,$pythonTest,$productContract)) {
+foreach ($path in @($validator,$pythonTest,$productContract,$hermesContract)) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
         throw "Required agent fleet readiness validation surface is missing: $path"
     }
@@ -22,6 +23,9 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 & pwsh -NoLogo -NoProfile -File $productContract
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+& pwsh -NoLogo -NoProfile -File $hermesContract
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 Write-Host 'PASS: agent fleet readiness pre-push checks' -ForegroundColor Green
