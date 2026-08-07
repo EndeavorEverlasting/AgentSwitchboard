@@ -6,14 +6,16 @@
   "steps": [
     {"order": 1, "action": "Resolve repository, requested ref, and exact commit through a read-only source query.", "gate": "resolvedCommit is non-empty and current for the intended source."},
     {"order": 2, "action": "Resolve every required remote file at that exact commit before command delivery.", "gate": "all required files return successfully; no assumed path or remembered ref is accepted."},
-    {"order": 3, "action": "Validate command text for PowerShell transport corruption.", "gate": "No $env\\:NAME token, escaped URL scheme, prompt marker, transcript marker, or malformed continuation marker is present."},
-    {"order": 4, "action": "Validate interactive-shell safety.", "gate": "The parent copy-paste command does not call top-level exit; exit-propagating work runs in a child process and the parent captures and prints the child exit code."},
-    {"order": 5, "action": "Use explicit request semantics for remote content retrieval.", "gate": "gh api parameterized content retrieval uses --method GET with -f ref=<resolvedCommit>, or an equivalently explicit read-only API contract."},
-    {"order": 6, "action": "Preserve durable evidence before advancing across a process, terminal, TUI, or GUI boundary.", "gate": "The canonical evidence path is resolved from a tracked registry, manifest, workflow, or operator guide and is printed after execution."},
-    {"order": 7, "action": "Execute the owning validator before publishing the command when repository execution is available; otherwise use exact-head CI and state the proof ceiling.", "gate": "Focused validator passes or command delivery stops."},
-    {"order": 8, "action": "Deliver one copy-paste command without prompt text or Markdown escape characters inside the command body.", "gate": "The operator can paste the command verbatim into the declared shell."}
+    {"order": 3, "action": "Resolve every external executable required before the downstream runtime and select bounded side-effect-free probe arguments.", "gate": "Each executable has one exact path and a safe probe such as --version; where/Get-Command/file existence alone is not accepted as launch proof."},
+    {"order": 4, "action": "Concretely launch each required executable with UseShellExecute=false, bounded timeout, captured stdout/stderr, and a durable child-executable-launch artifact.", "gate": "Every required child process starts successfully and the bounded probe exits zero; Access is denied or process-start failure stops before downstream runtime work."},
+    {"order": 5, "action": "Validate command text for PowerShell transport corruption.", "gate": "No $env\\:NAME token, escaped URL scheme, prompt marker, transcript marker, or malformed continuation marker is present."},
+    {"order": 6, "action": "Validate interactive-shell safety.", "gate": "The parent copy-paste command does not call top-level exit; exit-propagating work runs in a child process and the parent captures and prints the child exit code."},
+    {"order": 7, "action": "Use explicit request semantics for remote content retrieval.", "gate": "gh api parameterized content retrieval uses --method GET with -f ref=<resolvedCommit>, or an equivalently explicit read-only API contract."},
+    {"order": 8, "action": "Preserve durable evidence before advancing across a process, terminal, TUI, or GUI boundary.", "gate": "The child executable launch artifact and canonical downstream evidence path are resolved from tracked harness evidence and printed after execution."},
+    {"order": 9, "action": "Execute the owning validator before publishing the command when repository execution is available; otherwise use exact-head CI and state the proof ceiling.", "gate": "Focused validator passes or command delivery stops."},
+    {"order": 10, "action": "Deliver one copy-paste command without prompt text or Markdown escape characters inside the command body.", "gate": "The operator can paste the command verbatim into the declared shell."}
   ],
   "successor": "downstream owning runtime workflow",
-  "artifacts": ["operator-command-delivery-result", "operator-command-delivery-report", "downstream-runtime-artifact"],
-  "proofCeiling": "Proves that command text, remote source identity, file resolution, interactive-shell semantics, and evidence routing are coherent. It does not prove the downstream runtime until the operator executes it and its owning evidence gate passes."
+  "artifacts": ["operator-command-delivery-result", "operator-command-delivery-report", "child-executable-launch-result", "downstream-runtime-artifact"],
+  "proofCeiling": "Proves command text, remote source identity, file resolution, bounded launchability of required child executables, interactive-shell semantics, and evidence routing. It does not prove the downstream runtime until the operator executes it and its owning evidence gate passes."
 }
