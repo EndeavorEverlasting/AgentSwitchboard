@@ -11,6 +11,7 @@ on:
       - 'tooling/profiles/windows/Get-TechnicianLiveCertHarnessStatus.ps1'
       - 'tooling/profiles/windows/hooks/Invoke-TechnicianLiveCertPreCommit.ps1'
       - 'Technician-LiveCert-*.cmd'
+      - 'Test-Technician-Toolchain-Preflight.cmd'
       - 'Repair-Technician-*.cmd'
       - 'Run-Technician-LiveCert.cmd'
       - 'AgentSwitchboard-Technician-Bootstrap.cmd'
@@ -18,9 +19,11 @@ on:
       - 'Install-TechnicianLiveCertShortcuts.cmd'
       - 'scripts/Test-TechnicianLiveCertSurface.ps1'
       - 'scripts/Test-TechnicianLiveCertHarness.ps1'
+      - 'scripts/Test-WindowsToolchainLaunch.ps1'
       - 'scripts/Test-WindowsProfileLiveCertification.ps1'
       - 'tests/test_technician_live_cert_surface.py'
       - 'tests/test_technician_live_cert_harness.py'
+      - 'tests/test_windows_toolchain_launch_harness.py'
       - '.ai/skills/windows-profile-live-certification/SKILL.md'
       - '.github/workflows/technician-live-cert-surface.yml'
       - 'docs/workstation/technician-live-cert-click-guide.md'
@@ -73,6 +76,10 @@ jobs:
             exit $exitCode
           }
 
+      - name: Run Python Windows toolchain launch harness tests
+        shell: pwsh
+        run: python -m unittest tests.test_windows_toolchain_launch_harness
+
       - name: Validate surface in PowerShell 7
         shell: pwsh
         run: pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertSurface.ps1
@@ -80,6 +87,11 @@ jobs:
       - name: Validate harness in PowerShell 7
         shell: pwsh
         run: pwsh -NoLogo -NoProfile -File scripts/Test-TechnicianLiveCertHarness.ps1
+
+      - name: Prove Windows toolchain launch in PowerShell 7
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-WindowsToolchainLaunch.ps1 -OutputRoot "$env:RUNNER_TEMP\technician-toolchain-pwsh"
 
       - name: Validate surface in Windows PowerShell 5.1
         if: runner.os == 'Windows'
@@ -90,6 +102,11 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-TechnicianLiveCertHarness.ps1
+
+      - name: Prove Windows toolchain launch in Windows PowerShell 5.1
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-WindowsToolchainLaunch.ps1 -OutputRoot "$env:RUNNER_TEMP\technician-toolchain-windows-powershell"
 
       - name: Validate Windows Profile live-certification doctrine
         shell: pwsh
@@ -126,6 +143,7 @@ jobs:
             technician-surface-python.log
             technician-harness-python.log
             technician-p00-ci.log
+            ${{ runner.temp }}/technician-toolchain-*/*
           if-no-files-found: warn
           retention-days: 7
 
