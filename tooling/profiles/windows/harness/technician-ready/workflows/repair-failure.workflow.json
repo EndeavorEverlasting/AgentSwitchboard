@@ -1,0 +1,19 @@
+{
+  "schema": "agentswitchboard.technician-bootstrap-order-workflow.v1",
+  "workflowId": "technician-bootstrap-order-repair-failure",
+  "trigger": ["bootstrap-order CI failure", "focused validator failure", "completeness failure", "status reporter detects missing component"],
+  "inputs": ["exact failing head", "failing validator/job", "first failing assertion", "bounded stdout/stderr", "changed-file set"],
+  "steps": [
+    "preserve the failing evidence and exact head",
+    "identify the first deterministic failing boundary",
+    "do not weaken, skip, delete, or reinterpret a valid ordering gate to manufacture a pass",
+    "repair the owning harness component when the defect is harness-owned",
+    "when a product or governance defect is exposed, stop the harness-only mutation and name the owning lane",
+    "rerun the exact failed validator first",
+    "rerun the complete validation order after the focused repair passes",
+    "emit a new status report and preserve the proof ceiling"
+  ],
+  "outputs": ["repair commit or explicit ownership blocker", "re-run evidence", "updated validation artifact", "human-readable failure or recovery report"],
+  "stopConditions": ["repair crosses forbidden product or governance scope", "secret or private operator evidence would enter tracked files", "destructive cleanup is proposed", "required authority is missing"],
+  "proofCeiling": "Deterministic failure localization and harness repair evidence only."
+}

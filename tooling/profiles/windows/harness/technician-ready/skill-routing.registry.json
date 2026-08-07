@@ -1,0 +1,17 @@
+{
+  "schema": "agentswitchboard.technician-bootstrap-order-skill-routing.v1",
+  "registryId": "agentswitchboard.technician-bootstrap-order-skill-routing.v1",
+  "skill": ".ai/skills/technician-bootstrap-order-validation/SKILL.md",
+  "routes": [
+    {"trigger": "new-or-resumed-bootstrap-order-task", "workflowId": "technician-bootstrap-order-intake"},
+    {"trigger": "tracked-bootstrap-order-change", "workflowId": "technician-bootstrap-order-validate-change"},
+    {"trigger": "bootstrap-order-validator-or-ci-failure", "workflowId": "technician-bootstrap-order-repair-failure"},
+    {"trigger": "bootstrap-order-handoff-or-session-boundary", "workflowId": "technician-bootstrap-order-handoff"}
+  ],
+  "precedence": [
+    "repair-failure before new implementation when current exact-head evidence is red",
+    "validate-change before handoff after any tracked mutation",
+    "handoff only after exact-head state and proof ceiling are recorded"
+  ],
+  "proofCeiling": "Deterministic local routing metadata only."
+}
