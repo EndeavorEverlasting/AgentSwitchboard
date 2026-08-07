@@ -40,6 +40,10 @@ jobs:
         shell: pwsh
         run: ./tooling/gnhf/Test-GnhfFleetContracts.ps1
 
+      - name: Existing Hermes setup contracts
+        shell: pwsh
+        run: ./tooling/gnhf/Test-HermesSetupContracts.ps1
+
       - name: Parse tracked PowerShell harness surfaces
         shell: pwsh
         run: |
