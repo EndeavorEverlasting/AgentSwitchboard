@@ -1,0 +1,86 @@
+name: OpenCode click launcher contract
+
+on:
+  pull_request:
+    paths:
+      - 'AgentSwitchboard.cmd'
+      - 'Start-AgentSwitchboard-OpenCode.cmd'
+      - 'tooling/gnhf/Start-AgentSwitchboardOpenCode.ps1'
+      - 'tooling/gnhf/Start-GnhfSprint.ps1'
+      - 'tooling/gnhf/Test-OpenCodeClickLauncher.ps1'
+      - 'docs/workstation/agent-startup-readiness.md'
+      - 'docs/workstation/opencode-click-launcher.md'
+      - '.github/workflows/opencode-click-launcher.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-contract:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Parse OpenCode click PowerShell surfaces
+        shell: pwsh
+        run: |
+          foreach ($path in @(
+            'tooling/gnhf/Start-AgentSwitchboardOpenCode.ps1',
+            'tooling/gnhf/Start-GnhfSprint.ps1',
+            'tooling/gnhf/Test-OpenCodeClickLauncher.ps1'
+          )) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $path), [ref]$tokens, [ref]$errors)
+            if ($errors.Count -gt 0) {
+              $errors | Format-List | Out-String | Write-Error
+              throw "PowerShell parse failed: $path"
+            }
+          }
+      - name: Validate command-delivery boundary on actual PowerShell candidate
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-OperatorCommandDeliveryHarnessCompleteness.ps1 -CandidatePath tooling/gnhf/Start-AgentSwitchboardOpenCode.ps1
+      - name: Reproduce detached-head regression and exercise actual CMD
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File tooling/gnhf/Test-OpenCodeClickLauncher.ps1
+      - name: Verify root startup discovers the click launcher
+        shell: pwsh
+        run: |
+          $startup = Get-Content -LiteralPath AgentSwitchboard.cmd -Raw
+          if (-not $startup.Contains('double-click Start-AgentSwitchboard-OpenCode.cmd')) {
+            throw 'Root startup does not direct the operator to the click-first OpenCode launcher.'
+          }
+          if ($startup.Contains('Pass bounded sprint arguments to this launcher when repository work is intended.')) {
+            throw 'Legacy raw-argument guidance is still the default operator instruction.'
+          }
+      - name: Check PR-range hygiene
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_BASE_REF) {
+            git diff --check "origin/$env:GITHUB_BASE_REF...HEAD"
+          }
+          if (git status --short) {
+            throw 'Checkout is dirty after OpenCode click-launcher validation.'
+          }
+
+  linux-static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify click surface ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f Start-AgentSwitchboard-OpenCode.cmd
+          test -f tooling/gnhf/Start-AgentSwitchboardOpenCode.ps1
+          test -f tooling/gnhf/Test-OpenCodeClickLauncher.ps1
+          grep -F 'Start-AgentSwitchboardOpenCode.ps1' Start-AgentSwitchboard-OpenCode.cmd
+          grep -F 'Detached HEAD is not allowed for an unattended sprint.' tooling/gnhf/Start-GnhfSprint.ps1
+          grep -F 'Get-Clipboard -Raw' tooling/gnhf/Start-AgentSwitchboardOpenCode.ps1
+          grep -F 'double-click Start-AgentSwitchboard-OpenCode.cmd' AgentSwitchboard.cmd
+          grep -F 'Do not reconstruct the long' docs/workstation/agent-startup-readiness.md
+          git diff --check "origin/${GITHUB_BASE_REF:-main}...HEAD"

@@ -18,7 +18,9 @@ if not "%_code%"=="0" goto :finish
 if "%~1"=="" (
   echo.
   echo [READY] Startup orientation is complete.
-  echo Pass bounded sprint arguments to this launcher when repository work is intended.
+  echo [OPENCODE] Copy the bounded sprint prompt, then double-click Start-AgentSwitchboard-OpenCode.cmd.
+  echo            To target another repository without rebuilding a command, drag its folder onto that CMD file.
+  echo [ADVANCED] Other agents and automation may still pass bounded sprint arguments to AgentSwitchboard.cmd.
   goto :finish
 )
 

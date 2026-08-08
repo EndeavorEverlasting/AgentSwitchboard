@@ -82,7 +82,22 @@ The reusable fleet lives under:
 %LOCALAPPDATA%\AgentSwitchboard\GnhfFleet
 ```
 
-For a target repository such as SysAdminSuite, supply the real bounded sprint prompt. Copy the prompt to the Windows clipboard, enter the clean target repository, and launch:
+### OpenCode: normal click-first workflow
+
+Do not reconstruct the long `agent-switchboard.cmd -RepoPath ... -Agent opencode ...` command for routine OpenCode work.
+
+1. Copy the complete bounded sprint prompt to the Windows clipboard.
+2. Double-click `Start-AgentSwitchboard-OpenCode.cmd` from a clean, attached AgentSwitchboard checkout.
+3. Review the target repository, attached branch, prompt character count, iteration/token limits, push state, and evidence path printed before launch.
+4. After the bounded child returns, inspect the generated GNHF worktree, validation output, commit state, and diff before accepting delivery.
+
+When the target is another repository such as SysAdminSuite, drag that repository folder onto `Start-AgentSwitchboard-OpenCode.cmd`. Windows supplies the dropped folder as `RepoPath`; the bounded prompt still comes from the clipboard. Push remains off by default.
+
+The click launcher rejects detached verification worktrees before GNHF or OpenCode starts and records local launch evidence under `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\logs\opencode-click`. See [`../../docs/workstation/opencode-click-launcher.md`](../../docs/workstation/opencode-click-launcher.md).
+
+### Other agents and advanced automation
+
+The reusable command surface remains available for non-OpenCode lanes and explicit automation. For example, a Hermes run may be launched from a clean target repository with a real bounded sprint prompt:
 
 ```powershell
 cd "C:\Users\Cheex\Desktop\dev\SysAdminSuite"
@@ -94,9 +109,7 @@ cd "C:\Users\Cheex\Desktop\dev\SysAdminSuite"
   -MaxTokens 250000
 ```
 
-Change `hermes` to `opencode`, `goose`, `agy`, or `copilot` when that adapter reports `READY`.
-
-Or launch from a tracked or local prompt file:
+Or an advanced lane can launch from a tracked or local prompt file:
 
 ```powershell
 & "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet\agent-switchboard.cmd" `
@@ -107,7 +120,7 @@ Or launch from a tracked or local prompt file:
   -StopWhen "The scoped validation is complete, evidence is recorded, and no implementation files changed."
 ```
 
-The bundled OpenCode, Goose, AGY, Copilot, and Hermes prompts are scoped specifically to AgentSwitchboard. They are selected automatically only when the target repository folder is named `AgentSwitchboard`; other repositories must receive `-Prompt` or `-PromptPath` so the launcher cannot silently apply the wrong owned scope. Use `-PushBranch` only after a controlled local run proves the lane; local commit-only worktrees are the default.
+The bundled OpenCode, Goose, AGY, Copilot, and Hermes prompts are scoped specifically to AgentSwitchboard. They are selected automatically only when the target repository folder is named `AgentSwitchboard`; other repositories must receive an explicit prompt through their owning operator surface so the launcher cannot silently apply the wrong scope. Use `-PushBranch` only after a controlled local run proves the lane; local commit-only worktrees are the default.
 
 ## Bootstrap or repair from PowerShell
 
@@ -207,6 +220,8 @@ hermes
 Use each tool's own login/provider flow. Do not put provider keys in the fleet manifest, prompts, setup summary, or repository.
 
 ## Start one sprint directly
+
+The following is an advanced lower-level entrypoint, not the normal OpenCode operator path:
 
 ```powershell
 $root = "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet"
