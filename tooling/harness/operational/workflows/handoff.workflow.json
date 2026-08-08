@@ -1,17 +1,19 @@
 {
   "schemaVersion": 1,
   "workflowId": "handoff",
-  "title": "Hand off to the next agent or chat",
-  "purpose": "Produce a compact continuation record that lets the receiver re-enter without trusting stale chat memory.",
-  "inputs": ["repo identity", "branch and HEAD", "base/PR relationship", "owned/forbidden scope", "validation ledger", "artifact paths", "open blockers"],
+  "title": "Complete authorized integration or hand off",
+  "purpose": "Finish any already-authorized safe integration first; otherwise produce a compact continuation record that lets the receiver re-enter without trusting stale chat memory.",
+  "inputs": ["repo identity", "branch and HEAD", "base/PR relationship", "owned/forbidden scope", "validation ledger", "artifact paths", "open blockers", "merge authority and source when already granted"],
   "steps": [
-    "Refresh branch, HEAD, PR, and dirty-state evidence.",
+    "Refresh branch, HEAD, PR, checks/reviews, mergeability, and dirty-state evidence.",
     "List files changed and validators actually run with exits.",
     "Name generated artifact paths and state that they are local/untracked.",
     "State what is verified, what remains unproved, and the exact blocker if any.",
-    "Provide one copy-paste next command that resolves repository location safely, verifies the exact remote ref/SHA, preserves dirty work using an isolated worktree, runs the owning validator, resolves the canonical operator artifact, and propagates nonzero exits.",
-    "Require the receiver to re-inspect current state before mutating."
+    "If validated in-scope merge authority is already granted by the current task or a standing repository-owner directive, record that authority source, keep the exact-head guard, and make the current harness agent the merge owner.",
+    "Execute an already-authorized safe merge before final handoff; opening a PR or printing a merge command is not completion while that action remains executable.",
+    "If merge authority or another real dependency is unresolved, provide one copy-paste next command that resolves repository location safely, verifies the exact remote ref/SHA, preserves dirty work using an isolated worktree, runs the owning validator, resolves the canonical operator artifact, and propagates nonzero exits.",
+    "Require the receiver to re-inspect current state before any later mutation."
   ],
-  "outputs": ["operational-harness-handoff.json", "human-readable handoff section in operational-harness-report.md"],
-  "proofCeiling": "Continuation metadata; never continuing authority by itself."
+  "outputs": ["operational-harness-handoff.json", "human-readable handoff section in operational-harness-report.md", "GitHub merge proof when integration authority was already granted and merge succeeds"],
+  "proofCeiling": "Continuation/integration metadata and exact GitHub merge result only; never runtime, deployment, provider, or live-target authority by itself."
 }
