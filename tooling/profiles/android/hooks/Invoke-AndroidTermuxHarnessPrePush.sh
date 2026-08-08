@@ -4,6 +4,12 @@ set -euo pipefail
 root="$(git rev-parse --show-toplevel)"
 cd "$root"
 
+if [ -n "$(git status --porcelain)" ]; then
+  printf '%s\n' '[FAIL] Pre-push validation requires a clean working tree so validated content equals the commit being pushed.' >&2
+  git status --short >&2
+  exit 2
+fi
+
 python tests/test_android_termux_harness.py
 bash -n tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPreCommit.sh
 bash -n tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPrePush.sh
@@ -16,4 +22,4 @@ else
   printf '%s\n' '[SKIP] pwsh unavailable; completeness is owned by hosted CI on Termux.'
 fi
 
-printf '%s\n' '[PASS] Android Termux harness pre-push checks'
+printf '%s\n' '[PASS] Android Termux harness pre-push checks validated the clean HEAD snapshot'
