@@ -41,6 +41,17 @@ def git(*args: str) -> str:
     return result.stdout.strip()
 
 
+def route_for(task: str) -> str | None:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        result = subprocess.run(
+            [sys.executable, str(HARNESS / "Get-OperationalHarnessStatus.py"), "--task", task, "--output-root", temp_dir],
+            cwd=Path(temp_dir), text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
+        )
+        require(result.returncode == 0, f"route probe exit={result.returncode} task={task!r} stdout={result.stdout!r} stderr={result.stderr!r}")
+        status = json.loads((Path(temp_dir) / "operational-harness-status.json").read_text(encoding="utf-8"))
+        return status["routing"]["specializedSkill"]
+
+
 def main() -> None:
     required = [
         "HARNESS.md",
@@ -167,6 +178,8 @@ def main() -> None:
     require("Test-OperationalHarness.ps1" in pre_push, "pre-push helper must run owning validator")
     require("diff --check" in pre_push, "pre-push helper must run range diff check")
     require("-BaseRef" in pre_push, "pre-push helper must explain explicit stacked base")
+    require("BaseRef is required" in pre_push, "pre-push helper must fail closed without an explicit base")
+    require("@{u}" not in pre_push, "pre-push helper must not infer a push range from configured upstream")
     for hook_text, label in ((pre_commit, "pre-commit"), (pre_push, "pre-push")):
         for forbidden in ("core.hookspath", "git config", "reset --hard", "git clean", "force-push"):
             require(forbidden not in hook_text.lower(), f"{label} helper contains forbidden behavior: {forbidden}")
@@ -211,6 +224,14 @@ def main() -> None:
         require(status["routing"]["workflow"] == "pre-commit-validation", "task routing should select validation")
         require(status["routing"]["specializedSkill"] == ".ai/skills/environment-capability-routing/SKILL.md", "cross-environment task should route to environment skill")
         require(status["validation"]["gateComplete"] is False, "validation may not be inferred")
+
+    route_cases = (
+        ("verify Windows launch mode", ".ai/skills/windows-profile-launch-mode-validation/SKILL.md"),
+        ("verify visible runtime on Windows", ".ai/skills/end-to-end-runtime-validation/SKILL.md"),
+        ("verify pi harness on Windows", ".ai/skills/pi-fusion-orchestration/SKILL.md"),
+    )
+    for task, expected in route_cases:
+        require(route_for(task) == expected, f"specialized routing precedence failed for {task!r}")
 
     head = git("rev-parse", "HEAD")
     with tempfile.TemporaryDirectory() as temp_dir:
