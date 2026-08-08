@@ -1,0 +1,11 @@
+{
+  "enableInstallTelemetry": false,
+  "enableSkillCommands": true,
+  "skills": [
+    "../.ai/skills"
+  ],
+  "packages": [],
+  "extensions": [],
+  "prompts": [],
+  "themes": []
+}

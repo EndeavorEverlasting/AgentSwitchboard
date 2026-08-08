@@ -1,0 +1,39 @@
+name: Android on-the-move runtime contracts
+
+on:
+  pull_request:
+    paths:
+      - "Start-AgentSwitchboard-Android.sh"
+      - ".pi/**"
+      - "tooling/profiles/android/**"
+      - "docs/workstation/android-on-the-move-runtime.md"
+      - ".ai/harness/device-profile-registry.json"
+      - "scripts/Test-DeviceProfileLauncherContract.ps1"
+      - "tests/test_android_on_the_move_runtime.py"
+      - ".github/workflows/android-on-the-move-runtime.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Parse shell entrypoints
+        run: |
+          bash -n Start-AgentSwitchboard-Android.sh
+          bash -n tooling/profiles/android/AgentSwitchboard-Android.sh
+      - name: Run focused Android runtime contracts
+        run: python3 -m unittest tests.test_android_on_the_move_runtime
+      - name: Run device profile contract
+        shell: pwsh
+        run: ./scripts/Test-DeviceProfileLauncherContract.ps1
+      - name: Check diff hygiene
+        run: |
+          set -euo pipefail
+          git diff --check "origin/${GITHUB_BASE_REF}...HEAD"
+          test -z "$(git status --short)"
