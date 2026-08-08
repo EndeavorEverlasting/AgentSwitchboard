@@ -2,7 +2,7 @@
 
 Start here **after `AGENTS.md`** when you need to enter the repository without relying on remembered paths or hidden commands.
 
-This operational harness does not replace the repository-family, environment-capability, device-profile, application, Pi, GNHF, or Windows profile harnesses. It tells you how to find and select the owner, run the right validator, record artifacts, recover from failures, and hand off.
+This operational harness does not replace the repository-family, environment-capability, device-profile, application, Pi, GNHF, or Windows profile harnesses. It tells you how to find and select the owner, run the right validator, preserve granted integration authority, record artifacts, recover from failures, complete safe integration, and hand off only when work truly transfers or remains blocked.
 
 ## Fast entry
 
@@ -11,6 +11,7 @@ From the repository root:
 ```powershell
 pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1
 python tests/test_operational_harness.py
+python tests/test_operational_merge_authority.py
 python tooling/harness/operational/Get-OperationalHarnessStatus.py --task "describe the task"
 ```
 
@@ -31,22 +32,39 @@ python tooling/harness/operational/Get-OperationalHarnessStatus.py `
   --gate-complete
 ```
 
-`--gate-complete` is caller attestation and requires at least one explicit validation receipt. The reporter does not execute or infer those receipts. When a complete PR gate is reported, the generated next action names the repository owner, keeps merge authorization/review as an explicit dependency, and pins any proposed merge command to the exact observed head.
+`--gate-complete` is caller attestation and requires at least one explicit validation receipt. The reporter does not execute or infer those receipts.
+
+If the current task or an explicit standing repository-owner directive already authorizes merging validated in-scope work, **preserve that authority** instead of asking again:
+
+```powershell
+python tooling/harness/operational/Get-OperationalHarnessStatus.py `
+  --task "complete validated PR integration" `
+  --pr-number <number> `
+  --validated-command "<command already run successfully>" `
+  --gate-complete `
+  --merge-authorized `
+  --merge-authority-source "<current task prompt or standing repository-owner directive>"
+```
+
+With recorded authority, the generated exact-head merge action is owned by the **current harness agent**. The agent must recheck live mergeability/checks/reviews and execute the pinned merge in the same work cycle when safe. Opening a PR, printing the command, or asking the owner to repeat authorization is not completion.
+
+Without recorded merge authority, the generated next action remains owner-controlled and explicitly names authorization/review as the dependency. The reporter never invents authority.
 
 ## Canonical operational files
 
 - `tooling/harness/operational/manifest.json` — operational harness entrypoints and safety ceiling.
 - `tooling/harness/operational/codebase-map.json` — compact repository structure, commands, and known traps.
-- `tooling/harness/operational/workflow-registry.json` — deterministic routing to task intake, validation, failure recovery, handoff, and specialized domain skills.
+- `tooling/harness/operational/workflow-registry.json` — deterministic routing to task intake, validation, failure recovery, handoff/integration continuation, and specialized domain skills.
 - `tooling/harness/operational/artifact-registry.json` — generated evidence roles, names, generators, and proof ceilings.
 - `tooling/harness/operational/validator-registry.json` — owning, foundation, domain, and aggregate checks.
 - `tooling/harness/operational/workflows/` — executable workflow specifications.
 - `.ai/skills/operational-harness-routing/SKILL.md` — scoped repeatable procedure.
 - `docs/harness/operational-harness.md` — human operator guide.
-- `scripts/Test-OperationalHarness.ps1` and `tests/test_operational_harness.py` — completeness contracts.
-- `.github/workflows/operational-harness.yml` — Windows/Linux hosted gate.
+- `scripts/Test-OperationalHarness.ps1`, `tests/test_operational_harness.py`, and `tests/test_operational_merge_authority.py` — completeness and authority-continuation contracts.
+- `.github/workflows/operational-harness.yml` — Windows/Linux hosted harness gate.
+- `.github/workflows/operational-merge-authority.yml` — Windows/Linux authority-continuation regression gate.
 - `tooling/harness/operational/hooks/Invoke-OperationalHarnessPreCommit.ps1` — optional pre-commit helper. It is never installed implicitly.
-- `tooling/harness/operational/hooks/Invoke-OperationalHarnessPrePush.ps1` — optional pre-push helper. It never guesses a stacked base when no upstream exists.
+- `tooling/harness/operational/hooks/Invoke-OperationalHarnessPrePush.ps1` — optional pre-push helper. It requires an exact base instead of guessing the push range.
 
 ## Workflow choice
 
@@ -56,14 +74,16 @@ Use `pre-commit-validation` after implementation is complete but before committi
 
 Use `failure-recovery` when a validator, CI job, schema, fixture, or contract fails.
 
-Use `handoff` when another agent/chat/operator must continue the exact branch and proof state, or when a completed verification gate has reached a review/merge dependency.
+Use `handoff` after a complete gate to either finish already-authorized safe integration or transfer exact branch/proof state when a real dependency remains unresolved.
 
 Cross-environment work must route through `.ai/skills/environment-capability-routing/SKILL.md`. Operator-visible runtime proof must route through `.ai/skills/end-to-end-runtime-validation/SKILL.md`. Those specialized owners outrank generic operational convenience.
 
 ## Safety and proof
 
-This harness may inspect repository files, local Git identity/state, and registered validators. It may generate local status/report/handoff artifacts. It does not authorize governance edits, product mutation, provider access, credentials, deployment, live-target mutation, destructive Git, merge, or proof promotion.
+This harness may inspect repository files, local Git identity/state, and registered validators. It may generate local status/report/handoff artifacts. It does not authorize governance edits, product mutation, provider access, credentials, deployment, live-target mutation, destructive Git, or proof promotion.
 
-A generated merge command is an owner-gated next action, not merge authorization and not an action performed by the harness.
+Merge authority may come from the current task or an explicit standing repository-owner directive. The harness may **record and preserve** that authority; it may not invent it. When authority is recorded and the validated in-scope merge remains safe, the current harness agent owns continuation through the exact-head-pinned merge.
+
+A generated merge command without recorded authority is an owner-gated next action. A generated merge command with recorded authority is an executable current-agent action, but it is still not merge proof until GitHub returns a successful merge result.
 
 A green operational harness means the repository has a coherent **operational control surface**. It does not mean the application, agents, providers, remote machines, or user workflow have run successfully.

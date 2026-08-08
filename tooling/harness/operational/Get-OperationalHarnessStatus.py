@@ -81,7 +81,9 @@ def main() -> int:
     parser.add_argument("--pr-number", type=int, default=None, help="Pull request number associated with this verification/handoff.")
     parser.add_argument("--validated-command", action="append", default=[], help="Command the caller already executed successfully. Repeatable; recorded as caller attestation, not independently re-run.")
     parser.add_argument("--gate-complete", action="store_true", help="Attest that the declared validation gate completed successfully before this report was generated.")
-    parser.add_argument("--next-command", default=None, help="Explicit executable next gate. If omitted after a complete PR gate, an exact-head merge command is emitted but remains owner-authorized only.")
+    parser.add_argument("--merge-authorized", action="store_true", help="Record that the current task or a standing repository-owner directive already authorizes merging validated in-scope work.")
+    parser.add_argument("--merge-authority-source", default=None, help="Human-readable source of merge authority, required with --merge-authorized (for example: current task prompt or standing repository-owner directive).")
+    parser.add_argument("--next-command", default=None, help="Explicit executable next gate. If omitted after a complete PR gate, an exact-head merge command is emitted; its owner depends on recorded merge authority.")
     parser.add_argument("--next-owner", default=None, help="Owner of the next action when --next-command is supplied.")
     parser.add_argument("--next-dependency", default=None, help="Dependency blocking the next action when --next-command is supplied.")
     parser.add_argument("--next-proof", default=None, help="Artifact or proof produced by the next action when --next-command is supplied.")
@@ -150,6 +152,15 @@ def main() -> int:
     if args.gate_complete and not args.validated_command:
         print("[FAIL] --gate-complete requires at least one --validated-command receipt", file=sys.stderr)
         return 7
+    if args.merge_authority_source and not args.merge_authorized:
+        print("[FAIL] --merge-authority-source requires --merge-authorized", file=sys.stderr)
+        return 8
+    if args.merge_authorized and not args.merge_authority_source:
+        print("[FAIL] --merge-authorized requires --merge-authority-source", file=sys.stderr)
+        return 9
+    if args.merge_authorized and (args.pr_number is None or not args.gate_complete):
+        print("[FAIL] --merge-authorized requires --pr-number and --gate-complete", file=sys.stderr)
+        return 10
 
     detached = branch_rc != 0
     effective_branch = symbolic_branch if branch_rc == 0 else args.branch_label
@@ -185,12 +196,21 @@ def main() -> int:
             "proof": args.next_proof or "result of the declared next gate",
         }
     elif args.gate_complete and args.pr_number is not None and head_rc == 0:
-        next_action = {
-            "owner": "repository owner",
-            "dependency": "explicit owner merge authorization and any required review",
-            "command": f"gh pr merge {args.pr_number} --repo {REPOSITORY} --merge --match-head-commit {head}",
-            "proof": f"GitHub merge result for PR #{args.pr_number} at exact head {head}",
-        }
+        merge_command = f"gh pr merge {args.pr_number} --repo {REPOSITORY} --merge --match-head-commit {head}"
+        if args.merge_authorized:
+            next_action = {
+                "owner": "current harness agent",
+                "dependency": f"merge authorized by {args.merge_authority_source}; required checks/reviews must remain satisfied and the exact PR head must remain unchanged",
+                "command": merge_command,
+                "proof": f"GitHub merge result for PR #{args.pr_number} at exact head {head}",
+            }
+        else:
+            next_action = {
+                "owner": "repository owner",
+                "dependency": "explicit owner merge authorization and any required review",
+                "command": merge_command,
+                "proof": f"GitHub merge result for PR #{args.pr_number} at exact head {head}",
+            }
     else:
         next_action = {
             "owner": "current harness agent",
@@ -268,7 +288,9 @@ def main() -> int:
         f"- missing components: `{len(missing)}`",
         f"- selected workflow: `{workflow}`",
         f"- specialized route: `{specialized or 'none'}`",
-        f"- validation gate complete: `{args.gate_complete}`", "", "## Working", "",
+        f"- validation gate complete: `{args.gate_complete}`",
+        f"- merge authorized: `{args.merge_authorized}`",
+        f"- merge authority source: `{args.merge_authority_source or 'not supplied'}`", "", "## Working", "",
     ]
     report_lines.extend(f"- `{item['path']}`" for item in components if item["present"])
     report_lines.extend(["", "## Broken or missing", ""])
@@ -286,10 +308,13 @@ def main() -> int:
         f"- dependency: {next_action['dependency']}",
         f"- proof produced: {next_action['proof']}",
         f"- command: `{next_action['command']}`", "",
-        "This report is generated from tracked harness registries plus read-only local Git observation and explicit caller receipts. It is not runtime, deployment, provider, remote-host, merge-authorization, or operator-acceptance proof.", "",
+        "This report is generated from tracked harness registries plus read-only local Git observation and explicit caller receipts. Merge authority is recorded only when --merge-authorized and --merge-authority-source are supplied; merge execution is never inferred. It is not runtime, deployment, provider, remote-host, merge-result, or operator-acceptance proof.", "",
     ])
     report_path.write_text("\n".join(report_lines), encoding="utf-8")
 
+    unproved = ["live runtime", "deployment", "provider/authentication behavior", "remote host behavior", "operator acceptance"]
+    if not args.merge_authorized:
+        unproved.append("merge authorization")
     handoff = {
         "schemaVersion": 1,
         "repository": REPOSITORY,
@@ -301,7 +326,7 @@ def main() -> int:
         "reportArtifact": str(report_path),
         "validated": args.validated_command,
         "validationGateComplete": args.gate_complete,
-        "unproved": ["live runtime", "deployment", "provider/authentication behavior", "remote host behavior", "merge authorization", "operator acceptance"],
+        "unproved": unproved,
         "nextOwner": next_action["owner"],
         "nextDependency": next_action["dependency"],
         "nextProof": next_action["proof"],
