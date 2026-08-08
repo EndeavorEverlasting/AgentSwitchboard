@@ -60,7 +60,7 @@ Decision-frontier mode adapts a small set of planning principles from the pinned
 - **One decision per writer/session.** A writer normally resolves one decision task per session. Independent research tasks may proceed in parallel only through separately owned branches/worktrees and must preserve their evidence independently.
 - **Handoff at the execution edge.** When no unresolved decision task or fog remains and the destination is sufficiently specified, update the plan handoff with the exact executable next owner/command. Do not turn the final planning session into unbounded implementation.
 
-The contribution manifest is adoption metadata and provenance only. It is not runtime proof, it does not import the donor's issue-tracker behavior, and it does not grant authority.
+The contribution manifest is adoption metadata and provenance only. It is not runtime proof, it does not import the donor's issue-tracker behavior, and it does not grant authority. The stale-reference policy is `pin-until-reviewed`: upstream movement is an update signal, never authority to change the adopted semantics automatically.
 
 ## Outputs
 
