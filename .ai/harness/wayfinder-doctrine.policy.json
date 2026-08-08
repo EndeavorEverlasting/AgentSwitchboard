@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "policyId": "agentswitchboard.wayfinder-doctrine.v1",
+  "documentation": "docs/governance/wayfinder-doctrine.md",
+  "canonicalSkill": ".ai/skills/wayfinder/SKILL.md",
+  "sourceContribution": "tooling/harness/operational/contributions/wayfinder-public-plan.contribution.json",
+  "selection": {
+    "requiresMultiSessionScale": true,
+    "requiresUnresolvedRouteFog": true,
+    "clearRouteUsesBoundedExecution": true,
+    "noFogAfterBreadthFirstChartExitsWayfinder": true
+  },
+  "authority": {
+    "mapRole": "low-resolution-index",
+    "decisionAuthority": "tracker-child-tickets",
+    "publicPlanRole": "repository-coordination-mirror",
+    "specRole": "temporary-synthesis",
+    "implementationOwner": "to-tickets-or-bounded-sprint",
+    "duplicateDecisionStoresForbidden": true
+  },
+  "ticketTypes": {
+    "research": {
+      "interaction": "afk",
+      "requiredSkills": ["research"],
+      "requiresPrimarySources": true,
+      "requiresArtifact": true
+    },
+    "prototype": {
+      "interaction": "hitl",
+      "requiredSkills": ["prototype"],
+      "requiresArtifact": true,
+      "requiresHumanResponse": true,
+      "requiresHumanVerdict": true
+    },
+    "grilling": {
+      "interaction": "hitl",
+      "requiredSkills": ["grilling", "domain-modeling"],
+      "requiresHumanResponse": true
+    },
+    "task": {
+      "interaction": "either",
+      "requiredSkills": [],
+      "requiresTaskCompletion": true
+    }
+  },
+  "hitl": {
+    "humanSpeaksForThemselves": true,
+    "agentMayRecommend": true,
+    "agentMayInferApproval": false,
+    "agentMayAnswerHumanSide": false,
+    "silenceCountsAsVerdict": false
+  },
+  "frontier": {
+    "derivedFromTracker": true,
+    "requiresOpen": true,
+    "requiresUnclaimed": true,
+    "requiresNoOpenBlockers": true,
+    "claimBeforeWork": true,
+    "maxNonResearchResolutionsPerSession": 1,
+    "parallelResearchAllowedWhenIsolated": true,
+    "outOfScopeBlockerCountsAsResolved": false
+  },
+  "fog": {
+    "ticketWhenQuestionPrecise": true,
+    "notYetSpecifiedWhenQuestionNotPrecise": true,
+    "preSliceSpeculativeFogForbidden": true,
+    "outOfScopeNeverGraduatesWithoutDestinationChange": true
+  },
+  "chartMode": {
+    "destinationFirst": true,
+    "breadthFirstDiscovery": true,
+    "createTicketsBeforeWiring": true,
+    "researchDispatchAllowed": true,
+    "nonResearchResolutionAllowed": false,
+    "destinationImplementationAllowed": false,
+    "stopAfterChart": true
+  },
+  "specification": {
+    "requiresNoRequiredOpenDecisionTickets": true,
+    "requiresEmptyNotYetSpecified": true,
+    "requiresObservedHitlEvidence": true,
+    "lifecycle": "temporary-until-implementation",
+    "primaryDecisionAuthority": "tracker-child-tickets",
+    "retainDecisionHistoryAfterRetirement": true
+  },
+  "donorRefresh": {
+    "policy": "pin-until-reviewed",
+    "autoAdvance": false,
+    "editSnapshotsInPlace": false,
+    "requireNewPinnedSnapshot": true,
+    "requireConsumerValidation": true
+  },
+  "proofCeiling": "Static/hosted contract and command-construction proof only. Live tracker permissions/behavior, HITL decisions, substantive research/prototype quality, implementation, merge, deployment and acceptance require owning evidence."
+}
