@@ -1,0 +1,57 @@
+name: Operational merge authority
+
+on:
+  pull_request:
+    paths:
+      - "tooling/harness/operational/Get-OperationalHarnessStatus.py"
+      - "tooling/harness/operational/workflows/handoff.workflow.json"
+      - ".ai/skills/operational-harness-routing/SKILL.md"
+      - "docs/harness/operational-harness.md"
+      - "tests/test_operational_merge_authority.py"
+      - ".github/workflows/operational-merge-authority.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate merge-authority continuation contract
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & python tests/test_operational_merge_authority.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Validate owning operational harness
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & python tests/test_operational_harness.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify change hygiene
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ('${{ github.event_name }}' -eq 'pull_request') {
+            & git diff --check '${{ github.event.pull_request.base.sha }}' '${{ github.event.pull_request.head.sha }}'
+          } else {
+            & git diff --check HEAD^ HEAD
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $dirty = (& git status --short) -join "`n"
+          if ($dirty) {
+            Write-Error "workflow dirtied checkout:`n$dirty"
+            exit 1
+          }
