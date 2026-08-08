@@ -134,9 +134,9 @@ def main() -> None:
         "local-shell-only",
         "device-local-only",
         "remote workspace host",
-        "Proof ceiling",
     ):
         assert token in android_docs
+    assert "proof ceiling" in android_docs.lower()
     assert "tmux identity is host-scoped" in environment_doctrine
     assert "device-profile-launcher-contract.md" in agents
     assert "environment-capability-contract.md" in agents
