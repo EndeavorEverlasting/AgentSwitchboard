@@ -72,6 +72,12 @@ They are local operational evidence and are never tracked by default. The status
 
 A failing validator is evidence, not permission to edit the test until it passes. Keep the first failing command and bounded output. Determine whether the defect is in harness structure, a registry/schema relationship, documentation, script syntax, domain logic, environment dependency, or authority. Repair only the declared owned scope. If the real blocker is credentials, a protected runtime, merge/review, live target, or unsupported topology, hand off the blocker rather than simulating a pass.
 
+## Stacked baseline regression policy
+
+The hosted operational workflow treats its own harness validators as strict: they must pass on the head. For broad existing repository contracts, a stacked PR is compared against its exact PR base in isolated Git worktrees. A check that passes on the base and fails on the head is a blocking regression. A check that already fails on the base and still fails on the head is reported as `INHERITED-BASELINE`: it remains visible debt, but this harness lane does not mutate unrelated files just to absorb it. A base failure repaired by the head is reported separately.
+
+This distinction is not a waiver. It prevents a focused harness PR from claiming that inherited failures are green while also preventing forbidden-scope repairs from being smuggled into the harness commit.
+
 ## Validation
 
 Focused:
@@ -82,7 +88,7 @@ pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1
 git diff --check
 ```
 
-Hosted `.github/workflows/operational-harness.yml` additionally runs a broad set of existing dependency-light Python/Bash contracts on Linux and existing PowerShell foundation/domain contracts on Windows. This is regression evidence for repository contracts, not live runtime proof.
+Hosted `.github/workflows/operational-harness.yml` additionally compares a broad set of existing dependency-light Python/Bash contracts on Linux and existing PowerShell foundation/domain contracts on Windows against the exact PR base. Head-only failures block. Inherited base failures remain visible as baseline debt. This is regression evidence for repository contracts, not live runtime proof.
 
 ## Rollback
 
