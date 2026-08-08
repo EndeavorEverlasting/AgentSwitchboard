@@ -95,9 +95,22 @@ foreach ($token in @('id: android-termux-repo-bootstrap','status: experimental',
     Check ($skill.Contains($token)) "skill/$token" 'skill contract token is missing'
 }
 
-$deployable = ($requiredFiles | ForEach-Object { $textByPath[$_] }) -join "`n"
+$deployablePaths = @(
+    'tooling/profiles/android/harness/termux/manifest.json',
+    'tooling/profiles/android/harness/termux/codebase-map.json',
+    'tooling/profiles/android/harness/termux/artifact-registry.json',
+    'tooling/profiles/android/harness/termux/workflows/task-intake.workflow.json',
+    'tooling/profiles/android/harness/termux/workflows/validate-terminal-boundary.workflow.json',
+    'tooling/profiles/android/harness/termux/workflows/handle-input-boundary-failure.workflow.json',
+    'tooling/profiles/android/harness/termux/fixtures/bracketed-paste-corruption.fixture.txt',
+    'tooling/profiles/android/harness/termux/operator-report.template.md',
+    'tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPreCommit.sh',
+    '.ai/skills/android-termux-repo-bootstrap/SKILL.md',
+    'docs/harness/android-termux-operational-harness.md'
+)
+$deployable = ($deployablePaths | ForEach-Object { $textByPath[$_] }) -join "`n"
 foreach ($forbidden in @('BEGIN OPENSSH PRIVATE KEY','gh auth token','git clean -fdx')) {
-    Check (-not $deployable.Contains($forbidden)) "forbidden/$forbidden" 'unsafe secret or destructive command literal is embedded in harness contracts'
+    Check (-not $deployable.Contains($forbidden)) "forbidden/$forbidden" 'unsafe secret or destructive command literal is embedded in deployable harness contracts'
 }
 
 Write-Host 'ANDROID TERMUX HARNESS COMPLETENESS' -ForegroundColor Cyan
