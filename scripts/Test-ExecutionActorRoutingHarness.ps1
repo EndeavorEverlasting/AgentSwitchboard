@@ -81,7 +81,7 @@ $registry = Get-Content -LiteralPath (Join-Path $root 'tooling/harness/operation
 if ($registry.Contains('execution-actor-routing')) { Pass 'integration/workflow-registry' } else { Fail 'integration/workflow-registry' 'missing specialized route' }
 $validators = Get-Content -LiteralPath (Join-Path $root 'tooling/harness/operational/validator-registry.json') -Raw
 if ($validators.Contains('execution-actor-routing')) { Pass 'integration/validator-registry' } else { Fail 'integration/validator-registry' 'missing validator' }
-$artifacts = Get-Content -LiteralPath (Join-Path $root 'tooling/harness/operational/artifact-registry.json') -Raw
+$artifacts = Get-Content -LiteralPath (Join-Path $root 'tooling/harness/operational/execution-actor-routing/artifact-registry.json') -Raw
 if ($artifacts.Contains('execution-actor-binding')) { Pass 'integration/artifact-registry' } else { Fail 'integration/artifact-registry' 'missing artifact' }
 
 foreach ($hook in @(

@@ -43,7 +43,7 @@ class ExecutionActorRoutingHarnessTests(unittest.TestCase):
         self.assertIn("executionActorRoutingHarness", (ROOT / "tooling/harness/operational/manifest.json").read_text(encoding="utf-8"))
         self.assertIn("execution-actor-routing", (ROOT / "tooling/harness/operational/workflow-registry.json").read_text(encoding="utf-8"))
         self.assertIn("execution-actor-routing", (ROOT / "tooling/harness/operational/validator-registry.json").read_text(encoding="utf-8"))
-        self.assertIn("execution-actor-binding", (ROOT / "tooling/harness/operational/artifact-registry.json").read_text(encoding="utf-8"))
+        self.assertIn("execution-actor-binding", (ROOT / "tooling/harness/operational/execution-actor-routing/artifact-registry.json").read_text(encoding="utf-8"))
 
     def run_runner(self, *args):
         return subprocess.run([sys.executable, str(RUNNER), *args], cwd=ROOT, text=True, capture_output=True)
