@@ -3,10 +3,12 @@ name: OpenCode click launcher contract
 on:
   pull_request:
     paths:
+      - 'AgentSwitchboard.cmd'
       - 'Start-AgentSwitchboard-OpenCode.cmd'
       - 'tooling/gnhf/Start-AgentSwitchboardOpenCode.ps1'
       - 'tooling/gnhf/Start-GnhfSprint.ps1'
       - 'tooling/gnhf/Test-OpenCodeClickLauncher.ps1'
+      - 'docs/workstation/agent-startup-readiness.md'
       - 'docs/workstation/opencode-click-launcher.md'
       - '.github/workflows/opencode-click-launcher.yml'
   workflow_dispatch:
@@ -43,6 +45,16 @@ jobs:
       - name: Reproduce detached-head regression and exercise actual CMD
         shell: pwsh
         run: pwsh -NoLogo -NoProfile -File tooling/gnhf/Test-OpenCodeClickLauncher.ps1
+      - name: Verify root startup discovers the click launcher
+        shell: pwsh
+        run: |
+          $startup = Get-Content -LiteralPath AgentSwitchboard.cmd -Raw
+          if (-not $startup.Contains('double-click Start-AgentSwitchboard-OpenCode.cmd')) {
+            throw 'Root startup does not direct the operator to the click-first OpenCode launcher.'
+          }
+          if ($startup.Contains('Pass bounded sprint arguments to this launcher when repository work is intended.')) {
+            throw 'Legacy raw-argument guidance is still the default operator instruction.'
+          }
       - name: Check PR-range hygiene
         shell: pwsh
         run: |
@@ -69,4 +81,6 @@ jobs:
           grep -F 'Start-AgentSwitchboardOpenCode.ps1' Start-AgentSwitchboard-OpenCode.cmd
           grep -F 'Detached HEAD is not allowed for an unattended sprint.' tooling/gnhf/Start-GnhfSprint.ps1
           grep -F 'Get-Clipboard -Raw' tooling/gnhf/Start-AgentSwitchboardOpenCode.ps1
+          grep -F 'double-click Start-AgentSwitchboard-OpenCode.cmd' AgentSwitchboard.cmd
+          grep -F 'Do not reconstruct the long' docs/workstation/agent-startup-readiness.md
           git diff --check "origin/${GITHUB_BASE_REF:-main}...HEAD"

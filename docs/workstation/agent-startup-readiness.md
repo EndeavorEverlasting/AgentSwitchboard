@@ -15,7 +15,18 @@ With no arguments, the launcher performs read-only orientation:
 - writes local JSON and English reports under `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\reports\startup`;
 - does not install tools, authenticate providers, contact a hosted model, mutate a repository, push, merge, or deploy.
 
-When bounded sprint arguments are supplied, the launcher displays readiness first and then delegates to the existing `Start-AgentSwitchboard.ps1` authority.
+## OpenCode operator path
+
+When OpenCode is adapter-ready, the normal Windows workflow is click-first:
+
+1. copy the complete bounded sprint prompt to the Windows clipboard;
+2. double-click `Start-AgentSwitchboard-OpenCode.cmd`;
+3. review the repo, branch, limits, push state, and evidence path printed before launch;
+4. inspect the generated GNHF worktree and validation evidence before accepting delivery.
+
+Do not reconstruct the long `agent-switchboard.cmd -RepoPath ... -Agent opencode ...` command for routine use. To target another repository without rebuilding that command, drag the repository folder onto `Start-AgentSwitchboard-OpenCode.cmd`. See [`opencode-click-launcher.md`](opencode-click-launcher.md).
+
+When advanced bounded sprint arguments are explicitly supplied to `AgentSwitchboard.cmd`, it continues to delegate to the existing `Start-AgentSwitchboard.ps1` authority for automation and non-OpenCode lanes.
 
 ## Status meanings
 
