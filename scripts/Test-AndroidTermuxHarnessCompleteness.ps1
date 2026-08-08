@@ -12,10 +12,13 @@ function Check([bool]$Condition, [string]$Name, [string]$Message) {
     else { [void]$failures.Add("$Name`: $Message") }
 }
 
-function Require-File([string]$RelativePath) {
-    $path = Join-Path $RootPath $RelativePath
-    Check (Test-Path -LiteralPath $path -PathType Leaf) "file/$RelativePath" 'required file missing'
-    return $path
+function Finish {
+    Write-Host 'ANDROID TERMUX HARNESS COMPLETENESS' -ForegroundColor Cyan
+    $passes | ForEach-Object { Write-Host "[PASS] $_" -ForegroundColor Green }
+    $failures | ForEach-Object { Write-Host "[FAIL] $_" -ForegroundColor Red }
+    Write-Host "`nResult: $($passes.Count) passed / $($failures.Count) failed"
+    if ($failures.Count -gt 0) { exit 1 }
+    exit 0
 }
 
 $required = @(
@@ -40,7 +43,17 @@ $required = @(
     'tooling/profiles/android/AgentSwitchboard-Android.sh',
     '.ai/harness/device-profile-registry.json'
 )
-foreach ($path in $required) { [void](Require-File $path) }
+
+$missing = [System.Collections.Generic.List[string]]::new()
+foreach ($relative in $required) {
+    if (Test-Path -LiteralPath (Join-Path $RootPath $relative) -PathType Leaf) {
+        [void]$passes.Add("file/$relative")
+    } else {
+        [void]$missing.Add($relative)
+        [void]$failures.Add("file/$relative`: required file missing")
+    }
+}
+if ($missing.Count -gt 0) { Finish }
 
 $jsonPaths = @(
     'tooling/profiles/android/harness/termux/manifest.json',
@@ -52,24 +65,24 @@ $jsonPaths = @(
     'tooling/profiles/android/harness/termux/workflows/capture-terminal-output.workflow.json',
     '.ai/harness/device-profile-registry.json'
 )
+$json = @{}
 foreach ($relative in $jsonPaths) {
     try {
-        $null = Get-Content -LiteralPath (Join-Path $RootPath $relative) -Raw | ConvertFrom-Json
+        $json[$relative] = Get-Content -LiteralPath (Join-Path $RootPath $relative) -Raw | ConvertFrom-Json
         [void]$passes.Add("json/$relative")
     } catch {
         [void]$failures.Add("json/$relative`: $($_.Exception.Message)")
     }
 }
+if ($failures.Count -gt 0) { Finish }
 
-try {
-    $manifest = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/profiles/android/harness/termux/manifest.json') -Raw | ConvertFrom-Json
-    Check ($manifest.status -eq 'operational-harness-runtime-separate') 'manifest/status' 'unexpected harness status'
-    Check ($manifest.runtimeEntrypoint -eq 'Start-AgentSwitchboard-Android.sh') 'manifest/runtime-entrypoint' 'runtime entrypoint not indexed'
-    Check (@($manifest.components.workflows) -contains 'tooling/profiles/android/harness/termux/workflows/capture-terminal-output.workflow.json') 'manifest/capture-workflow' 'capture workflow missing'
-    Check (@($manifest.components.fixtures) -contains 'tooling/profiles/android/harness/termux/fixtures/multi-pane-selection.fixture.txt') 'manifest/multipane-fixture' 'multi-pane fixture missing'
-    Check (@($manifest.components.skills) -contains '.ai/skills/android-termux-terminal-recovery/SKILL.md') 'manifest/recovery-skill' 'terminal recovery skill missing'
-    Check (@($manifest.components.hooks) -contains 'tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPrePush.sh') 'manifest/prepush' 'pre-push hook missing'
-} catch { [void]$failures.Add("manifest/contracts`: $($_.Exception.Message)") }
+$manifest = $json['tooling/profiles/android/harness/termux/manifest.json']
+Check ($manifest.status -eq 'operational-harness-runtime-separate') 'manifest/status' 'unexpected harness status'
+Check ($manifest.runtimeEntrypoint -eq 'Start-AgentSwitchboard-Android.sh') 'manifest/runtime-entrypoint' 'runtime entrypoint not indexed'
+Check (@($manifest.components.workflows) -contains 'tooling/profiles/android/harness/termux/workflows/capture-terminal-output.workflow.json') 'manifest/capture-workflow' 'capture workflow missing'
+Check (@($manifest.components.fixtures) -contains 'tooling/profiles/android/harness/termux/fixtures/multi-pane-selection.fixture.txt') 'manifest/multipane-fixture' 'multi-pane fixture missing'
+Check (@($manifest.components.skills) -contains '.ai/skills/android-termux-terminal-recovery/SKILL.md') 'manifest/recovery-skill' 'terminal recovery skill missing'
+Check (@($manifest.components.hooks) -contains 'tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPrePush.sh') 'manifest/prepush' 'pre-push hook missing'
 
 $mapText = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/profiles/android/harness/termux/codebase-map.json') -Raw
 foreach ($token in @('tmux list-panes', 'tmux capture-pane -p -S -200', 'long-press selection', 'Touch scrolling', 'authentication/device-code')) {
@@ -91,21 +104,19 @@ foreach ($token in @('tmux list-panes', 'tmux capture-pane', 'Ctrl+B', 'Never so
     Check ($skillText.Contains($token)) "skill/$token" 'terminal recovery skill incomplete'
 }
 
-$registry = Get-Content -LiteralPath (Join-Path $RootPath '.ai/harness/device-profile-registry.json') -Raw | ConvertFrom-Json
+$registry = $json['.ai/harness/device-profile-registry.json']
 $android = @($registry.profiles | Where-Object profileId -eq 'android')[0]
-Check ($android.status -eq 'implemented-runtime-unproved') 'runtime/status' 'harness must reflect current Android runtime registration without promoting live proof'
-Check ($android.canonicalSourcePath -eq 'Start-AgentSwitchboard-Android.sh') 'runtime/source' 'canonical Android runtime entrypoint differs'
+Check ($android.status -eq 'implemented-runtime-unproved') 'runtime/status' 'must reflect current runtime registration without promoting live proof'
+Check ($android.canonicalSourcePath -eq 'Start-AgentSwitchboard-Android.sh') 'runtime/source' 'canonical runtime entrypoint differs'
 
-$tracked = & git -C $RootPath ls-files
-if ($LASTEXITCODE -eq 0) {
+$trackedOutput = & git -C $RootPath ls-files
+if ($LASTEXITCODE -ne 0) {
+    [void]$failures.Add('git/ls-files: failed')
+} else {
+    $tracked = @($trackedOutput | ForEach-Object { [string]$_ })
     foreach ($relative in $required) {
         Check ($tracked -contains $relative) "tracked/$relative" 'required harness/runtime-indexed file is not tracked'
     }
-} else { [void]$failures.Add('git/ls-files: failed') }
+}
 
-Write-Host 'ANDROID TERMUX HARNESS COMPLETENESS' -ForegroundColor Cyan
-$passes | ForEach-Object { Write-Host "[PASS] $_" -ForegroundColor Green }
-$failures | ForEach-Object { Write-Host "[FAIL] $_" -ForegroundColor Red }
-Write-Host "`nResult: $($passes.Count) passed / $($failures.Count) failed"
-if ($failures.Count -gt 0) { exit 1 }
-exit 0
+Finish

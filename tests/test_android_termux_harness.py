@@ -2,6 +2,7 @@
 """Dependency-free Android/Termux operational harness contracts."""
 
 import json
+import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,6 +17,13 @@ def load_json(path: Path):
 def require(path: str) -> Path:
     target = ROOT / path
     assert target.is_file(), f"missing: {path}"
+    tracked = subprocess.run(
+        ["git", "-C", str(ROOT), "ls-files", "--error-unmatch", "--", path],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    assert tracked.returncode == 0, f"not tracked in Git index: {path}"
     return target
 
 
