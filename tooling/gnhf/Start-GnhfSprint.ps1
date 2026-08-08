@@ -78,7 +78,9 @@ if ([string]::IsNullOrWhiteSpace($objective)) {
     throw "The sprint prompt is empty."
 }
 
-$insideWorkTree = (Invoke-Git -Arguments @("rev-parse", "--is-inside-work-tree") | Select-Object -First 1).Trim()
+$insideOutput = @(Invoke-Git -Arguments @("rev-parse", "--is-inside-work-tree"))
+$insideWorkTree = if ($insideOutput.Count -gt 0) { [string]$insideOutput[0] } else { "" }
+$insideWorkTree = $insideWorkTree.Trim()
 if ($insideWorkTree -ne "true") {
     throw "Target path is not a Git working tree: $RepoPath"
 }
@@ -89,7 +91,9 @@ if ($dirty.Count -gt 0) {
     throw "GNHF requires a clean target worktree. Existing changes:`n$($dirty -join [Environment]::NewLine)"
 }
 
-$branch = (Invoke-Git -Arguments @("branch", "--show-current") | Select-Object -First 1).Trim()
+$branchOutput = @(Invoke-Git -Arguments @("branch", "--show-current"))
+$branch = if ($branchOutput.Count -gt 0) { [string]$branchOutput[0] } else { "" }
+$branch = $branch.Trim()
 if ([string]::IsNullOrWhiteSpace($branch)) {
     throw "Detached HEAD is not allowed for an unattended sprint."
 }
