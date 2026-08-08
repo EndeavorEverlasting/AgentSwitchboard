@@ -101,7 +101,7 @@ An app-output context packet is a minimized interpretation artifact, not the ori
 
 ## End-to-end distinction
 
-`runtime-proof` may establish one observed behavior. `end-to-end-runtime-validation` is required when the claim depends on the exact operator command across shells/processes/platforms/terminal/TUI/GUI/provider/application boundaries. A parent exit code alone is not end-to-end proof.
+`runtime-proof` may establish one observed behavior. `end-to-end-runtime-validation` is required when the claim depends on the exact operator command across shells/processes/platforms/terminal/TUI/GUI/provider/application boundaries. A parent exception containing only an exit code is not a complete end-to-end failure report. A parent exit code alone is not end-to-end proof.
 
 ## Android Termux distinction
 
