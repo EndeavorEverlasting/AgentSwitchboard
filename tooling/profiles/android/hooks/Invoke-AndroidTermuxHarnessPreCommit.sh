@@ -14,13 +14,25 @@ scope=(
   tests/test_android_termux_harness.py
   scripts/Test-AndroidTermuxHarnessCompleteness.ps1
   .github/workflows/android-termux-harness.yml
+  .ai/agent-contract.json
+  .ai/harness/repository-family.registry.json
+  scripts/Get-RepositoryFamilyHarnessStatus.ps1
+  .ai/harness/device-profile-registry.json
+  Start-AgentSwitchboard-Android.sh
+  tooling/profiles/android/AgentSwitchboard-Android.sh
 )
 
 if ! git diff --quiet -- "${scope[@]}"; then
   printf '%s\n' '[FAIL] Android harness has unstaged changes in validated paths; stage or revert them before pre-commit validation.' >&2
+  git status --short -- "${scope[@]}" >&2
   exit 2
 fi
 
+command -v python >/dev/null 2>&1 || {
+  printf '%s\n' '[FAIL] python is required by the Android Termux harness; run: pkg install -y python' >&2
+  exit 3
+}
+python --version
 python tests/test_android_termux_harness.py
 
 for file in \

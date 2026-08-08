@@ -5,6 +5,9 @@
   "profile": "android",
   "environment": "termux",
   "status": "operational-harness-runtime-separate",
+  "authorityRef": ".ai/agent-contract.json",
+  "repositoryFamilyRegistry": ".ai/harness/repository-family.registry.json",
+  "repositoryFamilyStatusProbe": "scripts/Get-RepositoryFamilyHarnessStatus.ps1",
   "canonicalProfileRegistry": ".ai/harness/device-profile-registry.json",
   "runtimeEntrypoint": "Start-AgentSwitchboard-Android.sh",
   "components": {
@@ -34,11 +37,12 @@
     "completenessValidator": "scripts/Test-AndroidTermuxHarnessCompleteness.ps1",
     "ci": ".github/workflows/android-termux-harness.yml"
   },
-  "requiredTools": ["git", "tmux", "gh", "ssh", "curl", "jq"],
+  "requiredTools": ["git", "tmux", "gh", "ssh", "curl", "jq", "python"],
+  "harnessBootstrap": "pkg install -y python",
   "knownFailureSignatures": [
     {"id":"bracketed-paste","signature":"[200~","classification":"input-framing-corruption"},
     {"id":"multi-pane-native-selection","signature":"Android text selection spans more than one visible tmux pane","classification":"terminal-selection-boundary"},
     {"id":"scrollback-unclear","signature":"operator cannot reliably browse prior output with touch scrolling","classification":"terminal-scrollback-boundary"}
   ],
-  "proofCeiling": "This harness proves tracked Android/Termux operational contracts, bounded pane-capture procedures, validators, hooks, skills and hosted checks. The Android runtime is separately implemented and remains subject to its own live proof. This harness does not prove provider login, model output, tool execution, repository mutation, clipboard behavior on every device, or operator acceptance."
+  "proofCeiling": "This harness proves tracked Android/Termux operational contracts, bounded pane-capture procedures, validators, hooks, skills and hosted checks. The Android runtime is separately implemented and remains subject to its own live proof. This harness does not prove provider login, model output, tool execution, repository mutation, clipboard behavior on every device, repository-family status on a Termux host without PowerShell, or operator acceptance."
 }

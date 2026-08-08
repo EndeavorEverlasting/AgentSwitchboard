@@ -39,6 +39,9 @@ $required = @(
     'docs/harness/android-termux-operational-harness.md',
     'tests/test_android_termux_harness.py',
     '.github/workflows/android-termux-harness.yml',
+    '.ai/agent-contract.json',
+    '.ai/harness/repository-family.registry.json',
+    'scripts/Get-RepositoryFamilyHarnessStatus.ps1',
     'Start-AgentSwitchboard-Android.sh',
     'tooling/profiles/android/AgentSwitchboard-Android.sh',
     '.ai/harness/device-profile-registry.json'
@@ -63,6 +66,8 @@ $jsonPaths = @(
     'tooling/profiles/android/harness/termux/workflows/validate-terminal-boundary.workflow.json',
     'tooling/profiles/android/harness/termux/workflows/handle-input-boundary-failure.workflow.json',
     'tooling/profiles/android/harness/termux/workflows/capture-terminal-output.workflow.json',
+    '.ai/agent-contract.json',
+    '.ai/harness/repository-family.registry.json',
     '.ai/harness/device-profile-registry.json'
 )
 $json = @{}
@@ -79,20 +84,33 @@ if ($failures.Count -gt 0) { Finish }
 $manifest = $json['tooling/profiles/android/harness/termux/manifest.json']
 Check ($manifest.status -eq 'operational-harness-runtime-separate') 'manifest/status' 'unexpected harness status'
 Check ($manifest.runtimeEntrypoint -eq 'Start-AgentSwitchboard-Android.sh') 'manifest/runtime-entrypoint' 'runtime entrypoint not indexed'
+Check ($manifest.authorityRef -eq '.ai/agent-contract.json') 'manifest/authority' 'agent contract not indexed'
+Check ($manifest.repositoryFamilyRegistry -eq '.ai/harness/repository-family.registry.json') 'manifest/family-registry' 'family registry not indexed'
+Check ($manifest.repositoryFamilyStatusProbe -eq 'scripts/Get-RepositoryFamilyHarnessStatus.ps1') 'manifest/family-status' 'family status probe not indexed'
+Check (@($manifest.requiredTools) -contains 'python') 'manifest/python' 'Python harness prerequisite not declared'
+Check ($manifest.harnessBootstrap -eq 'pkg install -y python') 'manifest/python-bootstrap' 'Python harness bootstrap differs'
 Check (@($manifest.components.workflows) -contains 'tooling/profiles/android/harness/termux/workflows/capture-terminal-output.workflow.json') 'manifest/capture-workflow' 'capture workflow missing'
 Check (@($manifest.components.fixtures) -contains 'tooling/profiles/android/harness/termux/fixtures/multi-pane-selection.fixture.txt') 'manifest/multipane-fixture' 'multi-pane fixture missing'
 Check (@($manifest.components.skills) -contains '.ai/skills/android-termux-terminal-recovery/SKILL.md') 'manifest/recovery-skill' 'terminal recovery skill missing'
 Check (@($manifest.components.hooks) -contains 'tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPrePush.sh') 'manifest/prepush' 'pre-push hook missing'
 
 $mapText = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/profiles/android/harness/termux/codebase-map.json') -Raw
-foreach ($token in @('tmux list-panes', 'tmux capture-pane -p -S -200', 'long-press selection', 'Touch scrolling', 'authentication/device-code')) {
-    Check ($mapText.Contains($token)) "map/$token" 'required Android terminal boundary rule missing'
+foreach ($token in @('tmux list-panes', 'tmux capture-pane -p -S -200', 'long-press selection', 'Touch scrolling', 'usable local clone', 'pkg install -y python', '.ai/agent-contract.json', '.ai/harness/repository-family.registry.json', 'Get-RepositoryFamilyHarnessStatus.ps1')) {
+    Check ($mapText.Contains($token)) "map/$token" 'required Android operational rule missing'
 }
 
 $artifactText = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/profiles/android/harness/termux/artifact-registry.json') -Raw
 foreach ($token in @('tmux-pane-inventory', 'tmux-pane-capture', 'terminal-interaction-report', 'defaultHistoryLines', 'private SSH keys', 'credential file contents')) {
     Check ($artifactText.Contains($token)) "artifact/$token" 'required artifact or secret boundary missing'
 }
+
+$intakeText = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/profiles/android/harness/termux/workflows/task-intake.workflow.json') -Raw
+foreach ($token in @('verify-local-clone', 'repository-family-gate', 'pkg install -y python', 'command -v python', '.ai/agent-contract.json', '.ai/harness/repository-family.registry.json', 'Get-RepositoryFamilyHarnessStatus.ps1')) {
+    Check ($intakeText.Contains($token)) "intake/$token" 'required intake gate missing'
+}
+$intake = $json['tooling/profiles/android/harness/termux/workflows/task-intake.workflow.json']
+$stepIds = @($intake.steps | ForEach-Object { [string]$_.id })
+Check ([Array]::IndexOf($stepIds, 'verify-local-clone') -lt [Array]::IndexOf($stepIds, 'preserve-main')) 'intake/clone-before-branch' 'branch operations precede clone verification'
 
 $workflowText = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/profiles/android/harness/termux/workflows/capture-terminal-output.workflow.json') -Raw
 foreach ($token in @('inventory-panes', 'classify-sensitivity', 'select-exact-pane', 'capture-bounded-history', 'OAuth/device codes', 'QR/live-document/file')) {
@@ -102,6 +120,17 @@ foreach ($token in @('inventory-panes', 'classify-sensitivity', 'select-exact-pa
 $skillText = Get-Content -LiteralPath (Join-Path $RootPath '.ai/skills/android-termux-terminal-recovery/SKILL.md') -Raw
 foreach ($token in @('tmux list-panes', 'tmux capture-pane', 'Ctrl+B', 'Never solve a secrecy problem')) {
     Check ($skillText.Contains($token)) "skill/$token" 'terminal recovery skill incomplete'
+}
+
+$bootstrapText = Get-Content -LiteralPath (Join-Path $RootPath '.ai/skills/android-termux-repo-bootstrap/SKILL.md') -Raw
+foreach ($token in @('pkg install -y python', 'repository-family.registry.json', 'Get-RepositoryFamilyHarnessStatus.ps1', 'verify the local path', 'does not modify runtime product code')) {
+    Check ($bootstrapText.Contains($token)) "bootstrap/$token" 'bootstrap skill incomplete'
+}
+
+$ciText = Get-Content -LiteralPath (Join-Path $RootPath '.github/workflows/android-termux-harness.yml') -Raw
+Check (($ciText.Split('persist-credentials: false').Count - 1) -eq 2) 'ci/no-persisted-credentials' 'both checkout steps must disable credential persistence'
+foreach ($token in @('windows-entrypoints:', 'scripts/Test-RuntimeEventContract.ps1', 'Test-AppHarness.cmd')) {
+    Check ($ciText.Contains($token)) "ci/$token" 'required Windows entrypoint validation missing'
 }
 
 $registry = $json['.ai/harness/device-profile-registry.json']
