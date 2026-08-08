@@ -1,0 +1,17 @@
+{
+  "schema": "agentswitchboard.android-termux-workflow.v1",
+  "workflowId": "android-termux-handle-input-boundary-failure",
+  "trigger": "The terminal-boundary validator classifies bracketed-paste corruption, partial paste, unexpected literal control markers, or inconsistent command-not-found output.",
+  "inputs": ["failure classification", "expected command", "command resolution evidence", "tmux session identity"],
+  "steps": [
+    {"id":"freeze-downstream","action":"Do not authenticate, clone, reinstall or mutate repository state while the command-delivery boundary is ambiguous.","evidence":"blocked downstream stages"},
+    {"id":"preserve-session","action":"Keep the existing tmux session alive and preserve any already-written evidence logs.","evidence":"tmux ls output"},
+    {"id":"strip-sensitive-input","action":"Remove credentials, OAuth device codes, tokens and private key material from any diagnostic capture.","evidence":"redaction confirmation"},
+    {"id":"manual-probe","action":"Manually type a short command-resolution probe such as gh --version instead of pasting the failed long command.","evidence":"typed probe output"},
+    {"id":"repair-source","action":"If the typed probe passes, repair or bypass the paste/input source rather than reinstalling the executable.","evidence":"clean command framing"},
+    {"id":"resume-exact-step","action":"Resume at the first unproved downstream step only after the exact command boundary passes.","evidence":"next-step identity"},
+    {"id":"escalate","action":"If a manually typed probe also fails, collect command -v, PATH and package-state evidence and hand off without destructive cleanup.","evidence":"bounded failure report"}
+  ],
+  "rollback": "No rollback is needed for a read-only input diagnosis; any package mutation attempted outside this workflow must be handled by its owning package-management step.",
+  "proofCeiling": "Recovery of the shell command-delivery boundary only."
+}

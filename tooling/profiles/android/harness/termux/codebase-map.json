@@ -1,0 +1,49 @@
+{
+  "schema": "agentswitchboard.android-termux-codebase-map.v1",
+  "scope": "Android/Termux operational harness only; runtime implementation is indexed but not owned by this harness lane.",
+  "repositoryLayout": {
+    "authority": [".ai/agent-contract.json", ".ai/harness/repository-family.registry.json", "AGENTS.md"],
+    "routing": ["SKILLS.md", "TRIGGERS.md", ".ai/harness/app-composition.graph.json"],
+    "runtime": ["Start-AgentSwitchboard-Android.sh", "tooling/profiles/android/AgentSwitchboard-Android.sh", ".ai/harness/device-profile-registry.json", "docs/workstation/android-on-the-move-runtime.md"],
+    "harness": ["tooling/profiles/android/harness/termux/", "tooling/profiles/android/hooks/"],
+    "skills": [".ai/skills/android-termux-repo-bootstrap/SKILL.md", ".ai/skills/android-termux-terminal-recovery/SKILL.md"],
+    "validators": ["tests/test_android_termux_harness.py", "scripts/Test-AndroidTermuxHarnessCompleteness.ps1", "scripts/Get-RepositoryFamilyHarnessStatus.ps1", "scripts/Test-AppHarness.ps1", ".github/workflows/android-termux-harness.yml"]
+  },
+  "entrypoints": {
+    "runtime": "./Start-AgentSwitchboard-Android.sh",
+    "harnessPrerequisiteInstall": "pkg install -y python",
+    "portableHarnessValidation": "python tests/test_android_termux_harness.py",
+    "repositoryFamilyStatus": "pwsh -NoLogo -NoProfile -File scripts/Get-RepositoryFamilyHarnessStatus.ps1",
+    "aggregateHarness": "pwsh -NoLogo -NoProfile -File scripts/Test-AppHarness.ps1",
+    "preCommit": "bash tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPreCommit.sh",
+    "prePush": "bash tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPrePush.sh"
+  },
+  "operatorCommands": {
+    "paneInventory": "tmux list-panes -a -F '#S:#I.#P active=#{pane_active} cmd=#{pane_current_command}'",
+    "boundedCurrentPaneCapture": "tmux capture-pane -p -S -200",
+    "boundedTargetPaneCapture": "tmux capture-pane -p -S -200 -t <session:window.pane>",
+    "humanScrollbackFallback": "Ctrl+B then [; use PgUp/PgDn/arrows; q exits copy mode",
+    "verifyClone": "git rev-parse --show-toplevel && git remote get-url origin",
+    "runtimeStatus": "agentswitchboard-android status",
+    "runtimeLogin": "agentswitchboard-android login"
+  },
+  "knownTraps": [
+    "Android long-press selection may visually cross tmux split panes; do not use native selection as the primary evidence boundary.",
+    "Touch scrolling may not address tmux history predictably; use bounded capture-pane for evidence and tmux copy mode only for human browsing.",
+    "A pane displaying authentication/device-code material is sensitive; do not capture it to a durable artifact or share it.",
+    "Literal [200~ before a pasted command is input framing evidence, not proof that the intended executable is absent.",
+    "Do not fetch origin/main or create a branch until a usable local clone and expected origin have been verified.",
+    "The portable harness validator requires Python; the harness owns the Python package prerequisite rather than silently expanding the Android runtime installer.",
+    "Repository-family status is a PowerShell probe; on Termux without PowerShell, read the agent contract and family registry locally and defer family-level status proof to hosted or PowerShell validation rather than inventing a pass.",
+    "Root SKILLS.md and TRIGGERS.md are the discovery surface; the aggregate app-composition graph must register the Android validator so Test-AppHarness cannot pass while the Android harness is broken.",
+    "Keep Git repositories under Termux HOME, not shared storage.",
+    "Generated evidence is untracked and must not contain credentials or private key material.",
+    "The harness indexes the merged Android runtime but must not mutate runtime/product files in a harness-only sprint."
+  ],
+  "buildTestDeploy": {
+    "build": "No separate build; JSON/Markdown/shell harness assets are tracked source.",
+    "test": ["python tests/test_android_termux_harness.py", "pwsh -NoLogo -NoProfile -File scripts/Test-AndroidTermuxHarnessCompleteness.ps1", "pwsh -NoLogo -NoProfile -File scripts/Test-AppHarness.ps1", "git diff --check"],
+    "deploy": "Merge reviewed harness changes; no implicit hook install and no Android package/runtime deployment from this lane."
+  },
+  "proofCeiling": "Maps tracked ownership, root discovery, aggregate composition, commands and traps only; it does not prove a particular Android UI, clipboard, provider, model, tool invocation, repository-family status on Termux without PowerShell, or runtime mutation."
+}

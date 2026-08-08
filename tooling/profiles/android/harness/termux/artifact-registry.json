@@ -1,0 +1,25 @@
+{
+  "schema": "agentswitchboard.android-termux-artifact-registry.v1",
+  "root": "$HOME/agentswitchboard-evidence",
+  "tracked": false,
+  "naming": "Use sortable timestamps YYYYMMDD-HHMMSS and include tmux target identity when a pane is captured.",
+  "artifacts": [
+    {"artifactId":"termux-bootstrap-log","pattern":"termux-bootstrap-<timestamp>.log","proof":"installed command/version output only"},
+    {"artifactId":"tmux-persistence-proof","pattern":"tmux-persistence-<timestamp>.txt","proof":"device-local tmux session persistence only"},
+    {"artifactId":"terminal-input-boundary-report","pattern":"terminal-input-boundary-<timestamp>.txt","proof":"input framing/executable-resolution classification only"},
+    {"artifactId":"tmux-pane-inventory","pattern":"tmux-pane-inventory-<timestamp>.txt","proof":"pane identities and active state at capture time only"},
+    {"artifactId":"tmux-pane-capture","pattern":"tmux-pane-<session>-<window>-<pane>-<timestamp>.txt","proof":"bounded rendered pane history only; not command success by itself"},
+    {"artifactId":"terminal-interaction-report","pattern":"terminal-interaction-<timestamp>.md","proof":"selected pane, transport method, capture path and sensitivity decision"},
+    {"artifactId":"github-auth-status","pattern":"github-auth-status-<timestamp>.txt","proof":"redacted GitHub CLI auth status only"},
+    {"artifactId":"repo-clone-proof","pattern":"repo-clone-proof-<timestamp>.txt","proof":"remote/branch/local and remote head/status only"},
+    {"artifactId":"android-termux-harness-validation","pattern":"android-termux-harness-validation-<timestamp>.log","proof":"deterministic harness contract only"},
+    {"artifactId":"android-termux-operator-report","pattern":"android-termux-operator-report-<timestamp>.md","proof":"human-readable state summary; no higher proof than cited evidence"}
+  ],
+  "forbiddenContent": ["passwords", "OAuth device codes", "access tokens", "private SSH keys", "recovery codes", "credential file contents", "customer data", "private hostnames", "unredacted personal identifiers"],
+  "capturePolicy": {
+    "defaultHistoryLines": 200,
+    "primary": "Prefer exact tmux pane inventory plus bounded capture-pane over Android long-press selection or touch scrolling.",
+    "sensitivePane": "If the selected pane contains or may contain authentication secrets/device codes, do not persist it; switch to a non-sensitive pane or capture fresh sanitized output instead."
+  },
+  "proofCeiling": "Registry defines local evidence names and limits; artifact existence alone is never runtime success."
+}

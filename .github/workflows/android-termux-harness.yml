@@ -1,0 +1,69 @@
+name: Android Termux harness
+
+on:
+  pull_request:
+    paths:
+      - 'tooling/profiles/android/**'
+      - '.ai/skills/android-termux-repo-bootstrap/**'
+      - '.ai/skills/android-termux-terminal-recovery/**'
+      - 'SKILLS.md'
+      - 'TRIGGERS.md'
+      - '.ai/harness/app-composition.graph.json'
+      - 'docs/harness/android-termux-operational-harness.md'
+      - 'scripts/Test-AndroidTermuxHarnessCompleteness.ps1'
+      - 'tests/test_android_termux_harness.py'
+      - '.github/workflows/android-termux-harness.yml'
+      - '.ai/harness/device-profile-registry.json'
+      - 'Start-AgentSwitchboard-Android.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Parse Android shell hooks
+        run: |
+          bash -n tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPreCommit.sh
+          bash -n tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPrePush.sh
+      - name: Portable Android Termux contracts
+        run: python tests/test_android_termux_harness.py
+      - name: Android Termux completeness
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-AndroidTermuxHarnessCompleteness.ps1
+      - name: Existing Python contracts
+        run: python -m unittest discover -s tests -p 'test_*.py'
+      - name: Aggregate app harness
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-AppHarness.ps1
+      - name: PR diff hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check "origin/${GITHUB_BASE_REF:-main}...HEAD"
+          test -z "$(git status --short)"
+
+  windows-entrypoints:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Runtime event contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-RuntimeEventContract.ps1
+      - name: Canonical app harness wrapper
+        shell: cmd
+        run: Test-AppHarness.cmd
+      - name: Windows diff hygiene
+        shell: pwsh
+        run: |
+          git diff --check "origin/$env:GITHUB_BASE_REF...HEAD"
+          if (-not [string]::IsNullOrWhiteSpace((git status --porcelain))) { throw 'checkout is dirty after Windows Android harness validation' }

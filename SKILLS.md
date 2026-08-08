@@ -37,9 +37,10 @@ Every canonical skill must define:
 8. An operator-facing result that crosses shells, child processes, WSL, tmux, WezTerm, a TUI, a GUI, or another runtime boundary selects `end-to-end-runtime-validation`. Use `runtime-proof` for a bounded observation that does not require the complete operator path.
 9. A Windows Profile request that distinguishes default open-or-activate from an explicit separate instance, or evidence of duplicate WezTerm windows, selects `windows-profile-launch-mode-validation` before any launcher implementation or runtime claim.
 10. A request for a desktop shortcut or CMD installer that must create one genuinely separate tmux/WezTerm instance selects `tmux-new-instance-shortcut`. It preserves the one-launcher boundary and routes live acceptance through `end-to-end-runtime-validation`.
-11. `TRIGGERS.md` maps repository evidence to a skill.
-12. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
-13. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
+11. An Android/Termux repository bootstrap, mobile command-delivery recovery, multi-pane native-selection problem, or unclear tmux scrollback selects `android-termux-repo-bootstrap`; terminal selection/scrollback recovery additionally selects `android-termux-terminal-recovery` before asking the operator to fight native selection or provide screenshots.
+12. `TRIGGERS.md` maps repository evidence to a skill.
+13. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
+14. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
 
 ## Canonical skills
 
@@ -59,6 +60,8 @@ Every canonical skill must define:
 | [`windows-profile-launch-mode-validation`](.ai/skills/windows-profile-launch-mode-validation/SKILL.md) | Distinguish default workspace convergence, explicit named new instances, and accidental duplicate WezTerm windows | launch-mode request, separate-instance request, duplicate-window evidence, tmux-session identity ambiguity |
 | [`tmux-new-instance-shortcut`](.ai/skills/tmux-new-instance-shortcut/SKILL.md) | Install and validate one owned desktop shortcut that allocates a unique tmux session and separate WezTerm process | desktop shortcut request, clickable CMD installer, one-click separate tmux instance |
 | [`app-output-contextualization`](.ai/skills/app-output-contextualization/SKILL.md) | Parse supplied output, redact it, compare it with a prompt registry, and emit compact agent instructions | app output, logs, JSON, JSONL, validator output, minimal-token routing |
+| [`android-termux-repo-bootstrap`](.ai/skills/android-termux-repo-bootstrap/SKILL.md) | Turn Termux into a bounded AgentSwitchboard repository workspace with clone, persistence, family-routing and validation gates | Android/Termux bootstrap, phone-local repo setup, mobile command-delivery recovery |
+| [`android-termux-terminal-recovery`](.ai/skills/android-termux-terminal-recovery/SKILL.md) | Recover exact non-sensitive tmux pane evidence without depending on Android long-press selection or touch scrolling | selection spans panes, scrollback unclear, clipboard unreliable, prior terminal output required |
 
 ## Machine-profile distinction
 
@@ -93,6 +96,10 @@ An app-output context packet is a minimized interpretation artifact, not the ori
 ## End-to-end distinction
 
 `runtime-proof` can establish one observed behavior in an authorized environment. `end-to-end-runtime-validation` is required when the claim depends on the exact command an operator runs and a chain of shell, process, platform, terminal, TUI, GUI, provider, or application boundaries. The end-to-end skill requires per-stage stdout, stderr, exit identity, effective-state readback, user-visible observation, and idempotence or rollback proof when applicable. A parent exception containing only an exit code is not a complete end-to-end failure report.
+
+## Android Termux distinction
+
+`android-termux-repo-bootstrap` owns repository/workspace preparation and routes mobile terminal-evidence failures to `android-termux-terminal-recovery`. Android native selection and touch scrolling are never proof dependencies: exact tmux pane identity plus bounded `capture-pane` is preferred, and panes containing device codes or credentials are not persisted. The harness may install its own Python validation prerequisite, but it does not silently expand the separate Android runtime installer or promote hosted checks into phone runtime proof.
 
 ## Windows launch-mode distinction
 

@@ -1,0 +1,50 @@
+{
+  "schema": "agentswitchboard.android-termux-harness.v1",
+  "harnessId": "agentswitchboard.android-termux-operational-harness.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "profile": "android",
+  "environment": "termux",
+  "status": "operational-harness-runtime-separate",
+  "authorityRef": ".ai/agent-contract.json",
+  "repositoryFamilyRegistry": ".ai/harness/repository-family.registry.json",
+  "repositoryFamilyStatusProbe": "scripts/Get-RepositoryFamilyHarnessStatus.ps1",
+  "canonicalProfileRegistry": ".ai/harness/device-profile-registry.json",
+  "runtimeEntrypoint": "Start-AgentSwitchboard-Android.sh",
+  "components": {
+    "codebaseMap": "tooling/profiles/android/harness/termux/codebase-map.json",
+    "artifactRegistry": "tooling/profiles/android/harness/termux/artifact-registry.json",
+    "workflows": [
+      "tooling/profiles/android/harness/termux/workflows/task-intake.workflow.json",
+      "tooling/profiles/android/harness/termux/workflows/validate-terminal-boundary.workflow.json",
+      "tooling/profiles/android/harness/termux/workflows/handle-input-boundary-failure.workflow.json",
+      "tooling/profiles/android/harness/termux/workflows/capture-terminal-output.workflow.json"
+    ],
+    "fixtures": [
+      "tooling/profiles/android/harness/termux/fixtures/bracketed-paste-corruption.fixture.txt",
+      "tooling/profiles/android/harness/termux/fixtures/multi-pane-selection.fixture.txt"
+    ],
+    "operatorReport": "tooling/profiles/android/harness/termux/operator-report.template.md",
+    "hooks": [
+      "tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPreCommit.sh",
+      "tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPrePush.sh"
+    ],
+    "skills": [
+      ".ai/skills/android-termux-repo-bootstrap/SKILL.md",
+      ".ai/skills/android-termux-terminal-recovery/SKILL.md"
+    ],
+    "routingCatalogs": ["SKILLS.md", "TRIGGERS.md"],
+    "aggregateComposition": ".ai/harness/app-composition.graph.json",
+    "operatorGuide": "docs/harness/android-termux-operational-harness.md",
+    "portableTest": "tests/test_android_termux_harness.py",
+    "completenessValidator": "scripts/Test-AndroidTermuxHarnessCompleteness.ps1",
+    "ci": ".github/workflows/android-termux-harness.yml"
+  },
+  "requiredTools": ["git", "tmux", "gh", "ssh", "curl", "jq", "python"],
+  "harnessBootstrap": "pkg install -y python",
+  "knownFailureSignatures": [
+    {"id":"bracketed-paste","signature":"[200~","classification":"input-framing-corruption"},
+    {"id":"multi-pane-native-selection","signature":"Android text selection spans more than one visible tmux pane","classification":"terminal-selection-boundary"},
+    {"id":"scrollback-unclear","signature":"operator cannot reliably browse prior output with touch scrolling","classification":"terminal-scrollback-boundary"}
+  ],
+  "proofCeiling": "This harness proves tracked Android/Termux operational contracts, root skill/trigger discovery, aggregate validator registration, bounded pane-capture procedures, validators, hooks, skills and hosted checks. The Android runtime is separately implemented and remains subject to its own live proof. This harness does not prove provider login, model output, tool execution, repository mutation, clipboard behavior on every device, repository-family status on a Termux host without PowerShell, or operator acceptance."
+}
