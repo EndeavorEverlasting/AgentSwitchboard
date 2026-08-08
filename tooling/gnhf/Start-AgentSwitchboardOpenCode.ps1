@@ -74,7 +74,7 @@ function Invoke-GitLines {
     $output = & git -C $RepoPath @Arguments 2>&1
     $exitCode = $LASTEXITCODE
     if ($exitCode -ne 0) {
-        throw "git $($Arguments -join ' ') failed with exit code $exitCode:`n$($output -join [Environment]::NewLine)"
+        throw "git $($Arguments -join ' ') failed with exit code ${exitCode}:`n$($output -join [Environment]::NewLine)"
     }
     return @($output)
 }
