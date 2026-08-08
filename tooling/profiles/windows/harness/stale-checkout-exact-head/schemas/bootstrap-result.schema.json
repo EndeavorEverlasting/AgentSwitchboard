@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentswitchboard.local/schemas/stale-checkout-exact-head-bootstrap.v1.json",
+  "title": "AgentSwitchboard stale-checkout exact-head bootstrap result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "generatedAt",
+    "sourceRepository",
+    "origin",
+    "remoteRef",
+    "expectedHead",
+    "fetchedHead",
+    "extractedValidator",
+    "temporaryRunner",
+    "mode",
+    "validationArtifact",
+    "validationReport",
+    "status",
+    "proofLevel",
+    "proofCeiling"
+  ],
+  "properties": {
+    "schema": {
+      "const": "agentswitchboard.stale-checkout-exact-head-bootstrap.v1"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sourceRepository": {
+      "type": "string",
+      "minLength": 1
+    },
+    "origin": {
+      "type": "string",
+      "minLength": 1
+    },
+    "remoteRef": {
+      "type": "string",
+      "pattern": "^refs/heads/[A-Za-z0-9._/-]+$"
+    },
+    "expectedHead": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "fetchedHead": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "mode": {
+      "enum": [
+        "validate",
+        "ready"
+      ]
+    },
+    "validationArtifact": {
+      "type": "string",
+      "minLength": 1
+    },
+    "validationReport": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "const": "passed"
+    },
+    "proofLevel": {
+      "const": "stale-checkout-bootstrap-delegated-exact-head-proof"
+    },
+    "proofCeiling": {
+      "type": "string",
+      "minLength": 1
+    },
+    "extractedValidator": {
+      "type": "string",
+      "minLength": 1
+    },
+    "temporaryRunner": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}
