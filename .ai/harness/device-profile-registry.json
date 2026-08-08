@@ -39,16 +39,16 @@
     {
       "profileId": "android",
       "displayName": "Android Profile",
-      "status": "reserved",
+      "status": "implemented-runtime-unproved",
       "ownerRepository": "EndeavorEverlasting/AgentSwitchboard",
       "canonicalOperation": "open-or-activate",
-      "frontend": "profile-defined",
+      "frontend": "termux",
       "implementationSeparate": true,
       "configurationMayDiffer": true,
-      "canonicalSourcePath": null,
-      "installedPath": null,
+      "canonicalSourcePath": "Start-AgentSwitchboard-Android.sh",
+      "installedPath": "$PREFIX/bin/agentswitchboard-android",
       "consumers": []
     }
   ],
-  "proofCeiling": "The registry proves profile names, ownership, delegation rules, and platform separation only. It does not prove a launcher exists, WezTerm is installed, a window opened or activated, SysAdminSuite certification completed, or any Linux or Android implementation."
+  "proofCeiling": "The registry proves profile names, ownership, delegation rules, platform separation, and that a tracked Android Termux launcher is registered. It does not prove the Android package floor is installed on a device, Pi provider authentication succeeds, a model responds, tool behavior occurs, repository mutation succeeds, or the operator accepts the runtime."
 }
