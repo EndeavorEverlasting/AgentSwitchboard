@@ -5,27 +5,9 @@
   "trackedGeneratedArtifacts": false,
   "naming": "stable filenames within one unique run directory",
   "artifacts": [
-    {
-      "artifactId": "execution-actor-binding",
-      "fileName": "execution-actor-binding.json",
-      "generator": "tooling/harness/operational/execution-actor-routing/Invoke-ExecutionActorRouting.py bind",
-      "tracked": false,
-      "proofCeiling": "requested and selected actor binding only; no operation proof"
-    },
-    {
-      "artifactId": "execution-actor-receipt",
-      "fileName": "execution-actor-receipt.json",
-      "generator": "tooling/harness/operational/execution-actor-routing/Invoke-ExecutionActorRouting.py verify",
-      "tracked": false,
-      "proofCeiling": "actual actor matched selected actor and evidence reference was supplied; underlying operation correctness remains separate"
-    },
-    {
-      "artifactId": "execution-actor-operator-report",
-      "fileName": "execution-actor-operator-report.md",
-      "generator": "tooling/harness/operational/execution-actor-routing/Invoke-ExecutionActorRouting.py",
-      "tracked": false,
-      "proofCeiling": "human rendering of actor-routing state"
-    }
+    {"artifactId": "execution-actor-binding", "fileName": "execution-actor-binding.json", "generator": "tooling/harness/operational/execution-actor-routing/Invoke-ExecutionActorRouting.py bind", "tracked": false, "proofCeiling": "requested and selected actor binding only; preserve the emitted BINDING_SHA256 separately before execution"},
+    {"artifactId": "execution-actor-receipt", "fileName": "execution-actor-receipt.json", "generator": "tooling/harness/operational/execution-actor-routing/Invoke-ExecutionActorRouting.py verify", "tracked": false, "proofCeiling": "actual actor matched selected actor, pinned binding digest matched, and evidence reference was supplied; underlying operation correctness remains separate"},
+    {"artifactId": "execution-actor-operator-report", "fileName": "execution-actor-operator-report.md", "generator": "tooling/harness/operational/execution-actor-routing/Invoke-ExecutionActorRouting.py", "tracked": false, "proofCeiling": "human rendering of actor-routing and binding-digest continuity state"}
   ],
   "retention": "operator-controlled temporary evidence; never commit credentials, raw tokens, or machine-local secrets"
 }

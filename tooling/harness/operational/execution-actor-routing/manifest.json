@@ -3,12 +3,7 @@
   "harnessId": "agentswitchboard.execution-actor-routing.v1",
   "title": "AgentSwitchboard execution actor routing harness",
   "purpose": "Bind an explicitly requested execution actor before repository mutation and prove afterward that the same actor actually performed the operation.",
-  "actors": [
-    "chatgpt",
-    "agentswitchboard",
-    "operator",
-    "auto"
-  ],
+  "actors": ["chatgpt", "agentswitchboard", "operator", "auto"],
   "entrypoints": {
     "codebaseMap": "tooling/harness/operational/execution-actor-routing/codebase-map.json",
     "workflow": "tooling/harness/operational/execution-actor-routing/workflows/bind-execute-verify.workflow.json",
@@ -27,6 +22,7 @@
     "silentSubstitutionAllowed": false,
     "autoRequiresReason": true,
     "actualActorMustMatchSelectedActor": true,
+    "bindingDigestRequiredForVerification": true,
     "evidenceRequiredForVerifiedCompletion": true,
     "actorAliasesAllowed": false,
     "generatedEvidenceTracked": false,
@@ -37,6 +33,6 @@
     "productMutationAllowed": false,
     "governanceMutationAllowed": false,
     "destructiveGitAllowed": false,
-    "proofCeiling": "Execution-actor selection, binding, and identity evidence only. It does not prove the correctness, authorization, mergeability, deployment result, or acceptance of the underlying operation."
+    "proofCeiling": "Execution-actor selection, binding, pinned binding-digest continuity, and identity evidence only. It does not provide hostile-host tamper resistance or prove correctness, authorization, mergeability, deployment result, or acceptance of the underlying operation."
   }
 }

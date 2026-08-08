@@ -65,20 +65,21 @@ python tooling/harness/operational/execution-actor-routing/Invoke-ExecutionActor
   --operation "merge PR <number> at exact head <sha>"
 ```
 
-Canonical actor values are `chatgpt`, `agentswitchboard`, `operator`, and `auto`. Use `auto` only when no actor was explicitly requested, and record the selection reason.
+Canonical actor values are `chatgpt`, `agentswitchboard`, `operator`, and `auto`. Use `auto` only when no actor was explicitly requested, and record the selection reason. The bind command prints `BINDING_SHA256`; preserve that digest outside the mutable binding file before execution.
 
 An explicit mismatch is a hard gate. Do not substitute a direct GitHub/ChatGPT mutation for an AgentSwitchboard-owned operation, do not make AgentSwitchboard perform work explicitly assigned to ChatGPT, and do not execute operator-owned work on the operator's behalf merely because another path is available.
 
-After the operation, verify the actual actor against the binding and supply concrete actor-owned evidence:
+After the operation, verify the actual actor against the original binding digest and supply concrete actor-owned evidence:
 
 ```powershell
 python tooling/harness/operational/execution-actor-routing/Invoke-ExecutionActorRouting.py verify `
   --binding "<run-root>\execution-actor-binding.json" `
+  --expected-binding-sha256 "<BINDING_SHA256 captured at bind>" `
   --actual-actor agentswitchboard `
   --evidence "<actor-owned receipt, log, PR comment, or other concrete evidence>"
 ```
 
-Read `docs/harness/execution-actor-routing.md` and `.ai/skills/execution-actor-routing/SKILL.md` for failure recovery, output artifacts, validation, and proof ceiling.
+Verification validates the complete binding and fails closed if the binding's canonical digest differs from the preserved original digest. Read `docs/harness/execution-actor-routing.md` and `.ai/skills/execution-actor-routing/SKILL.md` for failure recovery, output artifacts, validation, trust model, and proof ceiling.
 
 ## OpenCode prompt preflight and execution
 
@@ -131,7 +132,7 @@ Use `failure-recovery` when a validator, CI job, schema, fixture, or contract fa
 
 Use `handoff` after a complete gate to either finish already-authorized safe integration or transfer exact branch/proof state when a real dependency remains unresolved.
 
-Explicit execution-actor requests and any operation whose proof depends on who performs it must route through `.ai/skills/execution-actor-routing/SKILL.md` **before mutation**.
+Explicit execution-actor requests and any operation whose proof depends on who performs it must route through `.ai/skills/execution-actor-routing/SKILL.md` **before mutation**. The status reporter consumes the actor route's registered `routingNeedles` so explicit phrases such as “have AgentSwitchboard” and “AgentSwitchboard must” produce that specialized route.
 
 OpenCode clipboard prompt intake, `PlanOnly` preflight, preflight-to-execution prompt identity, or any workflow that would require recopying the same prompt must route through `.ai/skills/opencode-prompt-handoff/SKILL.md` and its tracked harness runner.
 
@@ -143,7 +144,7 @@ This harness may inspect repository files, local Git identity/state, and registe
 
 Merge authority may come from the current task or an explicit standing repository-owner directive. The harness may **record and preserve** that authority; it may not invent it. When authority is recorded and the validated in-scope merge remains safe, the current harness agent owns continuation through the exact-head-pinned merge **unless an explicit execution-actor binding assigns that operation to another actor**.
 
-Actor routing does not create authority. It records which actor is selected under already-valid authority and prevents silent substitution. A verified actor receipt proves only actor identity continuity; the underlying operation still requires its owning evidence.
+Actor routing does not create authority. It records which actor is selected under already-valid authority and prevents silent substitution. A verified actor receipt proves actor identity plus continuity with the independently preserved binding digest; the underlying operation still requires its owning evidence. The digest is an integrity anchor, not a hostile-host signature.
 
 A generated merge command without recorded authority is an owner-gated next action. A generated merge command with recorded authority is an executable current-agent action, but it is still not merge proof until the selected actor's evidence shows a successful merge result.
 
