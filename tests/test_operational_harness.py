@@ -140,7 +140,16 @@ def main() -> None:
         require(forbidden not in hook.lower(), f"hook contains forbidden behavior: {forbidden}")
 
     workflow = require_file(".github/workflows/operational-harness.yml").read_text(encoding="utf-8")
-    for token in ("python3 tests/test_operational_harness.py", "scripts/Test-OperationalHarness.ps1", "git diff --check", "tests/test_environment_capability_harness.py", "tests/test_device_profile_launcher_contract.py"):
+    for token in (
+        "python3 tests/test_operational_harness.py",
+        "scripts/Test-OperationalHarness.ps1",
+        "git diff --check",
+        "tests/test_environment_capability_harness.py",
+        "tests/test_device_profile_launcher_contract.py",
+        "git worktree add --detach",
+        "[INHERITED-BASELINE]",
+        "[REGRESSION]",
+    ):
         require(token in workflow, f"CI token missing: {token}")
 
     guide = require_file("docs/harness/operational-harness.md").read_text(encoding="utf-8")
