@@ -36,11 +36,12 @@ def git(*args: str) -> tuple[int, str]:
 def select_route(task: str, registry: dict) -> tuple[str, str | None]:
     lowered = task.lower()
     specialized = None
+    # Specific runtime/domain owners must win before the broad environment route.
     special_rules = (
-        (("android", "termux", "ssh", "tmux", "wsl", "linux", "windows", "environment", "remote host"), ".ai/skills/environment-capability-routing/SKILL.md"),
-        (("runtime proof", "end to end", "end-to-end", "visible runtime"), ".ai/skills/end-to-end-runtime-validation/SKILL.md"),
-        (("launch mode", "open-or-activate", "new instance", "new-instance"), ".ai/skills/windows-profile-launch-mode-validation/SKILL.md"),
         (("pi harness", "opinion fusion", "autovalidate"), ".ai/skills/pi-fusion-orchestration/SKILL.md"),
+        (("launch mode", "open-or-activate", "new instance", "new-instance"), ".ai/skills/windows-profile-launch-mode-validation/SKILL.md"),
+        (("runtime proof", "end to end", "end-to-end", "visible runtime"), ".ai/skills/end-to-end-runtime-validation/SKILL.md"),
+        (("android", "termux", "ssh", "tmux", "wsl", "linux", "windows", "environment", "remote host"), ".ai/skills/environment-capability-routing/SKILL.md"),
     )
     for needles, route in special_rules:
         if any(needle in lowered for needle in needles):
@@ -99,6 +100,7 @@ def main() -> int:
         "tooling/harness/operational/hooks/Invoke-OperationalHarnessPreCommit.ps1",
         "tooling/harness/operational/hooks/Invoke-OperationalHarnessPrePush.ps1",
         ".ai/skills/operational-harness-routing/SKILL.md",
+        ".ai/skills/environment-capability-routing/SKILL.md",
         "scripts/Test-OperationalHarness.ps1",
         "tests/test_operational_harness.py",
         "docs/harness/operational-harness.md",
