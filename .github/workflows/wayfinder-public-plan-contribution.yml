@@ -3,6 +3,8 @@ name: Wayfinder contribution and harness
 on:
   pull_request:
     paths:
+      - '.ai/agent-contract.json'
+      - '.ai/harness/wayfinder-doctrine.policy.json'
       - '.ai/skills/wayfinder/**'
       - '.ai/skills/research/**'
       - '.ai/skills/prototype/**'
@@ -27,10 +29,13 @@ on:
       - 'TRIGGERS.md'
       - 'HARNESS.md'
       - 'docs/harness/wayfinder.md'
+      - 'docs/governance/wayfinder-doctrine.md'
       - '.github/workflows/wayfinder-public-plan-contribution.yml'
   push:
     branches: [main]
     paths:
+      - '.ai/agent-contract.json'
+      - '.ai/harness/wayfinder-doctrine.policy.json'
       - '.ai/skills/wayfinder/**'
       - '.ai/skills/research/**'
       - '.ai/skills/prototype/**'
@@ -44,6 +49,9 @@ on:
       - 'third_party/mattpocock-skills/**'
       - 'tooling/harness/wayfinder/**'
       - 'tooling/harness/operational/contributions/**'
+      - 'tooling/harness/operational/manifest.json'
+      - 'tooling/harness/operational/validator-registry.json'
+      - 'tooling/harness/operational/workflow-registry.json'
       - 'scripts/Test-WayfinderHarness.ps1'
       - 'scripts/Test-WayfinderPublicPlanContribution.ps1'
       - 'tests/test_wayfinder_harness.py'
@@ -52,6 +60,7 @@ on:
       - 'TRIGGERS.md'
       - 'HARNESS.md'
       - 'docs/harness/wayfinder.md'
+      - 'docs/governance/wayfinder-doctrine.md'
       - '.github/workflows/wayfinder-public-plan-contribution.yml'
 
 permissions:
