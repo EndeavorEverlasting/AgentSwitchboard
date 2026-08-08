@@ -3,15 +3,18 @@
   "title": "AgentSwitchboard Operational Harness Status",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "harnessId", "generatedUtc", "repository", "git", "components", "routing", "proofCeiling"],
+  "required": ["schemaVersion", "harnessId", "generatedUtc", "repository", "git", "pullRequest", "components", "routing", "validation", "nextAction", "proofCeiling"],
   "properties": {
     "schemaVersion": {"const": 1},
     "harnessId": {"const": "agentswitchboard.operational-harness.v1"},
     "generatedUtc": {"type": "string"},
     "repository": {"type": "string"},
     "git": {"type": "object"},
+    "pullRequest": {"type": ["integer", "null"]},
     "components": {"type": "array", "items": {"type": "object"}},
     "routing": {"type": "object"},
+    "validation": {"type": "object"},
+    "nextAction": {"type": "object"},
     "proofCeiling": {"type": "string"}
   }
 }
