@@ -90,4 +90,57 @@ case "$bootstrap_plan_output" in
   *'pkg install'*) fail bootstrap-plan-no-mutation "plan output exposed a mutation command: $bootstrap_plan_output" ;;
 esac
 
+probe_root="$(mktemp -d)"
+trap 'rm -rf "$probe_root"' EXIT
+probe_bin="$probe_root/bin"
+probe_state="$probe_root/state"
+mkdir -p "$probe_bin" "$probe_state"
+
+cat > "$probe_bin/ssh" <<'EOF'
+#!/bin/sh
+[ "${1:-}" = "-T" ] || exit 90
+shift
+target="${1:-}"
+[ -n "$target" ] || exit 91
+shift
+exec "$@"
+EOF
+
+cat > "$probe_bin/git" <<'EOF'
+#!/bin/sh
+case "${3:-} ${4:-}" in
+  'rev-parse --git-dir')
+    printf '.git\n'
+    ;;
+  'remote get-url')
+    printf 'https://github.com/EndeavorEverlasting/AgentSwitchboard.git\n'
+    ;;
+  'status --porcelain')
+    ;;
+  *)
+    printf 'unexpected fake git invocation: %s\n' "$*" >&2
+    exit 92
+    ;;
+esac
+EOF
+
+cat > "$probe_bin/tmux" <<'EOF'
+#!/bin/sh
+if [ "${1:-}" = "has-session" ]; then
+  printf 'error connecting to /tmp/tmux-1000/default (Permission denied)\n' >&2
+  exit 2
+fi
+printf 'unexpected fake tmux invocation: %s\n' "$*" >&2
+exit 93
+EOF
+
+chmod +x "$probe_bin/ssh" "$probe_bin/git" "$probe_bin/tmux"
+inspection_output="$(PATH="$probe_bin:$PATH" XDG_STATE_HOME="$probe_state" run_failure remote-tmux-inspection bash "$LAUNCHER" remote fake-host --host-profile posix-tmux --repo /srv/AgentSwitchboard --expected-origin https://github.com/EndeavorEverlasting/AgentSwitchboard.git --session dev --create)"
+expect_contains remote-tmux-inspection-message "$inspection_output" 'remote preflight failed'
+preflight_file="$probe_state/agentswitchboard/android/remote-preflight.env"
+[ -f "$preflight_file" ] || fail remote-tmux-inspection-evidence "missing $preflight_file"
+preflight_output="$(cat "$preflight_file")"
+expect_contains remote-tmux-inspection-status "$preflight_output" 'session_status=inspection-error'
+expect_contains remote-tmux-inspection-exit "$preflight_output" 'ssh_exit=45'
+
 printf 'PASS: Android Termux shell behavior contracts\n'
