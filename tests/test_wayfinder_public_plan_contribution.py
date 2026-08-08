@@ -5,8 +5,6 @@ import json
 import re
 from pathlib import Path
 
-from jsonschema import Draft202012Validator, FormatChecker, ValidationError
-
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = Path("tooling/harness/operational/contributions/wayfinder-public-plan.contribution.json")
 SCHEMA_PATH = Path("tooling/harness/operational/contributions/cross-repository-contribution.schema.json")
@@ -20,12 +18,18 @@ def load_json(path: Path):
     return json.loads((ROOT / path).read_text(encoding="utf-8"))
 
 
-def validator_for(schema: dict) -> Draft202012Validator:
+def validator_for(schema: dict):
+    # Keep the test-only jsonschema dependency out of module import so repository-wide
+    # unittest discovery can inspect this file without inheriting the contribution dependency.
+    from jsonschema import Draft202012Validator, FormatChecker
+
     Draft202012Validator.check_schema(schema)
     return Draft202012Validator(schema, format_checker=FormatChecker())
 
 
-def assert_rejected(validator: Draft202012Validator, instance: dict) -> None:
+def assert_rejected(validator, instance: dict) -> None:
+    from jsonschema import ValidationError
+
     try:
         validator.validate(instance)
     except ValidationError:
