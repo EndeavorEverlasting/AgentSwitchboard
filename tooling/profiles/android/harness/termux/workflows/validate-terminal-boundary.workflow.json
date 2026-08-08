@@ -1,0 +1,16 @@
+{
+  "schema": "agentswitchboard.android-termux-workflow.v1",
+  "workflowId": "android-termux-validate-terminal-boundary",
+  "trigger": "A Termux command behaves differently when pasted, begins with unexpected control-marker text, or reports command-not-found after the executable previously passed version proof.",
+  "inputs": ["literal command line as rendered by the shell", "expected executable name", "prior version proof when available"],
+  "steps": [
+    {"id":"preserve-literal","action":"Record a redacted literal rendering of the failed command without credentials, device codes or tokens.","evidence":"terminal input boundary report"},
+    {"id":"classify-framing","action":"If the rendered command begins with [200~ or an equivalent bracketed-paste marker, classify input-framing-corruption before classifying the executable as missing.","evidence":"failure classification"},
+    {"id":"resolve-executable","action":"Run command -v <executable> and the executable version command using manually typed input when paste framing is suspect.","evidence":"resolved path and version output"},
+    {"id":"compare-prior-proof","action":"Compare current command resolution with prior bootstrap proof; contradictory evidence blocks reinstall or package mutation until reconciled.","evidence":"comparison result"},
+    {"id":"retry-narrowly","action":"Retry only the intended one-line command using a trusted input method after framing is clean.","evidence":"retry output and exit code"},
+    {"id":"escalate-if-real-missing","action":"Only when command -v fails and package state confirms absence may the package-install boundary be reopened.","evidence":"missing executable proof"}
+  ],
+  "successCondition": "The shell receives the intended executable name without framing markers and command resolution agrees with installed-package evidence.",
+  "proofCeiling": "Terminal input framing and executable resolution only; authentication and downstream command semantics are separate gates."
+}

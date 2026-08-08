@@ -1,0 +1,39 @@
+name: Android Termux harness
+
+on:
+  pull_request:
+    paths:
+      - 'tooling/profiles/android/**'
+      - '.ai/skills/android-termux-repo-bootstrap/**'
+      - 'docs/harness/android-termux-operational-harness.md'
+      - 'scripts/Test-AndroidTermuxHarnessCompleteness.ps1'
+      - 'tests/test_android_termux_harness.py'
+      - '.github/workflows/android-termux-harness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Portable Android Termux contracts
+        run: python tests/test_android_termux_harness.py
+      - name: Android Termux completeness
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-AndroidTermuxHarnessCompleteness.ps1
+      - name: Existing Python contracts
+        run: python -m unittest discover -s tests -p 'test_*.py'
+      - name: Aggregate app harness
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-AppHarness.ps1
+      - name: PR diff hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check "origin/${GITHUB_BASE_REF:-main}...HEAD"
+          test -z "$(git status --short)"

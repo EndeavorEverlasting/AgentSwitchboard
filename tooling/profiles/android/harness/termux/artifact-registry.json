@@ -1,0 +1,18 @@
+{
+  "schema": "agentswitchboard.android-termux-artifact-registry.v1",
+  "registryId": "agentswitchboard.android-termux-operational-artifacts.v1",
+  "defaultRoot": "$HOME/agentswitchboard-evidence",
+  "tracked": false,
+  "artifacts": [
+    {"artifactId":"termux-bootstrap-log","fileName":"termux-bootstrap-<YYYYMMDD-HHMMSS>.log","generation":"bootstrap command piped through tee","naming":"timestamped, append-nothing, one file per bootstrap attempt","sensitivity":"local-operational","proofCeiling":"package installation and version output from one Termux attempt"},
+    {"artifactId":"tmux-persistence-proof","fileName":"tmux-persistence-<YYYYMMDD-HHMMSS>.txt","generation":"record tmux session inventory before detach and after reattach","naming":"timestamped, one file per proof attempt","sensitivity":"local-operational","proofCeiling":"tmux session persistence on the observed device only"},
+    {"artifactId":"terminal-input-boundary-report","fileName":"terminal-input-boundary-<YYYYMMDD-HHMMSS>.json","generation":"validate-terminal-boundary workflow","naming":"timestamped, one report per diagnosis","sensitivity":"local-operational","proofCeiling":"input framing and command-resolution diagnosis only"},
+    {"artifactId":"github-auth-status","fileName":"github-auth-status-<YYYYMMDD-HHMMSS>.txt","generation":"redacted output of gh auth status and account login only","naming":"timestamped, never include device codes or tokens","sensitivity":"local-operational","proofCeiling":"GitHub CLI authentication state at capture time only"},
+    {"artifactId":"repo-clone-proof","fileName":"repo-clone-proof-<YYYYMMDD-HHMMSS>.txt","generation":"record remote URL, branch, local HEAD, origin/main HEAD and git status","naming":"timestamped, one file per clone verification","sensitivity":"local-operational","proofCeiling":"repository synchronization and cleanliness at capture time only"},
+    {"artifactId":"android-termux-harness-validation","fileName":"android-termux-harness-validation-<YYYYMMDD-HHMMSS>.log","generation":"portable contract test or repository completeness validator piped through tee","naming":"timestamped, one file per validator run","sensitivity":"local-operational","proofCeiling":"deterministic harness contract validation only"},
+    {"artifactId":"android-termux-operator-report","fileName":"android-termux-operator-report-<YYYYMMDD-HHMMSS>.md","generation":"render operator-report.template.md from current evidence","naming":"timestamped, one report per handoff","sensitivity":"local-operational","proofCeiling":"English rendering of observed evidence and unresolved gaps"}
+  ],
+  "retention": "operator-controlled local evidence outside the repository",
+  "forbiddenContent": ["passwords", "OAuth device codes", "access tokens", "private SSH keys", "recovery codes", "customer data", "private hostnames", "unredacted personal identifiers"],
+  "proofCeiling": "Artifact naming, location, sensitivity and generation contract only."
+}

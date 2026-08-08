@@ -1,0 +1,2 @@
+[200~gh auth login --hostname github.com --git-protocol ssh --web~
+[200~gh: command not found

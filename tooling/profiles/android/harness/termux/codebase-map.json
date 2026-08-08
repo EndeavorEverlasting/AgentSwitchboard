@@ -1,0 +1,48 @@
+{
+  "schema": "agentswitchboard.android-termux-codebase-map.v1",
+  "harnessId": "agentswitchboard.android-termux-operational-harness.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "purpose": "Map the Android Termux operator path without substituting it for the still-separate Android profile launcher contract.",
+  "entrypoints": {
+    "governance": "AGENTS.md",
+    "rootMap": "CODEBASE_MAP.md",
+    "profileRegistry": ".ai/harness/device-profile-registry.json",
+    "manifest": "tooling/profiles/android/harness/termux/manifest.json",
+    "taskIntake": "tooling/profiles/android/harness/termux/workflows/task-intake.workflow.json",
+    "terminalBoundary": "tooling/profiles/android/harness/termux/workflows/validate-terminal-boundary.workflow.json",
+    "failureWorkflow": "tooling/profiles/android/harness/termux/workflows/handle-input-boundary-failure.workflow.json",
+    "skill": ".ai/skills/android-termux-repo-bootstrap/SKILL.md",
+    "operatorGuide": "docs/harness/android-termux-operational-harness.md",
+    "validator": "scripts/Test-AndroidTermuxHarnessCompleteness.ps1",
+    "portableTest": "tests/test_android_termux_harness.py"
+  },
+  "directories": [
+    {"path": ".ai/harness", "purpose": "Canonical repository-wide harness contracts and Android profile reservation."},
+    {"path": ".ai/skills", "purpose": "Scoped repeatable agent procedures."},
+    {"path": "tooling/profiles/android/harness/termux", "purpose": "Android Termux map, manifest, workflows, fixtures, report and artifact contracts."},
+    {"path": "tooling/profiles/android/hooks", "purpose": "Opt-in Android-local validation hooks; never installed implicitly."},
+    {"path": "scripts", "purpose": "Repository-side deterministic completeness validators."},
+    {"path": "tests", "purpose": "Portable dependency-free structural contracts runnable in Termux and CI."},
+    {"path": "docs/harness", "purpose": "Human operator guidance, gaps, recovery and proof ceilings."},
+    {"path": ".github/workflows", "purpose": "Hosted cross-platform validation for the harness change."}
+  ],
+  "commands": {
+    "termuxBootstrap": "pkg update -y && pkg upgrade -y && pkg install -y git openssh tmux gh curl jq nano",
+    "portableHarnessTest": "python tests/test_android_termux_harness.py",
+    "optionalPreCommitHook": "bash tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPreCommit.sh",
+    "repositoryCompleteness": "pwsh -NoLogo -NoProfile -File scripts/Test-AndroidTermuxHarnessCompleteness.ps1",
+    "aggregateHarness": "pwsh -NoLogo -NoProfile -File scripts/Test-AppHarness.ps1",
+    "diffHygiene": "git diff --check",
+    "build": "none; this lane contains harness contracts, not a compiled Android product",
+    "deploy": "none; Android profile launcher implementation and deployment remain out of scope"
+  },
+  "knownTraps": [
+    "Do not treat the F-Droid or Termux installation alone as AgentSwitchboard Android runtime proof.",
+    "Do not store a Git working tree in Android shared storage when Termux home is available; shared storage can break Unix permission and symlink expectations.",
+    "Do not reinstall gh merely because a pasted command begins with literal [200~; prove command resolution with command -v gh and gh --version first.",
+    "Do not paste OAuth device codes, access tokens, private SSH keys, recovery codes or customer data into reports or chat.",
+    "Do not claim the Android profile launcher is implemented while the canonical registry remains reserved.",
+    "Do not install hooks implicitly; invoke the repository-owned hook explicitly when desired."
+  ],
+  "proofCeiling": "Repository map and deterministic harness contracts only; no Android launcher, GitHub credential, clone, provider, agent-runtime or product-runtime proof."
+}

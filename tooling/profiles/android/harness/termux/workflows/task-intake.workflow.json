@@ -1,0 +1,17 @@
+{
+  "schema": "agentswitchboard.android-termux-workflow.v1",
+  "workflowId": "android-termux-task-intake",
+  "trigger": "A fresh Android Termux session is being prepared for bounded AgentSwitchboard repository work.",
+  "inputs": ["task scope", "repository identity", "intended branch ownership", "current Termux shell", "required tool list"],
+  "steps": [
+    {"id":"read-contracts","action":"Read AGENTS.md, the root codebase map, canonical Android profile registry and this harness manifest before mutation.","evidence":"paths read and current profile status recorded"},
+    {"id":"prove-shell","action":"Record uname -a, HOME, PREFIX, command -v results for git tmux gh ssh curl jq, and tool versions without exposing credentials.","evidence":"local bootstrap or intake log"},
+    {"id":"prove-persistence","action":"Require a tmux session for repository work; verify detach, tmux ls, and reattach before credential or repository mutation.","evidence":"tmux persistence proof"},
+    {"id":"check-input-boundary","action":"Before diagnosing a missing command, reject literal bracketed-paste framing such as [200~ as an input-boundary failure and run command -v on the intended executable.","evidence":"terminal input boundary report"},
+    {"id":"declare-writer","action":"Name repository, branch, lane, owned scope, forbidden scope and one writer before changes.","evidence":"bounded sprint declaration"},
+    {"id":"preserve-main","action":"Fetch current origin/main and create or use a non-default isolated feature branch; never use force or destructive cleanup.","evidence":"branch and base SHA"},
+    {"id":"validate-before-write","action":"Run the portable Android harness contract test before broader work when the repository is available.","evidence":"validator exit code and log"}
+  ],
+  "failurePolicy": "Preserve the tmux session and evidence, classify the exact failed boundary, repair only the owned boundary, then rerun the failed step before proceeding.",
+  "proofCeiling": "Intake and environment readiness only; no credential, clone, branch write, launcher or product-runtime success is implied."
+}
