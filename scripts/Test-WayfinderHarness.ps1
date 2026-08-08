@@ -11,6 +11,8 @@ $required = @(
     '.ai/agent-contract.json',
     'SKILLS.md',
     'HARNESS.md',
+    '.ai/harness/wayfinder-doctrine.policy.json',
+    'docs/governance/wayfinder-doctrine.md',
     '.ai/skills/wayfinder/SKILL.md',
     '.ai/skills/research/SKILL.md',
     '.ai/skills/prototype/SKILL.md',
@@ -53,6 +55,8 @@ if ($missing.Count -gt 0) {
 
 $manifest = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/harness/wayfinder/manifest.json') -Raw | ConvertFrom-Json
 if ($manifest.harnessId -ne 'agentswitchboard.wayfinder.v1') { throw 'Unexpected Wayfinder harness id.' }
+if ($manifest.authority.doctrine -ne 'docs/governance/wayfinder-doctrine.md') { throw 'Wayfinder doctrine is not registered in the harness manifest.' }
+if ($manifest.authority.doctrinePolicy -ne '.ai/harness/wayfinder-doctrine.policy.json') { throw 'Wayfinder doctrine policy is not registered in the harness manifest.' }
 if ($manifest.authority.donorRepository -ne 'mattpocock/skills') { throw 'Unexpected Wayfinder donor repository.' }
 if ($manifest.authority.donorCommit -ne '84fdeffd12f2ee307994d1eb6feb48173b6e0502') { throw 'Wayfinder donor pin changed without reviewed refresh.' }
 if ($manifest.ticketTypes.research.interaction -ne 'afk') { throw 'Research ticket gate must remain AFK.' }
@@ -63,6 +67,25 @@ if (-not $manifest.lifecycle.chartStopsBeforeNonResearchResolution) { throw 'Cha
 if ($manifest.lifecycle.maxNonResearchResolutionsPerSession -ne 1) { throw 'Wayfinder must limit sessions to one non-research decision resolution.' }
 if ($manifest.lifecycle.specLifecycle -ne 'temporary-until-implementation') { throw 'Wayfinder spec lifecycle drifted.' }
 if ($manifest.lifecycle.decisionHistoryRetention -ne 'retain tracker decision tickets after spec retirement') { throw 'Decision history retention drifted.' }
+
+$policy = Get-Content -LiteralPath (Join-Path $RootPath '.ai/harness/wayfinder-doctrine.policy.json') -Raw | ConvertFrom-Json
+if ($policy.policyId -ne 'agentswitchboard.wayfinder-doctrine.v1') { throw 'Unexpected Wayfinder doctrine policy id.' }
+if ($policy.authority.decisionAuthority -ne 'tracker-child-tickets') { throw 'Wayfinder decision authority must remain tracker child tickets.' }
+if ($policy.authority.publicPlanRole -ne 'repository-coordination-mirror') { throw 'Public plans must remain Wayfinder coordination mirrors.' }
+if ($policy.hitl.humanSpeaksForThemselves -ne $true) { throw 'Wayfinder HITL policy must require the human to speak for themselves.' }
+if ($policy.hitl.agentMayInferApproval -ne $false) { throw 'Wayfinder HITL policy must forbid inferred approval.' }
+if ($policy.frontier.claimBeforeWork -ne $true) { throw 'Wayfinder frontier policy must require claim-before-work.' }
+if ($policy.frontier.outOfScopeBlockerCountsAsResolved -ne $false) { throw 'Out-of-scope blockers must not silently satisfy dependencies.' }
+if ($policy.chartMode.nonResearchResolutionAllowed -ne $false) { throw 'Chart mode must not resolve non-research tickets.' }
+if ($policy.chartMode.stopAfterChart -ne $true) { throw 'Chart mode must stop after map/ticket charting.' }
+if ($policy.specification.lifecycle -ne 'temporary-until-implementation') { throw 'Wayfinder specification lifecycle drifted.' }
+if ($policy.specification.primaryDecisionAuthority -ne 'tracker-child-tickets') { throw 'Specifications must not replace tracker decision authority.' }
+if ($policy.donorRefresh.policy -ne 'pin-until-reviewed' -or $policy.donorRefresh.autoAdvance -ne $false) { throw 'Wayfinder donor refresh policy drifted.' }
+
+$doctrine = Get-Content -LiteralPath (Join-Path $RootPath 'docs/governance/wayfinder-doctrine.md') -Raw
+foreach ($token in @('the human speaks for themselves', 'Decision tickets are not implementation tickets', 'Chart-mode stop doctrine', 'temporary synthesis artifact', 'pin-until-reviewed')) {
+    if (-not $doctrine.ToLowerInvariant().Contains($token.ToLowerInvariant())) { throw "Wayfinder governance doctrine missing invariant: $token" }
+}
 
 $contract = Get-Content -LiteralPath (Join-Path $RootPath '.ai/agent-contract.json') -Raw | ConvertFrom-Json
 if ($contract.entrypoints.wayfinder -ne '.ai/skills/wayfinder/SKILL.md') { throw 'Agent contract does not register the Wayfinder entrypoint.' }
@@ -93,5 +116,5 @@ if ($LASTEXITCODE -ne 0) {
 if ($LASTEXITCODE -ne 0) { throw 'Wayfinder Python harness failed.' }
 
 Write-Host 'PASS: ASB Wayfinder harness' -ForegroundColor Green
-Write-Host 'Proof ceiling: imported-source integrity, typed ticket/HITL gates, fixtures, tracker command construction, frontier/spec lifecycle, and offline/hosted contracts only.'
+Write-Host 'Proof ceiling: imported-source integrity, governance doctrine, typed ticket/HITL gates, fixtures, tracker command construction, frontier/spec lifecycle, and offline/hosted contracts only.'
 exit 0
