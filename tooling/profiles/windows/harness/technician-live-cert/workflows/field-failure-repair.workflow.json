@@ -15,18 +15,18 @@
     },
     {
       "id": "reproduce-contract",
-      "action": "Identify why existing tests allowed the defect: blocked or misresolved executable, skipped shell, static token-only check, unexecuted branch, overload ambiguity, path-resolution timing, pager interaction, or proof inflation. PATH/Get-Command presence alone is insufficient for an executable dependency.",
-      "output": "harness-gap classification plus toolchain-preflight JSON/Markdown when executable launch is implicated"
+      "action": "Identify why existing tests allowed the defect: blocked or misresolved executable, skipped shell, static token-only check, tracked-but-unparsed PowerShell entrypoint, unexecuted report generator, unexecuted branch, overload ambiguity, path-resolution timing, pager interaction, or proof inflation. PATH/Get-Command presence alone is insufficient for an executable dependency; file existence and tracking alone are insufficient for a PowerShell harness entrypoint.",
+      "output": "harness-gap classification plus parser/execution failure evidence and toolchain-preflight JSON/Markdown when executable launch is implicated"
     },
     {
       "id": "repair",
-      "action": "Repair the executable defect and add the smallest deterministic guard that would have failed before field use. Harness-only toolchain failures are repaired in validators, registries, workflows, hooks, skills, reports, or entrypoint wrappers without unrelated product mutation.",
+      "action": "Repair the executable defect and add the smallest deterministic guard that would have failed before field use. For a harness reporter or validator, require PowerShell parser success and execute the reporter into an untracked temporary output root, proving both machine-readable and English report artifacts. Harness-only toolchain failures are repaired in validators, registries, workflows, hooks, skills, reports, or entrypoint wrappers without unrelated product mutation.",
       "output": "tracked harness code plus validator or fixture"
     },
     {
       "id": "cross-shell-validate",
-      "action": "Run the owning validators in Windows PowerShell 5.1 and PowerShell 7, including bounded Windows toolchain launch proof when relevant, then run Python contracts and noninteractive Git hygiene.",
-      "output": "cross-shell validation ledger"
+      "action": "Run the owning validators in Windows PowerShell 5.1 and PowerShell 7. The harness validator must parse every registered PowerShell harness entrypoint and execute the status reporter before success. Include bounded Windows toolchain launch proof when relevant, then run Python contracts and noninteractive Git hygiene.",
+      "output": "cross-shell validation ledger including status-reporter JSON and English Markdown generation proof"
     },
     {
       "id": "exact-command-rerun",
@@ -46,5 +46,5 @@
     "Repair requires credentials, private evidence, destructive cleanup, merge, deployment, or live mutation without authority.",
     "The candidate cannot be validated in every required shell."
   ],
-  "proofCeiling": "A repaired contract and cross-shell CI do not prove the original workstation path until the exact operator command passes. A successful toolchain preflight proves executable launch only, not fetch or runtime behavior."
+  "proofCeiling": "A repaired contract, parser/execution guard, and cross-shell CI do not prove the original workstation path until the exact operator command passes. A successful status-reporter smoke check proves harness report generation only. A successful toolchain preflight proves executable launch only, not fetch or runtime behavior."
 }
