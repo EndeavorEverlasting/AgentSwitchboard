@@ -30,7 +30,7 @@ Use this skill especially when the operator may submit a snippet one block at a 
 2. Resolve, validate, and enter the intended directory before Git, installation, validation, or implementation logic. Use `Set-Location -LiteralPath` when the artifact itself must change directory.
 3. For interactive snippets, prefer guard clauses when later logic does not require a continuation keyword.
 4. Keep each compound statement in the same syntactic submission. Never split `if`/`elseif`/`else` or `try`/`catch`/`finally` across separate interactive submissions.
-5. Keep every continuation keyword attached to the preceding closing brace in the same parsed statement: `} elseif (...) {`, `} else {`, `} catch {`, and `} finally {`.
+5. Keep every continuation keyword attached to the preceding closing brace in the same parsed statement: `} elseif (...) {`, `} else {`, `} catch {`, and `} finally {`. **Never instruct the operator to submit a closing `}` and then enter `else`, `elseif`, `catch`, or `finally` as a later command.**
 6. When a multiline compound statement is unavoidable, enclose the complete statement in one outer `& { ... }` block so PowerShell cannot execute the first completed inner block before the rest of the paste arrives.
 7. A one-physical-line compound statement is acceptable only when it remains readable and bounded. Do not compress a large workflow into a giant one-liner just to avoid multiline syntax.
 8. Capture `$LASTEXITCODE` **immediately after each native command** when later logic depends on it. Do not run another native command first.
