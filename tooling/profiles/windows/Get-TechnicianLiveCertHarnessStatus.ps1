@@ -79,6 +79,13 @@ foreach ($component in $manifest.components) {
 $p00Text = Get-Content -LiteralPath (Join-Path $RootPath 'tooling\profiles\windows\technician-live-cert\stages\P00-Preflight.ps1') -Raw
 $surfaceText = Get-Content -LiteralPath (Join-Path $RootPath 'scripts\Test-TechnicianLiveCertSurface.ps1') -Raw
 $toolchainText = Get-Content -LiteralPath (Join-Path $RootPath ([string]$manifest.entrypoints.toolchainPreflightValidator)) -Raw
+$surfaceStrictIndex = $surfaceText.IndexOf('Set-StrictMode')
+$surfaceParameterText = if ($surfaceStrictIndex -gt 0) {
+    $surfaceText.Substring(0, $surfaceStrictIndex)
+}
+else {
+    $surfaceText
+}
 $guardRows = @(
     [pscustomobject]@{
         id = 'git-executable-launch'
@@ -97,7 +104,7 @@ $guardRows = @(
     },
     [pscustomobject]@{
         id = 'psscriptroot-param-default'
-        passed = (-not ($surfaceText.Substring(0, [Math]::Max(0, $surfaceText.IndexOf('Set-StrictMode'))).Contains('$PSScriptRoot)'))
+        passed = (-not $surfaceParameterText.Contains('$PSScriptRoot)'))
         detail = 'Validator resolves repository root in the script body.'
     },
     [pscustomobject]@{
