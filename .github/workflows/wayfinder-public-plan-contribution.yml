@@ -1,31 +1,57 @@
-name: Wayfinder public-plan contribution
+name: Wayfinder contribution and harness
 
 on:
   pull_request:
     paths:
+      - '.ai/skills/wayfinder/**'
+      - '.ai/skills/research/**'
+      - '.ai/skills/prototype/**'
+      - '.ai/skills/grilling/**'
+      - '.ai/skills/domain-modeling/**'
+      - '.ai/skills/to-spec/**'
+      - '.ai/skills/to-tickets/**'
       - '.ai/skills/public-plan-coordination/SKILL.md'
       - 'plans/README.md'
       - 'plans/schemas/public-plan.schema.json'
-      - 'templates/repository-agent-contract/.ai/skills/public-plan-coordination/SKILL.md'
-      - 'templates/repository-agent-contract/plans/README.md'
-      - 'templates/repository-agent-contract/plans/schemas/public-plan.schema.json'
+      - 'third_party/mattpocock-skills/**'
+      - 'tooling/harness/wayfinder/**'
       - 'tooling/harness/operational/contributions/**'
+      - 'tooling/harness/operational/manifest.json'
+      - 'tooling/harness/operational/validator-registry.json'
+      - 'tooling/harness/operational/workflow-registry.json'
+      - 'scripts/Test-WayfinderHarness.ps1'
       - 'scripts/Test-WayfinderPublicPlanContribution.ps1'
+      - 'tests/test_wayfinder_harness.py'
       - 'tests/test_wayfinder_public_plan_contribution.py'
+      - 'SKILLS.md'
+      - 'TRIGGERS.md'
+      - 'HARNESS.md'
+      - 'docs/harness/wayfinder.md'
       - '.github/workflows/wayfinder-public-plan-contribution.yml'
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
+      - '.ai/skills/wayfinder/**'
+      - '.ai/skills/research/**'
+      - '.ai/skills/prototype/**'
+      - '.ai/skills/grilling/**'
+      - '.ai/skills/domain-modeling/**'
+      - '.ai/skills/to-spec/**'
+      - '.ai/skills/to-tickets/**'
       - '.ai/skills/public-plan-coordination/SKILL.md'
       - 'plans/README.md'
       - 'plans/schemas/public-plan.schema.json'
-      - 'templates/repository-agent-contract/.ai/skills/public-plan-coordination/SKILL.md'
-      - 'templates/repository-agent-contract/plans/README.md'
-      - 'templates/repository-agent-contract/plans/schemas/public-plan.schema.json'
+      - 'third_party/mattpocock-skills/**'
+      - 'tooling/harness/wayfinder/**'
       - 'tooling/harness/operational/contributions/**'
+      - 'scripts/Test-WayfinderHarness.ps1'
       - 'scripts/Test-WayfinderPublicPlanContribution.ps1'
+      - 'tests/test_wayfinder_harness.py'
       - 'tests/test_wayfinder_public_plan_contribution.py'
+      - 'SKILLS.md'
+      - 'TRIGGERS.md'
+      - 'HARNESS.md'
+      - 'docs/harness/wayfinder.md'
       - '.github/workflows/wayfinder-public-plan-contribution.yml'
 
 permissions:
@@ -46,9 +72,14 @@ jobs:
           python-version: '3.12'
       - name: Install pinned Draft 2020-12 validator
         run: python -m pip install --disable-pip-version-check -r tooling/harness/operational/contributions/requirements-wayfinder-public-plan.txt
-      - name: Python contribution contract
+      - name: Wayfinder Python harness
+        run: python tests/test_wayfinder_harness.py
+      - name: Wayfinder PowerShell harness
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderHarness.ps1
+      - name: Contribution Python contract
         run: python tests/test_wayfinder_public_plan_contribution.py
-      - name: PowerShell contribution contract
+      - name: Contribution PowerShell contract
         shell: pwsh
         run: pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderPublicPlanContribution.ps1
       - name: Existing public-plan PowerShell contract
@@ -59,6 +90,9 @@ jobs:
       - name: Agent documentation contract
         shell: pwsh
         run: pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1
+      - name: Operational harness contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1
       - name: Diff hygiene
         shell: bash
         run: git diff --check "$(git merge-base HEAD origin/main)..HEAD"

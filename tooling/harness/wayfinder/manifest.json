@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "harnessId": "agentswitchboard.wayfinder.v1",
+  "status": "experimental",
+  "purpose": "Turn multi-session ambiguity into a tracker-backed map of typed decision tickets, resolve them through deterministic workflow gates, synthesize a temporary spec when the route is clear, then hand off to implementation tickets or bounded execution.",
+  "authority": {
+    "agentSkill": ".ai/skills/wayfinder/SKILL.md",
+    "publicPlanSubstrate": ".ai/skills/public-plan-coordination/SKILL.md",
+    "sourceContribution": "tooling/harness/operational/contributions/wayfinder-public-plan.contribution.json",
+    "donorSnapshotRoot": "third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502",
+    "donorRepository": "mattpocock/skills",
+    "donorCommit": "84fdeffd12f2ee307994d1eb6feb48173b6e0502"
+  },
+  "skills": {
+    "orchestrator": ".ai/skills/wayfinder/SKILL.md",
+    "research": ".ai/skills/research/SKILL.md",
+    "prototype": ".ai/skills/prototype/SKILL.md",
+    "grilling": ".ai/skills/grilling/SKILL.md",
+    "domainModeling": ".ai/skills/domain-modeling/SKILL.md",
+    "toSpec": ".ai/skills/to-spec/SKILL.md",
+    "toTickets": ".ai/skills/to-tickets/SKILL.md"
+  },
+  "contracts": {
+    "python": "tooling/harness/wayfinder/wayfinder_contract.py",
+    "githubTracker": "tooling/harness/wayfinder/github_tracker.py",
+    "decisionTicketSchema": "tooling/harness/wayfinder/schemas/decision-ticket.schema.json",
+    "mapSchema": "tooling/harness/wayfinder/schemas/map.schema.json",
+    "specSchema": "tooling/harness/wayfinder/schemas/spec.schema.json"
+  },
+  "ticketTypes": {
+    "research": {"interaction": "afk", "requiredSkills": ["research"]},
+    "prototype": {"interaction": "hitl", "requiredSkills": ["prototype"]},
+    "grilling": {"interaction": "hitl", "requiredSkills": ["grilling", "domain-modeling"]},
+    "task": {"interaction": "either", "requiredSkills": []}
+  },
+  "tracker": {
+    "default": "github",
+    "github": {
+      "mapLabel": "wayfinder:map",
+      "ticketLabels": ["wayfinder:research", "wayfinder:prototype", "wayfinder:grilling", "wayfinder:task"],
+      "specLabel": "wayfinder:spec",
+      "parentRelationship": "GitHub native sub-issues",
+      "blockingRelationship": "GitHub native issue dependencies",
+      "claim": "issue assignee",
+      "resolution": "resolution comment + close + map context pointer"
+    },
+    "fallback": "local-markdown"
+  },
+  "lifecycle": {
+    "chartStopsBeforeNonResearchResolution": true,
+    "maxNonResearchResolutionsPerSession": 1,
+    "specReadiness": "no open decision tickets and no not-yet-specified fog",
+    "specLifecycle": "temporary-until-implementation",
+    "decisionHistoryRetention": "retain tracker decision tickets after spec retirement"
+  },
+  "validators": [
+    "python tests/test_wayfinder_harness.py",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderHarness.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderPublicPlanContribution.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1",
+    "git diff --check"
+  ],
+  "proofCeiling": "Imported-source integrity, ASB skill routing, typed ticket gates, HITL/AFK invariants, frontier/spec-readiness algorithms, GitHub CLI/API command construction, schemas, registration, and hosted/offline validation only. Live GitHub permissions/sub-issue/dependency behavior, human verdict quality, agent judgment quality, prototype usefulness, and destination implementation require separate runtime evidence."
+}

@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/harness/wayfinder/schemas/map.schema.json",
+  "title": "AgentSwitchboard Wayfinder Map Mirror",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "mapId", "title", "destination", "tracker", "planningOnly", "notes", "decisionsSoFar", "notYetSpecified", "outOfScope", "sourceContribution"],
+  "properties": {
+    "schema": {"const": "agentswitchboard.wayfinder-map.v1"},
+    "mapId": {"type": "string", "minLength": 1},
+    "title": {"type": "string", "minLength": 3},
+    "destination": {"type": "string", "minLength": 3},
+    "tracker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "mapRef", "mapUrl", "decisionAuthority"],
+      "properties": {
+        "provider": {"enum": ["github", "local-markdown"]},
+        "mapRef": {"type": "string", "minLength": 1},
+        "mapUrl": {"type": ["string", "null"], "format": "uri"},
+        "decisionAuthority": {"const": "tracker-child-tickets"}
+      }
+    },
+    "planningOnly": {"type": "boolean"},
+    "notes": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "decisionsSoFar": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title", "url", "gist"],
+        "properties": {
+          "title": {"type": "string", "minLength": 3},
+          "url": {"type": "string", "format": "uri"},
+          "gist": {"type": "string", "minLength": 3}
+        }
+      }
+    },
+    "notYetSpecified": {"type": "array", "items": {"type": "string", "minLength": 3}},
+    "outOfScope": {"type": "array", "items": {"type": "string", "minLength": 3}},
+    "spec": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "lifecycle", "ref"],
+          "properties": {
+            "status": {"enum": ["not-ready", "ready", "published", "retired"]},
+            "lifecycle": {"const": "temporary-until-implementation"},
+            "ref": {"type": ["string", "null"]}
+          }
+        }
+      ]
+    },
+    "sourceContribution": {"const": "tooling/harness/operational/contributions/wayfinder-public-plan.contribution.json"}
+  }
+}

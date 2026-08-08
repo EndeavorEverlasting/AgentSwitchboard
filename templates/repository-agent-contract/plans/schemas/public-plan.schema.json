@@ -40,19 +40,6 @@
     "createdUtc": { "type": "string", "format": "date-time" },
     "updatedUtc": { "type": "string", "format": "date-time" },
     "mission": { "type": "string", "minLength": 10 },
-    "coordinationMode": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "destination", "notYetSpecified", "outOfScope", "executionAllowed", "sourceContribution"],
-      "properties": {
-        "kind": { "const": "decision-frontier" },
-        "destination": { "type": "string", "minLength": 3 },
-        "notYetSpecified": { "type": "array", "items": { "type": "string", "minLength": 3 } },
-        "outOfScope": { "type": "array", "items": { "type": "string", "minLength": 3 } },
-        "executionAllowed": { "const": false },
-        "sourceContribution": { "type": "string", "minLength": 3 }
-      }
-    },
     "owner": {
       "type": "object",
       "additionalProperties": false,

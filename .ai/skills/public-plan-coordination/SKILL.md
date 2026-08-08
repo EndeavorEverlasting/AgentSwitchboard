@@ -1,6 +1,6 @@
 ---
 id: public-plan-coordination
-version: 1.1.0
+version: 1.2.0
 status: canonical
 ---
 
@@ -8,109 +8,106 @@ status: canonical
 
 ## Trigger
 
-Use this skill when a user or agent asks to create, update, resume, coordinate, factor, or hand off repository work that spans agents, branches, pull requests, waves, or sessions.
+Use when repository work must stay coordinated across agents, branches, pull requests, waves, worktrees, or sessions. This skill owns the **repository coordination mirror**: delivery state, ownership, collision boundaries, proof, and handoff.
 
-Also use decision-frontier mode when an effort is intentionally larger than one bounded agent session and the route to the destination is not yet clear enough to execute safely. In that mode the plan resolves decisions first; it does not pre-slice unknown work into implementation tasks.
+When the destination itself is wrapped in unresolved multi-session ambiguity, route ambiguity resolution through `wayfinder`. Public-plan coordination may mirror that map for repository coordination, but it does not replace the tracker map or its decision tickets.
 
 Deterministic triggers:
 
 - `plan.coordination-request`
-- a material change to dependencies, ownership, collision boundaries, proof gates, or next-agent handoff for a registered public plan
-- a sprint pack that would otherwise exist only in chat
-- a large ambiguous effort whose destination is known but whose executable route still contains unresolved decisions or investigations
+- a material change to dependencies, ownership, collision boundaries, proof gates, delivery references, or next-agent handoff for a registered public plan
+- a sprint map/launch pack that would otherwise exist only in chat
+- a Wayfinder map whose tracker state must be mirrored into repository coordination without duplicating ticket decisions
 
 ## Inputs
 
 - current repository and Git evidence
 - `plans/plan-registry.json`
 - selected public plan
-- branch, pull request, worktree, validator, artifact, and CI state
+- branch, PR, worktree, validator, artifact, and CI state
 - owned and forbidden scope
 - dependencies and safe parallel lanes
 - proof target and proof ceiling
-- for decision-frontier mode, `tooling/harness/operational/contributions/wayfinder-public-plan.contribution.json`
+- when `coordinationMode.kind` is `decision-frontier`: the tracker map reference and `tooling/harness/operational/contributions/wayfinder-public-plan.contribution.json`
 
 ## Procedure
 
 1. Read repository rules, codebase map, plan registry, selected plan, validators, open pull requests, and recent Git history.
-2. Reconcile stale plan fields with current repository evidence. Mark uncertainty rather than guessing.
-3. Classify the plan mode before editing:
-   - ordinary execution coordination uses the existing public-plan fields and has no `coordinationMode` object;
-   - decision-frontier coordination sets `coordinationMode.kind` to `decision-frontier` and follows the bounded rules below.
-4. Keep the plan and pull request distinct:
-   - the plan coordinates work and survives branch or PR replacement;
-   - the branch and PR transport reviewed implementation changes.
-5. Select one plan task whose dependencies are satisfied and whose file ownership does not collide with another active writer.
-6. Update machine-readable task status, evidence, delivery references, handoff, and timestamps when coordination changes materially. Update the plan in the same branch or PR as the implementation when safe.
-7. Keep product behavior in deterministic code, contracts, schemas, validators, and workflows. Do not hide product behavior in plan prose or prompts.
-8. Validate the plan and the owned repository change.
-9. Commit and push the plan update with the implementation when safe and authorized.
+2. Reconcile stale coordination fields with current repository evidence. Mark uncertainty instead of guessing.
+3. **Keep the plan and pull request distinct**:
+   - the public plan coordinates repository work;
+   - the branch/PR transports and reviews tracked changes;
+   - a Wayfinder tracker map indexes ambiguity-resolution decisions;
+   - Wayfinder child tickets own their exact questions and resolutions;
+   - bounded-sprint / implementation tickets own execution after the route is clear.
+4. For ordinary plans, select one ready coordination task whose dependencies are satisfied and whose file ownership does not collide with another writer.
+5. For a Wayfinder mirror, do **not** copy decision-ticket questions, answers, transcripts, prototype bodies, or research findings into `tasks[]`. Mirror only tracker identity, destination, fog, out-of-scope boundary, temporary-spec lifecycle, proof, delivery/collision state, and exact handoff.
+6. Update machine-readable plan state in the **same branch or PR** as the owned implementation/coordination change when safe. Tracker state remains primary for Wayfinder ticket claim/block/resolution facts.
+7. Keep **product behavior in deterministic code** and contracts, schemas, validators, and workflows; do not hide it in plan prose or prompts.
+8. Validate the plan and owned repository change.
+9. Commit/push the plan update with the implementation when safe and authorized.
 10. Report exact commit, PR, artifact, validation, proof level, proof ceiling, and next command.
 
-## Decision-frontier mode
+## Wayfinder mirror mode
 
-Decision-frontier mode adapts a small set of planning principles from the pinned external contribution manifest without making that donor repository an AgentSwitchboard runtime dependency or creating a second planning authority.
+`coordinationMode.kind: decision-frontier` is an **adapter surface**, not the Wayfinder engine.
 
-- **Destination first.** `coordinationMode.destination` states the decision/specification boundary this plan is finding a route toward. The destination is narrower than the repository mission and determines what is merely not-yet-specified versus genuinely out of scope.
-- **Decision tasks, not build slices.** While `coordinationMode.kind` is `decision-frontier`, `tasks[]` represent questions, investigations, prototypes, or prerequisites needed to make a decision. They are not pre-allocated implementation slices. `coordinationMode.executionAllowed` is fixed to `false`; execution moves to an ordinary bounded sprint or ordinary execution plan after the route is clear.
-- **Single decision owner.** The task is the canonical owner of its decision. Put the question in the task title/acceptance criteria and exact result pointers in `outputs`/`evidence`. Summaries may gist the result but must not become a competing authoritative copy.
-- **Frontier is derived, not stored twice.** A frontier task has `status: ready`, all named dependencies completed, and `owner: unassigned`. Claim it before work by changing `owner` to the active writer and `status` to `in-progress` in the owned plan branch. Never add a second `frontier` list that can drift from task state.
-- **Fog remains coarse.** `coordinationMode.notYetSpecified` records in-scope questions that cannot yet be stated precisely. When a question becomes precise, remove that fog entry and create a task. Do not pre-slice fog into speculative tasks.
-- **Destination scope is not safety scope.** `coordinationMode.outOfScope` records work beyond the destination. `forbiddenScope` remains the stronger repository/safety/authority boundary and must not be repurposed as planning fog.
-- **One decision per writer/session.** A writer normally resolves one decision task per session. Independent research tasks may proceed in parallel only through separately owned branches/worktrees and must preserve their evidence independently.
-- **Handoff at the execution edge.** When no unresolved decision task or fog remains and the destination is sufficiently specified, update the plan handoff with the exact executable next owner/command. Do not turn the final planning session into unbounded implementation.
+- `destination` mirrors the tracker map destination.
+- `tracker` points to the canonical map and declares `decisionAuthority: tracker-child-tickets`.
+- `notYetSpecified` mirrors coarse in-scope fog only.
+- `outOfScope` mirrors the destination boundary only.
+- `spec` records temporary specification state/reference; it is never the decision authority.
+- `executionAllowed` remains `false` while the plan represents ambiguity resolution.
+- `tasks[]` remain repository coordination tasks. They are not a shadow issue tracker.
 
-The contribution manifest is adoption metadata and provenance only. It is not runtime proof, it does not import the donor's issue-tracker behavior, and it does not grant authority. The stale-reference policy is `pin-until-reviewed`: upstream movement is an update signal, never authority to change the adopted semantics automatically.
+The live frontier is derived from the tracker: open child decision tickets with no open blockers and no assignee. Do not create a second frontier list in the public plan.
+
+The stale-source policy is `pin-until-reviewed`: donor movement is an update signal, not permission to reinterpret or auto-update ASB behavior.
 
 ## Outputs
 
 - updated `plans/plan-registry.json` when registry membership changes
-- one schema-valid public plan
-- for decision-frontier mode, one plan whose destination, decision tasks, fog, and destination out-of-scope boundary are represented without duplicate state
-- implementation artifacts owned by the selected task when ordinary execution coordination is active
+- one schema-valid public coordination plan
+- for Wayfinder: a low-resolution tracker mirror with no duplicated decision body
+- implementation/coordination artifacts owned by the selected task where applicable
 - validation evidence
-- commit and PR evidence
+- commit/PR evidence
 - bounded next-agent handoff
 
 ## Deterministic validation
 
 Repository-relative validator: `scripts/Test-PublicPlanContracts.ps1`.
 
-Run:
-
 ```powershell
 pwsh -NoLogo -NoProfile -File .\scripts\Test-PublicPlanContracts.ps1
 ```
 
-For the decision-frontier extension also run:
+For Wayfinder-backed mirrors also run:
 
 ```powershell
+pwsh -NoLogo -NoProfile -File .\scripts\Test-WayfinderHarness.ps1
 pwsh -NoLogo -NoProfile -File .\scripts\Test-WayfinderPublicPlanContribution.ps1
+python .\tests\test_wayfinder_harness.py
 python .\tests\test_wayfinder_public_plan_contribution.py
 ```
 
-Then run the validators named by the selected plan and `git diff --check`.
+Then run the selected plan's owning validators and `git diff --check`.
+
+## Proof ceiling
+
+A valid public-plan mirror proves coordination shape and referenced state only. It does not prove the tracker operation occurred, the human made a HITL decision, a prototype was accepted, research is correct, or destination implementation succeeded.
 
 ## Forbidden scope
 
-- storing secrets, credentials, customer data, private hostnames, or machine-local runtime evidence in public plans
-- claiming task completion from acknowledgment, prose, process start, or exit code alone
-- treating a plan as authorization to merge, deploy, mutate a target, authenticate, or perform destructive Git
-- using a pull request description as the only coordination record
-- putting application behavior exclusively in a plan or prompt
-- overwriting another agent's plan task or uncommitted work without an ownership handoff
-- copying donor-specific tracker labels, child-issue APIs, local tracker conventions, or donor skill names into AgentSwitchboard as a second authority
-- auto-advancing the pinned donor commit because upstream `main` moved; refresh requires a reviewed contribution update
+- storing secrets, credentials, customer data, private hostnames, or raw machine/runtime evidence in public plans
+- treating a plan as authorization to merge, deploy, authenticate, mutate a target, or perform destructive Git
+- **using a pull request description as the only coordination record**
+- application behavior hidden solely in plan prose/prompts
+- overwriting another writer's active coordination state without handoff
+- copying a Wayfinder ticket's detailed answer into the plan
+- using `tasks[]` as a parallel Wayfinder issue tracker
+- auto-advancing the donor pin
 
 ## Stop and escalate
 
-Stop and preserve evidence when:
-
-- the repository is dirty with unowned work;
-- two writers claim the same file, schema, workflow, skill, capability, trigger, branch, worktree, or decision task;
-- required plan dependencies are not proven;
-- the selected plan is stale and current repository evidence cannot resolve it;
-- a decision-frontier task has become executable implementation but no bounded execution owner has been established;
-- the next action needs secrets, merge, deployment, live-target mutation, or destructive Git without explicit authority;
-- validation contradicts the plan;
-- donor refresh would change adopted semantics without a new pinned contribution review.
+Stop for unowned dirty work, writer/path collisions, stale unresolved dependencies, a missing/unreadable tracker map, contradictory tracker-vs-plan state, failed validation, forbidden data, or actions requiring authority the plan does not grant.

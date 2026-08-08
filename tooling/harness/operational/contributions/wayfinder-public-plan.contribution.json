@@ -1,123 +1,137 @@
 {
   "schema": "agentswitchboard.cross-repository-contribution.v1",
-  "contributionId": "mattpocock.wayfinder.public-plan-decision-frontier.v1",
+  "contributionId": "mattpocock.wayfinder.asb-adaptation.v2",
   "status": "adopted",
   "donor": {
     "repository": "mattpocock/skills",
     "commit": "84fdeffd12f2ee307994d1eb6feb48173b6e0502",
-    "license": {
-      "spdx": "MIT",
-      "path": "LICENSE"
-    },
+    "license": {"spdx": "MIT", "path": "LICENSE"},
     "authoritativePaths": [
-      {
-        "path": "skills/engineering/wayfinder/SKILL.md",
-        "blobSha": "e4984ed327e12ba65303f4b5de2eb75c01e99c16"
-      },
-      {
-        "path": "skills/engineering/wayfinder/agents/openai.yaml",
-        "blobSha": "b37544751e0570f9df8de6c02aef238de8c3e1e0"
-      },
-      {
-        "path": "LICENSE",
-        "blobSha": "f1dd2c09108dde1a5f56097cee8461b3ea834499"
-      }
+      {"path": "skills/engineering/wayfinder/SKILL.md", "blobSha": "e4984ed327e12ba65303f4b5de2eb75c01e99c16"},
+      {"path": "skills/engineering/research/SKILL.md", "blobSha": "0ba594a07f306479baa67104381f48e209ab6aae"},
+      {"path": "skills/engineering/prototype/SKILL.md", "blobSha": "094571156140f5993cce8557dc31383c82817f3e"},
+      {"path": "skills/productivity/grilling/SKILL.md", "blobSha": "95bd01ee9049a7e08120d54af9cd6ceeef282335"},
+      {"path": "skills/engineering/domain-modeling/SKILL.md", "blobSha": "d0f7e1a5ccb06a7184056ff9af02b67bc77f9dda"},
+      {"path": "skills/engineering/to-spec/SKILL.md", "blobSha": "3fd64959895b7eb095a13d797e1c7544f1f08c8f"},
+      {"path": "skills/engineering/to-tickets/SKILL.md", "blobSha": "96deac51d4391a3f691478d48f85f43261516c08"},
+      {"path": "skills/engineering/setup-matt-pocock-skills/issue-tracker-github.md", "blobSha": "bf595e2470597fcd316d8b316ad861f05ed630be"},
+      {"path": "skills/engineering/setup-matt-pocock-skills/issue-tracker-local.md", "blobSha": "fbda5e04217fcdb73b513720f513abbe0b3014ed"},
+      {"path": "LICENSE", "blobSha": "f1dd2c09108dde1a5f56097cee8461b3ea834499"}
     ]
   },
   "consumer": {
     "repository": "EndeavorEverlasting/AgentSwitchboard",
-    "targetLayer": "public-plan coordination contract and repository-family template",
-    "canonicalOwner": ".ai/skills/public-plan-coordination/SKILL.md",
+    "targetLayer": "Wayfinder orchestration, typed decision workflows, tracker adapter, public-plan mirror, temporary-spec and implementation-ticket handoff",
+    "canonicalOwner": ".ai/skills/wayfinder/SKILL.md",
     "files": [
+      ".ai/skills/wayfinder/SKILL.md",
+      ".ai/skills/research/SKILL.md",
+      ".ai/skills/prototype/SKILL.md",
+      ".ai/skills/grilling/SKILL.md",
+      ".ai/skills/domain-modeling/SKILL.md",
+      ".ai/skills/to-spec/SKILL.md",
+      ".ai/skills/to-tickets/SKILL.md",
       ".ai/skills/public-plan-coordination/SKILL.md",
+      "tooling/harness/wayfinder/manifest.json",
+      "tooling/harness/wayfinder/wayfinder_contract.py",
+      "tooling/harness/wayfinder/github_tracker.py",
+      "tooling/harness/wayfinder/schemas/decision-ticket.schema.json",
+      "tooling/harness/wayfinder/schemas/map.schema.json",
+      "tooling/harness/wayfinder/schemas/spec.schema.json",
       "plans/schemas/public-plan.schema.json",
       "plans/README.md",
-      "templates/repository-agent-contract/.ai/skills/public-plan-coordination/SKILL.md",
-      "templates/repository-agent-contract/plans/schemas/public-plan.schema.json",
-      "templates/repository-agent-contract/plans/README.md",
-      "tooling/harness/operational/contributions/cross-repository-contribution.schema.json",
-      "tooling/harness/operational/contributions/wayfinder-public-plan.contribution.json",
-      "tooling/harness/operational/contributions/requirements-wayfinder-public-plan.txt",
-      "scripts/Test-WayfinderPublicPlanContribution.ps1",
+      "third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/README.md",
+      "third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/LICENSE",
+      "tests/test_wayfinder_harness.py",
+      "scripts/Test-WayfinderHarness.ps1",
       "tests/test_wayfinder_public_plan_contribution.py",
+      "scripts/Test-WayfinderPublicPlanContribution.ps1",
+      "tooling/harness/operational/contributions/requirements-wayfinder-public-plan.txt",
       ".github/workflows/wayfinder-public-plan-contribution.yml"
     ]
   },
   "classifications": [
     {
-      "candidate": "Destination-first planning boundary",
+      "candidate": "Wayfinder map orchestration and one-ticket-per-session planning loop",
       "classification": "reusable-skill",
       "disposition": "adopt",
-      "consumerOwner": ".ai/skills/public-plan-coordination/SKILL.md",
-      "notes": "Adopt the requirement to name the destination before expanding decision work; AgentSwitchboard remains authoritative for public-plan behavior."
+      "consumerOwner": ".ai/skills/wayfinder/SKILL.md",
+      "notes": "ASB owns the adapted orchestration while preserving the donor snapshot and explicit proof ceiling."
     },
     {
-      "candidate": "Decision tickets instead of speculative implementation slices",
+      "candidate": "Research, prototype, grilling, domain-modeling, to-spec, and to-tickets procedures",
       "classification": "reusable-skill",
       "disposition": "adopt",
-      "consumerOwner": ".ai/skills/public-plan-coordination/SKILL.md",
-      "notes": "Mapped onto existing public-plan tasks only while decision-frontier mode is active; execution is handed to the existing bounded execution path."
+      "consumerOwner": ".ai/skills/wayfinder/SKILL.md",
+      "notes": "Imported as distinct ASB procedures because Wayfinder ticket types are workflow gates, not descriptive categories."
     },
     {
-      "candidate": "Frontier, blocking, claim, fog-of-war, and destination out-of-scope semantics",
+      "candidate": "Typed ticket/map/spec contracts and HITL/AFK evidence requirements",
+      "classification": "shared-schema-or-evidence-packet",
+      "disposition": "adopt",
+      "consumerOwner": "tooling/harness/wayfinder/schemas/decision-ticket.schema.json",
+      "notes": "Closed schemas and deterministic classes make invalid ticket-type substitutions and inferred HITL completion fail closed."
+    },
+    {
+      "candidate": "GitHub child-issue, dependency, claim, frontier, resolution, and temporary-spec mechanics",
       "classification": "adapter",
       "disposition": "adopt",
-      "consumerOwner": "plans/schemas/public-plan.schema.json",
-      "notes": "Frontier is derived from existing task status/dependencies/owner. Only fog and destination-scope exclusions gain structured fields, preventing a duplicate frontier store."
+      "consumerOwner": "tooling/harness/wayfinder/github_tracker.py",
+      "notes": "ASB adapts tracker mechanics behind its own contract; live repository feature/permission availability still requires runtime proof."
     },
     {
-      "candidate": "Map-as-index and one canonical decision owner",
+      "candidate": "Map-as-index, ticket-as-primary-decision-source, fog, destination scope, and temporary-spec doctrine",
       "classification": "reference-only-doctrine",
       "disposition": "adopt",
-      "consumerOwner": ".ai/skills/public-plan-coordination/SKILL.md",
-      "notes": "Decision details remain owned by the public-plan task and its evidence pointers; summaries may gist but may not fork the decision."
+      "consumerOwner": ".ai/skills/wayfinder/SKILL.md",
+      "notes": "The principles are preserved while ASB public plans remain coordination mirrors rather than a second decision store."
     },
     {
-      "candidate": "Wayfinder issue labels, child-issue representation, native tracker blocking, and local-markdown fallback",
-      "classification": "domain-specific-rejected",
-      "disposition": "reject",
-      "consumerOwner": null,
-      "notes": "Tracker mechanics remain donor-specific. AgentSwitchboard uses its existing plan/task/dependency contract and does not import a second tracker model."
-    },
-    {
-      "candidate": "Donor /grilling, /domain-modeling, /research, and /prototype skill invocation names",
-      "classification": "domain-specific-rejected",
-      "disposition": "reject",
-      "consumerOwner": null,
-      "notes": "Those skill names and their HITL/AFK conventions belong to the donor ecosystem and must not be reimplemented as AgentSwitchboard authority."
-    },
-    {
-      "candidate": "Pinned-source adoption metadata and stale-reference policy",
+      "candidate": "Pinned immutable donor source snapshots with license",
       "classification": "portable-harness",
       "disposition": "adopt",
-      "consumerOwner": "tooling/harness/operational/contributions/cross-repository-contribution.schema.json",
-      "notes": "AgentSwitchboard records donor commit/path/blob authority and requires explicit reviewed refresh instead of silently following upstream main."
+      "consumerOwner": "third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/README.md",
+      "notes": "Exact snapshots are non-executable provenance evidence used to detect AI reinterpretation and stale-reference drift."
+    },
+    {
+      "candidate": "Donor setup command names, installer layout, exact emoji interview presentation, and project-specific prototype shapes",
+      "classification": "domain-specific-rejected",
+      "disposition": "reject",
+      "consumerOwner": null,
+      "notes": "Those presentation/setup details are not needed for semantic compatibility and would create unnecessary donor-environment coupling."
     }
   ],
   "capabilitiesDonated": [
-    "Name a destination before expanding a large ambiguous plan.",
-    "Represent unresolved work as decision questions rather than premature implementation slices.",
-    "Derive a takeable frontier from dependency and claim state instead of storing a second mutable frontier list.",
-    "Keep not-yet-specifiable in-scope fog separate from destination-level out-of-scope work.",
-    "Hand off to bounded execution when planning has made the route clear."
+    "Choose Wayfinder only when the route to a destination is genuinely too ambiguous/large for one bounded session.",
+    "Chart a tracker-backed map whose child tickets own exact decision questions and resolutions.",
+    "Treat research/prototype/grilling/task labels as workflow gates with explicit AFK/HITL evidence requirements.",
+    "Use native blocking and assignee state to expose a visual, concurrency-safe frontier.",
+    "Keep coarse in-scope fog separate from precise tickets and destination-level out-of-scope work.",
+    "Stop chart mode before non-research ticket resolution and normally resolve only one non-research ticket per session.",
+    "Synthesize a temporary spec only after the decision route is clear, then create separate implementation tickets or bounded execution work.",
+    "Retain durable decision history after the temporary spec is retired."
   ],
   "compatibility": {
-    "consumerContract": "agentswitchboard.public-plan.v1+decision-frontier-1",
-    "minimumSkillVersion": "1.1.0",
+    "consumerContract": "agentswitchboard.wayfinder.v1+public-plan-mirror-1",
+    "minimumSkillVersion": "1.2.0",
     "changeKind": "additive",
     "staleReferencePolicy": "pin-until-reviewed",
     "autoAdvanceDonor": false
   },
-  "proofCeiling": "This contribution proves only the pinned donor reference, AgentSwitchboard semantic mapping, closed consumer schema shape, template propagation, Draft 2020-12 instance validation, and consumer-side validators. It does not prove donor runtime behavior, issue-tracker child/dependency APIs, agent judgment quality, successful decision resolution, child-repository adoption, or any execution/merge/deployment outcome outside the consumer PR.",
+  "proofCeiling": "This contribution proves the pinned donor files and license, immutable source snapshots, ASB skill ownership/routing, closed schemas, deterministic ticket gates/frontier/spec-readiness logic, GitHub tracker command construction, public-plan mirror boundaries, and consumer-side hosted/offline validators. It does not prove live GitHub sub-issue/dependency permissions in a specific repository, hosted-agent judgment quality, actual human HITL answers/verdicts, prototype usefulness, research correctness beyond cited evidence, child-repository adoption, or destination implementation/deployment.",
   "mustNotCopyOrReimplement": [
-    "Do not copy the donor Wayfinder skill wholesale into AgentSwitchboard.",
-    "Do not create a second AgentSwitchboard wayfinder skill that competes with public-plan-coordination.",
-    "Do not import donor-specific issue labels, child-issue APIs, local tracker fallback, or skill invocation names as canonical AgentSwitchboard behavior.",
-    "Do not make child repositories depend directly on mattpocock/skills; they consume AgentSwitchboard's repository-family template when they adopt this mode.",
-    "Do not auto-update the donor commit when upstream main advances."
+    "Do not treat public-plan tasks as a second copy of Wayfinder decision tickets.",
+    "Do not put a full decision answer in both the map/public plan and its decision ticket; the ticket owns the detail.",
+    "Do not allow an agent to satisfy prototype or grilling HITL gates with its own recommendation or inferred approval.",
+    "Do not turn Wayfinder decision tickets into implementation tracer-bullet tickets; use to-tickets only after the route/spec is clear.",
+    "Do not make the temporary spec the durable source of decision rationale; retain ticket history.",
+    "Do not edit imported donor snapshots in place or auto-update the donor pin.",
+    "Do not make child repositories depend directly on mattpocock/skills; adoption requires an explicit consumer contribution."
   ],
   "validation": [
     "python -m pip install --disable-pip-version-check -r tooling/harness/operational/contributions/requirements-wayfinder-public-plan.txt",
+    "python tests/test_wayfinder_harness.py",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderHarness.ps1",
     "python tests/test_wayfinder_public_plan_contribution.py",
     "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderPublicPlanContribution.ps1",
     "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
