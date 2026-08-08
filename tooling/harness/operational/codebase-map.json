@@ -8,6 +8,7 @@
     {"path": ".ai/harness/", "purpose": "Canonical repository-family and cross-domain harness registries, policies, schemas, fixtures, and workflows."},
     {"path": ".ai/skills/", "purpose": "Canonical reusable agent procedures."},
     {"path": "tooling/harness/operational/", "purpose": "Operational harness spine: task routing, validator discovery, artifacts, reports, and handoff."},
+    {"path": "tooling/harness/operational/opencode-prompt-handoff/", "purpose": "Harness-owned materialize/preflight/execute composition that prevents clipboard mutation between OpenCode sprint gates."},
     {"path": "tooling/profiles/", "purpose": "Device/platform profiles and focused profile harnesses."},
     {"path": "tooling/gnhf/", "purpose": "Windows-first GNHF control-plane tooling and its contracts."},
     {"path": "tooling/pi/", "purpose": "Pi operational harness and experimental orchestration contracts."},
@@ -21,6 +22,7 @@
   "entrypoints": [
     {"path": "HARNESS.md", "when": "Fresh agent or operator needs the operational front door."},
     {"path": "tooling/harness/operational/Get-OperationalHarnessStatus.py", "when": "Need a read-only English/JSON snapshot and handoff artifacts."},
+    {"path": "tooling/harness/operational/opencode-prompt-handoff/Invoke-OpenCodePromptHandoff.ps1", "when": "An OpenCode bounded sprint needs preflight and execution without recopying or re-reading a mutable clipboard prompt."},
     {"path": "scripts/Test-OperationalHarness.ps1", "when": "Windows/PowerShell completeness validation."},
     {"path": "tests/test_operational_harness.py", "when": "Cross-platform operational-harness contract validation."},
     {"path": "Test-AppHarness.cmd", "when": "Need the existing aggregate offline app harness on Windows."},
@@ -35,11 +37,12 @@
     "plans/plan-registry.json",
     "tooling/harness/operational/manifest.json",
     "tooling/harness/operational/workflow-registry.json",
-    "tooling/harness/operational/validator-registry.json"
+    "tooling/harness/operational/validator-registry.json",
+    "tooling/harness/operational/opencode-prompt-handoff/manifest.json"
   ],
   "commands": {
     "build": {"command": "none", "reason": "AgentSwitchboard has no single conventional compile/build step; domain installers and launchers own their own validation."},
-    "fastHarnessValidation": ["python3 tests/test_operational_harness.py", "pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1", "git diff --check"],
+    "fastHarnessValidation": ["python3 tests/test_operational_harness.py", "pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1", "python3 tests/test_opencode_prompt_handoff_harness.py", "pwsh -NoLogo -NoProfile -File scripts/Test-OpenCodePromptHandoffHarness.ps1", "git diff --check"],
     "foundationValidation": ["pwsh -NoLogo -NoProfile -File scripts/Test-HarnessDoctrineContract.ps1", "pwsh -NoLogo -NoProfile -File scripts/Test-RepositoryFamilyHarness.ps1", "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1"],
     "aggregateOfflineValidation": ["Test-AppHarness.cmd"],
     "deploy": {"command": "none", "reason": "No generic deploy is authorized by this harness. Profile/install/runtime lanes use their own explicit operator contracts."}
@@ -48,6 +51,7 @@
     "Do not assume the current shell is inside a Git checkout; resolve repository identity before calling git rev-parse.",
     "Do not call .Trim() on command output until the command exit code and non-null output are checked.",
     "PowerShell interactive paste can execute a completed if block before a following standalone else block; keep } else { in the same parsed statement or execute a tracked .ps1 file as one unit.",
+    "Do not use a clipboard-backed OpenCode PlanOnly preflight and then launch later from the clipboard again; preflight and execution must be bound to one materialized prompt artifact and digest.",
     "Do not infer runtime readiness from repository, package, process, SSH, tmux-name, or CI presence.",
     "Do not run a domain validator merely because its filename exists; select the owning workflow and proof ceiling first.",
     "Do not install Git hooks implicitly. The operational pre-commit and pre-push helpers are opt-in only.",

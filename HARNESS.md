@@ -50,6 +50,21 @@ With recorded authority, the generated exact-head merge action is owned by the *
 
 Without recorded merge authority, the generated next action remains owner-controlled and explicitly names authorization/review as the dependency. The reporter never invents authority.
 
+## OpenCode prompt preflight and execution
+
+Do **not** use two separate clipboard-backed invocations for an OpenCode `PlanOnly` preflight followed by execution. The clipboard is a mutable intake surface, not a continuation artifact.
+
+When preflight must happen before the bounded sprint, use the prompt-handoff harness so the prompt is materialized once and both gates receive the same `-PromptPath` and SHA-256 identity:
+
+```powershell
+pwsh -NoLogo -NoProfile -File tooling/harness/operational/opencode-prompt-handoff/Invoke-OpenCodePromptHandoff.ps1 `
+  -RepoPath <repo-path> `
+  -Name <sprint-name> `
+  -PushBranch
+```
+
+If `-PromptPath` is omitted, the harness reads the clipboard exactly once at startup. It does not require a second copy/paste after preflight. Read `docs/harness/opencode-prompt-handoff.md` and `.ai/skills/opencode-prompt-handoff/SKILL.md` for artifacts, recovery, validation, and proof ceiling.
+
 ## Canonical operational files
 
 - `tooling/harness/operational/manifest.json` — operational harness entrypoints and safety ceiling.
@@ -58,11 +73,16 @@ Without recorded merge authority, the generated next action remains owner-contro
 - `tooling/harness/operational/artifact-registry.json` — generated evidence roles, names, generators, and proof ceilings.
 - `tooling/harness/operational/validator-registry.json` — owning, foundation, domain, and aggregate checks.
 - `tooling/harness/operational/workflows/` — executable workflow specifications.
+- `tooling/harness/operational/opencode-prompt-handoff/` — deterministic prompt materialization plus same-artifact OpenCode preflight/execution composition.
 - `.ai/skills/operational-harness-routing/SKILL.md` — scoped repeatable procedure.
+- `.ai/skills/opencode-prompt-handoff/SKILL.md` — canonical no-recopy prompt handoff procedure.
 - `docs/harness/operational-harness.md` — human operator guide.
+- `docs/harness/opencode-prompt-handoff.md` — human prompt-handoff operator guide.
 - `scripts/Test-OperationalHarness.ps1`, `tests/test_operational_harness.py`, and `tests/test_operational_merge_authority.py` — completeness and authority-continuation contracts.
+- `scripts/Test-OpenCodePromptHandoffHarness.ps1` and `tests/test_opencode_prompt_handoff_harness.py` — prompt-handoff completeness and anti-regression contracts.
 - `.github/workflows/operational-harness.yml` — Windows/Linux hosted harness gate.
 - `.github/workflows/operational-merge-authority.yml` — Windows/Linux authority-continuation regression gate.
+- `.github/workflows/opencode-prompt-handoff-harness.yml` — Windows/Linux prompt-handoff harness gate.
 - `tooling/harness/operational/hooks/Invoke-OperationalHarnessPreCommit.ps1` — optional pre-commit helper. It is never installed implicitly.
 - `tooling/harness/operational/hooks/Invoke-OperationalHarnessPrePush.ps1` — optional pre-push helper. It requires an exact base instead of guessing the push range.
 
@@ -75,6 +95,8 @@ Use `pre-commit-validation` after implementation is complete but before committi
 Use `failure-recovery` when a validator, CI job, schema, fixture, or contract fails.
 
 Use `handoff` after a complete gate to either finish already-authorized safe integration or transfer exact branch/proof state when a real dependency remains unresolved.
+
+OpenCode clipboard prompt intake, `PlanOnly` preflight, preflight-to-execution prompt identity, or any workflow that would require recopying the same prompt must route through `.ai/skills/opencode-prompt-handoff/SKILL.md` and its tracked harness runner.
 
 Cross-environment work must route through `.ai/skills/environment-capability-routing/SKILL.md`. Operator-visible runtime proof must route through `.ai/skills/end-to-end-runtime-validation/SKILL.md`. Those specialized owners outrank generic operational convenience.
 

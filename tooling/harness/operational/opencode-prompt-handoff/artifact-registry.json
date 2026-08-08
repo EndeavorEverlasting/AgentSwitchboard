@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "registryId": "agentswitchboard.opencode-prompt-handoff-artifacts.v1",
+  "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/prompt-handoff/runs/<run-id>",
+  "trackedGeneratedArtifacts": false,
+  "naming": "one unique run directory per invocation; stable role filenames inside the run directory",
+  "artifacts": [
+    {"artifactId": "bounded-sprint-prompt", "fileName": "bounded-sprint-prompt.md", "type": "local prompt transport", "generator": "Invoke-OpenCodePromptHandoff.ps1", "tracked": false, "containsRawPrompt": true, "proofCeiling": "exact bytes supplied to both preflight and execution; local-only and potentially sensitive"},
+    {"artifactId": "prompt-handoff-receipt", "fileName": "prompt-handoff-receipt.json", "type": "machine-readable receipt", "generator": "Invoke-OpenCodePromptHandoff.ps1", "tracked": false, "containsRawPrompt": false, "proofCeiling": "prompt digest, source class, preflight/execute exit codes, paths, and ordering observed by the harness runner"},
+    {"artifactId": "prompt-handoff-operator-report", "fileName": "prompt-handoff-operator-report.md", "type": "operator report", "generator": "Invoke-OpenCodePromptHandoff.ps1", "tracked": false, "containsRawPrompt": false, "proofCeiling": "human rendering of the same harness-owned continuity evidence"}
+  ],
+  "retention": "Keep the run-local prompt only as long as needed for retry/recovery. Never commit it. Delete the run directory after acceptance if the prompt contains private operational context.",
+  "secretRule": "Do not use this transport for passwords, tokens, recovery codes, private keys, or other credentials."
+}
