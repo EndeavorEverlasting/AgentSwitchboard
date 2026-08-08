@@ -41,15 +41,18 @@ def git(*args: str) -> str:
     return result.stdout.strip()
 
 
-def route_for(task: str) -> str | None:
+def status_for(task: str) -> dict:
     with tempfile.TemporaryDirectory() as temp_dir:
         result = subprocess.run(
             [sys.executable, str(HARNESS / "Get-OperationalHarnessStatus.py"), "--task", task, "--output-root", temp_dir],
             cwd=Path(temp_dir), text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
         )
         require(result.returncode == 0, f"route probe exit={result.returncode} task={task!r} stdout={result.stdout!r} stderr={result.stderr!r}")
-        status = json.loads((Path(temp_dir) / "operational-harness-status.json").read_text(encoding="utf-8"))
-        return status["routing"]["specializedSkill"]
+        return json.loads((Path(temp_dir) / "operational-harness-status.json").read_text(encoding="utf-8"))
+
+
+def route_for(task: str) -> str | None:
+    return status_for(task)["routing"]["specializedSkill"]
 
 
 def main() -> None:
@@ -192,6 +195,7 @@ def main() -> None:
         "tests/test_operator_command_delivery_harness.py",
         "tests/test_device_profile_launcher_contract.py",
         "tests/test_tmux_live_proof_contract.py",
+        ".ai/skills/environment-capability-routing/**",
         "persist-credentials: false",
         "git worktree add --detach",
         "[INHERITED-BASELINE]",
@@ -212,18 +216,24 @@ def main() -> None:
     for token in ("newcomer control surface", "task-intake", "pre-commit-validation", "failure-recovery", "handoff", "Artifact registry", "Optional hooks", "Pre-push", "Proof ceiling"):
         require(token in guide, f"operator guide token missing: {token}")
 
-    with tempfile.TemporaryDirectory() as temp_dir:
-        result = subprocess.run(
-            [sys.executable, str(HARNESS / "Get-OperationalHarnessStatus.py"), "--task", "validate a cross-environment tmux task", "--output-root", temp_dir],
-            cwd=Path(temp_dir), text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
-        )
-        require(result.returncode == 0, f"status reporter exit={result.returncode} stdout={result.stdout!r} stderr={result.stderr!r}")
-        for name in ("operational-harness-status.json", "operational-harness-report.md", "operational-harness-validation-ledger.json", "operational-harness-handoff.json"):
-            require((Path(temp_dir) / name).is_file(), f"status reporter missing {name}")
-        status = json.loads((Path(temp_dir) / "operational-harness-status.json").read_text(encoding="utf-8"))
-        require(status["routing"]["workflow"] == "pre-commit-validation", "task routing should select validation")
-        require(status["routing"]["specializedSkill"] == ".ai/skills/environment-capability-routing/SKILL.md", "cross-environment task should route to environment skill")
-        require(status["validation"]["gateComplete"] is False, "validation may not be inferred")
+    status = status_for("validate a cross-environment tmux task")
+    require(status["routing"]["workflow"] == "pre-commit-validation", "task routing should select validation")
+    require(status["routing"]["specializedSkill"] == ".ai/skills/environment-capability-routing/SKILL.md", "cross-environment task should route to environment skill")
+    require(status["validation"]["gateComplete"] is False, "validation may not be inferred")
+    component_paths = {item["path"]: item["present"] for item in status["components"]}
+    registered_skills = {
+        item["skill"]
+        for item in [*workflow_registry["workflows"], *workflow_registry["specializedRouting"]]
+        if item.get("skill")
+    }
+    for registered_skill in registered_skills:
+        require(registered_skill in component_paths, f"reporter health omits registered skill: {registered_skill}")
+        require(component_paths[registered_skill] is True, f"registered skill is not healthy: {registered_skill}")
+
+    for item in workflow_registry["workflows"]:
+        for trigger in item["triggers"]:
+            routed = status_for(trigger)["routing"]["workflow"]
+            require(routed == item["workflowId"], f"registered trigger {trigger!r} routed to {routed!r}, expected {item['workflowId']!r}")
 
     route_cases = (
         ("verify Windows launch mode", ".ai/skills/windows-profile-launch-mode-validation/SKILL.md"),
