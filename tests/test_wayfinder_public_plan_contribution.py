@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import copy
 import json
 import re
 from pathlib import Path
+
+from jsonschema import Draft202012Validator, FormatChecker, ValidationError
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = Path("tooling/harness/operational/contributions/wayfinder-public-plan.contribution.json")
@@ -17,11 +20,37 @@ def load_json(path: Path):
     return json.loads((ROOT / path).read_text(encoding="utf-8"))
 
 
+def validator_for(schema: dict) -> Draft202012Validator:
+    Draft202012Validator.check_schema(schema)
+    return Draft202012Validator(schema, format_checker=FormatChecker())
+
+
+def assert_rejected(validator: Draft202012Validator, instance: dict) -> None:
+    try:
+        validator.validate(instance)
+    except ValidationError:
+        return
+    raise AssertionError("expected Draft 2020-12 schema rejection")
+
+
 def main() -> None:
     manifest = load_json(MANIFEST_PATH)
     contribution_schema = load_json(SCHEMA_PATH)
     public_plan_schema = load_json(PUBLIC_PLAN_SCHEMA)
     template_plan_schema = load_json(TEMPLATE_PUBLIC_PLAN_SCHEMA)
+
+    contribution_validator = validator_for(contribution_schema)
+    public_plan_validator = validator_for(public_plan_schema)
+    validator_for(template_plan_schema)
+
+    # Validate the actual contribution manifest, not only selected fields.
+    contribution_validator.validate(manifest)
+    malformed_manifest = copy.deepcopy(manifest)
+    malformed_manifest["unexpectedAuthority"] = True
+    assert_rejected(contribution_validator, malformed_manifest)
+    malformed_manifest = copy.deepcopy(manifest)
+    del malformed_manifest["donor"]["commit"]
+    assert_rejected(contribution_validator, malformed_manifest)
 
     assert manifest["schema"] == "agentswitchboard.cross-repository-contribution.v1"
     assert contribution_schema["additionalProperties"] is False
@@ -80,10 +109,36 @@ def main() -> None:
     assert template_mode["properties"]["executionAllowed"]["const"] is False
 
     registry = load_json(Path("plans/plan-registry.json"))
+    registered_plans = []
     for entry in registry["plans"]:
         plan = load_json(Path(entry["path"]))
-        # Backward compatibility: all pre-extension plans remain valid without coordinationMode.
-        assert "coordinationMode" not in plan or plan["coordinationMode"]["kind"] == "decision-frontier"
+        # Full schema validation proves old plans remain valid without migration.
+        public_plan_validator.validate(plan)
+        registered_plans.append(plan)
+
+    # Exercise the new mode with both a valid synthetic instance and fail-closed mutations.
+    decision_plan = copy.deepcopy(registered_plans[0])
+    decision_plan["coordinationMode"] = {
+        "kind": "decision-frontier",
+        "destination": "Resolve the decisions required for a bounded execution handoff.",
+        "notYetSpecified": ["A later question whose precise shape depends on the first decision."],
+        "outOfScope": ["Implementation beyond the decision destination."],
+        "executionAllowed": False,
+        "sourceContribution": MANIFEST_PATH.as_posix(),
+    }
+    public_plan_validator.validate(decision_plan)
+
+    unsafe_plan = copy.deepcopy(decision_plan)
+    unsafe_plan["coordinationMode"]["executionAllowed"] = True
+    assert_rejected(public_plan_validator, unsafe_plan)
+
+    malformed_plan = copy.deepcopy(decision_plan)
+    malformed_plan["coordinationMode"]["unexpectedFrontierStore"] = []
+    assert_rejected(public_plan_validator, malformed_plan)
+
+    malformed_plan = copy.deepcopy(decision_plan)
+    del malformed_plan["coordinationMode"]["sourceContribution"]
+    assert_rejected(public_plan_validator, malformed_plan)
 
     skill = (ROOT / SKILL_PATH).read_text(encoding="utf-8")
     for token in (
@@ -111,7 +166,7 @@ def main() -> None:
     assert manifest["mustNotCopyOrReimplement"]
     assert any("Do not copy the donor Wayfinder skill wholesale" in item for item in manifest["mustNotCopyOrReimplement"])
 
-    print("PASS: Wayfinder insight is pinned and adapted into the existing public-plan authority without duplicate runtime ownership")
+    print("PASS: Wayfinder contribution and registered public plans validate under Draft 2020-12 without duplicate authority")
 
 
 if __name__ == "__main__":
