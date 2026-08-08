@@ -21,9 +21,11 @@
   },
   "consumer": {
     "repository": "EndeavorEverlasting/AgentSwitchboard",
-    "targetLayer": "Wayfinder orchestration, typed decision workflows, tracker adapter, public-plan mirror, temporary-spec and implementation-ticket handoff",
+    "targetLayer": "Wayfinder governance, orchestration, typed decision workflows, tracker adapter, public-plan mirror, temporary-spec lifecycle, implementation-ticket handoff, and operational routing/validation",
     "canonicalOwner": ".ai/skills/wayfinder/SKILL.md",
     "files": [
+      ".ai/agent-contract.json",
+      ".ai/harness/wayfinder-doctrine.policy.json",
       ".ai/skills/wayfinder/SKILL.md",
       ".ai/skills/research/SKILL.md",
       ".ai/skills/prototype/SKILL.md",
@@ -32,16 +34,38 @@
       ".ai/skills/to-spec/SKILL.md",
       ".ai/skills/to-tickets/SKILL.md",
       ".ai/skills/public-plan-coordination/SKILL.md",
+      "SKILLS.md",
+      "HARNESS.md",
+      "docs/governance/wayfinder-doctrine.md",
+      "docs/harness/wayfinder.md",
       "tooling/harness/wayfinder/manifest.json",
       "tooling/harness/wayfinder/wayfinder_contract.py",
       "tooling/harness/wayfinder/github_tracker.py",
       "tooling/harness/wayfinder/schemas/decision-ticket.schema.json",
       "tooling/harness/wayfinder/schemas/map.schema.json",
       "tooling/harness/wayfinder/schemas/spec.schema.json",
+      "tooling/harness/wayfinder/fixtures/map.json",
+      "tooling/harness/wayfinder/fixtures/ticket-research.json",
+      "tooling/harness/wayfinder/fixtures/ticket-prototype.json",
+      "tooling/harness/wayfinder/fixtures/ticket-grilling.json",
+      "tooling/harness/wayfinder/fixtures/ticket-task.json",
+      "tooling/harness/wayfinder/fixtures/spec.json",
       "plans/schemas/public-plan.schema.json",
       "plans/README.md",
+      "tooling/harness/operational/manifest.json",
+      "tooling/harness/operational/validator-registry.json",
+      "tooling/harness/operational/workflow-registry.json",
       "third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/README.md",
       "third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/LICENSE",
+      "third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/wayfinder/SKILL.md",
+      "third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/research/SKILL.md",
+      "third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/prototype/SKILL.md",
+      "third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/grilling/SKILL.md",
+      "third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/domain-modeling/SKILL.md",
+      "third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/to-spec/SKILL.md",
+      "third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/to-tickets/SKILL.md",
+      "third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/issue-tracker-github.md",
+      "third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/issue-tracker-local.md",
       "tests/test_wayfinder_harness.py",
       "scripts/Test-WayfinderHarness.ps1",
       "tests/test_wayfinder_public_plan_contribution.py",
@@ -80,11 +104,11 @@
       "notes": "ASB adapts tracker mechanics behind its own contract; live repository feature/permission availability still requires runtime proof."
     },
     {
-      "candidate": "Map-as-index, ticket-as-primary-decision-source, fog, destination scope, and temporary-spec doctrine",
+      "candidate": "Map-as-index, ticket-as-primary-decision-source, fog, destination scope, HITL boundaries, chart stop, and temporary-spec doctrine",
       "classification": "reference-only-doctrine",
       "disposition": "adopt",
-      "consumerOwner": ".ai/skills/wayfinder/SKILL.md",
-      "notes": "The principles are preserved while ASB public plans remain coordination mirrors rather than a second decision store."
+      "consumerOwner": "docs/governance/wayfinder-doctrine.md",
+      "notes": "The doctrine is now explicit and machine-backed while ASB public plans remain coordination mirrors rather than a second decision store."
     },
     {
       "candidate": "Pinned immutable donor source snapshots with license",
@@ -118,7 +142,7 @@
     "staleReferencePolicy": "pin-until-reviewed",
     "autoAdvanceDonor": false
   },
-  "proofCeiling": "This contribution proves the pinned donor files and license, immutable source snapshots, ASB skill ownership/routing, closed schemas, deterministic ticket gates/frontier/spec-readiness logic, GitHub tracker command construction, public-plan mirror boundaries, and consumer-side hosted/offline validators. It does not prove live GitHub sub-issue/dependency permissions in a specific repository, hosted-agent judgment quality, actual human HITL answers/verdicts, prototype usefulness, research correctness beyond cited evidence, child-repository adoption, or destination implementation/deployment.",
+  "proofCeiling": "This contribution proves the pinned donor files and license, immutable source snapshots, ASB governance doctrine, skill ownership/routing, closed schemas, deterministic ticket gates/frontier/spec-readiness logic, GitHub tracker command construction, public-plan mirror boundaries, and consumer-side hosted/offline validators. It does not prove live GitHub sub-issue/dependency permissions in a specific repository, hosted-agent judgment quality, actual human HITL answers/verdicts, prototype usefulness, research correctness beyond cited evidence, child-repository adoption, or destination implementation/deployment.",
   "mustNotCopyOrReimplement": [
     "Do not treat public-plan tasks as a second copy of Wayfinder decision tickets.",
     "Do not put a full decision answer in both the map/public plan and its decision ticket; the ticket owns the detail.",
@@ -137,6 +161,7 @@
     "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
     "python tests/test_public_plan_contracts.py",
     "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1",
     "git diff --check"
   ]
 }
