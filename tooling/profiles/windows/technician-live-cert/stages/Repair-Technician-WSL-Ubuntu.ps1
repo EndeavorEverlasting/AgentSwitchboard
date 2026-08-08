@@ -41,7 +41,7 @@ function Get-WslDistributionState {
     $exitCode = $LASTEXITCODE
     $names = @(
         $raw |
-        ForEach-Object { ([string]$_).Replace([char]0, '').Trim() } |
+        ForEach-Object { ([string]$_).Replace(([char]0).ToString(), [string]::Empty).Trim() } |
         Where-Object { $_ -and $_ -notmatch '^Copyright ' }
     )
 
