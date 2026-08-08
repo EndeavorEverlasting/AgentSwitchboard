@@ -34,7 +34,7 @@ jobs:
         shell: pwsh
         run: ./scripts/Test-OpenCodePromptHandoffHarness.ps1
       - name: Operational harness portable contract
-        run: python3 -m unittest tests.test_operational_harness
+        run: python3 tests/test_operational_harness.py
       - name: Operational harness PowerShell contract
         shell: pwsh
         run: ./scripts/Test-OperationalHarness.ps1
@@ -57,7 +57,7 @@ jobs:
         run: ./scripts/Test-OpenCodePromptHandoffHarness.ps1
       - name: Operational harness portable contract
         shell: pwsh
-        run: python -m unittest tests.test_operational_harness
+        run: python tests/test_operational_harness.py
       - name: Operational harness PowerShell contract
         shell: pwsh
         run: ./scripts/Test-OperationalHarness.ps1
