@@ -10,6 +10,9 @@ scope=(
   tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPrePush.sh
   .ai/skills/android-termux-repo-bootstrap/SKILL.md
   .ai/skills/android-termux-terminal-recovery/SKILL.md
+  SKILLS.md
+  TRIGGERS.md
+  .ai/harness/app-composition.graph.json
   docs/harness/android-termux-operational-harness.md
   tests/test_android_termux_harness.py
   scripts/Test-AndroidTermuxHarnessCompleteness.ps1
@@ -42,7 +45,8 @@ for file in \
   tooling/profiles/android/harness/termux/workflows/task-intake.workflow.json \
   tooling/profiles/android/harness/termux/workflows/validate-terminal-boundary.workflow.json \
   tooling/profiles/android/harness/termux/workflows/handle-input-boundary-failure.workflow.json \
-  tooling/profiles/android/harness/termux/workflows/capture-terminal-output.workflow.json; do
+  tooling/profiles/android/harness/termux/workflows/capture-terminal-output.workflow.json \
+  .ai/harness/app-composition.graph.json; do
   git ls-files --error-unmatch -- "$file" >/dev/null
   python -m json.tool "$file" >/dev/null
 done

@@ -44,14 +44,34 @@ def main() -> None:
     assert manifest["authorityRef"] == ".ai/agent-contract.json"
     assert manifest["repositoryFamilyRegistry"] == ".ai/harness/repository-family.registry.json"
     assert manifest["repositoryFamilyStatusProbe"] == "scripts/Get-RepositoryFamilyHarnessStatus.ps1"
+    assert manifest["components"]["routingCatalogs"] == ["SKILLS.md", "TRIGGERS.md"]
+    assert manifest["components"]["aggregateComposition"] == ".ai/harness/app-composition.graph.json"
 
-    for group in ("workflows", "fixtures", "hooks", "skills"):
+    for group in ("workflows", "fixtures", "hooks", "skills", "routingCatalogs"):
         for path in manifest["components"][group]:
             require(path)
-    for key in ("codebaseMap", "artifactRegistry", "operatorReport", "operatorGuide", "portableTest", "completenessValidator", "ci"):
+    for key in ("codebaseMap", "artifactRegistry", "operatorReport", "aggregateComposition", "operatorGuide", "portableTest", "completenessValidator", "ci"):
         require(manifest["components"][key])
     for path in (manifest["authorityRef"], manifest["repositoryFamilyRegistry"], manifest["repositoryFamilyStatusProbe"]):
         require(path)
+
+    skills_catalog = require("SKILLS.md").read_text(encoding="utf-8")
+    triggers = require("TRIGGERS.md").read_text(encoding="utf-8")
+    for skill_id in ("android-termux-repo-bootstrap", "android-termux-terminal-recovery"):
+        assert skill_id in skills_catalog
+    for trigger_id in ("android.termux-repo-bootstrap", "android.termux-terminal-recovery"):
+        assert trigger_id in triggers
+
+    graph = load_json(ROOT / ".ai/harness/app-composition.graph.json")
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    edges = {(edge["from"], edge["to"]) for edge in graph["edges"]}
+    assert nodes["validator.android-termux"]["paths"] == ["scripts/Test-AndroidTermuxHarnessCompleteness.ps1"]
+    assert nodes["validator.android-termux"]["safeOffline"] is True
+    assert nodes["skill.android-termux-bootstrap"]["paths"] == [".ai/skills/android-termux-repo-bootstrap/SKILL.md"]
+    assert nodes["skill.android-termux-recovery"]["paths"] == [".ai/skills/android-termux-terminal-recovery/SKILL.md"]
+    assert ("observer.app-harness", "validator.android-termux") in edges
+    assert ("trigger.android-termux", "skill.android-termux-bootstrap") in edges
+    assert ("trigger.android-termux", "skill.android-termux-recovery") in edges
 
     registry = load_json(ROOT / ".ai/harness/device-profile-registry.json")
     android = next(item for item in registry["profiles"] if item["profileId"] == "android")
@@ -68,9 +88,10 @@ def main() -> None:
     assert "git rev-parse --show-toplevel" in commands
     assert codebase["entrypoints"]["harnessPrerequisiteInstall"] == "pkg install -y python"
     assert codebase["entrypoints"]["repositoryFamilyStatus"].endswith("scripts/Get-RepositoryFamilyHarnessStatus.ps1")
+    assert codebase["entrypoints"]["aggregateHarness"].endswith("scripts/Test-AppHarness.ps1")
 
     traps = "\n".join(codebase["knownTraps"])
-    for token in ("long-press selection", "Touch scrolling", "authentication/device-code", "[200~", "usable local clone", "Python", "Repository-family status"):
+    for token in ("long-press selection", "Touch scrolling", "authentication/device-code", "[200~", "usable local clone", "Python", "Repository-family status", "aggregate app-composition graph"):
         assert token in traps
 
     step_ids = [step["id"] for step in intake["steps"]]

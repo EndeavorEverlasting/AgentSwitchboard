@@ -32,6 +32,8 @@
       ".ai/skills/android-termux-repo-bootstrap/SKILL.md",
       ".ai/skills/android-termux-terminal-recovery/SKILL.md"
     ],
+    "routingCatalogs": ["SKILLS.md", "TRIGGERS.md"],
+    "aggregateComposition": ".ai/harness/app-composition.graph.json",
     "operatorGuide": "docs/harness/android-termux-operational-harness.md",
     "portableTest": "tests/test_android_termux_harness.py",
     "completenessValidator": "scripts/Test-AndroidTermuxHarnessCompleteness.ps1",
@@ -44,5 +46,5 @@
     {"id":"multi-pane-native-selection","signature":"Android text selection spans more than one visible tmux pane","classification":"terminal-selection-boundary"},
     {"id":"scrollback-unclear","signature":"operator cannot reliably browse prior output with touch scrolling","classification":"terminal-scrollback-boundary"}
   ],
-  "proofCeiling": "This harness proves tracked Android/Termux operational contracts, bounded pane-capture procedures, validators, hooks, skills and hosted checks. The Android runtime is separately implemented and remains subject to its own live proof. This harness does not prove provider login, model output, tool execution, repository mutation, clipboard behavior on every device, repository-family status on a Termux host without PowerShell, or operator acceptance."
+  "proofCeiling": "This harness proves tracked Android/Termux operational contracts, root skill/trigger discovery, aggregate validator registration, bounded pane-capture procedures, validators, hooks, skills and hosted checks. The Android runtime is separately implemented and remains subject to its own live proof. This harness does not prove provider login, model output, tool execution, repository mutation, clipboard behavior on every device, repository-family status on a Termux host without PowerShell, or operator acceptance."
 }
