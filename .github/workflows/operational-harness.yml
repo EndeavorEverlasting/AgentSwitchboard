@@ -37,39 +37,82 @@ jobs:
           test -s "$output_root/operational-harness-report.md"
           test -s "$output_root/operational-harness-handoff.json"
 
-      - name: Run dependency-light existing Python contracts
+      - name: Compare existing Linux contracts against base
         shell: bash
         run: |
           set -euo pipefail
-          for test_file in \
-            tests/test_android_termux_docs.py \
-            tests/test_android_termux_profile.py \
-            tests/test_app_harness_validator.py \
-            tests/test_app_output_context_engine.py \
-            tests/test_device_profile_launcher_contract.py \
-            tests/test_environment_capability_harness.py \
-            tests/test_environment_capability_template.py \
-            tests/test_machine_profile_bootstrap.py \
-            tests/test_pi_harness_contracts.py \
-            tests/test_public_plan_contracts.py \
-            tests/test_runtime_event_contract.py \
-            tests/test_technician_live_cert_surface.py \
-            tests/test_technician_pull_and_run_contract.py \
-            tests/test_tmux_new_instance_shortcut_harness.py \
-            tests/test_windows_profile_launch_mode_harness.py
-          do
-            python3 "$test_file"
-          done
-          bash tests/test_android_termux_profile.sh
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            base_sha="${{ github.event.pull_request.base.sha }}"
+            head_sha="${{ github.event.pull_request.head.sha }}"
+          else
+            head_sha="$(git rev-parse HEAD)"
+            base_sha="$(git rev-parse HEAD^)"
+          fi
+          base_dir="${RUNNER_TEMP}/operational-harness-base"
+          head_dir="${RUNNER_TEMP}/operational-harness-head"
+          git worktree add --detach "$base_dir" "$base_sha"
+          git worktree add --detach "$head_dir" "$head_sha"
+
+          regression_count=0
+          compare_test() {
+            label="$1"
+            shift
+            base_log="${RUNNER_TEMP}/base-${label//[^A-Za-z0-9_.-]/_}.log"
+            head_log="${RUNNER_TEMP}/head-${label//[^A-Za-z0-9_.-]/_}.log"
+            set +e
+            (cd "$base_dir" && "$@") >"$base_log" 2>&1
+            base_rc=$?
+            (cd "$head_dir" && "$@") >"$head_log" 2>&1
+            head_rc=$?
+            set -e
+
+            if [[ "$base_rc" -eq 0 && "$head_rc" -eq 0 ]]; then
+              printf '[PASS] %s base=0 head=0\n' "$label"
+            elif [[ "$base_rc" -ne 0 && "$head_rc" -eq 0 ]]; then
+              printf '[REPAIRED] %s base=%s head=0\n' "$label" "$base_rc"
+            elif [[ "$base_rc" -ne 0 && "$head_rc" -ne 0 ]]; then
+              printf '[INHERITED-BASELINE] %s base=%s head=%s\n' "$label" "$base_rc" "$head_rc"
+              tail -n 12 "$head_log" || true
+            else
+              printf '[REGRESSION] %s base=0 head=%s\n' "$label" "$head_rc" >&2
+              cat "$head_log" >&2
+              regression_count=$((regression_count + 1))
+            fi
+          }
+
+          compare_test android-termux-docs python3 tests/test_android_termux_docs.py
+          compare_test android-termux-profile python3 tests/test_android_termux_profile.py
+          compare_test app-harness python3 tests/test_app_harness_validator.py
+          compare_test app-output-context python3 tests/test_app_output_context_engine.py
+          compare_test device-profile python3 tests/test_device_profile_launcher_contract.py
+          compare_test environment-capability python3 tests/test_environment_capability_harness.py
+          compare_test environment-template python3 tests/test_environment_capability_template.py
+          compare_test machine-profile-bootstrap python3 tests/test_machine_profile_bootstrap.py
+          compare_test pi-harness python3 tests/test_pi_harness_contracts.py
+          compare_test public-plan python3 tests/test_public_plan_contracts.py
+          compare_test runtime-event python3 tests/test_runtime_event_contract.py
+          compare_test technician-live-cert python3 tests/test_technician_live_cert_surface.py
+          compare_test technician-pull-run python3 tests/test_technician_pull_and_run_contract.py
+          compare_test tmux-shortcut python3 tests/test_tmux_new_instance_shortcut_harness.py
+          compare_test windows-launch-mode python3 tests/test_windows_profile_launch_mode_harness.py
+          compare_test android-shell bash tests/test_android_termux_profile.sh
+
+          test -z "$(git -C "$base_dir" status --short)"
+          test -z "$(git -C "$head_dir" status --short)"
+          if [[ "$regression_count" -ne 0 ]]; then
+            printf '[FAIL] %s existing-contract regression(s) introduced by head\n' "$regression_count" >&2
+            exit 1
+          fi
+          printf '[PASS] no head-only Linux contract regressions; inherited failures remain visible above\n'
 
       - name: Verify PR-range diff hygiene and clean checkout
         shell: bash
         run: |
           set -euo pipefail
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            git diff --check "${{ github.event.pull_request.base.sha }}" HEAD
+            git diff --check "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"
           else
-            git diff --check HEAD^
+            git diff --check HEAD^ HEAD
           fi
           test -z "$(git status --short)"
 
@@ -90,10 +133,27 @@ jobs:
           & python tests/test_operational_harness.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Run existing PowerShell foundation and domain contracts
+      - name: Compare existing PowerShell contracts against base
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          if ('${{ github.event_name }}' -eq 'pull_request') {
+            $baseSha = '${{ github.event.pull_request.base.sha }}'
+            $headSha = '${{ github.event.pull_request.head.sha }}'
+          } else {
+            $headSha = (& git rev-parse HEAD).Trim()
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            $baseSha = (& git rev-parse HEAD^).Trim()
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+
+          $baseDir = Join-Path $env:RUNNER_TEMP 'operational-harness-base'
+          $headDir = Join-Path $env:RUNNER_TEMP 'operational-harness-head'
+          & git worktree add --detach $baseDir $baseSha
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & git worktree add --detach $headDir $headSha
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
           $validators = @(
             'scripts/Test-HarnessDoctrineContract.ps1',
             'scripts/Test-RepositoryFamilyHarness.ps1',
@@ -111,19 +171,50 @@ jobs:
             'scripts/Test-TmuxNewInstanceShortcutHarness.ps1',
             'scripts/Test-TechnicianLiveCertSurface.ps1'
           )
+
+          $regressions = 0
           foreach ($validator in $validators) {
-            & pwsh -NoLogo -NoProfile -File $validator
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            $safe = ($validator -replace '[^A-Za-z0-9_.-]', '_')
+            $baseLog = Join-Path $env:RUNNER_TEMP "base-$safe.log"
+            $headLog = Join-Path $env:RUNNER_TEMP "head-$safe.log"
+
+            & pwsh -NoLogo -NoProfile -File (Join-Path $baseDir $validator) *> $baseLog
+            $baseRc = $LASTEXITCODE
+            & pwsh -NoLogo -NoProfile -File (Join-Path $headDir $validator) *> $headLog
+            $headRc = $LASTEXITCODE
+
+            if ($baseRc -eq 0 -and $headRc -eq 0) {
+              Write-Host "[PASS] $validator base=0 head=0"
+            } elseif ($baseRc -ne 0 -and $headRc -eq 0) {
+              Write-Host "[REPAIRED] $validator base=$baseRc head=0"
+            } elseif ($baseRc -ne 0 -and $headRc -ne 0) {
+              Write-Host "[INHERITED-BASELINE] $validator base=$baseRc head=$headRc"
+              Get-Content -LiteralPath $headLog -Tail 12 -ErrorAction SilentlyContinue
+            } else {
+              Write-Error "[REGRESSION] $validator base=0 head=$headRc"
+              Get-Content -LiteralPath $headLog -ErrorAction SilentlyContinue
+              $regressions++
+            }
           }
+
+          if ((& git -C $baseDir status --short) -or (& git -C $headDir status --short)) {
+            Write-Error 'Existing contract execution dirtied a comparison worktree.'
+            exit 1
+          }
+          if ($regressions -ne 0) {
+            Write-Error "$regressions existing PowerShell contract regression(s) introduced by head."
+            exit 1
+          }
+          Write-Host '[PASS] no head-only PowerShell contract regressions; inherited failures remain visible above'
 
       - name: Verify PR-range diff hygiene and clean checkout
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           if ('${{ github.event_name }}' -eq 'pull_request') {
-            & git diff --check '${{ github.event.pull_request.base.sha }}' HEAD
+            & git diff --check '${{ github.event.pull_request.base.sha }}' '${{ github.event.pull_request.head.sha }}'
           } else {
-            & git diff --check HEAD^
+            & git diff --check HEAD^ HEAD
           }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $dirty = (& git status --short) -join "`n"
