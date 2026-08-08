@@ -1,0 +1,16 @@
+{
+  "schema": "agentswitchboard.android-termux-workflow.v1",
+  "workflowId": "android-termux-capture-terminal-output",
+  "trigger": "Android long-press selection spans tmux panes, touch scrolling is unreliable, or prior terminal output is needed without relying on clipboard selection.",
+  "inputs": ["tmux session/window/pane context", "reason for capture", "maximum history lines (default 200)", "sensitivity classification"],
+  "steps": [
+    {"id":"inventory-panes","action":"Run tmux list-panes -a with session/window/pane, active flag and current command. Do not guess the pane from screen geometry.","evidence":"tmux pane inventory artifact"},
+    {"id":"classify-sensitivity","action":"Reject durable capture of panes that display OAuth/device codes, passwords, tokens, private keys, credential files, or other forbidden content. Select a non-sensitive pane or generate fresh sanitized output instead.","evidence":"sensitivity decision in interaction report"},
+    {"id":"select-exact-pane","action":"Choose exactly one tmux target in session:window.pane form. Native Android selection spanning panes is not an evidence boundary.","evidence":"target identity"},
+    {"id":"capture-bounded-history","action":"Capture at most the required bounded history, default 200 lines, with tmux capture-pane -p -S -200 -t TARGET and write it under $HOME/agentswitchboard-evidence.","evidence":"tmux pane capture artifact"},
+    {"id":"inspect-without-selection","action":"Use tail, sed, grep, less, or cat against the artifact. For human-only browsing, tmux copy mode (Ctrl+B then [, PgUp/PgDn/arrows, q) is a fallback, not required proof transport.","evidence":"inspection command/result identity"},
+    {"id":"handoff-minimally","action":"Share only the smallest non-sensitive excerpt or artifact path needed for the next decision. Prefer short canonical commands, QR/live-document/file transport when clipboard is unreliable, and never require long-press selection.","evidence":"terminal interaction report with exact next command"}
+  ],
+  "failurePolicy": "If pane identity is ambiguous, capture would include sensitive authentication material, tmux is unavailable, or the bounded artifact cannot be written, stop that capture path and generate fresh sanitized command output in a known pane. Do not widen capture history or fall back to screenshot/clipboard as proof by default.",
+  "proofCeiling": "Proves bounded recovery of rendered terminal text from one identified tmux pane. It does not prove the captured command succeeded, that another pane is safe, or that Android native selection/scrolling is repaired."
+}

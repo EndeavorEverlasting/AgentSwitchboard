@@ -12,7 +12,8 @@ for file in \
   tooling/profiles/android/harness/termux/artifact-registry.json \
   tooling/profiles/android/harness/termux/workflows/task-intake.workflow.json \
   tooling/profiles/android/harness/termux/workflows/validate-terminal-boundary.workflow.json \
-  tooling/profiles/android/harness/termux/workflows/handle-input-boundary-failure.workflow.json; do
+  tooling/profiles/android/harness/termux/workflows/handle-input-boundary-failure.workflow.json \
+  tooling/profiles/android/harness/termux/workflows/capture-terminal-output.workflow.json; do
   python -m json.tool "$file" >/dev/null
 done
 

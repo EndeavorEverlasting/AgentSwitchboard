@@ -2,47 +2,65 @@
 
 ## Purpose
 
-This harness makes the Android/Termux repository path inspectable and repeatable without pretending that a canonical AgentSwitchboard Android launcher already exists. The Android profile remains governed by `.ai/harness/device-profile-registry.json`; this lane supplies operator contracts, portable validation, failure handling, local evidence naming, and handoff.
+This harness makes Android/Termux repository work repeatable when mobile terminal input, text selection, split-pane rendering, scrollback, clipboard transport, app switching, or evidence preservation is unreliable. The Android runtime is now separately implemented and registered on `main`; this harness indexes that runtime but does not modify it or claim live provider/model/tool success.
 
-## Prerequisites
+## Prerequisites and floor
 
-Use the F-Droid build of Termux and keep Termux add-ons optional until a specific workflow requires them. The narrow repository toolchain is `git`, `openssh`, `tmux`, `gh`, `curl`, `jq`, and an editor. Repository work should live under Termux `$HOME`, for example `$HOME/dev/AgentSwitchboard`, rather than Android shared storage.
+Keep the checkout under Termux `$HOME` (for example `$HOME/dev/AgentSwitchboard`), use a named tmux session, and keep generated evidence under `$HOME/agentswitchboard-evidence`. The narrow tool floor is `git`, `openssh`, `tmux`, `gh`, `curl`, `jq`, plus the runtime-specific packages installed by the separate Android runtime entrypoint when that lane is active.
 
-A durable shell is a gate, not decoration. Start or attach a named tmux session and prove detach, `tmux ls`, and reattach before doing credential or repository work that must survive an Android app switch or terminal loss.
+A durable shell is a gate: prove detach, `tmux ls`, and reattach before work that must survive an Android app switch or terminal loss.
 
-## First-use workflow
+## Mobile terminal rule: pane identity beats touch selection
 
-1. Read `AGENTS.md`, `CODEBASE_MAP.md`, the Android profile registry, and `tooling/profiles/android/harness/termux/manifest.json`.
-2. Run the task-intake workflow and prove required commands resolve.
-3. If a pasted command appears with literal `[200~` or another framing marker, stop downstream work and use the terminal-boundary workflow. A rendered line such as `[200~gh ...` is evidence that the shell did not receive `gh` as the executable name. It is not by itself evidence that GitHub CLI is uninstalled.
-4. When paste framing is suspect, manually type a short probe such as `gh --version`. Run `command -v gh` before any reinstall. Only reopen package installation if the manually typed resolution probe actually fails.
-5. Once command delivery is clean, perform GitHub authentication. Keep device codes and credentials out of logs, screenshots, issues, PRs and chat.
-6. Clone under `$HOME/dev`, fetch the current remote base, and compare local HEAD with `origin/main` before creating an isolated work branch. Concurrent work may move `main`; matching a newer fetched remote is success, while stale hard-coded SHAs are not.
-7. Run the portable contract test on Android before broader repository work.
+Android long-press selection is not a reliable tmux pane boundary. When selection highlights text across multiple panes, or touch scrolling is unclear, do not fight the UI and do not require a screenshot for proof.
+
+First list pane identities:
+
+```sh
+tmux list-panes -a -F '#S:#I.#P active=#{pane_active} cmd=#{pane_current_command}'
+```
+
+Then target exactly one **non-sensitive** pane and capture bounded history:
+
+```sh
+mkdir -p "$HOME/agentswitchboard-evidence"
+TARGET='<session:window.pane>'
+OUT="$HOME/agentswitchboard-evidence/tmux-pane-$(date +%Y%m%d-%H%M%S).txt"
+tmux capture-pane -p -S -200 -t "$TARGET" > "$OUT"
+printf 'EVIDENCE=%s\n' "$OUT"
+```
+
+Do not persist a pane that contains an OAuth/device code, password, token, private key, credential-file content, or comparable secret. Switch to a safe pane or run a fresh sanitized read-only command and capture that output instead.
+
+For **human browsing only**, tmux copy mode is the fallback: press `Ctrl+B`, release, press `[`, navigate with Page Up/Page Down or arrows, and press `q` to leave copy mode. `capture-pane` remains the preferred evidence path because it is explicit, bounded, scriptable, and independent of Android native selection.
+
+## Input framing workflow
+
+If a pasted command appears with literal `[200~` or another framing marker, stop downstream diagnosis. A line such as `[200~gh ...` is evidence that the shell did not receive `gh` as the executable name; it is not evidence that GitHub CLI is uninstalled. Manually type `command -v gh` / `gh --version` before considering package repair.
+
+## Transport choices
+
+Clipboard copy/paste is convenient but optional. Critical commands have one canonical plain-text form and may be delivered by careful manual entry, QR payload, monitored live document, or file artifact. Prefer short repository-owned launchers over long fragile commands. Transport carries text; it does not create execution authority.
 
 ## Validation
 
-Android-local, dependency-free contract check:
+Android-local contract:
 
 ```sh
 python tests/test_android_termux_harness.py
 ```
 
-Opt-in staged-change hook:
+Opt-in hooks:
 
 ```sh
 bash tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPreCommit.sh
+bash tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPrePush.sh
 ```
 
-Repository/CI completeness check:
+PowerShell/hosted completeness:
 
 ```powershell
 pwsh -NoLogo -NoProfile -File scripts/Test-AndroidTermuxHarnessCompleteness.ps1
-```
-
-Aggregate repository harness where PowerShell is available:
-
-```powershell
 pwsh -NoLogo -NoProfile -File scripts/Test-AppHarness.ps1
 ```
 
@@ -52,27 +70,22 @@ Patch hygiene:
 git diff --check
 ```
 
-## Artifacts and evidence
+## Artifacts
 
-Generated Android evidence is local and untracked under `$HOME/agentswitchboard-evidence`. Use `artifact-registry.json` for names and proof ceilings. Do not commit operator logs simply to prove the harness exists. A terminal crash or app switch must not destroy the only copy of evidence: commands that matter should use `tee` or write explicit local report files before the next boundary.
+Use `tooling/profiles/android/harness/termux/artifact-registry.json`. Pane inventory, bounded pane capture, terminal interaction report, bootstrap logs, clone proof and harness validation are local/untracked. Never commit raw operator evidence simply to prove the harness exists.
+
+## Runtime boundary
+
+The canonical runtime entrypoint is `Start-AgentSwitchboard-Android.sh`, and the installed command is `agentswitchboard-android`. Runtime provider login, model response, tool execution and repository-writing proof remain separate live gates. The harness may route to them but must not promote static/CI evidence into runtime proof.
 
 ## Failure handling
 
-Preserve the tmux session, classify the exact boundary, and do not discard contradictory proof. If a bootstrap log already proves `gh --version` and a later pasted line says `[200~gh: command not found`, treat that as an input-boundary inconsistency until a manually typed probe resolves it. Do not reinstall a healthy tool to make an unrelated paste defect disappear.
-
-If authentication fails, preserve only redacted status and error identity. Never preserve device codes, tokens, passwords, recovery codes, or private key content. If a clone or branch step fails, record the remote, branch, local HEAD, `origin/main`, status and the nonzero command without force or cleanup.
+Preserve the tmux session and the first safe failure evidence. Route bracketed-paste failures through the input-boundary workflow and multi-pane/scrollback failures through `capture-terminal-output.workflow.json` / `android-termux-terminal-recovery`. If the only relevant screen contains secrets, do not broaden the screenshot or capture; generate sanitized output in a known pane.
 
 ## Rollback
 
-The harness itself installs nothing globally and its hook is opt-in. Rollback for a local validation attempt is therefore to stop invoking the hook and remove only generated local evidence that the operator explicitly chooses to discard. Package removal, credential revocation, repository deletion, or Android app removal are separate actions and are not automatic rollback steps.
-
-## Current gaps
-
-- The canonical Android profile launcher is not proved implemented by this harness.
-- GitHub authentication on a particular phone is a runtime gate and must be proved on that device.
-- Repository clone, branch mutation, agent runtime, provider routing and product behavior remain separate gates.
-- Bracketed-paste framing is a documented failure signature; deterministic prevention across Android keyboards/terminal versions is not claimed.
+Hooks are opt-in and the harness installs nothing globally. Stop invoking a hook to remove it from a local workflow. Generated evidence may be deleted only deliberately. Package removal, credential revocation, repository deletion, Android runtime uninstall, and Termux app removal are separate operations.
 
 ## Proof ceiling
 
-Tracked contracts and deterministic structural validation only, plus whatever runtime evidence an operator explicitly captures locally. No Android launcher, credential, clone, agent-provider, product-runtime or deployment success is implied.
+Tracked harness structure, deterministic validators, CI, pane-capture procedure, failure classification, and evidence policy only. This does not prove identical Android UI behavior, clipboard reliability on every device, provider authentication, model/tool behavior, repository mutation, or operator acceptance.

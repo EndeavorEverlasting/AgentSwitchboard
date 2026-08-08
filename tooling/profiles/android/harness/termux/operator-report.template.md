@@ -1,38 +1,42 @@
-# Android Termux Operator Report
+# Android Termux operator report
 
-- Repository: `<owner/repo>`
-- Branch: `<branch>`
-- Base SHA: `<sha>`
-- tmux session: `<name>`
-- Evidence root: `<local-path>`
-- Proof level: `<contract|environment|auth|clone|runtime>`
+- Timestamp:
+- Repo:
+- Branch / HEAD:
+- tmux session:
+- Active pane identity:
+- Terminal transport state: typed / paste / QR / monitored-document / file / mixed
+- Android native selection required: no / fallback-only
+- Scrollback method: capture-pane / tmux-copy-mode / not-needed
+- Sensitivity decision:
+- Pane inventory artifact:
+- Pane capture artifact:
+- Harness validation artifact:
 
 ## Working
 
-- `<verified item + evidence>`
+-
 
-## Broken
+## Broken or blocked
 
-- `<failed boundary + exact error identity>`
+-
 
 ## Missing / unproved
 
-- `<next unproved gate>`
+-
 
-## Validation
+## Proof reached
 
-- `python tests/test_android_termux_harness.py`: `<PASS|FAIL|SKIPPED + reason>`
-- `pwsh -NoLogo -NoProfile -File scripts/Test-AndroidTermuxHarnessCompleteness.ps1`: `<PASS|FAIL|SKIPPED + reason>`
-- `git diff --check`: `<PASS|FAIL>`
+-
 
-## Security / redaction
+## Generated evidence
 
-No OAuth device codes, access tokens, passwords, private SSH keys, recovery codes, customer data or private hostnames are included.
+-
 
-## Next command
+## Exact next command
 
-`<one exact executable command that advances the first unproved gate>`
+`<one executable command>`
 
 ## Proof ceiling
 
-`<state exactly what this report does not prove>`
+This report summarizes cited local evidence only. Native Android selection behavior, runtime success, provider/model behavior, repository mutation, and operator acceptance require their own observed proof.

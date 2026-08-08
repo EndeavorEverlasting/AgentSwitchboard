@@ -1,0 +1,7 @@
+CASE=android-multi-pane-selection
+OBSERVED=Android long-press text selection visually extends across more than one visible tmux pane.
+SECONDARY=Operator is unsure how to scroll earlier terminal output.
+CLASSIFICATION=terminal-selection-and-scrollback-boundary
+WRONG_CONCLUSION=The operator must fight native selection or provide screenshots to recover evidence.
+REQUIRED_RECOVERY=Identify an exact tmux pane, reject sensitive auth panes, use bounded tmux capture-pane output, and inspect/share the resulting local artifact.
+PROOF_CEILING=Fixture only; it does not prove behavior on every Android, keyboard, or Termux build.

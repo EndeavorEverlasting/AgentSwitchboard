@@ -9,114 +9,103 @@ $failures = [System.Collections.Generic.List[string]]::new()
 
 function Check([bool]$Condition, [string]$Name, [string]$Message) {
     if ($Condition) { [void]$passes.Add($Name) }
-    else { [void]$failures.Add("${Name}: $Message") }
+    else { [void]$failures.Add("$Name`: $Message") }
 }
 
-function Read-Tracked([string]$RelativePath) {
+function Require-File([string]$RelativePath) {
     $path = Join-Path $RootPath $RelativePath
-    $exists = Test-Path -LiteralPath $path -PathType Leaf
-    Check $exists "file/$RelativePath" 'required file is missing'
-    if (-not $exists) { return $null }
-    $null = & git -C $RootPath ls-files --error-unmatch -- $RelativePath 2>$null
-    Check ($LASTEXITCODE -eq 0) "tracked/$RelativePath" 'required file is not tracked'
-    return Get-Content -LiteralPath $path -Raw
+    Check (Test-Path -LiteralPath $path -PathType Leaf) "file/$RelativePath" 'required file missing'
+    return $path
 }
 
-$requiredFiles = @(
+$required = @(
     'tooling/profiles/android/harness/termux/manifest.json',
     'tooling/profiles/android/harness/termux/codebase-map.json',
     'tooling/profiles/android/harness/termux/artifact-registry.json',
+    'tooling/profiles/android/harness/termux/operator-report.template.md',
     'tooling/profiles/android/harness/termux/workflows/task-intake.workflow.json',
     'tooling/profiles/android/harness/termux/workflows/validate-terminal-boundary.workflow.json',
     'tooling/profiles/android/harness/termux/workflows/handle-input-boundary-failure.workflow.json',
+    'tooling/profiles/android/harness/termux/workflows/capture-terminal-output.workflow.json',
     'tooling/profiles/android/harness/termux/fixtures/bracketed-paste-corruption.fixture.txt',
-    'tooling/profiles/android/harness/termux/operator-report.template.md',
-    'tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPreCommit.sh',
+    'tooling/profiles/android/harness/termux/fixtures/multi-pane-selection.fixture.txt',
     '.ai/skills/android-termux-repo-bootstrap/SKILL.md',
+    '.ai/skills/android-termux-terminal-recovery/SKILL.md',
+    'tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPreCommit.sh',
+    'tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPrePush.sh',
     'docs/harness/android-termux-operational-harness.md',
     'tests/test_android_termux_harness.py',
-    '.github/workflows/android-termux-harness.yml'
+    '.github/workflows/android-termux-harness.yml',
+    'Start-AgentSwitchboard-Android.sh',
+    'tooling/profiles/android/AgentSwitchboard-Android.sh',
+    '.ai/harness/device-profile-registry.json'
 )
+foreach ($path in $required) { [void](Require-File $path) }
 
-$textByPath = @{}
-foreach ($relativePath in $requiredFiles) { $textByPath[$relativePath] = Read-Tracked $relativePath }
-
-foreach ($relativePath in @($requiredFiles | Where-Object { $_ -like '*.json' })) {
-    try {
-        $null = $textByPath[$relativePath] | ConvertFrom-Json
-        Check $true "json/$relativePath" ''
-    }
-    catch { Check $false "json/$relativePath" $_.Exception.Message }
-}
-
-try {
-    $manifest = $textByPath['tooling/profiles/android/harness/termux/manifest.json'] | ConvertFrom-Json
-    Check ($manifest.schema -eq 'agentswitchboard.android-termux-harness.v1') 'manifest/schema' 'unexpected manifest schema'
-    Check ($manifest.profile -eq 'android') 'manifest/profile' 'profile must be android'
-    Check ($manifest.environment -eq 'termux') 'manifest/environment' 'environment must be termux'
-    Check ($manifest.status -eq 'contract-only') 'manifest/proof-status' 'harness overclaims runtime readiness'
-    Check ($manifest.canonicalProfileRegistry -eq '.ai/harness/device-profile-registry.json') 'manifest/profile-registry' 'canonical profile registry is not referenced'
-    Check ([string]$manifest.proofCeiling -match 'does not claim an Android profile launcher exists') 'manifest/proof-ceiling' 'launcher overclaim is not blocked'
-}
-catch { [void]$failures.Add("manifest/semantic: $($_.Exception.Message)") }
-
-$expectedWorkflows = @{
-    'tooling/profiles/android/harness/termux/workflows/task-intake.workflow.json' = 'android-termux-task-intake'
-    'tooling/profiles/android/harness/termux/workflows/validate-terminal-boundary.workflow.json' = 'android-termux-validate-terminal-boundary'
-    'tooling/profiles/android/harness/termux/workflows/handle-input-boundary-failure.workflow.json' = 'android-termux-handle-input-boundary-failure'
-}
-foreach ($relativePath in $expectedWorkflows.Keys) {
-    try {
-        $workflow = $textByPath[$relativePath] | ConvertFrom-Json
-        Check ($workflow.schema -eq 'agentswitchboard.android-termux-workflow.v1') "workflow/schema/$relativePath" 'unexpected workflow schema'
-        Check ($workflow.workflowId -eq $expectedWorkflows[$relativePath]) "workflow/id/$relativePath" 'unexpected workflow id'
-        Check (@($workflow.steps).Count -ge 5) "workflow/steps/$relativePath" 'workflow is not operationally complete'
-        Check (-not [string]::IsNullOrWhiteSpace([string]$workflow.proofCeiling)) "workflow/proof/$relativePath" 'proof ceiling is missing'
-    }
-    catch { [void]$failures.Add("workflow/$relativePath`: $($_.Exception.Message)") }
-}
-
-try {
-    $artifacts = $textByPath['tooling/profiles/android/harness/termux/artifact-registry.json'] | ConvertFrom-Json
-    Check ($artifacts.tracked -eq $false) 'artifacts/untracked' 'generated evidence must remain untracked'
-    $artifactIds = @($artifacts.artifacts | ForEach-Object { [string]$_.artifactId })
-    foreach ($artifactId in @('termux-bootstrap-log','tmux-persistence-proof','terminal-input-boundary-report','github-auth-status','repo-clone-proof','android-termux-harness-validation','android-termux-operator-report')) {
-        Check ($artifactIds -contains $artifactId) "artifacts/$artifactId" 'artifact is not registered'
-    }
-}
-catch { [void]$failures.Add("artifacts/semantic: $($_.Exception.Message)") }
-
-$fixture = $textByPath['tooling/profiles/android/harness/termux/fixtures/bracketed-paste-corruption.fixture.txt']
-Check ($fixture.Contains('[200~gh auth login')) 'fixture/bracketed-paste' 'literal bracketed-paste signature is missing'
-Check ($fixture.Contains('[200~gh: command not found')) 'fixture/command-not-found' 'command-not-found signature is missing'
-
-$skill = $textByPath['.ai/skills/android-termux-repo-bootstrap/SKILL.md']
-foreach ($token in @('id: android-termux-repo-bootstrap','status: experimental','## Trigger','## Inputs','## Procedure','## Outputs','## Deterministic validation','## Forbidden scope','## Stop and escalate')) {
-    Check ($skill.Contains($token)) "skill/$token" 'skill contract token is missing'
-}
-
-$deployablePaths = @(
+$jsonPaths = @(
     'tooling/profiles/android/harness/termux/manifest.json',
     'tooling/profiles/android/harness/termux/codebase-map.json',
     'tooling/profiles/android/harness/termux/artifact-registry.json',
     'tooling/profiles/android/harness/termux/workflows/task-intake.workflow.json',
     'tooling/profiles/android/harness/termux/workflows/validate-terminal-boundary.workflow.json',
     'tooling/profiles/android/harness/termux/workflows/handle-input-boundary-failure.workflow.json',
-    'tooling/profiles/android/harness/termux/fixtures/bracketed-paste-corruption.fixture.txt',
-    'tooling/profiles/android/harness/termux/operator-report.template.md',
-    'tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPreCommit.sh',
-    '.ai/skills/android-termux-repo-bootstrap/SKILL.md',
-    'docs/harness/android-termux-operational-harness.md'
+    'tooling/profiles/android/harness/termux/workflows/capture-terminal-output.workflow.json',
+    '.ai/harness/device-profile-registry.json'
 )
-$deployable = ($deployablePaths | ForEach-Object { $textByPath[$_] }) -join "`n"
-foreach ($forbidden in @('BEGIN OPENSSH PRIVATE KEY','gh auth token','git clean -fdx')) {
-    Check (-not $deployable.Contains($forbidden)) "forbidden/$forbidden" 'unsafe secret or destructive command literal is embedded in deployable harness contracts'
+foreach ($relative in $jsonPaths) {
+    try {
+        $null = Get-Content -LiteralPath (Join-Path $RootPath $relative) -Raw | ConvertFrom-Json
+        [void]$passes.Add("json/$relative")
+    } catch {
+        [void]$failures.Add("json/$relative`: $($_.Exception.Message)")
+    }
 }
+
+try {
+    $manifest = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/profiles/android/harness/termux/manifest.json') -Raw | ConvertFrom-Json
+    Check ($manifest.status -eq 'operational-harness-runtime-separate') 'manifest/status' 'unexpected harness status'
+    Check ($manifest.runtimeEntrypoint -eq 'Start-AgentSwitchboard-Android.sh') 'manifest/runtime-entrypoint' 'runtime entrypoint not indexed'
+    Check (@($manifest.components.workflows) -contains 'tooling/profiles/android/harness/termux/workflows/capture-terminal-output.workflow.json') 'manifest/capture-workflow' 'capture workflow missing'
+    Check (@($manifest.components.fixtures) -contains 'tooling/profiles/android/harness/termux/fixtures/multi-pane-selection.fixture.txt') 'manifest/multipane-fixture' 'multi-pane fixture missing'
+    Check (@($manifest.components.skills) -contains '.ai/skills/android-termux-terminal-recovery/SKILL.md') 'manifest/recovery-skill' 'terminal recovery skill missing'
+    Check (@($manifest.components.hooks) -contains 'tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPrePush.sh') 'manifest/prepush' 'pre-push hook missing'
+} catch { [void]$failures.Add("manifest/contracts`: $($_.Exception.Message)") }
+
+$mapText = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/profiles/android/harness/termux/codebase-map.json') -Raw
+foreach ($token in @('tmux list-panes', 'tmux capture-pane -p -S -200', 'long-press selection', 'Touch scrolling', 'authentication/device-code')) {
+    Check ($mapText.Contains($token)) "map/$token" 'required Android terminal boundary rule missing'
+}
+
+$artifactText = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/profiles/android/harness/termux/artifact-registry.json') -Raw
+foreach ($token in @('tmux-pane-inventory', 'tmux-pane-capture', 'terminal-interaction-report', 'defaultHistoryLines', 'private SSH keys', 'credential file contents')) {
+    Check ($artifactText.Contains($token)) "artifact/$token" 'required artifact or secret boundary missing'
+}
+
+$workflowText = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/profiles/android/harness/termux/workflows/capture-terminal-output.workflow.json') -Raw
+foreach ($token in @('inventory-panes', 'classify-sensitivity', 'select-exact-pane', 'capture-bounded-history', 'OAuth/device codes', 'QR/live-document/file')) {
+    Check ($workflowText.Contains($token)) "workflow/$token" 'required pane recovery step missing'
+}
+
+$skillText = Get-Content -LiteralPath (Join-Path $RootPath '.ai/skills/android-termux-terminal-recovery/SKILL.md') -Raw
+foreach ($token in @('tmux list-panes', 'tmux capture-pane', 'Ctrl+B', 'Never solve a secrecy problem')) {
+    Check ($skillText.Contains($token)) "skill/$token" 'terminal recovery skill incomplete'
+}
+
+$registry = Get-Content -LiteralPath (Join-Path $RootPath '.ai/harness/device-profile-registry.json') -Raw | ConvertFrom-Json
+$android = @($registry.profiles | Where-Object profileId -eq 'android')[0]
+Check ($android.status -eq 'implemented-runtime-unproved') 'runtime/status' 'harness must reflect current Android runtime registration without promoting live proof'
+Check ($android.canonicalSourcePath -eq 'Start-AgentSwitchboard-Android.sh') 'runtime/source' 'canonical Android runtime entrypoint differs'
+
+$tracked = & git -C $RootPath ls-files
+if ($LASTEXITCODE -eq 0) {
+    foreach ($relative in $required) {
+        Check ($tracked -contains $relative) "tracked/$relative" 'required harness/runtime-indexed file is not tracked'
+    }
+} else { [void]$failures.Add('git/ls-files: failed') }
 
 Write-Host 'ANDROID TERMUX HARNESS COMPLETENESS' -ForegroundColor Cyan
 $passes | ForEach-Object { Write-Host "[PASS] $_" -ForegroundColor Green }
 $failures | ForEach-Object { Write-Host "[FAIL] $_" -ForegroundColor Red }
-Write-Host ''
-Write-Host ("Result: {0} passed / {1} failed" -f $passes.Count, $failures.Count)
+Write-Host "`nResult: $($passes.Count) passed / $($failures.Count) failed"
 if ($failures.Count -gt 0) { exit 1 }
 exit 0

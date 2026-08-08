@@ -5,10 +5,13 @@ on:
     paths:
       - 'tooling/profiles/android/**'
       - '.ai/skills/android-termux-repo-bootstrap/**'
+      - '.ai/skills/android-termux-terminal-recovery/**'
       - 'docs/harness/android-termux-operational-harness.md'
       - 'scripts/Test-AndroidTermuxHarnessCompleteness.ps1'
       - 'tests/test_android_termux_harness.py'
       - '.github/workflows/android-termux-harness.yml'
+      - '.ai/harness/device-profile-registry.json'
+      - 'Start-AgentSwitchboard-Android.sh'
   workflow_dispatch:
 
 permissions:
@@ -21,6 +24,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Parse Android shell hooks
+        run: |
+          bash -n tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPreCommit.sh
+          bash -n tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPrePush.sh
       - name: Portable Android Termux contracts
         run: python tests/test_android_termux_harness.py
       - name: Android Termux completeness

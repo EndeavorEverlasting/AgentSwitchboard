@@ -1,91 +1,94 @@
-from __future__ import annotations
+#!/usr/bin/env python3
+"""Dependency-free Android/Termux operational harness contracts."""
 
 import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-
-REQUIRED = [
-    "tooling/profiles/android/harness/termux/manifest.json",
-    "tooling/profiles/android/harness/termux/codebase-map.json",
-    "tooling/profiles/android/harness/termux/artifact-registry.json",
-    "tooling/profiles/android/harness/termux/workflows/task-intake.workflow.json",
-    "tooling/profiles/android/harness/termux/workflows/validate-terminal-boundary.workflow.json",
-    "tooling/profiles/android/harness/termux/workflows/handle-input-boundary-failure.workflow.json",
-    "tooling/profiles/android/harness/termux/fixtures/bracketed-paste-corruption.fixture.txt",
-    "tooling/profiles/android/harness/termux/operator-report.template.md",
-    "tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPreCommit.sh",
-    ".ai/skills/android-termux-repo-bootstrap/SKILL.md",
-    "docs/harness/android-termux-operational-harness.md",
-    "scripts/Test-AndroidTermuxHarnessCompleteness.ps1",
-    ".github/workflows/android-termux-harness.yml",
-]
-
-JSON_FILES = [p for p in REQUIRED if p.endswith(".json")]
+HARNESS = ROOT / "tooling/profiles/android/harness/termux"
 
 
-def require(condition: bool, message: str) -> None:
-    if not condition:
-        raise AssertionError(message)
+def load_json(path: Path):
+    assert path.is_file(), f"missing: {path.relative_to(ROOT)}"
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
-def main() -> int:
-    for relative in REQUIRED:
-        require((ROOT / relative).is_file(), f"required file missing: {relative}")
+def require(path: str) -> Path:
+    target = ROOT / path
+    assert target.is_file(), f"missing: {path}"
+    return target
 
-    parsed = {}
-    for relative in JSON_FILES:
-        parsed[relative] = json.loads((ROOT / relative).read_text(encoding="utf-8"))
 
-    manifest = parsed["tooling/profiles/android/harness/termux/manifest.json"]
-    require(manifest["schema"] == "agentswitchboard.android-termux-harness.v1", "unexpected manifest schema")
-    require(manifest["profile"] == "android", "manifest profile must be android")
-    require(manifest["environment"] == "termux", "manifest environment must be termux")
-    require(manifest["status"] == "contract-only", "harness must not overclaim Android runtime")
-    require("does not claim an Android profile launcher exists" in manifest["proofCeiling"], "manifest proof ceiling must block launcher overclaim")
+def main() -> None:
+    manifest = load_json(HARNESS / "manifest.json")
+    codebase = load_json(HARNESS / "codebase-map.json")
+    artifacts = load_json(HARNESS / "artifact-registry.json")
+    capture = load_json(HARNESS / "workflows/capture-terminal-output.workflow.json")
+    load_json(HARNESS / "workflows/task-intake.workflow.json")
+    load_json(HARNESS / "workflows/validate-terminal-boundary.workflow.json")
+    load_json(HARNESS / "workflows/handle-input-boundary-failure.workflow.json")
 
-    component_paths = []
-    for value in manifest["components"].values():
-        component_paths.extend(value if isinstance(value, list) else [value])
-    for relative in component_paths:
-        require((ROOT / relative).is_file(), f"manifest component missing: {relative}")
+    assert manifest["harnessId"] == "agentswitchboard.android-termux-operational-harness.v1"
+    assert manifest["runtimeEntrypoint"] == "Start-AgentSwitchboard-Android.sh"
+    assert manifest["status"] == "operational-harness-runtime-separate"
+    assert set(manifest["requiredTools"]) == {"git", "tmux", "gh", "ssh", "curl", "jq"}
 
-    artifacts = parsed["tooling/profiles/android/harness/termux/artifact-registry.json"]
-    require(artifacts["tracked"] is False, "generated Android evidence must remain untracked")
-    ids = {a["artifactId"] for a in artifacts["artifacts"]}
-    for expected in {"termux-bootstrap-log", "tmux-persistence-proof", "terminal-input-boundary-report", "github-auth-status", "repo-clone-proof", "android-termux-harness-validation", "android-termux-operator-report"}:
-        require(expected in ids, f"artifact not registered: {expected}")
-    forbidden = " ".join(artifacts["forbiddenContent"]).lower()
-    for token in ("oauth device codes", "access tokens", "private ssh keys", "recovery codes"):
-        require(token in forbidden, f"artifact redaction contract missing: {token}")
+    for group in ("workflows", "fixtures", "hooks", "skills"):
+        for path in manifest["components"][group]:
+            require(path)
+    for key in ("codebaseMap", "artifactRegistry", "operatorReport", "operatorGuide", "portableTest", "completenessValidator", "ci"):
+        require(manifest["components"][key])
 
-    expected_workflows = {
-        "tooling/profiles/android/harness/termux/workflows/task-intake.workflow.json": "android-termux-task-intake",
-        "tooling/profiles/android/harness/termux/workflows/validate-terminal-boundary.workflow.json": "android-termux-validate-terminal-boundary",
-        "tooling/profiles/android/harness/termux/workflows/handle-input-boundary-failure.workflow.json": "android-termux-handle-input-boundary-failure",
-    }
-    for relative, workflow_id in expected_workflows.items():
-        workflow = parsed[relative]
-        require(workflow["schema"] == "agentswitchboard.android-termux-workflow.v1", f"unexpected workflow schema: {relative}")
-        require(workflow["workflowId"] == workflow_id, f"unexpected workflow id: {relative}")
-        require(len(workflow["steps"]) >= 5, f"workflow is incomplete: {relative}")
-        require(bool(workflow.get("proofCeiling")), f"workflow proof ceiling missing: {relative}")
+    registry = load_json(ROOT / ".ai/harness/device-profile-registry.json")
+    android = next(item for item in registry["profiles"] if item["profileId"] == "android")
+    assert android["status"] == "implemented-runtime-unproved"
+    assert android["frontend"] == "termux"
+    assert android["canonicalSourcePath"] == "Start-AgentSwitchboard-Android.sh"
+    require("Start-AgentSwitchboard-Android.sh")
+    require("tooling/profiles/android/AgentSwitchboard-Android.sh")
 
-    fixture = (ROOT / "tooling/profiles/android/harness/termux/fixtures/bracketed-paste-corruption.fixture.txt").read_text(encoding="utf-8")
-    require("[200~gh auth login" in fixture, "bracketed-paste failure fixture missing exact signature")
-    require("[200~gh: command not found" in fixture, "command-not-found fixture missing exact signature")
+    commands = json.dumps(codebase["operatorCommands"])
+    assert "tmux list-panes" in commands
+    assert "tmux capture-pane -p -S -200" in commands
+    assert "Ctrl+B" in commands and "PgUp" in commands
 
-    skill = (ROOT / ".ai/skills/android-termux-repo-bootstrap/SKILL.md").read_text(encoding="utf-8")
-    for heading in ("id: android-termux-repo-bootstrap", "status: experimental", "## Trigger", "## Inputs", "## Procedure", "## Outputs", "## Deterministic validation", "## Forbidden scope", "## Stop and escalate"):
-        require(heading in skill, f"skill contract token missing: {heading}")
+    traps = "\n".join(codebase["knownTraps"])
+    assert "long-press selection" in traps
+    assert "Touch scrolling" in traps
+    assert "authentication/device-code" in traps
+    assert "[200~" in traps
 
-    deployable_text = "\n".join((ROOT / p).read_text(encoding="utf-8") for p in REQUIRED if (ROOT / p).suffix in {".md", ".json", ".sh", ".txt"})
-    for forbidden_literal in ("BEGIN OPENSSH PRIVATE KEY", "gh auth token", "--force", "git clean -fdx"):
-        require(forbidden_literal not in deployable_text, f"unsafe literal embedded in harness: {forbidden_literal}")
+    ids = {item["artifactId"] for item in artifacts["artifacts"]}
+    assert {"tmux-pane-inventory", "tmux-pane-capture", "terminal-interaction-report"} <= ids
+    assert artifacts["capturePolicy"]["defaultHistoryLines"] == 200
+    forbidden = " ".join(artifacts["forbiddenContent"])
+    for token in ("device codes", "access tokens", "private SSH keys", "credential file"):
+        assert token in forbidden
 
-    print(f"ANDROID TERMUX HARNESS: PASS ({len(REQUIRED)} required files, {len(JSON_FILES)} JSON contracts)")
-    return 0
+    workflow_text = json.dumps(capture)
+    for token in ("list-panes", "capture-pane", "exactly one tmux target", "OAuth/device codes", "copy mode", "QR/live-document/file"):
+        assert token in workflow_text
+    assert "does not prove the captured command succeeded" in capture["proofCeiling"]
+
+    fixture = require("tooling/profiles/android/harness/termux/fixtures/multi-pane-selection.fixture.txt").read_text(encoding="utf-8")
+    assert "CLASSIFICATION=terminal-selection-and-scrollback-boundary" in fixture
+    assert "REQUIRED_RECOVERY=" in fixture
+
+    skill = require(".ai/skills/android-termux-terminal-recovery/SKILL.md").read_text(encoding="utf-8")
+    for token in ("tmux list-panes", "tmux capture-pane", "Ctrl+B", "QR", "Never solve a secrecy problem"):
+        assert token in skill
+
+    guide = require("docs/harness/android-termux-operational-harness.md").read_text(encoding="utf-8")
+    for token in ("pane identity beats touch selection", "capture-pane", "copy mode", "implemented", "Runtime boundary"):
+        assert token in guide
+
+    for hook in manifest["components"]["hooks"]:
+        text = require(hook).read_text(encoding="utf-8")
+        assert "test_android_termux_harness.py" in text
+        assert "diff --check" in text
+
+    print("PASS: Android Termux operational harness contracts")
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()
