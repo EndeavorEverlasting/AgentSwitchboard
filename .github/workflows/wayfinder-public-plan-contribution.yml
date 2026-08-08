@@ -1,0 +1,59 @@
+name: Wayfinder public-plan contribution
+
+on:
+  pull_request:
+    paths:
+      - '.ai/skills/public-plan-coordination/SKILL.md'
+      - 'plans/README.md'
+      - 'plans/schemas/public-plan.schema.json'
+      - 'templates/repository-agent-contract/.ai/skills/public-plan-coordination/SKILL.md'
+      - 'templates/repository-agent-contract/plans/README.md'
+      - 'templates/repository-agent-contract/plans/schemas/public-plan.schema.json'
+      - 'tooling/harness/operational/contributions/**'
+      - 'scripts/Test-WayfinderPublicPlanContribution.ps1'
+      - 'tests/test_wayfinder_public_plan_contribution.py'
+      - '.github/workflows/wayfinder-public-plan-contribution.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - '.ai/skills/public-plan-coordination/SKILL.md'
+      - 'plans/README.md'
+      - 'plans/schemas/public-plan.schema.json'
+      - 'templates/repository-agent-contract/.ai/skills/public-plan-coordination/SKILL.md'
+      - 'templates/repository-agent-contract/plans/README.md'
+      - 'templates/repository-agent-contract/plans/schemas/public-plan.schema.json'
+      - 'tooling/harness/operational/contributions/**'
+      - 'scripts/Test-WayfinderPublicPlanContribution.ps1'
+      - 'tests/test_wayfinder_public_plan_contribution.py'
+      - '.github/workflows/wayfinder-public-plan-contribution.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Python contribution contract
+        run: python tests/test_wayfinder_public_plan_contribution.py
+      - name: PowerShell contribution contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderPublicPlanContribution.ps1
+      - name: Existing public-plan PowerShell contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1
+      - name: Existing public-plan Python contract
+        run: python tests/test_public_plan_contracts.py
+      - name: Agent documentation contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1
+      - name: Diff hygiene
+        shell: bash
+        run: git diff --check "$(git merge-base HEAD origin/main)..HEAD"

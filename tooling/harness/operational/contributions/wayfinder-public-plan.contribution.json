@@ -1,0 +1,125 @@
+{
+  "schema": "agentswitchboard.cross-repository-contribution.v1",
+  "contributionId": "mattpocock.wayfinder.public-plan-decision-frontier.v1",
+  "status": "adopted",
+  "donor": {
+    "repository": "mattpocock/skills",
+    "commit": "84fdeffd12f2ee307994d1eb6feb48173b6e0502",
+    "license": {
+      "spdx": "MIT",
+      "path": "LICENSE"
+    },
+    "authoritativePaths": [
+      {
+        "path": "skills/engineering/wayfinder/SKILL.md",
+        "blobSha": "e4984ed327e12ba65303f4b5de2eb75c01e99c16"
+      },
+      {
+        "path": "skills/engineering/wayfinder/agents/openai.yaml",
+        "blobSha": "b37544751e0570f9df8de6c02aef238de8c3e1e0"
+      },
+      {
+        "path": "LICENSE",
+        "blobSha": "f1dd2c09108dde1a5f56097cee8461b3ea834499"
+      }
+    ]
+  },
+  "consumer": {
+    "repository": "EndeavorEverlasting/AgentSwitchboard",
+    "targetLayer": "public-plan coordination contract and repository-family template",
+    "canonicalOwner": ".ai/skills/public-plan-coordination/SKILL.md",
+    "files": [
+      ".ai/skills/public-plan-coordination/SKILL.md",
+      "plans/schemas/public-plan.schema.json",
+      "plans/README.md",
+      "templates/repository-agent-contract/.ai/skills/public-plan-coordination/SKILL.md",
+      "templates/repository-agent-contract/plans/schemas/public-plan.schema.json",
+      "templates/repository-agent-contract/plans/README.md",
+      "tooling/harness/operational/contributions/cross-repository-contribution.schema.json",
+      "tooling/harness/operational/contributions/wayfinder-public-plan.contribution.json",
+      "scripts/Test-WayfinderPublicPlanContribution.ps1",
+      "tests/test_wayfinder_public_plan_contribution.py"
+    ]
+  },
+  "classifications": [
+    {
+      "candidate": "Destination-first planning boundary",
+      "classification": "reusable-skill",
+      "disposition": "adopt",
+      "consumerOwner": ".ai/skills/public-plan-coordination/SKILL.md",
+      "notes": "Adopt the requirement to name the destination before expanding decision work; AgentSwitchboard remains authoritative for public-plan behavior."
+    },
+    {
+      "candidate": "Decision tickets instead of speculative implementation slices",
+      "classification": "reusable-skill",
+      "disposition": "adopt",
+      "consumerOwner": ".ai/skills/public-plan-coordination/SKILL.md",
+      "notes": "Mapped onto existing public-plan tasks only while decision-frontier mode is active; execution is handed to the existing bounded execution path."
+    },
+    {
+      "candidate": "Frontier, blocking, claim, fog-of-war, and destination out-of-scope semantics",
+      "classification": "adapter",
+      "disposition": "adopt",
+      "consumerOwner": "plans/schemas/public-plan.schema.json",
+      "notes": "Frontier is derived from existing task status/dependencies/owner. Only fog and destination-scope exclusions gain structured fields, preventing a duplicate frontier store."
+    },
+    {
+      "candidate": "Map-as-index and one canonical decision owner",
+      "classification": "reference-only-doctrine",
+      "disposition": "adopt",
+      "consumerOwner": ".ai/skills/public-plan-coordination/SKILL.md",
+      "notes": "Decision details remain owned by the public-plan task and its evidence pointers; summaries may gist but may not fork the decision."
+    },
+    {
+      "candidate": "Wayfinder issue labels, child-issue representation, native tracker blocking, and local-markdown fallback",
+      "classification": "domain-specific-rejected",
+      "disposition": "reject",
+      "consumerOwner": null,
+      "notes": "Tracker mechanics remain donor-specific. AgentSwitchboard uses its existing plan/task/dependency contract and does not import a second tracker model."
+    },
+    {
+      "candidate": "Donor /grilling, /domain-modeling, /research, and /prototype skill invocation names",
+      "classification": "domain-specific-rejected",
+      "disposition": "reject",
+      "consumerOwner": null,
+      "notes": "Those skill names and their HITL/AFK conventions belong to the donor ecosystem and must not be reimplemented as AgentSwitchboard authority."
+    },
+    {
+      "candidate": "Pinned-source adoption metadata and stale-reference policy",
+      "classification": "portable-harness",
+      "disposition": "adopt",
+      "consumerOwner": "tooling/harness/operational/contributions/cross-repository-contribution.schema.json",
+      "notes": "AgentSwitchboard records donor commit/path/blob authority and requires explicit reviewed refresh instead of silently following upstream main."
+    }
+  ],
+  "capabilitiesDonated": [
+    "Name a destination before expanding a large ambiguous plan.",
+    "Represent unresolved work as decision questions rather than premature implementation slices.",
+    "Derive a takeable frontier from dependency and claim state instead of storing a second mutable frontier list.",
+    "Keep not-yet-specifiable in-scope fog separate from destination-level out-of-scope work.",
+    "Hand off to bounded execution when planning has made the route clear."
+  ],
+  "compatibility": {
+    "consumerContract": "agentswitchboard.public-plan.v1+decision-frontier-1",
+    "minimumSkillVersion": "1.1.0",
+    "changeKind": "additive",
+    "staleReferencePolicy": "pin-until-reviewed",
+    "autoAdvanceDonor": false
+  },
+  "proofCeiling": "This contribution proves only the pinned donor reference, AgentSwitchboard semantic mapping, closed consumer schema shape, template propagation, and offline consumer validators. It does not prove donor runtime behavior, issue-tracker child/dependency APIs, agent judgment quality, successful decision resolution, child-repository adoption, or any execution/merge/deployment outcome outside the consumer PR.",
+  "mustNotCopyOrReimplement": [
+    "Do not copy the donor Wayfinder skill wholesale into AgentSwitchboard.",
+    "Do not create a second AgentSwitchboard wayfinder skill that competes with public-plan-coordination.",
+    "Do not import donor-specific issue labels, child-issue APIs, local tracker fallback, or skill invocation names as canonical AgentSwitchboard behavior.",
+    "Do not make child repositories depend directly on mattpocock/skills; they consume AgentSwitchboard's repository-family template when they adopt this mode.",
+    "Do not auto-update the donor commit when upstream main advances."
+  ],
+  "validation": [
+    "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderPublicPlanContribution.ps1",
+    "python tests/test_wayfinder_public_plan_contribution.py",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
+    "python tests/test_public_plan_contracts.py",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1",
+    "git diff --check"
+  ]
+}
