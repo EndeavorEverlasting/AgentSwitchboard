@@ -37,8 +37,10 @@
       "templates/repository-agent-contract/plans/README.md",
       "tooling/harness/operational/contributions/cross-repository-contribution.schema.json",
       "tooling/harness/operational/contributions/wayfinder-public-plan.contribution.json",
+      "tooling/harness/operational/contributions/requirements-wayfinder-public-plan.txt",
       "scripts/Test-WayfinderPublicPlanContribution.ps1",
-      "tests/test_wayfinder_public_plan_contribution.py"
+      "tests/test_wayfinder_public_plan_contribution.py",
+      ".github/workflows/wayfinder-public-plan-contribution.yml"
     ]
   },
   "classifications": [
@@ -106,7 +108,7 @@
     "staleReferencePolicy": "pin-until-reviewed",
     "autoAdvanceDonor": false
   },
-  "proofCeiling": "This contribution proves only the pinned donor reference, AgentSwitchboard semantic mapping, closed consumer schema shape, template propagation, and offline consumer validators. It does not prove donor runtime behavior, issue-tracker child/dependency APIs, agent judgment quality, successful decision resolution, child-repository adoption, or any execution/merge/deployment outcome outside the consumer PR.",
+  "proofCeiling": "This contribution proves only the pinned donor reference, AgentSwitchboard semantic mapping, closed consumer schema shape, template propagation, Draft 2020-12 instance validation, and consumer-side validators. It does not prove donor runtime behavior, issue-tracker child/dependency APIs, agent judgment quality, successful decision resolution, child-repository adoption, or any execution/merge/deployment outcome outside the consumer PR.",
   "mustNotCopyOrReimplement": [
     "Do not copy the donor Wayfinder skill wholesale into AgentSwitchboard.",
     "Do not create a second AgentSwitchboard wayfinder skill that competes with public-plan-coordination.",
@@ -115,8 +117,9 @@
     "Do not auto-update the donor commit when upstream main advances."
   ],
   "validation": [
-    "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderPublicPlanContribution.ps1",
+    "python -m pip install --disable-pip-version-check -r tooling/harness/operational/contributions/requirements-wayfinder-public-plan.txt",
     "python tests/test_wayfinder_public_plan_contribution.py",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderPublicPlanContribution.ps1",
     "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
     "python tests/test_public_plan_contracts.py",
     "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1",
