@@ -18,8 +18,8 @@
     {"path":"Test-Technician-Toolchain-Preflight.cmd","purpose":"Before fetch/worktree/runtime work, prove Windows can actually launch a concrete Git executable and persist diagnostic evidence."},
     {"path":"scripts/Test-WindowsToolchainLaunch.ps1","purpose":"Bounded Git executable discovery and launch validator; emits JSON and Markdown diagnostics without network or target mutation."},
     {"path":"scripts/Test-TechnicianLiveCertSurface.ps1","purpose":"Focused surface contract validator."},
-    {"path":"scripts/Test-TechnicianLiveCertHarness.ps1","purpose":"Harness completeness and integration validator."},
-    {"path":"tooling/profiles/windows/Get-TechnicianLiveCertHarnessStatus.ps1","purpose":"Read-only JSON and English status report."}
+    {"path":"scripts/Test-TechnicianLiveCertHarness.ps1","purpose":"Harness completeness, registered PowerShell entrypoint parseability, status-reporter execution, artifact-generation, and integration validator."},
+    {"path":"tooling/profiles/windows/Get-TechnicianLiveCertHarnessStatus.ps1","purpose":"Read-only executable JSON and English status report; its successful execution is part of harness validation, not an assumed post-validation convenience."}
   ],
   "configurationFiles": [
     "tooling/profiles/windows/technician-live-cert/technician-live-cert.manifest.json",
@@ -44,10 +44,11 @@
     "Get-Command or PATH resolution does not prove Windows can launch an executable; prove git.exe with a bounded no-shell process start and preserve candidate/error evidence before fetch or worktree mutation.",
     "PSScriptRoot can be empty while a parameter default expression is evaluated in Windows PowerShell 5.1; resolve it in the script body.",
     "System.String.Replace can bind to char,char when passed [char]0 and an empty string; force the string,string overload.",
+    "A tracked PowerShell reporter can still contain a parser error even when existence, tracking, and static token checks pass; parse every registered PowerShell harness entrypoint and execute report generators before declaring the harness complete.",
     "Hosted CI skips real WSL/Ubuntu runtime and cannot promote P00 workstation proof.",
     "git diff may invoke an interactive pager; harness commands must use git --no-pager.",
     "A stage may not pass from process creation alone; child exit, effective-state readback, and required observation remain mandatory.",
     "Generated run evidence contains local account and path data and must remain untracked."
   ],
-  "proofCeiling": "Tracked harness structure, cross-shell parser and contract validation, fixture-safe CMD dispatch, bounded Git executable launch proof, local artifact policy, and exact failure-boundary reporting only. Live repository fetch, WSL initialization, visible WezTerm behavior, tmux attachment, agent launch, repeatability, and operator acceptance require their owning runtime sequence."
+  "proofCeiling": "Tracked harness structure, cross-shell parser and contract validation, executable status-report generation, fixture-safe CMD dispatch, bounded Git executable launch proof, local artifact policy, and exact failure-boundary reporting only. Live repository fetch, WSL initialization, visible WezTerm behavior, tmux attachment, agent launch, repeatability, and operator acceptance require their owning runtime sequence."
 }

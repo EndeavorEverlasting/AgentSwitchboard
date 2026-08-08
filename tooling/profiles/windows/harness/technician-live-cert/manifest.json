@@ -74,7 +74,8 @@
     {"id":"hosted-ci-proof-inflation","guard":"CI surface modes prove dispatch and contracts only; they do not claim live WSL, fleet installation, provider authentication, or visible window behavior."},
     {"id":"interactive-git-pager","guard":"All harness Git inspection uses git --no-pager and propagates nonzero exit codes."},
     {"id":"live-failure-overridden-by-static-pass","guard":"Observed operator failure remains blocking until the exact repository-owned command is rerun successfully."},
-    {"id":"git-executable-launch-blocked","guard":"Before fetch, worktree, or runtime proof, Windows toolchain preflight must resolve a concrete git.exe, launch git --version without shell mediation, bound the wait, and persist candidate/error evidence. PATH presence alone is not proof of executable usability."}
+    {"id":"git-executable-launch-blocked","guard":"Before fetch, worktree, or runtime proof, Windows toolchain preflight must resolve a concrete git.exe, launch git --version without shell mediation, bound the wait, and persist candidate/error evidence. PATH presence alone is not proof of executable usability."},
+    {"id":"status-reporter-parse-and-execution","guard":"Every registered PowerShell harness entrypoint is parsed by System.Management.Automation.Language.Parser, and the status reporter is executed with PassThru into an untracked temporary output root before harness success. Both JSON and English Markdown status artifacts must be produced."}
   ],
   "validationOrder": [
     "python -m unittest tests.test_technician_live_cert_harness",

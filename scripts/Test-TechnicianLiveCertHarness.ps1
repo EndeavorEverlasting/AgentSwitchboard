@@ -138,6 +138,7 @@ Add-Result ($manifest.implicitHookInstallationAllowed -eq $false) 'hooks/opt-in-
 Add-Result ($manifest.networkAllowedByValidators -eq $false) 'validators/no-network' 'Focused validators must remain offline'
 Add-Result ($manifest.targetMutationAllowedByValidators -eq $false) 'validators/no-target-mutation' 'Focused validators must not mutate targets'
 Add-Result ('git-executable-launch-blocked' -in @($manifest.knownFailureGuards.id)) 'guards/git-executable-launch-blocked' 'Manifest must register the executable launch failure guard.'
+Add-Result ('status-reporter-parse-and-execution' -in @($manifest.knownFailureGuards.id)) 'guards/status-reporter-parse-and-execution' 'Manifest must register the status reporter parser/execution guard.'
 
 $operatorGuide = Get-Content -LiteralPath (Join-Path $RootPath $manifest.entrypoints.operatorGuide) -Raw
 foreach ($token in @(
@@ -187,10 +188,35 @@ $entrypointScripts = @(
     'tooling\profiles\windows\hooks\Invoke-TechnicianLiveCertPreCommit.ps1'
 )
 foreach ($relativePath in $entrypointScripts) {
-    $text = Get-Content -LiteralPath (Join-Path $RootPath $relativePath) -Raw
+    $fullPath = Join-Path $RootPath $relativePath
+    $tokens = $null
+    $parseErrors = $null
+    [void][System.Management.Automation.Language.Parser]::ParseFile($fullPath, [ref]$tokens, [ref]$parseErrors)
+    $parseMessages = @($parseErrors | ForEach-Object { $_.Message })
+    Add-Result ($parseMessages.Count -eq 0) "entrypoint/$relativePath/powershell-parse" ($parseMessages -join '; ')
+
+    $text = Get-Content -LiteralPath $fullPath -Raw
     $strictIndex = $text.IndexOf('Set-StrictMode')
     $parameterSurface = if ($strictIndex -gt 0) { $text.Substring(0, $strictIndex) } else { $text }
     Add-Result (-not $parameterSurface.Contains('$PSScriptRoot)')) "entrypoint/$relativePath/no-psscriptroot-default" 'PSScriptRoot must be resolved in the script body'
+}
+
+$statusReporterPath = Join-Path $RootPath ([string]$manifest.entrypoints.statusReporter)
+$statusOutputRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("AgentSwitchboard-technician-live-cert-status-{0}" -f [guid]::NewGuid().ToString('N'))
+try {
+    $statusResult = & $statusReporterPath -RootPath $RootPath -OutputRoot $statusOutputRoot -PassThru
+    Add-Result ($null -ne $statusResult) 'status-reporter/result' 'Status reporter returned no result.'
+    if ($null -ne $statusResult) {
+        Add-Result ($statusResult.status -eq 'READY_FOR_VALIDATION') 'status-reporter/ready' "Status reporter returned '$($statusResult.status)'."
+    }
+    Add-Result (Test-Path -LiteralPath (Join-Path $statusOutputRoot 'technician-live-cert-harness-status.json') -PathType Leaf) 'status-reporter/json-artifact' 'Status reporter did not generate its JSON artifact.'
+    Add-Result (Test-Path -LiteralPath (Join-Path $statusOutputRoot 'technician-live-cert-harness-status.md') -PathType Leaf) 'status-reporter/markdown-artifact' 'Status reporter did not generate its English Markdown artifact.'
+}
+catch {
+    Add-Result $false 'status-reporter/execution' $_.Exception.Message
+}
+finally {
+    Remove-Item -LiteralPath $statusOutputRoot -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 if (-not $SkipChildValidators) {
