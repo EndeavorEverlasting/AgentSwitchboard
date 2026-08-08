@@ -1,0 +1,133 @@
+name: Operational harness
+
+on:
+  pull_request:
+    paths:
+      - "HARNESS.md"
+      - "tooling/harness/operational/**"
+      - ".ai/skills/operational-harness-routing/**"
+      - "scripts/Test-OperationalHarness.ps1"
+      - "tests/test_operational_harness.py"
+      - "docs/harness/operational-harness.md"
+      - ".github/workflows/operational-harness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: false
+
+      - name: Validate operational harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tests/test_operational_harness.py
+          output_root="${RUNNER_TEMP}/agentswitchboard-operational-harness"
+          python3 tooling/harness/operational/Get-OperationalHarnessStatus.py \
+            --task "validate operational harness before commit" \
+            --output-root "$output_root"
+          test -s "$output_root/operational-harness-status.json"
+          test -s "$output_root/operational-harness-report.md"
+          test -s "$output_root/operational-harness-handoff.json"
+
+      - name: Run dependency-light existing Python contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          for test_file in \
+            tests/test_android_termux_docs.py \
+            tests/test_android_termux_profile.py \
+            tests/test_app_harness_validator.py \
+            tests/test_app_output_context_engine.py \
+            tests/test_device_profile_launcher_contract.py \
+            tests/test_environment_capability_harness.py \
+            tests/test_environment_capability_template.py \
+            tests/test_machine_profile_bootstrap.py \
+            tests/test_pi_harness_contracts.py \
+            tests/test_public_plan_contracts.py \
+            tests/test_runtime_event_contract.py \
+            tests/test_technician_live_cert_surface.py \
+            tests/test_technician_pull_and_run_contract.py \
+            tests/test_tmux_new_instance_shortcut_harness.py \
+            tests/test_windows_profile_launch_mode_harness.py
+          do
+            python3 "$test_file"
+          done
+          bash tests/test_android_termux_profile.sh
+
+      - name: Verify PR-range diff hygiene and clean checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git diff --check "${{ github.event.pull_request.base.sha }}" HEAD
+          else
+            git diff --check HEAD^
+          fi
+          test -z "$(git status --short)"
+
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: false
+
+      - name: Validate operational harness
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & python tests/test_operational_harness.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run existing PowerShell foundation and domain contracts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $validators = @(
+            'scripts/Test-HarnessDoctrineContract.ps1',
+            'scripts/Test-RepositoryFamilyHarness.ps1',
+            'scripts/Test-AgentDocumentationContract.ps1',
+            'scripts/Test-AgentGovernanceDoctrine.ps1',
+            'scripts/Test-EnvironmentCapabilityHarness.ps1',
+            'scripts/Test-DeviceProfileLauncherContract.ps1',
+            'scripts/Test-PublicPlanContracts.ps1',
+            'scripts/Test-RuntimeEventContract.ps1',
+            'scripts/Test-MachineProfileBootstrap.ps1',
+            'scripts/Test-PiHarnessCompleteness.ps1',
+            'scripts/Test-AppOutputContextEngine.ps1',
+            'scripts/Test-EndToEndRuntimeValidationSkill.ps1',
+            'scripts/Test-WindowsProfileLaunchModeHarness.ps1',
+            'scripts/Test-TmuxNewInstanceShortcutHarness.ps1',
+            'scripts/Test-TechnicianLiveCertSurface.ps1'
+          )
+          foreach ($validator in $validators) {
+            & pwsh -NoLogo -NoProfile -File $validator
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+
+      - name: Verify PR-range diff hygiene and clean checkout
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ('${{ github.event_name }}' -eq 'pull_request') {
+            & git diff --check '${{ github.event.pull_request.base.sha }}' HEAD
+          } else {
+            & git diff --check HEAD^
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $dirty = (& git status --short) -join "`n"
+          if ($dirty) {
+            Write-Error "workflow dirtied checkout:`n$dirty"
+            exit 1
+          }
