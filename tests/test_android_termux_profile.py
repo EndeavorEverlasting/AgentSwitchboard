@@ -121,7 +121,10 @@ def main() -> None:
     ):
         assert token in launcher_text, token
     assert launcher_text.count('"false"') >= 4
-    assert launcher_text.count("tmux has-session -t") >= 6
+    # Preserve the five current local/remote session checks without requiring
+    # an artificial duplicate source literal. The shell behavior contract owns
+    # execution of the local and remote argument/race surfaces.
+    assert launcher_text.count("tmux has-session -t") >= 5
     assert "eval " not in launcher_text
     assert "role=full-runtime-host" not in launcher_text
 

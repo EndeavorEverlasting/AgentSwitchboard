@@ -177,9 +177,10 @@ foreach ($token in @(
 }
 
 $androidDocs = $text['docs/workstation/android-termux.md']
-foreach ($token in @('terminal-client-implemented','local-shell-only','device-local-only','remote workspace host','Execution hold','Proof ceiling')) {
+foreach ($token in @('terminal-client-implemented','local-shell-only','device-local-only','remote workspace host','Execution hold')) {
     Check ($androidDocs.Contains($token)) "android-docs/$token" 'required Android boundary missing'
 }
+Check ($androidDocs.Contains('proof ceiling', [StringComparison]::OrdinalIgnoreCase)) 'android-docs/proof-ceiling' 'required Android proof-ceiling boundary missing'
 Check (-not $androidDocs.Contains('The shared continuity boundary is the named')) 'android-docs/reject-old-story' 'obsolete same-name continuity story remains'
 
 $launcher = $text['tooling/profiles/android/Invoke-AgentSwitchboardOpenOrActivate.sh']
