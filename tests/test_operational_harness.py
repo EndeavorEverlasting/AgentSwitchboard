@@ -60,6 +60,7 @@ def main() -> None:
         "tooling/harness/operational/hooks/Invoke-OperationalHarnessPrePush.ps1",
         "tooling/harness/operational/Get-OperationalHarnessStatus.py",
         ".ai/skills/operational-harness-routing/SKILL.md",
+        ".ai/skills/environment-capability-routing/SKILL.md",
         "scripts/Test-OperationalHarness.ps1",
         "tests/test_operational_harness.py",
         "docs/harness/operational-harness.md",
@@ -131,6 +132,7 @@ def main() -> None:
     validator_ids = {item["id"] for item in validators["validators"]}
     for expected in ("operational-python", "operational-powershell", "diff-check", "harness-doctrine", "repository-family", "agent-documentation"):
         require(expected in validator_ids, f"validator registry missing {expected}")
+    require("environment-capability" not in validator_ids, "unmerged environment validator must not be registered on main")
     for item in validators["validators"]:
         require(item["mutatesTarget"] is False, f"registered validator mutates target: {item['id']}")
         require(item["proof"], f"validator proof missing: {item['id']}")
@@ -154,6 +156,10 @@ def main() -> None:
     ):
         require(token in skill, f"skill token missing: {token}")
 
+    environment_skill = require_file(".ai/skills/environment-capability-routing/SKILL.md").read_text(encoding="utf-8")
+    for token in ("status: experimental", "current `main` branch", "end-to-end-runtime-validation", "does not claim"):
+        require(token in environment_skill, f"environment routing adapter token missing: {token}")
+
     pre_commit = require_file("tooling/harness/operational/hooks/Invoke-OperationalHarnessPreCommit.ps1").read_text(encoding="utf-8")
     require("Test-OperationalHarness.ps1" in pre_commit, "pre-commit helper must run owning validator")
     require("diff --cached --check" in pre_commit, "pre-commit helper must run staged diff check")
@@ -170,13 +176,24 @@ def main() -> None:
         "python3 tests/test_operational_harness.py",
         "scripts/Test-OperationalHarness.ps1",
         "git diff --check",
-        "tests/test_environment_capability_harness.py",
+        "tests/test_operator_command_delivery_harness.py",
         "tests/test_device_profile_launcher_contract.py",
+        "tests/test_tmux_live_proof_contract.py",
+        "persist-credentials: false",
         "git worktree add --detach",
         "[INHERITED-BASELINE]",
         "[REGRESSION]",
     ):
         require(token in workflow, f"CI token missing: {token}")
+    for stale in (
+        "tests/test_environment_capability_harness.py",
+        "tests/test_environment_capability_template.py",
+        "tests/test_android_termux_profile.py",
+        "tests/test_android_termux_docs.py",
+        "tests/test_android_termux_profile.sh",
+        "scripts/Test-EnvironmentCapabilityHarness.ps1",
+    ):
+        require(stale not in workflow, f"current-main CI must not invoke unmerged stacked contract: {stale}")
 
     guide = require_file("docs/harness/operational-harness.md").read_text(encoding="utf-8")
     for token in ("newcomer control surface", "task-intake", "pre-commit-validation", "failure-recovery", "handoff", "Artifact registry", "Optional hooks", "Pre-push", "Proof ceiling"):
@@ -201,11 +218,11 @@ def main() -> None:
             [
                 sys.executable,
                 str(HARNESS / "Get-OperationalHarnessStatus.py"),
-                "--task", "verify PR 80 operational harness before review or merge",
+                "--task", "verify a synthetic operational harness PR gate",
                 "--output-root", temp_dir,
-                "--branch-label", "feat/operational-harness-infrastructure-20260807",
+                "--branch-label", "feature/operational-harness-fixture",
                 "--expected-head", head,
-                "--pr-number", "80",
+                "--pr-number", "123",
                 "--validated-command", "pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1",
                 "--validated-command", "python tests/test_operational_harness.py",
                 "--validated-command", "git diff --check",
@@ -217,9 +234,9 @@ def main() -> None:
         status = json.loads((Path(temp_dir) / "operational-harness-status.json").read_text(encoding="utf-8"))
         handoff = json.loads((Path(temp_dir) / "operational-harness-handoff.json").read_text(encoding="utf-8"))
         report = (Path(temp_dir) / "operational-harness-report.md").read_text(encoding="utf-8")
-        require(status["git"]["branch"] == "feat/operational-harness-infrastructure-20260807" or status["git"]["branch"], "branch identity must be preserved")
+        require(status["git"]["branch"] == "feature/operational-harness-fixture" or status["git"]["branch"], "branch identity must be preserved")
         require(status["git"]["head"] == head, "exact head must be preserved")
-        require(status["pullRequest"] == 80, "PR context missing")
+        require(status["pullRequest"] == 123, "synthetic PR context missing")
         require(status["routing"]["workflow"] == "handoff", "complete PR gate should route to handoff")
         require(status["validation"]["gateComplete"] is True, "gate completion missing")
         require(len(status["validation"]["reportedSuccessfulCommands"]) == 3, "validation receipts missing")
