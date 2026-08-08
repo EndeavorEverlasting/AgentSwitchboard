@@ -48,9 +48,10 @@
   "knownTraps": [
     "Do not assume the current shell is inside a Git checkout; resolve repository identity before calling git rev-parse.",
     "Do not call .Trim() on command output until the command exit code and non-null output are checked.",
+    "PowerShell interactive paste can execute a completed if block before a following standalone else block; keep } else { in the same parsed statement or execute a tracked .ps1 file as one unit.",
     "Do not infer runtime readiness from repository, package, process, SSH, tmux-name, or CI presence.",
     "Do not run a domain validator merely because its filename exists; select the owning workflow and proof ceiling first.",
-    "Do not install Git hooks implicitly. The operational pre-commit hook is opt-in only.",
+    "Do not install Git hooks implicitly. The operational pre-commit and pre-push helpers are opt-in only.",
     "Do not put generated operational reports inside the repository.",
     "Do not clean, reset, stash, force-push, or rewrite history to make a validation result look clean.",
     "Do not use the operational harness as authority to mutate AGENTS.md, secrets, product code, live targets, providers, or credentials."
