@@ -30,6 +30,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-python@v7
         with:
@@ -44,6 +46,10 @@ jobs:
         run: |
           $outputRoot = Join-Path $PWD 'stale-checkout-status/pwsh'
           pwsh -NoLogo -NoProfile -File scripts/Test-StaleCheckoutExactHeadBootstrap.ps1 -RootPath $PWD -OutputRoot $outputRoot
+
+      - name: Validate current command-delivery boundary
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-OperatorCommandDeliveryHarnessCompleteness.ps1 -CandidatePath scripts/Invoke-StaleCheckoutExactHeadBootstrap.ps1
 
       - name: Validate focused harness in Windows PowerShell 5.1
         if: runner.os == 'Windows'
