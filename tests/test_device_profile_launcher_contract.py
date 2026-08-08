@@ -55,8 +55,18 @@ def main() -> None:
     assert windows["consumers"][0]["delegateOnly"] is True
     assert windows["consumers"][0]["rawFallbackAllowed"] is False
     assert by_id["linux"]["status"] == "reserved"
-    assert by_id["android"]["status"] == "reserved"
-    assert by_id["android"]["configurationMayDiffer"] is True
+
+    android = by_id["android"]
+    assert android["status"] == "implemented-runtime-unproved"
+    assert android["frontend"] == "termux"
+    assert android["configurationMayDiffer"] is True
+    assert android["canonicalSourcePath"] == "Start-AgentSwitchboard-Android.sh"
+    assert android["installedPath"] == "$PREFIX/bin/agentswitchboard-android"
+    assert (ROOT / android["canonicalSourcePath"]).is_file()
+    assert (ROOT / "tooling/profiles/android/AgentSwitchboard-Android.sh").is_file()
+    assert "does not prove" in registry["proofCeiling"]
+    for unproved in ("provider authentication", "model responds", "tool behavior", "repository mutation"):
+        assert unproved in registry["proofCeiling"]
 
     assert valid["ownerRepository"] == "EndeavorEverlasting/AgentSwitchboard"
     assert valid["operation"] == "open-or-activate"

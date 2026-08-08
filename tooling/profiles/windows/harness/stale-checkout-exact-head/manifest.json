@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "harnessId": "agentswitchboard.stale-checkout-exact-head.v1",
+  "scope": "Safe recovery when the current Windows checkout predates or cannot safely switch to the exact-head validator launcher",
+  "canonicalOwner": "EndeavorEverlasting/AgentSwitchboard",
+  "entrypoints": {
+    "bootstrapCmd": "Bootstrap-Technician-ExactHead.cmd",
+    "bootstrapEngine": "scripts/Invoke-StaleCheckoutExactHeadBootstrap.ps1",
+    "codebaseMap": "tooling/profiles/windows/harness/stale-checkout-exact-head/codebase-map.json",
+    "artifactRegistry": "tooling/profiles/windows/harness/stale-checkout-exact-head/artifact-registry.json",
+    "workflow": "tooling/profiles/windows/harness/stale-checkout-exact-head/workflows/bootstrap.workflow.json",
+    "schema": "tooling/profiles/windows/harness/stale-checkout-exact-head/schemas/bootstrap-result.schema.json",
+    "fixture": "tooling/profiles/windows/harness/stale-checkout-exact-head/fixtures/bootstrap-cases.fixture.json",
+    "operatorReportTemplate": "tooling/profiles/windows/harness/stale-checkout-exact-head/reports/operator-report.template.md",
+    "statusReporter": "tooling/profiles/windows/Get-StaleCheckoutExactHeadHarnessStatus.ps1",
+    "validator": "scripts/Test-StaleCheckoutExactHeadBootstrap.ps1",
+    "pythonValidator": "tests/test_stale_checkout_exact_head_bootstrap.py",
+    "optInHook": "tooling/profiles/windows/hooks/Invoke-StaleCheckoutExactHeadPreCommit.ps1",
+    "skill": ".ai/skills/stale-checkout-exact-head-bootstrap/SKILL.md",
+    "operatorGuide": "docs/harness/stale-checkout-exact-head-bootstrap.md",
+    "ciWorkflow": ".github/workflows/stale-checkout-exact-head-bootstrap.yml"
+  },
+  "components": [
+    {"id": "bootstrap-cmd", "path": "Bootstrap-Technician-ExactHead.cmd", "type": "entrypoint"},
+    {"id": "bootstrap-engine", "path": "scripts/Invoke-StaleCheckoutExactHeadBootstrap.ps1", "type": "implementation"},
+    {"id": "codebase-map", "path": "tooling/profiles/windows/harness/stale-checkout-exact-head/codebase-map.json", "type": "map"},
+    {"id": "artifact-registry", "path": "tooling/profiles/windows/harness/stale-checkout-exact-head/artifact-registry.json", "type": "registry"},
+    {"id": "workflow", "path": "tooling/profiles/windows/harness/stale-checkout-exact-head/workflows/bootstrap.workflow.json", "type": "workflow"},
+    {"id": "schema", "path": "tooling/profiles/windows/harness/stale-checkout-exact-head/schemas/bootstrap-result.schema.json", "type": "schema"},
+    {"id": "fixture", "path": "tooling/profiles/windows/harness/stale-checkout-exact-head/fixtures/bootstrap-cases.fixture.json", "type": "fixture"},
+    {"id": "operator-report-template", "path": "tooling/profiles/windows/harness/stale-checkout-exact-head/reports/operator-report.template.md", "type": "report"},
+    {"id": "status-reporter", "path": "tooling/profiles/windows/Get-StaleCheckoutExactHeadHarnessStatus.ps1", "type": "reporter"},
+    {"id": "validator", "path": "scripts/Test-StaleCheckoutExactHeadBootstrap.ps1", "type": "validator"},
+    {"id": "python-validator", "path": "tests/test_stale_checkout_exact_head_bootstrap.py", "type": "validator"},
+    {"id": "opt-in-hook", "path": "tooling/profiles/windows/hooks/Invoke-StaleCheckoutExactHeadPreCommit.ps1", "type": "hook"},
+    {"id": "skill", "path": ".ai/skills/stale-checkout-exact-head-bootstrap/SKILL.md", "type": "skill"},
+    {"id": "operator-guide", "path": "docs/harness/stale-checkout-exact-head-bootstrap.md", "type": "documentation"},
+    {"id": "ci-workflow", "path": ".github/workflows/stale-checkout-exact-head-bootstrap.yml", "type": "workflow"}
+  ],
+  "validationOrder": [
+    "python -m unittest tests.test_stale_checkout_exact_head_bootstrap",
+    "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-StaleCheckoutExactHeadBootstrap.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-StaleCheckoutExactHeadBootstrap.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-OperatorCommandDeliveryHarnessCompleteness.ps1 -CandidatePath scripts/Invoke-StaleCheckoutExactHeadBootstrap.ps1",
+    "git --no-pager diff --check"
+  ],
+  "safety": {
+    "sourceCheckoutMutationAllowed": false,
+    "forceFetchAllowed": false,
+    "resetAllowed": false,
+    "cleanAllowed": false,
+    "stashAllowed": false,
+    "generatedEvidenceTracked": false,
+    "allowedOrigins": [
+      "https://github.com/EndeavorEverlasting/AgentSwitchboard.git",
+      "https://github.com/EndeavorEverlasting/AgentSwitchboard",
+      "git@github.com:EndeavorEverlasting/AgentSwitchboard.git"
+    ]
+  },
+  "proofCeiling": "Safe exact-ref fetch, exact validator extraction, delegation to the exact commit's repository-owned validator, and fresh artifact readback. The delegated exact-head artifact owns all higher runtime claims."
+}

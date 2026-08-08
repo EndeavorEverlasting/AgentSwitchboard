@@ -1,0 +1,72 @@
+name: Stale Checkout Exact-Head Bootstrap
+
+on:
+  pull_request:
+    paths:
+      - 'Bootstrap-Technician-ExactHead.cmd'
+      - 'scripts/Invoke-StaleCheckoutExactHeadBootstrap.ps1'
+      - 'scripts/Test-StaleCheckoutExactHeadBootstrap.ps1'
+      - 'tests/test_stale_checkout_exact_head_bootstrap.py'
+      - 'tooling/profiles/windows/harness/stale-checkout-exact-head/**'
+      - 'tooling/profiles/windows/Get-StaleCheckoutExactHeadHarnessStatus.ps1'
+      - 'tooling/profiles/windows/hooks/Invoke-StaleCheckoutExactHeadPreCommit.ps1'
+      - '.ai/skills/stale-checkout-exact-head-bootstrap/SKILL.md'
+      - 'docs/harness/stale-checkout-exact-head-bootstrap.md'
+      - '.github/workflows/stale-checkout-exact-head-bootstrap.yml'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Run dependency-free Python contracts
+        shell: pwsh
+        run: python -m unittest tests.test_stale_checkout_exact_head_bootstrap
+
+      - name: Validate focused harness in PowerShell 7
+        shell: pwsh
+        run: |
+          $outputRoot = Join-Path $PWD 'stale-checkout-status/pwsh'
+          pwsh -NoLogo -NoProfile -File scripts/Test-StaleCheckoutExactHeadBootstrap.ps1 -RootPath $PWD -OutputRoot $outputRoot
+
+      - name: Validate current command-delivery boundary
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-OperatorCommandDeliveryHarnessCompleteness.ps1 -CandidatePath scripts/Invoke-StaleCheckoutExactHeadBootstrap.ps1
+
+      - name: Validate focused harness in Windows PowerShell 5.1
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $outputRoot = Join-Path $PWD 'stale-checkout-status/windows-powershell'
+          powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts\Test-StaleCheckoutExactHeadBootstrap.ps1 -RootPath $PWD -OutputRoot $outputRoot
+
+      - name: Check repository hygiene
+        shell: bash
+        run: git --no-pager diff --check
+
+      - name: Upload harness status
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: stale-checkout-exact-head-${{ matrix.os }}-${{ github.run_attempt }}
+          path: stale-checkout-status/**
+          if-no-files-found: warn
+          retention-days: 7

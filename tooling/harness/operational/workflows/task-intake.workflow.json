@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "task-intake",
+  "title": "Pick up a task safely",
+  "purpose": "Recover repository truth, select one owning harness/workflow, and declare a bounded write lane before mutation.",
+  "inputs": ["task request", "repository path or identifier if known", "current Git/PR evidence if available"],
+  "steps": [
+    "Resolve repository identity without assuming the current working directory is a checkout.",
+    "Read AGENTS.md, HARNESS.md, the operational codebase map, workflow registry, and relevant domain map.",
+    "Inspect branch, HEAD, dirty state, active PR or stacked-parent relationship, plans, and validator ownership.",
+    "Classify the task as operational-harness, environment-capability, device-profile, application/offline-harness, Pi, GNHF, public-plan, documentation, or another explicitly mapped domain.",
+    "Select exactly one primary workflow and any required specialized skill.",
+    "Declare repository, branch, lane, owned paths, forbidden paths, artifacts, validators, proof ceiling, and commit/PR expectation.",
+    "Create an isolated branch or worktree when another writer or unrelated work exists."
+  ],
+  "stopConditions": ["repository identity is unresolved", "requested work would mutate governance without a governance lane", "another writer owns the same branch or paths", "required live-target, credential, merge, deployment, or destructive authority is absent"],
+  "outputs": ["selected workflow", "bounded sprint declaration", "validator set", "artifact plan", "exact next executable action"],
+  "proofCeiling": "Read-only intake and deterministic routing only."
+}

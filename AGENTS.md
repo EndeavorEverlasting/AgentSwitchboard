@@ -95,6 +95,19 @@ Broad strides are encouraged when they complete one coherent vertical slice unde
 - When safe and authorized, mutate tracked files, validate, commit, push, and open or update the intended PR.
 - Preserve the same repair context when a deterministic gate exposes a correctable defect; do not abandon evidence and restart blindly.
 
+## Continuous execution and transport independence
+
+The agentic loop is `inspect -> decide -> mutate -> validate -> observe -> reconcile -> continue`. It continues until the declared goal is proved complete or a real authority, capability, safety, or dependency blocker prevents the next action. Continuous execution does not mean an unbounded retry loop: each repair or runtime iteration remains bounded by its owning contract, but reaching a new safe executable action is a reason to continue, not a reason to stop.
+
+1. **Use live capability when it exists.** When the current agent can inspect the live repository, connected source, GitHub state, CI state, runtime environment, or target evidence and the action is inside declared authority, perform the live read or search and advance the work. Do not substitute stale memory, a guessed SHA, a status-only response, or an instruction for the operator to perform work the agent can safely perform itself.
+2. **Preserve standing authority.** Explicit task authority and an applicable standing repository-owner directive remain valid for the bounded work unless revoked, contradicted by higher-priority policy, or made stale by changed conditions. Recheck mergeability, checks, reviews, runtime prerequisites, and exact heads just in time; when those gates pass and merge or runtime execution is already authorized, execute it instead of asking the operator to repeat authorization.
+3. **No premature terminal state.** Opening a PR, printing a next command, listing branches, showing logs, producing a handoff, or reporting an already-known blocker is not completion while safe authorized work remains. Continue through implementation, repair, validation, push, review, merge, runtime tests, effective-state readback, artifact inspection, and proof promotion when each step is owned and authorized.
+4. **Stop only at a real blocker.** Human intervention is justified when a required capability is unavailable, permission or authentication cannot be obtained safely, a secret or physical action is required from the owner, another writer owns the necessary mutation, a deterministic gate fails outside owned scope, policy requires explicit approval, or the next action would exceed authority or proof ceiling. Name the exact blocker, owner, dependency, and executable action that advances it.
+5. **Treat live coordination surfaces as continuation channels.** A monitored live document, shared file, issue, PR comment, plan, or other connected coordination surface may carry task state, commands, revisions, and handoff evidence. Re-read the current revision before acting when it is part of the declared workflow. The surface conveys instructions and evidence; it does not create authority beyond the authenticated source and applicable governance. Use a revision, timestamp, digest, or other freshness marker when practical, and never place secrets or private key material in a shared continuation artifact.
+6. **Do not assume clipboard availability.** Every critical operator command has one canonical plain-text form that can survive transport without semantic change. Clipboard copy/paste is one delivery path, not a prerequisite. Equivalent delivery may use careful manual entry, a QR payload, a monitored live document, or a file artifact. A QR code or document transports command text; it is not authority to execute it.
+7. **Prefer robust transport over fragile transcription.** Keep cross-device commands short and location-independent. When a command is too long or sensitive to quoting for reliable manual or QR transfer, prefer a repository-owned launcher or a versioned file/document artifact with an exact digest and a short command that resolves it. Do not fragment a long shell command into unaudited QR chunks merely to avoid building a safer transport.
+8. **Preserve evidence across device and app boundaries.** Before a terminal, app switch, remote hop, or device transition could destroy the only evidence, write decision-relevant output to a bounded durable artifact such as a local log or report. Never include credentials, one-time codes, tokens, passwords, recovery codes, or private SSH keys in that evidence.
+
 ## Agent-facing interface doctrine (AXI)
 
 Agent-facing commands, reports, tools, and wrappers must be designed for reliable operation at low token cost. The enforceable repository interpretation is derived from the Agent eXperience Interface principles at https://axi.md/.
@@ -136,6 +149,9 @@ No governance-only sprint may claim that Pi, Ollama, LM Studio, a local model, a
 - **Summaries without proof** presented as delivery.
 - **Completion claims without running checks** required by the repository or task.
 - **Secret or credential exposure** in prompts, logs, commits, fixtures, plans, reports, or PR text.
+- **Premature handoff or repeated permission requests** when current capability and existing authority already permit the next safe action.
+- **Clipboard-only command delivery** as the sole continuation path when the workflow crosses devices or environments where clipboard access is unavailable or unreliable.
+- **Treating QR, live-document, file, issue, or PR-comment transport as new authority**, or placing credentials or private key material in those transport artifacts.
 - **Re-inventing an established principle** in a prompt, skill, capability, workflow, or product surface instead of referencing and extending the canonical owner through its declared contract.
 - **Trivial-only progress** that leaves a safely owned coherent vertical slice incomplete, or a giant mixed-scope change that bundles unrelated missions merely to appear broad.
 - Destructive Git, force-push, default-branch writes, merge, release, deployment, or live-target mutation without explicit authority.
@@ -199,6 +215,8 @@ A task is complete only when, at minimum:
 - commit SHA exists for a writing sprint;
 - push or PR state is reported;
 - one exact next command is given.
+
+Opening or updating a PR is not by itself completion when the declared goal still includes safe authorized work. If current authority includes review integration, merge, runtime tests, implementation, effective-state verification, or artifact readback, the agent must continue through those gates while they remain safe and unblocked. A handoff is terminal only when the goal is proved complete or a real blocker has been named with its owner, dependency, next executable action, and expected proof.
 
 When an end-to-end route was required, also report the exact operator command, the successful or failed stage, child stdout and stderr evidence, effective-state readback, user-visible observation, idempotence and rollback result when applicable, and the remaining proof gap.
 

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "pre-commit-validation",
+  "title": "Validate before commit",
+  "purpose": "Run the smallest owning checks first, then foundation checks, diff hygiene, and evidence readback.",
+  "inputs": ["changed paths", "selected workflow", "validator registry", "current branch"],
+  "steps": [
+    "Run the operational harness completeness validator when operational harness files changed.",
+    "Run each domain-owning validator selected from validator-registry.json for the changed surface.",
+    "Run git diff --check against the intended base.",
+    "Run foundation validators that cover touched shared contracts.",
+    "Confirm generated evidence and machine-local output are untracked.",
+    "Review staged diff and verify only owned paths are included.",
+    "Record command, exit code, and proof ceiling in the validation ledger."
+  ],
+  "failureBehavior": "Stop commit. Route to failure-recovery with the exact failing command and output summary.",
+  "outputs": ["operational-harness-validation-ledger.json", "commit gate pass or explicit blocker"],
+  "proofCeiling": "Static/offline correctness for the validated surfaces; not live runtime or deployment."
+}

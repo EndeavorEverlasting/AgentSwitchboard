@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "registryId": "agentswitchboard.operational-workflows.v1",
+  "defaultWorkflow": "task-intake",
+  "workflows": [
+    {"workflowId": "task-intake", "path": "tooling/harness/operational/workflows/task-intake.workflow.json", "triggers": ["unfamiliar repository", "new task", "stale handoff", "unknown branch", "unknown harness owner"], "skill": ".ai/skills/operational-harness-routing/SKILL.md"},
+    {"workflowId": "pre-commit-validation", "path": "tooling/harness/operational/workflows/pre-commit-validation.workflow.json", "triggers": ["before commit", "before push", "tracked harness change", "validation request"], "skill": ".ai/skills/evidence-validation/SKILL.md"},
+    {"workflowId": "failure-recovery", "path": "tooling/harness/operational/workflows/failure-recovery.workflow.json", "triggers": ["validator failed", "CI failed", "contract mismatch", "missing artifact", "dirty-state conflict"], "skill": ".ai/skills/evidence-validation/SKILL.md"},
+    {"workflowId": "handoff", "path": "tooling/harness/operational/workflows/handoff.workflow.json", "triggers": ["chat ending", "agent transfer", "blocked by review", "blocked by live target", "continuation required"], "skill": ".ai/skills/pr-integration/SKILL.md"}
+  ],
+  "specializedRouting": [
+    {"condition": "task starts from a stale or dirty AgentSwitchboard checkout and must verify or run an exact remote head without mutating the source checkout", "skill": ".ai/skills/stale-checkout-exact-head-bootstrap/SKILL.md", "workflowRoot": "tooling/profiles/windows/harness/stale-checkout-exact-head/workflows/"},
+    {"condition": "task crosses platform, host, shell, frontend, SSH, tmux, orchestration runtime, or agent runtime", "skill": ".ai/skills/environment-capability-routing/SKILL.md", "workflowRoot": null},
+    {"condition": "task requires operator-visible runtime proof", "skill": ".ai/skills/end-to-end-runtime-validation/SKILL.md", "workflowRoot": null},
+    {"condition": "task concerns Windows profile launch modes", "skill": ".ai/skills/windows-profile-launch-mode-validation/SKILL.md", "workflowRoot": "tooling/profiles/windows/harness/launch-modes/workflows/"},
+    {"condition": "task concerns Pi multi-agent orchestration", "skill": ".ai/skills/pi-fusion-orchestration/SKILL.md", "workflowRoot": "tooling/pi/harness/workflows/"}
+  ]
+}

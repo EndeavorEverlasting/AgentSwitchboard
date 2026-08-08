@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "mapId": "agentswitchboard.stale-checkout-exact-head-map.v1",
+  "purpose": "Locate the stale-checkout bootstrap, its contracts, validators, generated evidence, and downstream exact-head owner.",
+  "directories": [
+    {"path": "scripts", "purpose": "Bootstrap implementation and deterministic validators"},
+    {"path": "tooling/profiles/windows/harness/stale-checkout-exact-head", "purpose": "Focused map, registry, workflow, schema, fixture, and report contract"},
+    {"path": "tooling/profiles/windows/hooks", "purpose": "Opt-in staged-change validation"},
+    {"path": ".ai/skills/stale-checkout-exact-head-bootstrap", "purpose": "Reusable trigger and operating procedure"},
+    {"path": ".ai/skills/operator-command-delivery", "purpose": "Current executable/operator command-delivery authority"},
+    {"path": ".ai/skills/powershell-interactive-execution", "purpose": "Current PowerShell interactive parse-boundary authority"},
+    {"path": "docs/harness", "purpose": "Human-readable operator guidance"},
+    {"path": "tests", "purpose": "Dependency-free structural and safety contracts"}
+  ],
+  "entrypoints": [
+    "Bootstrap-Technician-ExactHead.cmd",
+    "scripts/Invoke-StaleCheckoutExactHeadBootstrap.ps1",
+    "scripts/Test-StaleCheckoutExactHeadBootstrap.ps1",
+    "tooling/profiles/windows/Get-StaleCheckoutExactHeadHarnessStatus.ps1"
+  ],
+  "downstreamOwner": {
+    "entrypoint": "Validate-Technician-ExactHead.cmd",
+    "engine": "scripts/Invoke-TechnicianExactHeadValidation.ps1",
+    "artifactRegistry": "tooling/profiles/windows/harness/technician-live-cert/artifact-registry.json"
+  },
+  "commands": {
+    "validatePython": "python -m unittest tests.test_stale_checkout_exact_head_bootstrap",
+    "validatePowerShell7": "pwsh -NoLogo -NoProfile -File scripts/Test-StaleCheckoutExactHeadBootstrap.ps1",
+    "validateWindowsPowerShell": "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/Test-StaleCheckoutExactHeadBootstrap.ps1",
+    "validateCommandDelivery": "pwsh -NoLogo -NoProfile -File scripts/Test-OperatorCommandDeliveryHarnessCompleteness.ps1 -CandidatePath scripts/Invoke-StaleCheckoutExactHeadBootstrap.ps1",
+    "status": "pwsh -NoLogo -NoProfile -File tooling/profiles/windows/Get-StaleCheckoutExactHeadHarnessStatus.ps1",
+    "field": "Bootstrap-Technician-ExactHead.cmd -SourceRepository <path> -RemoteRef <ref> -ExpectedHead <sha> -Mode ready"
+  }
+}
