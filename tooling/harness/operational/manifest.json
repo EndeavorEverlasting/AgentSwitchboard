@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "harnessId": "agentswitchboard.operational-harness.v1",
+  "title": "AgentSwitchboard operational harness",
+  "authority": {
+    "governance": "AGENTS.md",
+    "repositoryContract": ".ai/agent-contract.json",
+    "rootHarnessManifest": ".ai/harness/manifest.json",
+    "codebaseCatalog": "CODEBASE_MAP.md",
+    "skillCatalog": "SKILLS.md"
+  },
+  "entrypoints": {
+    "startHere": "HARNESS.md",
+    "codebaseMap": "tooling/harness/operational/codebase-map.json",
+    "workflowRegistry": "tooling/harness/operational/workflow-registry.json",
+    "artifactRegistry": "tooling/harness/operational/artifact-registry.json",
+    "validatorRegistry": "tooling/harness/operational/validator-registry.json",
+    "statusReporter": "tooling/harness/operational/Get-OperationalHarnessStatus.py",
+    "completenessValidator": "scripts/Test-OperationalHarness.ps1",
+    "pythonContract": "tests/test_operational_harness.py",
+    "routingSkill": ".ai/skills/operational-harness-routing/SKILL.md",
+    "operatorGuide": "docs/harness/operational-harness.md",
+    "operatorReportTemplate": "tooling/harness/operational/templates/operator-report.template.md",
+    "preCommitHook": "tooling/harness/operational/hooks/Invoke-OperationalHarnessPreCommit.ps1",
+    "prePushHook": "tooling/harness/operational/hooks/Invoke-OperationalHarnessPrePush.ps1"
+  },
+  "workflowOrder": [
+    "task-intake",
+    "pre-commit-validation",
+    "failure-recovery",
+    "handoff"
+  ],
+  "generatedEvidence": {
+    "tracked": false,
+    "defaultRoot": "operating-system temporary directory/AgentSwitchboard/operational-harness/<run-id>",
+    "artifacts": [
+      "operational-harness-status.json",
+      "operational-harness-report.md",
+      "operational-harness-validation-ledger.json",
+      "operational-harness-handoff.json"
+    ]
+  },
+  "hooks": {
+    "implicitInstallationAllowed": false,
+    "preCommit": "tooling/harness/operational/hooks/Invoke-OperationalHarnessPreCommit.ps1",
+    "prePush": "tooling/harness/operational/hooks/Invoke-OperationalHarnessPrePush.ps1"
+  },
+  "safety": {
+    "networkRequired": false,
+    "liveTargetMutationAllowed": false,
+    "productMutationAllowed": false,
+    "secretCollectionAllowed": false,
+    "destructiveGitAllowed": false,
+    "governanceMutationOwned": false,
+    "proofCeiling": "Tracked operational-harness structure, workflow routing, validator registration, read-only repository status, generated local reports, and offline/static validation only."
+  }
+}

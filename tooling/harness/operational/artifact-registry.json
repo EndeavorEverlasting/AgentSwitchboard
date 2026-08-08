@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "registryId": "agentswitchboard.operational-artifacts.v1",
+  "defaultRoot": "operating-system temporary directory/AgentSwitchboard/operational-harness/<run-id>",
+  "trackedGeneratedArtifacts": false,
+  "naming": "stable role filename inside a unique run directory; run directory uses UTC timestamp plus process id",
+  "artifacts": [
+    {"artifactId": "operational-harness-status", "fileName": "operational-harness-status.json", "type": "status", "generator": "tooling/harness/operational/Get-OperationalHarnessStatus.py", "tracked": false, "proofCeiling": "repository/harness presence and local Git observation only"},
+    {"artifactId": "operational-harness-operator-report", "fileName": "operational-harness-report.md", "type": "operator-report", "generator": "tooling/harness/operational/Get-OperationalHarnessStatus.py", "tracked": false, "proofCeiling": "English rendering of the same read-only status"},
+    {"artifactId": "operational-harness-validation-ledger", "fileName": "operational-harness-validation-ledger.json", "type": "validation-ledger", "generator": "validator or operator workflow", "tracked": false, "proofCeiling": "commands and exits actually recorded; not inferred runtime proof"},
+    {"artifactId": "operational-harness-handoff", "fileName": "operational-harness-handoff.json", "type": "handoff", "generator": "tooling/harness/operational/Get-OperationalHarnessStatus.py", "tracked": false, "proofCeiling": "compressed continuation record; receiver must refresh state"}
+  ],
+  "retention": "operator-controlled temporary evidence; never commit secrets or machine-local evidence"
+}
