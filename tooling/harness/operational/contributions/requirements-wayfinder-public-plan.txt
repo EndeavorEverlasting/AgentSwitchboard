@@ -1,0 +1,4 @@
+# Test-only dependency for Draft 2020-12 instance validation.
+# Verified release source: https://pypi.org/project/jsonschema/4.26.0/
+# This is not an AgentSwitchboard runtime dependency.
+jsonschema==4.26.0
