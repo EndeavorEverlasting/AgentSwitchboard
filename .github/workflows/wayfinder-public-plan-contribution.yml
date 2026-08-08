@@ -41,6 +41,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned Draft 2020-12 validator
+        run: python -m pip install --disable-pip-version-check -r tooling/harness/operational/contributions/requirements-wayfinder-public-plan.txt
       - name: Python contribution contract
         run: python tests/test_wayfinder_public_plan_contribution.py
       - name: PowerShell contribution contract
