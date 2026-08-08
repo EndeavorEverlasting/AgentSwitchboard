@@ -1,0 +1,43 @@
+name: PowerShell Interactive Execution Contract
+
+on:
+  pull_request:
+    paths:
+      - '.ai/skills/powershell-interactive-execution/SKILL.md'
+      - 'tests/test_powershell_interactive_execution_skill.py'
+      - '.github/workflows/powershell-interactive-execution.yml'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Validate PowerShell interactive execution skill
+        shell: pwsh
+        run: python -m unittest tests.test_powershell_interactive_execution_skill
+
+      - name: Validate agent documentation contracts
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1
+
+      - name: Check repository hygiene
+        shell: bash
+        run: git --no-pager diff --check
