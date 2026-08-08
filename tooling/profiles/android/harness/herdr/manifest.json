@@ -1,0 +1,50 @@
+{
+  "schema": "agentswitchboard.android-herdr-migration.v1",
+  "harnessId": "agentswitchboard.android-herdr-migration-probe.v1",
+  "status": "experimental-unproved",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "profile": "android",
+  "environment": "termux",
+  "currentRuntime": {
+    "multiplexer": "tmux",
+    "runtimeEntrypoint": "Start-AgentSwitchboard-Android.sh",
+    "preserveUntil": "Herdr passes live Termux compatibility, persistence, detach/reattach, agent-state, and sprint evidence gates"
+  },
+  "candidate": {
+    "name": "Herdr",
+    "upstream": "https://github.com/herdrdev/herdr",
+    "officialInstallDocs": "https://herdr.dev/docs/install/",
+    "officialStablePlatforms": ["linux-x86_64", "linux-aarch64", "macos-x86_64", "macos-aarch64"],
+    "windows": "preview-beta",
+    "termuxAndroid": "not-officially-claimed",
+    "cargoInstallClaim": "not-used-until-upstream-documents-it"
+  },
+  "components": {
+    "probe": "tooling/profiles/android/harness/herdr/Probe-Herdr-Migration.sh",
+    "rootEntrypoint": "Test-AgentSwitchboard-Android-Herdr.sh",
+    "operatorGuide": "docs/workstation/android-herdr-migration.md",
+    "portableTest": "tests/test_android_herdr_migration.py",
+    "ci": ".github/workflows/android-herdr-migration.yml"
+  },
+  "gates": [
+    "termux-environment-observed",
+    "herdr-command-identity-observed",
+    "herdr-version-observed",
+    "background-server-start-observed",
+    "detach-reattach-observed",
+    "agent-state-observed",
+    "android-background-survival-observed",
+    "bounded-agent-sprint-observed"
+  ],
+  "promotionRule": "Do not replace tmux in the canonical Android runtime until every gate has same-device evidence and the existing Android runtime validators remain green.",
+  "forbidden": [
+    "automatic removal of tmux",
+    "automatic Android device_config or battery-policy mutation",
+    "curl-pipe-shell installation as proof",
+    "claiming Linux aarch64 binary compatibility proves Android/Termux compatibility",
+    "claiming command presence proves background persistence",
+    "claiming detach/reattach proves agent-state detection",
+    "persisting credentials or device codes in evidence"
+  ],
+  "proofCeiling": "Repository contracts can prove migration policy, probe behavior, and validation wiring. They do not prove Herdr runs correctly on Android/Termux or survives Android background process management."
+}
