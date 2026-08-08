@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import hashlib
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -37,10 +37,14 @@ EXPECTED_IMPORTED_BLOBS = {
 }
 
 
-def git_blob_sha(path: Path) -> str:
-    data = path.read_bytes()
-    payload = f"blob {len(data)}\0".encode() + data
-    return hashlib.sha1(payload).hexdigest()
+def committed_blob_sha(path: Path) -> str:
+    """Return the committed Git object id, independent of checkout EOL filters."""
+    relative = path.relative_to(ROOT).as_posix()
+    return subprocess.check_output(
+        ["git", "rev-parse", f"HEAD:{relative}"],
+        cwd=ROOT,
+        text=True,
+    ).strip().lower()
 
 
 def expect_contract_error(callback) -> None:
@@ -283,7 +287,7 @@ def validate_imported_sources() -> None:
     for relative, expected in EXPECTED_IMPORTED_BLOBS.items():
         path = VENDOR / relative
         assert path.is_file(), relative
-        assert git_blob_sha(path) == expected, f"{relative}: imported source drift"
+        assert committed_blob_sha(path) == expected, f"{relative}: imported Git object drift"
 
     manifest = json.loads((HARNESS / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["authority"]["donorCommit"] == DONOR
