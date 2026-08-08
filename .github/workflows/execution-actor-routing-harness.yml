@@ -1,0 +1,62 @@
+name: Execution actor routing harness
+
+on:
+  pull_request:
+    paths:
+      - "tooling/harness/operational/execution-actor-routing/**"
+      - ".ai/skills/execution-actor-routing/**"
+      - "docs/harness/execution-actor-routing.md"
+      - "scripts/Test-ExecutionActorRoutingHarness.ps1"
+      - "tests/test_execution_actor_routing_harness.py"
+      - "HARNESS.md"
+      - "tooling/harness/operational/manifest.json"
+      - "tooling/harness/operational/codebase-map.json"
+      - "tooling/harness/operational/workflow-registry.json"
+      - "tooling/harness/operational/artifact-registry.json"
+      - "tooling/harness/operational/validator-registry.json"
+      - ".github/workflows/execution-actor-routing-harness.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  linux-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Actor routing portable contract
+        run: python3 tests/test_execution_actor_routing_harness.py
+      - name: Actor routing PowerShell completeness
+        shell: pwsh
+        run: ./scripts/Test-ExecutionActorRoutingHarness.ps1
+      - name: Existing operational portable contract
+        run: python3 tests/test_operational_harness.py
+      - name: Existing operational PowerShell contract
+        shell: pwsh
+        run: ./scripts/Test-OperationalHarness.ps1
+      - name: PR-range diff hygiene
+        run: git diff --check "${{ github.event.pull_request.base.sha }}...HEAD"
+
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Actor routing portable contract
+        run: python tests/test_execution_actor_routing_harness.py
+      - name: Actor routing PowerShell completeness
+        shell: pwsh
+        run: ./scripts/Test-ExecutionActorRoutingHarness.ps1
+      - name: Existing operational portable contract
+        run: python tests/test_operational_harness.py
+      - name: Existing operational PowerShell contract
+        shell: pwsh
+        run: ./scripts/Test-OperationalHarness.ps1
+      - name: PR-range diff hygiene
+        shell: pwsh
+        run: git diff --check "${{ github.event.pull_request.base.sha }}...HEAD"

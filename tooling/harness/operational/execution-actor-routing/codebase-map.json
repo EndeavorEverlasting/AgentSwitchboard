@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "mapId": "agentswitchboard.execution-actor-routing-map.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "scope": "harness-only",
+  "canonicalInputs": [
+    "AGENTS.md",
+    "HARNESS.md",
+    "tooling/harness/operational/manifest.json",
+    "tooling/harness/operational/workflow-registry.json"
+  ],
+  "structure": [
+    {"path": "tooling/harness/operational/execution-actor-routing/manifest.json", "purpose": "Actor-routing contract and entrypoints."},
+    {"path": "tooling/harness/operational/execution-actor-routing/workflows/bind-execute-verify.workflow.json", "purpose": "Required ordering: bind actor, execute through that actor, verify actual actor evidence."},
+    {"path": "tooling/harness/operational/execution-actor-routing/Invoke-ExecutionActorRouting.py", "purpose": "Dependency-free binding and verification artifact writer with fail-closed mismatch behavior."},
+    {"path": "tooling/harness/operational/execution-actor-routing/artifact-registry.json", "purpose": "Generated actor-binding, receipt, and operator-report contracts."},
+    {"path": "tooling/harness/operational/execution-actor-routing/schemas/execution-actor-binding.schema.json", "purpose": "Binding artifact schema."},
+    {"path": ".ai/skills/execution-actor-routing/SKILL.md", "purpose": "Fresh-agent procedure and trigger conditions."},
+    {"path": "scripts/Test-ExecutionActorRoutingHarness.ps1", "purpose": "PowerShell completeness and contract validator."},
+    {"path": "tests/test_execution_actor_routing_harness.py", "purpose": "Portable anti-regression tests."},
+    {"path": ".github/workflows/execution-actor-routing-harness.yml", "purpose": "Windows/Linux hosted validation."}
+  ],
+  "entryCommand": "python tooling/harness/operational/execution-actor-routing/Invoke-ExecutionActorRouting.py bind --requested-actor <chatgpt|agentswitchboard|operator|auto> --selected-actor <chatgpt|agentswitchboard|operator> --selection-source <user-explicit|task-contract|context-inferred> --task \"<task>\" --operation \"<operation>\"",
+  "validationCommands": [
+    "python tests/test_execution_actor_routing_harness.py",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-ExecutionActorRoutingHarness.ps1",
+    "python tests/test_operational_harness.py",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1",
+    "git diff --check"
+  ],
+  "knownTraps": [
+    "Do not treat chatgpt and agentswitchboard as interchangeable execution identities.",
+    "Do not infer an explicit actor request into auto.",
+    "Do not claim an AgentSwitchboard-performed mutation from a ChatGPT GitHub connector result.",
+    "Do not claim a ChatGPT-performed mutation from an AgentSwitchboard run receipt.",
+    "Do not let an operator instruction be silently converted into agent execution.",
+    "Binding proves routing intent; verification requires evidence from the actor that actually performed the operation."
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AgentSwitchboard execution actor binding",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "runId",
+    "status",
+    "requestedActor",
+    "selectedActor",
+    "selectionSource",
+    "task",
+    "operation",
+    "boundAtUtc"
+  ],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "runId": {"type": "string", "minLength": 1},
+    "status": {"enum": ["actor-bound", "actor-mismatch"]},
+    "requestedActor": {"enum": ["chatgpt", "agentswitchboard", "operator", "auto"]},
+    "selectedActor": {"enum": ["chatgpt", "agentswitchboard", "operator"]},
+    "selectionSource": {"enum": ["user-explicit", "task-contract", "context-inferred"]},
+    "selectionReason": {"type": ["string", "null"]},
+    "task": {"type": "string", "minLength": 1},
+    "operation": {"type": "string", "minLength": 1},
+    "boundAtUtc": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}
