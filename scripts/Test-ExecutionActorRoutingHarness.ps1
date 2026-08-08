@@ -71,7 +71,8 @@ foreach ($heading in @('## Trigger','## Inputs','## Procedure','## Outputs','## 
     if ($skill.Contains($heading)) { Pass "skill/$heading" } else { Fail "skill/$heading" 'missing' }
 }
 foreach ($actor in @('chatgpt','agentswitchboard','operator','auto')) {
-    if ($skill.Contains("`$actor`")) { Pass "skill/actor-$actor" } else { Fail "skill/actor-$actor" 'missing' }
+    $actorToken = '`' + $actor + '`'
+    if ($skill.Contains($actorToken)) { Pass "skill/actor-$actor" } else { Fail "skill/actor-$actor" 'missing' }
 }
 
 $rootManifest = Get-Content -LiteralPath (Join-Path $root 'tooling/harness/operational/manifest.json') -Raw
