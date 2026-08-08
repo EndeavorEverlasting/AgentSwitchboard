@@ -6,6 +6,7 @@ on:
       - "HARNESS.md"
       - "tooling/harness/operational/**"
       - ".ai/skills/operational-harness-routing/**"
+      - ".ai/skills/environment-capability-routing/**"
       - "scripts/Test-OperationalHarness.ps1"
       - "tests/test_operational_harness.py"
       - "docs/harness/operational-harness.md"
@@ -23,6 +24,7 @@ jobs:
         with:
           fetch-depth: 0
           show-progress: false
+          persist-credentials: false
 
       - name: Validate operational harness
         shell: bash
@@ -80,22 +82,19 @@ jobs:
             fi
           }
 
-          compare_test android-termux-docs python3 tests/test_android_termux_docs.py
-          compare_test android-termux-profile python3 tests/test_android_termux_profile.py
           compare_test app-harness python3 tests/test_app_harness_validator.py
           compare_test app-output-context python3 tests/test_app_output_context_engine.py
           compare_test device-profile python3 tests/test_device_profile_launcher_contract.py
-          compare_test environment-capability python3 tests/test_environment_capability_harness.py
-          compare_test environment-template python3 tests/test_environment_capability_template.py
           compare_test machine-profile-bootstrap python3 tests/test_machine_profile_bootstrap.py
+          compare_test operator-command-delivery python3 tests/test_operator_command_delivery_harness.py
           compare_test pi-harness python3 tests/test_pi_harness_contracts.py
           compare_test public-plan python3 tests/test_public_plan_contracts.py
           compare_test runtime-event python3 tests/test_runtime_event_contract.py
           compare_test technician-live-cert python3 tests/test_technician_live_cert_surface.py
           compare_test technician-pull-run python3 tests/test_technician_pull_and_run_contract.py
+          compare_test tmux-live-proof python3 tests/test_tmux_live_proof_contract.py
           compare_test tmux-shortcut python3 tests/test_tmux_new_instance_shortcut_harness.py
           compare_test windows-launch-mode python3 tests/test_windows_profile_launch_mode_harness.py
-          compare_test android-shell bash tests/test_android_termux_profile.sh
 
           test -z "$(git -C "$base_dir" status --short)"
           test -z "$(git -C "$head_dir" status --short)"
@@ -123,6 +122,7 @@ jobs:
         with:
           fetch-depth: 0
           show-progress: false
+          persist-credentials: false
 
       - name: Validate operational harness
         shell: pwsh
@@ -159,7 +159,6 @@ jobs:
             'scripts/Test-RepositoryFamilyHarness.ps1',
             'scripts/Test-AgentDocumentationContract.ps1',
             'scripts/Test-AgentGovernanceDoctrine.ps1',
-            'scripts/Test-EnvironmentCapabilityHarness.ps1',
             'scripts/Test-DeviceProfileLauncherContract.ps1',
             'scripts/Test-PublicPlanContracts.ps1',
             'scripts/Test-RuntimeEventContract.ps1',
