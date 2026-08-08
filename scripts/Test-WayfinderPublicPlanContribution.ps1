@@ -43,23 +43,49 @@ function Read-Json {
 
 $manifestRelative = 'tooling/harness/operational/contributions/wayfinder-public-plan.contribution.json'
 $schemaRelative = 'tooling/harness/operational/contributions/cross-repository-contribution.schema.json'
+$requirementsRelative = 'tooling/harness/operational/contributions/requirements-wayfinder-public-plan.txt'
 $skillRelative = '.ai/skills/public-plan-coordination/SKILL.md'
 $planSchemaRelative = 'plans/schemas/public-plan.schema.json'
 $templateSkillRelative = 'templates/repository-agent-contract/.ai/skills/public-plan-coordination/SKILL.md'
 $templatePlanSchemaRelative = 'templates/repository-agent-contract/plans/schemas/public-plan.schema.json'
+$pythonValidatorRelative = 'tests/test_wayfinder_public_plan_contribution.py'
 
 foreach ($relative in @(
     $manifestRelative,
     $schemaRelative,
+    $requirementsRelative,
     $skillRelative,
     $planSchemaRelative,
     $templateSkillRelative,
     $templatePlanSchemaRelative,
     'plans/README.md',
     'templates/repository-agent-contract/plans/README.md',
-    'tests/test_wayfinder_public_plan_contribution.py'
+    $pythonValidatorRelative
 )) {
     Add-Check -Passed (Test-Path -LiteralPath (Join-Path $RootPath $relative) -PathType Leaf) -Name "required/$relative" -Message 'file is missing'
+}
+
+# Draft 2020-12 instance validation is an owning gate, not a spot check.
+$pythonCommand = Get-Command python -ErrorAction SilentlyContinue
+if (-not $pythonCommand) {
+    [void]$failures.Add('schema/draft-2020-12`: python is unavailable')
+}
+else {
+    $dependencyProbe = @(& $pythonCommand.Source -c 'import jsonschema; assert jsonschema.__version__.split(".")[:2] == ["4", "26"]' 2>&1)
+    $dependencyExit = $LASTEXITCODE
+    if ($dependencyExit -ne 0) {
+        [void]$failures.Add("schema/draft-2020-12-dependency`: jsonschema 4.26.x is unavailable; install with python -m pip install -r $requirementsRelative")
+    }
+    else {
+        $schemaValidationOutput = @(& $pythonCommand.Source (Join-Path $RootPath $pythonValidatorRelative) 2>&1)
+        $schemaValidationExit = $LASTEXITCODE
+        if ($schemaValidationExit -ne 0) {
+            [void]$failures.Add("schema/draft-2020-12-instances`: Python schema validator failed with exit code $schemaValidationExit`n$($schemaValidationOutput -join [Environment]::NewLine)")
+        }
+        else {
+            [void]$passes.Add('schema/draft-2020-12-instances')
+        }
+    }
 }
 
 $manifest = Read-Json -RelativePath $manifestRelative
@@ -169,5 +195,5 @@ if ($failures.Count -gt 0) {
 
 Write-Host "PASS: Wayfinder public-plan contribution ($($passes.Count) checks)" -ForegroundColor Green
 Write-Host "Manifest: $manifestRelative"
-Write-Host 'Proof ceiling: pinned donor references and consumer contract/adapter validation only; no donor runtime, child-repo adoption, decision quality, or execution proof.'
+Write-Host 'Proof ceiling: pinned donor references and Draft 2020-12 consumer instance validation only; no donor runtime, child-repo adoption, decision quality, or execution proof.'
 exit 0
