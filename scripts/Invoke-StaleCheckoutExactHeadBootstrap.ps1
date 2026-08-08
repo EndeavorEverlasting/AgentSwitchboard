@@ -29,6 +29,20 @@ function Write-Utf8NoBom {
     [IO.File]::WriteAllText($Path, $Content, (New-Object Text.UTF8Encoding($false)))
 }
 
+function Get-FirstGitLine {
+    param(
+        [Parameter(Mandatory)][string[]]$Lines,
+        [Parameter(Mandatory)][string]$Purpose
+    )
+
+    $value = if ($Lines.Count -gt 0) { [string]$Lines[0] } else { '' }
+    $value = $value.Trim()
+    if ([string]::IsNullOrWhiteSpace($value)) {
+        throw "Git returned no usable output while resolving $Purpose."
+    }
+    $value
+}
+
 $startedUtc = [DateTime]::UtcNow
 $expectedNormalized = $ExpectedHead.ToLowerInvariant()
 $sourceRoot = (Resolve-Path -LiteralPath $SourceRepository -ErrorAction Stop).Path
@@ -51,7 +65,7 @@ $allowedOrigins = @(
     'git@github.com:EndeavorEverlasting/AgentSwitchboard.git'
 )
 
-$originUrl = (Invoke-Git -Arguments @('remote', 'get-url', 'origin') | Select-Object -First 1).Trim()
+$originUrl = Get-FirstGitLine -Lines @(Invoke-Git -Arguments @('remote', 'get-url', 'origin')) -Purpose 'origin URL'
 if ($originUrl -notin $allowedOrigins) {
     throw "Unexpected origin: $originUrl"
 }
@@ -64,13 +78,13 @@ Invoke-Git -Arguments @('log', '--oneline', '--decorate', '-5') | ForEach-Object
 
 Write-Host '=== FETCH EXACT REMOTE REF ===' -ForegroundColor Cyan
 Invoke-Git -Arguments @('fetch', '--no-tags', 'origin', $RemoteRef) | Out-Null
-$fetchedHead = (Invoke-Git -Arguments @('rev-parse', 'FETCH_HEAD') | Select-Object -First 1).Trim().ToLowerInvariant()
+$fetchedHead = (Get-FirstGitLine -Lines @(Invoke-Git -Arguments @('rev-parse', 'FETCH_HEAD')) -Purpose 'FETCH_HEAD').ToLowerInvariant()
 if ($fetchedHead -ne $expectedNormalized) {
     throw "Fetched head mismatch. Expected $expectedNormalized; fetched $fetchedHead."
 }
 
 $validatorSpec = "${expectedNormalized}:scripts/Invoke-TechnicianExactHeadValidation.ps1"
-$validatorSource = Invoke-Git -Arguments @('show', $validatorSpec)
+$validatorSource = @(Invoke-Git -Arguments @('show', $validatorSpec))
 if ($validatorSource.Count -eq 0) {
     throw "The exact fetched head does not contain the exact-head validator: $validatorSpec"
 }
