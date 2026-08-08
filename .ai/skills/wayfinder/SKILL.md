@@ -49,7 +49,7 @@ Ticket type is a fail-closed workflow gate:
 | `grilling` | HITL | `grilling` **and** `domain-modeling` | actual human answers + durable domain updates where needed |
 | `task` | AFK or HITL | Wayfinder task gate | prerequisite action actually completed |
 
-Label/body disagreement fails closed in favor of the ticket type label until a human explicitly relabels/overrides it. An agent may not answer the human side of a HITL ticket or infer approval from silence.
+For HITL work, **the human speaks for themselves**. Label/body disagreement fails closed in favor of the ticket type label until a human explicitly relabels/overrides it. An agent may not answer the human side of a HITL ticket or infer approval from silence.
 
 ## Procedure
 
