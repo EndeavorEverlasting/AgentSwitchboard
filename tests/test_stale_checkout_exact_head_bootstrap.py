@@ -10,6 +10,8 @@ HARNESS = ROOT / "tooling/profiles/windows/harness/stale-checkout-exact-head"
 MANIFEST = HARNESS / "manifest.json"
 ENGINE = ROOT / "scripts/Invoke-StaleCheckoutExactHeadBootstrap.ps1"
 CMD = ROOT / "Bootstrap-Technician-ExactHead.cmd"
+SKILL = ROOT / ".ai/skills/stale-checkout-exact-head-bootstrap/SKILL.md"
+WORKFLOW = ROOT / ".github/workflows/stale-checkout-exact-head-bootstrap.yml"
 
 
 class StaleCheckoutExactHeadBootstrapTests(unittest.TestCase):
@@ -37,6 +39,10 @@ class StaleCheckoutExactHeadBootstrapTests(unittest.TestCase):
         self.assertFalse(manifest["safety"]["sourceCheckoutMutationAllowed"])
         self.assertFalse(manifest["safety"]["forceFetchAllowed"])
         self.assertFalse(manifest["safety"]["generatedEvidenceTracked"])
+        self.assertIn(
+            "Test-OperatorCommandDeliveryHarnessCompleteness.ps1",
+            "\n".join(manifest["validationOrder"]),
+        )
 
         for item in components.values():
             path = ROOT / item["path"]
@@ -85,6 +91,8 @@ class StaleCheckoutExactHeadBootstrapTests(unittest.TestCase):
             "AGENT_SWITCHBOARD_NO_PAUSE",
             "Unexpected origin",
             "Remove-Item -LiteralPath $runnerPath",
+            "function Get-FirstGitLine",
+            "Git returned no usable output while resolving",
         ]
         for token in required:
             self.assertIn(token, source)
@@ -97,6 +105,7 @@ class StaleCheckoutExactHeadBootstrapTests(unittest.TestCase):
             "checkout -f",
             "worktree remove --force",
             "StrictHostKeyChecking=no",
+            "Select-Object -First 1).Trim()",
         ]
         lowered = source.lower()
         for token in forbidden:
@@ -120,6 +129,22 @@ class StaleCheckoutExactHeadBootstrapTests(unittest.TestCase):
         self.assertIn("$validation.status -ne 'passed'", source)
         self.assertIn("$Mode -eq 'ready' -and -not $validation.readinessRequested", source)
         self.assertIn("does not exceed the proof ceiling", source)
+
+    def test_skill_routes_through_current_command_delivery_authority(self) -> None:
+        source = SKILL.read_text(encoding="utf-8")
+        self.assertIn("operator-command-delivery", source)
+        self.assertIn("powershell-interactive-execution", source)
+        self.assertIn("Test-OperatorCommandDeliveryHarnessCompleteness.ps1", source)
+        self.assertNotIn("Test-OperatorCommandEnvelope.ps1", source)
+        self.assertNotIn("Test-SkillFactoringContracts.ps1", source)
+
+    def test_ci_runs_focused_and_current_command_delivery_contracts(self) -> None:
+        source = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("tests.test_stale_checkout_exact_head_bootstrap", source)
+        self.assertIn("Test-StaleCheckoutExactHeadBootstrap.ps1", source)
+        self.assertIn("Test-OperatorCommandDeliveryHarnessCompleteness.ps1", source)
+        self.assertIn("scripts/Invoke-StaleCheckoutExactHeadBootstrap.ps1", source)
+        self.assertIn("persist-credentials: false", source)
 
     def test_cmd_wrapper_uses_repo_owned_engine_and_propagates_exit(self) -> None:
         source = CMD.read_text(encoding="utf-8")
