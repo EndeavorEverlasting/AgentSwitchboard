@@ -15,7 +15,9 @@ scope=(
   .ai/harness/app-composition.graph.json
   docs/harness/android-termux-operational-harness.md
   tests/test_android_termux_harness.py
+  tests/test_android_termux_modal_state_harness.py
   scripts/Test-AndroidTermuxHarnessCompleteness.ps1
+  scripts/Test-AndroidTermuxModalStateHarness.ps1
   .github/workflows/android-termux-harness.yml
   .ai/agent-contract.json
   .ai/harness/repository-family.registry.json
@@ -37,6 +39,8 @@ command -v python >/dev/null 2>&1 || {
 }
 python --version
 python tests/test_android_termux_harness.py
+python tests/test_android_termux_modal_state_harness.py
+bash -n tooling/profiles/android/harness/termux/Inspect-TerminalState.sh
 
 for file in \
   tooling/profiles/android/harness/termux/manifest.json \
@@ -46,6 +50,7 @@ for file in \
   tooling/profiles/android/harness/termux/workflows/validate-terminal-boundary.workflow.json \
   tooling/profiles/android/harness/termux/workflows/handle-input-boundary-failure.workflow.json \
   tooling/profiles/android/harness/termux/workflows/capture-terminal-output.workflow.json \
+  tooling/profiles/android/harness/termux/workflows/recover-modal-terminal-state.workflow.json \
   .ai/harness/app-composition.graph.json; do
   git ls-files --error-unmatch -- "$file" >/dev/null
   python -m json.tool "$file" >/dev/null

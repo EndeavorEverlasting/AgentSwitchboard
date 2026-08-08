@@ -1,0 +1,11 @@
+FIXTURE=android-termux-nano-modal-editor
+VISIBLE_TOP=$HOME/sprint.md Modified
+VISIBLE_SHORTCUTS=^G Help | ^O Write Out | ^X Exit
+PANE_CURRENT_COMMAND=nano
+CLASSIFICATION=modal-editor:nano
+HUNG_CLAIM=no
+WAITING_FOR=editor-input
+EXIT_CONTRACT=Ctrl+X; N=discard modified buffer; Y then Enter=save shown filename
+PROMPT_FILE_BAD_EXAMPLE=cd ... ; git switch main ; git pull --ff-only ; git switch -c ... ; nano "$HOME/sprint.md"
+PROMPT_FILE_RULE=sprint.md must contain the bounded task instructions, not the shell commands used to prepare the repository or open the editor
+REQUIRED_RECOVERY=exit the editor deliberately, prove shell return, inspect bounded prompt content, then run the sprint launcher

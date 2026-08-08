@@ -16,6 +16,8 @@ command -v python >/dev/null 2>&1 || {
 }
 python --version
 python tests/test_android_termux_harness.py
+python tests/test_android_termux_modal_state_harness.py
+bash -n tooling/profiles/android/harness/termux/Inspect-TerminalState.sh
 bash -n tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPreCommit.sh
 bash -n tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPrePush.sh
 
@@ -23,6 +25,7 @@ git diff --check
 
 if command -v pwsh >/dev/null 2>&1; then
   pwsh -NoLogo -NoProfile -File scripts/Test-AndroidTermuxHarnessCompleteness.ps1
+  pwsh -NoLogo -NoProfile -File scripts/Test-AndroidTermuxModalStateHarness.ps1
 else
   printf '%s\n' '[SKIP] pwsh unavailable; completeness and repository-family status proof are owned by hosted/PowerShell validation on Termux.'
 fi
