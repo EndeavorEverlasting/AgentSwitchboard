@@ -25,13 +25,8 @@ if (-not (Test-Path -LiteralPath $validator -PathType Leaf)) {
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 if ([string]::IsNullOrWhiteSpace($BaseRef)) {
-    $upstreamRaw = & git -C $RootPath rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>$null
-    $gitRc = $LASTEXITCODE
-    if ($gitRc -ne 0 -or -not $upstreamRaw) {
-        Write-Error 'No upstream branch is configured. Re-run with -BaseRef <exact-base-ref>; stacked branches must name their real base explicitly.'
-        exit 4
-    }
-    $BaseRef = ($upstreamRaw -join '').Trim()
+    Write-Error 'BaseRef is required. Re-run with -BaseRef <exact-base-ref-or-target-ref>; this opt-in helper does not infer the pushed ref from a configured upstream.'
+    exit 4
 }
 
 $baseShaRaw = & git -C $RootPath rev-parse --verify "$BaseRef^{commit}" 2>$null
