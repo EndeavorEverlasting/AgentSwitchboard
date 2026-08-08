@@ -48,14 +48,25 @@ def select_route(task: str, registry: dict) -> tuple[str, str | None]:
             specialized = route
             break
 
-    if any(word in lowered for word in ("handoff", "transfer", "continue later", "next agent")):
-        workflow = "handoff"
-    elif any(word in lowered for word in ("failed", "failure", "broken", "repair ci", "fix ci")):
-        workflow = "failure-recovery"
-    elif any(word in lowered for word in ("before commit", "pre-commit", "validate", "verification", "verify")):
-        workflow = "pre-commit-validation"
-    else:
-        workflow = registry.get("defaultWorkflow", "task-intake")
+    registered = {item["workflowId"]: item for item in registry.get("workflows", [])}
+    # Lifecycle precedence is explicit, but trigger text comes from the registry.
+    workflow = None
+    for workflow_id in ("handoff", "failure-recovery", "pre-commit-validation", "task-intake"):
+        item = registered.get(workflow_id)
+        if item and any(str(trigger).lower() in lowered for trigger in item.get("triggers", [])):
+            workflow = workflow_id
+            break
+
+    # Compatibility aliases cover common operator phrasing not intended as registry vocabulary.
+    if workflow is None:
+        if any(word in lowered for word in ("handoff", "transfer", "continue later", "next agent")):
+            workflow = "handoff"
+        elif any(word in lowered for word in ("failed", "failure", "broken", "repair ci", "fix ci")):
+            workflow = "failure-recovery"
+        elif any(word in lowered for word in ("before commit", "pre-commit", "validate", "validation", "verification", "verify")):
+            workflow = "pre-commit-validation"
+        else:
+            workflow = registry.get("defaultWorkflow", "task-intake")
     return workflow, specialized
 
 
@@ -100,12 +111,17 @@ def main() -> int:
         "tooling/harness/operational/hooks/Invoke-OperationalHarnessPreCommit.ps1",
         "tooling/harness/operational/hooks/Invoke-OperationalHarnessPrePush.ps1",
         ".ai/skills/operational-harness-routing/SKILL.md",
-        ".ai/skills/environment-capability-routing/SKILL.md",
         "scripts/Test-OperationalHarness.ps1",
         "tests/test_operational_harness.py",
         "docs/harness/operational-harness.md",
         ".github/workflows/operational-harness.yml",
     ]
+    registered_skills = {
+        str(item.get("skill"))
+        for item in [*workflows.get("workflows", []), *workflows.get("specializedRouting", [])]
+        if item.get("skill")
+    }
+    required.extend(sorted(path for path in registered_skills if path not in required))
     components = [{"path": p, "present": (ROOT / p).is_file()} for p in required]
     missing = [item["path"] for item in components if not item["present"]]
 
