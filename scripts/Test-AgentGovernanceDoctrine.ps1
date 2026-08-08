@@ -47,6 +47,7 @@ if ($exists) {
         '## Mandatory sprint declaration',
         '## Launch order and dependency gates',
         '## Broad-stride execution and principle reuse',
+        '## Continuous execution and transport independence',
         '## Agent-facing interface doctrine (AXI)',
         '## Multi-agent and local-model governance',
         '## Forbidden behaviors',
@@ -129,6 +130,28 @@ if ($exists) {
     }
 
     foreach ($rule in @(
+        'inspect -> decide -> mutate -> validate -> observe -> reconcile -> continue',
+        'Use live capability when it exists',
+        'perform the live read or search and advance the work',
+        'Preserve standing authority',
+        'execute it instead of asking the operator to repeat authorization',
+        'No premature terminal state',
+        'safe authorized work remains',
+        'Stop only at a real blocker',
+        'Treat live coordination surfaces as continuation channels',
+        'monitored live document',
+        'Do not assume clipboard availability',
+        'QR payload',
+        'transports command text; it is not authority',
+        'Prefer robust transport over fragile transcription',
+        'repository-owned launcher',
+        'Preserve evidence across device and app boundaries',
+        'Continuous execution does not mean an unbounded retry loop'
+    )) {
+        Add-Result -Passed $text.Contains($rule) -Name "governance/continuous-execution/$rule" -FailureMessage 'required continuous-execution or transport-independence rule is missing'
+    }
+
+    foreach ($rule in @(
         'Token-efficient output',
         'Minimal default schemas',
         'Content truncation',
@@ -169,6 +192,9 @@ if ($exists) {
         'Summaries without proof',
         'Completion claims without running checks',
         'Secret or credential exposure',
+        'Premature handoff or repeated permission requests',
+        'Clipboard-only command delivery',
+        'Treating QR, live-document, file, issue, or PR-comment transport as new authority',
         'Re-inventing an established principle',
         'Trivial-only progress',
         'Installing or executing unverified third-party agent snippets',
@@ -182,7 +208,10 @@ if ($exists) {
         'validation was actually run',
         'commit SHA exists',
         'push or PR state is reported',
-        'one exact next command is given'
+        'one exact next command is given',
+        'Opening or updating a PR is not by itself completion',
+        'review integration, merge, runtime tests, implementation, effective-state verification, or artifact readback',
+        'real blocker has been named with its owner, dependency, next executable action, and expected proof'
     )) {
         Add-Result -Passed $text.Contains($completion) -Name "governance/completion/$completion" -FailureMessage 'minimum completion evidence is missing'
     }
