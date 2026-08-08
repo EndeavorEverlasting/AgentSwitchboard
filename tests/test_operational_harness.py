@@ -28,6 +28,19 @@ def require_file(relative: str) -> Path:
     return path
 
 
+def git(*args: str) -> str:
+    result = subprocess.run(
+        ["git", "-C", str(ROOT), *args],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    require(result.returncode == 0, f"git {' '.join(args)} failed: {result.stderr}")
+    require(bool(result.stdout.strip()), f"git {' '.join(args)} returned empty output")
+    return result.stdout.strip()
+
+
 def main() -> None:
     required = [
         "HARNESS.md",
@@ -44,6 +57,7 @@ def main() -> None:
         "tooling/harness/operational/schemas/operational-harness-handoff.schema.json",
         "tooling/harness/operational/templates/operator-report.template.md",
         "tooling/harness/operational/hooks/Invoke-OperationalHarnessPreCommit.ps1",
+        "tooling/harness/operational/hooks/Invoke-OperationalHarnessPrePush.ps1",
         "tooling/harness/operational/Get-OperationalHarnessStatus.py",
         ".ai/skills/operational-harness-routing/SKILL.md",
         "scripts/Test-OperationalHarness.ps1",
@@ -59,6 +73,8 @@ def main() -> None:
     require(manifest["harnessId"] == "agentswitchboard.operational-harness.v1", "manifest harnessId")
     require(manifest["generatedEvidence"]["tracked"] is False, "generated evidence must be untracked")
     require(manifest["hooks"]["implicitInstallationAllowed"] is False, "hooks must be opt-in")
+    require(manifest["hooks"]["preCommit"], "pre-commit helper must be registered")
+    require(manifest["hooks"]["prePush"], "pre-push helper must be registered")
     for path in manifest["entrypoints"].values():
         require_file(path)
     require(manifest["safety"]["networkRequired"] is False, "operational harness may not require network")
@@ -119,13 +135,18 @@ def main() -> None:
         require(item["mutatesTarget"] is False, f"registered validator mutates target: {item['id']}")
         require(item["proof"], f"validator proof missing: {item['id']}")
 
-    for schema in (
-        "tooling/harness/operational/schemas/operational-harness-status.schema.json",
-        "tooling/harness/operational/schemas/operational-harness-handoff.schema.json",
+    status_schema = load("tooling/harness/operational/schemas/operational-harness-status.schema.json")
+    handoff_schema = load("tooling/harness/operational/schemas/operational-harness-handoff.schema.json")
+    for data, schema in (
+        (status_schema, "tooling/harness/operational/schemas/operational-harness-status.schema.json"),
+        (handoff_schema, "tooling/harness/operational/schemas/operational-harness-handoff.schema.json"),
     ):
-        data = load(schema)
         require(data["$schema"] == "https://json-schema.org/draft/2020-12/schema", f"schema draft: {schema}")
         require(data["title"], f"schema title: {schema}")
+    for required_key in ("validation", "nextAction"):
+        require(required_key in status_schema["required"], f"status schema missing required {required_key}")
+    for required_key in ("validationGateComplete", "nextOwner", "nextDependency", "nextProof", "nextCommand"):
+        require(required_key in handoff_schema["required"], f"handoff schema missing required {required_key}")
 
     skill = require_file(".ai/skills/operational-harness-routing/SKILL.md").read_text(encoding="utf-8")
     for token in (
@@ -133,11 +154,16 @@ def main() -> None:
     ):
         require(token in skill, f"skill token missing: {token}")
 
-    hook = require_file("tooling/harness/operational/hooks/Invoke-OperationalHarnessPreCommit.ps1").read_text(encoding="utf-8")
-    require("Test-OperationalHarness.ps1" in hook, "hook must run owning validator")
-    require("diff --cached --check" in hook, "hook must run staged diff check")
-    for forbidden in ("core.hookspath", "git config", "reset --hard", "git clean", "force-push"):
-        require(forbidden not in hook.lower(), f"hook contains forbidden behavior: {forbidden}")
+    pre_commit = require_file("tooling/harness/operational/hooks/Invoke-OperationalHarnessPreCommit.ps1").read_text(encoding="utf-8")
+    require("Test-OperationalHarness.ps1" in pre_commit, "pre-commit helper must run owning validator")
+    require("diff --cached --check" in pre_commit, "pre-commit helper must run staged diff check")
+    pre_push = require_file("tooling/harness/operational/hooks/Invoke-OperationalHarnessPrePush.ps1").read_text(encoding="utf-8")
+    require("Test-OperationalHarness.ps1" in pre_push, "pre-push helper must run owning validator")
+    require("diff --check" in pre_push, "pre-push helper must run range diff check")
+    require("-BaseRef" in pre_push, "pre-push helper must explain explicit stacked base")
+    for hook_text, label in ((pre_commit, "pre-commit"), (pre_push, "pre-push")):
+        for forbidden in ("core.hookspath", "git config", "reset --hard", "git clean", "force-push"):
+            require(forbidden not in hook_text.lower(), f"{label} helper contains forbidden behavior: {forbidden}")
 
     workflow = require_file(".github/workflows/operational-harness.yml").read_text(encoding="utf-8")
     for token in (
@@ -153,7 +179,7 @@ def main() -> None:
         require(token in workflow, f"CI token missing: {token}")
 
     guide = require_file("docs/harness/operational-harness.md").read_text(encoding="utf-8")
-    for token in ("newcomer control surface", "task-intake", "pre-commit-validation", "failure-recovery", "handoff", "Artifact registry", "Optional hook", "Proof ceiling"):
+    for token in ("newcomer control surface", "task-intake", "pre-commit-validation", "failure-recovery", "handoff", "Artifact registry", "Optional hooks", "Pre-push", "Proof ceiling"):
         require(token in guide, f"operator guide token missing: {token}")
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -167,6 +193,52 @@ def main() -> None:
         status = json.loads((Path(temp_dir) / "operational-harness-status.json").read_text(encoding="utf-8"))
         require(status["routing"]["workflow"] == "pre-commit-validation", "task routing should select validation")
         require(status["routing"]["specializedSkill"] == ".ai/skills/environment-capability-routing/SKILL.md", "cross-environment task should route to environment skill")
+        require(status["validation"]["gateComplete"] is False, "validation may not be inferred")
+
+    head = git("rev-parse", "HEAD")
+    with tempfile.TemporaryDirectory() as temp_dir:
+        reported = subprocess.run(
+            [
+                sys.executable,
+                str(HARNESS / "Get-OperationalHarnessStatus.py"),
+                "--task", "verify PR 80 operational harness before review or merge",
+                "--output-root", temp_dir,
+                "--branch-label", "feat/operational-harness-infrastructure-20260807",
+                "--expected-head", head,
+                "--pr-number", "80",
+                "--validated-command", "pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1",
+                "--validated-command", "python tests/test_operational_harness.py",
+                "--validated-command", "git diff --check",
+                "--gate-complete",
+            ],
+            cwd=Path(temp_dir), text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
+        )
+        require(reported.returncode == 0, f"actionable reporter exit={reported.returncode} stdout={reported.stdout!r} stderr={reported.stderr!r}")
+        status = json.loads((Path(temp_dir) / "operational-harness-status.json").read_text(encoding="utf-8"))
+        handoff = json.loads((Path(temp_dir) / "operational-harness-handoff.json").read_text(encoding="utf-8"))
+        report = (Path(temp_dir) / "operational-harness-report.md").read_text(encoding="utf-8")
+        require(status["git"]["branch"] == "feat/operational-harness-infrastructure-20260807" or status["git"]["branch"], "branch identity must be preserved")
+        require(status["git"]["head"] == head, "exact head must be preserved")
+        require(status["pullRequest"] == 80, "PR context missing")
+        require(status["routing"]["workflow"] == "handoff", "complete PR gate should route to handoff")
+        require(status["validation"]["gateComplete"] is True, "gate completion missing")
+        require(len(status["validation"]["reportedSuccessfulCommands"]) == 3, "validation receipts missing")
+        require(handoff["validationGateComplete"] is True, "handoff gate completion missing")
+        require(handoff["nextOwner"] == "repository owner", "next action owner must be explicit")
+        require("explicit owner merge authorization" in handoff["nextDependency"], "merge dependency must remain explicit")
+        require(f"--match-head-commit {head}" in handoff["nextCommand"], "next merge gate must pin exact head")
+        require("selected workflow: `handoff`" in report, "report must render handoff workflow")
+        require("validation gate complete: `True`" in report, "report must render validation completion")
+        require("owner: `repository owner`" in report, "report must render action owner")
+        require("python3 tests/test_operational_harness.py`\n\nThis report" not in report, "report must not loop back to the first validator after completed gate")
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        mismatch = subprocess.run(
+            [sys.executable, str(HARNESS / "Get-OperationalHarnessStatus.py"), "--output-root", temp_dir, "--expected-head", "0000000000000000000000000000000000000000"],
+            cwd=Path(temp_dir), text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
+        )
+        require(mismatch.returncode != 0, "expected-head mismatch must fail closed")
+        require("HEAD mismatch" in mismatch.stderr, "expected-head mismatch must explain failure")
 
     print("PASS: operational harness completeness and routing contract")
 
