@@ -9,6 +9,7 @@
     {"workflowId": "handoff", "path": "tooling/harness/operational/workflows/handoff.workflow.json", "triggers": ["chat ending", "agent transfer", "blocked by review", "blocked by live target", "continuation required"], "skill": ".ai/skills/pr-integration/SKILL.md"}
   ],
   "specializedRouting": [
+    {"condition": "task starts from a stale or dirty AgentSwitchboard checkout and must verify or run an exact remote head without mutating the source checkout", "skill": ".ai/skills/stale-checkout-exact-head-bootstrap/SKILL.md", "workflowRoot": "tooling/profiles/windows/harness/stale-checkout-exact-head/workflows/"},
     {"condition": "task crosses platform, host, shell, frontend, SSH, tmux, orchestration runtime, or agent runtime", "skill": ".ai/skills/environment-capability-routing/SKILL.md", "workflowRoot": null},
     {"condition": "task requires operator-visible runtime proof", "skill": ".ai/skills/end-to-end-runtime-validation/SKILL.md", "workflowRoot": null},
     {"condition": "task concerns Windows profile launch modes", "skill": ".ai/skills/windows-profile-launch-mode-validation/SKILL.md", "workflowRoot": "tooling/profiles/windows/harness/launch-modes/workflows/"},
