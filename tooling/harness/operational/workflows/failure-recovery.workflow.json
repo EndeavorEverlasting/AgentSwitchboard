@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "failure-recovery",
+  "title": "Handle validator or harness failures",
+  "purpose": "Keep the failing evidence, identify the owning layer, repair only owned defects, and rerun the affected gate.",
+  "inputs": ["failing command", "exit code", "bounded output", "changed paths", "selected workflow"],
+  "steps": [
+    "Preserve the first failure identity and bounded diagnostic output.",
+    "Classify the failure as harness structure, schema/registry mismatch, documentation drift, script parse, domain contract, environment dependency, or unauthorized boundary.",
+    "Do not weaken a validator, fixture, policy, or proof claim to manufacture a pass.",
+    "Repair only files inside the declared owned scope.",
+    "Rerun the focused failing check, then rerun dependent foundation checks and git diff --check.",
+    "If the blocker is environment, credentials, review, merge, live target, or unsupported topology, stop mutation and produce a handoff with the exact gate."
+  ],
+  "outputs": ["updated validation ledger", "repaired tracked files or exact blocker", "next executable gate"],
+  "proofCeiling": "Repair evidence for the owned layer only."
+}

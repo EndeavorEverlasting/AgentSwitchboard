@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AgentSwitchboard Operational Harness Handoff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "repository", "branch", "branchRef", "head", "pullRequest", "statusArtifact", "reportArtifact", "validated", "validationGateComplete", "unproved", "nextOwner", "nextDependency", "nextProof", "nextCommand"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "repository": {"type": "string"},
+    "branch": {"type": ["string", "null"]},
+    "branchRef": {"type": ["string", "null"]},
+    "head": {"type": ["string", "null"]},
+    "pullRequest": {"type": ["integer", "null"]},
+    "statusArtifact": {"type": "string"},
+    "reportArtifact": {"type": "string"},
+    "validated": {"type": "array", "items": {"type": "string"}},
+    "validationGateComplete": {"type": "boolean"},
+    "unproved": {"type": "array", "items": {"type": "string"}},
+    "nextOwner": {"type": "string"},
+    "nextDependency": {"type": "string"},
+    "nextProof": {"type": "string"},
+    "nextCommand": {"type": "string"}
+  }
+}
