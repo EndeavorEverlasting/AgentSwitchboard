@@ -56,9 +56,15 @@ They are local operational evidence and are never tracked by default. The status
 
 `tooling/harness/operational/validator-registry.json` separates owning, foundation, domain, and aggregate validators. Run owning checks first. Adding a validator to the registry does not magically prove its domain; the command must actually run successfully in the applicable environment.
 
-### Optional hook
+### Optional hooks
 
-`tooling/harness/operational/hooks/Invoke-OperationalHarnessPreCommit.ps1` is an opt-in helper. The repository does **not** install or configure it automatically. It runs the operational completeness validator and staged `git diff --check`. Operators may invoke it directly or wire it into their own local hook policy.
+The repository never installs or configures Git hooks automatically.
+
+`tooling/harness/operational/hooks/Invoke-OperationalHarnessPreCommit.ps1` is an opt-in pre-commit helper. It runs the operational completeness validator and staged `git diff --cached --check`.
+
+`tooling/harness/operational/hooks/Invoke-OperationalHarnessPrePush.ps1` is an opt-in **Pre-push** helper. It runs the owning operational validator and a range `git diff --check`. When the current branch has no upstream, it fails closed and requires `-BaseRef <exact-base-ref>` instead of guessing `main`; that is required for stacked work such as a feature branch based on another unmerged feature branch.
+
+Operators may invoke either helper directly or wire it into their own local hook policy. The harness itself does not mutate `core.hooksPath`, `.git/hooks`, Git configuration, history, or the working tree.
 
 ### Skill
 
@@ -66,7 +72,13 @@ They are local operational evidence and are never tracked by default. The status
 
 ### Operator report
 
-`tooling/harness/operational/Get-OperationalHarnessStatus.py` emits machine-readable status plus an English report. The report says what components exist, what is missing, the selected route for the supplied task text, current local branch/HEAD/dirty observation, validators, known traps, proof ceiling, and next command.
+`tooling/harness/operational/Get-OperationalHarnessStatus.py` emits machine-readable status plus an English report. The report says what components exist, what is missing, the selected route for the supplied task text, current local Git observation, validators, known traps, proof ceiling, validation receipts, and a dependency-aware next action.
+
+For isolated detached verification worktrees, pass `--branch-label` so the report preserves the logical branch identity instead of reporting only `detached-or-unavailable`. Use `--expected-head` to fail closed if the checkout is not the exact expected SHA. Use `--branch-ref` when a Git ref must independently resolve to that same HEAD. Use `--pr-number` to bind the report to a pull request.
+
+The reporter never infers that validators passed merely because their files exist. Commands already executed by an outer verification workflow may be supplied with repeatable `--validated-command` arguments. `--gate-complete` is accepted only when at least one such receipt is supplied; the ledger records those entries as caller-attested rather than independently executed by the reporter.
+
+After a complete PR verification gate, the default next action advances to the real merge/review dependency. It names the owner, states that explicit owner merge authorization and required review are still dependencies, pins the PR head with `gh pr merge --match-head-commit`, and does **not** merge anything itself. GitHub CLI documents `--match-head-commit` as the guard that refuses a merge if the PR head moved.
 
 ## Failure behavior
 
@@ -88,6 +100,12 @@ pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1
 git diff --check
 ```
 
+Optional pre-push gate for a stacked branch:
+
+```powershell
+pwsh -NoLogo -NoProfile -File tooling/harness/operational/hooks/Invoke-OperationalHarnessPrePush.ps1 -BaseRef origin/<exact-base-branch>
+```
+
 Hosted `.github/workflows/operational-harness.yml` additionally compares a broad set of existing dependency-light Python/Bash contracts on Linux and existing PowerShell foundation/domain contracts on Windows against the exact PR base. Head-only failures block. Inherited base failures remain visible as baseline debt. This is regression evidence for repository contracts, not live runtime proof.
 
 ## Rollback
@@ -96,4 +114,4 @@ The harness is isolated under `tooling/harness/operational/`, plus its skill, va
 
 ## Proof ceiling
 
-Passing the operational harness proves that the tracked operational components are present, internally cross-referenced, parseable, safely routed, and capable of producing read-only local status/report/handoff artifacts. It does not prove product runtime, AgentSwitchboard orchestration on another environment, provider authentication, SSH/tmux continuity, deployment, or operator acceptance.
+Passing the operational harness proves that the tracked operational components are present, internally cross-referenced, parseable, safely routed, and capable of producing read-only local status/report/handoff artifacts. A caller-attested validation ledger proves only that the outer workflow supplied those successful-command receipts; it does not cause the reporter to re-run them. Nothing in this operational harness proves product runtime, AgentSwitchboard orchestration on another environment, provider authentication, SSH/tmux continuity, deployment, merge authorization, or operator acceptance.
