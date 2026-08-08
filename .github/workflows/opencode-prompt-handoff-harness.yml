@@ -1,0 +1,67 @@
+name: OpenCode prompt handoff harness
+
+on:
+  pull_request:
+    paths:
+      - "tooling/harness/operational/opencode-prompt-handoff/**"
+      - ".ai/skills/opencode-prompt-handoff/**"
+      - "docs/harness/opencode-prompt-handoff.md"
+      - "scripts/Test-OpenCodePromptHandoffHarness.ps1"
+      - "tests/test_opencode_prompt_handoff_harness.py"
+      - "tooling/harness/operational/manifest.json"
+      - "tooling/harness/operational/codebase-map.json"
+      - "tooling/harness/operational/workflow-registry.json"
+      - "tooling/harness/operational/validator-registry.json"
+      - "tooling/harness/operational/Get-OperationalHarnessStatus.py"
+      - "tests/test_operational_harness.py"
+      - ".github/workflows/opencode-prompt-handoff-harness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Prompt handoff portable contract
+        run: python3 -m unittest tests.test_opencode_prompt_handoff_harness
+      - name: Prompt handoff PowerShell completeness
+        shell: pwsh
+        run: ./scripts/Test-OpenCodePromptHandoffHarness.ps1
+      - name: Operational harness portable contract
+        run: python3 -m unittest tests.test_operational_harness
+      - name: Operational harness PowerShell contract
+        shell: pwsh
+        run: ./scripts/Test-OperationalHarness.ps1
+      - name: Diff hygiene
+        if: github.event_name == 'pull_request'
+        run: git diff --check "origin/${GITHUB_BASE_REF}...HEAD"
+
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Prompt handoff portable contract
+        shell: pwsh
+        run: python -m unittest tests.test_opencode_prompt_handoff_harness
+      - name: Prompt handoff PowerShell completeness
+        shell: pwsh
+        run: ./scripts/Test-OpenCodePromptHandoffHarness.ps1
+      - name: Operational harness portable contract
+        shell: pwsh
+        run: python -m unittest tests.test_operational_harness
+      - name: Operational harness PowerShell contract
+        shell: pwsh
+        run: ./scripts/Test-OperationalHarness.ps1
+      - name: Diff hygiene
+        if: github.event_name == 'pull_request'
+        shell: pwsh
+        run: git diff --check "origin/$env:GITHUB_BASE_REF...HEAD"

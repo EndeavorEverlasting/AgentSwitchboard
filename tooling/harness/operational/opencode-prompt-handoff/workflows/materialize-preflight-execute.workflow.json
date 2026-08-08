@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "opencode-prompt-handoff-materialize-preflight-execute",
+  "title": "Materialize one bounded prompt, preflight it, then execute the exact same artifact",
+  "purpose": "Prevent clipboard mutation or operator re-copy from changing the sprint between AgentSwitchboard preflight and execution.",
+  "triggers": [
+    "OpenCode sprint prompt starts on the Windows clipboard",
+    "PlanOnly or preflight is requested before a bounded sprint",
+    "operator would otherwise need to copy the prompt a second time",
+    "preflight and execution must prove prompt identity continuity"
+  ],
+  "inputs": [
+    "clean attached repository path",
+    "prompt path or one clipboard snapshot",
+    "bounded sprint name",
+    "iteration/token bounds",
+    "push preference"
+  ],
+  "steps": [
+    "Resolve the target repository and existing OpenCode launcher without mutating product code.",
+    "Read the prompt exactly once from the supplied file or clipboard intake source.",
+    "Materialize those exact prompt bytes to a run-local untracked bounded-sprint-prompt.md artifact.",
+    "Compute and record SHA-256 and character count without copying raw prompt text into the receipt or report.",
+    "Invoke the existing OpenCode launcher in PlanOnly mode with -PromptPath pointing to the materialized artifact.",
+    "Stop immediately if preflight exits nonzero; preserve the artifact and receipt for recovery.",
+    "Recompute SHA-256 after preflight and fail closed if the prompt artifact changed.",
+    "Unless PreflightOnly was explicitly requested, invoke the existing OpenCode launcher again with the exact same -PromptPath and bounds.",
+    "Record execute exit code and final digest, and fail closed if prompt identity changed or execution failed.",
+    "Write the machine-readable receipt and human operator report outside the repository."
+  ],
+  "failureHandling": [
+    "Never ask the operator to copy the prompt again merely to continue the same run.",
+    "Never silently fall back to the current clipboard after a prompt artifact has been materialized.",
+    "Never delete the run-local prompt automatically after a failed preflight or execution; it is recovery evidence.",
+    "Route launcher/product defects to the product owner; this harness lane may not patch product code."
+  ],
+  "outputs": [
+    "bounded-sprint-prompt.md",
+    "prompt-handoff-receipt.json",
+    "prompt-handoff-operator-report.md",
+    "OpenCode/GNHF downstream evidence paths printed by the delegated launcher"
+  ],
+  "proofCeiling": "Prompt transport and gate ordering only. A successful harness run does not itself prove provider response, code quality, branch push, PR state, merge, deployment, or end-user acceptance."
+}

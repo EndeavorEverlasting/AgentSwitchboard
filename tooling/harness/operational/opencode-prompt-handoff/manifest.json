@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "harnessId": "agentswitchboard.opencode-prompt-handoff.v1",
+  "title": "OpenCode bounded-prompt handoff harness",
+  "purpose": "Make preflight-to-execution prompt identity deterministic so a validated AgentSwitchboard sprint cannot depend on the mutable Windows clipboard across separate invocations.",
+  "canonicalOwner": "tooling/harness/operational/opencode-prompt-handoff/Invoke-OpenCodePromptHandoff.ps1",
+  "entrypoints": {
+    "runner": "tooling/harness/operational/opencode-prompt-handoff/Invoke-OpenCodePromptHandoff.ps1",
+    "codebaseMap": "tooling/harness/operational/opencode-prompt-handoff/codebase-map.json",
+    "workflow": "tooling/harness/operational/opencode-prompt-handoff/workflows/materialize-preflight-execute.workflow.json",
+    "artifactRegistry": "tooling/harness/operational/opencode-prompt-handoff/artifact-registry.json",
+    "completenessValidator": "scripts/Test-OpenCodePromptHandoffHarness.ps1",
+    "portableContract": "tests/test_opencode_prompt_handoff_harness.py",
+    "skill": ".ai/skills/opencode-prompt-handoff/SKILL.md",
+    "operatorGuide": "docs/harness/opencode-prompt-handoff.md",
+    "preCommitHook": "tooling/harness/operational/opencode-prompt-handoff/hooks/Invoke-OpenCodePromptHandoffPreCommit.ps1",
+    "prePushHook": "tooling/harness/operational/opencode-prompt-handoff/hooks/Invoke-OpenCodePromptHandoffPrePush.ps1"
+  },
+  "integration": {
+    "delegatesTo": "tooling/gnhf/Start-AgentSwitchboardOpenCode.ps1",
+    "promptTransport": "materialize-once-to-run-local-file",
+    "identity": "SHA-256 of the exact UTF-8 prompt artifact",
+    "preflightAndExecutionUseSamePromptPath": true,
+    "clipboardMaySeedPrompt": true,
+    "clipboardMayBridgePreflightToExecution": false
+  },
+  "generatedEvidence": {
+    "tracked": false,
+    "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/prompt-handoff/runs/<run-id>",
+    "artifacts": [
+      "bounded-sprint-prompt.md",
+      "prompt-handoff-receipt.json",
+      "prompt-handoff-operator-report.md"
+    ]
+  },
+  "hooks": {
+    "implicitInstallationAllowed": false,
+    "preCommit": "tooling/harness/operational/opencode-prompt-handoff/hooks/Invoke-OpenCodePromptHandoffPreCommit.ps1",
+    "prePush": "tooling/harness/operational/opencode-prompt-handoff/hooks/Invoke-OpenCodePromptHandoffPrePush.ps1"
+  },
+  "safety": {
+    "productMutationAllowed": false,
+    "governanceMutationOwned": false,
+    "destructiveGitAllowed": false,
+    "secretCollectionAllowed": false,
+    "generatedPromptTrackedAllowed": false,
+    "proofCeiling": "Proves deterministic prompt materialization, exact prompt digest continuity, preflight-before-execution ordering, and harness/component contracts. It does not prove provider authentication, hosted model response, coding quality, push, merge, deployment, or operator acceptance."
+  }
+}

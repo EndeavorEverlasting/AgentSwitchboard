@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "mapId": "agentswitchboard.opencode-prompt-handoff-map.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "boundary": "harness-only composition around the existing OpenCode sprint launcher",
+  "owners": [
+    {"path": "Start-AgentSwitchboard-OpenCode.cmd", "role": "existing clickable product entrypoint; not modified by this harness sprint"},
+    {"path": "tooling/gnhf/Start-AgentSwitchboardOpenCode.ps1", "role": "existing OpenCode sprint launcher; accepts -PromptPath and -PlanOnly"},
+    {"path": "tooling/gnhf/Start-GnhfSprint.ps1", "role": "existing bounded GNHF worktree sprint engine"},
+    {"path": "tooling/harness/operational/opencode-prompt-handoff/Invoke-OpenCodePromptHandoff.ps1", "role": "harness-owned composition runner that snapshots prompt input once and binds preflight and execution to the same artifact"},
+    {"path": "tooling/harness/operational/opencode-prompt-handoff/workflows/materialize-preflight-execute.workflow.json", "role": "deterministic operator workflow"},
+    {"path": ".ai/skills/opencode-prompt-handoff/SKILL.md", "role": "routing and recovery procedure"},
+    {"path": "scripts/Test-OpenCodePromptHandoffHarness.ps1", "role": "PowerShell completeness and parse validator"},
+    {"path": "tests/test_opencode_prompt_handoff_harness.py", "role": "portable structural and anti-regression contract"},
+    {"path": "docs/harness/opencode-prompt-handoff.md", "role": "operator guide and proof ceiling"}
+  ],
+  "knownFailure": {
+    "symptom": "A PlanOnly launch reports Prompt: clipboard, exits successfully without starting GNHF, and a later execution must read the clipboard again.",
+    "risk": "The prompt can change between preflight and execution, so the second launch is not cryptographically or artifact-bound to what was preflighted.",
+    "fieldEvidence": "Observed 2026-08-08: PlanOnly consumed a 7094-character clipboard prompt and explicitly reported that no GNHF or provider process was started.",
+    "harnessRule": "Clipboard may be an intake source only. Preflight and execution must consume one materialized prompt artifact with one recorded digest."
+  },
+  "commands": {
+    "run": "pwsh -NoLogo -NoProfile -File tooling/harness/operational/opencode-prompt-handoff/Invoke-OpenCodePromptHandoff.ps1 -RepoPath <repo> -PushBranch",
+    "validatePowerShell": "pwsh -NoLogo -NoProfile -File scripts/Test-OpenCodePromptHandoffHarness.ps1",
+    "validatePortable": "python3 tests/test_opencode_prompt_handoff_harness.py",
+    "diffCheck": "git diff --check"
+  },
+  "forbidden": [
+    "Do not require the operator to copy the prompt again after preflight.",
+    "Do not treat clipboard contents as durable continuation evidence.",
+    "Do not write the raw prompt into JSON receipts, CI logs, PR bodies, or tracked files.",
+    "Do not bypass the existing OpenCode/GNHF launchers or duplicate their lifecycle logic.",
+    "Do not mutate product code, governance, secrets, or live targets from this harness lane."
+  ]
+}
