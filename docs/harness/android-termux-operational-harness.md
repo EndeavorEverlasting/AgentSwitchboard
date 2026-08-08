@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This harness makes Android/Termux repository work repeatable when mobile terminal input, text selection, split-pane rendering, scrollback, clipboard transport, app switching, or evidence preservation is unreliable. The Android runtime is separately implemented and registered on `main`; this harness indexes that runtime but does not modify it or claim live provider/model/tool success.
+This harness makes Android/Termux repository work repeatable when mobile terminal input, text selection, split-pane rendering, scrollback, clipboard transport, app switching, modal editors, foreground-process state, or evidence preservation is unreliable. The Android runtime is separately implemented and registered on `main`; this harness indexes that runtime but does not modify it or claim live provider/model/tool success.
 
 ## Prerequisites and authority floor
 
@@ -55,6 +55,42 @@ Do not persist a pane that contains an OAuth/device code, password, token, priva
 
 For **human browsing only**, tmux copy mode is the fallback: press `Ctrl+B`, release, press `[`, navigate with Page Up/Page Down or arrows, and press `q` to leave copy mode. `capture-pane` remains the preferred evidence path because it is explicit, bounded, scriptable, and independent of Android native selection.
 
+## Modal terminal state is not a hang by default
+
+Every operator instruction that opens a modal surface must include four things **before** the command is run: the expected foreground screen, the fact that the shell prompt will be absent while that application owns the pane, the exact exit keys, and whether exiting saves or discards work.
+
+From another safe pane, classify an ambiguous pane with:
+
+```sh
+bash tooling/profiles/android/harness/termux/Inspect-TerminalState.sh <session:window.pane>
+```
+
+For nano, the common visible state is the edited filename plus `Modified` near the top and shortcuts including `^G Help`, `^O Write Out`, and `^X Exit` at the bottom. That is an editor waiting for input, not evidence that Termux or the shell is hung.
+
+The exit contract is explicit:
+
+- press `Ctrl+X`;
+- if nano asks to save a modified buffer, press `N` to discard accidental content;
+- or press `Y`, then `Enter`, to save the shown filename when the text is intentionally the sprint prompt.
+
+After exit, prove the shell actually returned:
+
+```sh
+printf 'PHONE_SHELL_READY=%s\n' "$(date -Iseconds)"
+```
+
+Do not kill Termux, close the tmux session, or press random keys simply because the prompt disappeared.
+
+### Sprint prompt boundary
+
+The shell commands used to prepare work are **not** the content of `sprint.md`. A valid sprint prompt contains the bounded repository task that the coding agent should execute. If the file contains lines such as `cd`, `git switch main`, `git pull --ff-only`, `git switch -c ...`, or `nano "$HOME/sprint.md"`, classify the intake as authoring confusion and repair or discard that file before running:
+
+```sh
+agentswitchboard-android sprint --prompt-file "$HOME/sprint.md"
+```
+
+The workflow `workflows/recover-modal-terminal-state.workflow.json` and fixture `fixtures/nano-modal-editor.fixture.txt` are the deterministic recovery contract for this failure.
+
 ## Input framing workflow
 
 If a pasted command appears with literal `[200~` or another framing marker, stop downstream diagnosis. A line such as `[200~gh ...` is evidence that the shell did not receive `gh` as the executable name; it is not evidence that GitHub CLI is uninstalled. Manually type `command -v gh` / `gh --version` before considering package repair.
@@ -65,10 +101,11 @@ Clipboard copy/paste is convenient but optional. Critical commands have one cano
 
 ## Validation
 
-Android-local contract:
+Android-local contracts:
 
 ```sh
 python tests/test_android_termux_harness.py
+python tests/test_android_termux_modal_state_harness.py
 ```
 
 Opt-in hooks:
@@ -82,6 +119,7 @@ PowerShell/hosted completeness:
 
 ```powershell
 pwsh -NoLogo -NoProfile -File scripts/Test-AndroidTermuxHarnessCompleteness.ps1
+pwsh -NoLogo -NoProfile -File scripts/Test-AndroidTermuxModalStateHarness.ps1
 pwsh -NoLogo -NoProfile -File scripts/Test-AppHarness.ps1
 ```
 
@@ -93,7 +131,7 @@ git diff --check
 
 ## Artifacts
 
-Use `tooling/profiles/android/harness/termux/artifact-registry.json`. Pane inventory, bounded pane capture, terminal interaction report, bootstrap logs, clone proof and harness validation are local/untracked. Never commit raw operator evidence simply to prove the harness exists.
+Use `tooling/profiles/android/harness/termux/artifact-registry.json`. Terminal-state reports, pane inventory, bounded pane capture, terminal interaction reports, bootstrap logs, clone proof and harness validation are local/untracked. Never commit raw operator evidence simply to prove the harness exists.
 
 ## Runtime boundary
 
@@ -101,7 +139,7 @@ The canonical runtime entrypoint is `Start-AgentSwitchboard-Android.sh`, and the
 
 ## Failure handling
 
-Preserve the tmux session and the first safe failure evidence. Route bracketed-paste failures through the input-boundary workflow and multi-pane/scrollback failures through `capture-terminal-output.workflow.json` / `android-termux-terminal-recovery`. If the only relevant screen contains secrets, do not broaden the screenshot or capture; generate sanitized output in a known pane.
+Preserve the tmux session and the first safe failure evidence. Route modal editor/pager ambiguity through `recover-modal-terminal-state.workflow.json`, bracketed-paste failures through the input-boundary workflow, and multi-pane/scrollback failures through `capture-terminal-output.workflow.json` / `android-termux-terminal-recovery`. If the only relevant screen contains secrets, do not broaden the screenshot or capture; generate sanitized output in a known pane.
 
 ## Rollback
 
@@ -109,4 +147,4 @@ Hooks are opt-in and the harness installs nothing globally except the explicit P
 
 ## Proof ceiling
 
-Tracked harness structure, deterministic validators, CI, pane-capture procedure, clone gate, repository-family routing boundary, failure classification, and evidence policy only. This does not prove identical Android UI behavior, clipboard reliability on every device, repository-family status without its PowerShell probe, provider authentication, model/tool behavior, repository mutation, or operator acceptance.
+Tracked harness structure, deterministic validators, CI, pane-capture procedure, modal-state classifier, explicit editor exit contract, sprint-prompt boundary, clone gate, repository-family routing boundary, failure classification, and evidence policy only. This does not prove identical Android UI behavior, clipboard reliability on every device, foreground-process health, repository-family status without its PowerShell probe, provider authentication, model/tool behavior, repository mutation, or operator acceptance.

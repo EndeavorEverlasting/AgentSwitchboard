@@ -11,7 +11,9 @@ on:
       - '.ai/harness/app-composition.graph.json'
       - 'docs/harness/android-termux-operational-harness.md'
       - 'scripts/Test-AndroidTermuxHarnessCompleteness.ps1'
+      - 'scripts/Test-AndroidTermuxModalStateHarness.ps1'
       - 'tests/test_android_termux_harness.py'
+      - 'tests/test_android_termux_modal_state_harness.py'
       - '.github/workflows/android-termux-harness.yml'
       - '.ai/harness/device-profile-registry.json'
       - 'Start-AgentSwitchboard-Android.sh'
@@ -28,15 +30,21 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Parse Android shell hooks
+      - name: Parse Android shell hooks and state inspector
         run: |
           bash -n tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPreCommit.sh
           bash -n tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPrePush.sh
+          bash -n tooling/profiles/android/harness/termux/Inspect-TerminalState.sh
       - name: Portable Android Termux contracts
         run: python tests/test_android_termux_harness.py
+      - name: Portable Android modal-state contracts
+        run: python tests/test_android_termux_modal_state_harness.py
       - name: Android Termux completeness
         shell: pwsh
         run: pwsh -NoLogo -NoProfile -File scripts/Test-AndroidTermuxHarnessCompleteness.ps1
+      - name: Android modal-state completeness
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-AndroidTermuxModalStateHarness.ps1
       - name: Existing Python contracts
         run: python -m unittest discover -s tests -p 'test_*.py'
       - name: Aggregate app harness
@@ -59,6 +67,9 @@ jobs:
       - name: Runtime event contract
         shell: pwsh
         run: pwsh -NoLogo -NoProfile -File scripts/Test-RuntimeEventContract.ps1
+      - name: Android modal-state completeness
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-AndroidTermuxModalStateHarness.ps1
       - name: Canonical app harness wrapper
         shell: cmd
         run: Test-AppHarness.cmd

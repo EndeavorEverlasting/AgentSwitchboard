@@ -7,6 +7,7 @@
     {"artifactId":"termux-bootstrap-log","pattern":"termux-bootstrap-<timestamp>.log","proof":"installed command/version output only"},
     {"artifactId":"tmux-persistence-proof","pattern":"tmux-persistence-<timestamp>.txt","proof":"device-local tmux session persistence only"},
     {"artifactId":"terminal-input-boundary-report","pattern":"terminal-input-boundary-<timestamp>.txt","proof":"input framing/executable-resolution classification only"},
+    {"artifactId":"terminal-state-report","pattern":"terminal-state-<session>-<window>-<pane>-<timestamp>.txt","proof":"foreground command, modal-state classification and exit contract only; no process-health proof"},
     {"artifactId":"tmux-pane-inventory","pattern":"tmux-pane-inventory-<timestamp>.txt","proof":"pane identities and active state at capture time only"},
     {"artifactId":"tmux-pane-capture","pattern":"tmux-pane-<session>-<window>-<pane>-<timestamp>.txt","proof":"bounded rendered pane history only; not command success by itself"},
     {"artifactId":"terminal-interaction-report","pattern":"terminal-interaction-<timestamp>.md","proof":"selected pane, transport method, capture path and sensitivity decision"},
@@ -19,7 +20,8 @@
   "capturePolicy": {
     "defaultHistoryLines": 200,
     "primary": "Prefer exact tmux pane inventory plus bounded capture-pane over Android long-press selection or touch scrolling.",
-    "sensitivePane": "If the selected pane contains or may contain authentication secrets/device codes, do not persist it; switch to a non-sensitive pane or capture fresh sanitized output instead."
+    "sensitivePane": "If the selected pane contains or may contain authentication secrets/device codes, do not persist it; switch to a non-sensitive pane or capture fresh sanitized output instead.",
+    "modalState": "A foreground editor or pager is classified from tmux pane state. Do not call it hung solely because the shell prompt is absent; record its exit contract before recovery."
   },
   "proofCeiling": "Registry defines local evidence names and limits; artifact existence alone is never runtime success."
 }

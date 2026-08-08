@@ -1,0 +1,17 @@
+{
+  "schema": "agentswitchboard.android-termux-workflow.v1",
+  "workflowId": "android-termux-recover-modal-terminal-state",
+  "trigger": "The phone appears stuck after a command, an editor or pager is visible, or the operator cannot tell whether the terminal is waiting for input, running work, or hung.",
+  "inputs": ["tmux pane identity or current tmux pane", "visible foreground application when known", "whether unsaved task text should be saved or discarded", "next intended shell action"],
+  "steps": [
+    {"id":"declare-modal-handoff-before-entry","action":"Before instructing an operator to enter nano, less, tmux copy mode, vi-family editors, or another modal surface, state the expected next screen, the fact that the shell prompt will disappear until exit, the exact exit keys, and the save-versus-discard consequence.","evidence":"operator instruction contains expected state and exit contract"},
+    {"id":"classify-current-pane","action":"From a safe pane, run tooling/profiles/android/harness/termux/Inspect-TerminalState.sh with the exact target. Treat pane_current_command=nano as an editor awaiting input, not a shell hang. Do not infer a hang merely because there is no shell prompt.","evidence":"terminal-state classification"},
+    {"id":"recognize-nano-screen","action":"A nano screen commonly shows the edited filename and Modified near the top and shortcut labels such as ^G Help, ^O Write Out and ^X Exit at the bottom. Classify this as modal-editor:nano.","evidence":"screen-state classification only; screenshot is optional, not required"},
+    {"id":"protect-sprint-prompt-boundary","action":"If sprint.md contains shell setup commands such as cd, git switch, git pull, branch creation, or nano itself instead of the bounded repository task, classify task intake as authoring confusion. Do not pass that file to agentswitchboard-android sprint --prompt-file until it contains the intended task instructions.","evidence":"prompt file classified as bounded-task-text or rejected as shell-bootstrap-text"},
+    {"id":"exit-nano-explicitly","action":"Press Ctrl+X. If nano asks whether to save a modified buffer, press N to discard accidental content, or Y then Enter to save the shown filename when the content is intentionally the sprint prompt. Do not press random keys or kill Termux to escape.","evidence":"return to shell or explicit unsaved-content decision"},
+    {"id":"prove-shell-return","action":"After exit, prove the shell returned with printf 'PHONE_SHELL_READY=%s\\n' \"$(date -Iseconds)\" and then inspect only the intended prompt file with a bounded command before launching the sprint.","evidence":"PHONE_SHELL_READY marker plus bounded prompt inspection"},
+    {"id":"continue-one-action","action":"Only after the state and prompt boundary are known, execute the next owned command. For a real bounded phone sprint, that is agentswitchboard-android sprint --prompt-file \"$HOME/sprint.md\" from a clean non-main feature branch.","evidence":"next command and owning runtime evidence"}
+  ],
+  "failurePolicy": "Never label a modal foreground application as hung without runtime evidence. Preserve the tmux session, identify the exact pane and command, provide the exit contract, and recover to a shell before unrelated diagnosis.",
+  "proofCeiling": "This workflow proves terminal-state classification, an explicit modal exit path, and task-file intake boundaries. It does not prove provider/model behavior, that a foreground process is healthy, repository mutation, sprint success, or operator acceptance."
+}
