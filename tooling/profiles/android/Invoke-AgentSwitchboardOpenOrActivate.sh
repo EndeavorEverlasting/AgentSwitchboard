@@ -264,6 +264,7 @@ repo_status="missing"
 origin_status="unknown"
 working_tree_status="unknown"
 session_status="unknown"
+session_probe_exit="not-run"
 
 if command -v tmux >/dev/null 2>&1; then
   tmux_status="ready"
@@ -285,11 +286,19 @@ if git -C "$repo_path" rev-parse --git-dir >/dev/null 2>&1; then
 fi
 
 if [ "$tmux_status" = "ready" ]; then
-  if tmux has-session -t "$session" 2>/dev/null; then
+  session_probe_log="${TMPDIR:-/tmp}/agentswitchboard-tmux-probe-$$.log"
+  set +e
+  tmux has-session -t "$session" >/dev/null 2>"$session_probe_log"
+  session_probe_exit=$?
+  set -e
+  if [ "$session_probe_exit" -eq 0 ]; then
     session_status="present"
-  else
+  elif grep -Eq "no server running on|can't find session" "$session_probe_log"; then
     session_status="absent"
+  else
+    session_status="inspection-error"
   fi
+  rm -f "$session_probe_log"
 fi
 
 printf 'remote_os=%s\n' "$remote_os"
@@ -299,11 +308,13 @@ printf 'repository_status=%s\n' "$repo_status"
 printf 'origin_status=%s\n' "$origin_status"
 printf 'working_tree_status=%s\n' "$working_tree_status"
 printf 'session_status=%s\n' "$session_status"
+printf 'session_probe_exit=%s\n' "$session_probe_exit"
 
 if [ "$tmux_status" != "ready" ]; then exit 41; fi
 if [ "$repo_status" != "present" ]; then exit 42; fi
 if [ "$origin_status" != "expected" ]; then exit 43; fi
 if [ "$working_tree_status" != "clean" ]; then exit 44; fi
+if [ "$session_status" = "inspection-error" ]; then exit 45; fi
 printf 'preflight=pass\n'
 REMOTE_PREFLIGHT
 )"
