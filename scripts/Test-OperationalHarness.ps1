@@ -37,6 +37,7 @@ $required = @(
     'tooling/harness/operational/schemas/operational-harness-handoff.schema.json',
     'tooling/harness/operational/templates/operator-report.template.md',
     'tooling/harness/operational/hooks/Invoke-OperationalHarnessPreCommit.ps1',
+    'tooling/harness/operational/hooks/Invoke-OperationalHarnessPrePush.ps1',
     'tooling/harness/operational/Get-OperationalHarnessStatus.py',
     '.ai/skills/operational-harness-routing/SKILL.md',
     'scripts/Test-OperationalHarness.ps1',
@@ -57,6 +58,8 @@ if ($null -ne $manifest) {
     Add-Result ($manifest.harnessId -eq 'agentswitchboard.operational-harness.v1') 'manifest/id' 'unexpected harness id'
     Add-Result ($manifest.generatedEvidence.tracked -eq $false) 'manifest/untracked-evidence' 'generated evidence must remain untracked'
     Add-Result ($manifest.hooks.implicitInstallationAllowed -eq $false) 'manifest/opt-in-hooks' 'hooks may not install implicitly'
+    Add-Result (-not [string]::IsNullOrWhiteSpace([string]$manifest.hooks.preCommit)) 'manifest/pre-commit-hook' 'pre-commit helper must be registered'
+    Add-Result (-not [string]::IsNullOrWhiteSpace([string]$manifest.hooks.prePush)) 'manifest/pre-push-hook' 'pre-push helper must be registered'
     Add-Result ($manifest.safety.networkRequired -eq $false) 'manifest/no-network-requirement' 'operational harness must not require network'
     Add-Result ($manifest.safety.liveTargetMutationAllowed -eq $false) 'manifest/no-live-target-mutation' 'live target mutation is forbidden'
     Add-Result ($manifest.safety.productMutationAllowed -eq $false) 'manifest/no-product-mutation' 'product mutation is forbidden'
@@ -104,21 +107,50 @@ foreach ($schemaPath in @('tooling/harness/operational/schemas/operational-harne
     }
 }
 
-$hookPath = Join-Path $RootPath 'tooling/harness/operational/hooks/Invoke-OperationalHarnessPreCommit.ps1'
-if (Test-Path -LiteralPath $hookPath -PathType Leaf) {
+$statusSchema = Read-Json 'tooling/harness/operational/schemas/operational-harness-status.schema.json'
+if ($null -ne $statusSchema) {
+    foreach ($expected in @('validation','nextAction')) { Add-Result (@($statusSchema.required) -contains $expected) "schema/status-required/$expected" 'actionable status field is not required' }
+}
+$handoffSchema = Read-Json 'tooling/harness/operational/schemas/operational-harness-handoff.schema.json'
+if ($null -ne $handoffSchema) {
+    foreach ($expected in @('validationGateComplete','nextOwner','nextDependency','nextProof','nextCommand')) { Add-Result (@($handoffSchema.required) -contains $expected) "schema/handoff-required/$expected" 'actionable handoff field is not required' }
+}
+
+$preCommitPath = Join-Path $RootPath 'tooling/harness/operational/hooks/Invoke-OperationalHarnessPreCommit.ps1'
+if (Test-Path -LiteralPath $preCommitPath -PathType Leaf) {
     $tokens = $null; $parseErrors = $null
-    [void][System.Management.Automation.Language.Parser]::ParseFile($hookPath, [ref]$tokens, [ref]$parseErrors)
-    Add-Result ($parseErrors.Count -eq 0) 'hook/powershell-parse' ($parseErrors -join '; ')
-    $hookText = Get-Content -LiteralPath $hookPath -Raw
-    Add-Result ($hookText.Contains('Test-OperationalHarness.ps1')) 'hook/owning-validator' 'owning validator missing'
-    Add-Result ($hookText.Contains('diff --cached --check')) 'hook/staged-diff-check' 'staged diff check missing'
-    Add-Result ($hookText -notmatch '(?i)core\.hooksPath|git\s+config|reset\s+--hard|git\s+clean|force-push') 'hook/no-implicit-or-destructive-git' 'hook contains forbidden Git behavior'
+    [void][System.Management.Automation.Language.Parser]::ParseFile($preCommitPath, [ref]$tokens, [ref]$parseErrors)
+    Add-Result ($parseErrors.Count -eq 0) 'hook/pre-commit-powershell-parse' ($parseErrors -join '; ')
+    $hookText = Get-Content -LiteralPath $preCommitPath -Raw
+    Add-Result ($hookText.Contains('Test-OperationalHarness.ps1')) 'hook/pre-commit-owning-validator' 'owning validator missing'
+    Add-Result ($hookText.Contains('diff --cached --check')) 'hook/pre-commit-staged-diff-check' 'staged diff check missing'
+    Add-Result ($hookText -notmatch '(?i)core\.hooksPath|git\s+config|reset\s+--hard|git\s+clean|force-push') 'hook/pre-commit-no-implicit-or-destructive-git' 'hook contains forbidden Git behavior'
+}
+
+$prePushPath = Join-Path $RootPath 'tooling/harness/operational/hooks/Invoke-OperationalHarnessPrePush.ps1'
+if (Test-Path -LiteralPath $prePushPath -PathType Leaf) {
+    $tokens = $null; $parseErrors = $null
+    [void][System.Management.Automation.Language.Parser]::ParseFile($prePushPath, [ref]$tokens, [ref]$parseErrors)
+    Add-Result ($parseErrors.Count -eq 0) 'hook/pre-push-powershell-parse' ($parseErrors -join '; ')
+    $hookText = Get-Content -LiteralPath $prePushPath -Raw
+    Add-Result ($hookText.Contains('Test-OperationalHarness.ps1')) 'hook/pre-push-owning-validator' 'owning validator missing'
+    Add-Result ($hookText.Contains('diff --check')) 'hook/pre-push-range-diff-check' 'range diff check missing'
+    Add-Result ($hookText.Contains('-BaseRef')) 'hook/pre-push-explicit-base' 'stacked branch base requirement missing'
+    Add-Result ($hookText -notmatch '(?i)core\.hooksPath|git\s+config|reset\s+--hard|git\s+clean|force-push') 'hook/pre-push-no-implicit-or-destructive-git' 'hook contains forbidden Git behavior'
 }
 
 $skillPath = Join-Path $RootPath '.ai/skills/operational-harness-routing/SKILL.md'
 if (Test-Path -LiteralPath $skillPath -PathType Leaf) {
     $skillText = Get-Content -LiteralPath $skillPath -Raw
     foreach ($token in @('id: operational-harness-routing','status: canonical','## Trigger','## Inputs','## Procedure','## Outputs','## Deterministic validation','## Forbidden scope','## Stop and escalate')) { Add-Result ($skillText.Contains($token)) "skill/$token" 'required skill token missing' }
+}
+
+$reporterPath = Join-Path $RootPath 'tooling/harness/operational/Get-OperationalHarnessStatus.py'
+if (Test-Path -LiteralPath $reporterPath -PathType Leaf) {
+    $reporterText = Get-Content -LiteralPath $reporterPath -Raw
+    foreach ($token in @('--branch-label','--branch-ref','--expected-head','--pr-number','--validated-command','--gate-complete','--match-head-commit','explicit owner merge authorization')) {
+        Add-Result ($reporterText.Contains($token)) "reporter/$token" 'actionable detached-worktree or next-gate contract missing'
+    }
 }
 
 Write-Host 'OPERATIONAL HARNESS CONTRACT' -ForegroundColor Cyan
