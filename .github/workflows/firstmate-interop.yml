@@ -7,12 +7,15 @@ on:
       - 'tests/test_operational_harness.py'
       - 'tests/test_firstmate_integration_contract.py'
       - 'tests/test_firstmate_operational_harness.py'
+      - 'tests/test_firstmate_windows_harness_portability.py'
       - 'tests/test_firstmate_windows_wsl_bridge.py'
       - 'docs/harness/firstmate-integration.md'
       - 'docs/harness/firstmate-operational-harness.md'
       - 'docs/reports/firstmate-operational-harness-status.md'
       - '.ai/skills/firstmate-crew-orchestration/**'
       - 'Test-AgentSwitchboard-FirstMate-Harness.sh'
+      - 'Test-AgentSwitchboard-FirstMate-Harness.ps1'
+      - 'Test-AgentSwitchboard-FirstMate-Harness.cmd'
       - 'Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1'
       - '.github/workflows/firstmate-interop.yml'
   pull_request:
@@ -21,12 +24,15 @@ on:
       - 'tests/test_operational_harness.py'
       - 'tests/test_firstmate_integration_contract.py'
       - 'tests/test_firstmate_operational_harness.py'
+      - 'tests/test_firstmate_windows_harness_portability.py'
       - 'tests/test_firstmate_windows_wsl_bridge.py'
       - 'docs/harness/firstmate-integration.md'
       - 'docs/harness/firstmate-operational-harness.md'
       - 'docs/reports/firstmate-operational-harness-status.md'
       - '.ai/skills/firstmate-crew-orchestration/**'
       - 'Test-AgentSwitchboard-FirstMate-Harness.sh'
+      - 'Test-AgentSwitchboard-FirstMate-Harness.ps1'
+      - 'Test-AgentSwitchboard-FirstMate-Harness.cmd'
       - 'Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1'
       - '.github/workflows/firstmate-interop.yml'
 
@@ -40,6 +46,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -54,6 +61,7 @@ jobs:
         run: |
           python tests/test_firstmate_integration_contract.py
           python tests/test_firstmate_operational_harness.py
+          python tests/test_firstmate_windows_harness_portability.py
           python tests/test_firstmate_windows_wsl_bridge.py
       - name: Validate shell surfaces
         run: |
@@ -73,21 +81,23 @@ jobs:
           git fetch --no-tags origin main
           git diff --check origin/main...HEAD
 
-  windows-bridge-contract:
+  windows-native-contract:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Validate bridge static contract
+      - name: Validate Windows-native First Mate harness
         shell: pwsh
         run: |
-          python tests/test_firstmate_windows_wsl_bridge.py
-          $head = (git rev-parse HEAD).Trim()
-          pwsh -NoLogo -NoProfile -File .\Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead $head -ContractOnly
+          pwsh -NoLogo -NoProfile -File .\Test-AgentSwitchboard-FirstMate-Harness.ps1 -Mode contract
+      - name: Validate existing operational harness floor
+        shell: pwsh
+        run: python tests/test_operational_harness.py
       - name: Validate branch diff hygiene
         shell: pwsh
         run: |

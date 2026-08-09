@@ -3,27 +3,37 @@
   "validators": [
     {
       "id": "firstmate-integration-contract",
-      "command": "python3 tests/test_firstmate_integration_contract.py",
-      "scope": "First Mate upstream pin, safe probe, platform/role boundary"
+      "command": "python tests/test_firstmate_integration_contract.py",
+      "scope": "First Mate upstream pin, safe probe, platform/role boundary, portable origin normalization"
     },
     {
       "id": "firstmate-operational-completeness",
-      "command": "python3 tests/test_firstmate_operational_harness.py",
-      "scope": "maps, workflows, artifacts, validators, hooks, skill, report, selector"
+      "command": "python tests/test_firstmate_operational_harness.py",
+      "scope": "maps, workflows, artifacts, validators, hooks, skill, reports, selectors, platform front doors"
+    },
+    {
+      "id": "firstmate-windows-native-harness",
+      "command": "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-Harness.ps1 -Mode contract",
+      "scope": "Windows-native contract/report/route front door; forbids bare Bash dependency during Windows contract validation"
+    },
+    {
+      "id": "firstmate-windows-portability-contract",
+      "command": "python tests/test_firstmate_windows_harness_portability.py",
+      "scope": "Windows path and shell portability, canonical origin normalizer, CMD/PowerShell front-door contracts"
     },
     {
       "id": "firstmate-windows-wsl-bridge-contract",
-      "command": "python3 tests/test_firstmate_windows_wsl_bridge.py && pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead <exact-sha> -ContractOnly",
-      "scope": "PowerShell-to-WSL transport boundary, separate stdout/stderr, no wslpath dependency, tracked artifact resolution"
+      "command": "python tests/test_firstmate_windows_wsl_bridge.py && pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead <exact-sha> -ContractOnly",
+      "scope": "PowerShell-to-WSL transport boundary, canonical Ubuntu, bounded WSL processes, separate stdout/stderr, no wslpath dependency, tracked artifact resolution"
     },
     {
       "id": "firstmate-shell-parse",
       "command": "bash -n tooling/firstmate/Test-FirstMateInterop.sh && bash -n Test-AgentSwitchboard-FirstMate-Harness.sh && bash -n tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPreCommit.sh && bash -n tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPrePush.sh",
-      "scope": "operator shell entrypoints and optional hook scripts"
+      "scope": "Linux/WSL operator shell entrypoints and optional hook scripts; not a Windows-native validator"
     },
     {
       "id": "operational-harness-foundation",
-      "command": "python3 tests/test_operational_harness.py",
+      "command": "python tests/test_operational_harness.py",
       "scope": "existing repository operational harness regression floor"
     },
     {

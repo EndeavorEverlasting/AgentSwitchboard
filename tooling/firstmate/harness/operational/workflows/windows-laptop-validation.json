@@ -1,0 +1,30 @@
+{
+  "schema": "agentswitchboard.firstmate-workflow.v1",
+  "id": "windows-laptop-validation",
+  "trigger": "A Windows laptop operator or agent must validate First Mate harness readiness before crossing into WSL.",
+  "inputs": [
+    "AgentSwitchboard repository root",
+    "exact AgentSwitchboard HEAD",
+    "requested mode: contract, report, route, or runtime-floor",
+    "whether repository-owned WSL repair is authorized for this run"
+  ],
+  "steps": [
+    "Run the PowerShell-native front door Test-AgentSwitchboard-FirstMate-Harness.ps1 from the repository root or through its CMD wrapper.",
+    "For contract mode, run only Windows-safe Python contracts plus the PowerShell bridge ContractOnly gate; do not invoke bare bash from Windows Python.",
+    "Generate reports and route decisions through the Python owners without crossing into WSL.",
+    "Only runtime-floor mode may cross into WSL, and it must delegate to Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 with the exact HEAD.",
+    "If WSL repair is explicitly requested, use the existing repository-owned Repair-Technician-WSL-Ubuntu.cmd path and preserve its reboot boundary.",
+    "Preserve generated diagnostics and stop at the first real runtime dependency rather than substituting Android or another shell."
+  ],
+  "outputs": [
+    "Windows-native contract receipt",
+    "operator report or route artifact when requested",
+    "physical WSL floor artifacts only when runtime-floor executes"
+  ],
+  "failure_handling": [
+    "A bare bash invocation from Windows PowerShell or Windows Python is a harness routing defect, not proof that WSL or First Mate is broken.",
+    "A Windows path handed directly to a POSIX shell must be rejected or translated by the owning bridge; do not retry with ad-hoc quoting.",
+    "Preserve the failing command, exit code, and bounded diagnostics, repair the harness owner, and rerun the Windows-native front door."
+  ],
+  "proof_ceiling": "contract/report/route modes prove harness behavior only; runtime-floor can prove the physical Windows-to-Ubuntu floor but not live crew productivity"
+}

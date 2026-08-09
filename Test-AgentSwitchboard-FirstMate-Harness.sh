@@ -19,6 +19,7 @@ case "$MODE" in
   contract)
     python3 tests/test_firstmate_integration_contract.py
     python3 tests/test_firstmate_operational_harness.py
+    python3 tests/test_firstmate_windows_harness_portability.py
     python3 tests/test_firstmate_windows_wsl_bridge.py
     bash -n Test-AgentSwitchboard-FirstMate-Harness.sh
     bash -n tooling/firstmate/Test-FirstMateInterop.sh

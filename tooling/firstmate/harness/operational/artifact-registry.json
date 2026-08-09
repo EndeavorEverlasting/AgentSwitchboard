@@ -2,35 +2,34 @@
   "schema": "agentswitchboard.firstmate-artifact-registry.v1",
   "naming": "firstmate-<artifact-role>[-<timestamp>].<ext>",
   "default_root": "OS temporary directory/agentswitchboard/firstmate-harness",
-  "windows_runtime_root": "OS temporary directory/AgentSwitchboard/firstmate-windows-wsl/<head8>-<timestamp>-<nonce>/",
   "artifacts": [
     {
       "id": "operator-report",
       "filename": "firstmate-harness-report.md",
-      "generator": "python3 tooling/firstmate/harness/operational/Build-FirstMateHarnessReport.py",
+      "generator": "python tooling/firstmate/harness/operational/Build-FirstMateHarnessReport.py",
       "contains": "role boundaries, component state, commands, blockers, proof ceiling, and next action",
       "proof_ceiling": "repository harness state only"
     },
     {
       "id": "route-decision",
       "filename": "firstmate-route.json",
-      "generator": "python3 tooling/firstmate/harness/operational/Select-FirstMateWorkflow.py --output <path>",
+      "generator": "python tooling/firstmate/harness/operational/Select-FirstMateWorkflow.py --output <path>",
       "contains": "deterministic route, runtime backend, execution gate, owner, dependency, and next command",
       "proof_ceiling": "routing decision only; not execution proof"
     },
     {
       "id": "windows-wsl-runtime-proof",
       "filename": "firstmate-floor.txt",
-      "generator": "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead <exact-sha>",
-      "contains": "canonical Ubuntu distribution identity, Windows source repository identity, WSLENV path transport, WSL-owned standalone exact-head clone identity, owning harness contract result, read-only First Mate floor output, route artifact, operator report, bootstrap stdout, and isolated WSL stderr diagnostics",
-      "proof_ceiling": "physical Windows-to-Ubuntu-on-WSL floor only; not live crew completion proof"
+      "generator": "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-Harness.ps1 -Mode runtime-floor -ExpectedHead <exact-sha>",
+      "contains": "canonical Ubuntu identity, Windows source repository identity, WSLENV path transport, WSL-owned standalone exact-head clone identity, owning harness contract result, read-only First Mate floor output, route artifact, operator report, bootstrap stdout, and isolated WSL stderr diagnostics",
+      "proof_ceiling": "physical Windows-to-WSL floor only; not live crew completion proof"
     },
     {
       "id": "windows-wsl-diagnostics",
       "filename": "wsl-stderr.log",
-      "generator": "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1",
-      "contains": "exact head, Windows launcher/source paths, canonical WSL distribution, bounded subprocess failures/timeouts, WSL workspace, and repository-owned WSL repair exit state when explicitly requested",
-      "proof_ceiling": "transport/failure diagnostics only; not WSL readiness or live crew proof"
+      "generator": "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 during each unique physical runtime-floor attempt",
+      "contains": "bounded WSL stage diagnostics, canonical distribution, timeout state, exact head, Windows source path, and preserved WSL workspace path; no credentials",
+      "proof_ceiling": "failure/runtime diagnostics only; not a success artifact"
     }
   ],
   "forbidden_evidence": [

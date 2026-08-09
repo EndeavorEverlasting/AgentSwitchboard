@@ -22,7 +22,7 @@
     },
     {
       "path": "tooling/profiles",
-      "purpose": "Machine/device profile harnesses, including the canonical Windows WSL/Ubuntu repair surface; separate from Android/Termux readiness."
+      "purpose": "Machine/device profile harnesses such as Android/Termux; separate from laptop crew readiness."
     },
     {
       "path": "tests",
@@ -43,28 +43,33 @@
   ],
   "entrypoints": {
     "crew_harness": "bash Test-AgentSwitchboard-FirstMate-Harness.sh contract",
+    "windows_harness": "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-Harness.ps1 -Mode contract",
+    "windows_cmd_harness": "Test-AgentSwitchboard-FirstMate-Harness.cmd contract",
+    "windows_runtime_floor": "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-Harness.ps1 -Mode runtime-floor -ExpectedHead <exact-sha>",
     "windows_wsl_bridge": "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead <exact-sha>",
-    "windows_wsl_bridge_with_bounded_repair": "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead <exact-sha> -RepairWslIfNeeded",
-    "canonical_wsl_repair": "Repair-Technician-WSL-Ubuntu.cmd",
     "firstmate_probe": "bash tooling/firstmate/Test-FirstMateInterop.sh --firstmate <path>",
-    "route_selector": "python3 tooling/firstmate/harness/operational/Select-FirstMateWorkflow.py --parallel-writers <n> --firstmate-floor <pass|unproved|fail> --platform <linux-wsl|windows|android|other>",
-    "operator_report": "python3 tooling/firstmate/harness/operational/Build-FirstMateHarnessReport.py"
+    "origin_normalizer": "python tooling/firstmate/harness/operational/Normalize-FirstMateOrigin.py <origin-url>",
+    "route_selector": "python tooling/firstmate/harness/operational/Select-FirstMateWorkflow.py --parallel-writers <n> --firstmate-floor <pass|unproved|fail> --platform <linux-wsl|windows|android|other>",
+    "operator_report": "python tooling/firstmate/harness/operational/Build-FirstMateHarnessReport.py"
   },
   "commands": {
     "focused_test": [
-      "python3 tests/test_firstmate_integration_contract.py",
-      "python3 tests/test_firstmate_operational_harness.py",
-      "python3 tests/test_firstmate_windows_wsl_bridge.py"
+      "python tests/test_firstmate_integration_contract.py",
+      "python tests/test_firstmate_operational_harness.py",
+      "python tests/test_firstmate_windows_harness_portability.py",
+      "python tests/test_firstmate_windows_wsl_bridge.py"
     ],
-    "shell_parse": [
+    "windows_contract": [
+      "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-Harness.ps1 -Mode contract"
+    ],
+    "shell_parse_linux_wsl": [
       "bash -n Test-AgentSwitchboard-FirstMate-Harness.sh",
       "bash -n tooling/firstmate/Test-FirstMateInterop.sh",
       "bash -n tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPreCommit.sh",
-      "bash -n tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPrePush.sh",
-      "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead <exact-sha> -ContractOnly"
+      "bash -n tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPrePush.sh"
     ],
     "foundation_test": [
-      "python3 tests/test_operational_harness.py"
+      "python tests/test_operational_harness.py"
     ],
     "diff_hygiene": [
       "git diff --check <base>...HEAD"
@@ -79,14 +84,14 @@
     "Android readiness does not block productive laptop/WSL crew work; the lanes are independent.",
     "Do not infer a valid Git checkout by requiring .git to be a directory; linked worktrees use a .git file.",
     "Normalize equivalent GitHub origin transports before comparing repository identity.",
+    "On Windows, a portable Python contract must not spawn bare bash with a Windows path. Use the Windows-native PowerShell harness and portable Python owners for cross-platform logic.",
+    "A Windows path such as C:\\... is not a POSIX path. Never hand it directly to Bash and infer a WSL or First Mate failure from the resulting exit code.",
+    "Do not trust the default WSL distribution for First Mate runtime work; bind to the integration contract's canonical Ubuntu distribution and prove WSL_DISTRO_NAME before continuing.",
     "Do not auto-promote Herdr while its pinned contract and live runtime gates are unresolved.",
     "Do not use First Mate remote-writing modes until the local-only runtime gate has evidence.",
     "Do not feed Windows temporary paths through wslpath and then parse combined native output; use WSLENV /p path translation and capture stdout/stderr separately.",
     "A Windows-created linked worktree is not a portable Linux Git checkout because its .git indirection can contain Windows-owned worktree metadata. The bridge must create a WSL-owned standalone clone at the exact commit.",
     "Do not hardcode /mnt/c for Windows-to-WSL transport; the WSL automount root is configurable.",
-    "A WSL configuration warning on stderr is diagnostic evidence, not machine-readable path or JSON output.",
-    "Bare wsl.exe --exec uses the default WSL distribution, which may be a service distro without Bash. First Mate laptop proof must bind the canonical Ubuntu distribution declared by the integration contract.",
-    "Every WSL subprocess in the physical proof must have a bounded timeout; an interactive or wedged WSL command must not hold the operator terminal indefinitely.",
-    "Repeated physical-laptop proof attempts must use unique evidence directories so later runs cannot overwrite the failure evidence that motivated a repair."
+    "A WSL configuration warning on stderr is diagnostic evidence, not machine-readable path or JSON output."
   ]
 }
