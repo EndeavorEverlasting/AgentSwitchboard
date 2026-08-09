@@ -1,0 +1,82 @@
+name: Lua embedding harness contract
+
+on:
+  pull_request:
+    paths:
+      - "tooling/lua/**"
+      - ".ai/skills/lua-embedding-integration/**"
+      - "scripts/Test-LuaHarnessCompleteness.ps1"
+      - "tests/test_lua_harness_contracts.py"
+      - "docs/harness/lua-embedding-harness.md"
+      - "docs/reports/lua-embedding-harness-status.md"
+      - ".github/workflows/lua-harness-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run dependency-free Lua contracts
+        run: python tests/test_lua_harness_contracts.py
+      - name: Run Lua completeness contract
+        shell: pwsh
+        run: ./scripts/Test-LuaHarnessCompleteness.ps1
+      - name: Run Lua read-only status
+        run: python tooling/lua/Get-LuaHarnessStatus.py --no-write
+      - name: Run canonical documentation contract
+        shell: pwsh
+        run: ./scripts/Test-AgentDocumentationContract.ps1
+      - name: Full PR-range hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check "origin/${GITHUB_BASE_REF}...HEAD"
+          test -z "$(git status --short)"
+
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Parse Lua PowerShell surfaces
+        shell: pwsh
+        run: |
+          $failures = [System.Collections.Generic.List[string]]::new()
+          foreach ($path in @(
+            'scripts/Test-LuaHarnessCompleteness.ps1',
+            'tooling/lua/hooks/Invoke-LuaHarnessPreCommit.ps1',
+            'tooling/lua/hooks/Invoke-LuaHarnessPrePush.ps1'
+          )) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
+            foreach ($error in @($errors)) { $failures.Add("$path`: $($error.Message)") }
+          }
+          if ($failures.Count -gt 0) {
+            $failures | ForEach-Object { Write-Error $_ }
+            exit 1
+          }
+      - name: Run dependency-free Lua contracts
+        shell: pwsh
+        run: python tests/test_lua_harness_contracts.py
+      - name: Run Lua completeness contract
+        shell: pwsh
+        run: ./scripts/Test-LuaHarnessCompleteness.ps1
+      - name: Run Lua read-only status
+        shell: pwsh
+        run: python tooling/lua/Get-LuaHarnessStatus.py --no-write
+      - name: Run canonical documentation contract
+        shell: pwsh
+        run: ./scripts/Test-AgentDocumentationContract.ps1
+      - name: Verify clean checkout
+        shell: pwsh
+        run: |
+          git diff --check "origin/$env:GITHUB_BASE_REF...HEAD"
+          if (git status --short) { throw 'Checkout is dirty after Lua harness validation.' }

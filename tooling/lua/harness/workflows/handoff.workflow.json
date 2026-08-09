@@ -1,0 +1,16 @@
+{
+  "schema": "agentswitchboard.lua-workflow.v1",
+  "id": "lua-handoff",
+  "trigger": "The harness gate is complete or the next action belongs to a separate product/runtime integration owner.",
+  "inputs": ["exact branch/head", "validation receipts", "generated report/readiness artifact", "unresolved runtime gates", "owned/forbidden scope"],
+  "steps": [
+    "Generate lua-harness-report.md and lua-readiness.json from the tracked status reporter.",
+    "Record the exact proof ceiling and all unresolved promotion gates.",
+    "When product embedding is next, require an explicit runtime sprint that pins Lua version/API and owns host wrapper code.",
+    "Name the first executable downstream validator or runtime action; do not substitute generic review/test advice.",
+    "Keep generated evidence outside tracked authority."
+  ],
+  "outputs": ["lua-harness-report.md", "lua-readiness.json", "lua-runtime-handoff.json or exact downstream action"],
+  "failureHandling": ["If current evidence is stale or contradictory, regenerate status before handoff."],
+  "proofCeiling": "handoff state only; no runtime promotion"
+}

@@ -1,0 +1,16 @@
+{
+  "schema": "agentswitchboard.lua-workflow.v1",
+  "id": "lua-task-intake",
+  "trigger": "A request proposes Lua scripting, embedding, sandboxing, VM state, host callbacks, LuaJIT, or Lua-authored dynamic logic.",
+  "inputs": ["repository/branch identity", "requested Lua use case", "host-language owner", "trust level of scripts", "required host capabilities", "owned and forbidden paths"],
+  "steps": [
+    "Read AGENTS.md, harness doctrine, Lua manifest, Lua embedding contract, codebase map, and scoped skill.",
+    "Classify each requested behavior as host-owned, Lua-owned, shared interface, or out-of-scope.",
+    "Reject product/runtime mutation in a harness-only sprint and record the required downstream runtime owner.",
+    "Select embedding-design-validation when architecture/lifecycle is changing; select sandbox-validation when capability exposure or untrusted scripts are involved.",
+    "Record unresolved version/API/resource-limit dependencies before any runtime promotion."
+  ],
+  "outputs": ["selected workflow", "host/Lua boundary map", "unresolved runtime dependencies", "proof ceiling", "exact next validator or downstream sprint gate"],
+  "failureHandling": ["If ownership is ambiguous, stop mutation and produce the boundary map first.", "If the request implies OS/IO access without an allow-list, route to sandbox-validation and fail closed."],
+  "proofCeiling": "intake and routing only"
+}

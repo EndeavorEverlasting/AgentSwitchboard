@@ -1,0 +1,15 @@
+{
+  "schema": "agentswitchboard.lua-validator-registry.v1",
+  "validators": [
+    {"id": "lua-contracts", "command": "python tests/test_lua_harness_contracts.py", "scope": "embedding principles, workflow completeness, sandbox fixtures, artifact policy, skill/docs consistency"},
+    {"id": "lua-completeness", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-LuaHarnessCompleteness.ps1", "scope": "tracked component existence, JSON parseability, Python contracts, and generated-evidence exclusion"},
+    {"id": "lua-status", "command": "python tooling/lua/Get-LuaHarnessStatus.py --no-write", "scope": "read-only English/machine contract readiness"},
+    {"id": "documentation-contract", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1", "scope": "canonical repository documentation and skill compatibility"},
+    {"id": "diff-hygiene", "command": "git diff --check <base>...HEAD", "scope": "branch patch whitespace/errors"}
+  ],
+  "hooks": {
+    "preCommit": "tooling/lua/hooks/Invoke-LuaHarnessPreCommit.ps1",
+    "prePush": "tooling/lua/hooks/Invoke-LuaHarnessPrePush.ps1"
+  },
+  "hookInstallation": "manual-only; never installed implicitly"
+}

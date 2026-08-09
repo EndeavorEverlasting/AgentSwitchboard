@@ -1,0 +1,81 @@
+{
+  "schema": "agentswitchboard.lua-embedding-contract.v1",
+  "contractId": "agentswitchboard.lua-embedding.v1",
+  "basis": {
+    "source": "owner-supplied technical breakdown",
+    "attribution": "Roberto Ierusalimschy",
+    "externalVerification": "not-performed-in-this-harness-sprint"
+  },
+  "architecture": {
+    "runtimeForm": "embedded-library",
+    "hostOwnsMainLoop": true,
+    "standaloneCliRequired": false,
+    "performancePartition": {
+      "host": "resource-intensive, performance-critical, lifecycle-critical behavior",
+      "lua": "dynamic logic that benefits from frequent safe change"
+    }
+  },
+  "stateIsolation": {
+    "independentVmStatesRequired": true,
+    "sharedMutableVmStateAcrossIsolationBoundariesAllowed": false,
+    "destroyResetOneStateWithoutHostImpactRequired": true,
+    "explicitStateCloseRequired": true,
+    "hostProcessMemoryOwnershipPreserved": true
+  },
+  "errorHandling": {
+    "scriptsMayRaiseErrors": true,
+    "hostMustCatchScriptErrors": true,
+    "protectedHostCallBoundaryRequired": true,
+    "rollbackAndCleanupOwnedByHost": true,
+    "uncaughtScriptErrorMayTerminateHost": false
+  },
+  "execution": {
+    "bytecodeCompatibleVmLoopPreferred": true,
+    "smallInterpreterInstructionSetPreferred": true,
+    "jitRequired": false,
+    "jitPromotionRequiresSeparateEvidence": true,
+    "jitIfAdopted": {
+      "deoptimizationPathRequired": true,
+      "reconstructibleInterpreterStateRequired": true
+    }
+  },
+  "typeDiscipline": {
+    "languageModel": "dynamic",
+    "runtimeChecksAtHostBoundaryRequired": true,
+    "internalDeveloperTypeDisciplineRequired": true,
+    "hostTypesOwnAllocationCriticalPaths": true
+  },
+  "sandbox": {
+    "defaultLibraryPolicy": "deny",
+    "exposureModel": "allow-list",
+    "hostFunctionRegistrationRequired": true,
+    "forbiddenLibrariesByDefault": ["os", "io", "package", "debug"],
+    "ambientOperatingSystemAccessAllowed": false,
+    "ambientFileIoAllowed": false,
+    "capabilityManifestRequired": true
+  },
+  "designPhilosophy": {
+    "featureDefault": "exclude",
+    "preferHostLanguageWhenRequirementFitsHost": true,
+    "conceptualIntegrityOverFeatureCount": true,
+    "luaNativeIndexing": "1-based"
+  },
+  "aiAuditability": {
+    "humanReadableNonMagicalSnippetsRequired": true,
+    "ambientGlobalMutationAllowed": false,
+    "implicitCapabilityAcquisitionAllowed": false,
+    "hiddenSideEffectsRequireExplicitReview": true
+  },
+  "runtimePromotionGates": [
+    "pin exact Lua implementation/version and official embedding API source",
+    "define host wrapper ownership and public host-to-Lua interface",
+    "implement create-run-close lifecycle with one state per declared isolation boundary",
+    "prove host catches script errors and performs rollback/cleanup",
+    "prove default sandbox denies os/io/package/debug and only allow-listed host functions are exposed",
+    "define and test resource limits before untrusted or AI-generated scripts",
+    "prove repeated state teardown with bounded leak/resource evidence",
+    "document host-versus-script performance partition",
+    "run exact operator/runtime path through end-to-end runtime validation before product success claim"
+  ],
+  "proofCeiling": "Design and promotion contract only. It does not select a Lua distribution, install Lua, bind a C API, execute bytecode, create a state, enforce a sandbox, prove teardown, or change product behavior."
+}
