@@ -48,7 +48,8 @@
       "trigger": "tracked Herdr harness change",
       "steps": [
         "parse wrapper, legacy readiness probe and hooks with bash -n",
-        "run migration, source-bound installation-review, compatibility-review and harness completeness tests",
+        "run migration, source-bound installation-review, compatibility-review and status-state-isolation contracts before harness completeness",
+        "run status routing tests against an isolated temporary --state-root so operator-local evidence cannot change synthetic validator outcomes",
         "run the prebuilt compatibility probe in contract mode only; CI must never download/execute the release asset",
         "run PowerShell completeness where available",
         "run existing Android Termux portable floor",
@@ -62,6 +63,7 @@
       "trigger": "probe, validator or migration gate failure",
       "steps": [
         "preserve first bounded non-sensitive failure evidence",
+        "validator result differs between clean CI and operator device => inspect ambient state discovery before changing assertions; isolate synthetic validator state rather than weakening the gate",
         "missing Herdr plus no install review => keep tmux and route to source-bound reviewed-installation",
         "completed blocked install review => route forward to runtime-compatibility-review",
         "native Android source-build request => keep blocked while the pinned source selects unsupported fallback platform behavior",

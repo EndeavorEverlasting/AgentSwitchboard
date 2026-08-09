@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 """Create a local source-bound Herdr Android runtime compatibility review."""
 from __future__ import annotations
-import argparse, json
+import argparse, json, os
 from datetime import datetime, timezone
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
 SOURCE = BASE / "upstream-runtime-compatibility.json"
-STATE_ROOT = Path.home() / ".local/state/agentswitchboard/android-herdr-migration"
+
+
+def state_root() -> Path:
+    xdg = os.environ.get("XDG_STATE_HOME")
+    base = Path(xdg).expanduser() if xdg else Path.home() / ".local/state"
+    return base / "agentswitchboard/android-herdr-migration"
 
 
 def load_source() -> dict:
@@ -98,7 +103,7 @@ def main() -> int:
     if not a.write and a.output is None:
         print(text, end="")
         return 0
-    target = a.output.expanduser() if a.output else STATE_ROOT / f"herdr-compatibility-review-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.md"
+    target = a.output.expanduser() if a.output else state_root() / f"herdr-compatibility-review-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.md"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(text, encoding="utf-8")
     print(f"COMPATIBILITY_REVIEW={target}\nDECISION={data['reviewDecision']}\nMIGRATION_DECISION={data['migrationDecision']}\nNEXT_GATE={data['nextGate']}\nNEXT_COMMAND=python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py evidence")

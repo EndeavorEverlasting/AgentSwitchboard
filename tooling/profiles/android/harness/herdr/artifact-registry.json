@@ -2,6 +2,7 @@
   "schema": "agentswitchboard.android-herdr-artifact-registry.v1",
   "stateRoot": "${XDG_STATE_HOME:-$HOME/.local/state}/agentswitchboard/android-herdr-migration",
   "policy": "generated-local-untracked",
+  "validatorIsolation": "Deterministic validators that exercise synthetic routing must pass an isolated --state-root and must not auto-discover operator-owned readiness/review artifacts.",
   "trackedSources": [
     {
       "sourceId": "herdr-upstream-installation-source",
@@ -17,54 +18,14 @@
     }
   ],
   "artifacts": [
-    {
-      "artifactId": "herdr-readiness-evidence",
-      "pattern": "herdr-readiness-<UTC timestamp>.env",
-      "generator": "bash Test-AgentSwitchboard-Android-Herdr.sh evidence",
-      "proof": "Termux/architecture, installed Herdr binary health, tmux fallback and migration classification only"
-    },
-    {
-      "artifactId": "herdr-harness-status-json",
-      "pattern": "herdr-harness-status-<UTC timestamp>.json",
-      "generator": "python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --write",
-      "proof": "repository harness state plus selected sanitized readiness/install-review classification"
-    },
-    {
-      "artifactId": "herdr-harness-status-markdown",
-      "pattern": "herdr-harness-status-<UTC timestamp>.md",
-      "generator": "python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --write",
-      "proof": "human-readable working/broken/missing/proof/next-action report"
-    },
-    {
-      "artifactId": "herdr-install-review",
-      "pattern": "herdr-install-review-<UTC timestamp>.md",
-      "generator": "python tooling/profiles/android/harness/herdr/Build-HerdrInstallReview.py --write",
-      "proof": "source-bound installation decision; BLOCKED never emits an install command"
-    },
-    {
-      "artifactId": "herdr-compatibility-review",
-      "pattern": "herdr-compatibility-review-<UTC timestamp>.md",
-      "generator": "python tooling/profiles/android/harness/herdr/Build-HerdrCompatibilityReview.py --write",
-      "proof": "source-bound native-Android versus Linux-musl compatibility decision and exact no-install probe boundary"
-    },
-    {
-      "artifactId": "herdr-prebuilt-exec-evidence",
-      "pattern": "herdr-prebuilt-exec-<UTC timestamp>.env",
-      "generator": "python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py evidence",
-      "proof": "exact pinned asset download/size/digest verification plus isolated --version execution identity only"
-    },
-    {
-      "artifactId": "herdr-validation-receipt",
-      "pattern": "herdr-harness-validation-<UTC timestamp>.txt",
-      "generator": "redirect focused validator output when durable proof is required",
-      "proof": "focused harness validator output only"
-    },
-    {
-      "artifactId": "herdr-runtime-proof",
-      "pattern": "herdr-runtime-proof-<run-id>.<ext>",
-      "generator": "future separately authorized live-runtime workflow",
-      "proof": "reserved; artifact existence alone never promotes a gate"
-    }
+    {"artifactId":"herdr-readiness-evidence","pattern":"herdr-readiness-<UTC timestamp>.env","generator":"bash Test-AgentSwitchboard-Android-Herdr.sh evidence","proof":"Termux/architecture, installed Herdr binary health, tmux fallback and migration classification only"},
+    {"artifactId":"herdr-harness-status-json","pattern":"herdr-harness-status-<UTC timestamp>.json","generator":"python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --write","proof":"repository harness state plus selected sanitized readiness/install-review classification"},
+    {"artifactId":"herdr-harness-status-markdown","pattern":"herdr-harness-status-<UTC timestamp>.md","generator":"python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --write","proof":"human-readable working/broken/missing/proof/next-action report"},
+    {"artifactId":"herdr-install-review","pattern":"herdr-install-review-<UTC timestamp>.md","generator":"python tooling/profiles/android/harness/herdr/Build-HerdrInstallReview.py --write","proof":"source-bound installation decision; BLOCKED never emits an install command"},
+    {"artifactId":"herdr-compatibility-review","pattern":"herdr-compatibility-review-<UTC timestamp>.md","generator":"python tooling/profiles/android/harness/herdr/Build-HerdrCompatibilityReview.py --write","proof":"source-bound native-Android versus Linux-musl compatibility decision and exact no-install probe boundary"},
+    {"artifactId":"herdr-prebuilt-exec-evidence","pattern":"herdr-prebuilt-exec-<UTC timestamp>.env","generator":"python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py evidence","proof":"exact pinned asset download/size/digest verification plus isolated --version execution identity only"},
+    {"artifactId":"herdr-validation-receipt","pattern":"herdr-harness-validation-<UTC timestamp>.txt","generator":"redirect focused validator output when durable proof is required","proof":"focused harness validator output only"},
+    {"artifactId":"herdr-runtime-proof","pattern":"herdr-runtime-proof-<run-id>.<ext>","generator":"future separately authorized live-runtime workflow","proof":"reserved; artifact existence alone never promotes a gate"}
   ],
   "naming": {
     "timestamps": "UTC basic YYYYMMDDTHHMMSSZ",
@@ -80,5 +41,5 @@
     "private hostnames or customer data",
     "raw machine-local evidence committed merely as proof"
   ],
-  "proofCeiling": "The registry defines tracked source binding plus local artifact ownership, names and proof limits. The prebuilt exec artifact can prove only checksum-verified ephemeral --version execution of the pinned Linux-musl ARM64 asset; artifact presence alone never proves installation approval, server behavior, persistence, agent state, background survival, sprint success, or runtime promotion."
+  "proofCeiling": "The registry defines tracked source binding plus local artifact ownership, names, validator isolation and proof limits. The prebuilt exec artifact can prove only checksum-verified ephemeral --version execution of the pinned Linux-musl ARM64 asset; artifact presence alone never proves installation approval, server behavior, persistence, agent state, background survival, sprint success, or runtime promotion."
 }
