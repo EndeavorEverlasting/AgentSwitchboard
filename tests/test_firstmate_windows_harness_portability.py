@@ -12,6 +12,7 @@ WORKFLOWS = HARNESS / "workflow-registry.json"
 WINDOWS_ENTRY = ROOT / "Test-AgentSwitchboard-FirstMate-Harness.ps1"
 WINDOWS_CMD = ROOT / "Test-AgentSwitchboard-FirstMate-Harness.cmd"
 INTEGRATION_TEST = ROOT / "tests" / "test_firstmate_integration_contract.py"
+OPERATIONAL_TEST = ROOT / "tests" / "test_firstmate_operational_harness.py"
 CI = ROOT / ".github" / "workflows" / "firstmate-interop.yml"
 
 
@@ -29,6 +30,7 @@ class FirstMateWindowsHarnessPortabilityTests(unittest.TestCase):
         cls.windows_entry = WINDOWS_ENTRY.read_text(encoding="utf-8")
         cls.windows_cmd = WINDOWS_CMD.read_text(encoding="utf-8")
         cls.integration_test = INTEGRATION_TEST.read_text(encoding="utf-8")
+        cls.operational_test = OPERATIONAL_TEST.read_text(encoding="utf-8")
         cls.ci = CI.read_text(encoding="utf-8")
 
     def test_manifest_registers_windows_native_front_door_and_normalizer(self):
@@ -74,6 +76,18 @@ class FirstMateWindowsHarnessPortabilityTests(unittest.TestCase):
         self.assertIn("sys.executable", self.integration_test)
         self.assertIn("Normalize-FirstMateOrigin.py", self.integration_test)
 
+    def test_operational_contract_reuses_current_python_interpreter(self):
+        self.assertIn("import sys", self.operational_test)
+        self.assertIn("sys.executable", self.operational_test)
+        self.assertNotRegex(
+            self.operational_test,
+            re.compile(r"subprocess\.run\(\s*\[\s*[\"']python3[\"']", re.MULTILINE),
+        )
+        self.assertNotRegex(
+            self.operational_test,
+            re.compile(r"subprocess\.run\(\s*\[\s*[\"']python[\"']", re.MULTILINE),
+        )
+
     def test_registry_exposes_platform_aware_windows_validator_and_workflow(self):
         validator_ids = {item["id"] for item in self.validators["validators"]}
         self.assertIn("firstmate-windows-native-harness", validator_ids)
@@ -85,13 +99,18 @@ class FirstMateWindowsHarnessPortabilityTests(unittest.TestCase):
         handling = workflow["failure_handling"]
         if isinstance(handling, str):
             handling = [handling]
-        self.assertIn("bare bash", "\n".join(handling).lower())
+        handling_text = "\n".join(handling).lower()
+        self.assertIn("bare bash", handling_text)
+        self.assertIn("9009", handling_text)
+        self.assertIn("sys.executable", handling_text)
 
-    def test_codebase_map_records_observed_cross_shell_trap(self):
+    def test_codebase_map_records_observed_cross_shell_and_python_alias_traps(self):
         traps = "\n".join(self.codebase["known_traps"]).lower()
         self.assertIn("bare bash", traps)
         self.assertIn("windows path", traps)
         self.assertIn("default wsl distribution", traps)
+        self.assertIn("python3", traps)
+        self.assertIn("sys.executable", traps)
         self.assertIn("windows_harness", self.codebase["entrypoints"])
 
     def test_windows_ci_runs_the_windows_native_front_door(self):

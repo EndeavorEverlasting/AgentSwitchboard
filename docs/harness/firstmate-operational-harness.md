@@ -58,6 +58,18 @@ The Linux probe delegates origin normalization to that owner. The portable Pytho
 
 **Rule:** never use a bare Bash subprocess from Windows contract validation merely because a Linux runtime exists later in the workflow. A Windows path is not a POSIX path.
 
+## Preserve Python interpreter identity
+
+A later physical Windows run exposed a second portability class. The PowerShell front door had already found and launched `python.exe`, but `tests/test_firstmate_operational_harness.py` then launched its own child Python tools using the literal executable name `python3`. That alias was not present on the Windows machine, so each child process returned exit `9009` even though Python itself was already running correctly.
+
+Portable Python contracts must therefore launch another repository Python script with the interpreter that is already executing the parent process:
+
+```python
+subprocess.run([sys.executable, str(tool), ...])
+```
+
+Do **not** repair this failure by installing another Python, adding aliases, switching into WSL, or changing the operator shell. When the parent Python process is healthy and only a hardcoded `python3` child returns `9009`, the owner is the harness test/launcher.
+
 ## Windows-to-WSL runtime floor
 
 The physical runtime bridge does **not** run Linux Git inside the Windows linked worktree. It derives the clean committed source repository with Git, passes that Windows path through Microsoft WSL's `WSLENV /p` path translation, creates a WSL-owned standalone clone under the Linux temporary filesystem, detaches that clone at the exact expected SHA, and runs all Linux validators there.
@@ -70,7 +82,7 @@ The bridge binds to the integration contract's canonical `Ubuntu` distribution, 
 - `codebase-map.json` — repository structure, platform entrypoints, commands, known traps.
 - `workflow-registry.json` and `workflows/*.json` — task intake, Windows-laptop validation, local-only crew execution, validation, failure recovery, handoff.
 - `artifact-registry.json` — operator report, route decision, and Windows-to-WSL runtime-floor artifacts.
-- `validator-registry.json` — portable, Windows-native, Linux/WSL shell, foundation, bridge, and diff gates.
+- `validator-registry.json` — portable, Windows-native, Linux/WSL shell, foundation, bridge, interpreter-continuity, and diff gates.
 - `Normalize-FirstMateOrigin.py` — portable origin-normalization owner shared by Windows contracts and the Linux probe.
 - `Select-FirstMateWorkflow.py` — deterministic direct-vs-crew/backend gate.
 - `Build-FirstMateHarnessReport.py` — English operator report generator.
@@ -87,20 +99,23 @@ The bridge binds to the integration contract's canonical `Ubuntu` distribution, 
 1. A linked worktree has a `.git` file rather than necessarily a `.git` directory.
 2. A **Windows-created linked worktree is not a portable Linux Git checkout**. Its `.git` file can point at Windows-owned worktree metadata that Linux Git cannot resolve correctly.
 3. A native Windows Python process must not invoke bare Bash with a Windows repository path for a platform-neutral contract.
-4. Do not pass Windows temporary paths through `wslpath` and assume stdout exists.
-5. Do not hardcode `/mnt/c`; WSL automount roots are configurable.
-6. Use `WSLENV /p` for Win32→WSL path translation and keep WSL stderr separate from stdout.
-7. The bridge creates a WSL-owned standalone exact-head clone from committed source state. Dirty files in the Windows source checkout are not copied into that clone.
-8. A WSL configuration warning on stderr is diagnostic evidence. It is only a gate failure if the WSL command itself fails.
-9. First Mate is the crew chief, not the AgentSwitchboard control plane.
-10. Herdr is a session-backend candidate, not the project manager; tmux remains the reference backend.
-11. Linux support does not prove Android/Termux or native-Windows First Mate runtime behavior.
+4. A Windows Python installation may expose `python.exe` without a `python3.exe` alias. Child Python tools in portable tests must use `sys.executable`; exit `9009` from hardcoded `python3` is an interpreter-routing defect.
+5. Do not pass Windows temporary paths through `wslpath` and assume stdout exists.
+6. Do not hardcode `/mnt/c`; WSL automount roots are configurable.
+7. Use `WSLENV /p` for Win32→WSL path translation and keep WSL stderr separate from stdout.
+8. The bridge creates a WSL-owned standalone exact-head clone from committed source state. Dirty files in the Windows source checkout are not copied into that clone.
+9. A WSL configuration warning on stderr is diagnostic evidence. It is only a gate failure if the WSL command itself fails.
+10. First Mate is the crew chief, not the AgentSwitchboard control plane.
+11. Herdr is a session-backend candidate, not the project manager; tmux remains the reference backend.
+12. Linux support does not prove Android/Termux or native-Windows First Mate runtime behavior.
 
 ## Failure handling
 
 Assign failures to one owner: Windows-native harness, Windows-to-WSL bridge, First Mate compatibility, worker/project task, session backend, or external dependency. Preserve successful disjoint work and repair only the failing owner.
 
-If Windows contract mode fails before `runtime-floor`, do **not** diagnose WSL from that failure. Preserve the native command, exit code, and bounded error. If runtime-floor fails after crossing into WSL, preserve:
+If Windows contract mode fails before `runtime-floor`, do **not** diagnose WSL from that failure. Preserve the native command, exit code, and bounded error. If the parent Python interpreter is already running and a child `python3` launch returns `9009`, repair the portable child launcher to use `sys.executable`.
+
+If runtime-floor fails after crossing into WSL, preserve:
 
 ```text
 firstmate-harness-report.md
@@ -142,4 +157,4 @@ git diff --check <base>...HEAD
 
 ## Proof ceiling
 
-A green hosted harness proves tracked routing, component completeness, portable origin normalization, platform-correct contract entrypoints, report generation, and the Windows-to-WSL standalone-clone bridge structure. Physical-laptop WSL execution remains unproved until `runtime-floor` passes there. Live First Mate crew dispatch and useful task completion are higher proof gates and are not claimed by contract validation.
+A green hosted harness proves tracked routing, component completeness, portable origin normalization, Python interpreter continuity, platform-correct contract entrypoints, report generation, and the Windows-to-WSL standalone-clone bridge structure. Physical-laptop WSL execution remains unproved until `runtime-floor` passes there. Live First Mate crew dispatch and useful task completion are higher proof gates and are not claimed by contract validation.
