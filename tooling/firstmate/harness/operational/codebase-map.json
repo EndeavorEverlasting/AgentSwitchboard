@@ -22,7 +22,7 @@
     },
     {
       "path": "tooling/profiles",
-      "purpose": "Machine/device profile harnesses such as Android/Termux; separate from laptop crew readiness."
+      "purpose": "Machine/device profile harnesses, including the canonical Windows WSL/Ubuntu repair surface; separate from Android/Termux readiness."
     },
     {
       "path": "tests",
@@ -44,6 +44,8 @@
   "entrypoints": {
     "crew_harness": "bash Test-AgentSwitchboard-FirstMate-Harness.sh contract",
     "windows_wsl_bridge": "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead <exact-sha>",
+    "windows_wsl_bridge_with_bounded_repair": "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead <exact-sha> -RepairWslIfNeeded",
+    "canonical_wsl_repair": "Repair-Technician-WSL-Ubuntu.cmd",
     "firstmate_probe": "bash tooling/firstmate/Test-FirstMateInterop.sh --firstmate <path>",
     "route_selector": "python3 tooling/firstmate/harness/operational/Select-FirstMateWorkflow.py --parallel-writers <n> --firstmate-floor <pass|unproved|fail> --platform <linux-wsl|windows|android|other>",
     "operator_report": "python3 tooling/firstmate/harness/operational/Build-FirstMateHarnessReport.py"
@@ -82,6 +84,9 @@
     "Do not feed Windows temporary paths through wslpath and then parse combined native output; use WSLENV /p path translation and capture stdout/stderr separately.",
     "A Windows-created linked worktree is not a portable Linux Git checkout because its .git indirection can contain Windows-owned worktree metadata. The bridge must create a WSL-owned standalone clone at the exact commit.",
     "Do not hardcode /mnt/c for Windows-to-WSL transport; the WSL automount root is configurable.",
-    "A WSL configuration warning on stderr is diagnostic evidence, not machine-readable path or JSON output."
+    "A WSL configuration warning on stderr is diagnostic evidence, not machine-readable path or JSON output.",
+    "Bare wsl.exe --exec uses the default WSL distribution, which may be a service distro without Bash. First Mate laptop proof must bind the canonical Ubuntu distribution declared by the integration contract.",
+    "Every WSL subprocess in the physical proof must have a bounded timeout; an interactive or wedged WSL command must not hold the operator terminal indefinitely.",
+    "Repeated physical-laptop proof attempts must use unique evidence directories so later runs cannot overwrite the failure evidence that motivated a repair."
   ]
 }
