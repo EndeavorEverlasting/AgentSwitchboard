@@ -21,7 +21,7 @@ Status: **contract repair in progress; Windows-native validation added; physical
 
 - Physical failure 1: the original bridge used `wslpath` and produced no usable stdout.
 - Physical failure 2: WSL could not execute the visibility gate inside a Windows-created detached linked worktree.
-- Physical failure 3: the operator's Windows-native `python tests/test_firstmate_integration_contract.py` spawned bare `bash` and passed it a `C:\\...` path. The Bash subprocess failed before the intended WSL runtime floor.
+- Physical failure 3: the operator's Windows-native `python tests/test_firstmate_integration_contract.py` spawned bare Bash (`bash`) and passed it a `C:\\...` path. The Bash subprocess failed before the intended WSL runtime floor.
 - Failure 3 is a harness portability defect. It does not prove Ubuntu, WSL, tmux, or First Mate failed.
 - The new Windows-native harness and portable origin-normalization repair still require exact-head physical-laptop reproof after hosted CI.
 - No live bounded First Mate crew dispatch has completed yet.
