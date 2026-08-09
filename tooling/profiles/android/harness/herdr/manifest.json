@@ -15,7 +15,7 @@
   "currentRuntime": {
     "multiplexer": "tmux",
     "runtimeEntrypoint": "Start-AgentSwitchboard-Android.sh",
-    "preserveUntil": "Herdr passes live Termux compatibility, persistence, detach/reattach, agent-state, background-survival and bounded-sprint evidence gates"
+    "preserveUntil": "Herdr passes same-device foreground server, client attach/detach, agent-state, background-survival and bounded-sprint evidence gates"
   },
   "candidate": {
     "name": "Herdr",
@@ -34,7 +34,9 @@
     "installationReviewNextGate": "prove-android-runtime-compatibility-or-obtain-explicit-upstream-support",
     "nativeAndroidSourceBuildDecision": "BLOCKED_UNSUPPORTED_PLATFORM_FALLBACK",
     "linuxMuslPrebuiltProbeDecision": "EXECUTION_PROBE_APPROVED_NO_INSTALL",
-    "runtimeCompatibilityNextGate": "exact-device-prebuilt-execution-identity"
+    "runtimeCompatibilityNextGate": "exact-device-prebuilt-execution-identity",
+    "boundedForegroundServerProbeDecision": "BOUNDED_FOREGROUND_SERVER_PROBE_APPROVED_NO_INSTALL",
+    "serverStartProbeNextGate": "exact-device-foreground-server-start-stop"
   },
   "components": {
     "codebaseMap": "tooling/profiles/android/harness/herdr/codebase-map.json",
@@ -42,13 +44,17 @@
     "workflowSpecs": "tooling/profiles/android/harness/herdr/workflows/workflow-specs.json",
     "upstreamInstallationSource": "tooling/profiles/android/harness/herdr/upstream-installation-source.json",
     "upstreamRuntimeCompatibility": "tooling/profiles/android/harness/herdr/upstream-runtime-compatibility.json",
+    "upstreamServerStartSource": "tooling/profiles/android/harness/herdr/upstream-server-start-source.json",
     "probe": "tooling/profiles/android/harness/herdr/Probe-Herdr-Migration.sh",
     "prebuiltCompatibilityProbe": "tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py",
+    "serverStartProbe": "tooling/profiles/android/harness/herdr/Probe-HerdrServerStart.py",
     "statusReporter": "tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py",
     "installReviewBuilder": "tooling/profiles/android/harness/herdr/Build-HerdrInstallReview.py",
     "compatibilityReviewBuilder": "tooling/profiles/android/harness/herdr/Build-HerdrCompatibilityReview.py",
+    "serverStartReviewBuilder": "tooling/profiles/android/harness/herdr/Build-HerdrServerStartReview.py",
     "rootEntrypoint": "Test-AgentSwitchboard-Android-Herdr.sh",
     "fixture": "tooling/profiles/android/harness/herdr/fixtures/herdr-not-installed.fixture.env",
+    "prebuiltPassFixture": "tooling/profiles/android/harness/herdr/fixtures/herdr-prebuilt-exec-pass.fixture.env",
     "operatorReport": "tooling/profiles/android/harness/herdr/operator-report.template.md",
     "preCommitHook": "tooling/profiles/android/harness/herdr/hooks/Invoke-HerdrHarnessPreCommit.sh",
     "prePushHook": "tooling/profiles/android/harness/herdr/hooks/Invoke-HerdrHarnessPrePush.sh",
@@ -58,6 +64,7 @@
     "portableTest": "tests/test_android_herdr_migration.py",
     "installReviewTest": "tests/test_android_herdr_install_review.py",
     "compatibilityReviewTest": "tests/test_android_herdr_compatibility_review.py",
+    "serverStartReviewTest": "tests/test_android_herdr_server_start_review.py",
     "statusStateIsolationTest": "tests/test_android_herdr_status_state_isolation.py",
     "completenessTest": "tests/test_android_herdr_harness_completeness.py",
     "completenessValidator": "scripts/Test-AndroidHerdrHarnessCompleteness.ps1",
@@ -68,26 +75,26 @@
     "herdr-installation-method-reviewed",
     "source-bound-runtime-compatibility-reviewed",
     "exact-device-prebuilt-execution-identity-observed",
-    "herdr-command-identity-observed",
-    "herdr-version-observed",
-    "background-server-start-observed",
+    "source-bound-foreground-server-start-reviewed",
+    "foreground-server-start-status-stop-observed",
+    "client-attach-observed",
     "detach-reattach-observed",
     "agent-state-observed",
     "android-background-survival-observed",
     "bounded-agent-sprint-observed"
   ],
-  "promotionRule": "Do not replace tmux in the canonical Android runtime until the installation method and runtime compatibility are reviewed, every live runtime gate has same-device evidence, and the existing Android runtime validators remain green.",
+  "promotionRule": "Do not replace tmux in the canonical Android runtime until installation/runtime/server-start reviews are complete, every live runtime gate has same-device evidence, and existing Android runtime validators remain green.",
   "forbidden": [
     "automatic removal of tmux",
     "automatic Android device_config or battery-policy mutation",
     "curl-pipe-shell installation as proof",
     "claiming Linux aarch64 binary availability proves Android/Termux compatibility",
     "persistently installing the Linux-musl probe asset before a separate installation approval",
-    "starting a Herdr server from the prebuilt execution-identity probe",
-    "claiming command presence proves background persistence",
-    "claiming detach/reattach proves agent-state detection",
+    "using bare herdr auto-detect daemon launch from the bounded server-start probe",
+    "attaching a client or testing detach/reattach from the bounded server-start probe",
+    "claiming foreground server start proves background persistence or agent-state detection",
     "persisting credentials or device codes in evidence",
     "committing raw phone evidence or generated local status/review artifacts"
   ],
-  "proofCeiling": "Repository contracts can prove migration policy, harness structure, deterministic state-isolated classification, source-bound installation and runtime-compatibility review, artifact ownership, report generation, validator/hook behavior and CI wiring. The current compatibility source approves only an ephemeral checksum-verified --version execution probe of the exact Linux-musl ARM64 asset; it does not authorize installation or server startup and does not prove any live migration gate."
+  "proofCeiling": "Repository contracts can prove migration policy, deterministic state-isolated routing, source-bound installation/runtime/server-start reviews, artifact ownership, report generation, validator/hook behavior and CI wiring. The server-start source approves only an ephemeral checksum-verified foreground `herdr server` start/status/stop probe after same-device prebuilt execution identity passes; it does not authorize persistent installation, daemon auto-launch, client attach/detach, background persistence, agent-state, coding-agent work, or tmux retirement."
 }

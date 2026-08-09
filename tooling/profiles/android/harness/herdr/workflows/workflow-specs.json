@@ -3,91 +3,105 @@
   "workflows": [
     {
       "workflowId": "task-intake",
-      "trigger": "Herdr Android/Termux migration request or readiness evidence",
+      "trigger": "Herdr Android/Termux migration request or readiness/runtime evidence",
       "steps": [
         "read AGENTS.md, harness doctrine, parent Android harness, Herdr manifest, codebase map and scoped skill",
         "preserve tmux as canonical and product runtime files as read-only",
-        "resolve explicit or newest local herdr-readiness and install-review evidence",
+        "resolve explicit or newest local readiness, install-review and prebuilt execution evidence",
         "render Get-HerdrHarnessStatus.py classification",
-        "select reviewed-installation, runtime-compatibility-review, failure-recovery, validation, or handoff at the first unproved gate"
+        "select reviewed-installation, runtime-compatibility-review, bounded-server-start-review, failure-recovery, validation or handoff at the first unproved gate"
       ],
-      "outputs": ["selected workflow", "sanitized migration classification", "one exact next command"],
-      "proofCeiling": "routing from current evidence only; no installation approval or runtime promotion"
+      "outputs": ["selected workflow","sanitized migration classification","one exact next command"],
+      "proofCeiling": "routing from current evidence only; no installation or runtime promotion"
     },
     {
       "workflowId": "reviewed-installation",
       "trigger": "KEEP_TMUX_HERDR_NOT_INSTALLED without a completed source-bound BLOCKED install review",
       "steps": [
-        "read the tracked upstream installation source snapshot before building the review",
-        "refresh that snapshot from current official install docs plus release/tag metadata when stale or when install authority might change",
-        "create the source-bound herdr-install-review artifact with Build-HerdrInstallReview.py --write",
-        "require BLOCKED when official upstream does not explicitly establish Android/Termux support and emit no install command",
-        "reject undocumented cargo install, curl-pipe-shell proof, automatic device_config/battery mutation and tmux removal",
-        "route a completed BLOCKED review forward to runtime-compatibility-review rather than rebuilding the same artifact"
+        "read tracked upstream installation source snapshot",
+        "refresh official source when stale or authority might change",
+        "create Build-HerdrInstallReview.py --write artifact",
+        "require BLOCKED while official Android/Termux support is unstated and emit no install command",
+        "route completed BLOCKED review to runtime-compatibility-review"
       ],
-      "outputs": ["tracked upstream source binding", "local source-bound install review", "installation decision", "rollback boundary"],
-      "proofCeiling": "the current source-bound review proves BLOCKED; it does not install Herdr or prove Android compatibility"
+      "outputs": ["tracked source binding","local install review","installation decision"],
+      "proofCeiling": "source-bound installation review only; no installation or Android runtime proof"
     },
     {
       "workflowId": "runtime-compatibility-review",
       "trigger": "source-bound install review is BLOCKED because Android/Termux support is not established",
       "steps": [
-        "read upstream-runtime-compatibility.json bound to Herdr v0.8.0 release commit 346411fa21afd297f5ed3b3fa56f9e3fbf7654b7",
-        "distinguish the published aarch64-unknown-linux-musl prebuilt from a native aarch64-linux-android source build",
-        "keep native Android source build BLOCKED while target_os=android selects Herdr's unsupported fallback platform module",
+        "read upstream-runtime-compatibility.json pinned to Herdr v0.8.0",
+        "distinguish aarch64-unknown-linux-musl prebuilt from native aarch64-linux-android source build",
+        "keep native Android build BLOCKED while target_os=android selects unsupported fallback",
         "render Build-HerdrCompatibilityReview.py --write",
-        "permit only the tracked ephemeral prebuilt identity probe: exact asset, exact byte size, exact SHA-256, isolated --version, bounded timeout, automatic temporary cleanup",
-        "do not install, start a server, create/attach a session, mutate Android policy, or remove tmux from this probe",
-        "on successful execution identity route to a separate bounded-server-start review; on failure preserve evidence and keep tmux"
+        "permit only exact-size/SHA-256 temporary --version execution probe",
+        "never install, start server, attach client, mutate Android policy or remove tmux from this probe",
+        "successful same-device identity routes to bounded-server-start-review"
       ],
-      "outputs": ["tracked runtime-compatibility source", "local compatibility review", "local prebuilt execution evidence", "KEEP_TMUX decision"],
-      "proofCeiling": "can prove exact source/build assumptions and ephemeral --version execution identity only; not installation or server compatibility"
+      "outputs": ["tracked runtime compatibility source","local compatibility review","local prebuilt execution evidence","KEEP_TMUX decision"],
+      "proofCeiling": "exact source/build assumptions and ephemeral executable identity only"
+    },
+    {
+      "workflowId": "bounded-server-start-review",
+      "trigger": "exact same-device herdr-prebuilt-exec evidence proves v0.8.0 execution identity",
+      "steps": [
+        "read upstream-server-start-source.json pinned to the same v0.8.0 release commit and asset digest",
+        "render Build-HerdrServerStartReview.py --write",
+        "require exact prebuilt PASS evidence before any live server probe downloads or executes",
+        "use only explicit foreground `herdr server`; never bare `herdr` auto-detect daemon launch",
+        "isolate HOME/XDG directories and HERDR_SOCKET_PATH in the temporary sandbox",
+        "prove server readiness only with `herdr status server --json` and exact version/protocol/socket checks",
+        "stop only with `herdr server stop`, require foreground process exit and not_running afterward",
+        "force-clean temporary descendants on any failed graceful stop and preserve sanitized evidence",
+        "do not install, attach a client, create workspace/session state, test detach/background survival, mutate Android policy or remove tmux",
+        "on PASS route to separately reviewed bounded-client-attach-review"
+      ],
+      "outputs": ["tracked server-start source","local server-start review","local foreground lifecycle evidence","KEEP_TMUX decision"],
+      "proofCeiling": "foreground server start/status/stop and isolated local API IPC only; not client attach or persistence"
     },
     {
       "workflowId": "validate-before-commit",
       "trigger": "tracked Herdr harness change",
       "steps": [
-        "parse wrapper, legacy readiness probe and hooks with bash -n",
-        "run migration, source-bound installation-review, compatibility-review and status-state-isolation contracts before harness completeness",
-        "run status routing tests against an isolated temporary --state-root so operator-local evidence cannot change synthetic validator outcomes",
-        "run the prebuilt compatibility probe in contract mode only; CI must never download/execute the release asset",
-        "run PowerShell completeness where available",
-        "run existing Android Termux portable floor",
-        "run git diff --check and verify generated evidence remains untracked/outside the repository"
+        "parse shell entrypoints and hooks",
+        "run migration, installation-review, compatibility-review, server-start-review and status-state-isolation contracts before harness completeness",
+        "run synthetic routing with isolated --state-root so operator evidence cannot change deterministic outcomes",
+        "run prebuilt and server-start probes in contract mode only; hosted CI must never run live evidence modes",
+        "run PowerShell completeness where available and existing Android Termux floor",
+        "run git diff --check and verify generated evidence remains local/untracked"
       ],
-      "outputs": ["focused validator output", "diff hygiene", "bounded Git state"],
-      "proofCeiling": "tracked harness contracts only; not same-device runtime proof"
+      "outputs": ["focused validator output","diff hygiene","bounded Git state"],
+      "proofCeiling": "tracked harness contracts only; not same-device server proof"
     },
     {
       "workflowId": "failure-recovery",
       "trigger": "probe, validator or migration gate failure",
       "steps": [
         "preserve first bounded non-sensitive failure evidence",
-        "validator result differs between clean CI and operator device => inspect ambient state discovery before changing assertions; isolate synthetic validator state rather than weakening the gate",
-        "missing Herdr plus no install review => keep tmux and route to source-bound reviewed-installation",
-        "completed blocked install review => route forward to runtime-compatibility-review",
-        "native Android source-build request => keep blocked while the pinned source selects unsupported fallback platform behavior",
-        "prebuilt identity probe download/digest/exec/timeout failure => keep tmux and preserve herdr-prebuilt-exec evidence without installing",
-        "successful prebuilt --version => do not install; route to a separately reviewed bounded-server-start gate",
-        "tracked validator failure => repair inside harness scope and rerun the complete focused floor",
+        "clean-CI/device validator disagreement => isolate ambient state before changing assertions",
+        "prebuilt identity failure => keep tmux and do not start server",
+        "server prerequisite/download/digest/start/status/stop/exit/cleanup failure => keep tmux and preserve herdr-server-start evidence",
+        "successful foreground lifecycle => do not attach client; route to bounded-client-attach-review",
+        "tracked validator failure => repair inside harness scope and rerun complete focused floor",
         "render operator report with one next command"
       ],
-      "outputs": ["failure classification", "fallback decision", "operator report"],
+      "outputs": ["failure classification","fallback decision","operator report"],
       "proofCeiling": "failure boundary and evidence preservation only"
     },
     {
       "workflowId": "handoff",
       "trigger": "focused validation completed or a real authority/runtime blocker remains",
       "steps": [
-        "run Get-HerdrHarnessStatus.py --write with explicit evidence/review when known",
-        "record repo/branch/head/PR and validator results separately from phone evidence",
-        "state tracked installation and runtime-compatibility source snapshots separately from live proof",
-        "state working, broken/blocked, missing/unproved, proof reached and proof ceiling",
-        "provide one exact executable next command that advances the first unproved gate",
+        "run Get-HerdrHarnessStatus.py --write with explicit evidence when known",
+        "record repo/branch/head/PR separately from phone evidence",
+        "state installation/runtime/server-start source snapshots separately from live proof",
+        "state working, blocked, missing, proof reached and proof ceiling",
+        "provide one exact executable next command advancing the first unproved gate",
         "keep credentials, device codes, private evidence and machine-local junk out of Git/PR"
       ],
-      "outputs": ["status JSON", "status Markdown", "Git/PR evidence", "source-bound decisions", "exact next command"],
-      "proofCeiling": "handoff summarizes evidence; it is not additional installation/runtime/merge/deployment proof"
+      "outputs": ["status JSON","status Markdown","Git/PR evidence","source-bound decisions","exact next command"],
+      "proofCeiling": "handoff summarizes evidence; it is not additional runtime/merge/deployment proof"
     }
   ]
 }

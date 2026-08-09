@@ -2,24 +2,23 @@
 
 ## Purpose
 
-This harness turns the Android Herdr migration into a repeatable evidence loop instead of a one-off terminal experiment. It owns migration maps, workflow specs, tracked upstream source bindings, local artifacts, validators, opt-in hooks, a scoped skill, status/report generation, installation and runtime-compatibility reviews, and the proof boundary. It does **not** own the canonical Android product runtime.
-
-The fallback remains tmux. Missing Herdr, a BLOCKED install review, or a failed compatibility probe are classified states, not authority to improvise an installer.
+This harness turns the Android Herdr migration into a source-bound, same-device evidence ladder. It owns maps, workflow specs, source snapshots, local artifact contracts, validators, opt-in hooks, scoped skill, operator reports, installation/runtime/server reviews, and bounded probe contracts. It does **not** own the canonical Android product runtime. tmux remains canonical.
 
 ## Fresh-agent entry
 
-Read `AGENTS.md`, harness doctrine, the parent Android Termux manifest, `tooling/profiles/android/harness/herdr/manifest.json`, its codebase map, both tracked upstream source snapshots, `.ai/skills/android-herdr-migration/SKILL.md`, then select a workflow from `workflows/workflow-specs.json`.
+Read, in order: `AGENTS.md`, harness doctrine, parent Android Termux manifest, `tooling/profiles/android/harness/herdr/manifest.json`, codebase map, the three tracked upstream snapshots, `.ai/skills/android-herdr-migration/SKILL.md`, then select `workflows/workflow-specs.json`.
 
 ## Workflow selection
 
-- No phone evidence: run the readiness probe.
-- `KEEP_TMUX_HERDR_NOT_INSTALLED` with no completed install review: build the source-bound install review.
-- Completed v0.8.0 BLOCKED install review: build the source-bound runtime compatibility review.
-- Compatibility review `EXECUTION_PROBE_APPROVED_NO_INSTALL`: the only authorized live action is the exact temporary prebuilt `--version` probe.
-- Prebuilt execution PASS: stop before server startup and route to a separately reviewed bounded-server-start gate.
-- Prebuilt execution failure: keep tmux and preserve the local evidence.
-- Tracked harness change: run validate-before-commit.
-- Completed gate or real blocker: render the handoff/status report.
+- No phone readiness evidence -> readiness probe.
+- Missing Herdr with no completed install review -> source-bound install review.
+- Completed BLOCKED install review -> runtime-compatibility review.
+- Compatibility review approved for identity only -> ephemeral exact-asset `--version` probe.
+- Exact same-device prebuilt execution PASS -> bounded server-start review.
+- Server-start review approved -> foreground-only server start/status/stop probe.
+- Foreground server lifecycle PASS -> **stop before client attach** and route to separately reviewed bounded-client-attach gate.
+- Any failure -> keep tmux, preserve bounded local evidence, and route to failure recovery.
+- Tracked harness change -> validate-before-commit.
 
 ## Operator commands
 
@@ -30,45 +29,40 @@ python tooling/profiles/android/harness/herdr/Build-HerdrInstallReview.py --writ
 python tooling/profiles/android/harness/herdr/Build-HerdrCompatibilityReview.py --write
 python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py contract
 python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py evidence
-bash Test-AgentSwitchboard-Android-Herdr.sh evidence
+python tooling/profiles/android/harness/herdr/Build-HerdrServerStartReview.py --write
+python tooling/profiles/android/harness/herdr/Probe-HerdrServerStart.py contract
+python tooling/profiles/android/harness/herdr/Probe-HerdrServerStart.py evidence
 ```
 
-## Runtime compatibility contract
+## Bounded server lifecycle contract
 
-At Herdr v0.8.0 commit `346411fa21afd297f5ed3b3fa56f9e3fbf7654b7`:
+Pinned Herdr v0.8.0 source makes an important distinction. Bare `herdr` uses auto-detect and can spawn a detached background server when no server exists. The explicit `herdr server` path dispatches directly to the headless foreground server. Therefore the Android bounded server probe **forbids bare `herdr`** and uses only explicit foreground `herdr server`.
 
-- the official ARM64 release asset is built as `aarch64-unknown-linux-musl`;
-- the release matrix does not include an Android target;
-- native `target_os=android` selects Herdr's unsupported fallback platform implementation rather than its Linux implementation;
-- the fallback stubs critical process/daemon/platform operations;
-- Linux source uses `/proc`, process groups/signals, PTYs, and Unix local sockets;
-- official Android/Termux support remains unstated.
+The probe is allowed only after exact-device prebuilt execution identity has passed. It re-downloads the exact pinned `herdr-linux-aarch64` asset into a private temporary sandbox, verifies byte size and SHA-256, disables onboarding/background update checks in an ephemeral config, isolates HOME/XDG directories and `HERDR_SOCKET_PATH`, and starts the server in its own temporary process group solely so cleanup can be bounded.
 
-Therefore native Android builds remain blocked, while the exact Linux-musl asset is allowed only an ephemeral checksum-verified `--version` execution probe. That probe is not installation and does not authorize a server.
+Readiness is proved with `herdr status server --json`. Success requires running=true, Herdr 0.8.0, protocol compatibility, and the exact isolated socket. Shutdown uses `herdr server stop`; the foreground process must exit normally and a post-stop status must report not running. Any failure invokes bounded cleanup of the temporary process tree before the sandbox is removed.
+
+This gate does not attach a client, create a workspace/session through CLI commands, test detach/reattach or Android background survival, install the binary, or mutate Android process policy.
 
 ## Artifact policy
 
-Generated evidence is local and untracked under `${XDG_STATE_HOME:-$HOME/.local/state}/agentswitchboard/android-herdr-migration`. `Get-HerdrHarnessStatus.py` follows that XDG-aware root for normal operator discovery and output. The synthetic fixture proves deterministic routing only; it is not phone runtime proof. Tracked upstream JSON files are source snapshots, not live evidence.
+Generated artifacts remain local and untracked under `${XDG_STATE_HOME:-$HOME/.local/state}/agentswitchboard/android-herdr-migration`. Current artifact classes include readiness, status, install review, compatibility review, prebuilt identity evidence, server-start review, server-start evidence, and validation receipts. Synthetic fixtures are never live proof.
 
 ## Validator state isolation
 
-Synthetic validators must not consume the operator's real local readiness/review history. A phone can legitimately contain `herdr-install-review-*.md` artifacts that advance the live state machine, while a completeness test may need to prove the earlier no-review state. Those are different inputs and must not collide.
-
-`Get-HerdrHarnessStatus.py --state-root <dir>` provides an explicit discovery/output root for deterministic validation. `tests/test_android_herdr_status_state_isolation.py` is the regression contract: it creates an ambient XDG state root containing a valid BLOCKED install review, proves an explicitly isolated state root still classifies `blocked-herdr-not-installed`, proves normal XDG discovery sees the ambient review and advances to `blocked-herdr-runtime-compatibility-unproved`, and proves `--write` keeps synthetic output inside the isolated root.
-
-Do not repair a device-only validator mismatch by weakening assertions or deleting real operator evidence. Isolate the synthetic state, then rerun the full focused floor.
+Synthetic routing tests use `Get-HerdrHarnessStatus.py --state-root <dir>` so real operator history cannot change deterministic assertions. `tests/test_android_herdr_status_state_isolation.py` proves this boundary. Never delete real evidence or weaken a validator simply because clean CI and the phone have different ambient state.
 
 ## Validation
 
 ```sh
 bash -n Test-AgentSwitchboard-Android-Herdr.sh
 bash -n tooling/profiles/android/harness/herdr/Probe-Herdr-Migration.sh
-bash -n tooling/profiles/android/harness/herdr/hooks/Invoke-HerdrHarnessPreCommit.sh
-bash -n tooling/profiles/android/harness/herdr/hooks/Invoke-HerdrHarnessPrePush.sh
 python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py contract
+python tooling/profiles/android/harness/herdr/Probe-HerdrServerStart.py contract
 python tests/test_android_herdr_migration.py
 python tests/test_android_herdr_install_review.py
 python tests/test_android_herdr_compatibility_review.py
+python tests/test_android_herdr_server_start_review.py
 python tests/test_android_herdr_status_state_isolation.py
 python tests/test_android_herdr_harness_completeness.py
 python tests/test_android_termux_harness.py
@@ -76,16 +70,16 @@ python tests/test_android_termux_modal_state_harness.py
 git diff --check
 ```
 
-PowerShell-capable repo/CI also runs `pwsh -NoLogo -NoProfile -File scripts/Test-AndroidHerdrHarnessCompleteness.ps1`.
+PowerShell-capable CI also runs `scripts/Test-AndroidHerdrHarnessCompleteness.ps1`. Hosted CI runs both live probes in `contract` mode only; it never downloads the candidate asset or starts Herdr.
 
 ## Hooks
 
-The Herdr pre-commit and pre-push hooks are opt-in validators. They never install themselves, install Herdr, fetch the release asset, run the live compatibility evidence mode, force-update refs, mutate Android policy, or remove tmux. CI runs the compatibility probe in `contract` mode only.
+The Herdr pre-commit/pre-push hooks are opt-in. They validate contracts only. They never install Herdr, run live evidence modes, start a server, mutate Android policy, remove tmux, or force-update Git refs.
 
 ## Failure and rollback
 
-Keep tmux when any gate is absent or fails. Never use Linux architecture alone as Android proof, command presence as persistence proof, detach/reattach as agent-state proof, or a fixture as live behavior. A clean-CI/operator-device validation disagreement is first treated as possible ambient state contamination; preserve operator artifacts and rerun with isolated validator state. The compatibility evidence probe leaves no persistent Herdr binary; its temporary sandbox is removed automatically. Harness rollback is a normal Git revert.
+Keep tmux after every missing or failed gate. The identity probe has no persistent binary. The server probe uses a temporary sandbox and includes forced process cleanup if graceful stop fails. Harness rollback is a normal Git revert; do not destructively clean operator artifacts.
 
 ## Proof ceiling
 
-Tracked files and hosted validation prove harness structure, deterministic state-isolated classification, XDG-aware artifact discovery, source binding, workflow selection, artifact ownership, report generation, hooks, skill, validators, CI wiring, and the exact no-install probe boundary. They do not prove Herdr server compatibility, persistence, detach/reattach, agent state, Android background survival, coding-sprint success, installation approval, or tmux retirement.
+Tracked files and hosted validation prove harness completeness, state-isolated routing, XDG-aware artifact ownership, pinned upstream server semantics, and the bounded foreground server-start contract. A same-device PASS can additionally prove only foreground server start/status/stop and local IPC. It does not prove client attach, detach/reattach, persistent background survival, agent-state detection, coding-agent work, or tmux retirement.

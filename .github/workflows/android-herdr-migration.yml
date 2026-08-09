@@ -13,6 +13,7 @@ on:
       - 'tests/test_android_herdr_migration.py'
       - 'tests/test_android_herdr_install_review.py'
       - 'tests/test_android_herdr_compatibility_review.py'
+      - 'tests/test_android_herdr_server_start_review.py'
       - 'tests/test_android_herdr_status_state_isolation.py'
       - 'tests/test_android_herdr_harness_completeness.py'
       - 'scripts/Test-AndroidHerdrHarnessCompleteness.ps1'
@@ -21,10 +22,9 @@ on:
     branches:
       - 'feat/android-herdr-migration-probe-20260808'
       - 'feat/android-herdr-harness-state-isolation-20260808'
-
+      - 'feat/android-herdr-bounded-server-start-harness-20260809'
 permissions:
   contents: read
-
 jobs:
   contract:
     runs-on: ubuntu-latest
@@ -44,22 +44,26 @@ jobs:
           python tests/test_android_herdr_migration.py
           python tests/test_android_herdr_install_review.py
           python tests/test_android_herdr_compatibility_review.py
+          python tests/test_android_herdr_server_start_review.py
           python tests/test_android_herdr_status_state_isolation.py
           python tests/test_android_herdr_harness_completeness.py
           python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py contract
+          python tooling/profiles/android/harness/herdr/Probe-HerdrServerStart.py contract
       - name: Herdr completeness validator
         shell: pwsh
         run: pwsh -NoLogo -NoProfile -File scripts/Test-AndroidHerdrHarnessCompleteness.ps1
       - name: Status and source-bound review contracts
         run: |
           isolated="$RUNNER_TEMP/herdr-isolated-state"
-          python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --state-root "$isolated" --evidence tooling/profiles/android/harness/herdr/fixtures/herdr-not-installed.fixture.env --format json > "$RUNNER_TEMP/herdr-status.json"
+          fixture="tooling/profiles/android/harness/herdr/fixtures/herdr-not-installed.fixture.env"
+          prebuilt="tooling/profiles/android/harness/herdr/fixtures/herdr-prebuilt-exec-pass.fixture.env"
+          python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --state-root "$isolated" --evidence "$fixture" --format json > "$RUNNER_TEMP/herdr-status.json"
           grep -q '"status": "blocked-herdr-not-installed"' "$RUNNER_TEMP/herdr-status.json"
           python tooling/profiles/android/harness/herdr/Build-HerdrInstallReview.py --output "$RUNNER_TEMP/herdr-install-review.md" | tee "$RUNNER_TEMP/herdr-install-review.out"
           grep -q 'Status: BLOCKED' "$RUNNER_TEMP/herdr-install-review.md"
           grep -q 'DECISION=BLOCKED' "$RUNNER_TEMP/herdr-install-review.out"
           grep -q 'Exact installation command, only when APPROVED: none' "$RUNNER_TEMP/herdr-install-review.md"
-          python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --state-root "$isolated" --evidence tooling/profiles/android/harness/herdr/fixtures/herdr-not-installed.fixture.env --install-review "$RUNNER_TEMP/herdr-install-review.md" --format json > "$RUNNER_TEMP/herdr-status-after-review.json"
+          python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --state-root "$isolated" --evidence "$fixture" --install-review "$RUNNER_TEMP/herdr-install-review.md" --format json > "$RUNNER_TEMP/herdr-status-after-review.json"
           grep -q '"status": "blocked-herdr-runtime-compatibility-unproved"' "$RUNNER_TEMP/herdr-status-after-review.json"
           grep -q '"nextGate": "source-bound-runtime-compatibility-review"' "$RUNNER_TEMP/herdr-status-after-review.json"
           python tooling/profiles/android/harness/herdr/Build-HerdrCompatibilityReview.py --output "$RUNNER_TEMP/herdr-compatibility-review.md" | tee "$RUNNER_TEMP/herdr-compatibility-review.out"
@@ -67,6 +71,15 @@ jobs:
           grep -q 'Installation authorized: no' "$RUNNER_TEMP/herdr-compatibility-review.md"
           grep -q 'Server startup authorized: no' "$RUNNER_TEMP/herdr-compatibility-review.md"
           grep -q 'DECISION=EXECUTION_PROBE_APPROVED_NO_INSTALL' "$RUNNER_TEMP/herdr-compatibility-review.out"
+          python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --state-root "$isolated" --evidence "$fixture" --install-review "$RUNNER_TEMP/herdr-install-review.md" --prebuilt-evidence "$prebuilt" --format json > "$RUNNER_TEMP/herdr-status-after-prebuilt.json"
+          grep -q '"status": "prebuilt-execution-identity-proven-server-unproved"' "$RUNNER_TEMP/herdr-status-after-prebuilt.json"
+          grep -q '"nextGate": "bounded-server-start-review"' "$RUNNER_TEMP/herdr-status-after-prebuilt.json"
+          python tooling/profiles/android/harness/herdr/Build-HerdrServerStartReview.py --output "$RUNNER_TEMP/herdr-server-start-review.md" | tee "$RUNNER_TEMP/herdr-server-start-review.out"
+          grep -q 'Status: BOUNDED_FOREGROUND_SERVER_PROBE_APPROVED_NO_INSTALL' "$RUNNER_TEMP/herdr-server-start-review.md"
+          grep -q 'Launch command: `herdr server`' "$RUNNER_TEMP/herdr-server-start-review.md"
+          grep -q 'Status command: `herdr status server --json`' "$RUNNER_TEMP/herdr-server-start-review.md"
+          grep -q 'Stop command: `herdr server stop`' "$RUNNER_TEMP/herdr-server-start-review.md"
+          grep -q 'DECISION=BOUNDED_FOREGROUND_SERVER_PROBE_APPROVED_NO_INSTALL' "$RUNNER_TEMP/herdr-server-start-review.out"
       - name: Existing Android harness floor
         run: |
           python tests/test_android_termux_harness.py
