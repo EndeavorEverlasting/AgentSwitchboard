@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 """Render low-noise Herdr harness status from tracked contracts and sanitized readiness evidence."""
 from __future__ import annotations
-import argparse, json
+import argparse, json, os
 from datetime import datetime, timezone
 from pathlib import Path
 
-STATE_ROOT = Path.home() / ".local/state/agentswitchboard/android-herdr-migration"
+
+def default_state_root() -> Path:
+    xdg = os.environ.get("XDG_STATE_HOME")
+    base = Path(xdg).expanduser() if xdg else Path.home() / ".local/state"
+    return base / "agentswitchboard/android-herdr-migration"
+
+
+DEFAULT_STATE_ROOT = default_state_root()
 ALLOWED = {"profile","frontend","kernel","arch","android_release","herdr_path","herdr_version","herdr_help","tmux_path","tmux_version","migration_decision","next_gate","proof_level","fixture"}
 
 
@@ -19,10 +26,10 @@ def parse_env(path: Path) -> dict[str,str]:
     return data
 
 
-def newest(pattern: str) -> Path | None:
-    if not STATE_ROOT.is_dir():
+def newest(state_root: Path, pattern: str) -> Path | None:
+    if not state_root.is_dir():
         return None
-    found = sorted(STATE_ROOT.glob(pattern))
+    found = sorted(state_root.glob(pattern))
     return found[-1] if found else None
 
 
@@ -77,22 +84,25 @@ def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--evidence", type=Path)
     p.add_argument("--install-review", type=Path)
+    p.add_argument("--state-root", type=Path, help="Override local state discovery/output root; deterministic validators should use an isolated temporary directory.")
     p.add_argument("--format", choices=("markdown","json"), default="markdown")
     p.add_argument("--write", action="store_true")
     a = p.parse_args()
-    ep = a.evidence.expanduser() if a.evidence else newest("herdr-readiness-*.env")
-    rp = a.install_review.expanduser() if a.install_review else newest("herdr-install-review-*.md")
+    state_root = a.state_root.expanduser() if a.state_root else DEFAULT_STATE_ROOT
+    ep = a.evidence.expanduser() if a.evidence else newest(state_root, "herdr-readiness-*.env")
+    rp = a.install_review.expanduser() if a.install_review else newest(state_root, "herdr-install-review-*.md")
     ev = parse_env(ep) if ep and ep.is_file() else None
     source = str(ep) if ep and ep.is_file() else "none"
     review_source = str(rp) if rp and rp.is_file() else "none"
     s = classify(ev, blocked_install_review(rp))
     s["evidenceSource"] = source
     s["installReviewSource"] = review_source
+    s["stateRoot"] = str(state_root)
     if a.write:
-        STATE_ROOT.mkdir(parents=True, exist_ok=True)
+        state_root.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        jp = STATE_ROOT / f"herdr-harness-status-{stamp}.json"
-        mp = STATE_ROOT / f"herdr-harness-status-{stamp}.md"
+        jp = state_root / f"herdr-harness-status-{stamp}.json"
+        mp = state_root / f"herdr-harness-status-{stamp}.md"
         jp.write_text(json.dumps(s, indent=2)+"\n", encoding="utf-8")
         mp.write_text(markdown(s, source, review_source), encoding="utf-8")
         print(f"STATUS_JSON={jp}\nSTATUS_MARKDOWN={mp}\nSTATUS={s['status']}\nNEXT_GATE={s['nextGate']}\nNEXT_COMMAND={s['nextCommand']}")

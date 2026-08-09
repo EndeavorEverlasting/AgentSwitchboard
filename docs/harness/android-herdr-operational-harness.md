@@ -48,7 +48,15 @@ Therefore native Android builds remain blocked, while the exact Linux-musl asset
 
 ## Artifact policy
 
-Generated evidence is local and untracked under `${XDG_STATE_HOME:-$HOME/.local/state}/agentswitchboard/android-herdr-migration`. The synthetic fixture proves deterministic routing only; it is not phone runtime proof. Tracked upstream JSON files are source snapshots, not live evidence.
+Generated evidence is local and untracked under `${XDG_STATE_HOME:-$HOME/.local/state}/agentswitchboard/android-herdr-migration`. `Get-HerdrHarnessStatus.py` follows that XDG-aware root for normal operator discovery and output. The synthetic fixture proves deterministic routing only; it is not phone runtime proof. Tracked upstream JSON files are source snapshots, not live evidence.
+
+## Validator state isolation
+
+Synthetic validators must not consume the operator's real local readiness/review history. A phone can legitimately contain `herdr-install-review-*.md` artifacts that advance the live state machine, while a completeness test may need to prove the earlier no-review state. Those are different inputs and must not collide.
+
+`Get-HerdrHarnessStatus.py --state-root <dir>` provides an explicit discovery/output root for deterministic validation. `tests/test_android_herdr_status_state_isolation.py` is the regression contract: it creates an ambient XDG state root containing a valid BLOCKED install review, proves an explicitly isolated state root still classifies `blocked-herdr-not-installed`, proves normal XDG discovery sees the ambient review and advances to `blocked-herdr-runtime-compatibility-unproved`, and proves `--write` keeps synthetic output inside the isolated root.
+
+Do not repair a device-only validator mismatch by weakening assertions or deleting real operator evidence. Isolate the synthetic state, then rerun the full focused floor.
 
 ## Validation
 
@@ -61,6 +69,7 @@ python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.p
 python tests/test_android_herdr_migration.py
 python tests/test_android_herdr_install_review.py
 python tests/test_android_herdr_compatibility_review.py
+python tests/test_android_herdr_status_state_isolation.py
 python tests/test_android_herdr_harness_completeness.py
 python tests/test_android_termux_harness.py
 python tests/test_android_termux_modal_state_harness.py
@@ -75,8 +84,8 @@ The Herdr pre-commit and pre-push hooks are opt-in validators. They never instal
 
 ## Failure and rollback
 
-Keep tmux when any gate is absent or fails. Never use Linux architecture alone as Android proof, command presence as persistence proof, detach/reattach as agent-state proof, or a fixture as live behavior. The compatibility evidence probe leaves no persistent Herdr binary; its temporary sandbox is removed automatically. Harness rollback is a normal Git revert.
+Keep tmux when any gate is absent or fails. Never use Linux architecture alone as Android proof, command presence as persistence proof, detach/reattach as agent-state proof, or a fixture as live behavior. A clean-CI/operator-device validation disagreement is first treated as possible ambient state contamination; preserve operator artifacts and rerun with isolated validator state. The compatibility evidence probe leaves no persistent Herdr binary; its temporary sandbox is removed automatically. Harness rollback is a normal Git revert.
 
 ## Proof ceiling
 
-Tracked files and hosted validation prove harness structure, deterministic classification, source binding, workflow selection, artifact ownership, report generation, hooks, skill, validators, CI wiring, and the exact no-install probe boundary. They do not prove Herdr server compatibility, persistence, detach/reattach, agent state, Android background survival, coding-sprint success, installation approval, or tmux retirement.
+Tracked files and hosted validation prove harness structure, deterministic state-isolated classification, XDG-aware artifact discovery, source binding, workflow selection, artifact ownership, report generation, hooks, skill, validators, CI wiring, and the exact no-install probe boundary. They do not prove Herdr server compatibility, persistence, detach/reattach, agent state, Android background survival, coding-sprint success, installation approval, or tmux retirement.

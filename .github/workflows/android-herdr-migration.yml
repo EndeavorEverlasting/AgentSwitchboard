@@ -13,12 +13,14 @@ on:
       - 'tests/test_android_herdr_migration.py'
       - 'tests/test_android_herdr_install_review.py'
       - 'tests/test_android_herdr_compatibility_review.py'
+      - 'tests/test_android_herdr_status_state_isolation.py'
       - 'tests/test_android_herdr_harness_completeness.py'
       - 'scripts/Test-AndroidHerdrHarnessCompleteness.ps1'
       - '.github/workflows/android-herdr-migration.yml'
   push:
     branches:
       - 'feat/android-herdr-migration-probe-20260808'
+      - 'feat/android-herdr-harness-state-isolation-20260808'
 
 permissions:
   contents: read
@@ -42,6 +44,7 @@ jobs:
           python tests/test_android_herdr_migration.py
           python tests/test_android_herdr_install_review.py
           python tests/test_android_herdr_compatibility_review.py
+          python tests/test_android_herdr_status_state_isolation.py
           python tests/test_android_herdr_harness_completeness.py
           python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py contract
       - name: Herdr completeness validator
@@ -49,13 +52,14 @@ jobs:
         run: pwsh -NoLogo -NoProfile -File scripts/Test-AndroidHerdrHarnessCompleteness.ps1
       - name: Status and source-bound review contracts
         run: |
-          python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --evidence tooling/profiles/android/harness/herdr/fixtures/herdr-not-installed.fixture.env --format json > "$RUNNER_TEMP/herdr-status.json"
+          isolated="$RUNNER_TEMP/herdr-isolated-state"
+          python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --state-root "$isolated" --evidence tooling/profiles/android/harness/herdr/fixtures/herdr-not-installed.fixture.env --format json > "$RUNNER_TEMP/herdr-status.json"
           grep -q '"status": "blocked-herdr-not-installed"' "$RUNNER_TEMP/herdr-status.json"
           python tooling/profiles/android/harness/herdr/Build-HerdrInstallReview.py --output "$RUNNER_TEMP/herdr-install-review.md" | tee "$RUNNER_TEMP/herdr-install-review.out"
           grep -q 'Status: BLOCKED' "$RUNNER_TEMP/herdr-install-review.md"
           grep -q 'DECISION=BLOCKED' "$RUNNER_TEMP/herdr-install-review.out"
           grep -q 'Exact installation command, only when APPROVED: none' "$RUNNER_TEMP/herdr-install-review.md"
-          python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --evidence tooling/profiles/android/harness/herdr/fixtures/herdr-not-installed.fixture.env --install-review "$RUNNER_TEMP/herdr-install-review.md" --format json > "$RUNNER_TEMP/herdr-status-after-review.json"
+          python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --state-root "$isolated" --evidence tooling/profiles/android/harness/herdr/fixtures/herdr-not-installed.fixture.env --install-review "$RUNNER_TEMP/herdr-install-review.md" --format json > "$RUNNER_TEMP/herdr-status-after-review.json"
           grep -q '"status": "blocked-herdr-runtime-compatibility-unproved"' "$RUNNER_TEMP/herdr-status-after-review.json"
           grep -q '"nextGate": "source-bound-runtime-compatibility-review"' "$RUNNER_TEMP/herdr-status-after-review.json"
           python tooling/profiles/android/harness/herdr/Build-HerdrCompatibilityReview.py --output "$RUNNER_TEMP/herdr-compatibility-review.md" | tee "$RUNNER_TEMP/herdr-compatibility-review.out"
