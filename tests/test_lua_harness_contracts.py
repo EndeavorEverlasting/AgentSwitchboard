@@ -15,6 +15,9 @@ STATUS = ROOT / "tooling" / "lua" / "Get-LuaHarnessStatus.py"
 SKILL = ROOT / ".ai" / "skills" / "lua-embedding-integration" / "SKILL.md"
 GUIDE = ROOT / "docs" / "harness" / "lua-embedding-harness.md"
 TRACKED_STATUS = ROOT / "docs" / "reports" / "lua-embedding-harness-status.md"
+ROOT_CODEBASE_MAP = ROOT / "CODEBASE_MAP.md"
+ROOT_SKILLS = ROOT / "SKILLS.md"
+ROOT_TRIGGERS = ROOT / "TRIGGERS.md"
 
 
 def load(path: Path):
@@ -125,6 +128,21 @@ class LuaHarnessContracts(unittest.TestCase):
             self.assertIn(phrase.lower(), (skill + guide + status).lower())
         self.assertIn("runtime unproved", status.lower())
         self.assertIn("product code", skill.lower())
+
+    def test_repository_discovery_catalogs_route_lua_harness(self):
+        codebase = ROOT_CODEBASE_MAP.read_text(encoding="utf-8")
+        skills = ROOT_SKILLS.read_text(encoding="utf-8")
+        triggers = ROOT_TRIGGERS.read_text(encoding="utf-8")
+        self.assertIn("## Lua embedding operational harness", codebase)
+        self.assertIn(".ai/skills/lua-embedding-integration/SKILL.md", codebase)
+        self.assertIn("scripts/Test-LuaHarnessCompleteness.ps1", codebase)
+        self.assertIn("lua-embedding-integration", skills)
+        self.assertIn("## Lua embedding distinction", skills)
+        self.assertIn("lua.embedding-request", triggers)
+        self.assertIn("lua.sandbox-request", triggers)
+        self.assertIn("lua-task-intake", triggers)
+        self.assertIn("lua-sandbox-validation", triggers)
+        self.assertIn("## Lua embedding invariant", triggers)
 
     def test_hooks_are_opt_in_and_do_not_install_themselves(self):
         for relative in self.validators["hooks"].values():
