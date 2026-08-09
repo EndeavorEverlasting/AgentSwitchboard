@@ -31,6 +31,9 @@ function Test-ExactSequence {
         Add-Error "$Label does not match immutable v1 contract"
     }
 }
+function Test-ExactCommitPin([string]$Value) {
+    return $Value -cmatch '^[0-9a-f]{40}$'
+}
 
 foreach ($path in @($ledger, $policyPathResolved, $adoptionPath, $docPath, $frontierPath)) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { Add-Error "missing required path: $path" }
@@ -41,8 +44,16 @@ $policy = Get-Content -LiteralPath $policyPathResolved -Raw | ConvertFrom-Json
 $adoption = Get-Content -LiteralPath $adoptionPath -Raw | ConvertFrom-Json
 $source = Get-Content -LiteralPath $ledger -Raw
 
-$expectedContractId = 'agentswitchboard.repository-work-ledger.v1'
-$expectedContractVersion = '1.0.0'
+$expectedPortableRepository = 'EndeavorEverlasting/BlacksmithGuild'
+$expectedPortableId = 'repo-ledger-interoperability'
+$expectedPortableVersion = 'RepoLedgerInteroperability.v1'
+$expectedPortableCommit = '429237aa41d8712d71859865c9be407ca23d8580'
+$expectedPortablePath = '.tbg/workflows/repo-ledger-interoperability.contract.json'
+$expectedLocalProfileId = 'agentswitchboard.repository-work-ledger.v1'
+$expectedLocalProfileVersion = '1.0.0'
+$expectedLocalProfileScope = 'AgentSwitchboard-local compatibility and execution profile'
+$expectedDonorCommit = '9351c952b057ae4520b1ea0d388e1d8908f4c093'
+$expectedDonorPaths = @('.ai/README.md', '.ai/WORK_QUEUE.md', '.ai/authority.json', 'scripts/ai-harness/validate-work-queue.mjs')
 $expectedStatuses = @('READY', 'CLAIMED', 'VERIFY', 'REVIEW', 'MERGE', 'OPERATOR', 'BLOCKED', 'DONE')
 $expectedContinuation = @('READY', 'CLAIMED', 'VERIFY', 'REVIEW', 'MERGE')
 $expectedPriorities = @('P0', 'P1', 'P2', 'P3')
@@ -52,10 +63,20 @@ $expectedWorkClasses = @('BOUNDED', 'UNBOUNDED')
 $expectedUnboundedStatuses = @('READY', 'BLOCKED', 'OPERATOR', 'DONE')
 $expectedTerminalNextAction = 'none; no safe actionable work remains'
 
-if ($policy.contractId -ne $expectedContractId) { Add-Error 'unexpected contractId' }
-if ($policy.contractVersion -ne $expectedContractVersion) { Add-Error 'unexpected contractVersion' }
+if ($policy.contractId -ne $expectedLocalProfileId) { Add-Error 'unexpected local profile contractId' }
+if ($policy.contractVersion -ne $expectedLocalProfileVersion) { Add-Error 'unexpected local profile contractVersion' }
+if ($policy.contractScope -ne $expectedLocalProfileScope) { Add-Error 'local profile contractScope must not claim portable authority' }
+if ($policy.canonicalRepository -ne 'EndeavorEverlasting/AgentSwitchboard') { Add-Error 'unexpected local profile owner repository' }
+if ($policy.portableContract.repository -ne $expectedPortableRepository) { Add-Error 'portable contract repository must be BlacksmithGuild' }
+if ($policy.portableContract.id -ne $expectedPortableId) { Add-Error 'unexpected portable contract id' }
+if ($policy.portableContract.version -ne $expectedPortableVersion) { Add-Error 'unexpected portable contract version' }
+if ($policy.portableContract.pinnedCommit -ne $expectedPortableCommit) { Add-Error 'portable contract pin drifted; explicit compatibility update required' }
+if (-not (Test-ExactCommitPin ([string]$policy.portableContract.pinnedCommit))) { Add-Error 'portable contract pinnedCommit must be a full exact SHA' }
+if ($policy.portableContract.path -ne $expectedPortablePath) { Add-Error 'portable contract path drifted' }
 if ($policy.donor.repository -ne 'EndeavorEverlasting/AxTask') { Add-Error 'unexpected donor repository' }
-if ($policy.donor.pinnedCommit -notmatch '^[0-9a-f]{40}$') { Add-Error 'donor pinnedCommit must be a full SHA' }
+if ($policy.donor.pinnedCommit -ne $expectedDonorCommit) { Add-Error 'donor pinnedCommit drifted' }
+if (-not (Test-ExactCommitPin ([string]$policy.donor.pinnedCommit))) { Add-Error 'donor pinnedCommit must be a full SHA' }
+Test-ExactSequence -Actual @($policy.donor.authoritativePaths) -Expected $expectedDonorPaths -Label 'donor.authoritativePaths'
 Test-ExactSequence -Actual @($policy.statusVocabulary) -Expected $expectedStatuses -Label 'statusVocabulary'
 Test-ExactSequence -Actual @($policy.continuationStatuses) -Expected $expectedContinuation -Label 'continuationStatuses'
 Test-ExactSequence -Actual @($policy.priorities) -Expected $expectedPriorities -Label 'priorities'
@@ -63,15 +84,32 @@ Test-ExactSequence -Actual @($policy.requiredFields) -Expected $expectedRequired
 Test-ExactSequence -Actual @($policy.localExecutionProfile.requiredFields) -Expected $expectedLocalRequiredFields -Label 'localExecutionProfile.requiredFields'
 Test-ExactSequence -Actual @($policy.localExecutionProfile.workClasses) -Expected $expectedWorkClasses -Label 'localExecutionProfile.workClasses'
 Test-ExactSequence -Actual @($policy.localExecutionProfile.unboundedAllowedStatuses) -Expected $expectedUnboundedStatuses -Label 'localExecutionProfile.unboundedAllowedStatuses'
+if ($policy.localExecutionProfile.portableRequirement -ne $false) { Add-Error 'AgentSwitchboard Work class/frontier must remain a local-only extension' }
 if ($policy.localExecutionProfile.derivedRoutes.boundedContinuation -ne 'EXECUTE') { Add-Error 'localExecutionProfile bounded route must be EXECUTE' }
 if ($policy.localExecutionProfile.derivedRoutes.unboundedReady -ne 'DECOMPOSE') { Add-Error 'localExecutionProfile unbounded route must be DECOMPOSE' }
 if ($policy.terminalNextAction -ne $expectedTerminalNextAction) { Add-Error 'terminalNextAction does not match immutable v1 contract' }
-if ($adoption.contract.id -ne $expectedContractId -or $adoption.contract.version -ne $expectedContractVersion) { Add-Error 'adoption contract does not match immutable v1 contract' }
+
+if ($adoption.role -ne 'portable-contract-consumer-and-local-execution-profile-owner') { Add-Error 'adoption role must not claim canonical portable authority' }
+if ($adoption.portableContract.repository -ne $expectedPortableRepository) { Add-Error 'adoption portable contract repository must be BlacksmithGuild' }
+if ($adoption.portableContract.id -ne $expectedPortableId) { Add-Error 'adoption portable contract id drifted' }
+if ($adoption.portableContract.version -ne $expectedPortableVersion) { Add-Error 'adoption portable contract version drifted' }
+if ($adoption.portableContract.pinnedCommit -ne $expectedPortableCommit) { Add-Error 'adoption portable contract pin drifted' }
+if (-not (Test-ExactCommitPin ([string]$adoption.portableContract.pinnedCommit))) { Add-Error 'adoption portable contract pin must be a full exact SHA' }
+if ($adoption.portableContract.path -ne $expectedPortablePath) { Add-Error 'adoption portable contract path drifted' }
+if ($adoption.contract.id -ne $expectedLocalProfileId -or $adoption.contract.version -ne $expectedLocalProfileVersion) { Add-Error 'adoption local profile does not match AgentSwitchboard profile identity' }
+if ($adoption.contract.scope -ne $expectedLocalProfileScope) { Add-Error 'adoption local profile scope must not claim portable authority' }
 if ($adoption.donor.pinnedCommit -ne $policy.donor.pinnedCommit) { Add-Error 'adoption donor pin does not match policy' }
+Test-ExactSequence -Actual @($adoption.donor.sourcePaths) -Expected $expectedDonorPaths -Label 'adoption.donor.sourcePaths'
 if ($adoption.local.frontier -ne 'scripts/Get-RepositoryWorkLedgerFrontier.ps1') { Add-Error 'adoption must register the local frontier reader' }
+if ($adoption.local.executionProfile.portableRequirement -ne $false) { Add-Error 'adoption must mark Work class/frontier as non-portable' }
+
+foreach ($badRef in @('main', 'master', 'HEAD', 'v1.0.0', '429237aa41d8')) {
+    if (Test-ExactCommitPin $badRef) { Add-Error "symbolic/short portable contract ref unexpectedly accepted: $badRef" }
+}
 
 foreach ($phrase in @(
-    'contractRef: agentswitchboard.repository-work-ledger.v1@1.0.0',
+    "portableContractRef: $expectedPortableVersion@$expectedPortableCommit",
+    "localProfileRef: $expectedLocalProfileId@$expectedLocalProfileVersion",
     'Continuation states are not stopping states.',
     'PR opened is not completion.',
     'DONE is strict.',
@@ -167,4 +205,4 @@ if ($errors.Count) {
     Write-ValidationErrors -Messages $errors
     exit 1
 }
-Write-Host "[repository-work-ledger] PASS $LedgerPath ($($matches.Count) tasks) contract=$expectedContractId@$expectedContractVersion local-profile=bounded-frontier"
+Write-Host "[repository-work-ledger] PASS $LedgerPath ($($matches.Count) tasks) portable=$expectedPortableVersion@$($expectedPortableCommit.Substring(0,12)) local-profile=$expectedLocalProfileId@$expectedLocalProfileVersion frontier=bounded-unbounded stale-ref-probes=PASS"
