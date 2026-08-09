@@ -9,6 +9,9 @@ on:
       - "tests/test_lua_harness_contracts.py"
       - "docs/harness/lua-embedding-harness.md"
       - "docs/reports/lua-embedding-harness-status.md"
+      - "CODEBASE_MAP.md"
+      - "SKILLS.md"
+      - "TRIGGERS.md"
       - ".github/workflows/lua-harness-contract.yml"
   workflow_dispatch:
 
