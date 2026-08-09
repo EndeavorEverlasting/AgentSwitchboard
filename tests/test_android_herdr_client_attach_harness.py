@@ -43,6 +43,6 @@ def main():
     for token in ("terminal session observe","BLOCKED_AUTODETECT_DAEMON_RACE","tmux","Proof ceiling"): assert token in docs,token
     assert "bare `herdr`" in skill
     for shell in (manifest["components"]["preCommit"],manifest["components"]["prePush"]):
-        r=subprocess.run(["bash","-n",str(ROOT/shell)],cwd=ROOT,text=True,capture_output=True); assert r.returncode==0,r.stderr
+        r=subprocess.run(["bash","-n",shell],cwd=ROOT,text=True,capture_output=True); assert r.returncode==0,r.stderr
     print("PASS: Android Herdr bounded client-attach harness completeness")
 if __name__=="__main__": main()
