@@ -22,7 +22,16 @@
     "ledger": ".ai/WORK_QUEUE.md",
     "taskPrefix": "ASQ",
     "validator": "scripts/Test-RepositoryWorkLedgerContract.ps1",
-    "tests": "tests/test_repository_work_ledger_contract.py",
+    "frontier": "scripts/Get-RepositoryWorkLedgerFrontier.ps1",
+    "tests": [
+      "tests/test_repository_work_ledger_contract.py",
+      "tests/test_repository_work_ledger_frontier.py"
+    ],
+    "executionProfile": {
+      "requiredField": "Work class",
+      "classes": ["BOUNDED", "UNBOUNDED"],
+      "routesAreDerived": true
+    },
     "ci": ".github/workflows/repository-work-ledger-contract.yml"
   },
   "mustNotCopyOrReimplement": [
@@ -31,5 +40,5 @@
     "consumer product behavior",
     "runtime proof inferred from ledger prose"
   ],
-  "proofCeiling": "portable contract adoption and static local ledger validation"
+  "proofCeiling": "portable contract adoption plus AgentSwitchboard-local work-class and frontier routing validation"
 }
