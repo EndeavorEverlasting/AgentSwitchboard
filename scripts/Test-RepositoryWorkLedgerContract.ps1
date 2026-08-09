@@ -45,8 +45,14 @@ foreach ($phrase in @(
     if (-not $source.Contains($phrase)) { Add-Error "missing ledger contract phrase: $phrase" }
 }
 
-$headingRegex = [regex]'(?m)^## (ASQ-\d{3,}) — (.+)$'
-$matches = $headingRegex.Matches($source)
+$canonicalHeadingRegex = [regex]'(?m)^## (ASQ-\d{3,}) — (.+)$'
+$taskLikeHeadingRegex = [regex]'(?m)^##\s+(ASQ-[^\r\n]+)$'
+$matches = $canonicalHeadingRegex.Matches($source)
+foreach ($taskLikeHeading in $taskLikeHeadingRegex.Matches($source)) {
+    if (-not $canonicalHeadingRegex.IsMatch($taskLikeHeading.Value)) {
+        Add-Error "malformed ASQ heading: '$($taskLikeHeading.Value)' (expected '## ASQ-### — Title')"
+    }
+}
 if ($matches.Count -eq 0) { Add-Error 'ledger must contain at least one canonical ASQ task block' }
 
 $seen = @{}
@@ -54,6 +60,22 @@ $allowedStatuses = @($policy.statusVocabulary)
 $continuation = @($policy.continuationStatuses)
 $allowedPriorities = @($policy.priorities)
 $requiredFields = @($policy.requiredFields)
+$unassignedOwners = @('unclaimed', 'none', 'unknown', 'tbd', 'n/a')
+$nonActions = @(
+    $policy.terminalNextAction,
+    'none',
+    'tbd',
+    'status unchanged',
+    'pr opened',
+    'tests passed',
+    'ci green',
+    'wait',
+    'wait for review',
+    'review later',
+    'merge later',
+    'test later'
+)
+$actionPattern = '^(?:(?:after|once)\b.+?,\s*)?(?:operator\s+)?(?:run|execute|create|update|repair|resolve|merge|fetch|inspect|open|verify|validate|test|commit|push|rebase|retarget|compare|generate|record|obtain|install|apply|build|launch|deploy|restore|export|import|review|reconcile|invoke|edit|write|move|copy|sync|check)\b'
 
 for ($i = 0; $i -lt $matches.Count; $i++) {
     $match = $matches[$i]
@@ -64,7 +86,12 @@ for ($i = 0; $i -lt $matches.Count; $i++) {
     $block = $source.Substring($start, $end - $start)
     $fields = @{}
     foreach ($fieldMatch in [regex]::Matches($block, '(?m)^- \*\*([^*]+):\*\*[ \t]*(.*)$')) {
-        $fields[$fieldMatch.Groups[1].Value.Trim()] = $fieldMatch.Groups[2].Value.Trim()
+        $fieldName = $fieldMatch.Groups[1].Value.Trim()
+        if ($fields.ContainsKey($fieldName)) {
+            Add-Error "$id duplicate field '$fieldName'"
+            continue
+        }
+        $fields[$fieldName] = $fieldMatch.Groups[2].Value.Trim()
     }
     foreach ($field in $requiredFields) {
         if (-not $fields.ContainsKey($field)) { Add-Error "$id missing field '$field'"; continue }
@@ -78,8 +105,13 @@ for ($i = 0; $i -lt $matches.Count; $i++) {
     $next = $fields['Next action']
     if ($status -and $status -notin $allowedStatuses) { Add-Error "$id invalid status '$status'" }
     if ($priority -and $priority -notin $allowedPriorities) { Add-Error "$id invalid priority '$priority'" }
-    if ($status -eq 'CLAIMED' -and ([string]::IsNullOrWhiteSpace($owner) -or $owner -eq 'unclaimed')) { Add-Error "$id CLAIMED requires a concrete owner" }
-    if ($status -in $continuation -and $next -eq $policy.terminalNextAction) { Add-Error "$id continuation state requires an executable next action" }
+    if ($status -eq 'CLAIMED' -and ([string]::IsNullOrWhiteSpace($owner) -or $owner.ToLowerInvariant() -in $unassignedOwners)) { Add-Error "$id CLAIMED requires a concrete owner" }
+    if ($status -in $continuation) {
+        $normalizedNext = if ($next) { $next.Trim().ToLowerInvariant() } else { '' }
+        if ([string]::IsNullOrWhiteSpace($next) -or $normalizedNext -in $nonActions -or $next -notmatch $actionPattern) {
+            Add-Error "$id continuation state requires an executable next action beginning with a concrete action verb"
+        }
+    }
     if ($status -in @('BLOCKED','OPERATOR') -and ([string]::IsNullOrWhiteSpace($gate) -or $gate -eq 'none')) { Add-Error "$id $status requires an exact Gate" }
     if ($status -eq 'DONE') {
         $durable = $proof -match '\b(?:commit|merge):[0-9a-f]{7,40}\b' -or $proof -match '\b(?:workflow|run):#?\d+\b' -or $proof -match '\bartifact:\S+' -or $proof -match '\boperator-proof:\S+'
