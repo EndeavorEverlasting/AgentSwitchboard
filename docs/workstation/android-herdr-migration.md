@@ -2,7 +2,7 @@
 
 ## Status
 
-Herdr is an **experimental candidate** for the AgentSwitchboard Android orchestration layer. The canonical Android runtime remains Pi + tmux until the installation review and live Android/Termux proof clear the migration gates.
+Herdr is an **experimental candidate** for the AgentSwitchboard Android orchestration layer. The canonical Android runtime remains Pi + tmux until the installation review and live same-device Android/Termux proof clear the migration gates.
 
 Upstream currently documents stable Linux and macOS binaries, including Linux `aarch64`, plus preview Windows builds. Upstream installation documentation does **not** currently claim Android/Termux support, so this repository does not treat Linux `aarch64` availability as Android compatibility proof. The current tracked source-bound installation decision is therefore **BLOCKED**.
 
@@ -69,7 +69,7 @@ Herdr becomes eligible to replace tmux only after:
 
 1. Termux environment and architecture are observed.
 2. A source-bound installation method is reviewed and no longer blocked.
-3. Herdr executable identity/version is observed on the same device.
+3. Herdr executable identity/version is observed with same-device evidence.
 4. Background Herdr server starts successfully.
 5. Detach and reattach restore the same session.
 6. A supported coding agent is correctly classified as working / blocked / idle or done.
