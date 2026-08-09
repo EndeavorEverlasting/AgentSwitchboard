@@ -13,8 +13,17 @@
     "donorRepository": "mattpocock/skills",
     "donorCommit": "84fdeffd12f2ee307994d1eb6feb48173b6e0502"
   },
+  "components": {
+    "codebaseMap": "tooling/harness/wayfinder/codebase-map.json",
+    "workflowSpec": "tooling/harness/wayfinder/workflows/runtime-validation.workflow.json",
+    "artifactRegistry": "tooling/harness/wayfinder/artifact-registry.json",
+    "validatorRegistry": "tooling/harness/wayfinder/validator-registry.json",
+    "optionalPreCommitHook": "tooling/harness/wayfinder/hooks/Invoke-WayfinderPreCommit.ps1",
+    "operatorReportTemplate": "tooling/harness/wayfinder/templates/operator-report.template.md"
+  },
   "skills": {
     "orchestrator": ".ai/skills/wayfinder/SKILL.md",
+    "runtimeBinding": ".ai/skills/wayfinder-runtime-binding/SKILL.md",
     "research": ".ai/skills/research/SKILL.md",
     "prototype": ".ai/skills/prototype/SKILL.md",
     "grilling": ".ai/skills/grilling/SKILL.md",
@@ -28,6 +37,13 @@
     "decisionTicketSchema": "tooling/harness/wayfinder/schemas/decision-ticket.schema.json",
     "mapSchema": "tooling/harness/wayfinder/schemas/map.schema.json",
     "specSchema": "tooling/harness/wayfinder/schemas/spec.schema.json"
+  },
+  "runtimeBinding": {
+    "resolver": "tooling/harness/wayfinder/Resolve-WayfinderPython.ps1",
+    "precedence": ["explicit-parameter", "ASB_WAYFINDER_PYTHON", "VIRTUAL_ENV", "repository-.venv", "PATH"],
+    "failClosedExplicit": true,
+    "canonicalIdentity": "Python sys.executable after successful execution",
+    "contract": "Dependency installation and every nested Wayfinder Python validator must use the same bound interpreter. Windows short-path, junction, redirect, case, or spelling normalization does not constitute failure by itself."
   },
   "ticketTypes": {
     "research": {"interaction": "afk", "requiredSkills": ["research"]},
@@ -56,11 +72,17 @@
     "decisionHistoryRetention": "retain tracker decision tickets after spec retirement"
   },
   "validators": [
-    "python tests/test_wayfinder_harness.py",
-    "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderHarness.ps1",
-    "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderPublicPlanContribution.ps1",
+    "<bound-python> tests/test_wayfinder_runtime_binding_contract.py",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderPythonBinding.ps1 -PythonPath <bound-python>",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderHarnessCompleteness.ps1 -PythonPath <bound-python>",
+    "<bound-python> tests/test_wayfinder_companion_source_integrity.py",
+    "<bound-python> tests/test_wayfinder_harness.py",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderHarness.ps1 -PythonPath <bound-python>",
+    "<bound-python> tests/test_wayfinder_public_plan_contribution.py",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderPublicPlanContribution.ps1 -PythonPath <bound-python>",
     "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1",
     "git diff --check"
   ],
-  "proofCeiling": "Imported-source integrity, ASB skill routing, machine-readable doctrine, typed ticket gates, HITL/AFK invariants, frontier/spec-readiness algorithms, GitHub CLI/API command construction, schemas, registration, and hosted/offline validation only. Live GitHub permissions/sub-issue/dependency behavior, human verdict quality, agent judgment quality, prototype usefulness, and destination implementation require separate runtime evidence."
+  "proofCeiling": "Imported-source integrity, ASB skill routing, machine-readable doctrine, typed ticket gates, HITL/AFK invariants, interpreter continuity, harness completeness, frontier/spec-readiness algorithms, GitHub CLI/API command construction, schemas, registration, and hosted/offline validation only. Live GitHub permissions/sub-issue/dependency behavior, human verdict quality, agent judgment quality, prototype usefulness, and destination implementation require separate runtime evidence."
 }

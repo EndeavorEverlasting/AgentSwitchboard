@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "registryId": "agentswitchboard.wayfinder.artifacts.v1",
+  "artifacts": [
+    {"id": "wayfinder-manifest", "tracked": true, "path": "tooling/harness/wayfinder/manifest.json", "generator": "tracked source", "naming": "manifest.json", "proof": "Wayfinder harness ownership and component registration"},
+    {"id": "wayfinder-codebase-map", "tracked": true, "path": "tooling/harness/wayfinder/codebase-map.json", "generator": "tracked source", "naming": "codebase-map.json", "proof": "fresh-agent structure, commands, and known traps"},
+    {"id": "wayfinder-runtime-workflow", "tracked": true, "path": "tooling/harness/wayfinder/workflows/runtime-validation.workflow.json", "generator": "tracked source", "naming": "runtime-validation.workflow.json", "proof": "cross-shell interpreter-continuity workflow"},
+    {"id": "wayfinder-operator-report-template", "tracked": true, "path": "tooling/harness/wayfinder/templates/operator-report.template.md", "generator": "tracked source", "naming": "operator-report.template.md", "proof": "human-readable reporting contract"},
+    {"id": "wayfinder-runtime-report", "tracked": false, "pathPattern": "<temp>/AgentSwitchboard/wayfinder-runtime/<run-id>/operator-report.md", "generator": "runtime validation workflow", "naming": "operator-report.md", "proof": "exact-head interpreter binding, focused/broader validator results, and proof ceiling"},
+    {"id": "wayfinder-map", "tracked": false, "pathPattern": "tracker issue or local tracker path", "generator": "Wayfinder chart mode", "naming": "tracker-native", "proof": "destination/fog/decision-pointer map when live tracker use is separately authorized"},
+    {"id": "wayfinder-temporary-spec", "tracked": false, "pathPattern": "tracker issue or explicit project spec path", "generator": "to-spec after spec readiness", "naming": "temporary-until-implementation", "proof": "implementation synthesis only; decision tickets retain primary rationale"}
+  ],
+  "rules": [
+    "Generated runtime evidence is local/untracked unless a fixture is deliberately tracked.",
+    "Never persist secrets, device codes, auth output, or private live-target data in reports.",
+    "Resolve artifact paths from this registry/manifest/workflow before printing or opening them."
+  ]
+}

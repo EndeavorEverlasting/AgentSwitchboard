@@ -10,6 +10,7 @@
   ],
   "specializedRouting": [
     {"condition": "destination is too large or ambiguous for one bounded session and unresolved decision fog prevents a safe executable route", "skill": ".ai/skills/wayfinder/SKILL.md", "workflowRoot": "tooling/harness/wayfinder/"},
+    {"condition": "Wayfinder validation crosses Python and PowerShell, uses an isolated virtual environment, or a dependency exists in one invocation but is missing in a nested validator", "skill": ".ai/skills/wayfinder-runtime-binding/SKILL.md", "workflowRoot": "tooling/harness/wayfinder/workflows/"},
     {"condition": "a Wayfinder research decision ticket is claimed", "skill": ".ai/skills/research/SKILL.md", "workflowRoot": "tooling/harness/wayfinder/"},
     {"condition": "a Wayfinder prototype decision ticket is claimed", "skill": ".ai/skills/prototype/SKILL.md", "workflowRoot": "tooling/harness/wayfinder/"},
     {"condition": "a Wayfinder grilling decision ticket is claimed", "skill": ".ai/skills/grilling/SKILL.md", "workflowRoot": "tooling/harness/wayfinder/"},

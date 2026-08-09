@@ -8,7 +8,13 @@ status: experimental
 
 ## Source lineage
 
-Adapted from `mattpocock/skills@84fdeffd12f2ee307994d1eb6feb48173b6e0502`, `skills/engineering/prototype/SKILL.md`, blob `094571156140f5993cce8557dc31383c82817f3e`. Snapshot: `third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/prototype/SKILL.md`.
+Adapted from `mattpocock/skills@84fdeffd12f2ee307994d1eb6feb48173b6e0502`, `skills/engineering/prototype/SKILL.md`, blob `094571156140f5993cce8557dc31383c82817f3e`.
+
+Exact imported source and referenced procedure companions:
+
+- `third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/prototype/SKILL.md`
+- `third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/prototype/LOGIC.md`
+- `third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/prototype/UI.md`
 
 ## Trigger
 
@@ -25,13 +31,16 @@ Use when prose is too low-fidelity to decide how something should look or behave
 ## Procedure
 
 1. Bind the prototype to one question.
-2. Choose the cheapest concrete artifact that can answer it, reusing project tooling rather than inventing infrastructure.
-3. Mark it unmistakably throwaway and keep it outside production authority.
-4. Make it trivial to run; avoid persistence unless persistence is the question; skip unrelated abstractions/polish.
-5. Surface relevant state after actions/variant changes so behavior is inspectable.
-6. Preserve prototype source on an isolated throwaway branch or equivalent non-main evidence surface and link it from the decision ticket.
-7. Present the artifact to the human and capture their observed verdict. Running successfully is not approval.
-8. Record the validated decision separately; later production code implements that decision through normal sprint/test/review gates.
+2. Classify the uncertainty before building:
+   - logic/state/data-shape uncertainty follows the donor `prototype/LOGIC.md` procedure: isolate liftable pure logic and expose state plus guided edge-case scenarios in a trivial shareable demo;
+   - visual/layout/information-hierarchy uncertainty follows the donor `prototype/UI.md` procedure: prefer the real host surface, create structurally different variants, and make the active variant explicit/shareable.
+3. Choose the cheapest concrete artifact that can answer the question, reusing project tooling rather than inventing infrastructure.
+4. Mark it unmistakably throwaway and keep it outside production authority.
+5. Make it trivial to run; avoid persistence unless persistence is the question; skip unrelated abstractions/polish.
+6. Surface relevant state/variant after actions so behavior is inspectable rather than inferred.
+7. Preserve prototype source on an isolated throwaway branch or equivalent non-main evidence surface and link it from the decision ticket.
+8. Present the artifact to the human and capture their observed verdict. Running successfully is not approval.
+9. Record the validated decision separately; later production code implements that decision through normal sprint/test/review gates.
 
 ## Outputs
 
@@ -43,7 +52,7 @@ Use when prose is too low-fidelity to decide how something should look or behave
 
 ## Deterministic validation
 
-A Wayfinder prototype ticket requires an artifact pointer, `prototype` invocation evidence, at least one human response, and `humanVerdictObserved=true`. Run `python tests/test_wayfinder_harness.py` and `pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderHarness.ps1` when this skill changes.
+A Wayfinder prototype ticket requires an artifact pointer, `prototype` invocation evidence, at least one human response, and `humanVerdictObserved=true`. The pinned donor snapshot must contain `prototype/LOGIC.md` and `prototype/UI.md`. Run `python tests/test_wayfinder_harness.py` and `pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderHarness.ps1` when this skill changes.
 
 ## Forbidden scope
 

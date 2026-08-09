@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "wayfinder-runtime-validation",
+  "trigger": "Wayfinder validation crosses Python and PowerShell, uses an isolated venv, or reports a dependency available in one command but missing in a nested validator.",
+  "inputs": ["repository root", "optional exact PythonPath", "requirements file", "owned validator set"],
+  "steps": [
+    {"id": "bind", "action": "Resolve one Python 3 interpreter through Resolve-WayfinderPython.ps1. Explicit PythonPath wins; invalid explicit/override bindings fail closed."},
+    {"id": "report", "action": "Print source, canonical sys.executable path, and version before dependency checks."},
+    {"id": "dependency", "action": "Check jsonschema 4.26.x with the bound interpreter only."},
+    {"id": "portable", "action": "Run runtime-binding, Wayfinder semantic, and contribution Python validators with the bound interpreter."},
+    {"id": "powershell", "action": "Run PowerShell validators while passing the same -PythonPath into every nested Wayfinder validator."},
+    {"id": "broader-floor", "action": "Run public-plan, agent-documentation, operational-harness, and diff-hygiene checks after focused validators pass."},
+    {"id": "artifact", "action": "Resolve canonical manifest/report paths from the scoped artifact registry; never invent a report path."},
+    {"id": "handoff", "action": "Record exact head, interpreter binding, validator outcomes, proof ceiling, and first unresolved live gate."}
+  ],
+  "failureRules": [
+    "Do not install a missing dependency into a different interpreter than the one the validator will execute.",
+    "Do not silently fall back when -PythonPath or ASB_WAYFINDER_PYTHON was explicitly supplied but is invalid.",
+    "Do not treat requested-path versus canonical sys.executable string differences as failure when the bound interpreter executes successfully.",
+    "Do not continue to broader validation after an owning validator fails."
+  ],
+  "outputs": ["bound interpreter evidence", "validator results", "operator report", "handoff state"],
+  "proofCeiling": "Proves deterministic interpreter continuity and repository validators only. It does not prove provider, tracker, HITL, deployment, or destination runtime behavior."
+}

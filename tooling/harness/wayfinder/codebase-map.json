@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "mapId": "agentswitchboard.wayfinder.codebase-map.v1",
+  "purpose": "Give a fresh agent one compact map of the ASB Wayfinder harness, its entrypoints, validators, evidence surfaces, and known cross-shell traps.",
+  "structure": [
+    {"path": ".ai/skills/wayfinder/", "purpose": "ambiguity-resolution orchestration"},
+    {"path": ".ai/skills/{research,prototype,grilling,domain-modeling,to-spec,to-tickets}/", "purpose": "typed Wayfinder workflow skills"},
+    {"path": "tooling/harness/wayfinder/", "purpose": "deterministic contracts, registries, runtime binding, schemas, fixtures, workflow specs, hooks, and report templates"},
+    {"path": "scripts/Test-Wayfinder*.ps1", "purpose": "PowerShell owning validators and completeness/runtime-binding checks"},
+    {"path": "tests/test_wayfinder*.py", "purpose": "portable semantic and static contract validators"},
+    {"path": "third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/", "purpose": "immutable donor-source provenance evidence"},
+    {"path": ".github/workflows/wayfinder-public-plan-contribution.yml", "purpose": "hosted Windows/Linux validation"}
+  ],
+  "entrypoints": {
+    "operatorGuide": "docs/harness/wayfinder.md",
+    "harnessManifest": "tooling/harness/wayfinder/manifest.json",
+    "runtimeResolver": "tooling/harness/wayfinder/Resolve-WayfinderPython.ps1",
+    "completeness": "scripts/Test-WayfinderHarnessCompleteness.ps1",
+    "semanticValidator": "scripts/Test-WayfinderHarness.ps1",
+    "contributionValidator": "scripts/Test-WayfinderPublicPlanContribution.ps1",
+    "runtimeBindingValidator": "scripts/Test-WayfinderPythonBinding.ps1"
+  },
+  "commands": {
+    "installValidationDependency": "<bound-python> -m pip install --disable-pip-version-check -r tooling/harness/operational/contributions/requirements-wayfinder-public-plan.txt",
+    "portableContracts": [
+      "<bound-python> tests/test_wayfinder_runtime_binding_contract.py",
+      "<bound-python> tests/test_wayfinder_harness.py",
+      "<bound-python> tests/test_wayfinder_public_plan_contribution.py"
+    ],
+    "powerShellContracts": [
+      "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderPythonBinding.ps1 -PythonPath <bound-python>",
+      "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderHarnessCompleteness.ps1 -PythonPath <bound-python>",
+      "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderHarness.ps1 -PythonPath <bound-python>",
+      "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderPublicPlanContribution.ps1 -PythonPath <bound-python>"
+    ],
+    "hygiene": "git diff --check"
+  },
+  "knownTraps": [
+    "Installing jsonschema into one Python interpreter and then launching a nested PowerShell validator that resolves a different python from PATH.",
+    "Treating Windows short paths, junctions, redirects, or sys.executable normalization as interpreter failure merely because the requested and reported strings differ.",
+    "Relying on Markdown formatting literals in semantic assertions; normalize presentation syntax before asserting meaning.",
+    "Promoting hosted/static Wayfinder validation to live tracker or HITL proof.",
+    "Editing imported donor snapshots in place instead of refreshing the pinned source set through review."
+  ],
+  "proofCeiling": "Repository structure, registered commands, interpreter-binding contract, static/hosted validators, and documented traps only; no live tracker/HITL or destination implementation proof."
+}

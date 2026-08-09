@@ -1,135 +1,112 @@
 # ASB Wayfinder Harness
 
-Wayfinder is ASB's ambiguity-resolution workflow for work that is too large or uncertain for one bounded session. It is adapted from Matt Pocock's Wayfinder ecosystem at the pinned donor commit recorded in `tooling/harness/operational/contributions/wayfinder-public-plan.contribution.json`.
+Wayfinder is ASB's ambiguity-resolution workflow for work that is too large or uncertain for one bounded session. Its donor lineage is pinned in `tooling/harness/operational/contributions/wayfinder-public-plan.contribution.json`; imported donor files are provenance evidence, not ASB runtime authority.
 
-The purpose is not to give a model more discretion. The purpose is to **move decisions out of transient model context and into typed, reviewable tracker artifacts with deterministic workflow gates**.
+The harness exists to move decisions and proof out of transient model context and into typed, inspectable repository/tracker artifacts with deterministic gates.
 
-## When to use it
+## Fresh-agent entry
 
-Use Wayfinder when both are true:
+Read in this order:
 
-1. the destination requires more than one bounded agent session; and
-2. you cannot yet state the safe executable route because important decisions/investigations are still hidden by fog.
+1. `AGENTS.md` — repository governance (read-only for this harness lane).
+2. `HARNESS.md` — repository operational harness.
+3. `tooling/harness/wayfinder/codebase-map.json` — Wayfinder structure, commands, and traps.
+4. `tooling/harness/wayfinder/manifest.json` — scoped ownership and proof ceiling.
+5. `tooling/harness/wayfinder/workflows/runtime-validation.workflow.json` — cross-shell validation workflow.
+6. `tooling/harness/wayfinder/validator-registry.json` — owning validation order.
+7. `tooling/harness/wayfinder/artifact-registry.json` — canonical artifacts and generation rules.
 
-If the path is already clear, skip Wayfinder and use a normal bounded sprint/public-plan workflow.
+## When to use Wayfinder
+
+Use Wayfinder when the destination requires more than one bounded session **and** important unresolved decisions/fog prevent a safe executable route. If the route is already clear, use the normal bounded sprint/public-plan workflow instead.
 
 ## Authority map
 
 | Surface | Owns | Does not own |
 |---|---|---|
 | `.ai/skills/wayfinder/SKILL.md` | Wayfinder procedure and ticket routing | tracker state, human decisions, implementation |
-| tracker map | low-resolution destination/notes/decision pointers/fog/scope index | full decision details |
-| tracker child decision ticket | exact question, blockers, claim, resolution, asset pointers | destination implementation slices |
-| `plans/` public plan | repository ownership/collision/delivery/proof/handoff mirror | Wayfinder question/answer store |
-| temporary specification | synthesis of already-settled decisions | primary decision rationale |
-| `to-tickets` / `bounded-sprint` | implementation decomposition/execution after clarity | ambiguity-resolution decisions |
-| `third_party/mattpocock-skills/<commit>/` | immutable donor-source evidence | ASB runtime behavior |
+| tracker map | low-resolution destination/fog/scope/decision pointers | full decision bodies |
+| tracker child ticket | exact question, blockers, claim, resolution/assets | destination implementation slices |
+| `plans/` public plan | repository ownership/collision/delivery/proof mirror | Wayfinder question/answer store |
+| temporary spec | synthesis of settled decisions | primary decision rationale |
+| `to-tickets` / bounded sprint | implementation after clarity | ambiguity decisions |
+| `third_party/mattpocock-skills/<commit>/` | immutable donor evidence | ASB runtime behavior |
 
-A decision must have **one primary owner**. The map/public plan may gist and link a ticket; they must not duplicate its full answer.
+A decision has one primary owner. The map/public plan may link or gist a ticket, but must not duplicate its detailed answer.
 
-## Ticket types are gates
+## Ticket gates
 
-### Research — AFK
+- **Research — AFK:** use `research`; require a findings artifact and primary-source evidence.
+- **Prototype — HITL:** use `prototype`; require a runnable throwaway artifact and an observed human verdict. Logic/state uncertainty follows pinned `prototype/LOGIC.md`; visual/layout uncertainty follows pinned `prototype/UI.md`.
+- **Grilling — HITL:** use `grilling` + `domain-modeling`; actual human answers are required. Domain context/ADR formatting follows the pinned companion files.
+- **Task — AFK/HITL:** leave open until the prerequisite action actually happened.
 
-Use `research`. The ticket cannot resolve without a concrete findings artifact and at least one primary source. Independent research tickets may run in parallel when the execution surface supports safe isolation.
+Chart mode stops before non-research resolution. A normal work session resolves at most one non-research decision ticket.
 
-### Prototype — HITL
+## Runtime/interpreter binding
 
-Use `prototype`. The ticket cannot resolve merely because code ran. It needs a runnable throwaway artifact and an observed human reaction/verdict. Prototype source stays out of production authority; later implementation ports the validated decision through normal tests/review.
+Wayfinder validation crosses Python and PowerShell. **Never** install `jsonschema` with one Python and then let a nested PowerShell validator discover a different ambient `python`.
 
-### Grilling — HITL
+Canonical resolver: `tooling/harness/wayfinder/Resolve-WayfinderPython.ps1`.
 
-Use `grilling` and `domain-modeling`. The agent may research facts and recommend answers; the human owns choices. The ticket cannot resolve without actual human response evidence. Domain terms/ADRs are updated when they truly settle.
+Precedence:
 
-### Task — AFK or HITL
+1. explicit `-PythonPath`;
+2. `ASB_WAYFINDER_PYTHON`;
+3. active `VIRTUAL_ENV`;
+4. repository `.venv`;
+5. PATH (`python`, then `python3`).
 
-A task is a prerequisite action that unblocks a later decision: provisioning access, moving data so its shape can be inspected, signing up for a service so its API can be evaluated, and similar work. A checklist does not prove completion. Leave the ticket open until the prerequisite is actually done.
+An invalid explicit path or explicit environment override fails closed; it never silently falls back. After successful execution, `sys.executable` is the canonical interpreter identity. On Windows, short-path expansion, junctions, redirects, case differences, or spelling normalization are informational rather than a failure by themselves.
 
-## Chart mode
-
-1. Settle the destination through grilling/domain-modeling.
-2. Explore breadth-first. If no real fog exists and the whole route fits one bounded session, exit Wayfinder.
-3. Create the map.
-4. Create only the decision tickets whose questions can already be stated precisely.
-5. Create ticket identities first, then wire parent/blocking relationships in a second pass.
-6. Keep coarse future uncertainty in `Not yet specified`.
-7. Dispatch independent research tickets when a real subagent/execution surface exists.
-8. Update the public-plan coordination mirror.
-9. **Stop.** Charting does not hand-resolve prototype, grilling, or task tickets and does not implement the destination.
-
-## Work mode
-
-1. Load the map, not every ticket.
-2. Query the live frontier: open child tickets with no open blockers and no assignee.
-3. Choose a named eligible ticket or the first frontier ticket.
-4. **Claim it before work.** On GitHub the assignee is the claim.
-5. Run the exact type gate.
-6. Resolve at most one non-research ticket in the session.
-7. Post the resolution on the ticket, close it, and add only a linked one-line gist to the map.
-8. Recompute fog/blockers/scope; create newly precise tickets and wire them after creation.
-9. Update the public-plan mirror and stop.
-
-## GitHub adapter
-
-`tooling/harness/wayfinder/github_tracker.py` constructs the GitHub operations. It prefers current native GitHub surfaces:
-
-- map issue label `wayfinder:map`;
-- child issue creation with a parent relationship;
-- `wayfinder:research`, `wayfinder:prototype`, `wayfinder:grilling`, or `wayfinder:task` labels;
-- native `blocked_by` issue dependencies;
-- assignee-based claim;
-- resolution comment + close;
-- `wayfinder:spec` for the temporary specification.
-
-The repository currently needs these labels created before first live use. The adapter's `ensure_labels()` method owns that setup when an authenticated `gh` runtime is explicitly authorized. Static/hosted tests only prove command construction, not repository permissions or feature availability.
-
-## Specification lifecycle
-
-When all required decision tickets are resolved and `Not yet specified` is empty, `to-spec` may publish an implementation-ready specification. It must link the source map and decision tickets and declare lifecycle `temporary-until-implementation`.
-
-After implementation is accepted, retire/archive or remove the spec according to tracker policy. **Do not delete the closed decision tickets.** The durable value is the decision history; the spec is a temporary compression layer for execution.
-
-`to-tickets` runs after clarity and produces tracer-bullet implementation tickets. Those tickets are not Wayfinder decision tickets and should not carry `wayfinder:<type>` semantics.
-
-## Source integrity
-
-Imported donor files live under:
-
-`third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/`
-
-They include Wayfinder, research, prototype, grilling, domain-modeling, to-spec, to-tickets, GitHub/local tracker doctrine, and the MIT license. `tests/test_wayfinder_harness.py` recomputes Git blob hashes and fails if an imported source changes.
-
-Do not edit snapshots in place. A donor refresh creates a new pinned snapshot directory and contribution review.
-
-## Validation
-
-From a checkout with Python and PowerShell:
+### Safe isolated Windows validation
 
 ```powershell
-python -m pip install --disable-pip-version-check -r tooling/harness/operational/contributions/requirements-wayfinder-public-plan.txt
-python tests/test_wayfinder_harness.py
-pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderHarness.ps1
-python tests/test_wayfinder_public_plan_contribution.py
-pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderPublicPlanContribution.ps1
+$Venv = Join-Path $env:TEMP 'asb-wayfinder-proof-venv'
+python -m venv $Venv
+$Py = Join-Path $Venv 'Scripts\python.exe'
+& $Py -m pip install --disable-pip-version-check -r tooling/harness/operational/contributions/requirements-wayfinder-public-plan.txt
+& $Py tests/test_wayfinder_runtime_binding_contract.py
+pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderPythonBinding.ps1 -PythonPath $Py
+pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderHarnessCompleteness.ps1 -PythonPath $Py
+& $Py tests/test_wayfinder_companion_source_integrity.py
+& $Py tests/test_wayfinder_harness.py
+pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderHarness.ps1 -PythonPath $Py
+& $Py tests/test_wayfinder_public_plan_contribution.py
+pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderPublicPlanContribution.ps1 -PythonPath $Py
 pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1
 pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1
+pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1
 git diff --check
 ```
 
-The hosted workflow repeats the Wayfinder/public-plan gates on Windows and Linux.
+The same bound interpreter must be passed to every nested Wayfinder PowerShell validator.
+
+## Harness components
+
+- **Codebase map:** `tooling/harness/wayfinder/codebase-map.json`
+- **Workflow spec:** `tooling/harness/wayfinder/workflows/runtime-validation.workflow.json`
+- **Artifact registry:** `tooling/harness/wayfinder/artifact-registry.json`
+- **Validator registry:** `tooling/harness/wayfinder/validator-registry.json`
+- **Runtime resolver:** `tooling/harness/wayfinder/Resolve-WayfinderPython.ps1`
+- **Optional pre-commit helper:** `tooling/harness/wayfinder/hooks/Invoke-WayfinderPreCommit.ps1` (never installed implicitly)
+- **Scoped skills:** `.ai/skills/wayfinder*` plus typed ticket skills
+- **Operator report template:** `tooling/harness/wayfinder/templates/operator-report.template.md`
+- **Completeness check:** `scripts/Test-WayfinderHarnessCompleteness.ps1`
+- **Hosted validation:** `.github/workflows/wayfinder-public-plan-contribution.yml`
+
+Generated runtime evidence belongs under an OS temporary directory and remains untracked unless a deliberate fixture is being added. Never place secrets, auth/device codes, or private live-target data in reports.
+
+## Failure handling
+
+Run owning validators first and stop at the first real contract failure. Repair the owning harness surface before broader checks. Do not weaken a validator merely to accept a known failure. Presentation-only assertions should normalize Markdown before checking semantics. Do not confuse a Windows path normalization notice with a Python dependency failure.
+
+## Handoff
+
+Use `tooling/harness/wayfinder/templates/operator-report.template.md`. Record exact repository/ref/HEAD, bound interpreter path/version, focused and broader validator outcomes, working/broken/missing state, proof ceiling, and one owner/dependency-specific executable next action.
 
 ## Proof ceiling
 
-Green static/hosted validation proves imported-source integrity, ASB ownership/routing, schemas, deterministic ticket gates, HITL evidence requirements, frontier/spec-readiness algorithms, GitHub command construction, and public-plan separation.
+Green static/hosted validation proves tracked harness completeness, donor/source integrity, interpreter continuity, schemas, deterministic ticket/HITL gates, frontier/spec algorithms, tracker command construction, and public-plan separation.
 
-It does **not** prove:
-
-- GitHub sub-issues/dependencies/labels are available with the current operator's permissions;
-- an actual ticket was claimed/resolved correctly in a live repository;
-- a human approved a prototype or answered a grilling decision;
-- research conclusions are correct beyond their cited evidence;
-- the prototype is useful;
-- the resulting specification or implementation is good;
-- destination code was built, merged, deployed, or accepted.
-
-Those claims require their owning live/runtime artifacts.
+It does **not** prove live GitHub sub-issue/dependency/label permissions, actual ticket mutation, human HITL participation, research correctness beyond evidence, prototype usefulness, destination implementation, merge/deployment, or operator acceptance. Those require their owning live/runtime artifacts.

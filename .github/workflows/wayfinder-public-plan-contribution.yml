@@ -6,6 +6,7 @@ on:
       - '.ai/agent-contract.json'
       - '.ai/harness/wayfinder-doctrine.policy.json'
       - '.ai/skills/wayfinder/**'
+      - '.ai/skills/wayfinder-runtime-binding/**'
       - '.ai/skills/research/**'
       - '.ai/skills/prototype/**'
       - '.ai/skills/grilling/**'
@@ -20,10 +21,8 @@ on:
       - 'tooling/harness/operational/manifest.json'
       - 'tooling/harness/operational/validator-registry.json'
       - 'tooling/harness/operational/workflow-registry.json'
-      - 'scripts/Test-WayfinderHarness.ps1'
-      - 'scripts/Test-WayfinderPublicPlanContribution.ps1'
-      - 'tests/test_wayfinder_harness.py'
-      - 'tests/test_wayfinder_public_plan_contribution.py'
+      - 'scripts/Test-Wayfinder*.ps1'
+      - 'tests/test_wayfinder*.py'
       - 'SKILLS.md'
       - 'TRIGGERS.md'
       - 'HARNESS.md'
@@ -36,6 +35,7 @@ on:
       - '.ai/agent-contract.json'
       - '.ai/harness/wayfinder-doctrine.policy.json'
       - '.ai/skills/wayfinder/**'
+      - '.ai/skills/wayfinder-runtime-binding/**'
       - '.ai/skills/research/**'
       - '.ai/skills/prototype/**'
       - '.ai/skills/grilling/**'
@@ -50,10 +50,8 @@ on:
       - 'tooling/harness/operational/manifest.json'
       - 'tooling/harness/operational/validator-registry.json'
       - 'tooling/harness/operational/workflow-registry.json'
-      - 'scripts/Test-WayfinderHarness.ps1'
-      - 'scripts/Test-WayfinderPublicPlanContribution.ps1'
-      - 'tests/test_wayfinder_harness.py'
-      - 'tests/test_wayfinder_public_plan_contribution.py'
+      - 'scripts/Test-Wayfinder*.ps1'
+      - 'tests/test_wayfinder*.py'
       - 'SKILLS.md'
       - 'TRIGGERS.md'
       - 'HARNESS.md'
@@ -67,6 +65,7 @@ permissions:
 jobs:
   validate:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
@@ -79,16 +78,34 @@ jobs:
           python-version: '3.12'
       - name: Install pinned Draft 2020-12 validator
         run: python -m pip install --disable-pip-version-check -r tooling/harness/operational/contributions/requirements-wayfinder-public-plan.txt
+      - name: Runtime-binding static contract
+        run: python tests/test_wayfinder_runtime_binding_contract.py
+      - name: Runtime-binding PowerShell contract
+        shell: pwsh
+        run: |
+          $py = (Get-Command python).Source
+          pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderPythonBinding.ps1 -PythonPath $py
+      - name: Wayfinder completeness
+        shell: pwsh
+        run: |
+          $py = (Get-Command python).Source
+          pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderHarnessCompleteness.ps1 -PythonPath $py
+      - name: Companion-source integrity
+        run: python tests/test_wayfinder_companion_source_integrity.py
       - name: Wayfinder Python harness
         run: python tests/test_wayfinder_harness.py
       - name: Wayfinder PowerShell harness
         shell: pwsh
-        run: pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderHarness.ps1
+        run: |
+          $py = (Get-Command python).Source
+          pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderHarness.ps1 -PythonPath $py
       - name: Contribution Python contract
         run: python tests/test_wayfinder_public_plan_contribution.py
       - name: Contribution PowerShell contract
         shell: pwsh
-        run: pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderPublicPlanContribution.ps1
+        run: |
+          $py = (Get-Command python).Source
+          pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderPublicPlanContribution.ps1 -PythonPath $py
       - name: Existing public-plan PowerShell contract
         shell: pwsh
         run: pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1

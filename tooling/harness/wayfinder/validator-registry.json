@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "registryId": "agentswitchboard.wayfinder.validators.v1",
+  "validationOrder": [
+    "runtime-binding-static",
+    "runtime-binding-powershell",
+    "completeness",
+    "companion-source",
+    "wayfinder-python",
+    "wayfinder-powershell",
+    "contribution-python",
+    "contribution-powershell",
+    "public-plan",
+    "agent-documentation",
+    "operational-harness",
+    "diff-check"
+  ],
+  "validators": [
+    {"id": "runtime-binding-static", "command": "<bound-python> tests/test_wayfinder_runtime_binding_contract.py", "tier": "owning", "proof": "all nested Wayfinder PowerShell validators consume the runtime-binding resolver"},
+    {"id": "runtime-binding-powershell", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderPythonBinding.ps1 -PythonPath <bound-python>", "tier": "owning", "proof": "explicit binding precedence, environment override, canonical sys.executable normalization, and fail-closed invalid explicit binding"},
+    {"id": "completeness", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderHarnessCompleteness.ps1 -PythonPath <bound-python>", "tier": "owning", "proof": "codebase map, workflow, artifact registry, validators, hook, skills, reports and CI are tracked and cross-registered"},
+    {"id": "companion-source", "command": "<bound-python> tests/test_wayfinder_companion_source_integrity.py", "tier": "owning", "proof": "pinned prototype/domain-model companion Git objects and adapted-skill references"},
+    {"id": "wayfinder-python", "command": "<bound-python> tests/test_wayfinder_harness.py", "tier": "owning", "proof": "Wayfinder source, schemas, ticket gates, tracker adapter, frontier, HITL and spec lifecycle"},
+    {"id": "wayfinder-powershell", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderHarness.ps1 -PythonPath <bound-python>", "tier": "owning", "proof": "PowerShell harness structure plus delegated semantic validation with the same interpreter"},
+    {"id": "contribution-python", "command": "<bound-python> tests/test_wayfinder_public_plan_contribution.py", "tier": "domain", "proof": "pinned donor contribution and public-plan separation"},
+    {"id": "contribution-powershell", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-WayfinderPublicPlanContribution.ps1 -PythonPath <bound-python>", "tier": "domain", "proof": "PowerShell contribution contract with bound interpreter"},
+    {"id": "public-plan", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1", "tier": "foundation", "proof": "existing public-plan contracts remain compatible"},
+    {"id": "agent-documentation", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1", "tier": "foundation", "proof": "agent documentation contract remains valid"},
+    {"id": "operational-harness", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1", "tier": "aggregate", "proof": "repository operational harness remains coherent"},
+    {"id": "diff-check", "command": "git diff --check <base>..HEAD", "tier": "aggregate", "proof": "Git whitespace/error hygiene"}
+  ]
+}
