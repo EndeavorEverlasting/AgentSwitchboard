@@ -11,6 +11,9 @@
     "validator_registry": "tooling/firstmate/harness/operational/validator-registry.json",
     "selector": "tooling/firstmate/harness/operational/Select-FirstMateWorkflow.py",
     "report_builder": "tooling/firstmate/harness/operational/Build-FirstMateHarnessReport.py",
+    "origin_normalizer": "tooling/firstmate/harness/operational/Normalize-FirstMateOrigin.py",
+    "windows_entrypoint": "Test-AgentSwitchboard-FirstMate-Harness.ps1",
+    "windows_cmd_entrypoint": "Test-AgentSwitchboard-FirstMate-Harness.cmd",
     "windows_wsl_bridge": "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1",
     "skill": ".ai/skills/firstmate-crew-orchestration/SKILL.md",
     "operator_guide": "docs/harness/firstmate-operational-harness.md",
@@ -18,6 +21,7 @@
     "pre_commit_hook": "tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPreCommit.sh",
     "pre_push_hook": "tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPrePush.sh",
     "completeness_test": "tests/test_firstmate_operational_harness.py",
+    "windows_portability_test": "tests/test_firstmate_windows_harness_portability.py",
     "windows_wsl_bridge_test": "tests/test_firstmate_windows_wsl_bridge.py"
   },
   "roles": {
@@ -33,6 +37,7 @@
     "reference_session_backend": "tmux",
     "android": "separate-device-profile-lane",
     "native_windows_firstmate": "unverified",
+    "windows_native_harness": "PowerShell contract/report/route front door; WSL crossing only in runtime-floor mode",
     "windows_to_wsl_bridge": "tracked; WSL-owned standalone-clone reproof required",
     "herdr_selection_enabled": false
   },
@@ -42,8 +47,10 @@
     "Do not mutate First Mate upstream or install dependencies from this harness.",
     "One active writer per branch; First Mate workers require isolated branches/worktrees.",
     "Do not treat Android readiness as a dependency for productive laptop/WSL crew work.",
+    "Do not invoke bare bash from Windows Python or PowerShell for contract validation; use the Windows-native harness front door.",
+    "Do not pass a Windows path directly to a POSIX shell; use portable Python for cross-platform contracts or the owning Windows-to-WSL bridge for runtime work.",
     "Do not parse WSL stderr as machine-readable stdout or depend on wslpath for Windows temporary-path transport.",
     "Do not run Linux Git inside a Windows-created linked worktree; create a WSL-owned standalone exact-head clone from the clean committed source repository."
   ],
-  "proof_ceiling": "Tracked harness structure, deterministic route selection, report generation, hosted validators, and Windows-to-WSL standalone-clone bridge contract. Physical-laptop bridge execution, live First Mate crew dispatch, and Herdr runtime remain unproved."
+  "proof_ceiling": "Tracked harness structure, deterministic route selection, portable contract validation, report generation, hosted validators, Windows-native harness entrypoint, and Windows-to-WSL standalone-clone bridge contract. Physical-laptop bridge execution, live First Mate crew dispatch, and Herdr runtime remain unproved."
 }

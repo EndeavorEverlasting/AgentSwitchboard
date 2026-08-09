@@ -33,13 +33,18 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
         for expected in (".ai/skills", "tooling/harness", "tooling/firstmate", "tooling/profiles", "tests", "docs/harness"):
             self.assertIn(expected, structure)
         self.assertIn("crew_harness", self.codebase["entrypoints"])
+        self.assertIn("windows_harness", self.codebase["entrypoints"])
         self.assertIn("windows_wsl_bridge", self.codebase["entrypoints"])
+        self.assertIn("origin_normalizer", self.codebase["entrypoints"])
         self.assertIn("focused_test", self.codebase["commands"])
+        self.assertIn("windows_contract", self.codebase["commands"])
         self.assertIn("deploy", self.codebase["commands"])
         traps = "\n".join(self.codebase["known_traps"])
         self.assertIn("Android readiness", traps)
         self.assertIn("Herdr", traps)
         self.assertIn("worktrees use a .git file", traps)
+        self.assertIn("bare bash", traps.lower())
+        self.assertIn("Windows path", traps)
 
     def test_workflow_registry_points_to_complete_specs(self):
         ids = set()
@@ -53,7 +58,17 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
             self.assertTrue(parsed["outputs"])
             self.assertTrue(parsed["failure_handling"])
             ids.add(parsed["id"])
-        self.assertEqual(ids, {"task-intake", "crew-local-only", "pre-commit-validation", "failure-recovery", "handoff"})
+        self.assertEqual(
+            ids,
+            {
+                "task-intake",
+                "windows-laptop-validation",
+                "crew-local-only",
+                "pre-commit-validation",
+                "failure-recovery",
+                "handoff",
+            },
+        )
 
     def test_artifact_registry_has_real_generators_and_forbidden_evidence(self):
         self.assertEqual(self.artifacts["default_root"], "OS temporary directory/agentswitchboard/firstmate-harness")
@@ -68,7 +83,9 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
         commands = "\n".join(item["command"] for item in self.validators["validators"])
         self.assertIn("test_firstmate_integration_contract.py", commands)
         self.assertIn("test_firstmate_operational_harness.py", commands)
+        self.assertIn("test_firstmate_windows_harness_portability.py", commands)
         self.assertIn("test_firstmate_windows_wsl_bridge.py", commands)
+        self.assertIn("Test-AgentSwitchboard-FirstMate-Harness.ps1 -Mode contract", commands)
         self.assertIn("test_operational_harness.py", commands)
         self.assertIn("Invoke-FirstMateHarnessPreCommit.sh", commands)
         self.assertIn("Invoke-FirstMateHarnessPrePush.sh", commands)
@@ -167,16 +184,23 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
         self.assertIn("## Deterministic validation", skill)
         self.assertIn("## Forbidden scope", skill)
         self.assertIn("first_safe_sprint.yolo_enabled", skill)
+        self.assertIn("Test-AgentSwitchboard-FirstMate-Harness.ps1", skill)
         status = (ROOT / "docs/reports/firstmate-operational-harness-status.md").read_text(encoding="utf-8")
         self.assertIn("## Working", status)
         self.assertIn("## Broken or blocked", status)
         self.assertIn("## Missing", status)
+        self.assertIn("bare Bash", status)
 
-    def test_root_entrypoint_has_contract_report_route_and_probe_modes(self):
+    def test_root_entrypoints_have_platform_specific_contracts(self):
         entry = (ROOT / "Test-AgentSwitchboard-FirstMate-Harness.sh").read_text(encoding="utf-8")
         for mode in ("contract)", "report)", "route)", "probe)"):
             self.assertIn(mode, entry)
         self.assertIn("git diff --cached --check", entry)
+
+        windows = (ROOT / "Test-AgentSwitchboard-FirstMate-Harness.ps1").read_text(encoding="utf-8")
+        self.assertIn("FIRSTMATE_WINDOWS_OPERATIONAL_HARNESS", windows)
+        self.assertIn("runtime-floor", windows)
+        self.assertNotIn("bash", windows.lower())
 
 
 if __name__ == "__main__":

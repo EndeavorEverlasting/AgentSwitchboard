@@ -1,6 +1,7 @@
 import json
 import re
 import subprocess
+import sys
 import unittest
 from pathlib import Path
 
@@ -8,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "tooling" / "firstmate" / "harness" / "integration-contract.json"
 VERIFICATION_PATH = ROOT / "tooling" / "firstmate" / "harness" / "upstream-verification.json"
 PROBE_PATH = ROOT / "tooling" / "firstmate" / "Test-FirstMateInterop.sh"
+NORMALIZER_PATH = ROOT / "tooling" / "firstmate" / "harness" / "operational" / "Normalize-FirstMateOrigin.py"
 DOC_PATH = ROOT / "docs" / "harness" / "firstmate-integration.md"
 EXPECTED_SHA = "833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409"
 
@@ -18,6 +20,7 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
         cls.contract = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
         cls.verification = json.loads(VERIFICATION_PATH.read_text(encoding="utf-8"))
         cls.probe = PROBE_PATH.read_text(encoding="utf-8")
+        cls.normalizer = NORMALIZER_PATH.read_text(encoding="utf-8")
         cls.docs = DOC_PATH.read_text(encoding="utf-8")
 
     def test_upstream_pin_is_exact_and_shared(self):
@@ -78,7 +81,7 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
         self.assertIn("rev-parse --is-inside-work-tree", self.probe)
         self.assertNotIn('[[ -d "$candidate/.git" ]]', self.probe)
 
-    def test_origin_normalization_accepts_supported_git_transports(self):
+    def test_origin_normalization_accepts_supported_git_transports_without_bash(self):
         variants = (
             "https://github.com/kunchenguid/firstmate.git",
             "https://example-user@github.com/kunchenguid/firstmate.git/",
@@ -88,13 +91,18 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
         )
         for url in variants:
             completed = subprocess.run(
-                ["bash", str(PROBE_PATH), "--normalize-origin", url],
+                [sys.executable, str(NORMALIZER_PATH), url],
                 cwd=ROOT,
                 check=True,
                 capture_output=True,
                 text=True,
             )
             self.assertEqual(completed.stdout.strip(), "kunchenguid/firstmate", url)
+
+    def test_probe_delegates_origin_normalization_to_portable_owner(self):
+        self.assertIn("Normalize-FirstMateOrigin.py", self.probe)
+        self.assertIn('python3 "$NORMALIZER"', self.probe)
+        self.assertIn("def normalize_origin", self.normalizer)
 
     def test_probe_contract_parsing_is_fail_closed(self):
         self.assertIn("required_upstream_paths must be a non-empty list", self.probe)

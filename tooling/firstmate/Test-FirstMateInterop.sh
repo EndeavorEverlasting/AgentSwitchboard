@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 CONTRACT="$SCRIPT_DIR/harness/integration-contract.json"
+NORMALIZER="$SCRIPT_DIR/harness/operational/Normalize-FirstMateOrigin.py"
 EXPECTED_ORIGIN="kunchenguid/firstmate"
 
 usage() {
@@ -19,24 +20,7 @@ note() {
 }
 
 normalize_origin() {
-  local raw="${1:-}"
-  raw="${raw%/}"
-  raw="${raw%.git}"
-  raw="${raw%/}"
-
-  if [[ "$raw" =~ ^https?://([^/@]+@)?github\.com/(.+)$ ]]; then
-    raw="${BASH_REMATCH[2]}"
-  elif [[ "$raw" =~ ^git://github\.com/(.+)$ ]]; then
-    raw="${BASH_REMATCH[1]}"
-  elif [[ "$raw" =~ ^ssh://git@github\.com/(.+)$ ]]; then
-    raw="${BASH_REMATCH[1]}"
-  elif [[ "$raw" =~ ^git@github\.com:(.+)$ ]]; then
-    raw="${BASH_REMATCH[1]}"
-  fi
-
-  raw="${raw%/}"
-  raw="${raw%.git}"
-  printf '%s\n' "$raw"
+  python3 "$NORMALIZER" "${1:-}"
 }
 
 FIRSTMATE_DIR="${FIRSTMATE_DIR:-}"
@@ -71,6 +55,7 @@ if [[ -n "$NORMALIZE_ONLY" ]]; then
 fi
 
 [[ -f "$CONTRACT" ]] || fail "Missing integration contract: $CONTRACT"
+[[ -f "$NORMALIZER" ]] || fail "Missing canonical origin normalizer: $NORMALIZER"
 [[ "$(uname -s)" == "Linux" ]] || fail "This sprint proves only the Linux/WSL integration lane. Native Windows is out of scope."
 
 for tool in git gh tmux python3; do

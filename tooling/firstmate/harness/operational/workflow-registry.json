@@ -8,6 +8,12 @@
       "owner": "AgentSwitchboard"
     },
     {
+      "id": "windows-laptop-validation",
+      "spec": "tooling/firstmate/harness/operational/workflows/windows-laptop-validation.json",
+      "trigger": "Windows laptop harness validation before any WSL crossing",
+      "owner": "AgentSwitchboard Windows harness"
+    },
+    {
       "id": "crew-local-only",
       "spec": "tooling/firstmate/harness/operational/workflows/crew-local-only.json",
       "trigger": "parallel Linux/WSL task after First Mate floor passes",

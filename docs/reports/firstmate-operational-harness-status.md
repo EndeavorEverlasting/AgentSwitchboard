@@ -1,6 +1,6 @@
 # First Mate operational harness status
 
-Status: **contract-ready; Windows-to-WSL bridge repaired again; physical runtime reproof required**
+Status: **contract repair in progress; Windows-native validation added; physical runtime reproof still required**
 
 ## Working
 
@@ -10,32 +10,37 @@ Status: **contract-ready; Windows-to-WSL bridge repaired again; physical runtime
 - Direct-vs-crew routing is deterministic and requires `local-only` with `yolo_enabled: false`.
 - Codebase map, workflow specs, artifact registry, validator registry, optional hooks, scoped skill, report builder, and completeness tests are tracked.
 - Laptop/WSL crew readiness is independent from Android profile readiness.
-- The bridge no longer depends on `wslpath` or a hardcoded `/mnt/c` mount.
-- Windows paths cross into WSL through `WSLENV /p` with stdout/stderr captured separately.
-- Linux Git no longer runs inside the Windows-created linked worktree. The bridge derives the committed source repo, creates a WSL-owned standalone clone, checks out the exact SHA, and runs the owning harness there.
+- Windows now has a native harness front door: `Test-AgentSwitchboard-FirstMate-Harness.ps1` plus a location-independent CMD wrapper.
+- Windows contract/report/route modes do not require Bash or WSL.
+- GitHub origin normalization is owned by portable Python and reused by the Linux/WSL probe.
+- The WSL bridge no longer depends on `wslpath`, a hardcoded `/mnt/c`, or Linux Git running inside a Windows-created linked worktree.
+- Windows paths cross into WSL through `WSLENV /p`, the bridge binds to canonical Ubuntu, and WSL stdout/stderr are captured separately.
 - Bootstrap stdout, WSL stderr, the WSL workspace path, exact head, floor evidence, report, and route are durable evidence.
 
 ## Broken or blocked
 
-- The first physical command failed because `wslpath` produced no usable stdout.
-- The second physical command reached exact HEAD `56901243838e8a6b32745066a226041fc0619234` and the canonical artifact registry, but WSL could not execute the visibility gate inside the Windows-created detached worktree.
-- The second failure is now represented as a cross-OS Git-worktree metadata trap rather than retried with another CWD assumption.
-- The WSL-owned standalone-clone repair has not yet been rerun on the physical laptop.
+- Physical failure 1: the original bridge used `wslpath` and produced no usable stdout.
+- Physical failure 2: WSL could not execute the visibility gate inside a Windows-created detached linked worktree.
+- Physical failure 3: the operator's Windows-native `python tests/test_firstmate_integration_contract.py` spawned bare `bash` and passed it a `C:\\...` path. The Bash subprocess failed before the intended WSL runtime floor.
+- Failure 3 is a harness portability defect. It does not prove Ubuntu, WSL, tmux, or First Mate failed.
+- The new Windows-native harness and portable origin-normalization repair still require exact-head physical-laptop reproof after hosted CI.
 - No live bounded First Mate crew dispatch has completed yet.
 - Herdr automatic selection remains blocked by its separate lane.
-- Native-Windows First Mate behavior remains unverified.
+- Native-Windows First Mate runtime behavior remains unverified.
 
 ## Missing
 
-- One successful exact-head physical run of `Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1` using the WSL-owned standalone clone.
-- One local-only First Mate sprint with at least two disjoint worker branches/worktrees.
+- Hosted Windows/Linux validation of the Windows-native portability repair at the exact repair head.
+- One successful physical Windows `contract` run through `Test-AgentSwitchboard-FirstMate-Harness.ps1` with no Bash/WSL dependency.
+- One successful exact-head physical `runtime-floor` run using canonical Ubuntu and the WSL-owned standalone clone.
+- One local-only First Mate sprint with at least two disjoint worker branches/worktrees and observable useful completion.
 - Captured worker identity, branch/worktree ownership, validator receipts, and convergence evidence.
 - Any evidence sufficient to replace tmux with Herdr for a specific profile.
 
 ## Safe next state
 
-Fetch the repaired PR head without force, create an isolated Windows launcher worktree, and run the tracked bridge. Completion requires `[PASS] FIRSTMATE_WINDOWS_WSL_RUNTIME_FLOOR`, exact-head proof from the WSL-owned clone, the canonical report/floor/route artifacts, bootstrap stdout, and WSL diagnostics. If the First Mate floor itself is then the blocker, preserve that evidence and repair only that dependency.
+After hosted CI passes, fetch the exact portability-repair head into an isolated Windows worktree and run the registered PowerShell-native harness in `contract` mode. That is the immediate regression proof for the failure observed on the laptop. Only after it passes should the same front door advance to `runtime-floor`; only after that floor passes should a real tmux-backed First Mate local-only task be used as the productivity proof.
 
 ## Proof ceiling
 
-This report proves the repository repair only after exact-head hosted CI passes. It is not physical-laptop WSL proof and not live First Mate crew proof.
+This report describes tracked harness state. Hosted CI can prove the portability contract and Windows-native front door. It cannot prove the physical laptop until that exact head executes there, and it cannot prove productive First Mate crew work until a real bounded task completes with runtime evidence.
