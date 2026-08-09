@@ -1,0 +1,44 @@
+{
+  "schema": "agentswitchboard.firstmate-operational-harness.v1",
+  "harness_id": "firstmate-crew-orchestration",
+  "status": "contract-ready-runtime-unproved",
+  "canonical_entrypoint": "Test-AgentSwitchboard-FirstMate-Harness.sh",
+  "integration_contract": "tooling/firstmate/harness/integration-contract.json",
+  "components": {
+    "codebase_map": "tooling/firstmate/harness/operational/codebase-map.json",
+    "workflow_registry": "tooling/firstmate/harness/operational/workflow-registry.json",
+    "artifact_registry": "tooling/firstmate/harness/operational/artifact-registry.json",
+    "validator_registry": "tooling/firstmate/harness/operational/validator-registry.json",
+    "selector": "tooling/firstmate/harness/operational/Select-FirstMateWorkflow.py",
+    "report_builder": "tooling/firstmate/harness/operational/Build-FirstMateHarnessReport.py",
+    "skill": ".ai/skills/firstmate-crew-orchestration/SKILL.md",
+    "operator_guide": "docs/harness/firstmate-operational-harness.md",
+    "operator_status": "docs/reports/firstmate-operational-harness-status.md",
+    "pre_commit_hook": "tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPreCommit.sh",
+    "pre_push_hook": "tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPrePush.sh",
+    "completeness_test": "tests/test_firstmate_operational_harness.py"
+  },
+  "roles": {
+    "agentswitchboard": "control-plane",
+    "firstmate": "crew-chief",
+    "tmux": "reference-session-backend",
+    "herdr": "experimental-session-backend",
+    "coding_agents": "workers"
+  },
+  "routing": {
+    "single_writer_default": "direct-asb",
+    "parallel_linux_wsl_after_floor": "firstmate-local-only",
+    "reference_session_backend": "tmux",
+    "android": "separate-device-profile-lane",
+    "native_windows_firstmate": "unverified",
+    "herdr_selection_enabled": false
+  },
+  "collision_boundaries": [
+    "Do not edit AGENTS.md or governance policy in this harness lane.",
+    "Do not absorb the separate Android/Herdr migration lane.",
+    "Do not mutate First Mate upstream or install dependencies from this harness.",
+    "One active writer per branch; First Mate workers require isolated branches/worktrees.",
+    "Do not treat Android readiness as a dependency for productive laptop/WSL crew work."
+  ],
+  "proof_ceiling": "Tracked harness structure, deterministic route selection, report generation, and hosted validators. Live First Mate crew dispatch and Herdr runtime remain unproved."
+}

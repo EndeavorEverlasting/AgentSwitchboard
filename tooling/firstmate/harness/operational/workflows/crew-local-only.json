@@ -1,0 +1,26 @@
+{
+  "schema": "agentswitchboard.firstmate-workflow.v1",
+  "id": "crew-local-only",
+  "trigger": "The selector returns ready:firstmate-local-only.",
+  "inputs": [
+    "clean AgentSwitchboard branch or isolated worktree",
+    "passing First Mate read-only floor",
+    "parallel tasks with disjoint owned paths",
+    "local-only delivery posture"
+  ],
+  "steps": [
+    "Declare captain/convergence owner and one writer per worker branch/worktree.",
+    "Keep +yolo disabled and remote-writing delivery modes out of scope for the first live proof.",
+    "Dispatch only bounded tasks with explicit owned/forbidden paths and validators.",
+    "Record worker identities, worktree/branch identities, validator receipts, and produced artifacts.",
+    "Convergence owner re-inspects diffs before any integration.",
+    "Stop before PR creation, merge, deployment, or Herdr promotion unless separately authorized and proved."
+  ],
+  "outputs": [
+    "bounded local crew result",
+    "worker evidence set",
+    "convergence-ready or blocked handoff"
+  ],
+  "failure_handling": "Cancel or quarantine only the failing lane; preserve successful disjoint work and route deterministic failures back to the responsible worker.",
+  "proof_ceiling": "workflow-state evidence only unless the owning runtime/validator produces stronger proof"
+}

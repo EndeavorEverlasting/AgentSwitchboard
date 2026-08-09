@@ -1,0 +1,35 @@
+{
+  "schema": "agentswitchboard.firstmate-validator-registry.v1",
+  "validators": [
+    {
+      "id": "firstmate-integration-contract",
+      "command": "python3 tests/test_firstmate_integration_contract.py",
+      "scope": "First Mate upstream pin, safe probe, platform/role boundary"
+    },
+    {
+      "id": "firstmate-operational-completeness",
+      "command": "python3 tests/test_firstmate_operational_harness.py",
+      "scope": "maps, workflows, artifacts, validators, hooks, skill, report, selector"
+    },
+    {
+      "id": "firstmate-shell-parse",
+      "command": "bash -n tooling/firstmate/Test-FirstMateInterop.sh && bash -n Test-AgentSwitchboard-FirstMate-Harness.sh",
+      "scope": "operator shell entrypoints"
+    },
+    {
+      "id": "operational-harness-foundation",
+      "command": "python3 tests/test_operational_harness.py",
+      "scope": "existing repository operational harness regression floor"
+    },
+    {
+      "id": "diff-hygiene",
+      "command": "git diff --check <base>...HEAD",
+      "scope": "branch diff whitespace/errors"
+    }
+  ],
+  "hooks": {
+    "pre_commit": "tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPreCommit.sh",
+    "pre_push": "tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPrePush.sh"
+  },
+  "hook_installation": "manual-only; this harness never installs Git hooks implicitly"
+}

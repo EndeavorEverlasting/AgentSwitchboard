@@ -1,0 +1,29 @@
+{
+  "schema": "agentswitchboard.firstmate-artifact-registry.v1",
+  "naming": "firstmate-<artifact-role>[-<timestamp>].<ext>",
+  "default_root": "OS temporary directory/agentswitchboard/firstmate-harness",
+  "artifacts": [
+    {
+      "id": "operator-report",
+      "filename": "firstmate-harness-report.md",
+      "generator": "python3 tooling/firstmate/harness/operational/Build-FirstMateHarnessReport.py",
+      "contains": "role boundaries, component state, commands, blockers, proof ceiling, and next action",
+      "proof_ceiling": "repository harness state only"
+    },
+    {
+      "id": "route-decision",
+      "filename": "firstmate-route.json",
+      "generator": "python3 tooling/firstmate/harness/operational/Select-FirstMateWorkflow.py --output <path>",
+      "contains": "deterministic route, runtime backend, execution gate, owner, dependency, and next command",
+      "proof_ceiling": "routing decision only; not execution proof"
+    }
+  ],
+  "forbidden_evidence": [
+    "credentials",
+    "device codes",
+    "tokens",
+    "passwords",
+    "private SSH keys",
+    "unbounded model transcripts"
+  ]
+}

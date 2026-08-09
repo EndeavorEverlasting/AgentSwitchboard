@@ -6,15 +6,51 @@ CONTRACT="$SCRIPT_DIR/harness/integration-contract.json"
 EXPECTED_ORIGIN="kunchenguid/firstmate"
 
 usage() {
-  printf 'Usage: %s [--firstmate PATH]\n' "$0" >&2
+  printf 'Usage: %s [--firstmate PATH] [--normalize-origin URL]\n' "$0" >&2
+}
+
+fail() {
+  printf '[FAIL] %s\n' "$*" >&2
+  exit 1
+}
+
+note() {
+  printf '[INFO] %s\n' "$*"
+}
+
+normalize_origin() {
+  local raw="${1:-}"
+  raw="${raw%/}"
+  raw="${raw%.git}"
+  raw="${raw%/}"
+
+  if [[ "$raw" =~ ^https?://([^/@]+@)?github\.com/(.+)$ ]]; then
+    raw="${BASH_REMATCH[2]}"
+  elif [[ "$raw" =~ ^git://github\.com/(.+)$ ]]; then
+    raw="${BASH_REMATCH[1]}"
+  elif [[ "$raw" =~ ^ssh://git@github\.com/(.+)$ ]]; then
+    raw="${BASH_REMATCH[1]}"
+  elif [[ "$raw" =~ ^git@github\.com:(.+)$ ]]; then
+    raw="${BASH_REMATCH[1]}"
+  fi
+
+  raw="${raw%/}"
+  raw="${raw%.git}"
+  printf '%s\n' "$raw"
 }
 
 FIRSTMATE_DIR="${FIRSTMATE_DIR:-}"
+NORMALIZE_ONLY=""
 while (($#)); do
   case "$1" in
     --firstmate)
       [[ $# -ge 2 ]] || { usage; exit 64; }
       FIRSTMATE_DIR="$2"
+      shift 2
+      ;;
+    --normalize-origin)
+      [[ $# -ge 2 ]] || { usage; exit 64; }
+      NORMALIZE_ONLY="$2"
       shift 2
       ;;
     -h|--help)
@@ -29,14 +65,10 @@ while (($#)); do
   esac
 done
 
-fail() {
-  printf '[FAIL] %s\n' "$*" >&2
-  exit 1
-}
-
-note() {
-  printf '[INFO] %s\n' "$*"
-}
+if [[ -n "$NORMALIZE_ONLY" ]]; then
+  normalize_origin "$NORMALIZE_ONLY"
+  exit 0
+fi
 
 [[ -f "$CONTRACT" ]] || fail "Missing integration contract: $CONTRACT"
 [[ "$(uname -s)" == "Linux" ]] || fail "This sprint proves only the Linux/WSL integration lane. Native Windows is out of scope."
@@ -45,19 +77,10 @@ for tool in git gh tmux python3; do
   command -v "$tool" >/dev/null 2>&1 || fail "Required tool is unavailable in this Linux environment: $tool"
 done
 
-normalize_origin() {
-  local raw="$1"
-  raw="${raw%.git}"
-  raw="${raw#https://github.com/}"
-  raw="${raw#http://github.com/}"
-  raw="${raw#ssh://git@github.com/}"
-  raw="${raw#git@github.com:}"
-  printf '%s\n' "$raw"
-}
-
 is_firstmate_clone() {
   local candidate="$1"
-  [[ -e "$candidate/.git" ]] || return 1
+  [[ -d "$candidate" ]] || return 1
+  [[ "$(git -C "$candidate" rev-parse --is-inside-work-tree 2>/dev/null || true)" == "true" ]] || return 1
   local origin
   origin="$(git -C "$candidate" remote get-url origin 2>/dev/null || true)"
   [[ "$(normalize_origin "$origin")" == "$EXPECTED_ORIGIN" ]]

@@ -1,0 +1,80 @@
+{
+  "schema": "agentswitchboard.firstmate-codebase-map.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "start_here": [
+    "AGENTS.md",
+    "CODEBASE_MAP.md",
+    "HARNESS.md",
+    "tooling/firstmate/harness/operational/manifest.json"
+  ],
+  "structure": [
+    {
+      "path": ".ai/skills",
+      "purpose": "Scoped agent procedures; judgment stays here rather than in shell glue."
+    },
+    {
+      "path": "tooling/harness",
+      "purpose": "Repository-wide operational harness and deterministic support code."
+    },
+    {
+      "path": "tooling/firstmate",
+      "purpose": "First Mate interoperability probes and the crew-orchestration harness."
+    },
+    {
+      "path": "tooling/profiles",
+      "purpose": "Machine/device profile harnesses such as Android/Termux; separate from laptop crew readiness."
+    },
+    {
+      "path": "tests",
+      "purpose": "Portable deterministic contract and completeness tests."
+    },
+    {
+      "path": "scripts",
+      "purpose": "Repository validators and operator entrypoints, primarily PowerShell."
+    },
+    {
+      "path": "docs/harness",
+      "purpose": "Human operator guides."
+    },
+    {
+      "path": ".github/workflows",
+      "purpose": "Hosted validation gates."
+    }
+  ],
+  "entrypoints": {
+    "crew_harness": "bash Test-AgentSwitchboard-FirstMate-Harness.sh contract",
+    "firstmate_probe": "bash tooling/firstmate/Test-FirstMateInterop.sh --firstmate <path>",
+    "route_selector": "python3 tooling/firstmate/harness/operational/Select-FirstMateWorkflow.py --parallel-writers <n> --firstmate-floor <pass|unproved|fail> --platform <linux-wsl|windows|android|other>",
+    "operator_report": "python3 tooling/firstmate/harness/operational/Build-FirstMateHarnessReport.py"
+  },
+  "commands": {
+    "focused_test": [
+      "python3 tests/test_firstmate_integration_contract.py",
+      "python3 tests/test_firstmate_operational_harness.py"
+    ],
+    "shell_parse": [
+      "bash -n Test-AgentSwitchboard-FirstMate-Harness.sh",
+      "bash -n tooling/firstmate/Test-FirstMateInterop.sh",
+      "bash -n tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPreCommit.sh",
+      "bash -n tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPrePush.sh"
+    ],
+    "foundation_test": [
+      "python3 tests/test_operational_harness.py"
+    ],
+    "diff_hygiene": [
+      "git diff --check <base>...HEAD"
+    ],
+    "build": "No product build is owned by this harness; run the selected project validator after a crew task.",
+    "deploy": "Not owned. This harness grants no deployment or live-target authority."
+  },
+  "known_traps": [
+    "Linux aarch64 availability is not Android/Termux proof.",
+    "Herdr is not a project manager; it is a session backend candidate.",
+    "First Mate is not the AgentSwitchboard control plane; it is a crew orchestration candidate.",
+    "Android readiness does not block productive laptop/WSL crew work; the lanes are independent.",
+    "Do not infer a valid Git checkout by requiring .git to be a directory; linked worktrees use a .git file.",
+    "Normalize equivalent GitHub origin transports before comparing repository identity.",
+    "Do not auto-promote Herdr while its pinned contract and live runtime gates are unresolved.",
+    "Do not use First Mate remote-writing modes until the local-only runtime gate has evidence."
+  ]
+}

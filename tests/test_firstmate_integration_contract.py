@@ -1,5 +1,6 @@
 import json
 import re
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -45,6 +46,15 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
         self.assertEqual(platform["native_windows"], "unverified and out of scope")
         self.assertIn("inference", platform["wsl_support_claim"])
 
+    def test_role_boundaries_and_runtime_floor_are_explicit(self):
+        roles = self.contract["role_boundaries"]
+        self.assertIn("control plane", roles["agentswitchboard"])
+        self.assertIn("crew chief", roles["firstmate"])
+        runtime = self.contract["runtime_contract"]
+        self.assertEqual(runtime["reference_backend"], "tmux")
+        self.assertEqual(runtime["herdr"]["status"], "experimental-unproved")
+        self.assertIs(runtime["herdr"]["automatic_selection"], False)
+
     def test_probe_has_strict_shell_and_no_mutation_commands(self):
         self.assertIn("set -euo pipefail", self.probe)
         forbidden = (
@@ -62,6 +72,28 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
         for command in forbidden:
             self.assertNotIn(command, self.probe, command)
 
+    def test_probe_accepts_git_worktree_identity_via_git(self):
+        self.assertIn("rev-parse --is-inside-work-tree", self.probe)
+        self.assertNotIn('[[ -d "$candidate/.git" ]]', self.probe)
+
+    def test_origin_normalization_accepts_supported_git_transports(self):
+        variants = (
+            "https://github.com/kunchenguid/firstmate.git",
+            "https://example-user@github.com/kunchenguid/firstmate.git/",
+            "git://github.com/kunchenguid/firstmate.git",
+            "git@github.com:kunchenguid/firstmate.git",
+            "ssh://git@github.com/kunchenguid/firstmate.git",
+        )
+        for url in variants:
+            completed = subprocess.run(
+                ["bash", str(PROBE_PATH), "--normalize-origin", url],
+                cwd=ROOT,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(completed.stdout.strip(), "kunchenguid/firstmate", url)
+
     def test_probe_requires_clean_audited_clone_and_toolchain(self):
         self.assertIn("status --porcelain=v1", self.probe)
         self.assertIn('[[ "$ACTUAL_HEAD" == "$EXPECTED_HEAD" ]]', self.probe)
@@ -76,6 +108,7 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
         self.assertIn("Test-FirstMateInterop.sh", self.docs)
         self.assertIn("Proof ceiling", self.docs)
         self.assertIn("WSL", self.docs)
+        self.assertIn("Herdr promotion is a separate gate", self.docs)
 
 
 if __name__ == "__main__":

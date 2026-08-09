@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "integration_id": "firstmate-wsl",
   "upstream": {
     "repository": "https://github.com/kunchenguid/firstmate",
@@ -15,8 +15,26 @@
     "wsl_support_claim": "integration inference; upstream README declares Linux but does not explicitly certify WSL",
     "native_windows": "unverified and out of scope"
   },
+  "role_boundaries": {
+    "agentswitchboard": "control plane: select machine, provider, workflow, policy, validators, evidence, and escalation",
+    "firstmate": "crew chief: decompose and supervise parallel crew work while preserving isolated repository work",
+    "session_backend": "terminal/session substrate only; it does not own project decomposition or AgentSwitchboard policy",
+    "coding_agent": "bounded worker that reasons, edits, tests, and reports inside its assigned branch or worktree"
+  },
   "runtime_contract": {
     "reference_backend": "tmux",
+    "herdr": {
+      "status": "experimental-unproved",
+      "automatic_selection": false,
+      "owner_lane": "separate Herdr compatibility/migration harness",
+      "required_before_selection": [
+        "pinned reviewed upstream contract",
+        "aggregate harness registration",
+        "live session start and detach/reattach evidence",
+        "agent-state evidence",
+        "platform-specific persistence evidence"
+      ]
+    },
     "required_tools": [
       "git",
       "gh",
@@ -40,11 +58,16 @@
     "firstmate_repository_mutation": false,
     "agentswitchboard_shared_registry_mutation": false
   },
+  "operational_harness": {
+    "manifest": "tooling/firstmate/harness/operational/manifest.json",
+    "entrypoint": "Test-AgentSwitchboard-FirstMate-Harness.sh",
+    "skill": ".ai/skills/firstmate-crew-orchestration/SKILL.md"
+  },
   "required_upstream_paths": [
     "AGENTS.md",
     "README.md",
     "docs/configuration.md",
     ".agents/skills/project-management/SKILL.md"
   ],
-  "proof_ceiling": "Repository contract and read-only WSL compatibility probe only; no live First Mate task dispatch, worker runtime, PR delivery, merge, or native-Windows behavior is proven."
+  "proof_ceiling": "Repository contract, deterministic routing, and read-only WSL compatibility probe only; no live First Mate task dispatch, worker runtime, PR delivery, merge, Herdr runtime, or native-Windows behavior is proven."
 }
