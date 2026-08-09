@@ -55,7 +55,7 @@ def main():
     assert rc['compatibility']['linuxMuslPrebuiltOnTermux']['buildTarget']=='aarch64-unknown-linux-musl'
     assert rc['reviewDecision']=='EXECUTION_PROBE_APPROVED_NO_INSTALL' and rc['migrationDecision']=='KEEP_TMUX'
 
-    fixture=tracked('tooling/profiles/android/harness/herdr/fixtures/herdr-not-installed.fixture.env')
+    tracked('tooling/profiles/android/harness/herdr/fixtures/herdr-not-installed.fixture.env')
     isolation=tracked(m['components']['statusStateIsolationTest'])
     r=subprocess.run([sys.executable,str(isolation)],cwd=ROOT,text=True,capture_output=True)
     assert r.returncode==0,r.stderr
@@ -70,7 +70,15 @@ def main():
         for token in ('Status: EXECUTION_PROBE_APPROVED_NO_INSTALL','Release build target: aarch64-unknown-linux-musl','Decision: BLOCKED_UNSUPPORTED_PLATFORM_FALLBACK','Installation authorized: no','Server startup authorized: no'):
             assert token in text
 
-    r=subprocess.run([sys.executable,str(BASE/'Probe-HerdrPrebuiltCompatibility.py'),'contract'],cwd=ROOT,text=True,capture_output=True)
+    prebuilt_path=tracked(m['components']['prebuiltCompatibilityProbe'])
+    prebuilt_source=prebuilt_path.read_text(encoding='utf-8')
+    assert 'XDG_STATE_HOME' in prebuilt_source and 'def state_root()' in prebuilt_source
+    compat_builder_source=tracked(m['components']['compatibilityReviewBuilder']).read_text(encoding='utf-8')
+    assert 'XDG_STATE_HOME' in compat_builder_source and 'def state_root()' in compat_builder_source
+    status_source=tracked(m['components']['statusReporter']).read_text(encoding='utf-8')
+    assert '--state-root' in status_source and 'XDG_STATE_HOME' in status_source
+
+    r=subprocess.run([sys.executable,str(prebuilt_path),'contract'],cwd=ROOT,text=True,capture_output=True)
     assert r.returncode==0,r.stderr and 'HERDR_PREBUILT_COMPATIBILITY_CONTRACT=PASS' in r.stdout
 
     skill=tracked('.ai/skills/android-herdr-migration/SKILL.md').read_text()

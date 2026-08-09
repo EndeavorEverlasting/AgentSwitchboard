@@ -12,7 +12,12 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
 SOURCE = BASE / "upstream-runtime-compatibility.json"
-STATE_ROOT = Path.home() / ".local/state/agentswitchboard/android-herdr-migration"
+
+
+def state_root() -> Path:
+    xdg = os.environ.get("XDG_STATE_HOME")
+    base = Path(xdg).expanduser() if xdg else Path.home() / ".local/state"
+    return base / "agentswitchboard/android-herdr-migration"
 
 
 def source() -> dict:
@@ -31,8 +36,9 @@ def clean(value: object) -> str:
 
 
 def write_evidence(fields: dict[str, object]) -> Path:
-    STATE_ROOT.mkdir(parents=True, exist_ok=True)
-    path = STATE_ROOT / f"herdr-prebuilt-exec-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.env"
+    root = state_root()
+    root.mkdir(parents=True, exist_ok=True)
+    path = root / f"herdr-prebuilt-exec-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.env"
     path.write_text("\n".join(f"{key}={clean(value)}" for key, value in fields.items()) + "\n", encoding="utf-8")
     return path
 

@@ -79,6 +79,9 @@ foreach($token in @('device_config put','max_phantom_processes','cargo install h
 $prebuiltProbe=Get-Content -LiteralPath (Join-Path $RootPath 'tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py') -Raw
 foreach($token in @('cargo install herdr','device_config put','max_phantom_processes','PREFIX/bin')){ Assert-True (-not $prebuiltProbe.Contains($token)) "Prebuilt probe contains forbidden token: $token" }
 Assert-True ($prebuiltProbe.Contains('[str(candidate), "--version"]')) 'Prebuilt probe must execute only the pinned binary identity command.'
+Assert-True ($prebuiltProbe.Contains('XDG_STATE_HOME')) 'Prebuilt evidence writer must honor the artifact registry XDG state-root contract.'
+$compatBuilder=Get-Content -LiteralPath (Join-Path $RootPath 'tooling/profiles/android/harness/herdr/Build-HerdrCompatibilityReview.py') -Raw
+Assert-True ($compatBuilder.Contains('XDG_STATE_HOME')) 'Compatibility review builder must honor the artifact registry XDG state-root contract.'
 $statusReporter=Get-Content -LiteralPath (Join-Path $RootPath 'tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py') -Raw
 Assert-True ($statusReporter.Contains('--state-root')) 'Status reporter must support isolated validator state roots.'
 Assert-True ($statusReporter.Contains('XDG_STATE_HOME')) 'Status reporter must honor the artifact registry XDG state-root contract.'

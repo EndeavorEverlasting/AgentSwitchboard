@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prove Herdr status routing is isolated from ambient operator artifacts."""
+"""Prove Herdr status routing and local artifact generators honor isolated/XDG state roots."""
 from __future__ import annotations
 import json
 import os
@@ -13,6 +13,7 @@ BASE = ROOT / "tooling/profiles/android/harness/herdr"
 FIXTURE = BASE / "fixtures/herdr-not-installed.fixture.env"
 STATUS = BASE / "Get-HerdrHarnessStatus.py"
 INSTALL = BASE / "Build-HerdrInstallReview.py"
+COMPAT = BASE / "Build-HerdrCompatibilityReview.py"
 
 
 def run(args: list[str], *, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
@@ -26,6 +27,15 @@ def status(*extra: str, env: dict[str, str] | None = None) -> dict:
     return json.loads(result.stdout)
 
 
+def fields(output: str) -> dict[str, str]:
+    parsed = {}
+    for line in output.splitlines():
+        if "=" in line:
+            key, value = line.split("=", 1)
+            parsed[key] = value
+    return parsed
+
+
 def main() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
@@ -35,11 +45,11 @@ def main() -> None:
         ambient.mkdir(parents=True)
         isolated.mkdir()
 
-        ambient_review = ambient / "herdr-install-review-20260809T000000Z.md"
-        run([sys.executable, str(INSTALL), "--output", str(ambient_review)])
-
         env = os.environ.copy()
         env["XDG_STATE_HOME"] = str(xdg)
+
+        ambient_review = ambient / "herdr-install-review-20260809T000000Z.md"
+        run([sys.executable, str(INSTALL), "--output", str(ambient_review)], env=env)
 
         clean = status("--state-root", str(isolated), env=env)
         assert clean["stateRoot"] == str(isolated)
@@ -54,28 +64,30 @@ def main() -> None:
         assert ambient_status["nextGate"] == "source-bound-runtime-compatibility-review"
 
         isolated_review = isolated / "herdr-install-review-20260809T000001Z.md"
-        run([sys.executable, str(INSTALL), "--output", str(isolated_review)])
+        run([sys.executable, str(INSTALL), "--output", str(isolated_review)], env=env)
         isolated_after = status("--state-root", str(isolated), env=env)
         assert isolated_after["installReviewSource"] == str(isolated_review)
         assert isolated_after["status"] == "blocked-herdr-runtime-compatibility-unproved"
         assert isolated_after["nextGate"] == "source-bound-runtime-compatibility-review"
 
-        written = run([
+        written = fields(run([
             sys.executable,
             str(STATUS),
             "--state-root", str(isolated),
             "--evidence", str(FIXTURE),
             "--install-review", str(isolated_review),
             "--write",
-        ], env=env)
-        paths = {}
-        for line in written.stdout.splitlines():
-            if "=" in line:
-                key, value = line.split("=", 1)
-                paths[key] = value
-        assert Path(paths["STATUS_JSON"]).parent == isolated
-        assert Path(paths["STATUS_MARKDOWN"]).parent == isolated
-        assert paths["STATUS"] == "blocked-herdr-runtime-compatibility-unproved"
+        ], env=env).stdout)
+        assert Path(written["STATUS_JSON"]).parent == isolated
+        assert Path(written["STATUS_MARKDOWN"]).parent == isolated
+        assert written["STATUS"] == "blocked-herdr-runtime-compatibility-unproved"
+
+        compat = fields(run([sys.executable, str(COMPAT), "--write"], env=env).stdout)
+        compat_path = Path(compat["COMPATIBILITY_REVIEW"])
+        assert compat_path.parent == ambient
+        assert compat_path.is_file()
+        assert compat["DECISION"] == "EXECUTION_PROBE_APPROVED_NO_INSTALL"
+        assert compat["MIGRATION_DECISION"] == "KEEP_TMUX"
 
     print("PASS: Android Herdr status state-root isolation")
 
