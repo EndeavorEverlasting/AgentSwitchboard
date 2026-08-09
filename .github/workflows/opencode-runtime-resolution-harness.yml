@@ -37,6 +37,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Repository-only status
+        shell: pwsh
+        run: ./tooling/profiles/windows/Get-OpenCodeRuntimeResolutionStatus.ps1
       - name: OpenCode runtime-resolution completeness
         shell: pwsh
         run: ./scripts/Test-OpenCodeRuntimeResolutionHarness.ps1
@@ -46,6 +49,11 @@ jobs:
       - name: Existing agent documentation contract
         shell: pwsh
         run: ./scripts/Test-AgentDocumentationContract.ps1
+      - name: Existing aggregate offline harness
+        shell: pwsh
+        run: |
+          $outputRoot = Join-Path $env:RUNNER_TEMP 'agentswitchboard-app-harness'
+          ./scripts/Test-AppHarness.ps1 -OutputRoot $outputRoot
       - name: Diff hygiene
         shell: pwsh
         run: git diff --check ${{ github.event.pull_request.base.sha || 'HEAD^' }} ${{ github.sha }}
