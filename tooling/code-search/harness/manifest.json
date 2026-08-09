@@ -4,6 +4,7 @@
   "repository": "EndeavorEverlasting/AgentSwitchboard",
   "status": "contract-ready-runtime-probe-required",
   "components": {
+    "rootFrontDoor": "CODE_SEARCH.md",
     "codebaseMap": "tooling/code-search/harness/codebase-map.json",
     "providerRegistry": "tooling/code-search/harness/provider-registry.json",
     "workflowRegistry": "tooling/code-search/harness/workflow-registry.json",
