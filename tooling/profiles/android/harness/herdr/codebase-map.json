@@ -2,32 +2,16 @@
   "schema": "agentswitchboard.android-herdr-codebase-map.v1",
   "scope": "Android/Termux Herdr migration harness only; canonical Android product/runtime files are read-only and tmux remains authoritative until live promotion gates pass.",
   "repositoryStructure": {
-    "authorityReadOnly": [
-      "AGENTS.md",
-      "docs/governance/harness-doctrine.md",
-      ".ai/harness/harness-doctrine.policy.json"
-    ],
-    "parentHarness": [
-      "tooling/profiles/android/harness/termux/manifest.json",
-      "tooling/profiles/android/harness/termux/codebase-map.json"
-    ],
-    "canonicalRuntimeReadOnly": [
-      "Start-AgentSwitchboard-Android.sh",
-      "tooling/profiles/android/AgentSwitchboard-Android.sh"
-    ],
-    "harness": [
-      "tooling/profiles/android/harness/herdr/"
-    ],
-    "skill": [
-      ".ai/skills/android-herdr-migration/SKILL.md"
-    ],
-    "operatorDocs": [
-      "docs/workstation/android-herdr-migration.md",
-      "docs/harness/android-herdr-operational-harness.md"
-    ],
+    "authorityReadOnly": ["AGENTS.md", "docs/governance/harness-doctrine.md", ".ai/harness/harness-doctrine.policy.json"],
+    "parentHarness": ["tooling/profiles/android/harness/termux/manifest.json", "tooling/profiles/android/harness/termux/codebase-map.json"],
+    "canonicalRuntimeReadOnly": ["Start-AgentSwitchboard-Android.sh", "tooling/profiles/android/AgentSwitchboard-Android.sh"],
+    "harness": ["tooling/profiles/android/harness/herdr/"],
+    "skill": [".ai/skills/android-herdr-migration/SKILL.md"],
+    "operatorDocs": ["docs/workstation/android-herdr-migration.md", "docs/harness/android-herdr-operational-harness.md"],
     "validators": [
       "tests/test_android_herdr_migration.py",
       "tests/test_android_herdr_install_review.py",
+      "tests/test_android_herdr_compatibility_review.py",
       "tests/test_android_herdr_harness_completeness.py",
       "scripts/Test-AndroidHerdrHarnessCompleteness.ps1",
       ".github/workflows/android-herdr-migration.yml"
@@ -38,8 +22,12 @@
     "status": "python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py",
     "writeStatus": "python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --write",
     "buildInstallReview": "python tooling/profiles/android/harness/herdr/Build-HerdrInstallReview.py --write",
+    "buildCompatibilityReview": "python tooling/profiles/android/harness/herdr/Build-HerdrCompatibilityReview.py --write",
+    "prebuiltCompatibilityContract": "python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py contract",
+    "prebuiltCompatibilityEvidence": "python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py evidence",
     "portableValidation": "python tests/test_android_herdr_harness_completeness.py",
     "sourceBoundReviewValidation": "python tests/test_android_herdr_install_review.py",
+    "compatibilityReviewValidation": "python tests/test_android_herdr_compatibility_review.py",
     "powershellCompleteness": "pwsh -NoLogo -NoProfile -File scripts/Test-AndroidHerdrHarnessCompleteness.ps1",
     "preCommit": "bash tooling/profiles/android/harness/herdr/hooks/Invoke-HerdrHarnessPreCommit.sh",
     "prePush": "bash tooling/profiles/android/harness/herdr/hooks/Invoke-HerdrHarnessPrePush.sh"
@@ -49,18 +37,21 @@
     "artifactRegistry": "tooling/profiles/android/harness/herdr/artifact-registry.json",
     "workflowSpecs": "tooling/profiles/android/harness/herdr/workflows/workflow-specs.json",
     "upstreamInstallationSource": "tooling/profiles/android/harness/herdr/upstream-installation-source.json",
-    "sourceRefreshRule": "Refresh and review the tracked upstream installation source before authorizing any install command; stale or non-explicit Android/Termux support keeps installation BLOCKED."
+    "upstreamRuntimeCompatibility": "tooling/profiles/android/harness/herdr/upstream-runtime-compatibility.json",
+    "sourceRefreshRule": "Refresh tracked upstream installation and runtime-compatibility sources before broadening authority; a newer release/support signal must never silently inherit v0.8.0 probe approval."
   },
   "knownTraps": [
+    "The published Linux ARM64 asset is aarch64-unknown-linux-musl, not a native Android target.",
     "Linux aarch64 availability is not Android/Termux compatibility proof.",
-    "A missing herdr command is a reviewed-installation gate, not authority to improvise an installer.",
+    "A native aarch64-linux-android build selects Herdr's unsupported fallback platform module at the pinned source commit.",
+    "The no-install prebuilt probe authorizes only exact-size/SHA-256 verified ephemeral --version execution; it does not authorize server startup or persistent installation.",
+    "A missing herdr command is not authority to improvise an installer.",
     "Do not use cargo install herdr unless the pinned upstream source documents that method.",
     "Do not use curl-pipe-shell as installation proof.",
     "Do not mutate Android device_config, phantom-process limits, or battery policy from this harness lane.",
-    "Do not turn a tracked upstream metadata snapshot into live compatibility proof; it only binds the review to a reproducible source state.",
-    "Herdr command/version success proves binary readiness only; it does not prove a persistent server.",
+    "Herdr command/version success proves execution identity only; it does not prove PTY, IPC, process detection, persistence, or server behavior.",
     "Detach/reattach does not prove agent-state detection or Android background survival.",
-    "Raw phone evidence remains local and untracked; commit synthetic fixtures and contracts instead.",
+    "Raw phone evidence remains local and untracked; commit source snapshots, synthetic fixtures, and contracts instead.",
     "tmux remains canonical until every promotion gate has same-device evidence."
   ],
   "buildTestDeploy": {
@@ -68,15 +59,17 @@
     "test": [
       "bash -n Test-AgentSwitchboard-Android-Herdr.sh",
       "bash -n tooling/profiles/android/harness/herdr/Probe-Herdr-Migration.sh",
+      "python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py contract",
       "python tests/test_android_herdr_migration.py",
       "python tests/test_android_herdr_install_review.py",
+      "python tests/test_android_herdr_compatibility_review.py",
       "python tests/test_android_herdr_harness_completeness.py",
       "pwsh -NoLogo -NoProfile -File scripts/Test-AndroidHerdrHarnessCompleteness.ps1",
       "python tests/test_android_termux_harness.py",
       "python tests/test_android_termux_modal_state_harness.py",
       "git diff --check"
     ],
-    "deploy": "Push reviewed harness changes to the feature branch and update PR #95; do not install Herdr, replace tmux, mutate Android policy, or promote runtime from this lane."
+    "deploy": "Push reviewed harness changes to the feature branch and update PR #95; do not install Herdr, replace tmux, mutate Android policy, or start the Herdr server from the compatibility-review lane."
   },
-  "proofCeiling": "This map proves ownership, discoverability, source binding, workflow and validation commands, artifact paths and traps only; it does not prove Herdr Android compatibility, server persistence, agent-state detection, background survival, sprint behavior, or tmux replacement readiness."
+  "proofCeiling": "This map proves ownership, discoverability, source binding, workflow/validation commands, artifact paths and traps. It authorizes only the explicit ephemeral prebuilt execution probe named above; it does not prove Herdr Android support or any server/persistence/agent/background/sprint migration gate."
 }
