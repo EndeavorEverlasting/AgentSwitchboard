@@ -127,7 +127,7 @@ class FirstMateWindowsWslBridgeTests(unittest.TestCase):
         self.assertIn("bash+git", traps)
         self.assertIn("CRLF", traps)
         self.assertIn("normalize", traps.lower())
-        self.assertIn("empty stdout/stderr", traps)
+        self.assertIn("stdout/stderr may legitimately be empty", traps)
         self.assertIn("AllowEmptyString", traps)
 
 
