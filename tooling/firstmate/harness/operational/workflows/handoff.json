@@ -1,0 +1,26 @@
+{
+  "schema": "agentswitchboard.firstmate-workflow.v1",
+  "id": "handoff",
+  "trigger": "A complete gate transfers to another agent/chat or a real blocker prevents continuation.",
+  "inputs": [
+    "exact branch/head",
+    "validation receipts",
+    "artifact paths",
+    "unresolved blockers",
+    "next owner"
+  ],
+  "steps": [
+    "Record repository, branch, exact head, owned scope, forbidden scope, and preservation state.",
+    "List only validators actually run and their outcomes.",
+    "Name the current runtime backend and whether live crew execution was actually observed.",
+    "Record generated report and route-decision artifact paths when present.",
+    "Provide one exact next command that verifies the pinned head in an isolated worktree before execution."
+  ],
+  "outputs": [
+    "human-readable handoff",
+    "machine-readable route decision",
+    "exact next command"
+  ],
+  "failure_handling": "Never claim live First Mate, Herdr, PR, merge, or deployment proof from static harness validation.",
+  "proof_ceiling": "workflow-state evidence only unless the owning runtime/validator produces stronger proof"
+}

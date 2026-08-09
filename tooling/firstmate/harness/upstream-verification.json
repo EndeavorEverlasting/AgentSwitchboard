@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0.0",
+  "upstream_repository": "kunchenguid/firstmate",
+  "verified_branch": "main",
+  "verified_commit": "833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409",
+  "verified_on": "2026-08-08",
+  "inspected_paths": [
+    "README.md",
+    "AGENTS.md",
+    "docs/configuration.md",
+    ".agents/skills/project-management/SKILL.md",
+    "CONTRIBUTING.md"
+  ],
+  "facts": {
+    "declared_platforms": [
+      "macOS",
+      "Linux"
+    ],
+    "reference_backend": "tmux",
+    "supported_primary_harnesses": [
+      "Claude Code",
+      "Grok",
+      "Pi",
+      "pi-signed",
+      "Codex",
+      "OpenCode"
+    ],
+    "project_modes": [
+      "no-mistakes",
+      "direct-PR",
+      "local-only",
+      "no-mistakes-prod-only"
+    ],
+    "local_only_remote_required": false,
+    "local_only_skips_no_mistakes_initialization": true,
+    "new_remote_project_default": "no-mistakes-prod-only"
+  },
+  "inferences": [
+    "WSL is the lowest-risk AgentSwitchboard integration host because First Mate declares Linux support while AgentSwitchboard already uses Windows/WSL boundaries.",
+    "A local-only first smoke test minimizes outward mutation while still exercising First Mate project orchestration."
+  ],
+  "unknowns": [
+    "Upstream does not explicitly certify WSL in the inspected README.",
+    "Native Windows behavior is not declared by the inspected upstream platform contract.",
+    "Android/Termux support was not established by this evidence harvest."
+  ],
+  "proof_ceiling": "Static upstream repository evidence at the verified commit; no local First Mate clone, tmux session, primary harness, or task dispatch was executed by this connector-only sprint."
+}
