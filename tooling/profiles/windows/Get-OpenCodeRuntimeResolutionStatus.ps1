@@ -18,6 +18,9 @@ if (-not (Test-Path -LiteralPath $reportTemplatePath -PathType Leaf)) { throw "O
 
 $registry = Get-Content -LiteralPath $registryPath -Raw | ConvertFrom-Json
 $requiredTracked = @(
+    'CODEBASE_MAP.md',
+    'SKILLS.md',
+    'TRIGGERS.md',
     'tooling/profiles/windows/harness/opencode-runtime-resolution/codebase-map.json',
     'tooling/profiles/windows/harness/opencode-runtime-resolution/runtime-resolution.registry.json',
     'tooling/profiles/windows/harness/opencode-runtime-resolution/artifact-registry.json',
