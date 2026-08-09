@@ -1,1 +1,107 @@
-{"schema":"agentswitchboard.android-herdr-codebase-map.v1","scope":"Android/Termux Herdr migration harness only; canonical Android product/runtime files are read-only and tmux remains authoritative until live promotion gates pass.","repositoryStructure":{"authorityReadOnly":["AGENTS.md","docs/governance/harness-doctrine.md",".ai/harness/harness-doctrine.policy.json"],"parentHarness":["tooling/profiles/android/harness/termux/manifest.json","tooling/profiles/android/harness/termux/codebase-map.json"],"canonicalRuntimeReadOnly":["Start-AgentSwitchboard-Android.sh","tooling/profiles/android/AgentSwitchboard-Android.sh"],"harness":["tooling/profiles/android/harness/herdr/"],"skill":[".ai/skills/android-herdr-migration/SKILL.md"],"operatorDocs":["docs/workstation/android-herdr-migration.md","docs/harness/android-herdr-operational-harness.md"],"validators":["tests/test_android_herdr_migration.py","tests/test_android_herdr_install_review.py","tests/test_android_herdr_compatibility_review.py","tests/test_android_herdr_server_start_review.py","tests/test_android_herdr_status_state_isolation.py","tests/test_android_herdr_harness_completeness.py","scripts/Test-AndroidHerdrHarnessCompleteness.ps1",".github/workflows/android-herdr-migration.yml"]},"entrypoints":{"phoneProbe":"bash Test-AgentSwitchboard-Android-Herdr.sh evidence","status":"python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py","writeStatus":"python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --write","isolatedStatusValidation":"python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --state-root <isolated-temp-dir>","buildInstallReview":"python tooling/profiles/android/harness/herdr/Build-HerdrInstallReview.py --write","buildCompatibilityReview":"python tooling/profiles/android/harness/herdr/Build-HerdrCompatibilityReview.py --write","prebuiltCompatibilityContract":"python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py contract","prebuiltCompatibilityEvidence":"python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py evidence","buildServerStartReview":"python tooling/profiles/android/harness/herdr/Build-HerdrServerStartReview.py --write","serverStartContract":"python tooling/profiles/android/harness/herdr/Probe-HerdrServerStart.py contract","serverStartEvidence":"python tooling/profiles/android/harness/herdr/Probe-HerdrServerStart.py evidence","portableValidation":"python tests/test_android_herdr_harness_completeness.py","stateIsolationValidation":"python tests/test_android_herdr_status_state_isolation.py","sourceBoundReviewValidation":"python tests/test_android_herdr_install_review.py","compatibilityReviewValidation":"python tests/test_android_herdr_compatibility_review.py","serverStartReviewValidation":"python tests/test_android_herdr_server_start_review.py","powershellCompleteness":"pwsh -NoLogo -NoProfile -File scripts/Test-AndroidHerdrHarnessCompleteness.ps1","preCommit":"bash tooling/profiles/android/harness/herdr/hooks/Invoke-HerdrHarnessPreCommit.sh","prePush":"bash tooling/profiles/android/harness/herdr/hooks/Invoke-HerdrHarnessPrePush.sh"},"configuration":{"manifest":"tooling/profiles/android/harness/herdr/manifest.json","artifactRegistry":"tooling/profiles/android/harness/herdr/artifact-registry.json","workflowSpecs":"tooling/profiles/android/harness/herdr/workflows/workflow-specs.json","upstreamInstallationSource":"tooling/profiles/android/harness/herdr/upstream-installation-source.json","upstreamRuntimeCompatibility":"tooling/profiles/android/harness/herdr/upstream-runtime-compatibility.json","upstreamServerStartSource":"tooling/profiles/android/harness/herdr/upstream-server-start-source.json","stateRootContract":"${XDG_STATE_HOME:-$HOME/.local/state}/agentswitchboard/android-herdr-migration; validators must override with --state-root when they require synthetic clean state.","sourceRefreshRule":"Refresh tracked upstream installation/runtime/server-start sources before broadening authority; a newer release or source change must never silently inherit v0.8.0 probe approval."},"knownTraps":["Deterministic validators must not auto-discover real operator artifacts. Use an isolated --state-root for synthetic status routing tests.","The published Linux ARM64 asset is aarch64-unknown-linux-musl, not a native Android target.","Linux aarch64 availability is not Android/Termux support proof.","A native aarch64-linux-android build selects Herdr's unsupported fallback platform module at the pinned source commit.","The prebuilt identity probe authorizes only exact-size/SHA-256 verified ephemeral --version execution.","Bare `herdr` auto-detect launch may spawn a detached daemon; it is forbidden in the bounded server-start probe.","The bounded server-start probe must use explicit foreground `herdr server`, isolated XDG state, HERDR_SOCKET_PATH, status server --json, and server stop.","Foreground server start/status/stop proves only bounded local server lifecycle and API IPC, not client attach, detach/reattach, background survival or agent-state detection.","A missing Herdr command is not authority to improvise an installer.","Do not use cargo install herdr unless the pinned upstream source documents that method.","Do not use curl-pipe-shell as installation proof.","Do not mutate Android device_config, phantom-process limits, or battery policy from this harness lane.","Raw phone evidence remains local and untracked; commit source snapshots, synthetic fixtures, and contracts instead.","tmux remains canonical until every promotion gate has same-device evidence."],"buildTestDeploy":{"build":"No product build; harness assets are tracked JSON, Markdown, Python, shell, and PowerShell.","test":["bash -n Test-AgentSwitchboard-Android-Herdr.sh","bash -n tooling/profiles/android/harness/herdr/Probe-Herdr-Migration.sh","python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py contract","python tooling/profiles/android/harness/herdr/Probe-HerdrServerStart.py contract","python tests/test_android_herdr_migration.py","python tests/test_android_herdr_install_review.py","python tests/test_android_herdr_compatibility_review.py","python tests/test_android_herdr_server_start_review.py","python tests/test_android_herdr_status_state_isolation.py","python tests/test_android_herdr_harness_completeness.py","pwsh -NoLogo -NoProfile -File scripts/Test-AndroidHerdrHarnessCompleteness.ps1","python tests/test_android_termux_harness.py","python tests/test_android_termux_modal_state_harness.py","git diff --check"],"deploy":"Push reviewed harness changes to an isolated feature branch and open/update its PR; live evidence mode is operator-only and must not run in hosted CI."},"proofCeiling":"This map proves ownership, discoverability, deterministic routing, source binding, artifact paths, validators and probe boundaries. It authorizes only the explicit ephemeral prebuilt identity probe and, after that same-device PASS, the explicit bounded foreground server start/status/stop probe. It does not prove client attach, persistence, agent-state, Android background survival, coding-agent success or tmux retirement."}
+{
+  "schema": "agentswitchboard.android-herdr-codebase-map.v1",
+  "scope": "Android/Termux Herdr migration harness only; canonical Android product/runtime files are read-only and tmux remains authoritative until live promotion gates pass.",
+  "repositoryStructure": {
+    "authorityReadOnly": [
+      "AGENTS.md",
+      "docs/governance/harness-doctrine.md",
+      ".ai/harness/harness-doctrine.policy.json"
+    ],
+    "parentHarness": [
+      "tooling/profiles/android/harness/termux/manifest.json",
+      "tooling/profiles/android/harness/termux/codebase-map.json"
+    ],
+    "canonicalRuntimeReadOnly": [
+      "Start-AgentSwitchboard-Android.sh",
+      "tooling/profiles/android/AgentSwitchboard-Android.sh"
+    ],
+    "harness": [
+      "tooling/profiles/android/harness/herdr/"
+    ],
+    "skill": [
+      ".ai/skills/android-herdr-migration/SKILL.md"
+    ],
+    "operatorDocs": [
+      "docs/workstation/android-herdr-migration.md",
+      "docs/harness/android-herdr-operational-harness.md"
+    ],
+    "validators": [
+      "tests/test_android_herdr_migration.py",
+      "tests/test_android_herdr_install_review.py",
+      "tests/test_android_herdr_compatibility_review.py",
+      "tests/test_android_herdr_server_start_review.py",
+      "tests/test_android_herdr_status_state_isolation.py",
+      "tests/test_android_herdr_harness_completeness.py",
+      "scripts/Test-AndroidHerdrHarnessCompleteness.ps1",
+      ".github/workflows/android-herdr-migration.yml"
+    ]
+  },
+  "entrypoints": {
+    "phoneProbe": "bash Test-AgentSwitchboard-Android-Herdr.sh evidence",
+    "status": "python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py",
+    "writeStatus": "python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --write",
+    "isolatedStatusValidation": "python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --state-root <isolated-temp-dir>",
+    "buildInstallReview": "python tooling/profiles/android/harness/herdr/Build-HerdrInstallReview.py --write",
+    "buildCompatibilityReview": "python tooling/profiles/android/harness/herdr/Build-HerdrCompatibilityReview.py --write",
+    "prebuiltCompatibilityContract": "python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py contract",
+    "prebuiltCompatibilityEvidence": "python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py evidence",
+    "buildServerStartReview": "python tooling/profiles/android/harness/herdr/Build-HerdrServerStartReview.py --write",
+    "serverStartContract": "python tooling/profiles/android/harness/herdr/Probe-HerdrServerStart.py contract",
+    "serverStartEvidence": "python tooling/profiles/android/harness/herdr/Probe-HerdrServerStart.py evidence",
+    "portableValidation": "python tests/test_android_herdr_harness_completeness.py",
+    "stateIsolationValidation": "python tests/test_android_herdr_status_state_isolation.py",
+    "sourceBoundReviewValidation": "python tests/test_android_herdr_install_review.py",
+    "compatibilityReviewValidation": "python tests/test_android_herdr_compatibility_review.py",
+    "serverStartReviewValidation": "python tests/test_android_herdr_server_start_review.py",
+    "powershellCompleteness": "pwsh -NoLogo -NoProfile -File scripts/Test-AndroidHerdrHarnessCompleteness.ps1",
+    "preCommit": "bash tooling/profiles/android/harness/herdr/hooks/Invoke-HerdrHarnessPreCommit.sh",
+    "prePush": "bash tooling/profiles/android/harness/herdr/hooks/Invoke-HerdrHarnessPrePush.sh"
+  },
+  "configuration": {
+    "manifest": "tooling/profiles/android/harness/herdr/manifest.json",
+    "artifactRegistry": "tooling/profiles/android/harness/herdr/artifact-registry.json",
+    "workflowSpecs": "tooling/profiles/android/harness/herdr/workflows/workflow-specs.json",
+    "upstreamInstallationSource": "tooling/profiles/android/harness/herdr/upstream-installation-source.json",
+    "upstreamRuntimeCompatibility": "tooling/profiles/android/harness/herdr/upstream-runtime-compatibility.json",
+    "upstreamServerStartSource": "tooling/profiles/android/harness/herdr/upstream-server-start-source.json",
+    "stateRootContract": "${XDG_STATE_HOME:-$HOME/.local/state}/agentswitchboard/android-herdr-migration; validators must override with --state-root when they require synthetic clean state.",
+    "sourceRefreshRule": "Refresh tracked upstream installation/runtime/server-start sources before broadening authority; a newer release or source change must never silently inherit v0.8.0 probe approval."
+  },
+  "knownTraps": [
+    "Deterministic validators must not auto-discover real operator artifacts. Use an isolated --state-root for synthetic status routing tests.",
+    "The published Linux ARM64 asset is aarch64-unknown-linux-musl, not a native Android target.",
+    "Linux aarch64 availability is not Android/Termux support proof.",
+    "A native aarch64-linux-android build selects Herdr's unsupported fallback platform module at the pinned source commit.",
+    "The prebuilt identity probe authorizes only exact-size/SHA-256 verified ephemeral --version execution.",
+    "Bare `herdr` auto-detect launch may spawn a detached daemon; it is forbidden in the bounded server-start probe.",
+    "The bounded server-start probe must use explicit foreground `herdr server`, isolated XDG state, HERDR_SOCKET_PATH, status server --json, and server stop.",
+    "Foreground server start/status/stop proves only bounded local server lifecycle and API IPC, not client attach, detach/reattach, background survival or agent-state detection.",
+    "A missing Herdr command is not authority to improvise an installer.",
+    "Do not use cargo install herdr unless the pinned upstream source documents that method.",
+    "Do not use curl-pipe-shell as installation proof.",
+    "Do not mutate Android device_config, phantom-process limits, or battery policy from this harness lane.",
+    "Raw phone evidence remains local and untracked; commit source snapshots, synthetic fixtures, and contracts instead.",
+    "tmux remains canonical until every promotion gate has same-device evidence."
+  ],
+  "buildTestDeploy": {
+    "build": "No product build; harness assets are tracked JSON, Markdown, Python, shell, and PowerShell.",
+    "test": [
+      "bash -n Test-AgentSwitchboard-Android-Herdr.sh",
+      "bash -n tooling/profiles/android/harness/herdr/Probe-Herdr-Migration.sh",
+      "python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py contract",
+      "python tooling/profiles/android/harness/herdr/Probe-HerdrServerStart.py contract",
+      "python tests/test_android_herdr_migration.py",
+      "python tests/test_android_herdr_install_review.py",
+      "python tests/test_android_herdr_compatibility_review.py",
+      "python tests/test_android_herdr_server_start_review.py",
+      "python tests/test_android_herdr_status_state_isolation.py",
+      "python tests/test_android_herdr_harness_completeness.py",
+      "pwsh -NoLogo -NoProfile -File scripts/Test-AndroidHerdrHarnessCompleteness.ps1",
+      "python tests/test_android_termux_harness.py",
+      "python tests/test_android_termux_modal_state_harness.py",
+      "git diff --check"
+    ],
+    "deploy": "Push reviewed harness changes to an isolated feature branch and open/update its PR; live evidence mode is operator-only and must not run in hosted CI."
+  },
+  "proofCeiling": "This map proves ownership, discoverability, deterministic routing, source binding, artifact paths, validators and probe boundaries. It authorizes only the explicit ephemeral prebuilt identity probe and, after that same-device PASS, the explicit bounded foreground server start/status/stop probe. It does not prove client attach, persistence, agent-state, Android background survival, coding-agent success or tmux retirement."
+}

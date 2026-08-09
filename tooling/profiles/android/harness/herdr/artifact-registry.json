@@ -1,1 +1,103 @@
-{"schema":"agentswitchboard.android-herdr-artifact-registry.v1","stateRoot":"${XDG_STATE_HOME:-$HOME/.local/state}/agentswitchboard/android-herdr-migration","policy":"generated-local-untracked","validatorIsolation":"Deterministic validators that exercise synthetic routing must pass an isolated --state-root and must not auto-discover operator-owned readiness/review/runtime artifacts.","trackedSources":[{"sourceId":"herdr-upstream-installation-source","path":"tooling/profiles/android/harness/herdr/upstream-installation-source.json","refresh":"Re-verify official Herdr install docs plus latest release/tag metadata before authorizing installation.","proof":"Pins source/release/artifact/support facts used by the installation review; does not prove Android compatibility."},{"sourceId":"herdr-upstream-runtime-compatibility","path":"tooling/profiles/android/harness/herdr/upstream-runtime-compatibility.json","refresh":"Re-inspect exact release source/build matrix and current upstream Android/Termux support before broadening probe or install authority.","proof":"Pins Linux-musl build target, platform routing and runtime assumptions; approves only the bounded no-install execution-identity probe."},{"sourceId":"herdr-upstream-server-start-source","path":"tooling/profiles/android/harness/herdr/upstream-server-start-source.json","refresh":"Re-inspect the pinned release server dispatch, auto-detect behavior, status/stop APIs, socket overrides and XDG behavior before broadening foreground-server authority.","proof":"Pins the foreground-only server start/status/stop boundary; does not prove client attach, persistence or background survival."}],"artifacts":[{"artifactId":"herdr-readiness-evidence","pattern":"herdr-readiness-<UTC timestamp>.env","generator":"bash Test-AgentSwitchboard-Android-Herdr.sh evidence","proof":"Termux/architecture, installed Herdr binary health, tmux fallback and migration classification only"},{"artifactId":"herdr-harness-status-json","pattern":"herdr-harness-status-<UTC timestamp>.json","generator":"python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --write","proof":"repository harness state plus selected sanitized readiness/install/prebuilt classification"},{"artifactId":"herdr-harness-status-markdown","pattern":"herdr-harness-status-<UTC timestamp>.md","generator":"python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --write","proof":"human-readable working/broken/missing/proof/next-action report"},{"artifactId":"herdr-install-review","pattern":"herdr-install-review-<UTC timestamp>.md","generator":"python tooling/profiles/android/harness/herdr/Build-HerdrInstallReview.py --write","proof":"source-bound installation decision; BLOCKED never emits an install command"},{"artifactId":"herdr-compatibility-review","pattern":"herdr-compatibility-review-<UTC timestamp>.md","generator":"python tooling/profiles/android/harness/herdr/Build-HerdrCompatibilityReview.py --write","proof":"source-bound native-Android versus Linux-musl compatibility decision and exact no-install identity-probe boundary"},{"artifactId":"herdr-prebuilt-exec-evidence","pattern":"herdr-prebuilt-exec-<UTC timestamp>.env","generator":"python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py evidence","proof":"exact pinned asset download/size/digest verification plus isolated --version execution identity only"},{"artifactId":"herdr-server-start-review","pattern":"herdr-server-start-review-<UTC timestamp>.md","generator":"python tooling/profiles/android/harness/herdr/Build-HerdrServerStartReview.py --write","proof":"source-bound authorization for one foreground headless server start/status/stop probe after exact prebuilt PASS"},{"artifactId":"herdr-server-start-evidence","pattern":"herdr-server-start-<UTC timestamp>.env","generator":"python tooling/profiles/android/harness/herdr/Probe-HerdrServerStart.py evidence","proof":"checksum-verified foreground herdr server start, local status API, explicit stop and clean exit only"},{"artifactId":"herdr-validation-receipt","pattern":"herdr-harness-validation-<UTC timestamp>.txt","generator":"redirect focused validator output when durable proof is required","proof":"focused harness validator output only"},{"artifactId":"herdr-runtime-proof","pattern":"herdr-runtime-proof-<run-id>.<ext>","generator":"future separately authorized live-runtime workflow","proof":"reserved; artifact existence alone never promotes a gate"}],"naming":{"timestamps":"UTC basic YYYYMMDDTHHMMSSZ","runIds":"bounded lowercase token without credentials or host identity"},"forbiddenContent":["OAuth or device codes","access tokens","passwords","recovery codes","private SSH keys","credential-file contents","private hostnames or customer data","raw machine-local evidence committed merely as proof"],"proofCeiling":"The registry defines source binding, local artifact ownership, names, validator isolation and proof limits. Server-start evidence can prove only the bounded foreground start/status/stop lifecycle of the exact verified binary; artifact presence alone never proves installation approval, client attach, detach/reattach, background persistence, agent state, sprint success or runtime promotion."}
+{
+  "schema": "agentswitchboard.android-herdr-artifact-registry.v1",
+  "stateRoot": "${XDG_STATE_HOME:-$HOME/.local/state}/agentswitchboard/android-herdr-migration",
+  "policy": "generated-local-untracked",
+  "validatorIsolation": "Deterministic validators that exercise synthetic routing must pass an isolated --state-root and must not auto-discover operator-owned readiness/review/runtime artifacts.",
+  "trackedSources": [
+    {
+      "sourceId": "herdr-upstream-installation-source",
+      "path": "tooling/profiles/android/harness/herdr/upstream-installation-source.json",
+      "refresh": "Re-verify official Herdr install docs plus latest release/tag metadata before authorizing installation.",
+      "proof": "Pins source/release/artifact/support facts used by the installation review; does not prove Android compatibility."
+    },
+    {
+      "sourceId": "herdr-upstream-runtime-compatibility",
+      "path": "tooling/profiles/android/harness/herdr/upstream-runtime-compatibility.json",
+      "refresh": "Re-inspect exact release source/build matrix and current upstream Android/Termux support before broadening probe or install authority.",
+      "proof": "Pins Linux-musl build target, platform routing and runtime assumptions; approves only the bounded no-install execution-identity probe."
+    },
+    {
+      "sourceId": "herdr-upstream-server-start-source",
+      "path": "tooling/profiles/android/harness/herdr/upstream-server-start-source.json",
+      "refresh": "Re-inspect the pinned release server dispatch, auto-detect behavior, status/stop APIs, socket overrides and XDG behavior before broadening foreground-server authority.",
+      "proof": "Pins the foreground-only server start/status/stop boundary; does not prove client attach, persistence or background survival."
+    }
+  ],
+  "artifacts": [
+    {
+      "artifactId": "herdr-readiness-evidence",
+      "pattern": "herdr-readiness-<UTC timestamp>.env",
+      "generator": "bash Test-AgentSwitchboard-Android-Herdr.sh evidence",
+      "proof": "Termux/architecture, installed Herdr binary health, tmux fallback and migration classification only"
+    },
+    {
+      "artifactId": "herdr-harness-status-json",
+      "pattern": "herdr-harness-status-<UTC timestamp>.json",
+      "generator": "python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --write",
+      "proof": "repository harness state plus selected sanitized readiness/install/prebuilt classification"
+    },
+    {
+      "artifactId": "herdr-harness-status-markdown",
+      "pattern": "herdr-harness-status-<UTC timestamp>.md",
+      "generator": "python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --write",
+      "proof": "human-readable working/broken/missing/proof/next-action report"
+    },
+    {
+      "artifactId": "herdr-install-review",
+      "pattern": "herdr-install-review-<UTC timestamp>.md",
+      "generator": "python tooling/profiles/android/harness/herdr/Build-HerdrInstallReview.py --write",
+      "proof": "source-bound installation decision; BLOCKED never emits an install command"
+    },
+    {
+      "artifactId": "herdr-compatibility-review",
+      "pattern": "herdr-compatibility-review-<UTC timestamp>.md",
+      "generator": "python tooling/profiles/android/harness/herdr/Build-HerdrCompatibilityReview.py --write",
+      "proof": "source-bound native-Android versus Linux-musl compatibility decision and exact no-install identity-probe boundary"
+    },
+    {
+      "artifactId": "herdr-prebuilt-exec-evidence",
+      "pattern": "herdr-prebuilt-exec-<UTC timestamp>.env",
+      "generator": "python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py evidence",
+      "proof": "exact pinned asset download/size/digest verification plus isolated --version execution identity only"
+    },
+    {
+      "artifactId": "herdr-server-start-review",
+      "pattern": "herdr-server-start-review-<UTC timestamp>.md",
+      "generator": "python tooling/profiles/android/harness/herdr/Build-HerdrServerStartReview.py --write",
+      "proof": "source-bound authorization for one foreground headless server start/status/stop probe after exact prebuilt PASS"
+    },
+    {
+      "artifactId": "herdr-server-start-evidence",
+      "pattern": "herdr-server-start-<UTC timestamp>.env",
+      "generator": "python tooling/profiles/android/harness/herdr/Probe-HerdrServerStart.py evidence",
+      "proof": "checksum-verified foreground herdr server start, local status API, explicit stop and clean exit only"
+    },
+    {
+      "artifactId": "herdr-validation-receipt",
+      "pattern": "herdr-harness-validation-<UTC timestamp>.txt",
+      "generator": "redirect focused validator output when durable proof is required",
+      "proof": "focused harness validator output only"
+    },
+    {
+      "artifactId": "herdr-runtime-proof",
+      "pattern": "herdr-runtime-proof-<run-id>.<ext>",
+      "generator": "future separately authorized live-runtime workflow",
+      "proof": "reserved; artifact existence alone never promotes a gate"
+    }
+  ],
+  "naming": {
+    "timestamps": "UTC basic YYYYMMDDTHHMMSSZ",
+    "runIds": "bounded lowercase token without credentials or host identity"
+  },
+  "forbiddenContent": [
+    "OAuth or device codes",
+    "access tokens",
+    "passwords",
+    "recovery codes",
+    "private SSH keys",
+    "credential-file contents",
+    "private hostnames or customer data",
+    "raw machine-local evidence committed merely as proof"
+  ],
+  "proofCeiling": "The registry defines source binding, local artifact ownership, names, validator isolation and proof limits. Server-start evidence can prove only the bounded foreground start/status/stop lifecycle of the exact verified binary; artifact presence alone never proves installation approval, client attach, detach/reattach, background persistence, agent state, sprint success or runtime promotion."
+}
