@@ -54,6 +54,20 @@
     "artifact:<durable-reference>",
     "operator-proof:<durable-reference>"
   ],
+  "localExecutionProfile": {
+    "requiredFields": ["Work class"],
+    "workClasses": ["BOUNDED", "UNBOUNDED"],
+    "unboundedAllowedStatuses": ["READY", "BLOCKED", "OPERATOR", "DONE"],
+    "derivedRoutes": {
+      "boundedContinuation": "EXECUTE",
+      "unboundedReady": "DECOMPOSE",
+      "blocked": "BLOCKED",
+      "operator": "OPERATOR",
+      "done": "TERMINAL"
+    },
+    "frontierCommand": "pwsh -NoLogo -NoProfile -File scripts/Get-RepositoryWorkLedgerFrontier.ps1 -Json",
+    "proofCeiling": "local task granularity classification and deterministic frontier routing only"
+  },
   "consumerRequirements": {
     "repositoryLocalLedger": true,
     "repositoryLocalValidator": true,
