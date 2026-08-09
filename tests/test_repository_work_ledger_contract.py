@@ -82,6 +82,36 @@ class RepositoryWorkLedgerContractTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('stale local reference', result.stderr)
 
+    def test_malformed_task_heading_is_rejected(self):
+        content = task() + '\n## ASQ-9 - Hidden task\n\n- **Status:** READY\n'
+        result = self.run_temp(content)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('malformed ASQ heading', result.stderr)
+
+    def test_duplicate_fields_are_rejected(self):
+        content = task().replace('- **Status:** READY', '- **Status:** DONE\n- **Status:** READY', 1)
+        result = self.run_temp(content)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("duplicate field 'Status'", result.stderr)
+
+    def test_claimed_rejects_unassigned_owner_sentinels(self):
+        for owner in ('unclaimed', 'none', 'unknown', 'tbd', 'n/a'):
+            with self.subTest(owner=owner):
+                result = self.run_temp(task(Status='CLAIMED', Owner=owner))
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('CLAIMED requires a concrete owner', result.stderr)
+
+    def test_continuation_rejects_non_action_next_steps(self):
+        for next_action in ('status unchanged', 'PR opened', 'CI green', 'wait', 'merge later'):
+            with self.subTest(next_action=next_action):
+                result = self.run_temp(task(**{'Next action': next_action}))
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('continuation state requires an executable next action', result.stderr)
+
+    def test_continuation_accepts_concrete_action_verb(self):
+        result = self.run_temp(task(Status='VERIFY', Owner='agent-session', **{'Next action': 'run the owning validator and record its artifact receipt'}))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
 
 if __name__ == '__main__':
     unittest.main()
