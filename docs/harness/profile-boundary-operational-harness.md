@@ -23,7 +23,7 @@ Use the Windows-native harness front door:
 .\Test-ProfileBoundaryHarness.cmd
 ```
 
-Do not paste a bare `bash -lc ...` command into PowerShell and assume it means WSL. Before a Windows-laptop command targets `wsl-linux`, prove the bridge with an explicit `wsl.exe` invocation that reaches `/bin/bash`, then record that PASS in the command envelope.
+Do not paste a bare `bash -lc` command into PowerShell and assume it means WSL. Before a Windows-laptop command targets `wsl-linux`, prove the bridge with an explicit `wsl.exe` invocation that reaches `/bin/bash`, then record that PASS in the command envelope.
 
 If WSL emits a configuration warning or cannot execute `/bin/bash`, classify `wsl-bridge-unproved`. Stop downstream Linux commands. Repair WSL only when Linux/WSL is actually the intended execution surface.
 
