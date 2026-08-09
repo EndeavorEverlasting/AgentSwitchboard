@@ -1,0 +1,56 @@
+{
+  "schema": "agentswitchboard.android-herdr-upstream-installation-source.v1",
+  "verifiedAtUtc": "2026-08-09T01:13:00Z",
+  "source": {
+    "kind": "official-upstream",
+    "repository": "https://github.com/herdrdev/herdr",
+    "installDocs": "https://herdr.dev/docs/install/",
+    "releaseApi": "https://api.github.com/repos/herdrdev/herdr/releases/latest",
+    "releaseUrl": "https://github.com/herdrdev/herdr/releases/tag/v0.8.0",
+    "releaseTag": "v0.8.0",
+    "releaseCommit": "346411fa21afd297f5ed3b3fa56f9e3fbf7654b7",
+    "tagObject": "857196dee1ce98df53efdd3f437aa2ac8a75b608",
+    "releasePublishedAtUtc": "2026-08-03T19:00:03Z"
+  },
+  "documentedInstallMethods": [
+    "official-installer-script",
+    "manual-prebuilt-binary",
+    "homebrew",
+    "mise",
+    "nix"
+  ],
+  "documentedPlatforms": [
+    "Linux (stable)",
+    "macOS (stable)",
+    "Windows (preview beta)"
+  ],
+  "documentedArchitectures": [
+    "Linux x86_64",
+    "Linux aarch64",
+    "macOS x86_64",
+    "macOS aarch64",
+    "Windows x86_64 preview"
+  ],
+  "androidTermuxSupport": "not-stated",
+  "cargoInstallDocumented": false,
+  "candidate": {
+    "method": "manual-release-asset-review-only",
+    "artifact": "herdr-linux-aarch64",
+    "url": "https://github.com/herdrdev/herdr/releases/download/v0.8.0/herdr-linux-aarch64",
+    "sizeBytes": 19960864,
+    "digestAlgorithm": "sha256",
+    "digest": "f647ac66468d9efbc642fe534fb284468f0aea60641606fc008dfc0d82a3ca87",
+    "decision": "BLOCKED",
+    "installCommand": null,
+    "rollbackCommand": null,
+    "reason": "Official upstream publishes a Linux aarch64 asset but does not state Android or Termux support. Linux aarch64 availability is not Android runtime compatibility proof.",
+    "nextGate": "prove-android-runtime-compatibility-or-obtain-explicit-upstream-support"
+  },
+  "safety": {
+    "linuxAarch64IsAndroidProof": false,
+    "curlPipeShellAcceptedAsProof": false,
+    "automaticAndroidPolicyMutationAllowed": false,
+    "tmuxRollbackRequired": true
+  },
+  "proofCeiling": "This snapshot binds a review to official upstream metadata observed at verifiedAtUtc. It does not prove Android/Termux compatibility or authorize installation."
+}
