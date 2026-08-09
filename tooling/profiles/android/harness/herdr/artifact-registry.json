@@ -1,0 +1,16 @@
+{
+  "schema": "agentswitchboard.android-herdr-artifact-registry.v1",
+  "stateRoot": "${XDG_STATE_HOME:-$HOME/.local/state}/agentswitchboard/android-herdr-migration",
+  "policy": "generated-local-untracked",
+  "artifacts": [
+    {"artifactId":"herdr-readiness-evidence","pattern":"herdr-readiness-<UTC timestamp>.env","generator":"bash Test-AgentSwitchboard-Android-Herdr.sh evidence","proof":"Termux/architecture, Herdr binary health, tmux fallback and migration classification only"},
+    {"artifactId":"herdr-harness-status-json","pattern":"herdr-harness-status-<UTC timestamp>.json","generator":"python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --write","proof":"repository harness state plus sanitized readiness classification"},
+    {"artifactId":"herdr-harness-status-markdown","pattern":"herdr-harness-status-<UTC timestamp>.md","generator":"python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --write","proof":"human-readable working/broken/missing/proof/next-action report"},
+    {"artifactId":"herdr-install-review","pattern":"herdr-install-review-<UTC timestamp>.md","generator":"python tooling/profiles/android/harness/herdr/Build-HerdrInstallReview.py --write","proof":"source-binding installation review checklist; pending fields are not approval"},
+    {"artifactId":"herdr-validation-receipt","pattern":"herdr-harness-validation-<UTC timestamp>.txt","generator":"redirect focused validator output when durable proof is required","proof":"focused harness validator output only"},
+    {"artifactId":"herdr-runtime-proof","pattern":"herdr-runtime-proof-<run-id>.<ext>","generator":"future separately authorized live-runtime workflow","proof":"reserved; artifact existence alone never promotes a gate"}
+  ],
+  "naming": {"timestamps":"UTC basic YYYYMMDDTHHMMSSZ","runIds":"bounded lowercase token without credentials or host identity"},
+  "forbiddenContent": ["OAuth or device codes", "access tokens", "passwords", "recovery codes", "private SSH keys", "credential-file contents", "private hostnames or customer data", "raw machine-local evidence committed merely as proof"],
+  "proofCeiling": "The registry defines local artifact ownership, names and proof limits; artifact presence alone never proves installation approval, Herdr compatibility, background persistence, agent state, sprint success, or runtime promotion."
+}

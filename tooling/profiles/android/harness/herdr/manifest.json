@@ -5,10 +5,13 @@
   "repository": "EndeavorEverlasting/AgentSwitchboard",
   "profile": "android",
   "environment": "termux",
+  "authorityReadOnly": ["AGENTS.md", "docs/governance/harness-doctrine.md", ".ai/harness/harness-doctrine.policy.json"],
+  "parentHarness": "tooling/profiles/android/harness/termux/manifest.json",
+  "liveEvidencePolicy": "local-untracked-sanitized",
   "currentRuntime": {
     "multiplexer": "tmux",
     "runtimeEntrypoint": "Start-AgentSwitchboard-Android.sh",
-    "preserveUntil": "Herdr passes live Termux compatibility, persistence, detach/reattach, agent-state, and sprint evidence gates"
+    "preserveUntil": "Herdr passes live Termux compatibility, persistence, detach/reattach, agent-state, background-survival and bounded-sprint evidence gates"
   },
   "candidate": {
     "name": "Herdr",
@@ -20,10 +23,23 @@
     "cargoInstallClaim": "not-used-until-upstream-documents-it"
   },
   "components": {
+    "codebaseMap": "tooling/profiles/android/harness/herdr/codebase-map.json",
+    "artifactRegistry": "tooling/profiles/android/harness/herdr/artifact-registry.json",
+    "workflowSpecs": "tooling/profiles/android/harness/herdr/workflows/workflow-specs.json",
     "probe": "tooling/profiles/android/harness/herdr/Probe-Herdr-Migration.sh",
+    "statusReporter": "tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py",
+    "installReviewBuilder": "tooling/profiles/android/harness/herdr/Build-HerdrInstallReview.py",
     "rootEntrypoint": "Test-AgentSwitchboard-Android-Herdr.sh",
+    "fixture": "tooling/profiles/android/harness/herdr/fixtures/herdr-not-installed.fixture.env",
+    "operatorReport": "tooling/profiles/android/harness/herdr/operator-report.template.md",
+    "preCommitHook": "tooling/profiles/android/harness/herdr/hooks/Invoke-HerdrHarnessPreCommit.sh",
+    "prePushHook": "tooling/profiles/android/harness/herdr/hooks/Invoke-HerdrHarnessPrePush.sh",
+    "skill": ".ai/skills/android-herdr-migration/SKILL.md",
     "operatorGuide": "docs/workstation/android-herdr-migration.md",
+    "harnessGuide": "docs/harness/android-herdr-operational-harness.md",
     "portableTest": "tests/test_android_herdr_migration.py",
+    "completenessTest": "tests/test_android_herdr_harness_completeness.py",
+    "completenessValidator": "scripts/Test-AndroidHerdrHarnessCompleteness.ps1",
     "ci": ".github/workflows/android-herdr-migration.yml"
   },
   "gates": [
@@ -44,7 +60,8 @@
     "claiming Linux aarch64 binary compatibility proves Android/Termux compatibility",
     "claiming command presence proves background persistence",
     "claiming detach/reattach proves agent-state detection",
-    "persisting credentials or device codes in evidence"
+    "persisting credentials or device codes in evidence",
+    "committing raw phone evidence or generated local status/review artifacts"
   ],
-  "proofCeiling": "Repository contracts can prove migration policy, probe behavior, and validation wiring. They do not prove Herdr runs correctly on Android/Termux or survives Android background process management."
+  "proofCeiling": "Repository contracts can prove migration policy, harness structure, deterministic classification, artifact ownership, report generation, validator/hook behavior and CI wiring. They do not prove an installation method is approved, Herdr runs correctly on Android/Termux, or any live promotion gate."
 }
