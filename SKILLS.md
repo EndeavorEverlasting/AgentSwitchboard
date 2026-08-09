@@ -38,9 +38,10 @@ Every canonical skill must define:
 9. A Windows Profile request that distinguishes default open-or-activate from an explicit separate instance, or evidence of duplicate WezTerm windows, selects `windows-profile-launch-mode-validation` before any launcher implementation or runtime claim.
 10. A request for a desktop shortcut or CMD installer that must create one genuinely separate tmux/WezTerm instance selects `tmux-new-instance-shortcut`. It preserves the one-launcher boundary and routes live acceptance through `end-to-end-runtime-validation`.
 11. An Android/Termux repository bootstrap, mobile command-delivery recovery, multi-pane native-selection problem, or unclear tmux scrollback selects `android-termux-repo-bootstrap`; terminal selection/scrollback recovery additionally selects `android-termux-terminal-recovery` before asking the operator to fight native selection or provide screenshots.
-12. `TRIGGERS.md` maps repository evidence to a skill.
-13. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
-14. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
+12. A request for Lua, embedded scripting, VM-state lifecycle, LuaJIT, host callbacks, Lua sandboxing/capability exposure, or AI-generated Lua selects `lua-embedding-integration`; harness-only work must stop before product/runtime embedding.
+13. `TRIGGERS.md` maps repository evidence to a skill.
+14. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
+15. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
 
 ## Canonical skills
 
@@ -62,6 +63,7 @@ Every canonical skill must define:
 | [`app-output-contextualization`](.ai/skills/app-output-contextualization/SKILL.md) | Parse supplied output, redact it, compare it with a prompt registry, and emit compact agent instructions | app output, logs, JSON, JSONL, validator output, minimal-token routing |
 | [`android-termux-repo-bootstrap`](.ai/skills/android-termux-repo-bootstrap/SKILL.md) | Turn Termux into a bounded AgentSwitchboard repository workspace with clone, persistence, family-routing and validation gates | Android/Termux bootstrap, phone-local repo setup, mobile command-delivery recovery |
 | [`android-termux-terminal-recovery`](.ai/skills/android-termux-terminal-recovery/SKILL.md) | Recover exact non-sensitive tmux pane evidence without depending on Android long-press selection or touch scrolling | selection spans panes, scrollback unclear, clipboard unreliable, prior terminal output required |
+| [`lua-embedding-integration`](.ai/skills/lua-embedding-integration/SKILL.md) | Define the host/Lua boundary, independent-state lifecycle, protected errors, sandbox allow-list, and runtime-promotion gates | Lua embedding, Lua VM state, LuaJIT, sandbox/capability exposure, AI-generated Lua |
 
 ## Machine-profile distinction
 
@@ -100,6 +102,10 @@ An app-output context packet is a minimized interpretation artifact, not the ori
 ## Android Termux distinction
 
 `android-termux-repo-bootstrap` owns repository/workspace preparation and routes mobile terminal-evidence failures to `android-termux-terminal-recovery`. Android native selection and touch scrolling are never proof dependencies: exact tmux pane identity plus bounded `capture-pane` is preferred, and panes containing device codes or credentials are not persisted. The harness may install its own Python validation prerequisite, but it does not silently expand the separate Android runtime installer or promote hosted checks into phone runtime proof.
+
+## Lua embedding distinction
+
+`lua-embedding-integration` owns the contract, routing, evidence, and handoff layer around a future Lua runtime. Lua remains a host-embedded library: the host owns the main loop, state lifecycle, rollback, cleanup, and performance-critical work. Declared isolation boundaries require independent VM states; script errors end at a protected host catch; `os`, `io`, `package`, and `debug` are denied by default; script-visible host behavior requires an explicit allow-list. Contract validation and hosted CI do not prove a Lua implementation is installed, embedded, executing, sandboxed, isolated, leak-free, or production-ready.
 
 ## Windows launch-mode distinction
 

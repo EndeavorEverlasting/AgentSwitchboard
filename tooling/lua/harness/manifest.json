@@ -1,0 +1,49 @@
+{
+  "schema": "agentswitchboard.lua-operational-harness.v1",
+  "harnessId": "agentswitchboard.lua-embedding-harness.v1",
+  "status": "contract-ready-runtime-unproved",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "sourceBasis": {
+    "kind": "owner-supplied-technical-breakdown",
+    "attribution": "Roberto Ierusalimschy",
+    "receivedDate": "2026-08-09",
+    "externallyVerifiedInThisSprint": false
+  },
+  "components": {
+    "codebaseMap": "tooling/lua/harness/codebase-map.json",
+    "embeddingContract": "tooling/lua/harness/lua-embedding.contract.json",
+    "workflowRegistry": "tooling/lua/harness/workflow-registry.json",
+    "artifactRegistry": "tooling/lua/harness/artifact-registry.json",
+    "validatorRegistry": "tooling/lua/harness/validator-registry.json",
+    "schema": "tooling/lua/harness/schemas/lua-harness.schema.json",
+    "safeFixture": "tooling/lua/harness/fixtures/sandbox-safe.lua",
+    "unsafeFixture": "tooling/lua/harness/fixtures/sandbox-unsafe-os-access.lua",
+    "statusReporter": "tooling/lua/Get-LuaHarnessStatus.py",
+    "preCommitHook": "tooling/lua/hooks/Invoke-LuaHarnessPreCommit.ps1",
+    "prePushHook": "tooling/lua/hooks/Invoke-LuaHarnessPrePush.ps1",
+    "skill": ".ai/skills/lua-embedding-integration/SKILL.md",
+    "operatorGuide": "docs/harness/lua-embedding-harness.md",
+    "operatorStatus": "docs/reports/lua-embedding-harness-status.md",
+    "completenessValidator": "scripts/Test-LuaHarnessCompleteness.ps1",
+    "contractTests": "tests/test_lua_harness_contracts.py",
+    "ci": ".github/workflows/lua-harness-contract.yml"
+  },
+  "runtimeAuthority": {
+    "productMutationAllowed": false,
+    "dependencyInstallationAllowed": false,
+    "runtimeExecutionAllowed": false,
+    "networkAllowed": false,
+    "hostOwnsMainLoopRequired": true,
+    "standaloneLuaCliIsIntegrationOwner": false
+  },
+  "generatedEvidence": {
+    "tracked": false,
+    "defaultRoot": "operating-system temporary directory/AgentSwitchboard/LuaHarness/<run-id>",
+    "artifacts": [
+      "lua-harness-report.md",
+      "lua-readiness.json",
+      "lua-runtime-handoff.json"
+    ]
+  },
+  "proofCeiling": "Tracked Lua embedding policy, workflow, fixture, artifact, validator, hook, skill, and hosted contract proof only; no Lua runtime installation, host embedding, VM execution, sandbox enforcement, memory isolation, leak freedom, performance result, or product behavior."
+}

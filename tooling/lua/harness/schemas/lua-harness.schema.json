@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/lua/harness/schemas/lua-harness.schema.json",
+  "title": "AgentSwitchboard Lua Harness Generated Evidence",
+  "oneOf": [
+    {
+      "title": "Lua readiness",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "status", "contractReady", "runtimeEmbedded", "sandboxRuntimeProved", "stateIsolationRuntimeProved", "proofCeiling", "nextAction"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.lua-readiness.v1"},
+        "status": {"enum": ["contract-ready-runtime-unproved", "blocked"]},
+        "contractReady": {"type": "boolean"},
+        "runtimeEmbedded": {"type": "boolean"},
+        "sandboxRuntimeProved": {"type": "boolean"},
+        "stateIsolationRuntimeProved": {"type": "boolean"},
+        "proofCeiling": {"type": "string", "minLength": 1},
+        "nextAction": {"type": "string", "minLength": 1}
+      }
+    },
+    {
+      "title": "Lua runtime handoff",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "status", "requiredRuntimeGates", "proofCeiling"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.lua-runtime-handoff.v1"},
+        "status": {"enum": ["unproved", "ready-for-authorized-runtime-sprint", "blocked"]},
+        "requiredRuntimeGates": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+        "proofCeiling": {"type": "string", "minLength": 1}
+      }
+    }
+  ]
+}

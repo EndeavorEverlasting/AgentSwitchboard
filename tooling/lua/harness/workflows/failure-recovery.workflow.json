@@ -1,0 +1,16 @@
+{
+  "schema": "agentswitchboard.lua-workflow.v1",
+  "id": "lua-failure-recovery",
+  "trigger": "A Lua harness validator, schema, fixture, documentation gate, or future runtime gate fails.",
+  "inputs": ["failing command", "exit code", "failing artifact/path", "current exact head", "last known passing gate"],
+  "steps": [
+    "Classify failure as contract, registry, fixture, host-interface, sandbox, lifecycle, external dependency, or runtime evidence.",
+    "Preserve passing disjoint evidence and repair only the owning surface.",
+    "Never rewrite acceptance criteria, fixtures, or proof ceiling merely to obtain a pass.",
+    "If the failure is outside harness-owned scope, stop and produce a downstream handoff with exact owner/dependency.",
+    "Rerun the focused gate, then documentation contract, then diff hygiene."
+  ],
+  "outputs": ["failure classification", "repair owner", "rerun receipt", "remaining blocker or handoff"],
+  "failureHandling": ["If repeated bounded repair fails or product/runtime code is required, stop the harness lane and hand off without claiming runtime proof."],
+  "proofCeiling": "recovery evidence for the repaired gate only"
+}

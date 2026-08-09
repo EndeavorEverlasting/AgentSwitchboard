@@ -131,6 +131,7 @@ The focused implementation map is `tooling/profiles/windows/harness/tmux-new-ins
 - `.ai/skills/end-to-end-runtime-validation/SKILL.md`
 - `.ai/skills/windows-profile-launch-mode-validation/SKILL.md`
 - `.ai/skills/app-output-contextualization/SKILL.md`
+- `.ai/skills/lua-embedding-integration/SKILL.md`
 
 ## GNHF control plane
 
@@ -167,6 +168,24 @@ The focused implementation map is `tooling/profiles/windows/harness/tmux-new-ins
 
 This slice makes AgentSwitchboard the policy, routing, evidence, validation, and handoff layer around a future Pi runtime. It does not install Pi, execute an extension, contact a provider, classify a local endpoint as private, or claim fusion or autovalidation success.
 
+## Lua embedding operational harness
+
+- `tooling/lua/harness/manifest.json` — Lua harness component inventory, runtime authority boundary, generated evidence policy, and proof ceiling.
+- `tooling/lua/harness/codebase-map.json` — focused Lua structure, entrypoints, commands, and known traps.
+- `tooling/lua/harness/lua-embedding.contract.json` — host-owned embedding, independent-state, protected-error, sandbox, type-discipline, JIT, indexing, and AI-auditability contract.
+- `tooling/lua/harness/workflow-registry.json` and `tooling/lua/harness/workflows/` — intake, embedding-design, sandbox, failure-recovery, and handoff workflows.
+- `tooling/lua/harness/artifact-registry.json` — untracked report, readiness, and future runtime-handoff artifacts.
+- `tooling/lua/harness/validator-registry.json` — focused, documentation, status, hook, and diff-hygiene gates.
+- `tooling/lua/harness/fixtures/` — static safe/negative sandbox fixtures; the unsafe fixture is never executed.
+- `.ai/skills/lua-embedding-integration/SKILL.md` — scoped Lua embedding and runtime-promotion procedure.
+- `tooling/lua/Get-LuaHarnessStatus.py` — dependency-free read-only/status artifact generator.
+- `tooling/lua/hooks/Invoke-LuaHarnessPreCommit.ps1` and `Invoke-LuaHarnessPrePush.ps1` — opt-in checks; never installed implicitly.
+- `scripts/Test-LuaHarnessCompleteness.ps1` and `tests/test_lua_harness_contracts.py` — focused cross-platform completeness and design contracts.
+- `docs/harness/lua-embedding-harness.md` and `docs/reports/lua-embedding-harness-status.md` — operator guidance and tracked state.
+- `.github/workflows/lua-harness-contract.yml` — Windows and Linux hosted proof gate.
+
+This slice converts the owner-supplied Lua design principles into deterministic runtime-promotion gates. It does not select or install a Lua implementation, mutate AgentSwitchboard product code, create a VM state, enforce a sandbox at runtime, prove memory isolation or teardown, or claim Lua execution.
+
 ## Validation
 
 - `scripts/Test-HarnessDoctrineContract.ps1`
@@ -177,6 +196,7 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 - `scripts/Test-TmuxNewInstanceShortcutHarness.ps1`
 - `scripts/Test-AppOutputContextEngine.ps1`
 - `scripts/Test-PiHarnessCompleteness.ps1`
+- `scripts/Test-LuaHarnessCompleteness.ps1`
 - `scripts/Test-AgentDocumentationContract.ps1`
 - `scripts/Test-RepositoryFamilyHarness.ps1`
 - `scripts/Test-PublicPlanContracts.ps1`
@@ -185,6 +205,6 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 
 ## Generated evidence and proof boundary
 
-Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, Windows launch-mode, tmux shortcut, and Pi evidence is untracked. End-to-end runtime evidence is also local-operational and untracked unless deliberately minimized and reviewed as a public fixture. Evidence may contain local paths, versions, Git state, minimized operational payloads, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
+Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, Windows launch-mode, tmux shortcut, Pi, and Lua evidence is untracked. End-to-end runtime evidence is also local-operational and untracked unless deliberately minimized and reviewed as a public fixture. Evidence may contain local paths, versions, Git state, minimized operational payloads, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
 
-Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, launch-mode classification, shortcut allocation, or workflow semantics. Neither proves application runtime, an exact operator path, an open-or-activate result, a distinct WezTerm instance on the operator workstation, duplicate prevention, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, model quality, external target behavior, deployment, or operator acceptance.
+Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, launch-mode classification, shortcut allocation, or workflow semantics. Neither proves application runtime, an exact operator path, an open-or-activate result, a distinct WezTerm instance on the operator workstation, duplicate prevention, SysAdminSuite certification, Pi installation, Lua installation or embedding, extension compatibility, provider delivery, endpoint privacy, model quality, external target behavior, deployment, or operator acceptance.

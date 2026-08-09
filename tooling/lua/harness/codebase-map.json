@@ -1,0 +1,52 @@
+{
+  "schema": "agentswitchboard.lua-codebase-map.v1",
+  "harnessId": "agentswitchboard.lua-embedding-harness.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "purpose": "Map the smallest repository surface needed to design, validate, report, and hand off a future host-embedded Lua runtime without confusing contract proof with product-runtime proof.",
+  "startHere": [
+    "AGENTS.md",
+    "docs/governance/harness-doctrine.md",
+    "tooling/lua/harness/manifest.json",
+    "tooling/lua/harness/lua-embedding.contract.json",
+    ".ai/skills/lua-embedding-integration/SKILL.md"
+  ],
+  "directories": [
+    {"path": "tooling/lua/harness", "purpose": "Lua embedding contract, workflows, artifacts, validators, fixtures, and schema."},
+    {"path": "tooling/lua/hooks", "purpose": "Opt-in validation hooks; never installed implicitly."},
+    {"path": ".ai/skills", "purpose": "Scoped agent procedures and promotion boundaries."},
+    {"path": "scripts", "purpose": "Repository-level deterministic validators."},
+    {"path": "tests", "purpose": "Dependency-free contract and completeness tests."},
+    {"path": "docs/harness", "purpose": "Operator guidance and proof boundary."},
+    {"path": "docs/reports", "purpose": "Tracked English state snapshot."},
+    {"path": ".github/workflows", "purpose": "Windows and Linux hosted proof gates."}
+  ],
+  "entrypoints": {
+    "status": "python tooling/lua/Get-LuaHarnessStatus.py",
+    "completeness": "pwsh -NoLogo -NoProfile -File scripts/Test-LuaHarnessCompleteness.ps1",
+    "contracts": "python tests/test_lua_harness_contracts.py",
+    "skill": ".ai/skills/lua-embedding-integration/SKILL.md",
+    "operatorGuide": "docs/harness/lua-embedding-harness.md"
+  },
+  "commands": [
+    {"name": "Lua harness status", "command": "python tooling/lua/Get-LuaHarnessStatus.py --no-write", "effect": "read-only", "proof": "repository contract readiness only"},
+    {"name": "Lua contract tests", "command": "python tests/test_lua_harness_contracts.py", "effect": "read-only", "proof": "contract, fixture, registry, and workflow semantics"},
+    {"name": "Lua completeness", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-LuaHarnessCompleteness.ps1", "effect": "read-only", "proof": "tracked component completeness and consistency"},
+    {"name": "Documentation contract", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1", "effect": "read-only", "proof": "repository documentation compatibility"},
+    {"name": "Diff hygiene", "command": "git diff --check <base>...HEAD", "effect": "read-only", "proof": "patch whitespace/errors"},
+    {"name": "Build", "command": "not-owned-by-this-harness", "effect": "none", "proof": "product embedding requires a separately authorized runtime sprint"},
+    {"name": "Deploy", "command": "not-owned-by-this-harness", "effect": "none", "proof": "no deployment authority"}
+  ],
+  "knownTraps": [
+    "Do not treat a Lua executable on PATH as proof that AgentSwitchboard embeds Lua.",
+    "Do not make Lua the application main loop; the host owns startup, execution order, rollback, and teardown.",
+    "Do not share mutable VM state across isolation boundaries when independent states are required.",
+    "Do not allow script errors to unwind past the host boundary without a protected host catch and cleanup path.",
+    "Do not expose os, io, package, or debug by default; capabilities are host-registered allow-list entries.",
+    "Do not add JIT complexity as a prerequisite; interpreter-first remains the contract baseline.",
+    "Do not claim leak freedom because a state-close call exists; teardown must be observed under runtime evidence.",
+    "Do not hide behavior in ambient globals, implicit library exposure, or unreviewed metatable side effects for AI-authored snippets.",
+    "Lua-native table indexing is 1-based; do not add a 0-index compatibility layer merely for host-language familiarity.",
+    "When a requirement can remain in the host language, do not expand the scripting surface by default."
+  ],
+  "proofCeiling": "Repository map and deterministic offline contracts only; no Lua installation, embedding API, VM lifecycle, sandbox enforcement, error tunneling, memory behavior, JIT behavior, performance, or product-runtime proof."
+}
