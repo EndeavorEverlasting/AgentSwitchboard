@@ -4,7 +4,7 @@
   "adoptionStatus": "implemented",
   "contract": {
     "repository": "EndeavorEverlasting/BlacksmithGuild",
-    "commit": "3188d577dbda1994c0629c1416ae3362198812dd",
+    "commit": "429237aa41d8712d71859865c9be407ca23d8580",
     "path": ".tbg/workflows/repo-ledger-interoperability.contract.json",
     "version": "RepoLedgerInteroperability.v1"
   },
