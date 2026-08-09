@@ -12,6 +12,11 @@ on:
       - '.ai/harness/artifact-registry.json'
       - '.ai/harness/schemas/app-composition-graph.schema.json'
       - '.ai/harness/schemas/app-harness-validation.schema.json'
+      - '.ai/README.md'
+      - '.ai/WORK_QUEUE.md'
+      - '.ai/repo-ledger-adoption.json'
+      - 'scripts/ai-harness/validate-repo-ledger.py'
+      - 'tests/test_repo_ledger_validator.py'
       - 'CAPABILITIES.md'
       - 'TRIGGERS.md'
       - 'plans/**'
@@ -28,6 +33,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Validate repo-local work ledger
+        run: python scripts/ai-harness/validate-repo-ledger.py
+
+      - name: Run repo-ledger regression tests
+        run: python -m unittest tests.test_repo_ledger_validator -v
 
       - name: Parse aggregate validator
         shell: pwsh
@@ -68,6 +79,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Validate repo-local work ledger
+        run: python3 scripts/ai-harness/validate-repo-ledger.py
+
+      - name: Run repo-ledger regression tests
+        run: python3 -m unittest tests.test_repo_ledger_validator -v
 
       - name: Run dependency-free static contracts
         run: python3 tests/test_app_harness_validator.py
