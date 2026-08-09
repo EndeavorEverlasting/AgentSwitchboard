@@ -57,7 +57,7 @@ normalize_origin() {
 
 is_firstmate_clone() {
   local candidate="$1"
-  [[ -d "$candidate/.git" ]] || return 1
+  [[ -e "$candidate/.git" ]] || return 1
   local origin
   origin="$(git -C "$candidate" remote get-url origin 2>/dev/null || true)"
   [[ "$(normalize_origin "$origin")" == "$EXPECTED_ORIGIN" ]]
