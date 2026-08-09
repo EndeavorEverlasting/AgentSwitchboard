@@ -1,3 +1,4 @@
+import json
 import pathlib
 import subprocess
 import tempfile
@@ -5,12 +6,15 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 VALIDATOR = ROOT / 'scripts' / 'Test-RepositoryWorkLedgerContract.ps1'
+POLICY = ROOT / '.ai' / 'harness' / 'repository-work-ledger.policy.json'
 
 
-def run_validator(path=None):
+def run_validator(path=None, policy=None):
     command = ['pwsh', '-NoLogo', '-NoProfile', '-File', str(VALIDATOR)]
     if path:
         command += ['-LedgerPath', str(path)]
+    if policy:
+        command += ['-PolicyPath', str(policy)]
     return subprocess.run(command, cwd=ROOT, text=True, capture_output=True)
 
 
@@ -28,17 +32,11 @@ Canonical terminal action: none; no safe actionable work remains
 
 def task(**overrides):
     values = {
-        'Status': 'READY',
-        'Priority': 'P1',
-        'Owner': 'unclaimed',
-        'Branch / PR': 'none',
-        'Scope': 'bounded test scope',
-        'Forbidden': 'production mutation',
-        'Dependencies': 'none',
-        'References': '`AGENTS.md`',
-        'Acceptance gate': 'observable proof exists',
-        'Gate': 'none',
-        'Last proof': 'none',
+        'Status': 'READY', 'Priority': 'P1', 'Owner': 'unclaimed',
+        'Branch / PR': 'none', 'Scope': 'bounded test scope',
+        'Forbidden': 'production mutation', 'Dependencies': 'none',
+        'References': '`AGENTS.md`', 'Acceptance gate': 'observable proof exists',
+        'Gate': 'none', 'Last proof': 'none',
         'Next action': 'create the bounded artifact and validate it',
         'Updated': '2026-08-09',
     }
@@ -111,6 +109,19 @@ class RepositoryWorkLedgerContractTests(unittest.TestCase):
     def test_continuation_accepts_concrete_action_verb(self):
         result = self.run_temp(task(Status='VERIFY', Owner='agent-session', **{'Next action': 'run the owning validator and record its artifact receipt'}))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_policy_cannot_remove_v1_required_field(self):
+        policy = json.loads(POLICY.read_text(encoding='utf-8'))
+        policy['requiredFields'].remove('Acceptance gate')
+        with tempfile.NamedTemporaryFile('w', suffix='.json', delete=False, dir=ROOT, encoding='utf-8') as handle:
+            json.dump(policy, handle)
+            relative = pathlib.Path(handle.name).relative_to(ROOT)
+        try:
+            result = run_validator(policy=relative)
+        finally:
+            pathlib.Path(handle.name).unlink(missing_ok=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('requiredFields does not match immutable v1 contract', result.stderr)
 
 
 if __name__ == '__main__':
