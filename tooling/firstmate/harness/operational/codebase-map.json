@@ -86,6 +86,7 @@
     "Normalize equivalent GitHub origin transports before comparing repository identity.",
     "On Windows, a portable Python contract must not spawn bare bash with a Windows path. Use the Windows-native PowerShell harness and portable Python owners for cross-platform logic.",
     "A Windows path such as C:\\... is not a POSIX path. Never hand it directly to Bash and infer a WSL or First Mate failure from the resulting exit code.",
+    "Do not trust the default WSL distribution for First Mate runtime work; bind to the integration contract's canonical Ubuntu distribution and prove WSL_DISTRO_NAME before continuing.",
     "Do not auto-promote Herdr while its pinned contract and live runtime gates are unresolved.",
     "Do not use First Mate remote-writing modes until the local-only runtime gate has evidence.",
     "Do not feed Windows temporary paths through wslpath and then parse combined native output; use WSLENV /p path translation and capture stdout/stderr separately.",

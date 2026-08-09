@@ -54,6 +54,13 @@ class FirstMateWindowsHarnessPortabilityTests(unittest.TestCase):
         self.assertIn("'runtime-floor'", self.windows_entry)
         self.assertIn("RepairWslIfNeeded", self.windows_entry)
 
+    def test_bridge_is_invoked_as_child_process_so_exit_cannot_skip_parent_gates(self):
+        self.assertIn("& pwsh -NoLogo -NoProfile -File $bridge", self.windows_entry)
+        self.assertIn("& pwsh @bridgeArgs", self.windows_entry)
+        self.assertNotIn("& $bridge", self.windows_entry)
+        self.assertIn("Working-tree diff hygiene", self.windows_entry)
+        self.assertIn("FIRSTMATE_WINDOWS_OPERATIONAL_HARNESS", self.windows_entry)
+
     def test_cmd_wrapper_is_location_independent_and_propagates_exit_code(self):
         self.assertIn("%~dp0", self.windows_cmd)
         self.assertIn("Test-AgentSwitchboard-FirstMate-Harness.ps1", self.windows_cmd)
@@ -84,6 +91,7 @@ class FirstMateWindowsHarnessPortabilityTests(unittest.TestCase):
         traps = "\n".join(self.codebase["known_traps"]).lower()
         self.assertIn("bare bash", traps)
         self.assertIn("windows path", traps)
+        self.assertIn("default wsl distribution", traps)
         self.assertIn("windows_harness", self.codebase["entrypoints"])
 
     def test_windows_ci_runs_the_windows_native_front_door(self):

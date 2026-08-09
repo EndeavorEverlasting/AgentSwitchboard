@@ -64,7 +64,8 @@ try {
                 }
             }
 
-            & (Join-Path $Root 'Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1') `
+            $bridge = Join-Path $Root 'Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1'
+            & pwsh -NoLogo -NoProfile -File $bridge `
                 -ExpectedHead $ExpectedHead `
                 -ContractOnly
             if ($LASTEXITCODE -ne 0) {
@@ -109,14 +110,15 @@ try {
             }
 
             $bridge = Join-Path $Root 'Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1'
-            $arguments = @{
-                ExpectedHead = $ExpectedHead
-            }
+            $bridgeArgs = @(
+                '-NoLogo', '-NoProfile', '-File', $bridge,
+                '-ExpectedHead', $ExpectedHead
+            )
             if ($RepairWslIfNeeded) {
-                $arguments.RepairWslIfNeeded = $true
+                $bridgeArgs += '-RepairWslIfNeeded'
             }
 
-            & $bridge @arguments
+            & pwsh @bridgeArgs
             if ($LASTEXITCODE -ne 0) {
                 throw "First Mate physical runtime floor failed with exit code $LASTEXITCODE."
             }
