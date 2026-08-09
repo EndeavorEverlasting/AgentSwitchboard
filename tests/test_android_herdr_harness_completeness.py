@@ -22,8 +22,8 @@ def main():
     for token in ('id: android-herdr-migration','KEEP_TMUX_HERDR_NOT_INSTALLED','Build-HerdrInstallReview.py --write','same-device evidence','Forbidden scope'): assert token in skill
     report=tracked('tooling/profiles/android/harness/herdr/operator-report.template.md').read_text();
     for token in ('## Working','## Broken or blocked','## Missing / unproved','## Exact next command','## Proof ceiling'): assert token in report
-    for hook in (m['components']['preCommitHook'],m['components']['prePushHook']):
-        text=tracked(hook).read_text(); assert 'test_android_herdr_harness_completeness.py' in text and 'diff --check' in text
+    precommit=tracked(m['components']['preCommitHook']).read_text(); assert 'test_android_herdr_harness_completeness.py' in precommit and 'diff --check' in precommit
+    prepush=tracked(m['components']['prePushHook']).read_text(); assert 'Invoke-HerdrHarnessPreCommit.sh' in prepush and 'diff --check' in prepush and 'merge-base --is-ancestor' in prepush
     ci=tracked('.github/workflows/android-herdr-migration.yml').read_text();
     for token in ('Test-AndroidHerdrHarnessCompleteness.ps1','test_android_herdr_harness_completeness.py','Build-HerdrInstallReview.py','Get-HerdrHarnessStatus.py','Invoke-HerdrHarnessPreCommit.sh'): assert token in ci
     print('PASS: Android Herdr operational harness completeness')
