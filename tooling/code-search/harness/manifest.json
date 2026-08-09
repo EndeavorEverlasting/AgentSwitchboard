@@ -1,0 +1,30 @@
+{
+  "schema": "agentswitchboard.code-search-harness.v1",
+  "harnessId": "code-search-indexing",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "status": "contract-ready-runtime-probe-required",
+  "components": {
+    "codebaseMap": "tooling/code-search/harness/codebase-map.json",
+    "providerRegistry": "tooling/code-search/harness/provider-registry.json",
+    "workflowRegistry": "tooling/code-search/harness/workflow-registry.json",
+    "artifactRegistry": "tooling/code-search/harness/artifact-registry.json",
+    "validatorRegistry": "tooling/code-search/harness/validator-registry.json",
+    "selector": "tooling/code-search/Select-CodeSearchProvider.py",
+    "queryRunner": "tooling/code-search/Search-Codebase.py",
+    "statusReporter": "tooling/code-search/Get-CodeSearchHarnessStatus.py",
+    "skill": ".ai/skills/code-search-indexing/SKILL.md",
+    "operatorGuide": "docs/harness/code-search-indexing-harness.md",
+    "operatorStatus": "docs/reports/code-search-indexing-status.md",
+    "completenessValidator": "scripts/Test-CodeSearchHarnessCompleteness.ps1",
+    "contractTests": "tests/test_code_search_harness.py"
+  },
+  "selectionPolicy": {
+    "default": "probe-then-select",
+    "freeFirst": true,
+    "noExternalCodeExportWithoutExplicitOptIn": true,
+    "noDependencyInstallation": true,
+    "githubHostedDoesNotImplySearchReady": true,
+    "emptySearchIsNotReadinessProof": true
+  },
+  "proofCeiling": "Tracked provider selection, command construction, local evidence policy, synthetic routing, and hosted contract validation only. No provider installation, authentication, private-code export, index freshness, query quality, or workstation runtime success is implied."
+}
