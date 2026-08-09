@@ -3,6 +3,7 @@ name: Code search indexing harness
 on:
   pull_request:
     paths:
+      - "CODE_SEARCH.md"
       - "tooling/code-search/**"
       - ".ai/skills/code-search-indexing/**"
       - "scripts/Test-CodeSearchHarnessCompleteness.ps1"
