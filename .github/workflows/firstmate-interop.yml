@@ -6,22 +6,26 @@ on:
       - 'tooling/firstmate/**'
       - 'tests/test_firstmate_integration_contract.py'
       - 'tests/test_firstmate_operational_harness.py'
+      - 'tests/test_firstmate_windows_wsl_bridge.py'
       - 'docs/harness/firstmate-integration.md'
       - 'docs/harness/firstmate-operational-harness.md'
       - 'docs/reports/firstmate-operational-harness-status.md'
       - '.ai/skills/firstmate-crew-orchestration/**'
       - 'Test-AgentSwitchboard-FirstMate-Harness.sh'
+      - 'Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1'
       - '.github/workflows/firstmate-interop.yml'
   pull_request:
     paths:
       - 'tooling/firstmate/**'
       - 'tests/test_firstmate_integration_contract.py'
       - 'tests/test_firstmate_operational_harness.py'
+      - 'tests/test_firstmate_windows_wsl_bridge.py'
       - 'docs/harness/firstmate-integration.md'
       - 'docs/harness/firstmate-operational-harness.md'
       - 'docs/reports/firstmate-operational-harness-status.md'
       - '.ai/skills/firstmate-crew-orchestration/**'
       - 'Test-AgentSwitchboard-FirstMate-Harness.sh'
+      - 'Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1'
       - '.github/workflows/firstmate-interop.yml'
 
 permissions:
@@ -48,6 +52,7 @@ jobs:
         run: |
           python tests/test_firstmate_integration_contract.py
           python tests/test_firstmate_operational_harness.py
+          python tests/test_firstmate_windows_wsl_bridge.py
       - name: Validate shell surfaces
         run: |
           bash -n Test-AgentSwitchboard-FirstMate-Harness.sh
@@ -58,9 +63,31 @@ jobs:
         run: |
           python tooling/firstmate/harness/operational/Build-FirstMateHarnessReport.py --output "$RUNNER_TEMP/firstmate-harness-report.md"
           test -s "$RUNNER_TEMP/firstmate-harness-report.md"
+          python tooling/firstmate/harness/operational/Build-FirstMateHarnessReport.py --stdout | grep -q 'First Mate operational harness report'
       - name: Validate existing operational harness floor
         run: python tests/test_operational_harness.py
       - name: Validate branch diff hygiene
+        run: |
+          git fetch --no-tags origin main
+          git diff --check origin/main...HEAD
+
+  windows-bridge-contract:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate bridge static contract
+        shell: pwsh
+        run: |
+          python tests/test_firstmate_windows_wsl_bridge.py
+          $head = (git rev-parse HEAD).Trim()
+          pwsh -NoLogo -NoProfile -File .\Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead $head -ContractOnly
+      - name: Validate branch diff hygiene
+        shell: pwsh
         run: |
           git fetch --no-tags origin main
           git diff --check origin/main...HEAD

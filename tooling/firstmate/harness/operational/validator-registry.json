@@ -12,6 +12,11 @@
       "scope": "maps, workflows, artifacts, validators, hooks, skill, report, selector"
     },
     {
+      "id": "firstmate-windows-wsl-bridge-contract",
+      "command": "python3 tests/test_firstmate_windows_wsl_bridge.py && pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead <exact-sha> -ContractOnly",
+      "scope": "PowerShell-to-WSL transport boundary, separate stdout/stderr, no wslpath dependency, tracked artifact resolution"
+    },
+    {
       "id": "firstmate-shell-parse",
       "command": "bash -n tooling/firstmate/Test-FirstMateInterop.sh && bash -n Test-AgentSwitchboard-FirstMate-Harness.sh",
       "scope": "operator shell entrypoints"

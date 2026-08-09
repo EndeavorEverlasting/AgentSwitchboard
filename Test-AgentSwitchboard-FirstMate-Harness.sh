@@ -7,7 +7,7 @@ usage() {
   cat >&2 <<'EOF'
 Usage:
   bash Test-AgentSwitchboard-FirstMate-Harness.sh contract
-  bash Test-AgentSwitchboard-FirstMate-Harness.sh report [--output PATH]
+  bash Test-AgentSwitchboard-FirstMate-Harness.sh report [--output PATH|--stdout]
   bash Test-AgentSwitchboard-FirstMate-Harness.sh route [selector arguments]
   bash Test-AgentSwitchboard-FirstMate-Harness.sh probe [--firstmate PATH]
 EOF
@@ -19,6 +19,7 @@ case "$MODE" in
   contract)
     python3 tests/test_firstmate_integration_contract.py
     python3 tests/test_firstmate_operational_harness.py
+    python3 tests/test_firstmate_windows_wsl_bridge.py
     bash -n Test-AgentSwitchboard-FirstMate-Harness.sh
     bash -n tooling/firstmate/Test-FirstMateInterop.sh
     bash -n tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPreCommit.sh

@@ -16,6 +16,13 @@
       "generator": "python3 tooling/firstmate/harness/operational/Select-FirstMateWorkflow.py --output <path>",
       "contains": "deterministic route, runtime backend, execution gate, owner, dependency, and next command",
       "proof_ceiling": "routing decision only; not execution proof"
+    },
+    {
+      "id": "windows-wsl-runtime-proof",
+      "filename": "firstmate-floor.txt",
+      "generator": "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead <exact-sha>",
+      "contains": "exact-head WSL visibility, owning harness contract result, read-only First Mate floor output, route artifact, operator report, and isolated WSL stderr diagnostics",
+      "proof_ceiling": "physical Windows-to-WSL floor only; not live crew completion proof"
     }
   ],
   "forbidden_evidence": [

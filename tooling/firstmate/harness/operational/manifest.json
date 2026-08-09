@@ -11,12 +11,14 @@
     "validator_registry": "tooling/firstmate/harness/operational/validator-registry.json",
     "selector": "tooling/firstmate/harness/operational/Select-FirstMateWorkflow.py",
     "report_builder": "tooling/firstmate/harness/operational/Build-FirstMateHarnessReport.py",
+    "windows_wsl_bridge": "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1",
     "skill": ".ai/skills/firstmate-crew-orchestration/SKILL.md",
     "operator_guide": "docs/harness/firstmate-operational-harness.md",
     "operator_status": "docs/reports/firstmate-operational-harness-status.md",
     "pre_commit_hook": "tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPreCommit.sh",
     "pre_push_hook": "tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPrePush.sh",
-    "completeness_test": "tests/test_firstmate_operational_harness.py"
+    "completeness_test": "tests/test_firstmate_operational_harness.py",
+    "windows_wsl_bridge_test": "tests/test_firstmate_windows_wsl_bridge.py"
   },
   "roles": {
     "agentswitchboard": "control-plane",
@@ -31,6 +33,7 @@
     "reference_session_backend": "tmux",
     "android": "separate-device-profile-lane",
     "native_windows_firstmate": "unverified",
+    "windows_to_wsl_bridge": "tracked; physical-laptop reproof required",
     "herdr_selection_enabled": false
   },
   "collision_boundaries": [
@@ -38,7 +41,8 @@
     "Do not absorb the separate Android/Herdr migration lane.",
     "Do not mutate First Mate upstream or install dependencies from this harness.",
     "One active writer per branch; First Mate workers require isolated branches/worktrees.",
-    "Do not treat Android readiness as a dependency for productive laptop/WSL crew work."
+    "Do not treat Android readiness as a dependency for productive laptop/WSL crew work.",
+    "Do not parse WSL stderr as machine-readable stdout or depend on wslpath for Windows temporary-path transport."
   ],
-  "proof_ceiling": "Tracked harness structure, deterministic route selection, report generation, and hosted validators. Live First Mate crew dispatch and Herdr runtime remain unproved."
+  "proof_ceiling": "Tracked harness structure, deterministic route selection, report generation, hosted validators, and Windows-to-WSL bridge contract. Physical-laptop bridge execution, live First Mate crew dispatch, and Herdr runtime remain unproved."
 }

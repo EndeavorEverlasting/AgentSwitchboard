@@ -43,6 +43,7 @@
   ],
   "entrypoints": {
     "crew_harness": "bash Test-AgentSwitchboard-FirstMate-Harness.sh contract",
+    "windows_wsl_bridge": "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead <exact-sha>",
     "firstmate_probe": "bash tooling/firstmate/Test-FirstMateInterop.sh --firstmate <path>",
     "route_selector": "python3 tooling/firstmate/harness/operational/Select-FirstMateWorkflow.py --parallel-writers <n> --firstmate-floor <pass|unproved|fail> --platform <linux-wsl|windows|android|other>",
     "operator_report": "python3 tooling/firstmate/harness/operational/Build-FirstMateHarnessReport.py"
@@ -50,13 +51,15 @@
   "commands": {
     "focused_test": [
       "python3 tests/test_firstmate_integration_contract.py",
-      "python3 tests/test_firstmate_operational_harness.py"
+      "python3 tests/test_firstmate_operational_harness.py",
+      "python3 tests/test_firstmate_windows_wsl_bridge.py"
     ],
     "shell_parse": [
       "bash -n Test-AgentSwitchboard-FirstMate-Harness.sh",
       "bash -n tooling/firstmate/Test-FirstMateInterop.sh",
       "bash -n tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPreCommit.sh",
-      "bash -n tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPrePush.sh"
+      "bash -n tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPrePush.sh",
+      "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead <exact-sha> -ContractOnly"
     ],
     "foundation_test": [
       "python3 tests/test_operational_harness.py"
@@ -75,6 +78,8 @@
     "Do not infer a valid Git checkout by requiring .git to be a directory; linked worktrees use a .git file.",
     "Normalize equivalent GitHub origin transports before comparing repository identity.",
     "Do not auto-promote Herdr while its pinned contract and live runtime gates are unresolved.",
-    "Do not use First Mate remote-writing modes until the local-only runtime gate has evidence."
+    "Do not use First Mate remote-writing modes until the local-only runtime gate has evidence.",
+    "Do not feed Windows temporary paths through wslpath and then parse combined native output; launch wsl.exe with the exact Windows worktree as ProcessStartInfo.WorkingDirectory and capture stdout/stderr separately.",
+    "A WSL configuration warning on stderr is diagnostic evidence, not machine-readable path or JSON output."
   ]
 }

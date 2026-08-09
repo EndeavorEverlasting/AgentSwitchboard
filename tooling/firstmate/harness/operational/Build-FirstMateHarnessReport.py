@@ -37,16 +37,19 @@ def render() -> str:
         "- Exact First Mate upstream pin and read-only Linux/WSL compatibility contract are tracked.",
         "- Deterministic direct-vs-crew routing is tracked and testable.",
         "- tmux remains the reference session backend.",
+        "- The Windows-to-WSL proof bridge keeps WSL diagnostics on stderr and machine-readable output on stdout; it does not depend on `wslpath`.",
         f"- {len(workflows['workflows'])} workflow specs, {len(validators['validators'])} validators, and {len(artifacts['artifacts'])} generated artifact roles are registered.",
         "",
         "## Broken or blocked",
         "",
         "- Live First Mate crew dispatch is not yet runtime-proved.",
+        "- The repaired Windows-to-WSL bridge still requires physical-laptop exact-head reproof after the observed `wslpath` transport failure.",
         "- Herdr automatic selection is disabled; its separate compatibility/migration lane must clear pinned-contract and live-runtime gates.",
-        "- Native Windows First Mate behavior is unverified.",
+        "- Native Windows First Mate behavior is unverified; the bridge only launches the Linux/WSL lane from Windows.",
         "",
         "## Missing proof",
         "",
+        "- One successful physical-laptop Windows-to-WSL floor proof using the tracked bridge.",
         "- One bounded local-only First Mate crew sprint with isolated worker worktrees.",
         "- Live worker state, validator receipt, and convergence evidence from that sprint.",
         "- Any Herdr session-backend promotion evidence.",
@@ -54,12 +57,13 @@ def render() -> str:
         "## Canonical entry commands",
         "",
         f"- Contract: `{codebase['entrypoints']['crew_harness']}`",
+        f"- Windows/WSL bridge: `{codebase['entrypoints']['windows_wsl_bridge']}`",
         f"- First Mate probe: `{codebase['entrypoints']['firstmate_probe']}`",
         f"- Route selector: `{codebase['entrypoints']['route_selector']}`",
         "",
         "## Next useful unproved state",
         "",
-        "On a Linux/WSL laptop with an audited First Mate checkout, run the read-only floor. If it passes, route a bounded parallel task to `firstmate-local-only`; do not wait for Android or Herdr readiness.",
+        "On the Windows laptop, run the tracked Windows-to-WSL bridge at the exact PR head. If the read-only floor passes, route a bounded parallel task to `firstmate-local-only`; do not wait for Android or Herdr readiness.",
         "",
         "## Proof ceiling",
         "",
@@ -72,13 +76,22 @@ def render() -> str:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output")
+    parser.add_argument("--stdout", action="store_true")
     args = parser.parse_args()
+
+    text = render()
+    if args.stdout:
+        if args.output:
+            parser.error("--stdout and --output are mutually exclusive")
+        print(text)
+        return 0
+
     if args.output:
         output = Path(args.output).expanduser().resolve()
     else:
         output = Path(tempfile.gettempdir()) / "agentswitchboard" / "firstmate-harness" / "firstmate-harness-report.md"
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(render(), encoding="utf-8")
+    output.write_text(text, encoding="utf-8")
     print(output)
     return 0
 
