@@ -180,8 +180,13 @@ function Invoke-WslProcess {
         [string[]]$PathEnvironmentNames = @()
     )
 
+    # PowerShell here-strings inherit the checkout's native line endings. Git may
+    # materialize this script with CRLF on Windows, but bash -lc requires Unix
+    # command text. Normalize the payload before it crosses the WSL boundary.
+    $normalizedCommand = $Command.Replace("`r`n", "`n").Replace("`r", "`n")
+
     return Invoke-WslHostProcess `
-        -Arguments @('--distribution', $Distribution, '--exec', 'bash', '-lc', $Command) `
+        -Arguments @('--distribution', $Distribution, '--exec', 'bash', '-lc', $normalizedCommand) `
         -Environment $Environment `
         -PathEnvironmentNames $PathEnvironmentNames
 }
@@ -281,6 +286,7 @@ Set-Content -LiteralPath $WslDiagnosticsPath -Value @(
     "WSL_WORKSPACE=$wslWorkspace"
     'NOTE=The WSL distribution is explicitly selected after a bash+git capability probe; the implicit default is never trusted.'
     'NOTE=Windows paths cross into WSL only through WSLENV /p translation; WSL stdout and stderr remain separate.'
+    'NOTE=PowerShell-originated WSL command payloads are normalized to LF before bash -lc execution.'
     'NOTE=The Linux runtime uses a WSL-owned standalone clone, never the Windows linked-worktree .git indirection.'
 )
 

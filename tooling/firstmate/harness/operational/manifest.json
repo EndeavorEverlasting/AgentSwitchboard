@@ -33,8 +33,9 @@
     "reference_session_backend": "tmux",
     "android": "separate-device-profile-lane",
     "native_windows_firstmate": "unverified",
-    "windows_to_wsl_bridge": "tracked; explicit-distro standalone-clone physical reproof required",
+    "windows_to_wsl_bridge": "tracked; explicit-distro LF-normalized standalone-clone physical reproof required",
     "wsl_distribution_policy": "enumerate installed distributions; skip known utility distros unless explicitly requested; require bash+git capability; invoke all runtime commands with --distribution",
+    "wsl_command_transport": "normalize PowerShell command payloads from CRLF or CR to LF before bash -lc",
     "herdr_selection_enabled": false
   },
   "collision_boundaries": [
@@ -45,7 +46,8 @@
     "Do not treat Android readiness as a dependency for productive laptop/WSL crew work.",
     "Do not parse WSL stderr as machine-readable stdout or depend on wslpath for Windows temporary-path transport.",
     "Do not run Linux Git inside a Windows-created linked worktree; create a WSL-owned standalone exact-head clone from the clean committed source repository.",
-    "Do not execute the runtime through an implicit WSL default distribution; select and record an explicit bash+git-capable distribution first."
+    "Do not execute the runtime through an implicit WSL default distribution; select and record an explicit bash+git-capable distribution first.",
+    "Do not pass raw Windows/PowerShell multiline command text to bash -lc; normalize CRLF and CR to LF at the bridge boundary."
   ],
-  "proof_ceiling": "Tracked harness structure, deterministic route selection, report generation, hosted validators, explicit WSL distribution selection, and Windows-to-WSL standalone-clone bridge contract. Physical-laptop bridge execution, live First Mate crew dispatch, and Herdr runtime remain unproved."
+  "proof_ceiling": "Tracked harness structure, deterministic route selection, report generation, hosted validators, explicit WSL distribution selection, LF-normalized PowerShell-to-bash command transport, and Windows-to-WSL standalone-clone bridge contract. Physical-laptop bridge execution, live First Mate crew dispatch, and Herdr runtime remain unproved."
 }

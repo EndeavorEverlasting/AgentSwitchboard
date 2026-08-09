@@ -82,7 +82,8 @@
     "Do not feed Windows temporary paths through wslpath and then parse combined native output; use WSLENV /p path translation and capture stdout/stderr separately.",
     "A Windows-created linked worktree is not a portable Linux Git checkout because its .git indirection can contain Windows-owned worktree metadata. The bridge must create a WSL-owned standalone clone at the exact commit.",
     "Do not hardcode /mnt/c for Windows-to-WSL transport; the WSL automount root is configurable.",
-    "Do not trust the implicit WSL default distribution. Utility distributions such as docker-desktop may be registered or default and may not provide bash or git. Enumerate installed distributions, skip known utility distributions unless explicitly requested, capability-probe bash+git, and invoke every runtime command with --distribution <name>.",
+    "Do not trust the implicit WSL default distribution for runtime execution. Enumerate installed distros, skip utility distros by default, require bash+git capability, and invoke the selected distro explicitly.",
+    "PowerShell here-strings can carry CRLF into bash -lc when Git materializes a script with Windows line endings. Normalize every WSL command payload from CRLF or CR to LF before adding it to ProcessStartInfo.ArgumentList.",
     "A WSL configuration warning on stderr is diagnostic evidence, not machine-readable path or JSON output."
   ]
 }
