@@ -3,6 +3,9 @@ name: OpenCode runtime resolution harness
 on:
   pull_request:
     paths:
+      - 'CODEBASE_MAP.md'
+      - 'SKILLS.md'
+      - 'TRIGGERS.md'
       - 'tooling/profiles/windows/harness/opencode-runtime-resolution/**'
       - 'tooling/profiles/windows/Get-OpenCodeRuntimeResolutionStatus.ps1'
       - 'tooling/profiles/windows/hooks/Invoke-OpenCodeRuntimeResolutionPreCommit.ps1'
@@ -14,6 +17,9 @@ on:
   push:
     branches: [main]
     paths:
+      - 'CODEBASE_MAP.md'
+      - 'SKILLS.md'
+      - 'TRIGGERS.md'
       - 'tooling/profiles/windows/harness/opencode-runtime-resolution/**'
       - 'tooling/profiles/windows/Get-OpenCodeRuntimeResolutionStatus.ps1'
       - 'tooling/profiles/windows/hooks/Invoke-OpenCodeRuntimeResolutionPreCommit.ps1'
