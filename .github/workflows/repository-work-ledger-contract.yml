@@ -1,0 +1,49 @@
+name: Repository work ledger contract
+
+on:
+  pull_request:
+    paths:
+      - ".ai/WORK_QUEUE.md"
+      - ".ai/harness/repository-work-ledger*.json"
+      - "docs/governance/repository-work-ledger-contract.md"
+      - "scripts/Test-RepositoryWorkLedgerContract.ps1"
+      - "tests/test_repository_work_ledger_contract.py"
+      - ".github/workflows/repository-work-ledger-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: false
+      - name: Parse validator
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile('scripts/Test-RepositoryWorkLedgerContract.ps1', [ref]$tokens, [ref]$errors)
+          if ($errors.Count) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
+      - name: Validate repository work ledger
+        shell: pwsh
+        run: ./scripts/Test-RepositoryWorkLedgerContract.ps1
+      - name: Run positive and negative contract tests
+        run: python tests/test_repository_work_ledger_contract.py
+      - name: Verify clean checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git diff --check "${{ github.event.pull_request.base.sha }}" HEAD
+          else
+            git diff --check HEAD^
+          fi
+          test -z "$(git status --short)"

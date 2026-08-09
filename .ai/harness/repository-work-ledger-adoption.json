@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "adoptionId": "agentswitchboard.repository-work-ledger.adoption.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "role": "canonical-portable-contract-and-consumer",
+  "contract": {
+    "id": "agentswitchboard.repository-work-ledger.v1",
+    "version": "1.0.0",
+    "documentation": "docs/governance/repository-work-ledger-contract.md",
+    "policy": ".ai/harness/repository-work-ledger.policy.json"
+  },
+  "donor": {
+    "repository": "EndeavorEverlasting/AxTask",
+    "pinnedCommit": "9351c952b057ae4520b1ea0d388e1d8908f4c093",
+    "sourcePaths": [
+      ".ai/WORK_QUEUE.md",
+      "scripts/ai-harness/validate-work-queue.mjs",
+      "server/ai-harness/work-queue-contract.test.ts"
+    ]
+  },
+  "local": {
+    "ledger": ".ai/WORK_QUEUE.md",
+    "taskPrefix": "ASQ",
+    "validator": "scripts/Test-RepositoryWorkLedgerContract.ps1",
+    "tests": "tests/test_repository_work_ledger_contract.py",
+    "ci": ".github/workflows/repository-work-ledger-contract.yml"
+  },
+  "mustNotCopyOrReimplement": [
+    "AxTask AXQ task contents",
+    "AxTask deployment/database domain gates",
+    "consumer product behavior",
+    "runtime proof inferred from ledger prose"
+  ],
+  "proofCeiling": "portable contract adoption and static local ledger validation"
+}
