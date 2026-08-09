@@ -3,6 +3,7 @@ param()
 $ErrorActionPreference='Stop'
 $root=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $required=@(
+ 'CODE_SEARCH.md',
  'tooling/code-search/harness/manifest.json',
  'tooling/code-search/harness/codebase-map.json',
  'tooling/code-search/harness/provider-registry.json',
