@@ -2,116 +2,98 @@
 
 ## Status
 
-Herdr is an **experimental candidate** for the AgentSwitchboard Android orchestration layer. The canonical Android runtime remains Pi + tmux until the installation review, runtime-compatibility review, and live same-device Android/Termux proof clear the migration gates.
+Herdr is an **experimental candidate** for the AgentSwitchboard Android orchestration layer. The canonical Android runtime remains Pi + tmux until every source review and live **same-device** gate is proven.
 
-Upstream currently documents stable Linux and macOS binaries, including Linux `aarch64`, plus preview Windows builds. Upstream installation documentation does **not** currently claim Android/Termux support, so this repository does not treat Linux `aarch64` availability as Android compatibility proof. The tracked installation decision remains **BLOCKED**.
-
-The repository also does not use `cargo install herdr` as an installation contract unless the pinned upstream source documents that path.
+Upstream documents stable Linux and macOS binaries, including Linux `aarch64`, plus preview Windows builds. Upstream installation documentation does **not** currently claim Android/Termux support, so Linux architecture alone is not migration proof. The tracked installation decision remains BLOCKED and emits no install command.
 
 ## Source-bound installation gate
 
-Installation evidence is pinned in:
-
-```text
-tooling/profiles/android/harness/herdr/upstream-installation-source.json
-```
-
-Generate the install review with:
+Tracked source: `tooling/profiles/android/harness/herdr/upstream-installation-source.json`.
 
 ```sh
 python tooling/profiles/android/harness/herdr/Build-HerdrInstallReview.py --write
 ```
 
-The current review must report `DECISION=BLOCKED`. A BLOCKED review deliberately contains **no installation command**.
+Current expected decision: `DECISION=BLOCKED`. Do not use undocumented `cargo install herdr` or infer an installer from the Linux artifact.
 
-## Source-bound runtime compatibility gate
+## Runtime compatibility gate
 
-The next gate is separate from installation. Exact Herdr v0.8.0 source/build evidence is pinned in:
+Tracked source: `tooling/profiles/android/harness/herdr/upstream-runtime-compatibility.json`.
 
-```text
-tooling/profiles/android/harness/herdr/upstream-runtime-compatibility.json
-```
-
-The pinned release workflow builds `herdr-linux-aarch64` for Rust target `aarch64-unknown-linux-musl`; it is not an Android-targeted artifact. The same pinned source has explicit Linux/macOS/Windows platform modules, while `target_os=android` selects Herdr's unsupported fallback platform implementation. That fallback stubs daemon detachment, process discovery, process signalling/existence checks, and other platform functions.
-
-Therefore two routes are intentionally distinguished:
-
-1. **Native Android source build (`aarch64-linux-android`)** — `BLOCKED_UNSUPPORTED_PLATFORM_FALLBACK` at this source commit. Do not treat successful compilation as migration readiness.
-2. **Exact Linux-musl ARM64 release asset** — `EXECUTION_PROBE_APPROVED_NO_INSTALL`. Only an ephemeral identity probe is authorized.
-
-Render the compatibility review:
+The v0.8.0 `herdr-linux-aarch64` asset is built for `aarch64-unknown-linux-musl`; native `aarch64-linux-android` selects Herdr's unsupported platform fallback at the pinned source. The exact Linux-musl asset therefore receives only a no-install execution-identity experiment.
 
 ```sh
 python tooling/profiles/android/harness/herdr/Build-HerdrCompatibilityReview.py --write
-```
-
-Expected result:
-
-```text
-DECISION=EXECUTION_PROBE_APPROVED_NO_INSTALL
-MIGRATION_DECISION=KEEP_TMUX
-NEXT_GATE=exact-device-prebuilt-execution-identity
-```
-
-## Exact no-install phone probe
-
-Only after the compatibility review above, run:
-
-```sh
 python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py evidence
 ```
 
-The probe:
+A PASS proves only exact size/digest plus `herdr 0.8.0` execution on that phone. It does not install Herdr or prove server behavior.
 
-- downloads only the pinned v0.8.0 `herdr-linux-aarch64` release asset into a private temporary directory;
-- requires exact size `19960864` bytes;
-- requires SHA-256 `f647ac66468d9efbc642fe534fb284468f0aea60641606fc008dfc0d82a3ca87` before execution;
-- gives the verified file owner-only executable permission;
-- runs only `--version` with a 10-second timeout;
-- isolates HOME and all XDG state/cache/config/data paths inside the temporary sandbox;
-- writes bounded sanitized evidence under `~/.local/state/agentswitchboard/android-herdr-migration/`;
-- removes the temporary binary/sandbox automatically.
+## Bounded foreground server-start gate
 
-It does **not** copy the binary into a persistent executable path, install Herdr, run an installer/update, start a server, create or attach a Herdr session, change Android policy, or remove tmux.
+After exact same-device prebuilt execution PASS, read `tooling/profiles/android/harness/herdr/upstream-server-start-source.json` and build:
 
-A result of `EXEC_COMPATIBILITY=PASS` proves only that the exact Linux-musl ARM64 asset can execute its version command on this phone. It does not prove PTY behavior, IPC, process detection, server persistence, detach/reattach, or agent state. The next gate after PASS is a separately reviewed bounded server-start test.
+```sh
+python tooling/profiles/android/harness/herdr/Build-HerdrServerStartReview.py --write
+```
+
+Expected decision:
+
+```text
+DECISION=BOUNDED_FOREGROUND_SERVER_PROBE_APPROVED_NO_INSTALL
+MIGRATION_DECISION=KEEP_TMUX
+NEXT_GATE=exact-device-foreground-server-start-stop
+```
+
+Pinned upstream source distinguishes two launch paths:
+
+- bare `herdr` uses auto-detect and may create a **detached background daemon**;
+- explicit `herdr server` dispatches directly to the **headless foreground server**.
+
+The bounded phone test therefore never runs bare `herdr`. It uses:
+
+```sh
+python tooling/profiles/android/harness/herdr/Probe-HerdrServerStart.py evidence
+```
+
+The probe re-downloads and verifies only the pinned v0.8.0 asset, creates an ephemeral config with onboarding/version/manifest checks disabled, isolates HOME/XDG paths and `HERDR_SOCKET_PATH`, starts only `herdr server`, polls only `herdr status server --json`, and stops only with `herdr server stop`.
+
+A PASS requires: running=true, version 0.8.0, compatible protocol, exact isolated socket, stop exit 0, clean foreground process exit, and not-running afterward. The temporary binary, sockets/config/logs and sandbox are removed. Failed graceful shutdown triggers bounded process-tree cleanup before evidence is written.
+
+This gate does **not** install Herdr, attach a client, create a workspace through CLI commands, test detach/reattach, test Android background survival, mutate `device_config`/battery policy, or replace tmux. A PASS advances only to `bounded-client-attach-review`.
 
 ## Why evaluate Herdr
 
-Herdr adds agent-aware pane state, persistent background sessions, tmux-style `Ctrl+B` prefix behavior, detach/reattach, workspaces/tabs/panes, and a CLI/socket control surface. These capabilities match the AgentSwitchboard workload if they remain reliable under Android/Termux constraints.
+Herdr offers agent-aware panes, persistent sessions, tmux-style prefix behavior, workspaces/tabs/panes and a CLI/socket control surface. Those capabilities are relevant only if the Linux-musl binary remains reliable across Android/Termux lifecycle gates.
 
 ## Safety rule
 
-Do **not** install Herdr while the tracked install review is `BLOCKED`. Do **not** uninstall tmux, rewrite the canonical Android launcher, or mutate Android `device_config` / battery policy as part of the compatibility probe. Background-process survival must be observed on the actual phone rather than assumed or forced by an undocumented workaround.
+**Do not uninstall tmux** or rewrite the canonical Android launcher while this harness is experimental. Do not run bare Herdr daemon auto-launch from the bounded server probe. Do not mutate Android phantom-process or battery policy to manufacture a PASS.
 
 ## Phone readiness command
-
-The original readiness classifier remains:
 
 ```sh
 bash Test-AgentSwitchboard-Android-Herdr.sh evidence
 ```
 
-Expected installed-state outcomes remain `KEEP_TMUX_HERDR_NOT_INSTALLED`, `KEEP_TMUX_HERDR_BINARY_NOT_HEALTHY`, or `HERDR_BINARY_CANDIDATE_ONLY`. Generated evidence stays local and untracked.
-
-When a source-bound BLOCKED install-review artifact is present, `Get-HerdrHarnessStatus.py` now advances `KEEP_TMUX_HERDR_NOT_INSTALLED` to the compatibility-review command instead of repeating the completed install review.
+Generated phone evidence remains local/untracked under the XDG-aware AgentSwitchboard state root.
 
 ## Promotion gates
 
-Herdr becomes eligible to replace tmux only after:
+1. Termux environment/architecture observed.
+2. Source-bound installation review.
+3. Source-bound runtime compatibility review.
+4. Exact-device prebuilt execution identity observed.
+5. Source-bound foreground server-start review.
+6. Foreground server start/status/stop observed.
+7. Separately reviewed client attach.
+8. Detach/reattach restores the same session.
+9. Supported coding agent state is correctly detected.
+10. Android background/app-switch survival is observed.
+11. A bounded AgentSwitchboard sprint completes with durable commit/push/PR evidence.
+12. Existing Android runtime/harness validators remain green.
 
-1. Termux environment and architecture are observed.
-2. A source-bound installation method is reviewed.
-3. Runtime compatibility is source-reviewed.
-4. Exact-device executable identity is observed with same-device evidence.
-5. A separately authorized background Herdr server starts successfully.
-6. Detach and reattach restore the same session.
-7. A supported coding agent is correctly classified as working / blocked / idle or done.
-8. The session survives the Android background/app-switch condition relevant to the operator workflow.
-9. A bounded AgentSwitchboard sprint completes with durable evidence, commit, push, and PR behavior at least as strong as the current tmux path.
-10. Existing Android runtime and harness validators remain green.
-
-Failure at any gate means **keep tmux** and preserve bounded evidence for the next repair sprint.
+Failure at any gate means **keep tmux** and preserve bounded evidence.
 
 ## Validation
 
@@ -119,9 +101,12 @@ Failure at any gate means **keep tmux** and preserve bounded evidence for the ne
 bash -n tooling/profiles/android/harness/herdr/Probe-Herdr-Migration.sh
 bash Test-AgentSwitchboard-Android-Herdr.sh contract
 python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py contract
+python tooling/profiles/android/harness/herdr/Probe-HerdrServerStart.py contract
 python tests/test_android_herdr_migration.py
 python tests/test_android_herdr_install_review.py
 python tests/test_android_herdr_compatibility_review.py
+python tests/test_android_herdr_server_start_review.py
+python tests/test_android_herdr_status_state_isolation.py
 python tests/test_android_herdr_harness_completeness.py
 python tests/test_android_termux_harness.py
 python tests/test_android_termux_modal_state_harness.py
@@ -130,4 +115,4 @@ git diff --check
 
 ## Proof ceiling
 
-These tracked files prove migration policy, exact upstream source/build binding, deterministic installation and compatibility decisions, safe no-install probe boundaries, and CI validation. They do not prove Herdr server/runtime behavior on Android/Termux or permit tmux retirement.
+Tracked harness files prove source binding, deterministic review/routing contracts, bounded live-probe authority and validation wiring. Same-device prebuilt PASS proves executable identity; same-device server-start PASS can prove only foreground headless start/status/stop and local IPC. Neither proves client attach, detach/reattach, persistence, agent state, background survival, coding-agent success, or permission to retire tmux.

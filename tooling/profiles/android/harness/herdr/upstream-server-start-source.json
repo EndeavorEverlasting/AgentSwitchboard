@@ -1,0 +1,68 @@
+{
+  "schema": "agentswitchboard.android-herdr-server-start-source.v1",
+  "verifiedAtUtc": "2026-08-09T06:10:00Z",
+  "source": {
+    "kind": "official-upstream",
+    "repository": "https://github.com/herdrdev/herdr",
+    "releaseTag": "v0.8.0",
+    "releaseCommit": "346411fa21afd297f5ed3b3fa56f9e3fbf7654b7",
+    "artifact": "herdr-linux-aarch64",
+    "artifactUrl": "https://github.com/herdrdev/herdr/releases/download/v0.8.0/herdr-linux-aarch64",
+    "artifactSizeBytes": 19960864,
+    "artifactSha256": "f647ac66468d9efbc642fe534fb284468f0aea60641606fc008dfc0d82a3ca87"
+  },
+  "sourceEvidence": [
+    {"path":"src/main.rs","fact":"Explicit `herdr server` dispatches directly to server::headless::run_server(); it does not use auto-detect daemon spawning."},
+    {"path":"src/cli/server.rs","fact":"`herdr server` with no subcommand is the documented headless-server entry; `herdr server stop` sends the server stop request."},
+    {"path":"src/server/autodetect.rs","fact":"Bare `herdr` auto-detect launch may spawn a detached background daemon when no server is running; that path is forbidden for this bounded probe."},
+    {"path":"src/server/headless.rs","fact":"Headless server mode does not enter raw mode or read stdin, creates API/client sockets, runs the event loop, and handles explicit server stop."},
+    {"path":"src/cli/status.rs","fact":"`herdr status server --json` reports running state, version, protocol, capabilities, compatibility, socket and session."},
+    {"path":"src/api/mod.rs","fact":"HERDR_SOCKET_PATH overrides the active JSON API socket."},
+    {"path":"src/server/socket_paths.rs","fact":"When HERDR_SOCKET_PATH is set, the client socket is deterministically derived beside it."},
+    {"path":"src/config/io.rs","fact":"XDG_CONFIG_HOME and XDG_STATE_HOME are honored for Herdr configuration and state."},
+    {"path":"src/session.rs","fact":"`herdr server stop` sends server.stop and waits for API/client sockets to become unreachable, with an upstream 15-second stop bound."}
+  ],
+  "precondition": {
+    "requiredEvidenceSchema":"agentswitchboard.android-herdr-prebuilt-exec.v1",
+    "requiredReleaseCommit":"346411fa21afd297f5ed3b3fa56f9e3fbf7654b7",
+    "requiredArtifact":"herdr-linux-aarch64",
+    "requiredSha256":"f647ac66468d9efbc642fe534fb284468f0aea60641606fc008dfc0d82a3ca87",
+    "requiredExecCompatibility":"PASS",
+    "requiredVersionOutputContains":"herdr 0.8.0"
+  },
+  "probe": {
+    "decision":"BOUNDED_FOREGROUND_SERVER_PROBE_APPROVED_NO_INSTALL",
+    "migrationDecision":"KEEP_TMUX",
+    "launchMode":"foreground-headless-direct",
+    "launchCommand":["herdr","server"],
+    "statusCommand":["herdr","status","server","--json"],
+    "stopCommand":["herdr","server","stop"],
+    "startTimeoutSeconds":10,
+    "commandTimeoutSeconds":20,
+    "allowedActions":[
+      "re-download the exact pinned release asset into a private temporary directory",
+      "verify exact byte size and SHA-256 before execution",
+      "run only the explicit foreground `herdr server` command under isolated HOME/XDG paths and HERDR_SOCKET_PATH",
+      "poll only `herdr status server --json` to prove local API readiness",
+      "issue only `herdr server stop` for graceful shutdown",
+      "write sanitized local untracked lifecycle evidence",
+      "force-clean the temporary server process tree if graceful shutdown fails",
+      "remove the temporary binary, sockets, logs and sandbox on exit"
+    ],
+    "forbiddenActions":[
+      "run bare `herdr` auto-detect launch",
+      "persist or install the Herdr binary",
+      "create or attach a Herdr client/session/workspace through CLI commands",
+      "test detach/reattach or background survival",
+      "run Herdr update, integration, plugin or remote commands",
+      "mutate Android device_config, phantom-process limits or battery policy",
+      "remove or replace tmux"
+    ],
+    "successGate":"exact verified binary starts `herdr server`, reports running v0.8.0 with compatible protocol over the isolated API socket, accepts `herdr server stop`, exits without forced cleanup, and reports not_running afterward",
+    "failureGate":"any prerequisite, download, digest, server-start, status, identity, protocol, stop, exit or cleanup failure keeps tmux canonical and records sanitized evidence"
+  },
+  "reviewDecision":"BOUNDED_FOREGROUND_SERVER_PROBE_APPROVED_NO_INSTALL",
+  "migrationDecision":"KEEP_TMUX",
+  "nextGate":"exact-device-foreground-server-start-stop",
+  "proofCeiling":"This source snapshot approves one foreground, isolated, checksum-verified server start/status/stop probe after exact-device prebuilt execution identity has already passed. It does not authorize installation, daemon auto-launch, client attach, detach/reattach, persistence, agent-state detection, Android background survival, coding-agent work, or tmux retirement."
+}

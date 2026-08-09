@@ -3,12 +3,16 @@
 - Timestamp:
 - Repo / branch / HEAD:
 - PR:
-- Evidence source:
+- Readiness evidence:
+- Install review:
+- Compatibility review:
+- Prebuilt execution evidence:
+- Server-start review:
+- Server-start evidence:
 - Harness status:
-- Migration decision:
+- Migration decision: KEEP_TMUX
 - Canonical Android multiplexer: tmux
-- Herdr binary:
-- tmux fallback:
+- Live gate reached:
 - Next gate:
 
 ## Working
@@ -41,4 +45,4 @@
 
 ## Proof ceiling
 
-This report summarizes tracked harness state and sanitized local readiness evidence. It does not approve an installation method, prove Herdr Android compatibility, server persistence, agent-state detection, Android background survival, coding-agent behavior, or authorize replacing tmux.
+This report summarizes tracked harness state and selected sanitized local evidence. Evidence presence alone does not authorize installation, client attach/detach, Android background-policy changes, agent-state promotion, coding-agent migration, or tmux retirement.
