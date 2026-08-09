@@ -40,6 +40,45 @@
     "createdUtc": { "type": "string", "format": "date-time" },
     "updatedUtc": { "type": "string", "format": "date-time" },
     "mission": { "type": "string", "minLength": 10 },
+    "coordinationMode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "destination", "tracker", "notYetSpecified", "outOfScope", "spec", "executionAllowed", "sourceContribution"],
+      "properties": {
+        "kind": { "const": "decision-frontier" },
+        "destination": { "type": "string", "minLength": 3 },
+        "tracker": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["provider", "mapRef", "mapUrl", "decisionAuthority"],
+          "properties": {
+            "provider": { "enum": ["github", "local-markdown"] },
+            "mapRef": { "type": "string", "minLength": 1 },
+            "mapUrl": { "type": ["string", "null"], "format": "uri" },
+            "decisionAuthority": { "const": "tracker-child-tickets" }
+          }
+        },
+        "notYetSpecified": { "type": "array", "items": { "type": "string", "minLength": 3 } },
+        "outOfScope": { "type": "array", "items": { "type": "string", "minLength": 3 } },
+        "spec": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["status", "lifecycle", "ref"],
+              "properties": {
+                "status": { "enum": ["not-ready", "ready", "published", "retired"] },
+                "lifecycle": { "const": "temporary-until-implementation" },
+                "ref": { "type": ["string", "null"] }
+              }
+            }
+          ]
+        },
+        "executionAllowed": { "const": false },
+        "sourceContribution": { "const": "tooling/harness/operational/contributions/wayfinder-public-plan.contribution.json" }
+      }
+    },
     "owner": {
       "type": "object",
       "additionalProperties": false,

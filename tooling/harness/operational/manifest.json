@@ -23,14 +23,10 @@
     "operatorReportTemplate": "tooling/harness/operational/templates/operator-report.template.md",
     "preCommitHook": "tooling/harness/operational/hooks/Invoke-OperationalHarnessPreCommit.ps1",
     "prePushHook": "tooling/harness/operational/hooks/Invoke-OperationalHarnessPrePush.ps1",
-    "promptHandoffHarness": "tooling/harness/operational/opencode-prompt-handoff/manifest.json"
+    "promptHandoffHarness": "tooling/harness/operational/opencode-prompt-handoff/manifest.json",
+    "wayfinderHarness": "tooling/harness/wayfinder/manifest.json"
   },
-  "workflowOrder": [
-    "task-intake",
-    "pre-commit-validation",
-    "failure-recovery",
-    "handoff"
-  ],
+  "workflowOrder": ["task-intake", "pre-commit-validation", "failure-recovery", "handoff"],
   "generatedEvidence": {
     "tracked": false,
     "defaultRoot": "operating-system temporary directory/AgentSwitchboard/operational-harness/<run-id>",
@@ -53,6 +49,6 @@
     "secretCollectionAllowed": false,
     "destructiveGitAllowed": false,
     "governanceMutationOwned": false,
-    "proofCeiling": "Tracked operational-harness structure, workflow routing, validator registration, read-only repository status, generated local reports, and offline/static validation only."
+    "proofCeiling": "Tracked operational-harness structure, workflow routing, validator registration, read-only repository status, generated local reports, and offline/static validation only. Specialized Wayfinder live tracker/HITL behavior requires its own runtime evidence."
   }
 }

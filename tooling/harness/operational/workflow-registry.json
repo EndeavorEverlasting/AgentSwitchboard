@@ -9,6 +9,14 @@
     {"workflowId": "handoff", "path": "tooling/harness/operational/workflows/handoff.workflow.json", "triggers": ["chat ending", "agent transfer", "blocked by review", "blocked by live target", "continuation required"], "skill": ".ai/skills/pr-integration/SKILL.md"}
   ],
   "specializedRouting": [
+    {"condition": "destination is too large or ambiguous for one bounded session and unresolved decision fog prevents a safe executable route", "skill": ".ai/skills/wayfinder/SKILL.md", "workflowRoot": "tooling/harness/wayfinder/"},
+    {"condition": "Wayfinder validation crosses Python and PowerShell, uses an isolated virtual environment, or a dependency exists in one invocation but is missing in a nested validator", "skill": ".ai/skills/wayfinder-runtime-binding/SKILL.md", "workflowRoot": "tooling/harness/wayfinder/workflows/"},
+    {"condition": "a Wayfinder research decision ticket is claimed", "skill": ".ai/skills/research/SKILL.md", "workflowRoot": "tooling/harness/wayfinder/"},
+    {"condition": "a Wayfinder prototype decision ticket is claimed", "skill": ".ai/skills/prototype/SKILL.md", "workflowRoot": "tooling/harness/wayfinder/"},
+    {"condition": "a Wayfinder grilling decision ticket is claimed", "skill": ".ai/skills/grilling/SKILL.md", "workflowRoot": "tooling/harness/wayfinder/"},
+    {"condition": "a Wayfinder grilling session changes domain language or durable architectural decisions", "skill": ".ai/skills/domain-modeling/SKILL.md", "workflowRoot": "tooling/harness/wayfinder/"},
+    {"condition": "a Wayfinder map has no unresolved decision tickets or fog and needs an implementation-ready synthesis", "skill": ".ai/skills/to-spec/SKILL.md", "workflowRoot": "tooling/harness/wayfinder/"},
+    {"condition": "a clear spec/route must be decomposed into implementation tracer-bullet tickets", "skill": ".ai/skills/to-tickets/SKILL.md", "workflowRoot": "tooling/harness/wayfinder/"},
     {"condition": "task starts from a stale or dirty AgentSwitchboard checkout and must verify or run an exact remote head without mutating the source checkout", "skill": ".ai/skills/stale-checkout-exact-head-bootstrap/SKILL.md", "workflowRoot": "tooling/profiles/windows/harness/stale-checkout-exact-head/workflows/"},
     {"condition": "task concerns OpenCode clipboard prompt intake, PlanOnly preflight, preflight-to-execution prompt identity, or avoiding a second copy/paste", "skill": ".ai/skills/opencode-prompt-handoff/SKILL.md", "workflowRoot": "tooling/harness/operational/opencode-prompt-handoff/workflows/"},
     {"condition": "task crosses platform, host, shell, frontend, SSH, tmux, orchestration runtime, or agent runtime", "skill": ".ai/skills/environment-capability-routing/SKILL.md", "workflowRoot": null},

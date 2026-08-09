@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/harness/wayfinder/schemas/decision-ticket.schema.json",
+  "title": "AgentSwitchboard Wayfinder Decision Ticket Snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "ticketId", "title", "type", "label", "interaction", "status", "question", "blockedBy", "assets"],
+  "properties": {
+    "schema": {"const": "agentswitchboard.wayfinder-ticket.v1"},
+    "ticketId": {"type": "string", "minLength": 1},
+    "title": {"type": "string", "minLength": 3},
+    "type": {"enum": ["research", "prototype", "grilling", "task"]},
+    "label": {"enum": ["wayfinder:research", "wayfinder:prototype", "wayfinder:grilling", "wayfinder:task"]},
+    "interaction": {"enum": ["afk", "hitl", "either"]},
+    "status": {"enum": ["open", "claimed", "resolved", "out-of-scope"]},
+    "assignee": {"type": ["string", "null"]},
+    "question": {"type": "string", "minLength": 3},
+    "blockedBy": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "trackerUrl": {"type": ["string", "null"], "format": "uri"},
+    "assets": {"type": "array", "items": {"type": "string", "format": "uri"}},
+    "resolution": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["commentUrl", "gist", "invokedSkills", "primarySourceCount", "humanResponseCount", "humanVerdictObserved", "taskCompleted"],
+          "properties": {
+            "commentUrl": {"type": "string", "format": "uri"},
+            "gist": {"type": "string", "minLength": 3},
+            "invokedSkills": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+            "primarySourceCount": {"type": "integer", "minimum": 0},
+            "humanResponseCount": {"type": "integer", "minimum": 0},
+            "humanVerdictObserved": {"type": "boolean"},
+            "taskCompleted": {"type": "boolean"}
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"type": {"const": "research"}}, "required": ["type"]},
+      "then": {"properties": {"label": {"const": "wayfinder:research"}, "interaction": {"const": "afk"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "prototype"}}, "required": ["type"]},
+      "then": {"properties": {"label": {"const": "wayfinder:prototype"}, "interaction": {"const": "hitl"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "grilling"}}, "required": ["type"]},
+      "then": {"properties": {"label": {"const": "wayfinder:grilling"}, "interaction": {"const": "hitl"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "task"}}, "required": ["type"]},
+      "then": {"properties": {"label": {"const": "wayfinder:task"}, "interaction": {"const": "either"}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "claimed"}}, "required": ["status"]},
+      "then": {"required": ["assignee"], "properties": {"assignee": {"type": "string", "minLength": 1}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "resolved"}}, "required": ["status"]},
+      "then": {"required": ["resolution"], "properties": {"resolution": {"type": "object"}}}
+    }
+  ]
+}
