@@ -1,21 +1,28 @@
-# Repository work ledger contract
+# AgentSwitchboard repository work ledger profile
 
-Contract ID: `agentswitchboard.repository-work-ledger.v1`
-Version: `1.0.0`
-Canonical owner: `EndeavorEverlasting/AgentSwitchboard`
+Local profile ID: `agentswitchboard.repository-work-ledger.v1`
+Local profile version: `1.0.0`
+Local profile owner: `EndeavorEverlasting/AgentSwitchboard`
+Portable contract: `RepoLedgerInteroperability.v1`
+Portable contract owner: `EndeavorEverlasting/BlacksmithGuild`
+Portable contract commit: `429237aa41d8712d71859865c9be407ca23d8580`
 
 ## Purpose
 
 A repository work ledger is the durable coordination surface for unfinished work across users, agents, chats, machines, and branches. It implements the continuous-execution and transport-independent coordination principles already owned by `AGENTS.md`; it does not replace repository law, source code, tests, runbooks, issues, pull requests, CI, provider state, or runtime evidence.
 
-This contract was factored from the AxTask shared queue implementation at donor commit `9351c952b057ae4520b1ea0d388e1d8908f4c093`, especially `.ai/WORK_QUEUE.md`, `scripts/ai-harness/validate-work-queue.mjs`, and `server/ai-harness/work-queue-contract.test.ts`. AxTask remains authoritative for AxTask domain behavior and `AXQ-*` task contents. No AxTask-specific recovery, deployment, database, or product logic is portable authority here.
+The portable lifecycle was factored from the AxTask shared queue implementation at donor commit `9351c952b057ae4520b1ea0d388e1d8908f4c093`. BlacksmithGuild now owns the cross-repository compatibility contract, versioning boundary, donor provenance, and portable status/task/proof invariants as `RepoLedgerInteroperability.v1`. AxTask remains authoritative for AxTask domain behavior and `AXQ-*` task contents.
+
+AgentSwitchboard owns **only its local compatibility/execution profile**: the `ASQ-*` queue instance, local validator/tests/CI, `Work class`, and deterministic bounded/unbounded frontier. The local profile may strengthen the portable contract but is not a second portable or repository-family authority.
 
 ## Ownership boundary
 
-- AgentSwitchboard owns this portable contract, policy vocabulary, compatibility rules, and family-level proof semantics.
-- Each consumer repository owns its ledger instance, task identifiers, domain references, acceptance gates, local validator implementation, CI/hook integration, and runtime truth.
-- A consumer may strengthen this contract but may not silently weaken required fields, terminal-state proof, collision handling, or executable-next-action rules while claiming v1 compatibility.
-- A contribution/adoption manifest is evidence of intended compatibility only. It is not runtime proof and does not make AgentSwitchboard authoritative for consumer product behavior.
+- BlacksmithGuild owns portable ledger vocabulary, required portable fields, continuation/terminal semantics, durable-proof vocabulary, compatibility versioning, and the adoption/provenance boundary.
+- AxTask remains authoritative for AxTask donor behavior, `AXQ-*` task contents, deployment/database domain gates, and AxTask proof promotion.
+- AgentSwitchboard owns this repository's `ASQ-*` task state, local profile ID, `Work class`, frontier routing, validator/tests/CI, product/runtime behavior, and proof promotion.
+- Consumer repositories own their own ledger instances, task identifiers, domain references, acceptance gates, local validator implementations, CI/hook integration, and runtime truth.
+- A consumer may strengthen portable v1 but may not silently weaken required fields, terminal-state proof, collision handling, or executable-next-action rules while claiming compatibility.
+- A contribution/adoption manifest is compatibility metadata only. It is not runtime proof and does not make BlacksmithGuild or AgentSwitchboard authoritative for consumer product behavior.
 
 ## Required intake loop
 
@@ -26,9 +33,9 @@ This contract was factored from the AxTask shared queue implementation at donor 
 5. Execute through every safe, authorized continuation boundary available to the current agent.
 6. Update the ledger before stopping with strongest proof, exact gate, and first executable next action.
 
-## Status vocabulary
+## Portable status vocabulary
 
-Consumers must support these statuses with these semantics:
+This local profile mirrors BlacksmithGuild portable v1 statuses with these semantics:
 
 - `READY`: unclaimed and executable now.
 - `CLAIMED`: one identified writer/session is actively executing the item.
@@ -43,9 +50,9 @@ Consumers must support these statuses with these semantics:
 
 A `CLAIMED` item must name a real writer or session. Sentinel owner values such as `unclaimed`, `none`, `unknown`, `tbd`, or `n/a` are not ownership evidence.
 
-## Required task fields
+## Portable required task fields
 
-Every task block must contain exactly one non-blank value for each of:
+Every task block must contain exactly one non-blank value for each portable field:
 
 - `Status`
 - `Priority` (`P0` through `P3`)
@@ -82,7 +89,7 @@ Agents should consume the compact frontier instead of repeatedly rereading the f
 
 The frontier returns the highest-priority actionable task by default and derives either `EXECUTE` or `DECOMPOSE`. `-All` is for coordination views. For `EXECUTE`, the agent should claim the task and make a tracked mutation or record an exact blocker in the same session. For `DECOMPOSE`, the agent should create bounded child items before further parent-level analysis. This is the anti-rumination boundary: once the route and first action are known, continued free-form analysis is not progress.
 
-This execution profile is an AgentSwitchboard-local strengthening of v1. Consumer repositories may adopt it explicitly, but portable v1 compatibility does not require them to do so.
+This execution profile is an AgentSwitchboard-local strengthening. It is **not** required for `RepoLedgerInteroperability.v1` compatibility and must not be propagated to another repository merely because that repository adopts the portable contract.
 
 ## Proof and terminal-state rules
 
@@ -112,20 +119,19 @@ For continuation states, `Next action` must be a concrete executable progression
 - Before writing the ledger, re-read the latest revision and preserve concurrent task blocks.
 - Never delete, rewrite, renumber, or mark another active item complete merely to simplify a merge.
 - A collision is recorded as `BLOCKED` with the conflicting branch, PR, owner, or task named.
-- Stale references must fail validation or be repaired before the ledger can be treated as current evidence.
+- Portable compatibility pins must use exact full commits and fail closed on `main`, `HEAD`, branches, tags, or short SHAs.
+- The portable pin changes only when BlacksmithGuild's portable contract genuinely changes; BlacksmithGuild validator/docs/registry/CI maintenance does not force consumer repinning.
 
 ## Consumer compatibility contract
 
-A v1 consumer must provide:
+A portable v1 consumer must provide its own repository-local ledger, deterministic validator, positive/negative tests or equivalent fixtures, CI and/or an existing opt-in hook path, and adoption metadata that pins the BlacksmithGuild portable contract and AxTask donor provenance.
 
-1. one tracked repository-local ledger;
-2. one local deterministic validator owned by the consumer;
-3. positive and negative contract tests or equivalent fixtures;
-4. CI and/or an existing opt-in hook path that runs the local validator;
-5. one adoption manifest containing the canonical contract ID/version, canonical source paths, donor provenance, proof ceiling, and forbidden-copy boundary.
+Consumers must not fetch or execute validators from BlacksmithGuild or AgentSwitchboard at validation time. The portable contract is shared; execution remains repository-local.
 
-Consumers must not fetch or execute validators from AgentSwitchboard at validation time. The portable contract is shared; execution remains repository-local.
+AgentSwitchboard's local profile, `Work class`, and compact frontier are reference-only for other repositories unless they explicitly choose to adopt those features as their own local extension. Such adoption does not move portable authority out of BlacksmithGuild.
 
 ## Proof ceiling
 
-This contract and its deterministic validators can prove ledger structure, status semantics, durable-proof syntax, continuation/terminal-state rules, compatibility metadata, work-class semantics, deterministic frontier routing, and selected local reference existence. They cannot prove that referenced implementation is correct, CI actually passed, a PR merged, a provider changed state, an operator performed a protected action, or a runtime behaved as claimed. Those require their owning evidence surfaces.
+The BlacksmithGuild portable contract plus this repository's deterministic validators can prove portable compatibility metadata, ledger structure, status semantics, durable-proof syntax, continuation/terminal-state rules, AgentSwitchboard `Work class` semantics, deterministic frontier routing, and selected local reference existence.
+
+They cannot prove that referenced implementation is correct, CI actually passed, a PR merged, a provider changed state, an operator performed a protected action, or a runtime behaved as claimed. Those require their owning evidence surfaces.
