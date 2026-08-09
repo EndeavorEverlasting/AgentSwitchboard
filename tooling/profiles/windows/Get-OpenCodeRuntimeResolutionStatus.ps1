@@ -135,10 +135,10 @@ if ($OutputRoot) {
     $lines = [System.Collections.Generic.List[string]]::new()
     [void]$lines.Add('# OpenCode Runtime Resolution Report')
     [void]$lines.Add('')
-    [void]$lines.Add("- Repository harness status: `$status`")
-    [void]$lines.Add("- Missing tracked components: `$($missing.Count)`")
-    [void]$lines.Add("- Parent observation requested: `$([bool]$ObserveCurrentProcess)`")
-    if ($observation) { [void]$lines.Add("- Parent classification: `$($observation.parentClassification)`") }
+    [void]$lines.Add("- Repository harness status: $status")
+    [void]$lines.Add("- Missing tracked components: $($missing.Count)")
+    [void]$lines.Add("- Parent observation requested: $([bool]$ObserveCurrentProcess)")
+    if ($observation) { [void]$lines.Add("- Parent classification: $($observation.parentClassification)") }
     [void]$lines.Add('')
     [void]$lines.Add('## Working')
     [void]$lines.Add('Tracked runtime-resolution contracts can classify native Windows, declared WSL, and native-shadowed-by-WSL-shim evidence.')
