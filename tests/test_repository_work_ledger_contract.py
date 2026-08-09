@@ -26,13 +26,14 @@ localAuthority: AGENTS.md
 Continuation states are not stopping states.
 PR opened is not completion.
 DONE is strict.
+Work class is required by the AgentSwitchboard local execution profile.
 Canonical terminal action: none; no safe actionable work remains
 '''
 
 
 def task(**overrides):
     values = {
-        'Status': 'READY', 'Priority': 'P1', 'Owner': 'unclaimed',
+        'Status': 'READY', 'Priority': 'P1', 'Work class': 'BOUNDED', 'Owner': 'unclaimed',
         'Branch / PR': 'none', 'Scope': 'bounded test scope',
         'Forbidden': 'production mutation', 'Dependencies': 'none',
         'References': '`AGENTS.md`', 'Acceptance gate': 'observable proof exists',
@@ -50,6 +51,7 @@ class RepositoryWorkLedgerContractTests(unittest.TestCase):
         result = run_validator()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('[repository-work-ledger] PASS', result.stdout)
+        self.assertIn('local-profile=bounded-frontier', result.stdout)
 
     def run_temp(self, content):
         with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False, dir=ROOT, encoding='utf-8') as handle:
@@ -109,6 +111,31 @@ class RepositoryWorkLedgerContractTests(unittest.TestCase):
     def test_continuation_accepts_concrete_action_verb(self):
         result = self.run_temp(task(Status='VERIFY', Owner='agent-session', **{'Next action': 'run the owning validator and record its artifact receipt'}))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_work_class_is_required(self):
+        content = task().replace('- **Work class:** BOUNDED\n', '')
+        result = self.run_temp(content)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("missing field 'Work class'", result.stderr)
+
+    def test_invalid_work_class_is_rejected(self):
+        result = self.run_temp(task(**{'Work class': 'EPIC'}))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("invalid Work class 'EPIC'", result.stderr)
+
+    def test_unbounded_ready_requires_bounded_decomposition(self):
+        result = self.run_temp(task(**{'Work class': 'UNBOUNDED', 'Next action': 'inspect the repository until the route becomes clear'}))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('UNBOUNDED READY requires a next action that creates bounded child work', result.stderr)
+
+    def test_unbounded_ready_accepts_bounded_decomposition(self):
+        result = self.run_temp(task(**{'Work class': 'UNBOUNDED', 'Next action': 'decompose this parent into bounded child ASQ items with acceptance gates'}))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_unbounded_cannot_be_claimed_as_monolithic_implementation(self):
+        result = self.run_temp(task(Status='CLAIMED', Owner='agent-session', **{'Work class': 'UNBOUNDED', 'Next action': 'execute the parent implementation'}))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('UNBOUNDED tasks may only use READY, BLOCKED, OPERATOR, or DONE', result.stderr)
 
     def test_policy_cannot_remove_v1_required_field(self):
         policy = json.loads(POLICY.read_text(encoding='utf-8'))
