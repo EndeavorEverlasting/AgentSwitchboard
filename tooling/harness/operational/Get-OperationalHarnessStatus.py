@@ -36,17 +36,28 @@ def git(*args: str) -> tuple[int, str]:
 def select_route(task: str, registry: dict) -> tuple[str, str | None]:
     lowered = task.lower()
     specialized = None
-    # Specific runtime/domain owners must win before the broad environment route.
-    special_rules = (
-        (("pi harness", "opinion fusion", "autovalidate"), ".ai/skills/pi-fusion-orchestration/SKILL.md"),
-        (("launch mode", "open-or-activate", "new instance", "new-instance"), ".ai/skills/windows-profile-launch-mode-validation/SKILL.md"),
-        (("runtime proof", "end to end", "end-to-end", "visible runtime"), ".ai/skills/end-to-end-runtime-validation/SKILL.md"),
-        (("android", "termux", "ssh", "tmux", "wsl", "linux", "windows", "environment", "remote host"), ".ai/skills/environment-capability-routing/SKILL.md"),
-    )
-    for needles, route in special_rules:
-        if any(needle in lowered for needle in needles):
-            specialized = route
+
+    # Registry-owned deterministic routes run first. This allows a specialized
+    # harness to make its routing condition executable rather than documentary.
+    for item in registry.get("specializedRouting", []):
+        needles = tuple(str(needle).lower() for needle in item.get("routingNeedles", []))
+        if needles and any(needle in lowered for needle in needles):
+            specialized = item.get("skill")
             break
+
+    # Compatibility rules preserve existing domain routing while older entries
+    # are migrated to explicit registry-owned routingNeedles.
+    if specialized is None:
+        special_rules = (
+            (("pi harness", "opinion fusion", "autovalidate"), ".ai/skills/pi-fusion-orchestration/SKILL.md"),
+            (("launch mode", "open-or-activate", "new instance", "new-instance"), ".ai/skills/windows-profile-launch-mode-validation/SKILL.md"),
+            (("runtime proof", "end to end", "end-to-end", "visible runtime"), ".ai/skills/end-to-end-runtime-validation/SKILL.md"),
+            (("android", "termux", "ssh", "tmux", "wsl", "linux", "windows", "environment", "remote host"), ".ai/skills/environment-capability-routing/SKILL.md"),
+        )
+        for needles, route in special_rules:
+            if any(needle in lowered for needle in needles):
+                specialized = route
+                break
 
     registered = {item["workflowId"]: item for item in registry.get("workflows", [])}
     # Lifecycle precedence is explicit, but trigger text comes from the registry.

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "harnessId": "agentswitchboard.execution-actor-routing.v1",
+  "title": "AgentSwitchboard execution actor routing harness",
+  "purpose": "Bind an explicitly requested execution actor before repository mutation and prove afterward that the same actor actually performed the operation.",
+  "actors": ["chatgpt", "agentswitchboard", "operator", "auto"],
+  "entrypoints": {
+    "codebaseMap": "tooling/harness/operational/execution-actor-routing/codebase-map.json",
+    "workflow": "tooling/harness/operational/execution-actor-routing/workflows/bind-execute-verify.workflow.json",
+    "artifactRegistry": "tooling/harness/operational/execution-actor-routing/artifact-registry.json",
+    "runner": "tooling/harness/operational/execution-actor-routing/Invoke-ExecutionActorRouting.py",
+    "schema": "tooling/harness/operational/execution-actor-routing/schemas/execution-actor-binding.schema.json",
+    "skill": ".ai/skills/execution-actor-routing/SKILL.md",
+    "operatorGuide": "docs/harness/execution-actor-routing.md",
+    "validator": "scripts/Test-ExecutionActorRoutingHarness.ps1",
+    "portableValidator": "tests/test_execution_actor_routing_harness.py",
+    "preCommitHook": "tooling/harness/operational/execution-actor-routing/hooks/Invoke-ExecutionActorRoutingPreCommit.ps1",
+    "prePushHook": "tooling/harness/operational/execution-actor-routing/hooks/Invoke-ExecutionActorRoutingPrePush.ps1"
+  },
+  "rules": {
+    "explicitActorIsHardGate": true,
+    "silentSubstitutionAllowed": false,
+    "autoRequiresReason": true,
+    "actualActorMustMatchSelectedActor": true,
+    "bindingDigestRequiredForVerification": true,
+    "evidenceRequiredForVerifiedCompletion": true,
+    "actorAliasesAllowed": false,
+    "generatedEvidenceTracked": false,
+    "implicitHooksAllowed": false
+  },
+  "safety": {
+    "networkRequired": false,
+    "productMutationAllowed": false,
+    "governanceMutationAllowed": false,
+    "destructiveGitAllowed": false,
+    "proofCeiling": "Execution-actor selection, binding, pinned binding-digest continuity, and identity evidence only. It does not provide hostile-host tamper resistance or prove correctness, authorization, mergeability, deployment result, or acceptance of the underlying operation."
+  }
+}

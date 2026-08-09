@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "execution-actor-bind-execute-verify",
+  "trigger": ["user explicitly names ChatGPT as the actor", "user explicitly names AgentSwitchboard as the actor", "user explicitly names the operator as the actor", "a repository mutation can be performed by more than one actor and actor identity affects proof"],
+  "steps": [
+    {"id": "classify-request", "action": "Resolve requestedActor from the current task. Explicit user wording outranks convenience. Use auto only when no actor is specified.", "gate": "requestedActor is chatgpt, agentswitchboard, operator, or auto"},
+    {"id": "bind-selected-actor", "action": "Run the actor-routing bind command before the mutation. For an explicit actor, selectedActor must equal requestedActor. Auto requires a recorded selection reason. Preserve the emitted BINDING_SHA256 outside the mutable binding file.", "gate": "execution-actor-binding.json status is actor-bound and original binding SHA-256 is preserved"},
+    {"id": "execute-through-selected-actor", "action": "Perform the operation through the selected actor only. Do not substitute another execution path because it is faster or already available.", "gate": "operation returns actor-owned evidence or a concrete failure"},
+    {"id": "verify-actual-actor", "action": "Run the verify command with actualActor, the actor-owned evidence reference, and the preserved --expected-binding-sha256. Verification validates the complete binding and rejects a changed digest.", "gate": "execution-actor-receipt.json status is actor-verified, selectedActor equals actualActor, and bindingSha256 equals the preserved original digest"},
+    {"id": "continue-or-handoff", "action": "Continue the owning workflow only after actor verification. If the selected actor cannot execute, preserve the binding and name the blocker; do not complete the task through another actor without a new explicit selection.", "gate": "no silent actor substitution"}
+  ],
+  "failureRecovery": {
+    "mismatch": "Fail closed, preserve the binding/receipt/report, do not claim the requested actor performed the operation.",
+    "bindingDigestMismatch": "Fail closed without producing an actor-verified receipt. Re-bind from the authoritative task instead of trusting the changed local binding.",
+    "selectedActorUnavailable": "Record blocker and dependency. A different actor requires a new explicit task decision or auto re-resolution when auto was originally selected.",
+    "missingEvidence": "Do not claim actor-verified completion."
+  },
+  "proofCeiling": "Actor-routing and pinned binding-digest continuity only; no hostile-host tamper resistance or underlying-operation proof."
+}
