@@ -12,11 +12,17 @@ $docPath = Join-Path $repoRoot 'docs/governance/repository-work-ledger-contract.
 
 $errors = [System.Collections.Generic.List[string]]::new()
 function Add-Error([string]$Message) { $errors.Add($Message) }
+function Write-ValidationErrors {
+    param([System.Collections.Generic.List[string]]$Messages)
+    foreach ($message in $Messages) {
+        [Console]::Error.WriteLine($message)
+    }
+}
 
 foreach ($path in @($ledger, $policyPath, $adoptionPath, $docPath)) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { Add-Error "missing required path: $path" }
 }
-if ($errors.Count) { $errors | ForEach-Object { Write-Error $_ }; exit 1 }
+if ($errors.Count) { Write-ValidationErrors -Messages $errors; exit 1 }
 
 $policy = Get-Content -LiteralPath $policyPath -Raw | ConvertFrom-Json
 $adoption = Get-Content -LiteralPath $adoptionPath -Raw | ConvertFrom-Json
@@ -92,7 +98,7 @@ for ($i = 0; $i -lt $matches.Count; $i++) {
 
 if ($errors.Count) {
     Write-Host "[repository-work-ledger] FAIL ($($errors.Count))"
-    $errors | ForEach-Object { Write-Error $_ }
+    Write-ValidationErrors -Messages $errors
     exit 1
 }
 Write-Host "[repository-work-ledger] PASS $LedgerPath ($($matches.Count) tasks) contract=$($policy.contractId)@$($policy.contractVersion)"
