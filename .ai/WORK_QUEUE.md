@@ -15,7 +15,7 @@ Canonical terminal action: none; no safe actionable work remains
 - **Status:** MERGE
 - **Priority:** P1
 - **Owner:** chatgpt-cross-repo-ledger-20260809
-- **Branch / PR:** chore/work-ledger-post-merge-state-20260809 / follow-up PR pending
+- **Branch / PR:** chore/work-ledger-post-merge-state-20260809 / #106
 - **Scope:** factor the portable AxTask queue insight into AgentSwitchboard as canonical family contract, create AgentSwitchboard local ledger/validator/CI, and provide a bounded triage consumer adoption
 - **Forbidden:** changing AxTask domain behavior; copying AxTask recovery/deployment tasks; product feature changes; implicit AgentSwitchboard hook installation; claiming runtime proof from ledger metadata
 - **Dependencies:** AgentSwitchboard PR #105 merged as `62acecf4a590ecadf4a0b1ad1410e659b4e1b650`; triage PR #160 merged as `189be37114ef2eb11015b0d962eb23e5d12f1ccc`
@@ -23,5 +23,5 @@ Canonical terminal action: none; no safe actionable work remains
 - **Acceptance gate:** portable contract is canonical on AgentSwitchboard main; triage consumer is canonical on triage main and pins the AgentSwitchboard merge commit; both implementations passed their repository-owned contract and harness checks; final AgentSwitchboard ledger state is merged to main
 - **Gate:** none
 - **Last proof:** merge:62acecf4a590ecadf4a0b1ad1410e659b4e1b650 established the canonical AgentSwitchboard contract; workflow:31331594284 passed its exact-head ledger contract; merge:189be37114ef2eb11015b0d962eb23e5d12f1ccc established the triage consumer; workflows 31331837078, 31331837062, and 31331837072 passed the final triage PR head before merge
-- **Next action:** merge the one-file AgentSwitchboard ledger-state follow-up after its repository work ledger contract and repository-family harness checks pass
-- **Updated:** 2026-08-09T19:33:00Z
+- **Next action:** merge PR #106 at its exact green head; after merge, update ASQ-001 to DONE only if no additional safe actionable work remains
+- **Updated:** 2026-08-09T19:34:00Z
