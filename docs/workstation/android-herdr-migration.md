@@ -68,7 +68,7 @@ Herdr offers agent-aware panes, persistent sessions, tmux-style prefix behavior,
 
 ## Safety rule
 
-**Do not uninstall tmux** or rewrite the canonical Android launcher while this harness is experimental. Do not run bare Herdr daemon auto-launch from the bounded server probe. Do not mutate Android phantom-process or battery policy to manufacture a PASS.
+Do **not** uninstall tmux or rewrite the canonical Android launcher while this harness is experimental. Do not run bare Herdr daemon auto-launch from the bounded server probe. Do not mutate Android phantom-process or battery policy to manufacture a PASS.
 
 ## Phone readiness command
 
