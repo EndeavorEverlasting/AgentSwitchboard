@@ -71,6 +71,14 @@ class FirstMateWindowsWslBridgeTests(unittest.TestCase):
         self.assertNotIn("'bash', '-lc', $Command", runtime)
         self.assertIn("'bash', '-lc', $normalizedCommand", runtime)
 
+    def test_bridge_accepts_empty_native_streams_before_inspection(self):
+        self.assertIn("[AllowNull()][AllowEmptyString()][string]$Text", self.bridge)
+        diagnostic = self.bridge[self.bridge.index("function Add-WslDiagnostic") : self.bridge.index("if (-not (Test-Path -LiteralPath $ManifestPath))")]
+        self.assertIn("[AllowEmptyString()][string]$Text", diagnostic)
+        self.assertIn("Normalize-WslText -Text ''", self.bridge)
+        self.assertIn("-Stage 'empty-stream-contract'", self.bridge)
+        self.assertIn("Empty native WSL stream contract failed", self.bridge)
+
     def test_bridge_verifies_same_exact_head_inside_wsl(self):
         self.assertIn("git rev-parse HEAD", self.bridge)
         self.assertIn("standalone clone did not resolve the expected AgentSwitchboard HEAD", self.bridge)
@@ -119,6 +127,8 @@ class FirstMateWindowsWslBridgeTests(unittest.TestCase):
         self.assertIn("bash+git", traps)
         self.assertIn("CRLF", traps)
         self.assertIn("normalize", traps.lower())
+        self.assertIn("empty stdout/stderr", traps)
+        self.assertIn("AllowEmptyString", traps)
 
 
 if __name__ == "__main__":

@@ -38,7 +38,7 @@ function Assert-LastExit {
 }
 
 function Normalize-WslText {
-    param([AllowNull()][string]$Text)
+    param([AllowNull()][AllowEmptyString()][string]$Text)
     if ($null -eq $Text) {
         return ''
     }
@@ -195,7 +195,7 @@ function Add-WslDiagnostic {
     param(
         [Parameter(Mandatory = $true)][string]$Path,
         [Parameter(Mandatory = $true)][string]$Stage,
-        [Parameter(Mandatory = $true)][string]$Text
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text
     )
     if ([string]::IsNullOrWhiteSpace($Text)) {
         return
@@ -235,6 +235,16 @@ if ($actualHead -ne $ExpectedHead.ToLowerInvariant()) {
 }
 
 if ($ContractOnly) {
+    try {
+        [void](Normalize-WslText -Text '')
+        Add-WslDiagnostic `
+            -Path (Join-Path ([System.IO.Path]::GetTempPath()) 'agentswitchboard-firstmate-empty-stream-contract-unused.txt') `
+            -Stage 'empty-stream-contract' `
+            -Text ''
+    }
+    catch {
+        throw "Empty native WSL stream contract failed: $($_.Exception.Message)"
+    }
     Write-Host '[PASS] FIRSTMATE_WINDOWS_WSL_BRIDGE_CONTRACT'
     Write-Host "HEAD=$actualHead"
     exit 0
@@ -286,6 +296,7 @@ Set-Content -LiteralPath $WslDiagnosticsPath -Value @(
     "WSL_WORKSPACE=$wslWorkspace"
     'NOTE=The WSL distribution is explicitly selected after a bash+git capability probe; the implicit default is never trusted.'
     'NOTE=Windows paths cross into WSL only through WSLENV /p translation; WSL stdout and stderr remain separate.'
+    'NOTE=Empty native stdout/stderr is valid and accepted by the bridge normalization and diagnostic helpers.'
     'NOTE=PowerShell-originated WSL command payloads are normalized to LF before bash -lc execution.'
     'NOTE=The Linux runtime uses a WSL-owned standalone clone, never the Windows linked-worktree .git indirection.'
 )

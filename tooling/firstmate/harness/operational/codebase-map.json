@@ -84,6 +84,7 @@
     "Do not hardcode /mnt/c for Windows-to-WSL transport; the WSL automount root is configurable.",
     "Do not trust the implicit WSL default distribution for runtime execution. Enumerate installed distros, skip utility distros by default, require bash+git capability, and invoke the selected distro explicitly.",
     "PowerShell here-strings can carry CRLF into bash -lc when Git materializes a script with Windows line endings. Normalize every WSL command payload from CRLF or CR to LF before adding it to ProcessStartInfo.ArgumentList.",
+    "Native process stdout/stderr may legitimately be empty. PowerShell string parameters that receive those streams must declare AllowEmptyString before normalization or diagnostic inspection; otherwise parameter binding fails before the helper body can handle blank text.",
     "A WSL configuration warning on stderr is diagnostic evidence, not machine-readable path or JSON output."
   ]
 }
