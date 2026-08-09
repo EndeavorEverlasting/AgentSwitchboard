@@ -1,0 +1,24 @@
+{
+  "schema": "agentswitchboard.opencode-runtime-resolution-fixture.v1",
+  "caseId": "invalid-shim-shadowing-native",
+  "requestedSurface": "native-windows",
+  "parentResolution": {
+    "resolvedPath": "C:\\Users\\Example\\AppData\\Roaming\\npm\\opencode.ps1",
+    "runtimePlatform": "windows",
+    "wrapperKind": "native-package-shim"
+  },
+  "effectiveLaunchResolution": {
+    "resolvedPath": "C:\\Users\\Example\\AppData\\Local\\AgentSwitchboard\\bin\\opencode.cmd",
+    "runtimePlatform": "windows-wrapper",
+    "wrapperKind": "agentswitchboard-wsl-shim",
+    "targetPath": "/home/example/.opencode/bin/opencode",
+    "targetPlatform": "wsl-ubuntu"
+  },
+  "stateResolution": {
+    "commandPath": "C:\\Users\\Example\\AppData\\Roaming\\npm\\opencode.cmd",
+    "integration": "native"
+  },
+  "processPathCaptured": true,
+  "expectedClassification": "shim-shadowing-native",
+  "expectedPass": false
+}

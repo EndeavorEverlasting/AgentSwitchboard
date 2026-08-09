@@ -1,0 +1,26 @@
+{
+  "schema": "agentswitchboard.opencode-runtime-resolution-composition.v1",
+  "graphId": "agentswitchboard.opencode-runtime-resolution-harness.v1",
+  "nodes": [
+    {"id": "trigger.opencode-resolution-divergence", "kind": "trigger", "path": ".ai/skills/opencode-runtime-resolution/SKILL.md"},
+    {"id": "skill.opencode-runtime-resolution", "kind": "skill", "path": ".ai/skills/opencode-runtime-resolution/SKILL.md"},
+    {"id": "registry.opencode-runtime-resolution", "kind": "registry", "path": "tooling/profiles/windows/harness/opencode-runtime-resolution/runtime-resolution.registry.json"},
+    {"id": "workflow.opencode-runtime-intake", "kind": "workflow", "path": "tooling/profiles/windows/harness/opencode-runtime-resolution/workflows/runtime-resolution-intake.workflow.json"},
+    {"id": "workflow.opencode-path-collision", "kind": "workflow", "path": "tooling/profiles/windows/harness/opencode-runtime-resolution/workflows/path-collision-diagnosis.workflow.json"},
+    {"id": "validator.opencode-runtime-resolution", "kind": "validator", "path": "scripts/Test-OpenCodeRuntimeResolutionHarness.ps1"},
+    {"id": "artifact.opencode-runtime-classification", "kind": "artifact", "path": "tooling/profiles/windows/harness/opencode-runtime-resolution/artifact-registry.json"},
+    {"id": "report.opencode-runtime-operator", "kind": "report", "path": "tooling/profiles/windows/harness/opencode-runtime-resolution/operator-report.template.md"},
+    {"id": "handoff.opencode-runtime", "kind": "handoff", "path": "tooling/profiles/windows/harness/opencode-runtime-resolution/artifact-registry.json"}
+  ],
+  "edges": [
+    {"id": "edge.trigger-skill", "from": "trigger.opencode-resolution-divergence", "to": "skill.opencode-runtime-resolution"},
+    {"id": "edge.skill-registry", "from": "skill.opencode-runtime-resolution", "to": "registry.opencode-runtime-resolution"},
+    {"id": "edge.skill-intake", "from": "skill.opencode-runtime-resolution", "to": "workflow.opencode-runtime-intake"},
+    {"id": "edge.intake-collision", "from": "workflow.opencode-runtime-intake", "to": "workflow.opencode-path-collision"},
+    {"id": "edge.registry-validator", "from": "registry.opencode-runtime-resolution", "to": "validator.opencode-runtime-resolution"},
+    {"id": "edge.collision-classification", "from": "workflow.opencode-path-collision", "to": "artifact.opencode-runtime-classification"},
+    {"id": "edge.classification-report", "from": "artifact.opencode-runtime-classification", "to": "report.opencode-runtime-operator"},
+    {"id": "edge.report-handoff", "from": "report.opencode-runtime-operator", "to": "handoff.opencode-runtime"}
+  ],
+  "proofCeiling": "Registered harness routing topology only; no live OpenCode child-process execution is proven."
+}

@@ -1,0 +1,98 @@
+{
+  "schema": "agentswitchboard.opencode-runtime-resolution-codebase-map.v1",
+  "harnessId": "agentswitchboard.opencode-runtime-resolution-harness.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "purpose": "Map the tracked surfaces needed to distinguish native Windows OpenCode, the AgentSwitchboard Windows shim, and the WSL Ubuntu OpenCode runtime without mutating workstation state.",
+  "sourceAuthority": {
+    "nativeFleetSetup": "tooling/gnhf/Install-AgentSwitchboardGnhf.ps1",
+    "technicianReadiness": "tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1",
+    "openCodeLauncher": "tooling/gnhf/Start-AgentSwitchboardOpenCode.ps1",
+    "gnhfLauncher": "tooling/gnhf/Start-GnhfSprint.ps1",
+    "wslRepair": "tooling/profiles/windows/technician-live-cert/stages/Repair-Technician-OpenCode.ps1",
+    "setupBundle": "tooling/gnhf/Setup-AgentSwitchboard.ps1"
+  },
+  "entrypoints": {
+    "registry": "tooling/profiles/windows/harness/opencode-runtime-resolution/runtime-resolution.registry.json",
+    "artifactRegistry": "tooling/profiles/windows/harness/opencode-runtime-resolution/artifact-registry.json",
+    "compositionGraph": "tooling/profiles/windows/harness/opencode-runtime-resolution/composition.graph.json",
+    "intakeWorkflow": "tooling/profiles/windows/harness/opencode-runtime-resolution/workflows/runtime-resolution-intake.workflow.json",
+    "collisionWorkflow": "tooling/profiles/windows/harness/opencode-runtime-resolution/workflows/path-collision-diagnosis.workflow.json",
+    "schema": "tooling/profiles/windows/harness/opencode-runtime-resolution/schemas/opencode-runtime-resolution.schema.json",
+    "skill": ".ai/skills/opencode-runtime-resolution/SKILL.md",
+    "status": "tooling/profiles/windows/Get-OpenCodeRuntimeResolutionStatus.ps1",
+    "validator": "scripts/Test-OpenCodeRuntimeResolutionHarness.ps1",
+    "pythonContracts": "tests/test_opencode_runtime_resolution_harness.py",
+    "hook": "tooling/profiles/windows/hooks/Invoke-OpenCodeRuntimeResolutionPreCommit.ps1",
+    "operatorGuide": "docs/harness/opencode-runtime-resolution-harness.md",
+    "operatorReportTemplate": "tooling/profiles/windows/harness/opencode-runtime-resolution/operator-report.template.md"
+  },
+  "knownRuntimeSurfaces": [
+    {
+      "surfaceId": "native-windows-npm",
+      "expectedPath": "%APPDATA%\\npm\\opencode.cmd or %APPDATA%\\npm\\opencode.ps1",
+      "platform": "windows",
+      "role": "native OpenCode installation used by native GNHF integration"
+    },
+    {
+      "surfaceId": "agentswitchboard-windows-shim",
+      "expectedPath": "%LOCALAPPDATA%\\AgentSwitchboard\\bin\\opencode.cmd",
+      "platform": "windows-wrapper",
+      "role": "AgentSwitchboard command shim that delegates to WSL Ubuntu"
+    },
+    {
+      "surfaceId": "wsl-ubuntu-opencode",
+      "expectedPath": "$HOME/.opencode/bin/opencode",
+      "platform": "wsl-ubuntu",
+      "role": "Linux OpenCode installation repaired by the technician live-cert path"
+    },
+    {
+      "surfaceId": "fleet-state",
+      "expectedPath": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\state.json",
+      "platform": "windows-state",
+      "role": "recorded adapter command identity; evidence only until compared with effective child resolution"
+    }
+  ],
+  "commands": [
+    {
+      "name": "Repository-only status",
+      "command": "pwsh -NoLogo -NoProfile -File tooling/profiles/windows/Get-OpenCodeRuntimeResolutionStatus.ps1",
+      "effect": "read-only",
+      "proof": "tracked harness readiness only"
+    },
+    {
+      "name": "Observed current-process status",
+      "command": "pwsh -NoLogo -NoProfile -File tooling/profiles/windows/Get-OpenCodeRuntimeResolutionStatus.ps1 -ObserveCurrentProcess",
+      "effect": "read-only local observation",
+      "proof": "current PowerShell resolution and known local-path observations only"
+    },
+    {
+      "name": "Completeness validator",
+      "command": "pwsh -NoLogo -NoProfile -File scripts/Test-OpenCodeRuntimeResolutionHarness.ps1",
+      "effect": "read-only",
+      "proof": "tracked component, registry, workflow, fixture, and catalog semantics"
+    },
+    {
+      "name": "Dependency-free semantic contracts",
+      "command": "python tests/test_opencode_runtime_resolution_harness.py",
+      "effect": "read-only",
+      "proof": "fixture classification semantics"
+    },
+    {
+      "name": "Diff hygiene",
+      "command": "git diff --check",
+      "effect": "read-only",
+      "proof": "patch whitespace hygiene"
+    }
+  ],
+  "knownTraps": [
+    "opencode debug config proves resolved configuration, not which executable a later child process spawns.",
+    "Get-Command opencode in the parent PowerShell proves only that parent process resolution.",
+    "AgentSwitchboard can expose both a native Windows npm OpenCode and a Windows opencode.cmd shim that delegates to WSL Ubuntu.",
+    "The technician readiness path prepends the AgentSwitchboard shim root to the user PATH and rebuilds process PATH with AgentSwitchboard, agy, Hermes, and npm locations.",
+    "A healthy WSL OpenCode installation does not prove a native Windows OpenCode launch is using the intended executable.",
+    "A state.json commandPath is declared adapter state, not effective child-process proof.",
+    "uv or uv_spawn failures must be attributed to the exact failing process and environment rather than inferred from an unrelated parent-shell uv command.",
+    "Harness-only diagnosis never edits PATH, removes shims, reinstalls OpenCode, or changes launcher product code."
+  ],
+  "proofCeiling": "Tracked runtime-resolution contracts, deterministic synthetic collision classification, read-only repository/current-process observation, and exact repair routing only. It does not prove the failing OpenCode child process identity until that exact launch chain is observed end to end."
+}
