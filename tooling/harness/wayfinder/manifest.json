@@ -19,7 +19,8 @@
     "artifactRegistry": "tooling/harness/wayfinder/artifact-registry.json",
     "validatorRegistry": "tooling/harness/wayfinder/validator-registry.json",
     "optionalPreCommitHook": "tooling/harness/wayfinder/hooks/Invoke-WayfinderPreCommit.ps1",
-    "operatorReportTemplate": "tooling/harness/wayfinder/templates/operator-report.template.md"
+    "operatorReportTemplate": "tooling/harness/wayfinder/templates/operator-report.template.md",
+    "operatorStatusReport": "tooling/harness/wayfinder/reports/harness-status.md"
   },
   "skills": {
     "orchestrator": ".ai/skills/wayfinder/SKILL.md",
