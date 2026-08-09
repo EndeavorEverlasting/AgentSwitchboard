@@ -1,0 +1,48 @@
+{
+  "schema": "agentswitchboard.opencode-runtime-resolution-workflow.v1",
+  "workflowId": "opencode-runtime-resolution-intake",
+  "trigger": "OpenCode works or resolves one way in a parent shell but fails, spawns, or resolves differently when launched through AgentSwitchboard, GNHF, a shim, WSL, or another child-process boundary.",
+  "inputs": [
+    "repository branch and exact commit",
+    "requested runtime surface: native-windows, wsl-ubuntu, or unknown",
+    "exact operator or agent launch command",
+    "parent process OpenCode resolution",
+    "effective launch-process OpenCode resolution when available",
+    "process PATH snapshot for each observed boundary",
+    "AgentSwitchboard opencode.cmd shim content when present",
+    "GnhfFleet state agents.opencode commandPath and integration when present",
+    "bounded child stdout, stderr, exit code, and failing stage identity"
+  ],
+  "steps": [
+    {"stepId": "freeze-request", "action": "Record the requested runtime surface and exact launch chain before interpreting any command output."},
+    {"stepId": "read-registry", "action": "Load runtime-resolution.registry.json and classify every discovered opencode command as native Windows, AgentSwitchboard WSL shim, WSL Ubuntu, or unknown."},
+    {"stepId": "capture-parent", "action": "Capture Get-Command opencode -All plus the parent process PATH. Treat this as parent-only evidence."},
+    {"stepId": "capture-shim", "action": "If %LOCALAPPDATA%\\AgentSwitchboard\\bin\\opencode.cmd exists, capture its bounded text and target platform without executing or modifying it."},
+    {"stepId": "capture-state", "action": "If GnhfFleet state.json exists, capture only the OpenCode adapter commandPath, integration, availability, and version fields needed for comparison."},
+    {"stepId": "capture-effective-launch", "action": "When runtime authority and instrumentation exist, capture which OpenCode executable the exact child launch chain resolves before task execution; otherwise mark the boundary unresolved."},
+    {"stepId": "preserve-failure", "action": "Capture bounded stdout, stderr, exit code, and first divergent boundary. Do not replace failing evidence with a parent-shell success probe."},
+    {"stepId": "classify", "action": "Route the collected packet to path-collision-diagnosis.workflow.json."},
+    {"stepId": "report", "action": "Emit the registered untracked classification, English operator report, and final handoff with one exact next action."}
+  ],
+  "failureRules": [
+    "If requested runtime surface is unknown, classification cannot pass.",
+    "If the effective launch identity is missing, do not infer it from opencode debug config, state.json, or a parent Get-Command result.",
+    "If a native-windows request selects the AgentSwitchboard WSL shim, classify fail-closed.",
+    "If child diagnostics are missing after a spawn failure, stop proof promotion at the first unresolved boundary."
+  ],
+  "outputs": [
+    "opencode-runtime-run-context.json",
+    "opencode-runtime-resolution-snapshot.json",
+    "opencode-runtime-classification.json",
+    "opencode-runtime-operator-report.md",
+    "opencode-runtime-final-handoff.json"
+  ],
+  "forbidden": [
+    "editing user or machine PATH",
+    "deleting or rewriting AgentSwitchboard shims",
+    "installing or reinstalling OpenCode, Hermes, uv, Node, or WSL",
+    "modifying launcher/setup product code",
+    "claiming runtime proof from configuration or parent-shell discovery"
+  ],
+  "proofCeiling": "Read-only intake and evidence classification."
+}

@@ -1,0 +1,51 @@
+name: OpenCode runtime resolution harness
+
+on:
+  pull_request:
+    paths:
+      - 'tooling/profiles/windows/harness/opencode-runtime-resolution/**'
+      - 'tooling/profiles/windows/Get-OpenCodeRuntimeResolutionStatus.ps1'
+      - 'tooling/profiles/windows/hooks/Invoke-OpenCodeRuntimeResolutionPreCommit.ps1'
+      - '.ai/skills/opencode-runtime-resolution/**'
+      - 'scripts/Test-OpenCodeRuntimeResolutionHarness.ps1'
+      - 'tests/test_opencode_runtime_resolution_harness.py'
+      - 'docs/harness/opencode-runtime-resolution-harness.md'
+      - '.github/workflows/opencode-runtime-resolution-harness.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tooling/profiles/windows/harness/opencode-runtime-resolution/**'
+      - 'tooling/profiles/windows/Get-OpenCodeRuntimeResolutionStatus.ps1'
+      - 'tooling/profiles/windows/hooks/Invoke-OpenCodeRuntimeResolutionPreCommit.ps1'
+      - '.ai/skills/opencode-runtime-resolution/**'
+      - 'scripts/Test-OpenCodeRuntimeResolutionHarness.ps1'
+      - 'tests/test_opencode_runtime_resolution_harness.py'
+      - 'docs/harness/opencode-runtime-resolution-harness.md'
+      - '.github/workflows/opencode-runtime-resolution-harness.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: OpenCode runtime-resolution completeness
+        shell: pwsh
+        run: ./scripts/Test-OpenCodeRuntimeResolutionHarness.ps1
+      - name: Dependency-free semantic contracts
+        shell: pwsh
+        run: python ./tests/test_opencode_runtime_resolution_harness.py
+      - name: Existing agent documentation contract
+        shell: pwsh
+        run: ./scripts/Test-AgentDocumentationContract.ps1
+      - name: Diff hygiene
+        shell: pwsh
+        run: git diff --check ${{ github.event.pull_request.base.sha || 'HEAD^' }} ${{ github.sha }}

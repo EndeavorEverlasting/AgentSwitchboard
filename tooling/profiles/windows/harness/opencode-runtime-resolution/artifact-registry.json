@@ -1,0 +1,64 @@
+{
+  "schema": "agentswitchboard.opencode-runtime-resolution-artifacts.v1",
+  "registryId": "agentswitchboard.opencode-runtime-resolution-artifacts.v1",
+  "defaultRoot": "%TEMP%/AgentSwitchboard/OpenCodeRuntimeResolution/<run-id>",
+  "tracked": false,
+  "sensitivity": "local-operational",
+  "naming": {
+    "runId": "<UTC timestamp>-<8 hex chars>",
+    "stdout": "<stage-id>.stdout.log",
+    "stderr": "<stage-id>.stderr.log"
+  },
+  "artifacts": [
+    {
+      "artifactId": "opencode-runtime-run-context",
+      "fileName": "opencode-runtime-run-context.json",
+      "artifactType": "run-context",
+      "schema": "tooling/profiles/windows/harness/opencode-runtime-resolution/schemas/opencode-runtime-resolution.schema.json",
+      "generateWith": "runtime-resolution-intake.workflow.json",
+      "proofCeiling": "requested runtime surface, exact launch chain declaration, branch, and evidence root only"
+    },
+    {
+      "artifactId": "opencode-runtime-resolution-snapshot",
+      "fileName": "opencode-runtime-resolution-snapshot.json",
+      "artifactType": "resolution-snapshot",
+      "schema": "tooling/profiles/windows/harness/opencode-runtime-resolution/schemas/opencode-runtime-resolution.schema.json",
+      "generateWith": "tooling/profiles/windows/Get-OpenCodeRuntimeResolutionStatus.ps1 -ObserveCurrentProcess",
+      "proofCeiling": "one read-only parent/current-process resolution observation only"
+    },
+    {
+      "artifactId": "opencode-runtime-classification",
+      "fileName": "opencode-runtime-classification.json",
+      "artifactType": "classification",
+      "schema": "tooling/profiles/windows/harness/opencode-runtime-resolution/schemas/opencode-runtime-resolution.schema.json",
+      "generateWith": "path-collision-diagnosis.workflow.json",
+      "proofCeiling": "one deterministic comparison of supplied parent, effective launch, wrapper, and state evidence"
+    },
+    {
+      "artifactId": "opencode-runtime-operator-report",
+      "fileName": "opencode-runtime-operator-report.md",
+      "artifactType": "operator-report",
+      "schema": null,
+      "generateWith": "tooling/profiles/windows/Get-OpenCodeRuntimeResolutionStatus.ps1 -OutputRoot <outside-repo-path>",
+      "proofCeiling": "English rendering of repository readiness and optional current-process observation"
+    },
+    {
+      "artifactId": "opencode-runtime-final-handoff",
+      "fileName": "opencode-runtime-final-handoff.json",
+      "artifactType": "final-handoff",
+      "schema": "tooling/profiles/windows/harness/opencode-runtime-resolution/schemas/opencode-runtime-resolution.schema.json",
+      "generateWith": "path-collision-diagnosis.workflow.json",
+      "proofCeiling": "compressed continuation record; receiver must re-read current repository and runtime state"
+    }
+  ],
+  "forbiddenContent": [
+    "credentials",
+    "tokens",
+    "raw prompts",
+    "customer data",
+    "private hostnames",
+    "full unredacted environment dumps",
+    "unredacted process command lines containing secrets"
+  ],
+  "proofCeiling": "Artifact identity, location, generation ownership, sensitivity, and proof ceilings only."
+}
