@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentswitchboard.command-envelope.v1",
+  "title": "AgentSwitchboard profile-boundary command envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "hostContext", "targetProfile", "executionSurface", "command"],
+  "properties": {
+    "schema": {"const": "agentswitchboard.command-envelope.v1"},
+    "hostContext": {"enum": ["windows-laptop", "android-phone"]},
+    "targetProfile": {"enum": ["windows", "linux", "android"]},
+    "executionSurface": {"enum": ["windows-powershell", "windows-cmd", "wsl-linux", "android-termux"]},
+    "command": {"type": "string", "minLength": 1},
+    "bridgeProof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "probe", "evidence"],
+      "properties": {
+        "status": {"enum": ["passed", "failed", "not-run"]},
+        "probe": {"type": "string"},
+        "evidence": {"type": "string"}
+      }
+    }
+  }
+}

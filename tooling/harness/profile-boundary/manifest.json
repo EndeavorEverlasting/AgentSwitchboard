@@ -1,0 +1,43 @@
+{
+  "schema": "agentswitchboard.profile-boundary-harness.v1",
+  "harnessId": "agentswitchboard.profile-boundary-operational-harness.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "status": "contract-ready-runtime-proof-separate",
+  "authority": {
+    "governance": "AGENTS.md",
+    "deviceProfileRegistry": ".ai/harness/device-profile-registry.json",
+    "deviceProfileContract": "docs/governance/device-profile-launcher-contract.md"
+  },
+  "mission": "Prevent device, shell, and execution-surface conflation before an operator command is handed off.",
+  "components": {
+    "frontDoor": "PROFILE_BOUNDARY_HARNESS.md",
+    "codebaseMap": "tooling/harness/profile-boundary/codebase-map.json",
+    "profileRegistry": "tooling/harness/profile-boundary/profile-boundary.registry.json",
+    "artifactRegistry": "tooling/harness/profile-boundary/artifact-registry.json",
+    "commandEnvelopeSchema": "tooling/harness/profile-boundary/command-envelope.schema.json",
+    "workflowSpecs": "tooling/harness/profile-boundary/workflow-specs.json",
+    "commandValidator": "tooling/harness/profile-boundary/Validate-CommandEnvelope.py",
+    "fixtures": "tooling/harness/profile-boundary/fixtures/command-envelopes.json",
+    "hook": "tooling/harness/profile-boundary/hooks/Invoke-ProfileBoundaryPreCommit.py",
+    "skill": ".ai/skills/profile-boundary-routing/SKILL.md",
+    "operatorReport": "tooling/harness/profile-boundary/operator-report.template.md",
+    "operatorGuide": "docs/harness/profile-boundary-operational-harness.md",
+    "portableTest": "tests/test_profile_boundary_harness.py",
+    "completenessValidator": "scripts/Test-ProfileBoundaryHarness.py",
+    "windowsEntrypoint": "Test-ProfileBoundaryHarness.cmd",
+    "ci": ".github/workflows/profile-boundary-harness.yml"
+  },
+  "collisionBoundary": {
+    "intentionallyUnchanged": [
+      "AGENTS.md",
+      "HARNESS.md",
+      "SKILLS.md",
+      "TRIGGERS.md",
+      "tooling/profiles/android/harness/herdr/**",
+      "tooling/profiles/android/harness/termux/**",
+      "tooling/profiles/windows/**"
+    ],
+    "reason": "Active pull requests own shared governance, Wayfinder catalogs, Android Herdr, and Windows machine-profile surfaces. This harness composes with them without stealing their files."
+  },
+  "proofCeiling": "Tracked contracts, deterministic command-envelope rejection, cross-platform Python validation, Windows-native harness entrypoint shape, and hosted CI. It does not prove WSL is healthy, /bin/bash exists on an operator laptop, Termux is running on a phone, Herdr runs on Android, a provider responds, or an operator command completed."
+}

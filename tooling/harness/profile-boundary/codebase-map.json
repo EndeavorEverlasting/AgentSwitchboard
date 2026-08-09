@@ -1,0 +1,57 @@
+{
+  "schema": "agentswitchboard.profile-boundary-codebase-map.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "purpose": "Map the smallest repository surface needed to distinguish laptop, WSL, and Android/Termux command handoffs.",
+  "authority": [
+    "AGENTS.md",
+    ".ai/harness/device-profile-registry.json",
+    "docs/governance/device-profile-launcher-contract.md"
+  ],
+  "relatedImplementedSurfaces": {
+    "windows": [
+      "tooling/profiles/windows/",
+      "Get-AgentSwitchboard-MachineProfile.cmd"
+    ],
+    "android": [
+      "Start-AgentSwitchboard-Android.sh",
+      "tooling/profiles/android/AgentSwitchboard-Android.sh",
+      "tooling/profiles/android/harness/termux/"
+    ],
+    "sharedOperationalHarness": [
+      "HARNESS.md",
+      "tooling/harness/operational/"
+    ]
+  },
+  "entrypoints": {
+    "windowsValidation": "Test-ProfileBoundaryHarness.cmd",
+    "portableCompleteness": "python scripts/Test-ProfileBoundaryHarness.py",
+    "portableContracts": "python tests/test_profile_boundary_harness.py",
+    "commandEnvelopeValidation": "python tooling/harness/profile-boundary/Validate-CommandEnvelope.py --envelope <path>",
+    "existingDeviceProfileContracts": "python tests/test_device_profile_launcher_contract.py",
+    "existingAndroidHarnessContracts": "python tests/test_android_termux_harness.py"
+  },
+  "directories": {
+    "harness": "tooling/harness/profile-boundary/",
+    "skill": ".ai/skills/profile-boundary-routing/",
+    "operatorDocs": "docs/harness/",
+    "portableTests": "tests/",
+    "completeness": "scripts/",
+    "hostedValidation": ".github/workflows/"
+  },
+  "knownTraps": [
+    "A PowerShell prompt is not evidence that WSL or /bin/bash exists.",
+    "bash -lc entered from Windows PowerShell is ambiguous unless the command is explicitly routed through a proven WSL bridge.",
+    "Android/Termux commands such as agentswitchboard-android, pkg install, $PREFIX paths, or tooling/profiles/android entrypoints must not be handed to a Windows laptop shell.",
+    "A cloned repository on one device does not prove that another device has the same tools, shell, worktree, or runtime.",
+    "The same tmux session name on different hosts is not the same tmux server or workspace.",
+    "WSL configuration warnings are evidence to repair the WSL boundary, not permission to reinterpret an Android command as laptop work.",
+    "Open PRs may own adjacent profile systems; do not duplicate or silently overwrite them."
+  ],
+  "validationOrder": [
+    "python scripts/Test-ProfileBoundaryHarness.py",
+    "python tests/test_profile_boundary_harness.py",
+    "python tests/test_device_profile_launcher_contract.py",
+    "python tests/test_android_termux_harness.py",
+    "git diff --check"
+  ]
+}

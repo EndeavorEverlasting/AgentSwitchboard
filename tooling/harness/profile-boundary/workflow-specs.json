@@ -1,0 +1,53 @@
+{
+  "schema": "agentswitchboard.profile-boundary-workflows.v1",
+  "workflows": [
+    {
+      "id": "task-intake",
+      "trigger": "Any task that names, implies, or crosses a device, shell, terminal, WSL, Termux, phone, laptop, or profile boundary.",
+      "steps": [
+        "Read AGENTS.md, .ai/harness/device-profile-registry.json, and this harness manifest.",
+        "Name the physical host context explicitly: windows-laptop or android-phone.",
+        "Name the execution surface explicitly: windows-powershell, windows-cmd, wsl-linux, or android-termux.",
+        "Name the target profile explicitly: windows, linux, or android.",
+        "Reject remembered device assumptions and commands copied from another profile unless revalidated."
+      ],
+      "output": "A command envelope ready for deterministic validation."
+    },
+    {
+      "id": "validate-command-handoff",
+      "trigger": "Before presenting an executable operator command that touches a profile-specific surface.",
+      "steps": [
+        "Materialize agentswitchboard.command-envelope.v1.",
+        "Run Validate-CommandEnvelope.py.",
+        "If windows-laptop targets wsl-linux, require bridgeProof.status=passed and a probe naming wsl.exe plus /bin/bash.",
+        "If any Android-only marker appears, require android-phone plus android-termux.",
+        "Block a bare bash -lc command on windows-powershell.",
+        "Hand off the command only on PASS; otherwise hand off the validator's nextAction instead."
+      ],
+      "output": "PASS report or BLOCKED report with stable reason codes."
+    },
+    {
+      "id": "failure-recovery",
+      "trigger": "A shell, bridge, or profile command fails before the intended repository validator runs.",
+      "steps": [
+        "Preserve the first failure text and identify the actual outer shell.",
+        "Do not reinterpret a WSL failure as Android failure or an Android command as laptop work.",
+        "If WSL reports configuration warnings or /bin/bash is missing, classify the WSL bridge as unproved and stop downstream Linux commands.",
+        "If the command was intended for Android, move the handoff back to android-phone instead of repairing laptop WSL as a substitute.",
+        "Regenerate and revalidate a command envelope after the boundary is corrected."
+      ],
+      "output": "Corrected profile/surface classification and a newly validated next action."
+    },
+    {
+      "id": "handoff",
+      "trigger": "Validation is complete or a real external dependency remains.",
+      "steps": [
+        "Record host context, execution surface, target profile, validation status, reason codes, and proof ceiling.",
+        "Record the exact next action and its owner/dependency.",
+        "Do not claim runtime proof from a static PASS.",
+        "Keep local operator evidence untracked and omit secrets."
+      ],
+      "output": "Human-readable operator report plus machine-readable profile-boundary report."
+    }
+  ]
+}

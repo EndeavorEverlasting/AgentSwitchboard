@@ -1,0 +1,38 @@
+{
+  "schema": "agentswitchboard.profile-boundary-artifacts.v1",
+  "artifactRoot": {
+    "windows": "%TEMP%\\AgentSwitchboard\\profile-boundary\\<run-id>\\",
+    "posix": "${TMPDIR:-/tmp}/agentswitchboard/profile-boundary/<run-id>/"
+  },
+  "tracked": false,
+  "artifacts": [
+    {
+      "artifactId": "command-envelope",
+      "fileName": "command-envelope.json",
+      "generator": "operator or orchestrator",
+      "purpose": "Declare host context, target profile, execution surface, command digest source, and bridge proof before handoff."
+    },
+    {
+      "artifactId": "profile-boundary-report",
+      "fileName": "profile-boundary-report.json",
+      "generator": "tooling/harness/profile-boundary/Validate-CommandEnvelope.py",
+      "purpose": "Record PASS/BLOCKED classification, reason codes, command SHA-256, and next action without echoing raw command text."
+    },
+    {
+      "artifactId": "operator-report",
+      "fileName": "profile-boundary-operator-report.md",
+      "generator": "operator workflow",
+      "purpose": "Human-readable summary of host/surface identity, blockers, validation, proof ceiling, and next action."
+    }
+  ],
+  "naming": "Use one run directory per handoff attempt; never overwrite evidence from a different device or execution surface.",
+  "forbiddenContent": [
+    "passwords",
+    "OAuth or device codes",
+    "access or refresh tokens",
+    "private SSH keys",
+    "credential-file contents",
+    "raw command text when it may contain secrets"
+  ],
+  "proofCeiling": "Artifacts prove declared routing state and deterministic classification only; they do not prove the target shell, runtime, or command actually executed unless separate runtime evidence says so."
+}
