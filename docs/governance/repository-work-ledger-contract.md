@@ -65,6 +65,25 @@ Duplicate field names are invalid; a later field may never overwrite or reinterp
 
 Each repository owns its task-prefix namespace. AgentSwitchboard uses `ASQ-*`; AxTask keeps `AXQ-*`; consumer repositories must choose an unambiguous local prefix rather than copying `AXQ-*`. Every task-like heading using the local prefix must match the repository's canonical heading format; malformed prefixed headings must fail validation rather than disappear from the parser.
 
+## AgentSwitchboard local execution profile
+
+AgentSwitchboard strengthens portable v1 with one additional required local field: `Work class`.
+
+- `BOUNDED`: the implementation route is clear enough to finish or materially advance in one bounded sprint. Its derived route is `EXECUTE`.
+- `UNBOUNDED`: the parent is too large or too ambiguous to implement safely as one task. Its derived route is `DECOMPOSE` while `READY`.
+
+The route is derived from `Work class` plus `Status`; it is not stored as a second mutable field. `BLOCKED`, `OPERATOR`, and `DONE` derive `BLOCKED`, `OPERATOR`, and `TERMINAL` respectively.
+
+An `UNBOUNDED` task may only be `READY`, `BLOCKED`, `OPERATOR`, or `DONE`. It must never enter `CLAIMED`, `VERIFY`, `REVIEW`, or `MERGE` as a monolithic implementation item. A `READY` unbounded task must have a next action beginning with `decompose`, `split`, or `create` and explicitly produce bounded child work.
+
+Agents should consume the compact frontier instead of repeatedly rereading the full ledger:
+
+`pwsh -NoLogo -NoProfile -File scripts/Get-RepositoryWorkLedgerFrontier.ps1 -Json`
+
+The frontier returns the highest-priority actionable task by default and derives either `EXECUTE` or `DECOMPOSE`. `-All` is for coordination views. For `EXECUTE`, the agent should claim the task and make a tracked mutation or record an exact blocker in the same session. For `DECOMPOSE`, the agent should create bounded child items before further parent-level analysis. This is the anti-rumination boundary: once the route and first action are known, continued free-form analysis is not progress.
+
+This execution profile is an AgentSwitchboard-local strengthening of v1. Consumer repositories may adopt it explicitly, but portable v1 compatibility does not require them to do so.
+
 ## Proof and terminal-state rules
 
 A `DONE` item must include at least one durable evidence token in `Last proof`:
@@ -84,7 +103,7 @@ For `DONE`:
 
 For `BLOCKED` or `OPERATOR`, `Gate` must name the exact blocking condition.
 
-For continuation states, `Next action` must be a concrete executable progression. It must begin with an action such as run, execute, create, update, repair, resolve, merge, fetch, inspect, open, verify, validate, test, commit, push, rebase, retarget, compare, generate, record, obtain, install, apply, build, launch, deploy, restore, export, import, review, reconcile, invoke, edit, write, move, copy, sync, or check. Status-only phrases such as `PR opened`, `CI green`, `status unchanged`, `wait`, or `merge later` are invalid next actions.
+For continuation states, `Next action` must be a concrete executable progression. It must begin with an action such as run, execute, create, decompose, split, update, repair, resolve, merge, fetch, inspect, open, verify, validate, test, commit, push, rebase, retarget, compare, generate, record, obtain, install, apply, build, launch, deploy, restore, export, import, review, reconcile, invoke, edit, write, move, copy, sync, or check. Status-only phrases such as `PR opened`, `CI green`, `status unchanged`, `wait`, or `merge later` are invalid next actions.
 
 ## Collision and freshness rules
 
@@ -109,4 +128,4 @@ Consumers must not fetch or execute validators from AgentSwitchboard at validati
 
 ## Proof ceiling
 
-This contract and its deterministic validators can prove ledger structure, status semantics, durable-proof syntax, continuation/terminal-state rules, compatibility metadata, and selected local reference existence. They cannot prove that referenced implementation is correct, CI actually passed, a PR merged, a provider changed state, an operator performed a protected action, or a runtime behaved as claimed. Those require their owning evidence surfaces.
+This contract and its deterministic validators can prove ledger structure, status semantics, durable-proof syntax, continuation/terminal-state rules, compatibility metadata, work-class semantics, deterministic frontier routing, and selected local reference existence. They cannot prove that referenced implementation is correct, CI actually passed, a PR merged, a provider changed state, an operator performed a protected action, or a runtime behaved as claimed. Those require their owning evidence surfaces.
