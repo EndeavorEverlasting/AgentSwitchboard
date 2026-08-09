@@ -12,13 +12,15 @@
     "selector": "tooling/firstmate/harness/operational/Select-FirstMateWorkflow.py",
     "report_builder": "tooling/firstmate/harness/operational/Build-FirstMateHarnessReport.py",
     "windows_wsl_bridge": "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1",
+    "windows_wsl_physical_floor": "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1",
     "skill": ".ai/skills/firstmate-crew-orchestration/SKILL.md",
     "operator_guide": "docs/harness/firstmate-operational-harness.md",
     "operator_status": "docs/reports/firstmate-operational-harness-status.md",
     "pre_commit_hook": "tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPreCommit.sh",
     "pre_push_hook": "tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPrePush.sh",
     "completeness_test": "tests/test_firstmate_operational_harness.py",
-    "windows_wsl_bridge_test": "tests/test_firstmate_windows_wsl_bridge.py"
+    "windows_wsl_bridge_test": "tests/test_firstmate_windows_wsl_bridge.py",
+    "windows_wsl_prerequisite_test": "tests/test_firstmate_windows_wsl_prerequisite_gate.py"
   },
   "roles": {
     "agentswitchboard": "control-plane",
@@ -34,6 +36,7 @@
     "android": "separate-device-profile-lane",
     "native_windows_firstmate": "unverified",
     "windows_to_wsl_bridge": "tracked; explicit-distro LF-normalized empty-stream-safe standalone-clone physical reproof required",
+    "windows_physical_floor_entrypoint": "prerequisite-gated wrapper; required tools and GitHub auth are checked before WSL clone/test work",
     "wsl_distribution_policy": "enumerate installed distributions; skip known utility distros unless explicitly requested; require bash+git capability; invoke all runtime commands with --distribution",
     "wsl_command_transport": "normalize PowerShell command payloads from CRLF or CR to LF before bash -lc",
     "native_stream_policy": "empty stdout/stderr is valid native process output; normalization and diagnostic helpers must accept empty strings before inspection",
@@ -49,7 +52,8 @@
     "Do not run Linux Git inside a Windows-created linked worktree; create a WSL-owned standalone exact-head clone from the clean committed source repository.",
     "Do not execute the runtime through an implicit WSL default distribution; select and record an explicit bash+git-capable distribution first.",
     "Do not pass raw Windows/PowerShell multiline command text to bash -lc; normalize CRLF and CR to LF at the bridge boundary.",
-    "Do not reject empty native stdout/stderr at PowerShell parameter binding; stream helpers must accept empty strings and decide semantics inside the function body."
+    "Do not reject empty native stdout/stderr at PowerShell parameter binding; stream helpers must accept empty strings and decide semantics inside the function body.",
+    "Do not install WSL dependencies from the First Mate harness; the physical-floor prerequisite gate reports an exact operator NEXT_ACTION and exits before clone/test work."
   ],
-  "proof_ceiling": "Tracked harness structure, deterministic route selection, report generation, hosted validators, explicit WSL distribution selection, LF-normalized PowerShell-to-bash command transport, empty-native-stream-safe bridge helpers, and Windows-to-WSL standalone-clone bridge contract. Physical-laptop bridge execution, live First Mate crew dispatch, and Herdr runtime remain unproved."
+  "proof_ceiling": "Tracked harness structure, deterministic route selection, report generation, hosted validators, explicit WSL distribution selection, prerequisite-gated WSL tool/auth readback, LF-normalized PowerShell-to-bash command transport, empty-native-stream-safe bridge helpers, and Windows-to-WSL standalone-clone bridge contract. Physical-laptop bridge execution, live First Mate crew dispatch, and Herdr runtime remain unproved."
 }

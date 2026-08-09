@@ -8,12 +8,14 @@ on:
       - 'tests/test_firstmate_integration_contract.py'
       - 'tests/test_firstmate_operational_harness.py'
       - 'tests/test_firstmate_windows_wsl_bridge.py'
+      - 'tests/test_firstmate_windows_wsl_prerequisite_gate.py'
       - 'docs/harness/firstmate-integration.md'
       - 'docs/harness/firstmate-operational-harness.md'
       - 'docs/reports/firstmate-operational-harness-status.md'
       - '.ai/skills/firstmate-crew-orchestration/**'
       - 'Test-AgentSwitchboard-FirstMate-Harness.sh'
       - 'Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1'
+      - 'Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1'
       - '.github/workflows/firstmate-interop.yml'
   pull_request:
     paths:
@@ -22,12 +24,14 @@ on:
       - 'tests/test_firstmate_integration_contract.py'
       - 'tests/test_firstmate_operational_harness.py'
       - 'tests/test_firstmate_windows_wsl_bridge.py'
+      - 'tests/test_firstmate_windows_wsl_prerequisite_gate.py'
       - 'docs/harness/firstmate-integration.md'
       - 'docs/harness/firstmate-operational-harness.md'
       - 'docs/reports/firstmate-operational-harness-status.md'
       - '.ai/skills/firstmate-crew-orchestration/**'
       - 'Test-AgentSwitchboard-FirstMate-Harness.sh'
       - 'Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1'
+      - 'Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1'
       - '.github/workflows/firstmate-interop.yml'
 
 permissions:
@@ -55,6 +59,7 @@ jobs:
           python tests/test_firstmate_integration_contract.py
           python tests/test_firstmate_operational_harness.py
           python tests/test_firstmate_windows_wsl_bridge.py
+          python tests/test_firstmate_windows_wsl_prerequisite_gate.py
       - name: Validate shell surfaces
         run: |
           bash -n Test-AgentSwitchboard-FirstMate-Harness.sh
@@ -86,8 +91,10 @@ jobs:
         shell: pwsh
         run: |
           python tests/test_firstmate_windows_wsl_bridge.py
+          python tests/test_firstmate_windows_wsl_prerequisite_gate.py
           $head = (git rev-parse HEAD).Trim()
           pwsh -NoLogo -NoProfile -File .\Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead $head -ContractOnly
+          pwsh -NoLogo -NoProfile -File .\Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1 -ExpectedHead $head -WslDistribution Ubuntu -ContractOnly
       - name: Validate branch diff hygiene
         shell: pwsh
         run: |

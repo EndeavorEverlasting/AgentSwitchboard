@@ -17,6 +17,11 @@
       "scope": "PowerShell-to-WSL transport boundary, separate stdout/stderr, no wslpath dependency, tracked artifact resolution"
     },
     {
+      "id": "firstmate-windows-wsl-prerequisite-gate",
+      "command": "python3 tests/test_firstmate_windows_wsl_prerequisite_gate.py && pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1 -ExpectedHead <exact-sha> -WslDistribution Ubuntu -ContractOnly",
+      "scope": "physical-laptop WSL tool/auth prerequisite classification, unique evidence, exact operator repair action, and lower-bridge exit propagation"
+    },
+    {
       "id": "firstmate-shell-parse",
       "command": "bash -n tooling/firstmate/Test-FirstMateInterop.sh && bash -n Test-AgentSwitchboard-FirstMate-Harness.sh && bash -n tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPreCommit.sh && bash -n tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPrePush.sh",
       "scope": "operator shell entrypoints and optional hook scripts"
