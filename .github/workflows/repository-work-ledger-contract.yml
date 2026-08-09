@@ -7,7 +7,9 @@ on:
       - ".ai/harness/repository-work-ledger*.json"
       - "docs/governance/repository-work-ledger-contract.md"
       - "scripts/Test-RepositoryWorkLedgerContract.ps1"
+      - "scripts/Get-RepositoryWorkLedgerFrontier.ps1"
       - "tests/test_repository_work_ledger_contract.py"
+      - "tests/test_repository_work_ledger_frontier.py"
       - ".github/workflows/repository-work-ledger-contract.yml"
   workflow_dispatch:
 
@@ -25,18 +27,28 @@ jobs:
         with:
           fetch-depth: 0
           show-progress: false
-      - name: Parse validator
+      - name: Parse PowerShell surfaces
         shell: pwsh
         run: |
-          $tokens = $null
-          $errors = $null
-          [void][System.Management.Automation.Language.Parser]::ParseFile('scripts/Test-RepositoryWorkLedgerContract.ps1', [ref]$tokens, [ref]$errors)
-          if ($errors.Count) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
+          foreach ($path in @('scripts/Test-RepositoryWorkLedgerContract.ps1', 'scripts/Get-RepositoryWorkLedgerFrontier.ps1')) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
+            if ($errors.Count) { $errors | ForEach-Object { Write-Error "$path :: $($_.Message)" }; exit 1 }
+          }
       - name: Validate repository work ledger
         shell: pwsh
         run: ./scripts/Test-RepositoryWorkLedgerContract.ps1
+      - name: Validate compact frontier
+        shell: pwsh
+        run: |
+          $payload = ./scripts/Get-RepositoryWorkLedgerFrontier.ps1 -Json | ConvertFrom-Json
+          if ($payload.schema -ne 'agentswitchboard.repository-work-ledger.frontier.v1') { throw 'Unexpected frontier schema.' }
+          if ($payload.status -notin @('ready', 'empty')) { throw 'Unexpected frontier status.' }
       - name: Run positive and negative contract tests
-        run: python tests/test_repository_work_ledger_contract.py
+        run: |
+          python tests/test_repository_work_ledger_contract.py
+          python tests/test_repository_work_ledger_frontier.py
       - name: Verify clean checkout
         shell: bash
         run: |

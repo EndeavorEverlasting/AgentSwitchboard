@@ -15,6 +15,7 @@ $ledger = Resolve-RepoPath $LedgerPath
 $policyPathResolved = Resolve-RepoPath $PolicyPath
 $adoptionPath = Join-Path $repoRoot '.ai/harness/repository-work-ledger-adoption.json'
 $docPath = Join-Path $repoRoot 'docs/governance/repository-work-ledger-contract.md'
+$frontierPath = Join-Path $repoRoot 'scripts/Get-RepositoryWorkLedgerFrontier.ps1'
 
 $errors = [System.Collections.Generic.List[string]]::new()
 function Add-Error([string]$Message) { $errors.Add($Message) }
@@ -31,7 +32,7 @@ function Test-ExactSequence {
     }
 }
 
-foreach ($path in @($ledger, $policyPathResolved, $adoptionPath, $docPath)) {
+foreach ($path in @($ledger, $policyPathResolved, $adoptionPath, $docPath, $frontierPath)) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { Add-Error "missing required path: $path" }
 }
 if ($errors.Count) { Write-ValidationErrors -Messages $errors; exit 1 }
@@ -46,6 +47,9 @@ $expectedStatuses = @('READY', 'CLAIMED', 'VERIFY', 'REVIEW', 'MERGE', 'OPERATOR
 $expectedContinuation = @('READY', 'CLAIMED', 'VERIFY', 'REVIEW', 'MERGE')
 $expectedPriorities = @('P0', 'P1', 'P2', 'P3')
 $expectedRequiredFields = @('Status', 'Priority', 'Owner', 'Branch / PR', 'Scope', 'Forbidden', 'Dependencies', 'References', 'Acceptance gate', 'Gate', 'Last proof', 'Next action', 'Updated')
+$expectedLocalRequiredFields = @('Work class')
+$expectedWorkClasses = @('BOUNDED', 'UNBOUNDED')
+$expectedUnboundedStatuses = @('READY', 'BLOCKED', 'OPERATOR', 'DONE')
 $expectedTerminalNextAction = 'none; no safe actionable work remains'
 
 if ($policy.contractId -ne $expectedContractId) { Add-Error 'unexpected contractId' }
@@ -56,15 +60,22 @@ Test-ExactSequence -Actual @($policy.statusVocabulary) -Expected $expectedStatus
 Test-ExactSequence -Actual @($policy.continuationStatuses) -Expected $expectedContinuation -Label 'continuationStatuses'
 Test-ExactSequence -Actual @($policy.priorities) -Expected $expectedPriorities -Label 'priorities'
 Test-ExactSequence -Actual @($policy.requiredFields) -Expected $expectedRequiredFields -Label 'requiredFields'
+Test-ExactSequence -Actual @($policy.localExecutionProfile.requiredFields) -Expected $expectedLocalRequiredFields -Label 'localExecutionProfile.requiredFields'
+Test-ExactSequence -Actual @($policy.localExecutionProfile.workClasses) -Expected $expectedWorkClasses -Label 'localExecutionProfile.workClasses'
+Test-ExactSequence -Actual @($policy.localExecutionProfile.unboundedAllowedStatuses) -Expected $expectedUnboundedStatuses -Label 'localExecutionProfile.unboundedAllowedStatuses'
+if ($policy.localExecutionProfile.derivedRoutes.boundedContinuation -ne 'EXECUTE') { Add-Error 'localExecutionProfile bounded route must be EXECUTE' }
+if ($policy.localExecutionProfile.derivedRoutes.unboundedReady -ne 'DECOMPOSE') { Add-Error 'localExecutionProfile unbounded route must be DECOMPOSE' }
 if ($policy.terminalNextAction -ne $expectedTerminalNextAction) { Add-Error 'terminalNextAction does not match immutable v1 contract' }
 if ($adoption.contract.id -ne $expectedContractId -or $adoption.contract.version -ne $expectedContractVersion) { Add-Error 'adoption contract does not match immutable v1 contract' }
 if ($adoption.donor.pinnedCommit -ne $policy.donor.pinnedCommit) { Add-Error 'adoption donor pin does not match policy' }
+if ($adoption.local.frontier -ne 'scripts/Get-RepositoryWorkLedgerFrontier.ps1') { Add-Error 'adoption must register the local frontier reader' }
 
 foreach ($phrase in @(
     'contractRef: agentswitchboard.repository-work-ledger.v1@1.0.0',
     'Continuation states are not stopping states.',
     'PR opened is not completion.',
     'DONE is strict.',
+    'Work class',
     $expectedTerminalNextAction
 )) {
     if (-not $source.Contains($phrase)) { Add-Error "missing ledger contract phrase: $phrase" }
@@ -84,10 +95,10 @@ $seen = @{}
 $allowedStatuses = $expectedStatuses
 $continuation = $expectedContinuation
 $allowedPriorities = $expectedPriorities
-$requiredFields = $expectedRequiredFields
+$requiredFields = @($expectedRequiredFields + $expectedLocalRequiredFields)
 $unassignedOwners = @('unclaimed', 'none', 'unknown', 'tbd', 'n/a')
 $nonActions = @($expectedTerminalNextAction, 'none', 'tbd', 'status unchanged', 'pr opened', 'tests passed', 'ci green', 'wait', 'wait for review', 'review later', 'merge later', 'test later')
-$actionPattern = '^(?:(?:after|once)\b.+?,\s*)?(?:operator\s+)?(?:run|execute|create|update|repair|resolve|merge|fetch|inspect|open|verify|validate|test|commit|push|rebase|retarget|compare|generate|record|obtain|install|apply|build|launch|deploy|restore|export|import|review|reconcile|invoke|edit|write|move|copy|sync|check)\b'
+$actionPattern = '^(?:(?:after|once)\b.+?,\s*)?(?:operator\s+)?(?:run|execute|create|decompose|split|update|repair|resolve|merge|fetch|inspect|open|verify|validate|test|commit|push|rebase|retarget|compare|generate|record|obtain|install|apply|build|launch|deploy|restore|export|import|review|reconcile|invoke|edit|write|move|copy|sync|check)\b'
 
 for ($i = 0; $i -lt $matches.Count; $i++) {
     $match = $matches[$i]
@@ -106,15 +117,31 @@ for ($i = 0; $i -lt $matches.Count; $i++) {
         if (-not $fields.ContainsKey($field)) { Add-Error "$id missing field '$field'"; continue }
         if ([string]::IsNullOrWhiteSpace($fields[$field])) { Add-Error "$id required field '$field' must not be blank" }
     }
+
     $status = $fields['Status']
     $priority = $fields['Priority']
     $owner = $fields['Owner']
+    $workClass = $fields['Work class']
     $gate = $fields['Gate']
     $proof = $fields['Last proof']
     $next = $fields['Next action']
+
     if ($status -and $status -notin $allowedStatuses) { Add-Error "$id invalid status '$status'" }
     if ($priority -and $priority -notin $allowedPriorities) { Add-Error "$id invalid priority '$priority'" }
+    if ($workClass -and $workClass -notin $expectedWorkClasses) { Add-Error "$id invalid Work class '$workClass'" }
     if ($status -eq 'CLAIMED' -and ([string]::IsNullOrWhiteSpace($owner) -or $owner.ToLowerInvariant() -in $unassignedOwners)) { Add-Error "$id CLAIMED requires a concrete owner" }
+
+    if ($workClass -eq 'UNBOUNDED') {
+        if ($status -and $status -notin $expectedUnboundedStatuses) {
+            Add-Error "$id UNBOUNDED tasks may only use READY, BLOCKED, OPERATOR, or DONE; decompose before implementation continuation"
+        }
+        if ($status -eq 'READY') {
+            if ([string]::IsNullOrWhiteSpace($next) -or $next -notmatch '^(?:decompose|split|create)\b' -or $next -notmatch '\bbounded\b') {
+                Add-Error "$id UNBOUNDED READY requires a next action that creates bounded child work"
+            }
+        }
+    }
+
     if ($status -in $continuation) {
         $normalizedNext = if ($next) { $next.Trim().ToLowerInvariant() } else { '' }
         if ([string]::IsNullOrWhiteSpace($next) -or $normalizedNext -in $nonActions -or $next -notmatch $actionPattern) {
@@ -140,4 +167,4 @@ if ($errors.Count) {
     Write-ValidationErrors -Messages $errors
     exit 1
 }
-Write-Host "[repository-work-ledger] PASS $LedgerPath ($($matches.Count) tasks) contract=$expectedContractId@$expectedContractVersion"
+Write-Host "[repository-work-ledger] PASS $LedgerPath ($($matches.Count) tasks) contract=$expectedContractId@$expectedContractVersion local-profile=bounded-frontier"
