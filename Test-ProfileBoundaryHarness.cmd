@@ -14,7 +14,7 @@ python "%ROOT%tests\test_device_profile_launcher_contract.py"
 if errorlevel 1 exit /b %errorlevel%
 python "%ROOT%tests\test_android_termux_harness.py"
 if errorlevel 1 exit /b %errorlevel%
-git -C "%ROOT%" diff --check
+git -C "%ROOT%." diff --check
 if errorlevel 1 exit /b %errorlevel%
 echo PASS: profile-boundary harness Windows front door
 exit /b 0
