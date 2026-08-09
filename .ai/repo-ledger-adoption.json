@@ -1,0 +1,33 @@
+{
+  "schema": "RepoLedgerAdoption.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "adoptionStatus": "implemented",
+  "contract": {
+    "repository": "EndeavorEverlasting/BlacksmithGuild",
+    "commit": "3751c004fcf928e5d364226a1e08ae445f68b634",
+    "path": ".tbg/workflows/repo-ledger-interoperability.contract.json",
+    "version": "RepoLedgerInteroperability.v1"
+  },
+  "donor": {
+    "repository": "EndeavorEverlasting/AxTask",
+    "commit": "9351c952b057ae4520b1ea0d388e1d8908f4c093",
+    "sourcePaths": [
+      ".ai/README.md",
+      ".ai/WORK_QUEUE.md",
+      ".ai/authority.json",
+      "scripts/ai-harness/validate-work-queue.mjs"
+    ]
+  },
+  "local": {
+    "ledgerPath": ".ai/WORK_QUEUE.md",
+    "validatorPath": "scripts/ai-harness/validate-repo-ledger.py",
+    "taskNamespace": "ASQ",
+    "format": "markdown"
+  },
+  "authority": {
+    "runtimeOwner": "EndeavorEverlasting/AgentSwitchboard",
+    "contractOwner": "EndeavorEverlasting/BlacksmithGuild",
+    "noCircularAuthority": true
+  },
+  "proofCeiling": "repository_harness_only"
+}
