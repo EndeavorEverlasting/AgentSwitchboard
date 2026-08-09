@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0.0",
+  "integration_id": "firstmate-wsl",
+  "upstream": {
+    "repository": "https://github.com/kunchenguid/firstmate",
+    "branch": "main",
+    "verified_commit": "833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409"
+  },
+  "platform_contract": {
+    "upstream_declared_platforms": [
+      "macOS",
+      "Linux"
+    ],
+    "agentswitchboard_target": "WSL/Linux",
+    "wsl_support_claim": "integration inference; upstream README declares Linux but does not explicitly certify WSL",
+    "native_windows": "unverified and out of scope"
+  },
+  "runtime_contract": {
+    "reference_backend": "tmux",
+    "required_tools": [
+      "git",
+      "gh",
+      "tmux",
+      "python3"
+    ],
+    "primary_harness_any_of": [
+      "claude",
+      "grok",
+      "pi",
+      "pi-signed",
+      "codex",
+      "opencode"
+    ]
+  },
+  "first_safe_sprint": {
+    "project_delivery_mode": "local-only",
+    "remote_writes": false,
+    "credential_mutation": false,
+    "dependency_installation": false,
+    "firstmate_repository_mutation": false,
+    "agentswitchboard_shared_registry_mutation": false
+  },
+  "required_upstream_paths": [
+    "AGENTS.md",
+    "README.md",
+    "docs/configuration.md",
+    ".agents/skills/project-management/SKILL.md"
+  ],
+  "proof_ceiling": "Repository contract and read-only WSL compatibility probe only; no live First Mate task dispatch, worker runtime, PR delivery, merge, or native-Windows behavior is proven."
+}
