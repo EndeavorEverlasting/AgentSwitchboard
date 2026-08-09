@@ -43,7 +43,8 @@
   ],
   "entrypoints": {
     "crew_harness": "bash Test-AgentSwitchboard-FirstMate-Harness.sh contract",
-    "windows_wsl_bridge": "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead <exact-sha>",
+    "windows_wsl_bridge": "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1 -ExpectedHead <exact-sha> -WslDistribution Ubuntu",
+    "windows_wsl_lower_bridge": "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead <exact-sha> -WslDistribution <explicit-distro>",
     "firstmate_probe": "bash tooling/firstmate/Test-FirstMateInterop.sh --firstmate <path>",
     "route_selector": "python3 tooling/firstmate/harness/operational/Select-FirstMateWorkflow.py --parallel-writers <n> --firstmate-floor <pass|unproved|fail> --platform <linux-wsl|windows|android|other>",
     "operator_report": "python3 tooling/firstmate/harness/operational/Build-FirstMateHarnessReport.py"
@@ -52,14 +53,16 @@
     "focused_test": [
       "python3 tests/test_firstmate_integration_contract.py",
       "python3 tests/test_firstmate_operational_harness.py",
-      "python3 tests/test_firstmate_windows_wsl_bridge.py"
+      "python3 tests/test_firstmate_windows_wsl_bridge.py",
+      "python3 tests/test_firstmate_windows_wsl_prerequisite_gate.py"
     ],
     "shell_parse": [
       "bash -n Test-AgentSwitchboard-FirstMate-Harness.sh",
       "bash -n tooling/firstmate/Test-FirstMateInterop.sh",
       "bash -n tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPreCommit.sh",
       "bash -n tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPrePush.sh",
-      "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead <exact-sha> -ContractOnly"
+      "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead <exact-sha> -ContractOnly",
+      "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1 -ExpectedHead <exact-sha> -WslDistribution Ubuntu -ContractOnly"
     ],
     "foundation_test": [
       "python3 tests/test_operational_harness.py"
@@ -85,6 +88,8 @@
     "Do not trust the implicit WSL default distribution for runtime execution. Enumerate installed distros, skip utility distros by default, require bash+git capability, and invoke the selected distro explicitly.",
     "PowerShell here-strings can carry CRLF into bash -lc when Git materializes a script with Windows line endings. Normalize every WSL command payload from CRLF or CR to LF before adding it to ProcessStartInfo.ArgumentList.",
     "Native process stdout/stderr may legitimately be empty. PowerShell string parameters that receive those streams must declare AllowEmptyString before normalization or diagnostic inspection; otherwise parameter binding fails before the helper body can handle blank text.",
-    "A WSL configuration warning on stderr is diagnostic evidence, not machine-readable path or JSON output."
+    "A WSL configuration warning on stderr is diagnostic evidence, not machine-readable path or JSON output.",
+    "Do not discover a missing gh, tmux, python3, or GitHub-auth prerequisite after creating the WSL clone and running repository tests; the physical-floor wrapper must classify the prerequisite before clone/test work and emit the exact operator NEXT_ACTION.",
+    "A failed child pwsh invocation does not prevent later separately pasted PowerShell statements from running. Keep the physical success marker inside the prerequisite-gated wrapper and emit it only after the lower bridge returns exit zero."
   ]
 }
