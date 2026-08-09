@@ -28,10 +28,13 @@ def main() -> None:
     assert manifest["currentRuntime"]["multiplexer"] == "tmux"
     assert manifest["candidate"]["termuxAndroid"] == "not-officially-claimed"
     assert manifest["candidate"]["cargoInstallClaim"] == "not-used-until-upstream-documents-it"
+    assert manifest["candidate"]["installationReviewDecision"] == "BLOCKED"
+    assert manifest["candidate"]["installationReviewNextGate"] == "prove-android-runtime-compatibility-or-obtain-explicit-upstream-support"
     assert "linux-aarch64" in manifest["candidate"]["officialStablePlatforms"]
 
     required_gates = {
         "termux-environment-observed",
+        "herdr-installation-method-reviewed",
         "herdr-command-identity-observed",
         "herdr-version-observed",
         "background-server-start-observed",
@@ -79,7 +82,7 @@ def main() -> None:
         "does **not** currently claim Android/Termux support",
         "Do **not** uninstall tmux",
         "bash Test-AgentSwitchboard-Android-Herdr.sh evidence",
-        "same-device evidence",
+        "same-device",
         "Proof ceiling",
     ):
         assert token in guide

@@ -11,33 +11,47 @@
         "render Get-HerdrHarnessStatus.py classification",
         "select reviewed-installation, failure-recovery, validation, or handoff at the first unproved gate"
       ],
-      "outputs": ["selected workflow", "sanitized migration classification", "one exact next command"],
+      "outputs": [
+        "selected workflow",
+        "sanitized migration classification",
+        "one exact next command"
+      ],
       "proofCeiling": "routing from current evidence only; no installation approval or runtime promotion"
     },
     {
       "workflowId": "reviewed-installation",
       "trigger": "KEEP_TMUX_HERDR_NOT_INSTALLED",
       "steps": [
-        "create herdr-install-review artifact with Build-HerdrInstallReview.py --write",
-        "bind review to current official upstream release/commit and install documentation",
-        "record exact artifact/package identity, integrity mechanism, supported platforms and explicit Android/Termux claim",
+        "read the tracked upstream installation source snapshot before building the review",
+        "refresh that snapshot from current official install docs plus release/tag metadata when it is stale or an install might be authorized",
+        "create the source-bound herdr-install-review artifact with Build-HerdrInstallReview.py --write",
+        "require BLOCKED when official upstream does not explicitly establish Android/Termux support and emit no install command",
         "reject undocumented cargo install, curl-pipe-shell proof, automatic device_config/battery mutation and tmux removal",
-        "record APPROVED, REJECTED, BLOCKED or PENDING plus rollback and exact next command"
+        "only a future reviewed source/compatibility update may move the decision from BLOCKED to an executable bounded install gate"
       ],
-      "outputs": ["local source-bound install review", "installation decision", "rollback boundary"],
-      "proofCeiling": "a completed review may approve one bounded install method; it does not install Herdr or prove Android compatibility"
+      "outputs": [
+        "tracked upstream source binding",
+        "local source-bound install review",
+        "installation decision",
+        "rollback boundary"
+      ],
+      "proofCeiling": "the current source-bound review can prove BLOCKED; it does not install Herdr or prove Android compatibility"
     },
     {
       "workflowId": "validate-before-commit",
       "trigger": "tracked Herdr harness change",
       "steps": [
         "parse wrapper, probe and hooks with bash -n",
-        "run existing migration test and harness completeness test",
+        "run migration, source-bound installation-review and harness completeness tests",
         "run PowerShell completeness where available",
         "run existing Android Termux portable floor",
         "run git diff --check and verify generated evidence remains untracked/outside the repository"
       ],
-      "outputs": ["focused validator output", "diff hygiene", "bounded Git state"],
+      "outputs": [
+        "focused validator output",
+        "diff hygiene",
+        "bounded Git state"
+      ],
       "proofCeiling": "tracked harness contracts only; not same-device runtime proof"
     },
     {
@@ -45,13 +59,18 @@
       "trigger": "probe, validator or migration gate failure",
       "steps": [
         "preserve first bounded non-sensitive failure evidence",
-        "missing Herdr => keep tmux and route to reviewed-installation without improvising an installer",
+        "missing Herdr => keep tmux and route to source-bound reviewed-installation without improvising an installer",
+        "blocked source review => keep tmux and route to Android compatibility/upstream-support proof rather than installation",
         "unhealthy binary => repair compatibility before server test",
         "server/detach/agent-state/background/sprint failure => keep tmux and route to separately authorized live-runtime repair",
         "tracked validator failure => repair inside harness scope and rerun the complete focused floor",
         "render operator report with one next command"
       ],
-      "outputs": ["failure classification", "fallback decision", "operator report"],
+      "outputs": [
+        "failure classification",
+        "fallback decision",
+        "operator report"
+      ],
       "proofCeiling": "failure boundary and evidence preservation only"
     },
     {
@@ -60,11 +79,18 @@
       "steps": [
         "run Get-HerdrHarnessStatus.py --write with explicit evidence when known",
         "record repo/branch/head/PR and validator results separately from phone evidence",
+        "state tracked upstream source snapshot and installation-review decision separately from runtime proof",
         "state working, broken/blocked, missing/unproved, proof reached and proof ceiling",
         "provide one exact executable next command that advances the first unproved gate",
         "keep credentials, device codes, private evidence and machine-local junk out of Git/PR"
       ],
-      "outputs": ["status JSON", "status Markdown", "Git/PR evidence", "exact next command"],
+      "outputs": [
+        "status JSON",
+        "status Markdown",
+        "Git/PR evidence",
+        "source-bound install decision",
+        "exact next command"
+      ],
       "proofCeiling": "handoff summarizes evidence; it is not additional installation/runtime/merge/deployment proof"
     }
   ]

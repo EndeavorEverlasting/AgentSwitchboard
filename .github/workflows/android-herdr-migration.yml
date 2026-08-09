@@ -11,6 +11,7 @@ on:
       - 'docs/workstation/android-herdr-migration.md'
       - 'docs/harness/android-herdr-operational-harness.md'
       - 'tests/test_android_herdr_migration.py'
+      - 'tests/test_android_herdr_install_review.py'
       - 'tests/test_android_herdr_harness_completeness.py'
       - 'scripts/Test-AndroidHerdrHarnessCompleteness.ps1'
       - '.github/workflows/android-herdr-migration.yml'
@@ -38,16 +39,19 @@ jobs:
       - name: Herdr migration contracts
         run: |
           python tests/test_android_herdr_migration.py
+          python tests/test_android_herdr_install_review.py
           python tests/test_android_herdr_harness_completeness.py
       - name: Herdr completeness validator
         shell: pwsh
         run: pwsh -NoLogo -NoProfile -File scripts/Test-AndroidHerdrHarnessCompleteness.ps1
-      - name: Status and install-review artifact contracts
+      - name: Status and source-bound install-review contracts
         run: |
           python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --evidence tooling/profiles/android/harness/herdr/fixtures/herdr-not-installed.fixture.env --format json > "$RUNNER_TEMP/herdr-status.json"
           grep -q '"status": "blocked-herdr-not-installed"' "$RUNNER_TEMP/herdr-status.json"
-          python tooling/profiles/android/harness/herdr/Build-HerdrInstallReview.py --output "$RUNNER_TEMP/herdr-install-review.md"
-          grep -q 'Status: PENDING' "$RUNNER_TEMP/herdr-install-review.md"
+          python tooling/profiles/android/harness/herdr/Build-HerdrInstallReview.py --output "$RUNNER_TEMP/herdr-install-review.md" | tee "$RUNNER_TEMP/herdr-install-review.out"
+          grep -q 'Status: BLOCKED' "$RUNNER_TEMP/herdr-install-review.md"
+          grep -q 'DECISION=BLOCKED' "$RUNNER_TEMP/herdr-install-review.out"
+          grep -q 'Exact installation command, only when APPROVED: none' "$RUNNER_TEMP/herdr-install-review.md"
       - name: Existing Android harness floor
         run: |
           python tests/test_android_termux_harness.py

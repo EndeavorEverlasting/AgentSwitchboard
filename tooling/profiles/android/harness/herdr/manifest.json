@@ -5,7 +5,11 @@
   "repository": "EndeavorEverlasting/AgentSwitchboard",
   "profile": "android",
   "environment": "termux",
-  "authorityReadOnly": ["AGENTS.md", "docs/governance/harness-doctrine.md", ".ai/harness/harness-doctrine.policy.json"],
+  "authorityReadOnly": [
+    "AGENTS.md",
+    "docs/governance/harness-doctrine.md",
+    ".ai/harness/harness-doctrine.policy.json"
+  ],
   "parentHarness": "tooling/profiles/android/harness/termux/manifest.json",
   "liveEvidencePolicy": "local-untracked-sanitized",
   "currentRuntime": {
@@ -17,15 +21,23 @@
     "name": "Herdr",
     "upstream": "https://github.com/herdrdev/herdr",
     "officialInstallDocs": "https://herdr.dev/docs/install/",
-    "officialStablePlatforms": ["linux-x86_64", "linux-aarch64", "macos-x86_64", "macos-aarch64"],
+    "officialStablePlatforms": [
+      "linux-x86_64",
+      "linux-aarch64",
+      "macos-x86_64",
+      "macos-aarch64"
+    ],
     "windows": "preview-beta",
     "termuxAndroid": "not-officially-claimed",
-    "cargoInstallClaim": "not-used-until-upstream-documents-it"
+    "cargoInstallClaim": "not-used-until-upstream-documents-it",
+    "installationReviewDecision": "BLOCKED",
+    "installationReviewNextGate": "prove-android-runtime-compatibility-or-obtain-explicit-upstream-support"
   },
   "components": {
     "codebaseMap": "tooling/profiles/android/harness/herdr/codebase-map.json",
     "artifactRegistry": "tooling/profiles/android/harness/herdr/artifact-registry.json",
     "workflowSpecs": "tooling/profiles/android/harness/herdr/workflows/workflow-specs.json",
+    "upstreamInstallationSource": "tooling/profiles/android/harness/herdr/upstream-installation-source.json",
     "probe": "tooling/profiles/android/harness/herdr/Probe-Herdr-Migration.sh",
     "statusReporter": "tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py",
     "installReviewBuilder": "tooling/profiles/android/harness/herdr/Build-HerdrInstallReview.py",
@@ -38,12 +50,14 @@
     "operatorGuide": "docs/workstation/android-herdr-migration.md",
     "harnessGuide": "docs/harness/android-herdr-operational-harness.md",
     "portableTest": "tests/test_android_herdr_migration.py",
+    "installReviewTest": "tests/test_android_herdr_install_review.py",
     "completenessTest": "tests/test_android_herdr_harness_completeness.py",
     "completenessValidator": "scripts/Test-AndroidHerdrHarnessCompleteness.ps1",
     "ci": ".github/workflows/android-herdr-migration.yml"
   },
   "gates": [
     "termux-environment-observed",
+    "herdr-installation-method-reviewed",
     "herdr-command-identity-observed",
     "herdr-version-observed",
     "background-server-start-observed",
@@ -52,7 +66,7 @@
     "android-background-survival-observed",
     "bounded-agent-sprint-observed"
   ],
-  "promotionRule": "Do not replace tmux in the canonical Android runtime until every gate has same-device evidence and the existing Android runtime validators remain green.",
+  "promotionRule": "Do not replace tmux in the canonical Android runtime until the installation method is reviewed, every live runtime gate has same-device evidence, and the existing Android runtime validators remain green.",
   "forbidden": [
     "automatic removal of tmux",
     "automatic Android device_config or battery-policy mutation",
@@ -63,5 +77,5 @@
     "persisting credentials or device codes in evidence",
     "committing raw phone evidence or generated local status/review artifacts"
   ],
-  "proofCeiling": "Repository contracts can prove migration policy, harness structure, deterministic classification, artifact ownership, report generation, validator/hook behavior and CI wiring. They do not prove an installation method is approved, Herdr runs correctly on Android/Termux, or any live promotion gate."
+  "proofCeiling": "Repository contracts can prove migration policy, harness structure, deterministic classification, source-bound installation review, artifact ownership, report generation, validator/hook behavior and CI wiring. They do not prove Herdr runs correctly on Android/Termux or any live promotion gate. The current tracked installation review is BLOCKED because official upstream documentation does not state Android/Termux support."
 }
