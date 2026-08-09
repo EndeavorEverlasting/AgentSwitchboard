@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Deterministic completeness/contract test for the bounded Herdr client-attach harness."""
 from __future__ import annotations
-import json, subprocess, sys, tempfile
+import json, os, subprocess, sys, tempfile
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -42,7 +42,8 @@ def main():
     skill=tracked(manifest["components"]["skill"]).read_text(); docs=tracked(manifest["components"]["documentation"]).read_text()
     for token in ("terminal session observe","BLOCKED_AUTODETECT_DAEMON_RACE","tmux","Proof ceiling"): assert token in docs,token
     assert "bare `herdr`" in skill
-    for shell in (manifest["components"]["preCommit"],manifest["components"]["prePush"]):
-        r=subprocess.run(["bash","-n",shell],cwd=ROOT,text=True,capture_output=True); assert r.returncode==0,r.stderr
+    if os.name != "nt":
+        for shell in (manifest["components"]["preCommit"],manifest["components"]["prePush"]):
+            r=subprocess.run(["bash","-n",shell],cwd=ROOT,text=True,capture_output=True); assert r.returncode==0,r.stderr
     print("PASS: Android Herdr bounded client-attach harness completeness")
 if __name__=="__main__": main()
