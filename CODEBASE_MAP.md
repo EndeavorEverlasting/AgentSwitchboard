@@ -103,6 +103,24 @@ The Windows Profile is WezTerm-backed and contract-only. Its future canonical so
 
 The default mode converges one workspace identity to one visible window. An explicit named new instance requires exactly one additional top-level WezTerm window, a distinct frontend process, and a unique tmux session; repeating that instance ID must activate it. Two windows attached to the same tmux session are duplicate views, not separate instances. This harness does not implement or execute the launcher.
 
+## OpenCode runtime-resolution harness
+
+- `tooling/profiles/windows/harness/opencode-runtime-resolution/codebase-map.json` — focused source-authority map, entrypoints, commands, runtime surfaces, and known traps.
+- `tooling/profiles/windows/harness/opencode-runtime-resolution/runtime-resolution.registry.json` — native Windows npm, AgentSwitchboard WSL shim, WSL Ubuntu, fleet-state, evidence, classification, and repair-boundary contract.
+- `tooling/profiles/windows/harness/opencode-runtime-resolution/composition.graph.json` — trigger, skill, workflows, validator, artifact, report, and handoff route.
+- `tooling/profiles/windows/harness/opencode-runtime-resolution/workflows/` — read-only intake and path-collision diagnosis.
+- `tooling/profiles/windows/harness/opencode-runtime-resolution/artifact-registry.json` — local run context, resolution snapshot, classification, English report, and handoff naming.
+- `tooling/profiles/windows/harness/opencode-runtime-resolution/schemas/opencode-runtime-resolution.schema.json` — run-context, resolution-snapshot, classification, and handoff contract.
+- `tooling/profiles/windows/harness/opencode-runtime-resolution/fixtures/` — native pass, declared WSL pass, WSL-shim shadow failure, targetless-wrapper failure, and fleet-state-drift failure.
+- `.ai/skills/opencode-runtime-resolution/SKILL.md` — canonical resolver-provenance procedure selected before PATH/package repair.
+- `tooling/profiles/windows/Get-OpenCodeRuntimeResolutionStatus.ps1` — read-only tracked-readiness and optional current-process observation reporter.
+- `tooling/profiles/windows/hooks/Invoke-OpenCodeRuntimeResolutionPreCommit.ps1` — opt-in completeness, staged-diff, and generated-evidence gate; never installed implicitly.
+- `scripts/Test-OpenCodeRuntimeResolutionHarness.ps1` and `tests/test_opencode_runtime_resolution_harness.py` — cross-platform completeness, reporter, routing, and synthetic classification contracts.
+- `docs/harness/opencode-runtime-resolution-harness.md` — operator-facing working/broken/missing state and proof ceiling.
+- `.github/workflows/opencode-runtime-resolution-harness.yml` — Windows and Linux focused plus aggregate offline harness gate.
+
+This harness names the collision where a native Windows OpenCode request is shadowed by `%LOCALAPPDATA%\AgentSwitchboard\bin\opencode.cmd` and routed to WSL. Configuration output, parent-shell command resolution, file existence, and GNHF state remain discovery only until compared with the requested surface and effective child resolution. The harness is read-only: it does not edit PATH, reinstall packages, delete shims, or modify launcher/setup product code.
+
 ## tmux new-instance desktop shortcut harness
 
 The focused implementation map is `tooling/profiles/windows/harness/tmux-new-instance-shortcut/codebase-map.json`. It indexes the CMD installer, canonical launcher, manifest, workflows, artifact registry, schema, fixtures, skill, validator, status report, hook, operator guide, and Windows/Linux CI. The tracked `new-instance` and `open-or-activate` slices remain unproved on the operator workstation.
@@ -129,6 +147,7 @@ The focused implementation map is `tooling/profiles/windows/harness/tmux-new-ins
 - `.ai/skills/pr-integration/SKILL.md`
 - `.ai/skills/runtime-proof/SKILL.md`
 - `.ai/skills/end-to-end-runtime-validation/SKILL.md`
+- `.ai/skills/opencode-runtime-resolution/SKILL.md`
 - `.ai/skills/windows-profile-launch-mode-validation/SKILL.md`
 - `.ai/skills/app-output-contextualization/SKILL.md`
 
@@ -174,6 +193,7 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 - `scripts/Test-RuntimeEventContract.ps1`
 - `scripts/Test-DeviceProfileLauncherContract.ps1`
 - `scripts/Test-WindowsProfileLaunchModeHarness.ps1`
+- `scripts/Test-OpenCodeRuntimeResolutionHarness.ps1`
 - `scripts/Test-TmuxNewInstanceShortcutHarness.ps1`
 - `scripts/Test-AppOutputContextEngine.ps1`
 - `scripts/Test-PiHarnessCompleteness.ps1`
@@ -185,6 +205,6 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 
 ## Generated evidence and proof boundary
 
-Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, Windows launch-mode, tmux shortcut, and Pi evidence is untracked. End-to-end runtime evidence is also local-operational and untracked unless deliberately minimized and reviewed as a public fixture. Evidence may contain local paths, versions, Git state, minimized operational payloads, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
+Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, Windows launch-mode, OpenCode runtime-resolution, tmux shortcut, and Pi evidence is untracked. End-to-end runtime evidence is also local-operational and untracked unless deliberately minimized and reviewed as a public fixture. Evidence may contain local paths, versions, Git state, minimized operational payloads, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
 
-Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, launch-mode classification, shortcut allocation, or workflow semantics. Neither proves application runtime, an exact operator path, an open-or-activate result, a distinct WezTerm instance on the operator workstation, duplicate prevention, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, model quality, external target behavior, deployment, or operator acceptance.
+Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, launch-mode classification, OpenCode resolver classification, shortcut allocation, or workflow semantics. Neither proves application runtime, an exact operator path, an open-or-activate result, the exact OpenCode child executable on an operator workstation, a distinct WezTerm instance on the operator workstation, duplicate prevention, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, model quality, external target behavior, deployment, or operator acceptance.
