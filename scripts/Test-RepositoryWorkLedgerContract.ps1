@@ -70,12 +70,12 @@ foreach ($phrase in @(
     if (-not $source.Contains($phrase)) { Add-Error "missing ledger contract phrase: $phrase" }
 }
 
-$canonicalHeadingRegex = [regex]'(?m)^## (ASQ-\d{3,}) — (.+)$'
-$taskLikeHeadingRegex = [regex]'(?m)^##\s+(ASQ-[^\r\n]+)$'
+$canonicalHeadingRegex = [regex]'(?m)^##[ \t]+(ASQ-\d{3,})[ \t]+—[ \t]+([^\r\n]+)\r?$'
+$taskLikeHeadingRegex = [regex]'(?m)^##[ \t]+(ASQ-[^\r\n]+)\r?$'
 $matches = $canonicalHeadingRegex.Matches($source)
 foreach ($taskLikeHeading in $taskLikeHeadingRegex.Matches($source)) {
     if (-not $canonicalHeadingRegex.IsMatch($taskLikeHeading.Value)) {
-        Add-Error "malformed ASQ heading: '$($taskLikeHeading.Value)' (expected '## ASQ-### — Title')"
+        Add-Error "malformed ASQ heading: '$($taskLikeHeading.Groups[1].Value)' (expected '## ASQ-### — Title')"
     }
 }
 if ($matches.Count -eq 0) { Add-Error 'ledger must contain at least one canonical ASQ task block' }
@@ -97,7 +97,7 @@ for ($i = 0; $i -lt $matches.Count; $i++) {
     $end = if ($i + 1 -lt $matches.Count) { $matches[$i + 1].Index } else { $source.Length }
     $block = $source.Substring($start, $end - $start)
     $fields = @{}
-    foreach ($fieldMatch in [regex]::Matches($block, '(?m)^- \*\*([^*]+):\*\*[ \t]*(.*)$')) {
+    foreach ($fieldMatch in [regex]::Matches($block, '(?m)^- \*\*([^*]+):\*\*[ \t]*([^\r\n]*)\r?$')) {
         $fieldName = $fieldMatch.Groups[1].Value.Trim()
         if ($fields.ContainsKey($fieldName)) { Add-Error "$id duplicate field '$fieldName'"; continue }
         $fields[$fieldName] = $fieldMatch.Groups[2].Value.Trim()
