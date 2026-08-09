@@ -1,0 +1,27 @@
+{
+  "schema": "agentswitchboard.android-herdr-client-attach-workflows.v1",
+  "taskPickup": [
+    "Read AGENTS.md and the parent Herdr manifest.",
+    "Read this manifest, codebase map, artifact registry and upstream source.",
+    "Locate the newest same-device `herdr-server-start-*.env` or supply it explicitly.",
+    "Validate the exact release identity and prior lifecycle PASS before review or evidence mode."
+  ],
+  "workflows": {
+    "source-bound-review": {"command":"python tooling/profiles/android/harness/herdr/client-attach/Build-HerdrClientAttachReview.py --write","produces":"herdr-client-attach-review-<UTC>.md","gate":"must emit BOUNDED_CLIENT_PROTOCOL_OBSERVER_PROBE_APPROVED_NO_INSTALL and keep full-app TUI blocked"},
+    "contract": {"command":"python tooling/profiles/android/harness/herdr/client-attach/Probe-HerdrClientAttach.py contract","produces":"stdout contract receipt","gate":"no network/server/client execution"},
+    "same-device-observer": {"command":"python tooling/profiles/android/harness/herdr/client-attach/Probe-HerdrClientAttach.py evidence","produces":"herdr-client-attach-<UTC>.env","gate":"one read-only observer frame, clean stop/exit, no mutation; PASS advances only to bounded-full-tui-attach-review"}
+  },
+  "failureRecovery": [
+    "On missing/invalid server evidence: stop before download or process launch.",
+    "On digest failure: do not chmod/execute the binary.",
+    "On server/discovery/observer failure: terminate observer, stop or terminate foreground server, remove sandbox, write sanitized evidence.",
+    "Never compensate by running bare `herdr`, creating a workspace, using terminal control/takeover, or changing Android process policy.",
+    "KEEP_TMUX remains authoritative after every failure."
+  ],
+  "handoff": [
+    "Record exact repo branch/head and stacked base.",
+    "Record review/evidence artifact path and proof level.",
+    "Record whether cleanup was graceful or forced.",
+    "Name the next gate; do not claim full TUI attach from observer proof."
+  ]
+}

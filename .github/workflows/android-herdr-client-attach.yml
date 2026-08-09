@@ -1,0 +1,65 @@
+name: Android Herdr client attach
+
+on:
+  push:
+    paths:
+      - '.ai/skills/android-herdr-client-attach/**'
+      - 'docs/harness/android-herdr-client-attach-harness.md'
+      - 'tooling/profiles/android/harness/herdr/client-attach/**'
+      - 'tests/test_android_herdr_client_attach_harness.py'
+      - 'scripts/Test-AndroidHerdrClientAttachHarnessCompleteness.ps1'
+      - '.github/workflows/android-herdr-client-attach.yml'
+  pull_request:
+    paths:
+      - '.ai/skills/android-herdr-client-attach/**'
+      - 'docs/harness/android-herdr-client-attach-harness.md'
+      - 'tooling/profiles/android/harness/herdr/client-attach/**'
+      - 'tests/test_android_herdr_client_attach_harness.py'
+      - 'scripts/Test-AndroidHerdrClientAttachHarnessCompleteness.ps1'
+      - '.github/workflows/android-herdr-client-attach.yml'
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Parse hooks
+        run: |
+          bash -n tooling/profiles/android/harness/herdr/client-attach/hooks/Invoke-HerdrClientAttachHarnessPreCommit.sh
+          bash -n tooling/profiles/android/harness/herdr/client-attach/hooks/Invoke-HerdrClientAttachHarnessPrePush.sh
+      - name: Client attach harness contracts
+        run: |
+          python tests/test_android_herdr_client_attach_harness.py
+          python tooling/profiles/android/harness/herdr/client-attach/Probe-HerdrClientAttach.py contract
+      - name: Parent Herdr and Android floor
+        run: |
+          python tests/test_android_herdr_server_start_review.py
+          python tests/test_android_herdr_harness_completeness.py
+          python tests/test_android_termux_harness.py
+          python tests/test_android_termux_modal_state_harness.py
+      - name: Focused pre-commit
+        run: bash tooling/profiles/android/harness/herdr/client-attach/hooks/Invoke-HerdrClientAttachHarnessPreCommit.sh
+      - name: Diff hygiene
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git diff --check "origin/${{ github.base_ref }}...HEAD"
+          else
+            git diff --check HEAD^...HEAD
+          fi
+
+  windows-completeness:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Client attach PowerShell completeness
+        shell: pwsh
+        run: ./scripts/Test-AndroidHerdrClientAttachHarnessCompleteness.ps1
+      - name: Windows diff hygiene
+        shell: pwsh
+        run: git diff --check HEAD^...HEAD

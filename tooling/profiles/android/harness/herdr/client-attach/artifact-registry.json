@@ -1,0 +1,16 @@
+{
+  "schema": "agentswitchboard.android-herdr-client-attach-artifacts.v1",
+  "stateRoot": "${XDG_STATE_HOME:-$HOME/.local/state}/agentswitchboard/android-herdr-migration",
+  "tracked": [
+    {"id":"client-attach-source","path":"tooling/profiles/android/harness/herdr/client-attach/upstream-client-attach-source.json","generator":"manual pinned upstream source review","naming":"fixed"},
+    {"id":"client-attach-manifest","path":"tooling/profiles/android/harness/herdr/client-attach/manifest.json","generator":"tracked harness","naming":"fixed"},
+    {"id":"client-attach-codebase-map","path":"tooling/profiles/android/harness/herdr/client-attach/codebase-map.json","generator":"tracked harness","naming":"fixed"},
+    {"id":"client-attach-workflows","path":"tooling/profiles/android/harness/herdr/client-attach/workflow-specs.json","generator":"tracked harness","naming":"fixed"}
+  ],
+  "localUntracked": [
+    {"id":"client-attach-review","pattern":"herdr-client-attach-review-<UTC>.md","generator":"python tooling/profiles/android/harness/herdr/client-attach/Build-HerdrClientAttachReview.py --write","contains":"source binding, authority, proof ceiling"},
+    {"id":"client-attach-evidence","pattern":"herdr-client-attach-<UTC>.env","generator":"python tooling/profiles/android/harness/herdr/client-attach/Probe-HerdrClientAttach.py evidence","contains":"sanitized handshake/frame metadata only; never terminal frame bytes"}
+  ],
+  "prerequisites": [{"id":"server-start-evidence","pattern":"herdr-server-start-<UTC>.env","schema":"agentswitchboard.android-herdr-server-start.v1","source":"parent Herdr harness"}],
+  "namingRules": "UTC basic timestamp YYYYMMDDTHHMMSSZ; generated phone artifacts remain local/untracked."
+}

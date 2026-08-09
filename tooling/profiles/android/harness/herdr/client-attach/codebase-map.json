@@ -1,0 +1,36 @@
+{
+  "schema": "agentswitchboard.android-herdr-client-attach-codebase-map.v1",
+  "scope": "bounded Android/Termux Herdr client transport attachment",
+  "repositoryStructure": [
+    {"path":"tooling/profiles/android/harness/herdr/client-attach/","purpose":"source binding, workflow, probes, registries and reports for the client-attach gate"},
+    {"path":"tooling/profiles/android/harness/herdr/","purpose":"parent Herdr migration/server harness and prior live gates"},
+    {"path":"tests/","purpose":"deterministic contract/completeness validators"},
+    {"path":"scripts/","purpose":"PowerShell completeness validation"},
+    {"path":".ai/skills/","purpose":"scoped repeatable operator/agent procedures"},
+    {"path":".github/workflows/","purpose":"hosted exact-head validation"}
+  ],
+  "entryPoints": {
+    "review": "python tooling/profiles/android/harness/herdr/client-attach/Build-HerdrClientAttachReview.py --write",
+    "contract": "python tooling/profiles/android/harness/herdr/client-attach/Probe-HerdrClientAttach.py contract",
+    "live": "python tooling/profiles/android/harness/herdr/client-attach/Probe-HerdrClientAttach.py evidence",
+    "preCommit": "bash tooling/profiles/android/harness/herdr/client-attach/hooks/Invoke-HerdrClientAttachHarnessPreCommit.sh",
+    "prePush": "bash tooling/profiles/android/harness/herdr/client-attach/hooks/Invoke-HerdrClientAttachHarnessPrePush.sh"
+  },
+  "validationOrder": [
+    "python tests/test_android_herdr_client_attach_harness.py",
+    "python tooling/profiles/android/harness/herdr/client-attach/Probe-HerdrClientAttach.py contract",
+    "bash -n tooling/profiles/android/harness/herdr/client-attach/hooks/Invoke-HerdrClientAttachHarnessPreCommit.sh",
+    "bash tooling/profiles/android/harness/herdr/client-attach/hooks/Invoke-HerdrClientAttachHarnessPreCommit.sh",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-AndroidHerdrClientAttachHarnessCompleteness.ps1",
+    "existing Android/Herdr parent validators",
+    "git diff --check"
+  ],
+  "knownTraps": [
+    "Bare `herdr` is not an attach-only primitive: auto-detect may spawn a detached server if the client socket disappears.",
+    "`terminal session observe` proves the TerminalAttach client protocol path, not the full Herdr app TUI.",
+    "A terminal frame may contain operator data; evidence must record metadata only and never persist frame bytes.",
+    "Server stop ends sandbox pane processes; this gate is ephemeral and does not test persistence.",
+    "The Linux-musl binary executing on Android does not become an upstream-supported Android build."
+  ],
+  "buildTestDeploy": {"build":"none; harness is scripts/contracts","test":"focused validator + parent Android/Herdr floor","deploy":"none; no Herdr installation is authorized"}
+}
