@@ -41,9 +41,11 @@ Consumers must support these statuses with these semantics:
 
 `READY`, `CLAIMED`, `VERIFY`, `REVIEW`, and `MERGE` are continuation states, not stopping states.
 
+A `CLAIMED` item must name a real writer or session. Sentinel owner values such as `unclaimed`, `none`, `unknown`, `tbd`, or `n/a` are not ownership evidence.
+
 ## Required task fields
 
-Every task block must contain non-blank values for:
+Every task block must contain exactly one non-blank value for each of:
 
 - `Status`
 - `Priority` (`P0` through `P3`)
@@ -59,7 +61,9 @@ Every task block must contain non-blank values for:
 - `Next action`
 - `Updated`
 
-Each repository owns its task-prefix namespace. AgentSwitchboard uses `ASQ-*`; AxTask keeps `AXQ-*`; consumer repositories must choose an unambiguous local prefix rather than copying `AXQ-*`.
+Duplicate field names are invalid; a later field may never overwrite or reinterpret an earlier value.
+
+Each repository owns its task-prefix namespace. AgentSwitchboard uses `ASQ-*`; AxTask keeps `AXQ-*`; consumer repositories must choose an unambiguous local prefix rather than copying `AXQ-*`. Every task-like heading using the local prefix must match the repository's canonical heading format; malformed prefixed headings must fail validation rather than disappear from the parser.
 
 ## Proof and terminal-state rules
 
@@ -80,7 +84,7 @@ For `DONE`:
 
 For `BLOCKED` or `OPERATOR`, `Gate` must name the exact blocking condition.
 
-For continuation states, `Next action` must be executable and must advance the item rather than merely display already-known status.
+For continuation states, `Next action` must be a concrete executable progression. It must begin with an action such as run, execute, create, update, repair, resolve, merge, fetch, inspect, open, verify, validate, test, commit, push, rebase, retarget, compare, generate, record, obtain, install, apply, build, launch, deploy, restore, export, import, review, reconcile, invoke, edit, write, move, copy, sync, or check. Status-only phrases such as `PR opened`, `CI green`, `status unchanged`, `wait`, or `merge later` are invalid next actions.
 
 ## Collision and freshness rules
 
