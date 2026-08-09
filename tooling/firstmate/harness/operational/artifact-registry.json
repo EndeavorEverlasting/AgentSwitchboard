@@ -21,7 +21,7 @@
       "id": "windows-wsl-runtime-proof",
       "filename": "firstmate-floor.txt",
       "generator": "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead <exact-sha>",
-      "contains": "exact-head WSL visibility, owning harness contract result, read-only First Mate floor output, route artifact, operator report, and isolated WSL stderr diagnostics",
+      "contains": "Windows source repository identity, WSLENV path transport, WSL-owned standalone exact-head clone identity, owning harness contract result, read-only First Mate floor output, route artifact, operator report, bootstrap stdout, and isolated WSL stderr diagnostics",
       "proof_ceiling": "physical Windows-to-WSL floor only; not live crew completion proof"
     }
   ],

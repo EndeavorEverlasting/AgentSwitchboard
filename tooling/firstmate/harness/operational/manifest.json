@@ -33,7 +33,7 @@
     "reference_session_backend": "tmux",
     "android": "separate-device-profile-lane",
     "native_windows_firstmate": "unverified",
-    "windows_to_wsl_bridge": "tracked; physical-laptop reproof required",
+    "windows_to_wsl_bridge": "tracked; WSL-owned standalone-clone reproof required",
     "herdr_selection_enabled": false
   },
   "collision_boundaries": [
@@ -42,7 +42,8 @@
     "Do not mutate First Mate upstream or install dependencies from this harness.",
     "One active writer per branch; First Mate workers require isolated branches/worktrees.",
     "Do not treat Android readiness as a dependency for productive laptop/WSL crew work.",
-    "Do not parse WSL stderr as machine-readable stdout or depend on wslpath for Windows temporary-path transport."
+    "Do not parse WSL stderr as machine-readable stdout or depend on wslpath for Windows temporary-path transport.",
+    "Do not run Linux Git inside a Windows-created linked worktree; create a WSL-owned standalone exact-head clone from the clean committed source repository."
   ],
-  "proof_ceiling": "Tracked harness structure, deterministic route selection, report generation, hosted validators, and Windows-to-WSL bridge contract. Physical-laptop bridge execution, live First Mate crew dispatch, and Herdr runtime remain unproved."
+  "proof_ceiling": "Tracked harness structure, deterministic route selection, report generation, hosted validators, and Windows-to-WSL standalone-clone bridge contract. Physical-laptop bridge execution, live First Mate crew dispatch, and Herdr runtime remain unproved."
 }

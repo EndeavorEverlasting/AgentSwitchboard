@@ -79,7 +79,9 @@
     "Normalize equivalent GitHub origin transports before comparing repository identity.",
     "Do not auto-promote Herdr while its pinned contract and live runtime gates are unresolved.",
     "Do not use First Mate remote-writing modes until the local-only runtime gate has evidence.",
-    "Do not feed Windows temporary paths through wslpath and then parse combined native output; launch wsl.exe with the exact Windows worktree as ProcessStartInfo.WorkingDirectory and capture stdout/stderr separately.",
+    "Do not feed Windows temporary paths through wslpath and then parse combined native output; use WSLENV /p path translation and capture stdout/stderr separately.",
+    "A Windows-created linked worktree is not a portable Linux Git checkout because its .git indirection can contain Windows-owned worktree metadata. The bridge must create a WSL-owned standalone clone at the exact commit.",
+    "Do not hardcode /mnt/c for Windows-to-WSL transport; the WSL automount root is configurable.",
     "A WSL configuration warning on stderr is diagnostic evidence, not machine-readable path or JSON output."
   ]
 }
