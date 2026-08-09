@@ -12,7 +12,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST_PATH = REPO_ROOT / ".ai" / "repo-ledger-adoption.json"
 QUEUE_PATH = REPO_ROOT / ".ai" / "WORK_QUEUE.md"
 README_PATH = REPO_ROOT / ".ai" / "README.md"
-EXPECTED_CONTRACT_COMMIT = "3188d577dbda1994c0629c1416ae3362198812dd"
+EXPECTED_CONTRACT_COMMIT = "429237aa41d8712d71859865c9be407ca23d8580"
 EXPECTED_DONOR_COMMIT = "9351c952b057ae4520b1ea0d388e1d8908f4c093"
 EXPECTED_DONOR_PATHS = {
     ".ai/README.md",
@@ -122,7 +122,7 @@ def main() -> int:
     if manifest.get("proofCeiling") != "repository_harness_only":
         errors.append("adoption proof ceiling drifted")
 
-    for bad_ref in ("main", "master", "HEAD", "feat/repo-ledger", "v1.0.0", "3188d577dbda"):
+    for bad_ref in ("main", "master", "HEAD", "feat/repo-ledger", "v1.0.0", "429237aa41d8"):
         if exact_commit(bad_ref):
             errors.append(f"stale-reference probe unexpectedly accepted {bad_ref!r}")
 
