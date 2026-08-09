@@ -28,9 +28,8 @@ def require_tracked(path: str) -> Path:
     return target
 
 
-def load_validator():
-    path = HARNESS / "Validate-CommandEnvelope.py"
-    spec = importlib.util.spec_from_file_location("profile_boundary_validator", path)
+def load_module(path: Path, name: str):
+    spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)
@@ -47,6 +46,7 @@ def main() -> None:
 
     assert manifest["harnessId"] == "agentswitchboard.profile-boundary-operational-harness.v1"
     assert manifest["authority"]["deviceProfileRegistry"] == ".ai/harness/device-profile-registry.json"
+    assert manifest["components"]["transitionBuilder"] == "tooling/harness/profile-boundary/Build-ProfileTransition.py"
     assert "AGENTS.md" in manifest["collisionBoundary"]["intentionallyUnchanged"]
     assert "HARNESS.md" in manifest["collisionBoundary"]["intentionallyUnchanged"]
     assert "SKILLS.md" in manifest["collisionBoundary"]["intentionallyUnchanged"]
@@ -70,7 +70,7 @@ def main() -> None:
     assert wsl["proofRequired"] is True
     assert set(wsl["requiredProbeTokens"]) == {"wsl.exe", "/bin/bash"}
 
-    validator = load_validator()
+    validator = load_module(HARNESS / "Validate-CommandEnvelope.py", "profile_boundary_validator")
     for case in fixtures["cases"]:
         result = validator.validate_envelope(case["envelope"], registry)
         assert result["status"] == case["expectedStatus"], case["id"]
@@ -78,13 +78,49 @@ def main() -> None:
         assert len(result["commandSha256"]) == 64
         assert "command" not in result
 
+    source = next(case for case in fixtures["cases"] if case["id"] == "android-command-on-windows-blocked")
+    source_report = validator.validate_envelope(source["envelope"], registry)
+    builder = load_module(HARNESS / "Build-ProfileTransition.py", "profile_transition_builder")
+    transitioned, transition_report = builder.build_transition(source["envelope"], source_report, registry)
+
+    assert transitioned == {
+        "schema": "agentswitchboard.command-envelope.v1",
+        "hostContext": "android-phone",
+        "targetProfile": "android",
+        "executionSurface": "android-termux",
+        "command": source["envelope"]["command"],
+    }
+    assert validator.validate_envelope(transitioned, registry)["status"] == "PASS"
+    assert transition_report["status"] == "PASS"
+    assert transition_report["sourceCommandSha256"] == source_report["commandSha256"]
+    assert transition_report["destinationHostContext"] == "android-phone"
+    assert transition_report["executionSurface"] == "android-termux"
+    assert "command" not in transition_report
+
+    tampered = dict(source_report)
+    tampered["commandSha256"] = "0" * 64
+    try:
+        builder.build_transition(source["envelope"], tampered, registry)
+    except ValueError as exc:
+        assert "source-command-digest-mismatch" in str(exc)
+    else:
+        raise AssertionError("tampered source digest must fail closed")
+
     ids = [item["id"] for item in workflows["workflows"]]
-    assert ids == ["task-intake", "validate-command-handoff", "failure-recovery", "handoff"]
+    assert ids == [
+        "task-intake",
+        "validate-command-handoff",
+        "failure-recovery",
+        "correct-profile-transition",
+        "handoff",
+    ]
     workflow_text = json.dumps(workflows)
-    for token in ("windows-laptop", "android-phone", "wsl-linux", "android-termux", "/bin/bash", "Android-only"):
+    for token in ("windows-laptop", "android-phone", "wsl-linux", "android-termux", "/bin/bash", "Android-only", "Build-ProfileTransition.py", "commandSha256"):
         assert token in workflow_text
 
     assert artifacts["tracked"] is False
+    artifact_ids = {item["artifactId"] for item in artifacts["artifacts"]}
+    assert {"profile-transition-envelope", "profile-transition-report"} <= artifact_ids
     forbidden = " ".join(artifacts["forbiddenContent"])
     for token in ("passwords", "device codes", "access or refresh tokens", "private SSH keys"):
         assert token in forbidden
@@ -92,10 +128,11 @@ def main() -> None:
     skill = require_tracked(".ai/skills/profile-boundary-routing/SKILL.md").read_text(encoding="utf-8")
     guide = require_tracked("docs/harness/profile-boundary-operational-harness.md").read_text(encoding="utf-8")
     front = require_tracked("PROFILE_BOUNDARY_HARNESS.md").read_text(encoding="utf-8")
-    for token in ("windows-laptop", "android-phone", "wsl.exe", "/bin/bash", "bare `bash -lc`"):
+    for token in ("windows-laptop", "android-phone", "wsl.exe", "/bin/bash", "bare `bash -lc`", "Build-ProfileTransition.py"):
         assert token in skill
         assert token in guide
     assert "Test-ProfileBoundaryHarness.cmd" in front
+    assert "Build-ProfileTransition.py" in front
 
     ci = require_tracked(".github/workflows/profile-boundary-harness.yml").read_text(encoding="utf-8")
     assert ci.count("persist-credentials: false") == 2

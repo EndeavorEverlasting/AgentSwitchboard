@@ -19,6 +19,18 @@
       "purpose": "Record PASS/BLOCKED classification, reason codes, command SHA-256, and next action without echoing raw command text."
     },
     {
+      "artifactId": "profile-transition-envelope",
+      "fileName": "profile-transition-envelope.json",
+      "generator": "tooling/harness/profile-boundary/Build-ProfileTransition.py",
+      "purpose": "Preserve the original command while rewriting only the validated destination host/profile/surface for a cross-profile handoff. Keep local and untracked."
+    },
+    {
+      "artifactId": "profile-transition-report",
+      "fileName": "profile-transition-report.json",
+      "generator": "tooling/harness/profile-boundary/Build-ProfileTransition.py",
+      "purpose": "Bind the corrected handoff to the source command SHA-256 and record the destination validation result without echoing raw command text."
+    },
+    {
       "artifactId": "operator-report",
       "fileName": "profile-boundary-operator-report.md",
       "generator": "operator workflow",
@@ -34,5 +46,5 @@
     "credential-file contents",
     "raw command text when it may contain secrets"
   ],
-  "proofCeiling": "Artifacts prove declared routing state and deterministic classification only; they do not prove the target shell, runtime, or command actually executed unless separate runtime evidence says so."
+  "proofCeiling": "Artifacts prove declared routing state, deterministic classification, and corrected destination-envelope validation only; they do not prove the target shell, runtime, or command actually executed unless separate runtime evidence says so."
 }

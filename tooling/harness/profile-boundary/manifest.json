@@ -8,7 +8,7 @@
     "deviceProfileRegistry": ".ai/harness/device-profile-registry.json",
     "deviceProfileContract": "docs/governance/device-profile-launcher-contract.md"
   },
-  "mission": "Prevent device, shell, and execution-surface conflation before an operator command is handed off.",
+  "mission": "Prevent device, shell, and execution-surface conflation before an operator command is handed off, then produce a validated corrected handoff when the destination profile is known.",
   "components": {
     "frontDoor": "PROFILE_BOUNDARY_HARNESS.md",
     "codebaseMap": "tooling/harness/profile-boundary/codebase-map.json",
@@ -17,6 +17,7 @@
     "commandEnvelopeSchema": "tooling/harness/profile-boundary/command-envelope.schema.json",
     "workflowSpecs": "tooling/harness/profile-boundary/workflow-specs.json",
     "commandValidator": "tooling/harness/profile-boundary/Validate-CommandEnvelope.py",
+    "transitionBuilder": "tooling/harness/profile-boundary/Build-ProfileTransition.py",
     "fixtures": "tooling/harness/profile-boundary/fixtures/command-envelopes.json",
     "hook": "tooling/harness/profile-boundary/hooks/Invoke-ProfileBoundaryPreCommit.py",
     "skill": ".ai/skills/profile-boundary-routing/SKILL.md",
@@ -39,5 +40,5 @@
     ],
     "reason": "Active pull requests own shared governance, Wayfinder catalogs, Android Herdr, and Windows machine-profile surfaces. This harness composes with them without stealing their files."
   },
-  "proofCeiling": "Tracked contracts, deterministic command-envelope rejection, cross-platform Python validation, Windows-native harness entrypoint shape, and hosted CI. It does not prove WSL is healthy, /bin/bash exists on an operator laptop, Termux is running on a phone, Herdr runs on Android, a provider responds, or an operator command completed."
+  "proofCeiling": "Tracked contracts, deterministic command-envelope rejection, corrected profile-transition envelope generation, cross-platform Python validation, Windows-native harness entrypoint shape, and hosted CI. It does not prove WSL is healthy, /bin/bash exists on an operator laptop, Termux is running on a phone, Herdr runs on Android, a provider responds, or an operator command completed."
 }

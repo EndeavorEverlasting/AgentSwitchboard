@@ -1,7 +1,7 @@
 {
   "schema": "agentswitchboard.profile-boundary-codebase-map.v1",
   "repository": "EndeavorEverlasting/AgentSwitchboard",
-  "purpose": "Map the smallest repository surface needed to distinguish laptop, WSL, and Android/Termux command handoffs.",
+  "purpose": "Map the smallest repository surface needed to distinguish laptop, WSL, and Android/Termux command handoffs and safely transition a blocked command to its correct device.",
   "authority": [
     "AGENTS.md",
     ".ai/harness/device-profile-registry.json",
@@ -27,6 +27,7 @@
     "portableCompleteness": "python scripts/Test-ProfileBoundaryHarness.py",
     "portableContracts": "python tests/test_profile_boundary_harness.py",
     "commandEnvelopeValidation": "python tooling/harness/profile-boundary/Validate-CommandEnvelope.py --envelope <path>",
+    "profileTransition": "python tooling/harness/profile-boundary/Build-ProfileTransition.py --envelope <path> --report <path> --output <path>",
     "existingDeviceProfileContracts": "python tests/test_device_profile_launcher_contract.py",
     "existingAndroidHarnessContracts": "python tests/test_android_termux_harness.py"
   },
@@ -42,6 +43,7 @@
     "A PowerShell prompt is not evidence that WSL or /bin/bash exists.",
     "bash -lc entered from Windows PowerShell is ambiguous unless the command is explicitly routed through a proven WSL bridge.",
     "Android/Termux commands such as agentswitchboard-android, pkg install, $PREFIX paths, or tooling/profiles/android entrypoints must not be handed to a Windows laptop shell.",
+    "A BLOCKED Android-on-Windows result is a routing decision, not permission to manually edit or reconstruct the command before moving it to the phone.",
     "A cloned repository on one device does not prove that another device has the same tools, shell, worktree, or runtime.",
     "The same tmux session name on different hosts is not the same tmux server or workspace.",
     "WSL configuration warnings are evidence to repair the WSL boundary, not permission to reinterpret an Android command as laptop work.",

@@ -32,11 +32,20 @@ python tooling/harness/profile-boundary/Validate-CommandEnvelope.py --envelope <
 
 Only a `PASS` may be handed off as executable operator guidance. A `BLOCKED` result owns the next action.
 
+When a `BLOCKED` Android-on-Windows report identifies a known destination, preserve the original command instead of reconstructing it. Build a corrected, hash-bound phone envelope:
+
+```text
+python tooling/harness/profile-boundary/Build-ProfileTransition.py --envelope <source-envelope> --report <blocked-report> --output <phone-envelope> --transition-report <transition-report>
+```
+
+The builder rewrites only the destination host/profile/surface and emits nothing unless the corrected envelope passes the canonical validator.
+
 ## Canonical files
 
 - `tooling/harness/profile-boundary/manifest.json`
 - `tooling/harness/profile-boundary/profile-boundary.registry.json`
 - `tooling/harness/profile-boundary/workflow-specs.json`
+- `tooling/harness/profile-boundary/Build-ProfileTransition.py`
 - `.ai/skills/profile-boundary-routing/SKILL.md`
 - `docs/harness/profile-boundary-operational-harness.md`
 

@@ -39,15 +39,29 @@
       "output": "Corrected profile/surface classification and a newly validated next action."
     },
     {
+      "id": "correct-profile-transition",
+      "trigger": "A BLOCKED report proves that the command belongs to Android but the source host is not android-phone.",
+      "steps": [
+        "Keep the source command envelope and BLOCKED report in the same local evidence directory.",
+        "Run Build-ProfileTransition.py with both artifacts.",
+        "Require the report commandSha256 to match the source command before rewriting any routing fields.",
+        "Rewrite only hostContext=android-phone, targetProfile=android, and executionSurface=android-termux; preserve the exact command text.",
+        "Run the canonical command validator against the corrected envelope inside the builder.",
+        "Emit the corrected command envelope only on PASS and keep it local/untracked."
+      ],
+      "output": "A cryptographically bound, validator-PASS Android-phone command envelope plus a transition report."
+    },
+    {
       "id": "handoff",
       "trigger": "Validation is complete or a real external dependency remains.",
       "steps": [
         "Record host context, execution surface, target profile, validation status, reason codes, and proof ceiling.",
         "Record the exact next action and its owner/dependency.",
+        "When a corrected transition envelope exists, identify the destination device explicitly and require validation there before execution.",
         "Do not claim runtime proof from a static PASS.",
         "Keep local operator evidence untracked and omit secrets."
       ],
-      "output": "Human-readable operator report plus machine-readable profile-boundary report."
+      "output": "Human-readable operator report plus machine-readable profile-boundary or transition report."
     }
   ]
 }
