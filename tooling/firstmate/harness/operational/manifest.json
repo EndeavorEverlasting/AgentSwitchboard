@@ -33,7 +33,8 @@
     "reference_session_backend": "tmux",
     "android": "separate-device-profile-lane",
     "native_windows_firstmate": "unverified",
-    "windows_to_wsl_bridge": "tracked; WSL-owned standalone-clone reproof required",
+    "windows_to_wsl_bridge": "tracked; explicit-distro standalone-clone physical reproof required",
+    "wsl_distribution_policy": "enumerate installed distributions; skip known utility distros unless explicitly requested; require bash+git capability; invoke all runtime commands with --distribution",
     "herdr_selection_enabled": false
   },
   "collision_boundaries": [
@@ -43,7 +44,8 @@
     "One active writer per branch; First Mate workers require isolated branches/worktrees.",
     "Do not treat Android readiness as a dependency for productive laptop/WSL crew work.",
     "Do not parse WSL stderr as machine-readable stdout or depend on wslpath for Windows temporary-path transport.",
-    "Do not run Linux Git inside a Windows-created linked worktree; create a WSL-owned standalone exact-head clone from the clean committed source repository."
+    "Do not run Linux Git inside a Windows-created linked worktree; create a WSL-owned standalone exact-head clone from the clean committed source repository.",
+    "Do not execute the runtime through an implicit WSL default distribution; select and record an explicit bash+git-capable distribution first."
   ],
-  "proof_ceiling": "Tracked harness structure, deterministic route selection, report generation, hosted validators, and Windows-to-WSL standalone-clone bridge contract. Physical-laptop bridge execution, live First Mate crew dispatch, and Herdr runtime remain unproved."
+  "proof_ceiling": "Tracked harness structure, deterministic route selection, report generation, hosted validators, explicit WSL distribution selection, and Windows-to-WSL standalone-clone bridge contract. Physical-laptop bridge execution, live First Mate crew dispatch, and Herdr runtime remain unproved."
 }

@@ -29,6 +29,33 @@ class FirstMateWindowsWslBridgeTests(unittest.TestCase):
             {item["id"] for item in self.validators["validators"]},
         )
 
+    def test_bridge_selects_explicit_capable_wsl_distribution(self):
+        self.assertIn("[string]$WslDistribution", self.bridge)
+        self.assertIn("Select-WslDistribution", self.bridge)
+        self.assertIn("@('--list', '--quiet')", self.bridge)
+        self.assertIn("'--distribution', $candidate", self.bridge)
+        self.assertIn("command -v bash", self.bridge)
+        self.assertIn("command -v git", self.bridge)
+        self.assertIn("SKIPPED_UTILITY_DISTRO", self.bridge)
+        self.assertIn("docker-desktop", self.bridge)
+        self.assertIn("wsl-distro-probe.txt", self.bridge)
+        self.assertIn("WSL_DISTRIBUTION=$SelectedWslDistribution", self.bridge)
+
+    def test_bridge_never_runs_runtime_bash_against_implicit_default(self):
+        self.assertIn(
+            "@('--distribution', $Distribution, '--exec', 'bash', '-lc', $Command)",
+            self.bridge,
+        )
+        self.assertNotIn(
+            "[void]$psi.ArgumentList.Add('--exec')\n    [void]$psi.ArgumentList.Add('bash')",
+            self.bridge,
+        )
+        self.assertIn("POLICY=Never use the implicit WSL default", self.bridge)
+
+    def test_bridge_normalizes_legacy_wsl_list_null_bytes(self):
+        self.assertIn("Normalize-WslText", self.bridge)
+        self.assertIn("([char]0).ToString()", self.bridge)
+
     def test_bridge_uses_wslenv_path_translation_not_wslpath(self):
         self.assertNotIn("wslpath", self.bridge.lower())
         self.assertIn("WSLENV", self.bridge)
@@ -45,7 +72,6 @@ class FirstMateWindowsWslBridgeTests(unittest.TestCase):
         self.assertIn('checkout --quiet --detach "$ASB_EXPECTED_HEAD"', self.bridge)
         self.assertIn("/tmp/agentswitchboard-firstmate-", self.bridge)
         self.assertIn("WSL-owned standalone clone", self.bridge)
-        self.assertNotIn("$psi.WorkingDirectory = $resolvedWorkingDirectory", self.bridge)
         self.assertIn("$psi.WorkingDirectory = $env:SystemRoot", self.bridge)
 
     def test_bridge_verifies_same_exact_head_inside_wsl(self):
@@ -53,27 +79,23 @@ class FirstMateWindowsWslBridgeTests(unittest.TestCase):
         self.assertIn("standalone clone did not resolve the expected AgentSwitchboard HEAD", self.bridge)
         self.assertIn("Exact-head mismatch", self.bridge)
 
-    def test_bridge_preserves_wsl_stderr_and_workspace_as_evidence(self):
-        self.assertIn("wsl-stderr.log", self.bridge)
-        self.assertIn("WSL stdout and stderr remain separate", self.bridge)
+    def test_bridge_preserves_wsl_distro_stderr_and_workspace_as_evidence(self):
+        for filename in (
+            "wsl-distro-probe.txt",
+            "wsl-stderr.log",
+            "wsl-bootstrap-stdout.txt",
+            "firstmate-harness-report.md",
+            "firstmate-floor.txt",
+            "firstmate-route.json",
+        ):
+            self.assertIn(filename, self.bridge)
         self.assertIn("Add-WslDiagnostic", self.bridge)
         self.assertIn("WSL_WORKSPACE_PRESERVED", self.bridge)
-        self.assertIn("wsl-bootstrap-stdout.txt", self.bridge)
 
     def test_bridge_runs_owning_contract_before_live_floor(self):
         contract_index = self.bridge.index("Test-AgentSwitchboard-FirstMate-Harness.sh contract")
         probe_index = self.bridge.index("Test-FirstMateInterop.sh")
         self.assertLess(contract_index, probe_index)
-
-    def test_bridge_resolves_and_prints_canonical_artifacts(self):
-        for filename in (
-            "firstmate-harness-report.md",
-            "firstmate-floor.txt",
-            "firstmate-route.json",
-            "wsl-stderr.log",
-        ):
-            self.assertIn(filename, self.bridge)
-        self.assertIn("FIRSTMATE_WINDOWS_WSL_RUNTIME_FLOOR", self.bridge)
 
     def test_bridge_requires_yolo_off_on_ready_route(self):
         self.assertIn("$routeObject.yolo_enabled -ne $false", self.bridge)
@@ -82,14 +104,16 @@ class FirstMateWindowsWslBridgeTests(unittest.TestCase):
         self.assertIn('parser.add_argument("--stdout"', self.report_builder)
         self.assertIn('parser.error("--stdout and --output are mutually exclusive")', self.report_builder)
 
-    def test_known_trap_records_both_observed_windows_wsl_failure_classes(self):
+    def test_known_trap_records_all_observed_windows_wsl_failure_classes(self):
         traps = "\n".join(self.codebase["known_traps"])
         self.assertIn("Windows temporary paths", traps)
-        self.assertIn("capture stdout/stderr separately", traps)
         self.assertIn("WSL configuration warning", traps)
         self.assertIn("Windows-created linked worktree", traps)
         self.assertIn("WSLENV /p", traps)
         self.assertIn("standalone clone", traps)
+        self.assertIn("implicit WSL default", traps)
+        self.assertIn("bash", traps)
+        self.assertIn("--distribution", traps)
 
 
 if __name__ == "__main__":

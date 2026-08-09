@@ -10,6 +10,8 @@ param(
 
     [string]$EvidenceRoot,
 
+    [string]$WslDistribution,
+
     [switch]$ContractOnly
 )
 
@@ -35,9 +37,17 @@ function Assert-LastExit {
     }
 }
 
-function Invoke-WslProcess {
+function Normalize-WslText {
+    param([AllowNull()][string]$Text)
+    if ($null -eq $Text) {
+        return ''
+    }
+    return $Text.Replace(([char]0).ToString(), '')
+}
+
+function Invoke-WslHostProcess {
     param(
-        [Parameter(Mandatory = $true)][string]$Command,
+        [Parameter(Mandatory = $true)][string[]]$Arguments,
         [hashtable]$Environment = @{},
         [string[]]$PathEnvironmentNames = @()
     )
@@ -46,16 +56,14 @@ function Invoke-WslProcess {
 
     $psi = [System.Diagnostics.ProcessStartInfo]::new()
     $psi.FileName = $wsl.Source
-    # Never inherit a linked-worktree CWD into WSL. The Linux command explicitly
-    # enters the WSL-owned standalone clone created by this bridge.
     $psi.WorkingDirectory = $env:SystemRoot
     $psi.UseShellExecute = $false
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
-    [void]$psi.ArgumentList.Add('--exec')
-    [void]$psi.ArgumentList.Add('bash')
-    [void]$psi.ArgumentList.Add('-lc')
-    [void]$psi.ArgumentList.Add($Command)
+
+    foreach ($argument in $Arguments) {
+        [void]$psi.ArgumentList.Add([string]$argument)
+    }
 
     $wslEnvEntries = @()
     $existingWslEnv = $psi.Environment['WSLENV']
@@ -88,14 +96,94 @@ function Invoke-WslProcess {
     $stderrTask = $process.StandardError.ReadToEndAsync()
     $process.WaitForExit()
 
-    $stdout = $stdoutTask.GetAwaiter().GetResult()
-    $stderr = $stderrTask.GetAwaiter().GetResult()
-
     return [pscustomobject]@{
         ExitCode = $process.ExitCode
-        Stdout = $stdout
-        Stderr = $stderr
+        Stdout = Normalize-WslText -Text $stdoutTask.GetAwaiter().GetResult()
+        Stderr = Normalize-WslText -Text $stderrTask.GetAwaiter().GetResult()
     }
+}
+
+function Select-WslDistribution {
+    param(
+        [string]$RequestedDistribution,
+        [Parameter(Mandatory = $true)][string]$EvidencePath
+    )
+
+    Set-Content -LiteralPath $EvidencePath -Value @(
+        'PURPOSE=Select an explicit WSL Linux distribution with bash and git.'
+        'POLICY=Never use the implicit WSL default for AgentSwitchboard runtime proof.'
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($RequestedDistribution)) {
+        $candidates = @($RequestedDistribution.Trim())
+        Add-Content -LiteralPath $EvidencePath -Value "REQUESTED_DISTRIBUTION=$($RequestedDistribution.Trim())"
+    }
+    else {
+        $listing = Invoke-WslHostProcess -Arguments @('--list', '--quiet')
+        Add-Content -LiteralPath $EvidencePath -Value "LIST_EXIT_CODE=$($listing.ExitCode)"
+        if (-not [string]::IsNullOrWhiteSpace($listing.Stderr)) {
+            Add-Content -LiteralPath $EvidencePath -Value '===== LIST_STDERR ====='
+            Add-Content -LiteralPath $EvidencePath -Value $listing.Stderr.TrimEnd()
+        }
+        if ($listing.ExitCode -ne 0) {
+            throw "Unable to enumerate installed WSL distributions. Evidence: $EvidencePath"
+        }
+
+        $candidates = @(
+            $listing.Stdout -split "`r?`n" |
+                ForEach-Object { $_.Trim() } |
+                Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+        )
+        if ($candidates.Count -eq 0) {
+            throw "No WSL distributions are registered. Evidence: $EvidencePath"
+        }
+    }
+
+    $utilityPattern = '^(docker-desktop(-data)?|rancher-desktop(-data)?|podman-machine-default)$'
+
+    foreach ($candidate in $candidates) {
+        if (
+            [string]::IsNullOrWhiteSpace($RequestedDistribution) -and
+            $candidate -match $utilityPattern
+        ) {
+            Add-Content -LiteralPath $EvidencePath -Value "DISTRO=$candidate STATUS=SKIPPED_UTILITY_DISTRO"
+            continue
+        }
+
+        $probe = Invoke-WslHostProcess -Arguments @(
+            '--distribution', $candidate,
+            '--exec', 'bash', '-lc',
+            'command -v bash >/dev/null 2>&1 && command -v git >/dev/null 2>&1 && printf "ASB_WSL_DISTRO_READY=1\n"'
+        )
+
+        Add-Content -LiteralPath $EvidencePath -Value "DISTRO=$candidate EXIT_CODE=$($probe.ExitCode)"
+        if (-not [string]::IsNullOrWhiteSpace($probe.Stderr)) {
+            Add-Content -LiteralPath $EvidencePath -Value "===== DISTRO_STDERR $candidate ====="
+            Add-Content -LiteralPath $EvidencePath -Value $probe.Stderr.TrimEnd()
+        }
+
+        if ($probe.ExitCode -eq 0 -and $probe.Stdout -match 'ASB_WSL_DISTRO_READY=1') {
+            Add-Content -LiteralPath $EvidencePath -Value "SELECTED_DISTRIBUTION=$candidate"
+            return $candidate
+        }
+    }
+
+    $available = ($candidates -join ', ')
+    throw "No usable WSL Linux distribution with bash and git was found. Installed candidates: $available. Evidence: $EvidencePath"
+}
+
+function Invoke-WslProcess {
+    param(
+        [Parameter(Mandatory = $true)][string]$Distribution,
+        [Parameter(Mandatory = $true)][string]$Command,
+        [hashtable]$Environment = @{},
+        [string[]]$PathEnvironmentNames = @()
+    )
+
+    return Invoke-WslHostProcess `
+        -Arguments @('--distribution', $Distribution, '--exec', 'bash', '-lc', $Command) `
+        -Environment $Environment `
+        -PathEnvironmentNames $PathEnvironmentNames
 }
 
 function Add-WslDiagnostic {
@@ -176,6 +264,11 @@ $ProbePath = Join-Path $EvidenceRoot 'firstmate-floor.txt'
 $RoutePath = Join-Path $EvidenceRoot 'firstmate-route.json'
 $WslDiagnosticsPath = Join-Path $EvidenceRoot 'wsl-stderr.log'
 $BootstrapStdoutPath = Join-Path $EvidenceRoot 'wsl-bootstrap-stdout.txt'
+$DistroProbePath = Join-Path $EvidenceRoot 'wsl-distro-probe.txt'
+
+$SelectedWslDistribution = Select-WslDistribution `
+    -RequestedDistribution $WslDistribution `
+    -EvidencePath $DistroProbePath
 
 $runId = "$($actualHead.Substring(0, 8))-$([guid]::NewGuid().ToString('N').Substring(0, 8))"
 $wslWorkspace = "/tmp/agentswitchboard-firstmate-$runId"
@@ -184,9 +277,11 @@ Set-Content -LiteralPath $WslDiagnosticsPath -Value @(
     "HEAD=$actualHead"
     "WINDOWS_LAUNCHER_WORKTREE=$Root"
     "WINDOWS_SOURCE_REPOSITORY=$SourceRepositoryPath"
+    "WSL_DISTRIBUTION=$SelectedWslDistribution"
     "WSL_WORKSPACE=$wslWorkspace"
-    "NOTE=Windows paths cross into WSL only through WSLENV /p translation; WSL stdout and stderr remain separate."
-    "NOTE=The Linux runtime uses a WSL-owned standalone clone, never the Windows linked-worktree .git indirection."
+    'NOTE=The WSL distribution is explicitly selected after a bash+git capability probe; the implicit default is never trusted.'
+    'NOTE=Windows paths cross into WSL only through WSLENV /p translation; WSL stdout and stderr remain separate.'
+    'NOTE=The Linux runtime uses a WSL-owned standalone clone, never the Windows linked-worktree .git indirection.'
 )
 
 $bootstrapCommand = @'
@@ -208,6 +303,7 @@ printf 'HEAD=%s\n' "$actual"
 '@
 
 $bootstrap = Invoke-WslProcess `
+    -Distribution $SelectedWslDistribution `
     -Command $bootstrapCommand `
     -Environment @{
         ASB_SOURCE_REPO = $SourceRepositoryPath
@@ -218,7 +314,7 @@ $bootstrap = Invoke-WslProcess `
 Add-WslDiagnostic -Path $WslDiagnosticsPath -Stage 'bootstrap' -Text $bootstrap.Stderr
 Set-Content -LiteralPath $BootstrapStdoutPath -Value $bootstrap.Stdout.TrimEnd()
 if ($bootstrap.ExitCode -ne 0) {
-    throw "WSL could not create the standalone exact-head AgentSwitchboard clone. See $WslDiagnosticsPath and $BootstrapStdoutPath"
+    throw "WSL could not create the standalone exact-head AgentSwitchboard clone in distribution '$SelectedWslDistribution'. See $WslDiagnosticsPath, $DistroProbePath, and $BootstrapStdoutPath"
 }
 if ($bootstrap.Stdout -notmatch [regex]::Escape("HEAD=$actualHead")) {
     throw "WSL standalone clone did not resolve the expected AgentSwitchboard HEAD. See $BootstrapStdoutPath"
@@ -229,6 +325,7 @@ $workspaceEnvironment = @{
 }
 
 $visibility = Invoke-WslProcess `
+    -Distribution $SelectedWslDistribution `
     -Command 'set -euo pipefail; cd "$ASB_WSL_WORKSPACE"; printf "WSL_PWD=%s\n" "$PWD"; git rev-parse HEAD' `
     -Environment $workspaceEnvironment
 Add-WslDiagnostic -Path $WslDiagnosticsPath -Stage 'visibility' -Text $visibility.Stderr
@@ -241,6 +338,7 @@ if ($visibilityLines.Count -lt 2 -or $visibilityLines[-1].Trim() -ne $actualHead
 }
 
 $contract = Invoke-WslProcess `
+    -Distribution $SelectedWslDistribution `
     -Command 'set -euo pipefail; cd "$ASB_WSL_WORKSPACE"; bash Test-AgentSwitchboard-FirstMate-Harness.sh contract' `
     -Environment $workspaceEnvironment
 Add-WslDiagnostic -Path $WslDiagnosticsPath -Stage 'contract' -Text $contract.Stderr
@@ -251,6 +349,7 @@ if ($contract.ExitCode -ne 0) {
 Write-Host $contract.Stdout.TrimEnd()
 
 $report = Invoke-WslProcess `
+    -Distribution $SelectedWslDistribution `
     -Command 'set -euo pipefail; cd "$ASB_WSL_WORKSPACE"; python3 tooling/firstmate/harness/operational/Build-FirstMateHarnessReport.py --stdout' `
     -Environment $workspaceEnvironment
 Add-WslDiagnostic -Path $WslDiagnosticsPath -Stage 'report' -Text $report.Stderr
@@ -272,12 +371,14 @@ if (-not [string]::IsNullOrWhiteSpace($FirstMatePath)) {
     $probeCommand += ' --firstmate "$ASB_FIRSTMATE_PATH"'
 }
 $probe = Invoke-WslProcess `
+    -Distribution $SelectedWslDistribution `
     -Command $probeCommand `
     -Environment $probeEnvironment `
     -PathEnvironmentNames $probePathEnvironmentNames
 Add-WslDiagnostic -Path $WslDiagnosticsPath -Stage 'probe' -Text $probe.Stderr
 Set-Content -LiteralPath $ProbePath -Value @(
     "EXIT_CODE=$($probe.ExitCode)"
+    "WSL_DISTRIBUTION=$SelectedWslDistribution"
     "WSL_WORKSPACE=$wslWorkspace"
     $probe.Stdout.TrimEnd()
     "WSL_STDERR=$WslDiagnosticsPath"
@@ -285,11 +386,13 @@ Set-Content -LiteralPath $ProbePath -Value @(
 if ($probe.ExitCode -ne 0) {
     Write-Host '===== CANONICAL HARNESS REPORT ====='
     Get-Content -LiteralPath $ReportPath
+    Write-Host "WSL_DISTRIBUTION=$SelectedWslDistribution"
     Write-Host "WSL_WORKSPACE_PRESERVED=$wslWorkspace"
     throw "First Mate read-only floor failed. Durable evidence: $ProbePath"
 }
 
 $route = Invoke-WslProcess `
+    -Distribution $SelectedWslDistribution `
     -Command 'set -euo pipefail; cd "$ASB_WSL_WORKSPACE"; python3 tooling/firstmate/harness/operational/Select-FirstMateWorkflow.py --parallel-writers 3 --firstmate-floor pass --platform linux-wsl' `
     -Environment $workspaceEnvironment
 Add-WslDiagnostic -Path $WslDiagnosticsPath -Stage 'route' -Text $route.Stderr
@@ -313,8 +416,10 @@ Write-Host '===== FIRST MATE ROUTE ====='
 Get-Content -LiteralPath $RoutePath
 Write-Host '[PASS] FIRSTMATE_WINDOWS_WSL_RUNTIME_FLOOR'
 Write-Host "HEAD=$actualHead"
+Write-Host "WSL_DISTRIBUTION=$SelectedWslDistribution"
 Write-Host "REPORT=$ReportPath"
 Write-Host "FLOOR_EVIDENCE=$ProbePath"
 Write-Host "ROUTE=$RoutePath"
+Write-Host "WSL_DISTRO_PROBE=$DistroProbePath"
 Write-Host "WSL_DIAGNOSTICS=$WslDiagnosticsPath"
 Write-Host "WSL_WORKSPACE_PRESERVED=$wslWorkspace"
