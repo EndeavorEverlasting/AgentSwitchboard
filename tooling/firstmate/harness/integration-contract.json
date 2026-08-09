@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "integration_id": "firstmate-wsl",
   "upstream": {
     "repository": "https://github.com/kunchenguid/firstmate",
@@ -12,6 +12,7 @@
       "Linux"
     ],
     "agentswitchboard_target": "WSL/Linux",
+    "wsl_distribution": "Ubuntu",
     "wsl_support_claim": "integration inference; upstream README declares Linux but does not explicitly certify WSL",
     "native_windows": "unverified and out of scope"
   },
@@ -70,5 +71,5 @@
     "docs/configuration.md",
     ".agents/skills/project-management/SKILL.md"
   ],
-  "proof_ceiling": "Repository contract, deterministic routing, and read-only WSL compatibility probe only; no live First Mate task dispatch, worker runtime, PR delivery, merge, Herdr runtime, or native-Windows behavior is proven."
+  "proof_ceiling": "Repository contract, deterministic routing, and read-only Ubuntu-on-WSL compatibility probe only; no live First Mate task dispatch, worker runtime, PR delivery, merge, Herdr runtime, or native-Windows behavior is proven."
 }

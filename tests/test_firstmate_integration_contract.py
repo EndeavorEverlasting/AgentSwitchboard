@@ -44,6 +44,7 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
         platform = self.contract["platform_contract"]
         self.assertIn("Linux", platform["upstream_declared_platforms"])
         self.assertEqual(platform["agentswitchboard_target"], "WSL/Linux")
+        self.assertEqual(platform["wsl_distribution"], "Ubuntu")
         self.assertEqual(platform["native_windows"], "unverified and out of scope")
         self.assertIn("inference", platform["wsl_support_claim"])
 

@@ -2,6 +2,7 @@
   "schema": "agentswitchboard.firstmate-artifact-registry.v1",
   "naming": "firstmate-<artifact-role>[-<timestamp>].<ext>",
   "default_root": "OS temporary directory/agentswitchboard/firstmate-harness",
+  "windows_runtime_root": "OS temporary directory/AgentSwitchboard/firstmate-windows-wsl/<head8>-<timestamp>-<nonce>/",
   "artifacts": [
     {
       "id": "operator-report",
@@ -21,8 +22,15 @@
       "id": "windows-wsl-runtime-proof",
       "filename": "firstmate-floor.txt",
       "generator": "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead <exact-sha>",
-      "contains": "Windows source repository identity, WSLENV path transport, WSL-owned standalone exact-head clone identity, owning harness contract result, read-only First Mate floor output, route artifact, operator report, bootstrap stdout, and isolated WSL stderr diagnostics",
-      "proof_ceiling": "physical Windows-to-WSL floor only; not live crew completion proof"
+      "contains": "canonical Ubuntu distribution identity, Windows source repository identity, WSLENV path transport, WSL-owned standalone exact-head clone identity, owning harness contract result, read-only First Mate floor output, route artifact, operator report, bootstrap stdout, and isolated WSL stderr diagnostics",
+      "proof_ceiling": "physical Windows-to-Ubuntu-on-WSL floor only; not live crew completion proof"
+    },
+    {
+      "id": "windows-wsl-diagnostics",
+      "filename": "wsl-stderr.log",
+      "generator": "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1",
+      "contains": "exact head, Windows launcher/source paths, canonical WSL distribution, bounded subprocess failures/timeouts, WSL workspace, and repository-owned WSL repair exit state when explicitly requested",
+      "proof_ceiling": "transport/failure diagnostics only; not WSL readiness or live crew proof"
     }
   ],
   "forbidden_evidence": [
