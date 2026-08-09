@@ -34,13 +34,14 @@ Every canonical skill must define:
 5. Interactive PowerShell selects `powershell-interactive-execution`. Continuation keywords must remain in the same submitted statement as the block they continue.
 6. A copy-paste operator command that downloads, resolves, launches, installs, repairs, or crosses a child-process boundary selects `operator-command-delivery` before publication. The exact candidate command must be validated, not only a canned fixture.
 7. Supplied application, validator, agent, or tool output that must be compared with a prompt kit selects `app-output-contextualization`. It reads provided output only and preserves execution-surface separation.
-8. An operator-facing result that crosses shells, child processes, WSL, tmux, WezTerm, a TUI, a GUI, or another runtime boundary selects `end-to-end-runtime-validation`. Use `runtime-proof` for a bounded observation that does not require the complete operator path.
-9. A Windows Profile request that distinguishes default open-or-activate from an explicit separate instance, or evidence of duplicate WezTerm windows, selects `windows-profile-launch-mode-validation` before any launcher implementation or runtime claim.
-10. A request for a desktop shortcut or CMD installer that must create one genuinely separate tmux/WezTerm instance selects `tmux-new-instance-shortcut`. It preserves the one-launcher boundary and routes live acceptance through `end-to-end-runtime-validation`.
-11. An Android/Termux repository bootstrap, mobile command-delivery recovery, multi-pane native-selection problem, or unclear tmux scrollback selects `android-termux-repo-bootstrap`; terminal selection/scrollback recovery additionally selects `android-termux-terminal-recovery` before asking the operator to fight native selection or provide screenshots.
-12. `TRIGGERS.md` maps repository evidence to a skill.
-13. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
-14. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
+8. An OpenCode failure where configuration, parent-shell resolution, AgentSwitchboard/GNHF resolution, a Windows shim, WSL Ubuntu, or a child spawn such as `uv_spawn` may disagree selects `opencode-runtime-resolution` before reinstalling packages, deleting shims, or editing PATH.
+9. An operator-facing result that crosses shells, child processes, WSL, tmux, WezTerm, a TUI, a GUI, or another runtime boundary selects `end-to-end-runtime-validation`. Use `runtime-proof` for a bounded observation that does not require the complete operator path.
+10. A Windows Profile request that distinguishes default open-or-activate from an explicit separate instance, or evidence of duplicate WezTerm windows, selects `windows-profile-launch-mode-validation` before any launcher implementation or runtime claim.
+11. A request for a desktop shortcut or CMD installer that must create one genuinely separate tmux/WezTerm instance selects `tmux-new-instance-shortcut`. It preserves the one-launcher boundary and routes live acceptance through `end-to-end-runtime-validation`.
+12. An Android/Termux repository bootstrap, mobile command-delivery recovery, multi-pane native-selection problem, or unclear tmux scrollback selects `android-termux-repo-bootstrap`; terminal selection/scrollback recovery additionally selects `android-termux-terminal-recovery` before asking the operator to fight native selection or provide screenshots.
+13. `TRIGGERS.md` maps repository evidence to a skill.
+14. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
+15. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
 
 ## Canonical skills
 
@@ -57,6 +58,7 @@ Every canonical skill must define:
 | [`pr-integration`](.ai/skills/pr-integration/SKILL.md) | Reconcile stacked or parallel branches safely | merge request, stacked PRs, consumed upstream work |
 | [`runtime-proof`](.ai/skills/runtime-proof/SKILL.md) | Move from static confidence to observed behavior | launcher, installer, harness, or live-runtime request |
 | [`end-to-end-runtime-validation`](.ai/skills/end-to-end-runtime-validation/SKILL.md) | Prove the exact operator command across every runtime boundary through effective-state and user-experience readback | workstation repair, Windows-to-WSL chain, tmux/WezTerm configuration, cross-process installer or launcher, opaque child failure |
+| [`opencode-runtime-resolution`](.ai/skills/opencode-runtime-resolution/SKILL.md) | Prove which OpenCode runtime surface is requested and actually selected before runtime repair | native-vs-WSL disagreement, AgentSwitchboard `opencode.cmd` shim, parent/child resolver divergence, `uv_spawn`, contradictory fleet state |
 | [`windows-profile-launch-mode-validation`](.ai/skills/windows-profile-launch-mode-validation/SKILL.md) | Distinguish default workspace convergence, explicit named new instances, and accidental duplicate WezTerm windows | launch-mode request, separate-instance request, duplicate-window evidence, tmux-session identity ambiguity |
 | [`tmux-new-instance-shortcut`](.ai/skills/tmux-new-instance-shortcut/SKILL.md) | Install and validate one owned desktop shortcut that allocates a unique tmux session and separate WezTerm process | desktop shortcut request, clickable CMD installer, one-click separate tmux instance |
 | [`app-output-contextualization`](.ai/skills/app-output-contextualization/SKILL.md) | Parse supplied output, redact it, compare it with a prompt registry, and emit compact agent instructions | app output, logs, JSON, JSONL, validator output, minimal-token routing |
@@ -96,6 +98,10 @@ An app-output context packet is a minimized interpretation artifact, not the ori
 ## End-to-end distinction
 
 `runtime-proof` can establish one observed behavior in an authorized environment. `end-to-end-runtime-validation` is required when the claim depends on the exact command an operator runs and a chain of shell, process, platform, terminal, TUI, GUI, provider, or application boundaries. The end-to-end skill requires per-stage stdout, stderr, exit identity, effective-state readback, user-visible observation, and idempotence or rollback proof when applicable. A parent exception containing only an exit code is not a complete end-to-end failure report.
+
+## OpenCode runtime-resolution distinction
+
+`opencode-runtime-resolution` owns read-only attribution of OpenCode executable provenance when AgentSwitchboard may expose native Windows npm OpenCode, `%LOCALAPPDATA%\AgentSwitchboard\bin\opencode.cmd`, WSL Ubuntu OpenCode, or contradictory GNHF fleet state. `opencode debug config`, a parent `Get-Command`, file existence, and `state.json` are discovery evidence only; none alone proves the child executable that failed. The skill classifies native consistency, declared WSL consistency, native requests shadowed by the WSL shim, parent/child divergence, state-command drift, and unresolved runtime identity. It never edits PATH, removes shims, reinstalls packages, or claims live behavior. Exact-chain completion is handed to `end-to-end-runtime-validation` after any separately owned repair.
 
 ## Android Termux distinction
 
