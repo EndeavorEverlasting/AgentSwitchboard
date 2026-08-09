@@ -8,10 +8,12 @@ The failure is classified as a routing defect first. The harness does not assume
 
 ## Canonical distinction
 
+The command-envelope host identifiers are `windows-laptop` and `android-phone`; use those exact values instead of prose guesses.
+
 | Physical host | Canonical device profile | Normal outer shell | Valid execution surface |
 | --- | --- | --- | --- |
-| Windows laptop | `windows` | PowerShell | `windows-powershell`, `windows-cmd`, or explicitly proven `wsl-linux` |
-| Android phone | `android` | Termux Bash | `android-termux` |
+| Windows laptop (`windows-laptop`) | `windows` | PowerShell | `windows-powershell`, `windows-cmd`, or explicitly proven `wsl-linux` |
+| Android phone (`android-phone`) | `android` | Termux Bash | `android-termux` |
 
 A repository clone, `$HOME` path, tmux session name, or prior-chat command does not change the physical host.
 
