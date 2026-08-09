@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import sys
 import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
+EXIT_OPERATIONAL = 2
 
 
 def load(name: str) -> dict:
@@ -36,6 +38,7 @@ def render() -> str:
         "",
         "- Exact First Mate upstream pin and read-only Linux/WSL compatibility contract are tracked.",
         "- Deterministic direct-vs-crew routing is tracked and testable.",
+        "- The first safe sprint contract requires `local-only` with `first_safe_sprint.yolo_enabled: false`.",
         "- tmux remains the reference session backend.",
         "- The Windows-to-WSL proof bridge keeps WSL diagnostics on stderr and machine-readable output on stdout; it does not depend on `wslpath`.",
         f"- {len(workflows['workflows'])} workflow specs, {len(validators['validators'])} validators, and {len(artifacts['artifacts'])} generated artifact roles are registered.",
@@ -73,27 +76,46 @@ def render() -> str:
     return "\n".join(lines)
 
 
+def emit_error(error_id: str, exc: Exception, next_command: str) -> int:
+    payload = {
+        "status": "error",
+        "error": error_id,
+        "message": str(exc),
+        "next_command": next_command,
+    }
+    print(json.dumps(payload, sort_keys=True), file=sys.stderr)
+    return EXIT_OPERATIONAL
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output")
     parser.add_argument("--stdout", action="store_true")
     args = parser.parse_args()
 
-    text = render()
-    if args.stdout:
-        if args.output:
-            parser.error("--stdout and --output are mutually exclusive")
-        print(text)
-        return 0
+    if args.stdout and args.output:
+        parser.error("--stdout and --output are mutually exclusive")
 
-    if args.output:
-        output = Path(args.output).expanduser().resolve()
-    else:
-        output = Path(tempfile.gettempdir()) / "agentswitchboard" / "firstmate-harness" / "firstmate-harness-report.md"
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(text, encoding="utf-8")
-    print(output)
-    return 0
+    try:
+        text = render()
+        if args.stdout:
+            print(text)
+            return 0
+
+        if args.output:
+            output = Path(args.output).expanduser().resolve()
+        else:
+            output = Path(tempfile.gettempdir()) / "agentswitchboard" / "firstmate-harness" / "firstmate-harness-report.md"
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(text, encoding="utf-8")
+        print(output)
+        return 0
+    except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
+        return emit_error(
+            "firstmate-report-operational-error",
+            exc,
+            "bash Test-AgentSwitchboard-FirstMate-Harness.sh contract",
+        )
 
 
 if __name__ == "__main__":

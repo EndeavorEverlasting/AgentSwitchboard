@@ -77,6 +77,51 @@ for tool in git gh tmux python3; do
   command -v "$tool" >/dev/null 2>&1 || fail "Required tool is unavailable in this Linux environment: $tool"
 done
 
+CONTRACT_OUTPUT=""
+if ! CONTRACT_OUTPUT="$(python3 - "$CONTRACT" <<'PY'
+import json
+import re
+import sys
+from pathlib import PurePosixPath
+
+path = sys.argv[1]
+with open(path, encoding="utf-8") as handle:
+    data = json.load(handle)
+
+verified = data.get("upstream", {}).get("verified_commit")
+if not isinstance(verified, str) or not re.fullmatch(r"[0-9a-f]{40}", verified):
+    raise SystemExit("upstream.verified_commit must be a 40-character lowercase hex SHA")
+
+paths = data.get("required_upstream_paths")
+if not isinstance(paths, list) or not paths:
+    raise SystemExit("required_upstream_paths must be a non-empty list")
+
+for item in paths:
+    if not isinstance(item, str) or not item.strip():
+        raise SystemExit("required_upstream_paths entries must be non-empty strings")
+    parsed = PurePosixPath(item)
+    if parsed.is_absolute() or ".." in parsed.parts:
+        raise SystemExit(f"required_upstream_paths entry must be relative and traversal-free: {item}")
+
+safe = data.get("first_safe_sprint", {})
+if safe.get("project_delivery_mode") != "local-only":
+    raise SystemExit("first_safe_sprint.project_delivery_mode must be local-only")
+if safe.get("yolo_enabled") is not False:
+    raise SystemExit("first_safe_sprint.yolo_enabled must be explicitly false")
+
+print(verified)
+for item in paths:
+    print(item)
+PY
+)"; then
+  fail "Invalid integration contract: $CONTRACT"
+fi
+
+mapfile -t CONTRACT_LINES <<<"$CONTRACT_OUTPUT"
+EXPECTED_HEAD="${CONTRACT_LINES[0]}"
+REQUIRED_PATHS=("${CONTRACT_LINES[@]:1}")
+[[ ${#REQUIRED_PATHS[@]} -gt 0 ]] || fail "Invalid integration contract: no required upstream paths resolved"
+
 is_firstmate_clone() {
   local candidate="$1"
   [[ -d "$candidate" ]] || return 1
@@ -110,22 +155,9 @@ is_firstmate_clone "$FIRSTMATE_DIR" || fail "Path is not the audited upstream cl
 status="$(git -C "$FIRSTMATE_DIR" status --porcelain=v1)"
 [[ -z "$status" ]] || fail "First Mate clone is dirty; preserve that work before interoperability probing."
 
-EXPECTED_HEAD="$(python3 - "$CONTRACT" <<'PY'
-import json, sys
-with open(sys.argv[1], encoding='utf-8') as handle:
-    print(json.load(handle)['upstream']['verified_commit'])
-PY
-)"
 ACTUAL_HEAD="$(git -C "$FIRSTMATE_DIR" rev-parse HEAD)"
 [[ "$ACTUAL_HEAD" == "$EXPECTED_HEAD" ]] || fail "First Mate HEAD is $ACTUAL_HEAD, but this integration floor was audited at $EXPECTED_HEAD. Refresh the evidence contract before claiming compatibility."
 
-mapfile -t REQUIRED_PATHS < <(python3 - "$CONTRACT" <<'PY'
-import json, sys
-with open(sys.argv[1], encoding='utf-8') as handle:
-    for path in json.load(handle)['required_upstream_paths']:
-        print(path)
-PY
-)
 for path in "${REQUIRED_PATHS[@]}"; do
   [[ -e "$FIRSTMATE_DIR/$path" ]] || fail "Required audited upstream path is missing: $path"
 done

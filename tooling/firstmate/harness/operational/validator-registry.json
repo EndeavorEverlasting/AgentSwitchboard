@@ -18,8 +18,8 @@
     },
     {
       "id": "firstmate-shell-parse",
-      "command": "bash -n tooling/firstmate/Test-FirstMateInterop.sh && bash -n Test-AgentSwitchboard-FirstMate-Harness.sh",
-      "scope": "operator shell entrypoints"
+      "command": "bash -n tooling/firstmate/Test-FirstMateInterop.sh && bash -n Test-AgentSwitchboard-FirstMate-Harness.sh && bash -n tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPreCommit.sh && bash -n tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPrePush.sh",
+      "scope": "operator shell entrypoints and optional hook scripts"
     },
     {
       "id": "operational-harness-foundation",

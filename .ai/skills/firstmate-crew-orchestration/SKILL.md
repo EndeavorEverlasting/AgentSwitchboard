@@ -1,6 +1,6 @@
 ---
 id: firstmate-crew-orchestration
-version: 1.1.0
+version: 1.2.0
 status: experimental
 ---
 
@@ -8,7 +8,7 @@ status: experimental
 
 ## Trigger
 
-Use when AgentSwitchboard must decide whether a task should stay with one direct repository writer or be decomposed into parallel crew work through First Mate, especially when laptop/WSL work should continue independently of Android profile or Herdr migration work. Also use when a Windows operator must cross into the Linux/WSL First Mate lane and path conversion, WSL diagnostics, or exact-head continuity could make the handoff ambiguous.
+Use when AgentSwitchboard must decide whether a task should stay with one direct repository writer or be decomposed into parallel crew work through First Mate, especially when laptop/WSL work should continue independently of Android profile or Herdr migration work. Also use when a Windows operator must cross into the Linux/WSL First Mate lane and path conversion, WSL diagnostics, exact-head continuity, delivery posture, or autonomy posture could make the handoff ambiguous.
 
 ## Inputs
 
@@ -16,6 +16,7 @@ Use when AgentSwitchboard must decide whether a task should stay with one direct
 - number of concurrent writers actually needed;
 - target platform (`linux-wsl`, `windows`, `android`, or other);
 - First Mate read-only floor state (`pass`, `unproved`, or `fail`);
+- canonical `first_safe_sprint` contract, including `project_delivery_mode` and `yolo_enabled`;
 - exact AgentSwitchboard head for any Windows-to-WSL runtime proof;
 - owned and forbidden paths for every worker;
 - requested session backend, if any;
@@ -23,23 +24,24 @@ Use when AgentSwitchboard must decide whether a task should stay with one direct
 
 ## Procedure
 
-1. Read `AGENTS.md`, `CODEBASE_MAP.md`, `HARNESS.md`, and `tooling/firstmate/harness/operational/manifest.json`.
+1. Read `AGENTS.md`, `CODEBASE_MAP.md`, `HARNESS.md`, `tooling/firstmate/harness/integration-contract.json`, and `tooling/firstmate/harness/operational/manifest.json`.
 2. Preserve active writers. Do not absorb the Android/Herdr migration lane or unrelated PR ownership.
 3. Run `Select-FirstMateWorkflow.py`; do not replace its deterministic compatibility gates with model preference.
 4. Keep one-writer work on direct AgentSwitchboard execution.
 5. For parallel Linux/WSL work, require the read-only First Mate floor before routing to `firstmate-local-only`.
-6. When Windows launches the WSL lane, use `Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1`. Do not manually feed the isolated Windows worktree through `wslpath`.
-7. The Windows bridge must run `wsl.exe` with the exact Windows worktree as `ProcessStartInfo.WorkingDirectory`, capture stdout/stderr separately, and prove WSL resolves the same exact Git HEAD before parsing any report or route data.
-8. Preserve WSL stderr as bounded diagnostics. A `/etc/wsl.conf` warning is not machine-readable output and must never be concatenated into a path or JSON value.
-9. Keep tmux as the reference session backend. Herdr remains blocked while the operational manifest has `herdr_selection_enabled: false`.
-10. If First Mate becomes ready, assign disjoint branches/worktrees, explicit owned/forbidden paths, validators, and one convergence owner.
-11. Run focused validators before commit. Preserve successful disjoint worker evidence when one lane fails.
-12. Generate the operator report and route artifact before handoff.
-13. Never promote static harness success into live crew, Herdr, PR, merge, deployment, or target-runtime proof.
+6. Before selecting `firstmate-local-only`, require the canonical contract to state `first_safe_sprint.project_delivery_mode: local-only` and `first_safe_sprint.yolo_enabled: false`. A missing or non-false `yolo_enabled` is a blocked policy gate, not permission to infer autonomy.
+7. When Windows launches the WSL lane, use `Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1`. Do not manually feed the isolated Windows worktree through `wslpath`.
+8. The Windows bridge must run `wsl.exe` with the exact Windows worktree as `ProcessStartInfo.WorkingDirectory`, capture stdout/stderr separately, and prove WSL resolves the same exact Git HEAD before parsing any report or route data.
+9. Preserve WSL stderr as bounded diagnostics. A `/etc/wsl.conf` warning is not machine-readable output and must never be concatenated into a path or JSON value.
+10. Keep tmux as the reference session backend. Herdr remains blocked while the operational manifest has `herdr_selection_enabled: false`.
+11. If First Mate becomes ready, assign disjoint branches/worktrees, explicit owned/forbidden paths, validators, and one convergence owner.
+12. Run focused validators before commit. Preserve successful disjoint worker evidence when one lane fails.
+13. Generate the operator report and route artifact before handoff.
+14. Never promote static harness success into live crew, Herdr, PR, merge, deployment, or target-runtime proof.
 
 ## Outputs
 
-- deterministic route decision;
+- deterministic route decision including delivery mode and `yolo_enabled` state;
 - Windows-to-WSL runtime-floor evidence when that boundary is exercised;
 - crew/worktree boundary map when parallel work is selected;
 - validator receipts;
@@ -61,6 +63,7 @@ Use when AgentSwitchboard must decide whether a task should stay with one direct
 - no edits to `AGENTS.md` or governance policy in this harness lane;
 - no First Mate upstream mutation or dependency installation;
 - no automatic Herdr promotion;
+- no implicit or inferred `+yolo` enablement;
 - no native-Windows First Mate compatibility claim;
 - no Android/Termux compatibility inference from Linux support;
 - no concurrent writes to the same branch/worktree;

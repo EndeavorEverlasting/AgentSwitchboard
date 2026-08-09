@@ -33,6 +33,7 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
         for expected in (".ai/skills", "tooling/harness", "tooling/firstmate", "tooling/profiles", "tests", "docs/harness"):
             self.assertIn(expected, structure)
         self.assertIn("crew_harness", self.codebase["entrypoints"])
+        self.assertIn("windows_wsl_bridge", self.codebase["entrypoints"])
         self.assertIn("focused_test", self.codebase["commands"])
         self.assertIn("deploy", self.codebase["commands"])
         traps = "\n".join(self.codebase["known_traps"])
@@ -59,6 +60,7 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
         generators = "\n".join(item["generator"] for item in self.artifacts["artifacts"])
         self.assertIn("Build-FirstMateHarnessReport.py", generators)
         self.assertIn("Select-FirstMateWorkflow.py", generators)
+        self.assertIn("Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1", generators)
         self.assertIn("credentials", self.artifacts["forbidden_evidence"])
         self.assertIn("private SSH keys", self.artifacts["forbidden_evidence"])
 
@@ -66,7 +68,10 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
         commands = "\n".join(item["command"] for item in self.validators["validators"])
         self.assertIn("test_firstmate_integration_contract.py", commands)
         self.assertIn("test_firstmate_operational_harness.py", commands)
+        self.assertIn("test_firstmate_windows_wsl_bridge.py", commands)
         self.assertIn("test_operational_harness.py", commands)
+        self.assertIn("Invoke-FirstMateHarnessPreCommit.sh", commands)
+        self.assertIn("Invoke-FirstMateHarnessPrePush.sh", commands)
         self.assertEqual(self.validators["hook_installation"], "manual-only; this harness never installs Git hooks implicitly")
         for relative in self.validators["hooks"].values():
             text = (ROOT / relative).read_text(encoding="utf-8")
@@ -101,6 +106,7 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
         self.assertEqual(result["status"], "ready")
         self.assertEqual(result["route"], "firstmate-local-only")
         self.assertEqual(result["delivery_mode"], "local-only")
+        self.assertIs(result["yolo_enabled"], False)
         self.assertEqual(result["session_backend"], "tmux")
 
     def test_selector_blocks_herdr_promotion(self):
@@ -132,6 +138,26 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
             for heading in ("## Role boundaries", "## Working", "## Broken or blocked", "## Missing proof", "## Proof ceiling"):
                 self.assertIn(heading, text)
             self.assertIn("do not wait for Android or Herdr readiness", text)
+            self.assertIn("yolo_enabled: false", text)
+
+    def test_agent_facing_python_tools_normalize_output_write_errors(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for tool, args, error_id in (
+                (SELECTOR, ["--output", tmp], "firstmate-route-operational-error"),
+                (REPORT_BUILDER, ["--output", tmp], "firstmate-report-operational-error"),
+            ):
+                completed = subprocess.run(
+                    ["python3", str(tool), *args],
+                    cwd=ROOT,
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertEqual(completed.returncode, 2)
+                payload = json.loads(completed.stderr)
+                self.assertEqual(payload["status"], "error")
+                self.assertEqual(payload["error"], error_id)
+                self.assertIn("next_command", payload)
 
     def test_skill_and_status_report_expose_handoff_boundary(self):
         skill = (ROOT / ".ai/skills/firstmate-crew-orchestration/SKILL.md").read_text(encoding="utf-8")
@@ -140,6 +166,7 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
         self.assertIn("## Outputs", skill)
         self.assertIn("## Deterministic validation", skill)
         self.assertIn("## Forbidden scope", skill)
+        self.assertIn("first_safe_sprint.yolo_enabled", skill)
         status = (ROOT / "docs/reports/firstmate-operational-harness-status.md").read_text(encoding="utf-8")
         self.assertIn("## Working", status)
         self.assertIn("## Broken or blocked", status)
@@ -149,6 +176,7 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
         entry = (ROOT / "Test-AgentSwitchboard-FirstMate-Harness.sh").read_text(encoding="utf-8")
         for mode in ("contract)", "report)", "route)", "probe)"):
             self.assertIn(mode, entry)
+        self.assertIn("git diff --cached --check", entry)
 
 
 if __name__ == "__main__":

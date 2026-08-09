@@ -21,6 +21,8 @@ First Mate's project-management contract defines these delivery postures:
 
 For the first AgentSwitchboard interoperability proof, use `local-only`. That intentionally withholds remote-write authority while we prove repository discovery, toolchain readiness, the First Mate operating contract, and task isolation boundaries. A later sprint can promote the standing posture after a real local-only task has produced evidence.
 
+The autonomy posture is also machine-readable: `tooling/firstmate/harness/integration-contract.json` requires `first_safe_sprint.yolo_enabled: false`. The deterministic route selector refuses `firstmate-local-only` unless that canonical field is present and false. Documentation or model preference cannot silently enable `+yolo`.
+
 ## Run the read-only probe
 
 Run this from a Linux/WSL AgentSwitchboard checkout containing this integration branch:
@@ -42,10 +44,11 @@ The probe checks only local state plus `gh auth status`. It requires:
 3. one upstream-supported primary harness: `claude`, `grok`, `pi`, `pi-signed`, `codex`, or `opencode`;
 4. a clean First Mate Git worktree whose normalized `origin` resolves to `kunchenguid/firstmate`;
 5. exact First Mate HEAD `833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409`;
-6. the audited upstream contract paths; and
-7. an authenticated GitHub CLI session.
+6. a valid non-empty list of audited upstream contract paths;
+7. `first_safe_sprint.project_delivery_mode == local-only` and `first_safe_sprint.yolo_enabled == false`; and
+8. an authenticated GitHub CLI session.
 
-The origin check accepts equivalent GitHub transport forms, including HTTPS, authenticated HTTPS, `git://`, SCP-style SSH, and `ssh://` after normalization. Linked Git worktrees are valid; `.git` is not required to be a directory.
+The origin check accepts equivalent GitHub transport forms, including HTTPS, authenticated HTTPS, `git://`, SCP-style SSH, and `ssh://` after normalization. Linked Git worktrees are valid; `.git` is not required to be a directory. Contract parsing is fail-closed: malformed or traversal-bearing `required_upstream_paths`, a bad upstream SHA, or a non-disabled `+yolo` posture stops the probe before a pass can be emitted.
 
 It does **not** install dependencies, change credentials, alter either repository, dispatch a First Mate task, push a branch, open a PR, or merge anything.
 
@@ -79,6 +82,7 @@ The deterministic contract tests are:
 ```bash
 python3 tests/test_firstmate_integration_contract.py
 python3 tests/test_firstmate_operational_harness.py
+python3 tests/test_firstmate_windows_wsl_bridge.py
 ```
 
 The shell surface syntax checks are:
@@ -90,4 +94,4 @@ bash -n Test-AgentSwitchboard-FirstMate-Harness.sh
 
 ## Proof ceiling
 
-Passing the offline checks proves that AgentSwitchboard tracks a bounded First Mate integration contract with an exact upstream evidence pin, deterministic crew routing, and a non-mutating Linux/WSL probe. Passing the probe additionally proves that one operator environment has the audited First Mate clone and required local toolchain. Neither level proves live First Mate dispatch, worker supervision, treehouse worktree behavior, task completion, PR delivery, merge behavior, Herdr runtime, native Windows support, or Android/Termux support.
+Passing the offline checks proves that AgentSwitchboard tracks a bounded First Mate integration contract with an exact upstream evidence pin, deterministic crew routing, explicit `+yolo` disablement, and a non-mutating Linux/WSL probe. Passing the probe additionally proves that one operator environment has the audited First Mate clone and required local toolchain. Neither level proves live First Mate dispatch, worker supervision, treehouse worktree behavior, task completion, PR delivery, merge behavior, Herdr runtime, native Windows support, or Android/Termux support.

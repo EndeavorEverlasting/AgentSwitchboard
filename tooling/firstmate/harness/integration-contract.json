@@ -52,6 +52,7 @@
   },
   "first_safe_sprint": {
     "project_delivery_mode": "local-only",
+    "yolo_enabled": false,
     "remote_writes": false,
     "credential_mutation": false,
     "dependency_installation": false,

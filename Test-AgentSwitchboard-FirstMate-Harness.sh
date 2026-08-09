@@ -25,6 +25,7 @@ case "$MODE" in
     bash -n tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPreCommit.sh
     bash -n tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPrePush.sh
     git diff --check
+    git diff --cached --check
     printf '[PASS] FIRSTMATE_OPERATIONAL_HARNESS\n'
     ;;
   report)

@@ -27,9 +27,10 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
         self.assertEqual(self.verification["verified_commit"], sha)
         self.assertEqual(self.contract["upstream"]["repository"], "https://github.com/kunchenguid/firstmate")
 
-    def test_first_sprint_is_local_only_and_non_mutating(self):
+    def test_first_sprint_is_local_only_non_mutating_and_yolo_off(self):
         sprint = self.contract["first_safe_sprint"]
         self.assertEqual(sprint["project_delivery_mode"], "local-only")
+        self.assertIs(sprint["yolo_enabled"], False)
         for key in (
             "remote_writes",
             "credential_mutation",
@@ -94,6 +95,12 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
             )
             self.assertEqual(completed.stdout.strip(), "kunchenguid/firstmate", url)
 
+    def test_probe_contract_parsing_is_fail_closed(self):
+        self.assertIn("required_upstream_paths must be a non-empty list", self.probe)
+        self.assertIn("PurePosixPath", self.probe)
+        self.assertIn("first_safe_sprint.yolo_enabled must be explicitly false", self.probe)
+        self.assertNotIn("mapfile -t REQUIRED_PATHS < <(", self.probe)
+
     def test_probe_requires_clean_audited_clone_and_toolchain(self):
         self.assertIn("status --porcelain=v1", self.probe)
         self.assertIn('[[ "$ACTUAL_HEAD" == "$EXPECTED_HEAD" ]]', self.probe)
@@ -105,6 +112,7 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
     def test_docs_bind_to_contract_and_proof_ceiling(self):
         self.assertIn(EXPECTED_SHA, self.docs)
         self.assertIn("local-only", self.docs)
+        self.assertIn("first_safe_sprint.yolo_enabled", self.docs)
         self.assertIn("Test-FirstMateInterop.sh", self.docs)
         self.assertIn("Proof ceiling", self.docs)
         self.assertIn("WSL", self.docs)
