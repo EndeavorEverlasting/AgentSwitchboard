@@ -2,15 +2,24 @@
   "schemaVersion": 1,
   "contractId": "agentswitchboard.repository-work-ledger.v1",
   "contractVersion": "1.0.0",
+  "contractScope": "AgentSwitchboard-local compatibility and execution profile",
   "canonicalRepository": "EndeavorEverlasting/AgentSwitchboard",
+  "portableContract": {
+    "repository": "EndeavorEverlasting/BlacksmithGuild",
+    "id": "repo-ledger-interoperability",
+    "version": "RepoLedgerInteroperability.v1",
+    "pinnedCommit": "429237aa41d8712d71859865c9be407ca23d8580",
+    "path": ".tbg/workflows/repo-ledger-interoperability.contract.json"
+  },
   "documentation": "docs/governance/repository-work-ledger-contract.md",
   "donor": {
     "repository": "EndeavorEverlasting/AxTask",
     "pinnedCommit": "9351c952b057ae4520b1ea0d388e1d8908f4c093",
     "authoritativePaths": [
+      ".ai/README.md",
       ".ai/WORK_QUEUE.md",
-      "scripts/ai-harness/validate-work-queue.mjs",
-      "server/ai-harness/work-queue-contract.test.ts"
+      ".ai/authority.json",
+      "scripts/ai-harness/validate-work-queue.mjs"
     ],
     "portableCapabilities": [
       "shared unfinished-work coordination ledger",
@@ -58,6 +67,7 @@
     "requiredFields": ["Work class"],
     "workClasses": ["BOUNDED", "UNBOUNDED"],
     "unboundedAllowedStatuses": ["READY", "BLOCKED", "OPERATOR", "DONE"],
+    "portableRequirement": false,
     "derivedRoutes": {
       "boundedContinuation": "EXECUTE",
       "unboundedReady": "DECOMPOSE",
@@ -78,5 +88,5 @@
     "localRulesMayStrengthen": true,
     "localRulesMayWeaken": false
   },
-  "proofCeiling": "contract and static ledger validation only; no implementation, CI, merge, provider, operator, behavior-observed, or live-runtime proof"
+  "proofCeiling": "portable contract compatibility plus static local ledger/frontier validation only; no implementation, CI, merge, provider, operator, behavior-observed, or live-runtime proof"
 }

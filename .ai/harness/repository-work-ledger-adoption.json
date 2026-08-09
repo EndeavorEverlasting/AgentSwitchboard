@@ -2,10 +2,19 @@
   "schemaVersion": 1,
   "adoptionId": "agentswitchboard.repository-work-ledger.adoption.v1",
   "repository": "EndeavorEverlasting/AgentSwitchboard",
-  "role": "canonical-portable-contract-and-consumer",
+  "role": "portable-contract-consumer-and-local-execution-profile-owner",
+  "portableContract": {
+    "repository": "EndeavorEverlasting/BlacksmithGuild",
+    "id": "repo-ledger-interoperability",
+    "version": "RepoLedgerInteroperability.v1",
+    "pinnedCommit": "429237aa41d8712d71859865c9be407ca23d8580",
+    "path": ".tbg/workflows/repo-ledger-interoperability.contract.json",
+    "schemaPath": ".tbg/harness/schemas/repo-ledger-adoption.schema.json"
+  },
   "contract": {
     "id": "agentswitchboard.repository-work-ledger.v1",
     "version": "1.0.0",
+    "scope": "AgentSwitchboard-local compatibility and execution profile",
     "documentation": "docs/governance/repository-work-ledger-contract.md",
     "policy": ".ai/harness/repository-work-ledger.policy.json"
   },
@@ -13,9 +22,10 @@
     "repository": "EndeavorEverlasting/AxTask",
     "pinnedCommit": "9351c952b057ae4520b1ea0d388e1d8908f4c093",
     "sourcePaths": [
+      ".ai/README.md",
       ".ai/WORK_QUEUE.md",
-      "scripts/ai-harness/validate-work-queue.mjs",
-      "server/ai-harness/work-queue-contract.test.ts"
+      ".ai/authority.json",
+      "scripts/ai-harness/validate-work-queue.mjs"
     ]
   },
   "local": {
@@ -30,13 +40,16 @@
     "executionProfile": {
       "requiredField": "Work class",
       "classes": ["BOUNDED", "UNBOUNDED"],
-      "routesAreDerived": true
+      "routesAreDerived": true,
+      "portableRequirement": false
     },
     "ci": ".github/workflows/repository-work-ledger-contract.yml"
   },
   "mustNotCopyOrReimplement": [
     "AxTask AXQ task contents",
     "AxTask deployment/database domain gates",
+    "BlacksmithGuild consumer queue state or runtime behavior",
+    "AgentSwitchboard Work class/frontier as a portable v1 requirement",
     "consumer product behavior",
     "runtime proof inferred from ledger prose"
   ],

@@ -7,6 +7,8 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 VALIDATOR = ROOT / 'scripts' / 'Test-RepositoryWorkLedgerContract.ps1'
 POLICY = ROOT / '.ai' / 'harness' / 'repository-work-ledger.policy.json'
+ADOPTION = ROOT / '.ai' / 'harness' / 'repository-work-ledger-adoption.json'
+PORTABLE_COMMIT = '429237aa41d8712d71859865c9be407ca23d8580'
 
 
 def run_validator(path=None, policy=None):
@@ -18,7 +20,8 @@ def run_validator(path=None, policy=None):
     return subprocess.run(command, cwd=ROOT, text=True, capture_output=True)
 
 
-HEADER = '''contractRef: agentswitchboard.repository-work-ledger.v1@1.0.0
+HEADER = f'''portableContractRef: RepoLedgerInteroperability.v1@{PORTABLE_COMMIT}
+localProfileRef: agentswitchboard.repository-work-ledger.v1@1.0.0
 localAuthority: AGENTS.md
 
 # Test ledger
@@ -51,7 +54,20 @@ class RepositoryWorkLedgerContractTests(unittest.TestCase):
         result = run_validator()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('[repository-work-ledger] PASS', result.stdout)
-        self.assertIn('local-profile=bounded-frontier', result.stdout)
+        self.assertIn('portable=RepoLedgerInteroperability.v1@429237aa41d8', result.stdout)
+        self.assertIn('local-profile=agentswitchboard.repository-work-ledger.v1@1.0.0', result.stdout)
+
+    def test_portable_contract_pin_is_exact_and_blacksmith_owned(self):
+        policy = json.loads(POLICY.read_text(encoding='utf-8'))
+        adoption = json.loads(ADOPTION.read_text(encoding='utf-8'))
+        for portable in (policy['portableContract'], adoption['portableContract']):
+            self.assertEqual(portable['repository'], 'EndeavorEverlasting/BlacksmithGuild')
+            self.assertEqual(portable['id'], 'repo-ledger-interoperability')
+            self.assertEqual(portable['version'], 'RepoLedgerInteroperability.v1')
+            self.assertEqual(portable['pinnedCommit'], PORTABLE_COMMIT)
+            self.assertRegex(portable['pinnedCommit'], r'^[0-9a-f]{40}$')
+        self.assertFalse(policy['localExecutionProfile']['portableRequirement'])
+        self.assertFalse(adoption['local']['executionProfile']['portableRequirement'])
 
     def run_temp(self, content):
         with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False, dir=ROOT, encoding='utf-8') as handle:
@@ -149,6 +165,20 @@ class RepositoryWorkLedgerContractTests(unittest.TestCase):
             pathlib.Path(handle.name).unlink(missing_ok=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('requiredFields does not match immutable v1 contract', result.stderr)
+
+    def test_symbolic_portable_contract_pin_is_rejected(self):
+        policy = json.loads(POLICY.read_text(encoding='utf-8'))
+        policy['portableContract']['pinnedCommit'] = 'main'
+        with tempfile.NamedTemporaryFile('w', suffix='.json', delete=False, dir=ROOT, encoding='utf-8') as handle:
+            json.dump(policy, handle)
+            relative = pathlib.Path(handle.name).relative_to(ROOT)
+        try:
+            result = run_validator(policy=relative)
+        finally:
+            pathlib.Path(handle.name).unlink(missing_ok=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('portable contract pin drifted', result.stderr)
+        self.assertIn('portable contract pinnedCommit must be a full exact SHA', result.stderr)
 
 
 if __name__ == '__main__':
