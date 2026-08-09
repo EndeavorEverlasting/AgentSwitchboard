@@ -24,6 +24,9 @@ function Read-Tracked {
 }
 
 $requiredFiles = @(
+    'CODEBASE_MAP.md',
+    'SKILLS.md',
+    'TRIGGERS.md',
     'tooling/profiles/windows/harness/opencode-runtime-resolution/codebase-map.json',
     'tooling/profiles/windows/harness/opencode-runtime-resolution/runtime-resolution.registry.json',
     'tooling/profiles/windows/harness/opencode-runtime-resolution/artifact-registry.json',
@@ -34,6 +37,8 @@ $requiredFiles = @(
     'tooling/profiles/windows/harness/opencode-runtime-resolution/fixtures/valid-native-windows.fixture.json',
     'tooling/profiles/windows/harness/opencode-runtime-resolution/fixtures/valid-declared-wsl.fixture.json',
     'tooling/profiles/windows/harness/opencode-runtime-resolution/fixtures/invalid-shim-shadowing.fixture.json',
+    'tooling/profiles/windows/harness/opencode-runtime-resolution/fixtures/invalid-wsl-missing-target.fixture.json',
+    'tooling/profiles/windows/harness/opencode-runtime-resolution/fixtures/invalid-wsl-state-drift.fixture.json',
     'tooling/profiles/windows/harness/opencode-runtime-resolution/operator-report.template.md',
     '.ai/skills/opencode-runtime-resolution/SKILL.md',
     'tooling/profiles/windows/Get-OpenCodeRuntimeResolutionStatus.ps1',
@@ -99,6 +104,19 @@ foreach ($token in @(
     'No user or machine PATH mutation'
 )) { Check ($skill.Contains($token)) "skill/$token" 'required skill rule is missing' }
 
+$skillsCatalog = $text['SKILLS.md']
+foreach ($token in @('opencode-runtime-resolution', '.ai/skills/opencode-runtime-resolution/SKILL.md', 'OpenCode', 'WSL')) {
+    Check ($skillsCatalog.Contains($token)) "skills-catalog/$token" 'canonical skill is not discoverable'
+}
+$triggerCatalog = $text['TRIGGERS.md']
+foreach ($token in @('opencode.runtime-resolution-divergence', 'opencode-runtime-resolution', 'uv_spawn')) {
+    Check ($triggerCatalog.Contains($token)) "trigger-catalog/$token" 'OpenCode runtime-resolution trigger is not registered'
+}
+$codebaseMap = $text['CODEBASE_MAP.md']
+foreach ($token in @('## OpenCode runtime-resolution harness', 'opencode-runtime-resolution', 'Get-OpenCodeRuntimeResolutionStatus.ps1')) {
+    Check ($codebaseMap.Contains($token)) "codebase-map/$token" 'OpenCode runtime-resolution harness is not indexed'
+}
+
 $guide = $text['docs/harness/opencode-runtime-resolution-harness.md']
 foreach ($token in @('## Working','## Broken','## Missing','## Known traps','## Validation','## Proof ceiling','AgentSwitchboard\bin\opencode.cmd','%APPDATA%\npm')) {
     Check ($guide.Contains($token)) "guide/$token" 'operator guide token is missing'
@@ -119,6 +137,42 @@ foreach ($forbidden in @('SetEnvironmentVariable(','npm install --global','Invok
 if ($failures.Count -eq 0) {
     & python (Join-Path $RootPath 'tests/test_opencode_runtime_resolution_harness.py')
     Check ($LASTEXITCODE -eq 0) 'python/contracts' 'dependency-free semantic contracts failed'
+}
+
+if ($failures.Count -eq 0) {
+    $reportRoot = Join-Path ([IO.Path]::GetTempPath()) ('AgentSwitchboard-OpenCodeRuntimeResolution-contract-' + [guid]::NewGuid().ToString('N'))
+    try {
+        & pwsh -NoLogo -NoProfile -File (Join-Path $RootPath 'tooling\profiles\windows\Get-OpenCodeRuntimeResolutionStatus.ps1') -RootPath $RootPath -RequestedSurface unknown -OutputRoot $reportRoot
+        Check ($LASTEXITCODE -eq 0) 'reporter/exit-zero' 'repository-only reporter failed'
+
+        $snapshotPath = Join-Path $reportRoot 'opencode-runtime-resolution-snapshot.json'
+        $reportPath = Join-Path $reportRoot 'opencode-runtime-operator-report.md'
+        Check (Test-Path -LiteralPath $snapshotPath -PathType Leaf) 'reporter/snapshot-exists' 'snapshot was not generated'
+        Check (Test-Path -LiteralPath $reportPath -PathType Leaf) 'reporter/report-exists' 'operator report was not generated'
+
+        if (Test-Path -LiteralPath $snapshotPath -PathType Leaf) {
+            $snapshot = Get-Content -LiteralPath $snapshotPath -Raw | ConvertFrom-Json
+            Check ($snapshot.schema -eq 'agentswitchboard.opencode-runtime-resolution-snapshot.v1') 'reporter/schema' 'snapshot schema is not registered'
+            Check ($snapshot.requestedSurface -eq 'unknown') 'reporter/requested-surface' 'requested surface is missing or rewritten'
+            Check ($null -eq $snapshot.parentResolution) 'reporter/parent-null-without-observation' 'repository-only status invented parent resolution'
+            Check ($null -eq $snapshot.effectiveLaunchResolution) 'reporter/child-unresolved' 'repository-only status invented child resolution'
+            Check (-not [bool]$snapshot.processPathCaptured) 'reporter/path-not-captured' 'repository-only status falsely claims PATH capture'
+            Check (-not [bool]$snapshot.tracked) 'reporter/untracked-artifact' 'runtime artifact is marked tracked'
+            Check ($snapshot.repositoryHarnessStatus -eq 'ready') 'reporter/readiness' 'reporter did not establish complete tracked harness readiness'
+        }
+        if (Test-Path -LiteralPath $reportPath -PathType Leaf) {
+            $reportText = Get-Content -LiteralPath $reportPath -Raw
+            foreach ($heading in @('## Working','## Broken','## Missing','## Proof ceiling')) {
+                Check ($reportText.Contains($heading)) "reporter/$heading" 'operator report section is missing'
+            }
+        }
+    }
+    catch {
+        [void]$failures.Add("reporter/runtime-contract: $($_.Exception.Message)")
+    }
+    finally {
+        if (Test-Path -LiteralPath $reportRoot) { Remove-Item -LiteralPath $reportRoot -Recurse -Force -ErrorAction SilentlyContinue }
+    }
 }
 
 Write-Host 'OPENCODE RUNTIME RESOLUTION HARNESS' -ForegroundColor Cyan
