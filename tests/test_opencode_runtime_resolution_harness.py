@@ -5,6 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 HARNESS = ROOT / "tooling" / "profiles" / "windows" / "harness" / "opencode-runtime-resolution"
+REPORTER = ROOT / "tooling" / "profiles" / "windows" / "Get-OpenCodeRuntimeResolutionStatus.ps1"
 
 
 def load(path: Path):
@@ -37,6 +38,9 @@ def classify(case: dict) -> tuple[str, bool]:
     if requested == "native-windows" and (wrapper == "agentswitchboard-wsl-shim" or target_platform == "wsl-ubuntu"):
         return "shim-shadowing-native", False
 
+    if wrapper == "agentswitchboard-wsl-shim" and not launch.get("targetPath"):
+        return "unresolved-runtime-identity", False
+
     parent_platform = parent.get("runtimePlatform", "unknown")
     launch_platform = launch.get("runtimePlatform", "unknown")
     if requested != "wsl-ubuntu" and parent_platform != "unknown" and launch_platform != "unknown" and parent_platform != launch_platform:
@@ -48,8 +52,7 @@ def classify(case: dict) -> tuple[str, bool]:
         launch_family = family(launch.get("resolvedPath", ""))
         same_native_prefix = state_family == launch_family == "native-windows-npm"
         if state_family != "unknown" and launch_family != "unknown" and state_family != launch_family and not same_native_prefix:
-            if requested != "wsl-ubuntu":
-                return "state-command-drift", False
+            return "state-command-drift", False
 
     if requested == "native-windows" and target_platform == "windows" and wrapper == "native-package-shim":
         return "native-consistent", True
@@ -69,9 +72,14 @@ def test_required_files() -> None:
         HARNESS / "workflows" / "runtime-resolution-intake.workflow.json",
         HARNESS / "workflows" / "path-collision-diagnosis.workflow.json",
         HARNESS / "schemas" / "opencode-runtime-resolution.schema.json",
+        HARNESS / "fixtures" / "valid-native-windows.fixture.json",
+        HARNESS / "fixtures" / "valid-declared-wsl.fixture.json",
+        HARNESS / "fixtures" / "invalid-shim-shadowing.fixture.json",
+        HARNESS / "fixtures" / "invalid-wsl-missing-target.fixture.json",
+        HARNESS / "fixtures" / "invalid-wsl-state-drift.fixture.json",
         HARNESS / "operator-report.template.md",
         ROOT / ".ai" / "skills" / "opencode-runtime-resolution" / "SKILL.md",
-        ROOT / "tooling" / "profiles" / "windows" / "Get-OpenCodeRuntimeResolutionStatus.ps1",
+        REPORTER,
         ROOT / "tooling" / "profiles" / "windows" / "hooks" / "Invoke-OpenCodeRuntimeResolutionPreCommit.ps1",
         ROOT / "scripts" / "Test-OpenCodeRuntimeResolutionHarness.ps1",
         ROOT / "docs" / "harness" / "opencode-runtime-resolution-harness.md",
@@ -87,6 +95,7 @@ def test_registry_semantics() -> None:
     assert registry["evidenceRules"]["resolvedConfigProvesExecutableIdentity"] is False
     assert registry["evidenceRules"]["parentGetCommandProvesChildIdentity"] is False
     assert registry["evidenceRules"]["exactOperatorOrAgentLaunchChainRequiredForRuntimeProof"] is True
+    assert registry["evidenceRules"]["wrapperTargetRequiredWhenWrapperSelected"] is True
     assert registry["repairBoundary"]["harnessMayMutatePath"] is False
     assert registry["repairBoundary"]["harnessMayInstallPackages"] is False
     ids = {item["classificationId"] for item in registry["classifications"]}
@@ -103,12 +112,36 @@ def test_registry_semantics() -> None:
 def test_fixture_classification() -> None:
     fixture_dir = HARNESS / "fixtures"
     fixtures = sorted(fixture_dir.glob("*.fixture.json"))
-    assert len(fixtures) >= 3
+    assert len(fixtures) >= 5
     for path in fixtures:
         case = load(path)
         actual_classification, actual_pass = classify(case)
-        assert actual_classification == case["expectedClassification"], (path.name, actual_classification, case["expectedClassification"])
-        assert actual_pass is case["expectedPass"], (path.name, actual_pass, case["expectedPass"])
+        assert actual_classification == case["expectedClassification"], (
+            path.name,
+            actual_classification,
+            case["expectedClassification"],
+        )
+        assert actual_pass is case["expectedPass"], (
+            path.name,
+            actual_pass,
+            case["expectedPass"],
+        )
+
+
+def test_reporter_contract_registration() -> None:
+    source = REPORTER.read_text(encoding="utf-8")
+    for token in (
+        "agentswitchboard.opencode-runtime-resolution-snapshot.v1",
+        "requestedSurface = $RequestedSurface",
+        "parentResolution = $parentResolution",
+        "effectiveLaunchResolution = $null",
+        "processPathCaptured = $processPathCaptured",
+        "tracked = $false",
+        "git -C $RootPath ls-files --error-unmatch",
+        "invalid-wsl-missing-target.fixture.json",
+        "invalid-wsl-state-drift.fixture.json",
+    ):
+        assert token in source, f"reporter contract token missing: {token}"
 
 
 def test_graph_is_connected_for_core_route() -> None:
@@ -134,6 +167,7 @@ def main() -> None:
         test_required_files,
         test_registry_semantics,
         test_fixture_classification,
+        test_reporter_contract_registration,
         test_graph_is_connected_for_core_route,
     ]
     for test in tests:
