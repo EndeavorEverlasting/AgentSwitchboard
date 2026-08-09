@@ -1,0 +1,80 @@
+{
+  "schema": "agentswitchboard.android-herdr-client-attach-source.v1",
+  "verifiedAtUtc": "2026-08-09T18:18:00Z",
+  "source": {
+    "kind": "official-upstream",
+    "repository": "https://github.com/herdrdev/herdr",
+    "releaseTag": "v0.8.0",
+    "releaseCommit": "346411fa21afd297f5ed3b3fa56f9e3fbf7654b7",
+    "artifact": "herdr-linux-aarch64",
+    "artifactUrl": "https://github.com/herdrdev/herdr/releases/download/v0.8.0/herdr-linux-aarch64",
+    "artifactSizeBytes": 19960864,
+    "artifactSha256": "f647ac66468d9efbc642fe534fb284468f0aea60641606fc008dfc0d82a3ca87",
+    "protocol": 19
+  },
+  "sourceEvidence": [
+    {"path":"src/client/mod.rs","fact":"Thin clients connect to the client socket, send Hello, require Welcome, and restore terminal state on normal or error exit."},
+    {"path":"src/client/mod.rs","fact":"`terminal session observe` uses connect_terminal_session_stream, performs the real client handshake with ClientLaunchMode::TerminalAttach, then emits JSON terminal.frame envelopes."},
+    {"path":"src/server/client_transport.rs","fact":"The server emits ClientConnected only after a compatible Hello is accepted and Welcome is sent."},
+    {"path":"src/cli.rs","fact":"`terminal session observe` is a CLI subcommand and therefore bypasses the no-subcommand auto-detect attach path."},
+    {"path":"src/server/autodetect.rs","fact":"Bare `herdr` may spawn a detached server daemon if the client socket is absent, so full-app bare attach is not approved by this gate."},
+    {"path":"src/api/schema/response.rs","fact":"`pane list` returns PaneList with pane records."},
+    {"path":"src/api/schema/panes.rs","fact":"PaneInfo exposes both pane_id and terminal_id; terminal_id is the observer target."},
+    {"path":"src/client/mod.rs","fact":"The read-only terminal observer prints terminal.frame JSON and returns cleanly on ServerShutdown or EOF."}
+  ],
+  "precondition": {
+    "requiredEvidenceSchema": "agentswitchboard.android-herdr-server-start.v1",
+    "requiredReleaseCommit": "346411fa21afd297f5ed3b3fa56f9e3fbf7654b7",
+    "requiredSha256": "f647ac66468d9efbc642fe534fb284468f0aea60641606fc008dfc0d82a3ca87",
+    "requiredLifecycle": "PASS",
+    "requiredStatusRunning": "yes",
+    "requiredStatusVersion": "0.8.0",
+    "requiredStatusCompatible": "yes",
+    "requiredStopExitCode": "0",
+    "requiredPostStopRunning": "no",
+    "requiredServerExitCode": "0",
+    "requiredForcedCleanup": "no"
+  },
+  "probe": {
+    "decision": "BOUNDED_CLIENT_PROTOCOL_OBSERVER_PROBE_APPROVED_NO_INSTALL",
+    "fullAppTuiDecision": "BLOCKED_AUTODETECT_DAEMON_RACE",
+    "migrationDecision": "KEEP_TMUX",
+    "launchMode": "foreground-server-plus-read-only-terminal-observer",
+    "readOnlyDiscoveryCommand": ["herdr","pane","list"],
+    "observerCommand": ["herdr","terminal","session","observe","<terminal_id>","--cols","80","--rows","24"],
+    "stopCommand": ["herdr","server","stop"],
+    "serverReadyTimeoutSeconds": 10,
+    "observerFrameTimeoutSeconds": 10,
+    "commandTimeoutSeconds": 20,
+    "allowedActions": [
+      "validate the exact same-device server lifecycle PASS prerequisite",
+      "re-download and re-verify the exact pinned v0.8.0 ARM64 asset in a private temporary sandbox",
+      "start only explicit foreground `herdr server` with isolated HOME/XDG/TMPDIR and HERDR_SOCKET_PATH",
+      "use read-only `herdr pane list` to select an existing terminal_id",
+      "run only `herdr terminal session observe <terminal_id> --cols 80 --rows 24` as the client attach",
+      "accept only one bounded terminal.frame JSON envelope as transport proof",
+      "stop the foreground server with `herdr server stop`, require the observer and server to exit, and verify not_running",
+      "write sanitized local untracked evidence and remove the sandbox"
+    ],
+    "forbiddenActions": [
+      "run bare `herdr` full-app auto-detect launch",
+      "spawn or leave a detached Herdr daemon",
+      "persist or install the Herdr binary",
+      "create, close, rename, focus, split or mutate a workspace, tab or pane",
+      "send input, keys, prompts or terminal control messages",
+      "use terminal session control or takeover",
+      "claim full TUI attachment from observer transport proof",
+      "test detach/reattach, persistence, agent-state detection or Android background survival",
+      "mutate Android device_config, phantom-process limits or battery policy",
+      "remove or replace tmux"
+    ],
+    "successGate": "validated prior server PASS plus exact binary verification, foreground server readiness, non-mutating pane discovery, one valid terminal.frame from the read-only observer over the client transport, clean observer/server shutdown, and not_running post-state",
+    "failureGate": "any prerequisite, binary, discovery, handshake, frame, stop, exit or cleanup failure keeps tmux canonical and records sanitized evidence"
+  },
+  "reviewDecision": "BOUNDED_CLIENT_PROTOCOL_OBSERVER_PROBE_APPROVED_NO_INSTALL",
+  "fullAppTuiDecision": "BLOCKED_AUTODETECT_DAEMON_RACE",
+  "migrationDecision": "KEEP_TMUX",
+  "nextGate": "exact-device-client-protocol-observer-frame",
+  "nextGateOnPass": "bounded-full-tui-attach-review",
+  "proofCeiling": "This snapshot authorizes one read-only terminal observer client handshake/frame experiment against a freshly started foreground server. A PASS proves client-socket Hello/Welcome compatibility plus one observed terminal frame only. It does not prove bare/full-app TUI attach, detach/reattach, persistence, agent detection, Android background survival, coding-agent work, installation, or tmux retirement."
+}

@@ -1,0 +1,39 @@
+{
+  "schema": "agentswitchboard.android-herdr-client-attach-harness.v1",
+  "status": "experimental",
+  "parentHarness": "tooling/profiles/android/harness/herdr/manifest.json",
+  "canonicalMultiplexer": "tmux",
+  "baseProof": "foreground-server-start-status-stop-only",
+  "components": {
+    "codebaseMap": "tooling/profiles/android/harness/herdr/client-attach/codebase-map.json",
+    "workflowSpecs": "tooling/profiles/android/harness/herdr/client-attach/workflow-specs.json",
+    "artifactRegistry": "tooling/profiles/android/harness/herdr/client-attach/artifact-registry.json",
+    "upstreamSource": "tooling/profiles/android/harness/herdr/client-attach/upstream-client-attach-source.json",
+    "reviewBuilder": "tooling/profiles/android/harness/herdr/client-attach/Build-HerdrClientAttachReview.py",
+    "probe": "tooling/profiles/android/harness/herdr/client-attach/Probe-HerdrClientAttach.py",
+    "fixture": "tooling/profiles/android/harness/herdr/client-attach/fixtures/herdr-server-start-pass.fixture.env",
+    "preCommit": "tooling/profiles/android/harness/herdr/client-attach/hooks/Invoke-HerdrClientAttachHarnessPreCommit.sh",
+    "prePush": "tooling/profiles/android/harness/herdr/client-attach/hooks/Invoke-HerdrClientAttachHarnessPrePush.sh",
+    "operatorReport": "tooling/profiles/android/harness/herdr/client-attach/operator-report.template.md",
+    "skill": ".ai/skills/android-herdr-client-attach/SKILL.md",
+    "documentation": "docs/harness/android-herdr-client-attach-harness.md",
+    "completenessTest": "tests/test_android_herdr_client_attach_harness.py",
+    "powerShellCompleteness": "scripts/Test-AndroidHerdrClientAttachHarnessCompleteness.ps1",
+    "workflow": ".github/workflows/android-herdr-client-attach.yml"
+  },
+  "gates": [
+    "exact-device-prebuilt-execution-identity",
+    "foreground-server-start-status-stop",
+    "source-bound-client-attach-review",
+    "read-only-client-protocol-observer-frame",
+    "full-app-tui-attach-review",
+    "detach-reattach",
+    "agent-state",
+    "android-background-survival",
+    "bounded-coding-sprint"
+  ],
+  "currentGate": "source-bound-client-attach-review",
+  "promotionRule": "Advance only from observed same-device evidence. Observer-frame PASS advances to full-app TUI attach review, not detach/reattach.",
+  "forbidden": ["persistent-installation","bare-herdr-autodetect","detached-daemon","workspace-mutation","terminal-control","takeover","device-config-mutation","tmux-removal"],
+  "proofCeiling": "Tracked harness can authorize and validate the observer experiment. Only same-device evidence can prove client-protocol observer frame delivery."
+}
