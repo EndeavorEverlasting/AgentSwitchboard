@@ -1,6 +1,6 @@
 ---
 id: firstmate-crew-orchestration
-version: 1.4.0
+version: 1.5.0
 status: experimental
 ---
 
@@ -8,7 +8,7 @@ status: experimental
 
 ## Trigger
 
-Use when AgentSwitchboard must decide whether a task should stay with one direct repository writer or be decomposed into parallel crew work through First Mate. Also use whenever a Windows laptop operator validates, reports, routes, or crosses into the Linux/WSL First Mate lane. A bare Bash invocation from Windows Python/PowerShell, a Windows path handed to a POSIX shell, WSL diagnostics, exact-head continuity, delivery posture, autonomy posture, or cross-OS Git metadata all trigger this skill.
+Use when AgentSwitchboard must decide whether a task should stay with one direct repository writer or be decomposed into parallel crew work through First Mate. Also use whenever a Windows laptop operator validates, reports, routes, or crosses into the Linux/WSL First Mate lane. A bare Bash invocation from Windows Python/PowerShell, a Windows path handed to a POSIX shell, a hardcoded `python3` child process from a Windows-portable Python contract, WSL diagnostics, exact-head continuity, delivery posture, autonomy posture, or cross-OS Git metadata all trigger this skill.
 
 ## Inputs
 
@@ -28,7 +28,7 @@ Use when AgentSwitchboard must decide whether a task should stay with one direct
 1. Read `AGENTS.md`, `CODEBASE_MAP.md`, `HARNESS.md`, `tooling/firstmate/harness/integration-contract.json`, and `tooling/firstmate/harness/operational/manifest.json`.
 2. Preserve active writers. Do not absorb the Android/Herdr migration lane or unrelated PR ownership.
 3. Classify the host before choosing a validator. On Windows PowerShell, use `Test-AgentSwitchboard-FirstMate-Harness.ps1` or its CMD wrapper. Do not invoke the Bash harness or a Bash subprocess merely to prove a portable contract.
-4. Keep cross-platform deterministic logic in portable owners such as `Normalize-FirstMateOrigin.py`; Linux/WSL shell wrappers delegate rather than becoming the only implementation.
+4. Keep cross-platform deterministic logic in portable Python owners. When one Python contract launches another repository Python tool, reuse the running interpreter with `sys.executable`; do not assume `python3` or `python` aliases exist on the next host.
 5. Run `Select-FirstMateWorkflow.py`; do not replace its deterministic compatibility gates with model preference.
 6. Keep one-writer work on direct AgentSwitchboard execution.
 7. For parallel Linux/WSL work, require the read-only First Mate floor before routing to `firstmate-local-only`.
@@ -84,6 +84,7 @@ Linux/WSL:
 - no concurrent writes to the same branch/worktree;
 - no bare `bash` subprocess from Windows contract validation;
 - no direct Windows-path handoff to a POSIX shell;
+- no hardcoded `python3` or `python` child-process executable in platform-neutral Python contracts; use `sys.executable`;
 - no combined parsing of WSL stderr and machine-readable stdout;
 - no `wslpath` dependency or hardcoded `/mnt/c` path transport;
 - no Linux Git execution inside a Windows-created linked worktree;
@@ -92,4 +93,4 @@ Linux/WSL:
 
 ## Stop and escalate
 
-Stop when the next action requires governance mutation, product behavior outside the assigned worker scope, credentials, protected runtime access, a branch owned by another writer, or a runtime promotion gate not proved by its owning lane. For Windows contract failures, preserve the exact native command and exit code before any WSL action. For Windows-to-WSL failures, preserve `wsl-stderr.log`, `wsl-bootstrap-stdout.txt`, the WSL workspace path, the exact head, and the failing stage before repair.
+Stop when the next action requires governance mutation, product behavior outside the assigned worker scope, credentials, protected runtime access, a branch owned by another writer, or a runtime promotion gate not proved by its owning lane. For Windows contract failures, preserve the exact native command and exit code before any WSL action. Windows exit `9009` from a Python child launcher is an interpreter-routing defect when the parent interpreter is already running; repair that owner before WSL. For Windows-to-WSL failures, preserve `wsl-stderr.log`, `wsl-bootstrap-stdout.txt`, the WSL workspace path, the exact head, and the failing stage before repair.

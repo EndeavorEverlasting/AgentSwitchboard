@@ -1,5 +1,6 @@
 import json
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -98,7 +99,7 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
 
     def route(self, *args):
         completed = subprocess.run(
-            ["python3", str(SELECTOR), *args],
+            [sys.executable, str(SELECTOR), *args],
             cwd=ROOT,
             check=True,
             capture_output=True,
@@ -144,7 +145,7 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             output = Path(tmp) / "report.md"
             completed = subprocess.run(
-                ["python3", str(REPORT_BUILDER), "--output", str(output)],
+                [sys.executable, str(REPORT_BUILDER), "--output", str(output)],
                 cwd=ROOT,
                 check=True,
                 capture_output=True,
@@ -164,7 +165,7 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
                 (REPORT_BUILDER, ["--output", tmp], "firstmate-report-operational-error"),
             ):
                 completed = subprocess.run(
-                    ["python3", str(tool), *args],
+                    [sys.executable, str(tool), *args],
                     cwd=ROOT,
                     check=False,
                     capture_output=True,

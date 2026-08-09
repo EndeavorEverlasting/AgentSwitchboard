@@ -9,17 +9,17 @@
     {
       "id": "firstmate-operational-completeness",
       "command": "python tests/test_firstmate_operational_harness.py",
-      "scope": "maps, workflows, artifacts, validators, hooks, skill, reports, selectors, platform front doors"
+      "scope": "maps, workflows, artifacts, validators, hooks, skill, reports, selectors, platform front doors, and child-Python interpreter continuity through sys.executable"
     },
     {
       "id": "firstmate-windows-native-harness",
       "command": "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-Harness.ps1 -Mode contract",
-      "scope": "Windows-native contract/report/route front door; forbids bare Bash dependency during Windows contract validation"
+      "scope": "Windows-native contract/report/route front door; forbids bare Bash dependency and hardcoded python3 child-process dependency during Windows contract validation"
     },
     {
       "id": "firstmate-windows-portability-contract",
       "command": "python tests/test_firstmate_windows_harness_portability.py",
-      "scope": "Windows path and shell portability, canonical origin normalizer, CMD/PowerShell front-door contracts"
+      "scope": "Windows path and shell portability, canonical origin normalizer, Python interpreter continuity, CMD/PowerShell front-door contracts"
     },
     {
       "id": "firstmate-windows-wsl-bridge-contract",
