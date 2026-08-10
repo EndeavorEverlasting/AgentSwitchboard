@@ -265,6 +265,29 @@ install_runtime() {
   printf 'NEXT=agentswitchboard-android login\n'
 }
 
+assert_codex_tmux_session_identity() {
+  session="$1"
+  pane_command="$(tmux display-message -p -t "$session:0.0" '#{pane_current_command}' 2>/dev/null || true)"
+  pane_path="$(tmux display-message -p -t "$session:0.0" '#{pane_current_path}' 2>/dev/null || true)"
+  pane_pid="$(tmux display-message -p -t "$session:0.0" '#{pane_pid}' 2>/dev/null || true)"
+
+  repo_real="$(cd "$REPO_ROOT" 2>/dev/null && pwd -P || true)"
+  pane_real="$(cd "$pane_path" 2>/dev/null && pwd -P || true)"
+  codex_real="$(readlink -f "$CODEX_BIN" 2>/dev/null || true)"
+  pane_exe=''
+  case "$pane_pid" in
+    ''|*[!0-9]*) ;;
+    *) pane_exe="$(readlink -f "/proc/$pane_pid/exe" 2>/dev/null || true)" ;;
+  esac
+
+  [ "$pane_command" = 'codex' ] ||
+    fail "tmux session '$session' pane command '${pane_command:-unknown}' is not Codex; preserve that session and close it explicitly before Android-profile cutover"
+  [ -n "$repo_real" ] && [ "$pane_real" = "$repo_real" ] ||
+    fail "tmux session '$session' belongs to '${pane_path:-unknown}', not requested repo '$REPO_ROOT'; preserve it instead of cross-attaching"
+  [ -n "$codex_real" ] && [ "$pane_exe" = "$codex_real" ] ||
+    fail "tmux session '$session' is not running the profile-managed Codex binary '$CODEX_BIN'; preserve it instead of relabeling it"
+}
+
 open_or_activate() {
   require_termux
   assert_repo
@@ -273,20 +296,17 @@ open_or_activate() {
   mkdir -p "$STATE_ROOT"
 
   if tmux has-session -t "$DEFAULT_SESSION" 2>/dev/null; then
-    pane_command="$(tmux display-message -p -t "$DEFAULT_SESSION:0.0" '#{pane_current_command}' 2>/dev/null || true)"
-    [ "$pane_command" = 'codex' ] ||
-      fail "tmux session '$DEFAULT_SESSION' already exists with pane command '${pane_command:-unknown}', not Codex; preserve that session and close it explicitly before Android-profile cutover"
+    assert_codex_tmux_session_identity "$DEFAULT_SESSION"
     outcome='activated'
   else
     launch_log="$STATE_ROOT/open-or-activate-$(timestamp).log"
     printf -v launch_cmd 'exec %q -C %q' "$CODEX_BIN" "$REPO_ROOT"
     if tmux new-session -d -s "$DEFAULT_SESSION" -c "$REPO_ROOT" "$launch_cmd" \
       >"$launch_log" 2>&1; then
+      assert_codex_tmux_session_identity "$DEFAULT_SESSION"
       outcome='opened'
     elif tmux has-session -t "$DEFAULT_SESSION" 2>/dev/null; then
-      pane_command="$(tmux display-message -p -t "$DEFAULT_SESSION:0.0" '#{pane_current_command}' 2>/dev/null || true)"
-      [ "$pane_command" = 'codex' ] ||
-        fail "tmux session '$DEFAULT_SESSION' appeared during launch but is not Codex"
+      assert_codex_tmux_session_identity "$DEFAULT_SESSION"
       outcome='activated-after-race'
     else
       tail -n 30 "$launch_log" >&2 || true
@@ -305,7 +325,7 @@ open_or_activate() {
     "repo=$REPO_ROOT" \
     "head=$(git -C "$REPO_ROOT" rev-parse HEAD)" \
     "timestamp_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-    'proof=launcher-session-only'
+    'proof=launcher-session-identity'
 
   pass "outcome=$outcome agent=codex session=$DEFAULT_SESSION"
   if [ -n "${TMUX:-}" ]; then
