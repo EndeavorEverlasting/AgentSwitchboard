@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-CODEX_PACKAGE='@openai/codex'
 CODEX_VERSION='0.147.0'
-CODEX_NODE_PLATFORM='android'
-CODEX_NODE_ARCH='arm64'
+CODEX_RELEASE_TAG='rust-v0.147.0'
 CODEX_TARGET_TRIPLE='aarch64-unknown-linux-musl'
+CODEX_RELEASE_ASSET="codex-${CODEX_TARGET_TRIPLE}.tar.gz"
+CODEX_RELEASE_SIZE='91607658'
+CODEX_RELEASE_SHA256='eb677c80f666b1ab8b4b1d083b66e8d614b1281d960bb6f9fd8ca98f58b38b90'
+CODEX_RELEASE_URL="https://github.com/openai/codex/releases/download/${CODEX_RELEASE_TAG}/${CODEX_RELEASE_ASSET}"
 EXPECTED_REPO_SSH='git@github.com:EndeavorEverlasting/AgentSwitchboard.git'
 EXPECTED_REPO_HTTPS='https://github.com/EndeavorEverlasting/AgentSwitchboard.git'
 DEFAULT_SESSION="${AGENT_SWITCHBOARD_ANDROID_SESSION:-agentswitchboard-android}"
 STATE_ROOT="${XDG_STATE_HOME:-$HOME/.local/state}/agentswitchboard/android-runtime"
+TERMUX_PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
+CODEX_MANAGED_ROOT="$TERMUX_PREFIX/lib/agentswitchboard/codex/$CODEX_VERSION"
+CODEX_BIN="$CODEX_MANAGED_ROOT/codex"
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 DEFAULT_REPO="$(CDPATH= cd -- "$SCRIPT_DIR/../../.." && pwd)"
@@ -31,7 +36,7 @@ Usage:
 Modes:
   open-or-activate  Open or activate one tmux-backed Codex workspace.
   status            Read-only Codex, authentication, repository, and Git state.
-  install           Install/verify the pinned official Codex CLI and Termux floor.
+  install           Install/verify the pinned official Codex release asset and Termux floor.
   login             Sign in to Codex with the official device-auth flow.
   smoke             Read-only Codex command/tool runtime proof with durable JSONL evidence.
   proof-sprint      Run the repository-owned first phone editing sprint with Codex.
@@ -65,6 +70,8 @@ require_termux() {
     *) fail "unexpected PREFIX '$PREFIX'; Android runtime requires Termux" ;;
   esac
   command -v pkg >/dev/null 2>&1 || fail 'pkg is unavailable'
+  arch="$(uname -m)"
+  [ "$arch" = 'aarch64' ] || fail "unsupported Android architecture '$arch'; pinned Codex runtime requires aarch64"
 }
 
 repo_origin() {
@@ -81,20 +88,18 @@ assert_repo() {
 }
 
 codex_version() {
-  command -v codex >/dev/null 2>&1 || return 1
-  codex --version 2>/dev/null | awk '{print $NF}' | tail -n 1
+  [ -x "$CODEX_BIN" ] || return 1
+  "$CODEX_BIN" --version 2>/dev/null | awk '{print $NF}' | tail -n 1
 }
 
 assert_codex() {
-  command -v node >/dev/null 2>&1 || fail 'node is missing; run install'
-  command -v npm >/dev/null 2>&1 || fail 'npm is missing; run install'
-  command -v codex >/dev/null 2>&1 || fail 'codex is missing; run install'
+  [ -x "$CODEX_BIN" ] || fail "managed Codex is missing at $CODEX_BIN; run install"
   actual="$(codex_version || true)"
   [ "$actual" = "$CODEX_VERSION" ] || fail "Codex version '$actual' does not match required $CODEX_VERSION; run install"
 }
 
 assert_codex_auth() {
-  codex login status >/dev/null 2>&1 || fail 'Codex is not authenticated; run agentswitchboard-android login'
+  "$CODEX_BIN" login status >/dev/null 2>&1 || fail 'Codex is not authenticated; run agentswitchboard-android login'
 }
 
 assert_tmux() {
@@ -133,16 +138,18 @@ status() {
   printf 'runtime=codex\n'
   printf 'runtime_required_version=%s\n' "$CODEX_VERSION"
   printf 'runtime_observed_version=%s\n' "$(codex_version || printf missing)"
-  printf 'expected_node_platform=%s\n' "$CODEX_NODE_PLATFORM"
-  printf 'expected_node_arch=%s\n' "$CODEX_NODE_ARCH"
-  printf 'expected_target=%s\n' "$CODEX_TARGET_TRIPLE"
+  printf 'codex_release_tag=%s\n' "$CODEX_RELEASE_TAG"
+  printf 'codex_release_asset=%s\n' "$CODEX_RELEASE_ASSET"
+  printf 'codex_release_sha256=%s\n' "$CODEX_RELEASE_SHA256"
+  printf 'codex_target=%s\n' "$CODEX_TARGET_TRIPLE"
+  printf 'codex_managed_path=%s\n' "$CODEX_BIN"
   printf 'repo=%s\n' "$REPO_ROOT"
   printf 'origin=%s\n' "$(repo_origin)"
   printf 'branch=%s\n' "$branch"
   printf 'head=%s\n' "$head"
   printf 'dirty=%s\n' "$dirty"
   if [ -n "${TMUX:-}" ]; then printf 'tmux=attached\n'; else printf 'tmux=outside\n'; fi
-  if command -v codex >/dev/null 2>&1 && codex login status >/dev/null 2>&1; then
+  if [ -x "$CODEX_BIN" ] && "$CODEX_BIN" login status >/dev/null 2>&1; then
     printf 'codex_auth=ready\n'
   else
     printf 'codex_auth=unproved\n'
@@ -151,15 +158,6 @@ status() {
     printf 'github_auth=ready\n'
   else
     printf 'github_auth=unproved\n'
-  fi
-  if command -v node >/dev/null 2>&1; then
-    printf 'node=%s\n' "$(node --version)"
-    printf 'node_platform=%s\n' "$(node -p 'process.platform')"
-    printf 'node_arch=%s\n' "$(node -p 'process.arch')"
-  else
-    printf 'node=missing\n'
-    printf 'node_platform=unknown\n'
-    printf 'node_arch=unknown\n'
   fi
   printf 'state_root=%s\n' "$STATE_ROOT"
   printf 'proof_level=readiness-only\n'
@@ -171,48 +169,96 @@ install_runtime() {
   mkdir -p "$STATE_ROOT/install-logs"
   run_id="$(timestamp)"
   log="$STATE_ROOT/install-logs/install-$run_id.log"
+  tmp_root="$(mktemp -d "${TMPDIR:-$PREFIX/tmp}/agentswitchboard-codex.XXXXXX")"
+  archive="$tmp_root/$CODEX_RELEASE_ASSET"
+  extract_root="$tmp_root/extract"
+  archive_list="$tmp_root/archive-list.txt"
+  mkdir -p "$extract_root"
 
-  info "Installing official pinned Codex CLI; log=$log"
-  {
-    pkg install -y git openssh tmux gh jq nodejs
-    node -e 'const major=Number(process.versions.node.split(".")[0]); if (major < 16) process.exit(1)'
-    platform="$(node -p 'process.platform')"
-    arch="$(node -p 'process.arch')"
-    [ "$platform" = "$CODEX_NODE_PLATFORM" ]
-    [ "$arch" = "$CODEX_NODE_ARCH" ]
-    npm install -g --ignore-scripts "${CODEX_PACKAGE}@${CODEX_VERSION}"
-    actual="$(codex_version)"
-    [ "$actual" = "$CODEX_VERSION" ]
-    npm list -g --depth=0 "$CODEX_PACKAGE"
-  } >"$log" 2>&1 || {
+  cleanup_install_tmp() {
+    rm -rf "$tmp_root"
+  }
+  trap cleanup_install_tmp EXIT HUP INT TERM
+
+  info "Installing official pinned Codex release asset; log=$log"
+  pkg install -y git openssh tmux gh jq curl tar coreutils findutils >"$log" 2>&1 || {
     rc=$?
     tail -n 30 "$log" >&2 || true
-    fail "Codex runtime install failed exit=$rc log=$log"
+    fail "Termux dependency install failed exit=$rc log=$log"
   }
 
-  wrapper="$PREFIX/bin/agentswitchboard-android"
-  cat >"$wrapper" <<'WRAPPER'
-#!/data/data/com.termux/files/usr/bin/bash
-set -e
-repo="${AGENT_SWITCHBOARD_REPO:-$HOME/dev/AgentSwitchboard}"
-exec "$repo/Start-AgentSwitchboard-Android.sh" "$@"
-WRAPPER
-  chmod 0755 "$wrapper"
+  curl --fail --location --retry 3 --proto '=https' --tlsv1.2 \
+    --output "$archive" "$CODEX_RELEASE_URL" >>"$log" 2>&1 || {
+    rc=$?
+    tail -n 30 "$log" >&2 || true
+    fail "Codex release download failed exit=$rc log=$log"
+  }
+
+  actual_size="$(wc -c < "$archive" | tr -d '[:space:]')"
+  [ "$actual_size" = "$CODEX_RELEASE_SIZE" ] ||
+    fail "Codex release size mismatch expected=$CODEX_RELEASE_SIZE actual=$actual_size"
+
+  actual_sha="$(sha256sum "$archive" | awk '{print $1}')"
+  [ "$actual_sha" = "$CODEX_RELEASE_SHA256" ] ||
+    fail "Codex release SHA-256 mismatch expected=$CODEX_RELEASE_SHA256 actual=$actual_sha"
+
+  tar -tzf "$archive" >"$archive_list" || fail 'Codex release archive listing failed'
+  if grep -Eq '(^/|(^|/)\.\.(/|$))' "$archive_list"; then
+    fail 'Codex release archive contains an unsafe path'
+  fi
+
+  tar -xzf "$archive" -C "$extract_root" >>"$log" 2>&1 ||
+    fail 'Codex release archive extraction failed'
+
+  mapfile -t candidates < <(
+    find "$extract_root" -type f \
+      \( -name 'codex' -o -name "codex-$CODEX_TARGET_TRIPLE" \) -print
+  )
+  [ "${#candidates[@]}" -eq 1 ] ||
+    fail "Codex release must contain exactly one recognized executable; found=${#candidates[@]}"
+
+  candidate="${candidates[0]}"
+  chmod 0755 "$candidate"
+  candidate_version="$("$candidate" --version 2>/dev/null | awk '{print $NF}' | tail -n 1)"
+  [ "$candidate_version" = "$CODEX_VERSION" ] ||
+    fail "downloaded Codex version '$candidate_version' does not match required $CODEX_VERSION"
+
+  mkdir -p "$CODEX_MANAGED_ROOT"
+  staged="$CODEX_MANAGED_ROOT/.codex.$$.tmp"
+  cp "$candidate" "$staged"
+  chmod 0755 "$staged"
+  mv -f "$staged" "$CODEX_BIN"
 
   actual="$(codex_version)"
+  [ "$actual" = "$CODEX_VERSION" ] ||
+    fail "installed Codex version '$actual' does not match required $CODEX_VERSION"
+
+  wrapper="$PREFIX/bin/agentswitchboard-android"
+  {
+    printf '%s\n' '#!/data/data/com.termux/files/usr/bin/bash'
+    printf '%s\n' 'set -e'
+    printf 'repo=%q\n' "$REPO_ROOT"
+    printf '%s\n' 'exec "$repo/Start-AgentSwitchboard-Android.sh" "$@"'
+  } > "$wrapper"
+  chmod 0755 "$wrapper"
+
   write_env_result "$STATE_ROOT/install-result.env" \
     'profile=android' \
     'agent=codex' \
     'runtime=codex' \
-    "codex_package=$CODEX_PACKAGE" \
     "codex_version=$actual" \
-    "node_version=$(node --version)" \
-    "node_platform=$(node -p 'process.platform')" \
-    "node_arch=$(node -p 'process.arch')" \
+    "codex_release_tag=$CODEX_RELEASE_TAG" \
+    "codex_release_asset=$CODEX_RELEASE_ASSET" \
+    "codex_release_size=$actual_size" \
+    "codex_release_sha256=$actual_sha" \
     "codex_target=$CODEX_TARGET_TRIPLE" \
+    "codex_managed_path=$CODEX_BIN" \
     "wrapper=$wrapper" \
     "timestamp_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     'proof=installed-command-verification'
+
+  cleanup_install_tmp
+  trap - EXIT HUP INT TERM
 
   pass "official pinned Codex CLI installed version=$actual"
   printf 'EVIDENCE=%s\n' "$STATE_ROOT/install-result.env"
@@ -227,14 +273,20 @@ open_or_activate() {
   mkdir -p "$STATE_ROOT"
 
   if tmux has-session -t "$DEFAULT_SESSION" 2>/dev/null; then
+    pane_command="$(tmux display-message -p -t "$DEFAULT_SESSION:0.0" '#{pane_current_command}' 2>/dev/null || true)"
+    [ "$pane_command" = 'codex' ] ||
+      fail "tmux session '$DEFAULT_SESSION' already exists with pane command '${pane_command:-unknown}', not Codex; preserve that session and close it explicitly before Android-profile cutover"
     outcome='activated'
   else
     launch_log="$STATE_ROOT/open-or-activate-$(timestamp).log"
-    printf -v launch_cmd 'exec codex -C %q' "$REPO_ROOT"
+    printf -v launch_cmd 'exec %q -C %q' "$CODEX_BIN" "$REPO_ROOT"
     if tmux new-session -d -s "$DEFAULT_SESSION" -c "$REPO_ROOT" "$launch_cmd" \
       >"$launch_log" 2>&1; then
       outcome='opened'
     elif tmux has-session -t "$DEFAULT_SESSION" 2>/dev/null; then
+      pane_command="$(tmux display-message -p -t "$DEFAULT_SESSION:0.0" '#{pane_current_command}' 2>/dev/null || true)"
+      [ "$pane_command" = 'codex' ] ||
+        fail "tmux session '$DEFAULT_SESSION' appeared during launch but is not Codex"
       outcome='activated-after-race'
     else
       tail -n 30 "$launch_log" >&2 || true
@@ -249,6 +301,7 @@ open_or_activate() {
     "codex_version=$(codex_version)" \
     "outcome=$outcome" \
     "session=$DEFAULT_SESSION" \
+    'pane_command=codex' \
     "repo=$REPO_ROOT" \
     "head=$(git -C "$REPO_ROOT" rev-parse HEAD)" \
     "timestamp_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
@@ -268,7 +321,7 @@ login_runtime() {
   assert_repo
   assert_codex
 
-  if codex login status >/dev/null 2>&1; then
+  if "$CODEX_BIN" login status >/dev/null 2>&1; then
     pass 'Codex authentication is already ready'
     return 0
   fi
@@ -278,8 +331,9 @@ login_runtime() {
     '[ACTION] Complete authorization in your browser, then return to Termux.' \
     '[SECRET] The device code and resulting credentials are not written to AgentSwitchboard evidence.' \
     '[SECRET] Do not copy device codes, tokens, API keys, passwords, or credential files into Git, logs, or chat.'
-  codex login --device-auth
-  codex login status >/dev/null 2>&1 || fail 'Codex login command returned but authentication status is not ready'
+  "$CODEX_BIN" login --device-auth
+  "$CODEX_BIN" login status >/dev/null 2>&1 ||
+    fail 'Codex login command returned but authentication status is not ready'
   pass 'Codex ChatGPT authentication is ready'
 }
 
@@ -359,7 +413,7 @@ smoke_runtime() {
 
   prompt='Read AGENTS.md using a shell command, briefly state the rule that prevents premature handoff, and end the final answer with the exact line ANDROID_RUNTIME_SMOKE=PASS. Do not modify any file.'
   set +e
-  timeout 300 codex exec --json --ephemeral -s read-only -C "$REPO_ROOT" "$prompt" \
+  timeout 300 "$CODEX_BIN" exec --json --ephemeral -s read-only -C "$REPO_ROOT" "$prompt" \
     >"$events" 2>"$stderr_log"
   rc=$?
   set -e
@@ -435,7 +489,7 @@ EOF
 )"
 
   set +e
-  timeout 1800 codex exec --json --ephemeral --approve-for-me -C "$REPO_ROOT" "$envelope" \
+  timeout 1800 "$CODEX_BIN" exec --json --ephemeral --approve-for-me -C "$REPO_ROOT" "$envelope" \
     >"$events" 2>"$stderr_log"
   rc=$?
   set -e
@@ -464,7 +518,8 @@ EOF
   git -C "$REPO_ROOT" diff --check "$start_head...$end_head"
 
   remote_head="$(git -C "$REPO_ROOT" ls-remote origin "refs/heads/$branch" | awk 'NR==1 {print $1}')"
-  [ "$remote_head" = "$end_head" ] || fail "remote branch does not match local HEAD local=$end_head remote=${remote_head:-missing}"
+  [ "$remote_head" = "$end_head" ] ||
+    fail "remote branch does not match local HEAD local=$end_head remote=${remote_head:-missing}"
 
   pr_url="$(cd "$REPO_ROOT" && gh pr view "$branch" --json url --jq .url 2>/dev/null || true)"
   [ -n "$pr_url" ] || fail 'no PR found for sprint branch'
