@@ -2,10 +2,28 @@
 setlocal EnableExtensions DisableDelayedExpansion
 set "ROOT=%~dp0"
 where pwsh.exe >nul 2>nul || (echo [FAIL] PowerShell 7 is required.& endlocal & exit /b 127)
+set "PY_KIND="
+where python.exe >nul 2>nul && set "PY_KIND=python"
+if not defined PY_KIND (
+  where py.exe >nul 2>nul && set "PY_KIND=py"
+)
+if not defined PY_KIND (echo [FAIL] Python 3 is required: python.exe or py.exe -3.& endlocal & exit /b 127)
+if "%PY_KIND%"=="python" (
+  python.exe -c "import sys; raise SystemExit(0 if sys.version_info.major == 3 else 1)"
+) else (
+  py.exe -3 -c "import sys; raise SystemExit(0 if sys.version_info.major == 3 else 1)"
+)
+if errorlevel 1 (echo [FAIL] A usable Python 3 runtime was not found.& endlocal & exit /b 127)
 pushd "%ROOT%" || (echo [FAIL] Cannot enter repository root.& endlocal & exit /b 2)
-python -m unittest tests.test_opencode_lsp_harness -v
+if "%PY_KIND%"=="python" (
+  python.exe -m unittest tests.test_opencode_lsp_harness -v
+) else (
+  py.exe -3 -m unittest tests.test_opencode_lsp_harness -v
+)
 if errorlevel 1 goto :fail
 pwsh.exe -NoLogo -NoProfile -File "%ROOT%scripts\Test-OpenCodeLspHarness.ps1" -RootPath "%ROOT%"
+if errorlevel 1 goto :fail
+pwsh.exe -NoLogo -NoProfile -File "%ROOT%scripts\Test-AgentDocumentationContract.ps1" -RootPath "%ROOT%"
 if errorlevel 1 goto :fail
 git diff --check
 if errorlevel 1 goto :fail

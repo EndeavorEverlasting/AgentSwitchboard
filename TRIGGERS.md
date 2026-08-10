@@ -22,6 +22,7 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 | `plan.coordination-request` | multi-agent, multi-session, multi-wave, cross-PR, sprint-map, launch-pack, or material plan-state request | `public-plan-coordination`; update `plans/` and keep coordination distinct from PR delivery |
 | `startup.readiness-request` | startup or agent availability/configuration request | `startup.readiness.report`; read-only guidance without installation or provider calls |
 | `harness.proof-request` | one-command proof, synthetic validation, composition observer, node/edge coverage, or PASS/SKIP/FAIL request | `harness.proof.aggregate`; run the offline observer and emit untracked JSON plus English evidence |
+| `opencode.lsp-workstation-setup` | Windows OpenCode LSP inspection, enablement, verification, Admin Box setup, low-capability-agent configuration, or per-launch free-model setup | `opencode-lsp-workstation-setup`; inspect first, preserve existing config, write immutable local artifacts, and keep runtime diagnostics as a separate proof gate |
 | `android.termux-repo-bootstrap` | Android/Termux repository setup, phone-local AgentSwitchboard workspace preparation, missing local clone, or mobile command-delivery recovery | `android-termux-repo-bootstrap`; prove tmux, harness Python prerequisite, clone/origin, family-routing boundary and isolated branch before writes |
 | `android.termux-terminal-recovery` | Android long-press selection spans tmux panes, touch scrollback is unclear, clipboard transport is unreliable, or prior terminal output is needed | `android-termux-terminal-recovery`; identify one safe pane and use bounded `tmux capture-pane` rather than native selection as the evidence boundary |
 | `app.output-context-request` | supplied app, validator, agent, console, JSON, or JSONL output must be minimized and compared with a prompt registry | `app-output-contextualization`; parse supplied output offline, preserve exact execution surface, and emit compact untracked instructions |
@@ -60,9 +61,15 @@ Safety triggers may narrow or stop work even when a feature trigger is present.
 
 `startup.readiness-request` is read-only. It may inspect existing fleet state and emit local JSON and guidance. It must not install, authenticate, read credentials, contact a hosted model, mutate a repository, or claim adapter presence proves provider readiness.
 
+## OpenCode LSP workstation invariant
+
+`opencode.lsp-workstation-setup` selects `.ai/skills/opencode-lsp-workstation-setup/SKILL.md` and the specialized route in `tooling/harness/operational/workflow-registry.json`. The route resolves repository and OpenCode identity before configuration, preserves existing OpenCode config, writes immutable local evidence/configuration artifacts, keeps free-model selection per launch, and never stores inherited inline-config contents. A configured overlay or launcher is not active LSP proof; that requires opening a supported file and observing the runtime server/diagnostic behavior.
+
+Free trial models are restricted to public/non-confidential material. Customer data, credentials, private machine evidence, or confidential source select the existing secret/personal-data stop boundary instead of this free-model route.
+
 ## Synthetic harness observer invariant
 
-`harness.proof-request` routes to `scripts/Test-AppHarness.ps1`. The observer reads `.ai/harness/app-composition.graph.json`, verifies required nodes and edges, runs only graph-listed validators marked safe offline, and emits untracked JSON and English artifacts outside the repository.
+`harness.proof-request` routes to `scripts/Test-AppHarness.ps1`. The observer reads `.ai/harness/app-composition.graph.json`, verifies required nodes and edges, runs only graph-listed validators marked safe offline, and emits untracked JSON plus English artifacts outside the repository.
 
 A required node without an edge, a dangling edge, a disconnected route, an unsafe validator, or a broken required validator is a failure. Missing optional MCP/LSP readiness is an honest skip. Static topology proves registered composition only.
 

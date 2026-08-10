@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "harnessId": "agentswitchboard.opencode-lsp-workstation-setup.v1",
   "title": "OpenCode LSP workstation setup harness",
   "purpose": "Give low-capability agents and Windows operators one deterministic path to inspect, configure, verify, and hand off OpenCode LSP enablement without changing product code, governance, secrets, or existing OpenCode configuration.",
@@ -13,6 +13,9 @@
     "completenessValidator": "scripts/Test-OpenCodeLspHarness.ps1",
     "portableContract": "tests/test_opencode_lsp_harness.py",
     "skill": ".ai/skills/opencode-lsp-workstation-setup/SKILL.md",
+    "canonicalSkills": "SKILLS.md",
+    "canonicalTriggers": "TRIGGERS.md",
+    "operationalWorkflowRegistry": "tooling/harness/operational/workflow-registry.json",
     "operatorGuide": "docs/harness/opencode-lsp-workstation-setup.md",
     "operatorReportTemplate": "tooling/harness/operational/opencode-lsp-setup/operator-report.template.md",
     "preCommitHook": "tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPreCommit.ps1",
@@ -20,8 +23,9 @@
   },
   "upstreamContract": {
     "configSchema": "https://opencode.ai/config.json",
-    "overlayStrategy": "OPENCODE_CONFIG points at an AgentSwitchboard-owned machine-local overlay; existing global and project config remain untouched.",
     "stableLspRule": "LSP is disabled by default; lsp=true enables built-in servers whose file types and prerequisites are present.",
+    "configPrecedenceRule": "OPENCODE_CONFIG_CONTENT is the highest runtime config source; the generated launcher preserves inherited inline values in memory and forces lsp=true there.",
+    "interactiveModelRule": "The current OpenCode TUI accepts --model/-m on the top-level opencode command.",
     "v2Boundary": "Current OpenCode V2 documentation accepts LSP configuration but does not provide an LSP runtime; fail closed on a detected v2 command/version."
   },
   "recommendedProfile": {
@@ -32,7 +36,7 @@
   "generatedEvidence": {
     "tracked": false,
     "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/runs/<run-id>",
-    "stateRoot": "%LOCALAPPDATA%/AgentSwitchboard/opencode-lsp"
+    "configurationArtifactsImmutable": true
   },
   "safety": {
     "productMutationAllowed": false,
@@ -42,6 +46,6 @@
     "existingOpenCodeConfigMutationAllowed": false,
     "freeModelConfidentialDataAllowed": false,
     "implicitHookInstallationAllowed": false,
-    "proofCeiling": "Static/hosted validation proves harness structure and setup logic. Workstation execution can prove OpenCode command/version resolution, machine-local overlay generation, model visibility, and launch-command generation. Active LSP diagnostics require opening a supported file and observing runtime behavior."
+    "proofCeiling": "Static/hosted validation proves harness structure and setup logic. Workstation execution can prove OpenCode command/version resolution, immutable machine-local config artifacts, model visibility, and launcher generation. Active LSP diagnostics require opening a supported file and observing runtime behavior."
   }
 }

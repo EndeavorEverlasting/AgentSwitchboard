@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "harnessId": "agentswitchboard.opencode-lsp-workstation-setup.v1",
   "repository": "EndeavorEverlasting/AgentSwitchboard",
   "directories": [
@@ -11,19 +11,24 @@
     {"path":"docs/harness","purpose":"Operator setup/troubleshooting documentation."}
   ],
   "entrypoints": {
+    "canonicalSkills":"SKILLS.md",
+    "canonicalTriggers":"TRIGGERS.md",
+    "operationalWorkflowRegistry":"tooling/harness/operational/workflow-registry.json",
     "validate": "Test-OpenCodeLspHarness.cmd",
     "inspect": "pwsh -NoLogo -NoProfile -File tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1 -Mode Inspect -RepoPath .",
-    "configure": "pwsh -NoLogo -NoProfile -File tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1 -Mode Configure -RepoPath ."
+    "configure": "pwsh -NoLogo -NoProfile -File tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1 -Mode Configure -RepoPath .",
+    "verify": "pwsh -NoLogo -NoProfile -File tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1 -Mode Verify -RepoPath . -ConfigurationDirectory <configure-run>"
   },
   "configuration": {
     "upstreamGlobalConfig": "~/.config/opencode/opencode.json",
-    "ownedOverlay": "%LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/opencode-lsp.overlay.json",
-    "activation": "OPENCODE_CONFIG is set only for the generated OpenCode launcher process.",
-    "overlay": {"$schema":"https://opencode.ai/config.json","lsp":true}
+    "ownedArtifacts": "%LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/runs/<run-id>/",
+    "fallbackOverlay": {"$schema":"https://opencode.ai/config.json","lsp":true},
+    "effectiveLspRule": "The launcher preserves an inherited OPENCODE_CONFIG path when present, merges inherited OPENCODE_CONFIG_CONTENT in memory, then forces lsp=true in the highest-precedence inline config without persisting inherited contents.",
+    "modelRule": "The requested model is selected per interactive TUI launch with --model and is never persisted as a machine-wide default."
   },
   "languageFit": [
-    {"language":"Python","server":"pyright","note":"Useful for repository Python tests when OpenCode can resolve the requirement."},
-    {"language":"YAML","server":"yaml-ls","note":"Useful for workflow YAML; current OpenCode can auto-install when downloads are permitted."},
+    {"language":"Python","server":"pyright","note":"Useful for repository Python tests when the current OpenCode requirement is satisfied."},
+    {"language":"YAML","server":"yaml-ls","note":"Useful for workflow YAML; current stable OpenCode can auto-install when downloads are permitted."},
     {"language":"TypeScript/JavaScript","server":"typescript","note":"Activates only when the target project satisfies TypeScript requirements; not forced here."},
     {"language":"PowerShell","server":null,"note":"Current OpenCode built-ins do not list PowerShell; use repository PowerShell validators rather than inventing a custom server."}
   ],
@@ -34,12 +39,13 @@
     "reason": "This lane is harness infrastructure plus bounded machine-local setup; no product deployment."
   },
   "knownTraps": [
-    "Never edit the operator's existing global or project OpenCode config from this harness.",
+    "Never edit the operator's existing global, project, OPENCODE_CONFIG, or inline OpenCode configuration from this harness.",
     "Never persist a free trial model as a machine-wide default.",
     "Never send confidential, customer, credential, or private machine data to free trial endpoints.",
     "lsp=true is configuration proof, not active LSP runtime proof.",
     "Do not invent a PowerShell LSP.",
     "Fail closed when OpenCode V2 is detected because current V2 LSP configuration has no runtime effect.",
-    "Do not run arbitrary global package installers merely to manufacture a harness pass."
+    "Do not run arbitrary global package installers merely to manufacture a harness pass.",
+    "Configure artifacts are immutable per run; never reuse an owned configuration directory."
   ]
 }

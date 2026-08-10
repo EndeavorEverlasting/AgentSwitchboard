@@ -2,6 +2,9 @@ name: OpenCode LSP harness
 on:
   push:
     paths:
+      - 'SKILLS.md'
+      - 'TRIGGERS.md'
+      - 'tooling/harness/operational/workflow-registry.json'
       - 'tooling/harness/operational/opencode-lsp-setup/**'
       - 'tooling/harness/operational/manifest.json'
       - 'scripts/Test-OpenCodeLspHarness.ps1'
@@ -12,6 +15,9 @@ on:
       - '.github/workflows/opencode-lsp-harness.yml'
   pull_request:
     paths:
+      - 'SKILLS.md'
+      - 'TRIGGERS.md'
+      - 'tooling/harness/operational/workflow-registry.json'
       - 'tooling/harness/operational/opencode-lsp-setup/**'
       - 'tooling/harness/operational/manifest.json'
       - 'scripts/Test-OpenCodeLspHarness.ps1'
@@ -36,6 +42,9 @@ jobs:
       - name: Harness completeness and PowerShell parse
         shell: pwsh
         run: ./scripts/Test-OpenCodeLspHarness.ps1 -RootPath .
+      - name: Canonical documentation routing contract
+        shell: pwsh
+        run: ./scripts/Test-AgentDocumentationContract.ps1 -RootPath .
       - name: Diff whitespace
         shell: bash
         run: git diff --check

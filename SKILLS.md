@@ -38,9 +38,10 @@ Every canonical skill must define:
 9. A Windows Profile request that distinguishes default open-or-activate from an explicit separate instance, or evidence of duplicate WezTerm windows, selects `windows-profile-launch-mode-validation` before any launcher implementation or runtime claim.
 10. A request for a desktop shortcut or CMD installer that must create one genuinely separate tmux/WezTerm instance selects `tmux-new-instance-shortcut`. It preserves the one-launcher boundary and routes live acceptance through `end-to-end-runtime-validation`.
 11. An Android/Termux repository bootstrap, mobile command-delivery recovery, multi-pane native-selection problem, or unclear tmux scrollback selects `android-termux-repo-bootstrap`; terminal selection/scrollback recovery additionally selects `android-termux-terminal-recovery` before asking the operator to fight native selection or provide screenshots.
-12. `TRIGGERS.md` maps repository evidence to a skill.
-13. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
-14. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
+12. A Windows OpenCode LSP inspection, enablement, verification, low-capability-agent setup, or per-launch free-model configuration request selects `opencode-lsp-workstation-setup`; configuration proof remains below active LSP runtime proof.
+13. `TRIGGERS.md` maps repository evidence to a skill.
+14. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
+15. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
 
 ## Canonical skills
 
@@ -53,6 +54,7 @@ Every canonical skill must define:
 | [`gnhf-prompt-compilation`](.ai/skills/gnhf-prompt-compilation/SKILL.md) | Compile one copy-ready bounded `gnhf` PowerShell launch command | “GNHF prompt,” “Good Night, Have Fun prompt,” compile sprint for GNHF |
 | [`powershell-interactive-execution`](.ai/skills/powershell-interactive-execution/SKILL.md) | Produce directory-first PowerShell safe for interactive submission | PowerShell snippet, console steps, interactive command |
 | [`operator-command-delivery`](.ai/skills/operator-command-delivery/SKILL.md) | Verify exact source identity, candidate command text, child executable launchability, parent-shell safety, and evidence routing before publishing operator commands | copy-paste command, HTTP 404, malformed PowerShell transport, blocked child launch, lost diagnostics |
+| [`opencode-lsp-workstation-setup`](.ai/skills/opencode-lsp-workstation-setup/SKILL.md) | Configure and verify immutable Windows OpenCode LSP launch artifacts without replacing existing config | OpenCode LSP setup, Admin Box configuration, low-capability/free-model agent workflow |
 | [`evidence-validation`](.ai/skills/evidence-validation/SKILL.md) | Build honest proof and repair validation gaps | failing checks, review findings, proof request |
 | [`pr-integration`](.ai/skills/pr-integration/SKILL.md) | Reconcile stacked or parallel branches safely | merge request, stacked PRs, consumed upstream work |
 | [`runtime-proof`](.ai/skills/runtime-proof/SKILL.md) | Move from static confidence to observed behavior | launcher, installer, harness, or live-runtime request |
@@ -108,6 +110,10 @@ The default Windows Profile operation remains `open-or-activate`: one logical wo
 ## tmux shortcut distinction
 
 `tmux-new-instance-shortcut` owns the user-facing installer and explicit separate-instance shortcut. The CMD and `.lnk` are presentation surfaces only: they delegate to `tooling/profiles/windows/Invoke-AgentSwitchboardOpenOrActivate.ps1`. Automatic allocation reserves `dev` and selects `dev-1`, `dev-2`, and later unused positive suffixes. The shortcut installer proves installation and readback; a double-click result requires end-to-end runtime validation.
+
+## OpenCode LSP workstation distinction
+
+`opencode-lsp-workstation-setup` owns bounded Windows OpenCode LSP configuration evidence, not OpenCode product installation or active diagnostics. It preserves existing OpenCode config, writes immutable run-local artifacts, selects free models per launch only, and keeps free endpoints restricted to public/non-confidential material. An active server claim requires runtime observation after opening a supported file.
 
 ## PowerShell interactive distinction
 
