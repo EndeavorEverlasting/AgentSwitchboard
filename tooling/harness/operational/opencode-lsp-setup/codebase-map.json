@@ -1,9 +1,9 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "harnessId": "agentswitchboard.opencode-lsp-workstation-setup.v1",
   "repository": "EndeavorEverlasting/AgentSwitchboard",
   "directories": [
-    {"path":"tooling/harness/operational/opencode-lsp-setup","purpose":"Focused OpenCode/LSP contracts, runner, registries, hooks, and reports."},
+    {"path":"tooling/harness/operational/opencode-lsp-setup","purpose":"Focused OpenCode/LSP checkout recovery, contracts, runner, registries, hooks, and reports."},
     {"path":"tooling/gnhf","purpose":"Existing OpenCode/GNHF product launcher; reference only in this harness lane."},
     {"path":"scripts","purpose":"Deterministic PowerShell validation."},
     {"path":"tests","purpose":"Dependency-free harness contracts."},
@@ -14,6 +14,7 @@
     "canonicalSkills":"SKILLS.md",
     "canonicalTriggers":"TRIGGERS.md",
     "operationalWorkflowRegistry":"tooling/harness/operational/workflow-registry.json",
+    "recoverCheckout":"pwsh -NoLogo -NoProfile -File tooling/harness/operational/opencode-lsp-setup/Resolve-AgentSwitchboardCheckout.ps1 -PreferredPath <path-hint> -ExpectedBranch <branch> -ExpectedHead <sha>",
     "validate": "Test-OpenCodeLspHarness.cmd",
     "inspect": "pwsh -NoLogo -NoProfile -File tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1 -Mode Inspect -RepoPath .",
     "configure": "pwsh -NoLogo -NoProfile -File tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1 -Mode Configure -RepoPath .",
@@ -22,6 +23,7 @@
   "configuration": {
     "upstreamGlobalConfig": "~/.config/opencode/opencode.json",
     "ownedArtifacts": "%LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/runs/<run-id>/",
+    "ownedCheckoutFallback": "%LOCALAPPDATA%/AgentSwitchboard/checkouts/canonical-<head8>",
     "fallbackOverlay": {"$schema":"https://opencode.ai/config.json","lsp":true},
     "effectiveLspRule": "The launcher preserves an inherited OPENCODE_CONFIG path when present, merges inherited OPENCODE_CONFIG_CONTENT in memory, then forces lsp=true in the highest-precedence inline config without persisting inherited contents.",
     "modelRule": "The requested model is selected per interactive TUI launch with --model and is never persisted as a machine-wide default."
@@ -39,6 +41,8 @@
     "reason": "This lane is harness infrastructure plus bounded machine-local setup; no product deployment."
   },
   "knownTraps": [
+    "A folder named AgentSwitchBoard is not proof of a Git checkout; use the checkout resolver before setup when git rev-parse fails.",
+    "Never convert or delete a non-Git operator folder merely to manufacture repository proof.",
     "Never edit the operator's existing global, project, OPENCODE_CONFIG, or inline OpenCode configuration from this harness.",
     "Never persist a free trial model as a machine-wide default.",
     "Never send confidential, customer, credential, or private machine data to free trial endpoints.",
