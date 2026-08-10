@@ -1,19 +1,27 @@
 # Android On-the-Move Runtime
 
-AgentSwitchboard's Android profile is a **Termux + tmux + Pi coding-agent implementation** designed for editing the repository from a phone without pretending that static contracts are runtime proof.
+AgentSwitchboard's Android profile is a **Termux + tmux + OpenAI Codex CLI implementation** for repository work from a phone. Codex is the coding agent; tmux remains the current session backend. The separate Herdr migration may later replace the session backend, but it does not select or replace the coding agent.
 
-## Supported runtime
+## Supported coding agent
 
-The pinned coding runtime is:
+The Android profile pins:
 
-- package: `@earendil-works/pi-coding-agent`
-- version: `0.82.1`
-- Node.js floor: `22.19.0`
+- coding agent: OpenAI Codex CLI
+- npm package: `@openai/codex`
+- version: `0.147.0`
+- source tag: `openai/codex` `rust-v0.147.0`
+- Node platform: `android`
+- Node architecture: `arm64`
+- native target selected by the official npm launcher: `aarch64-unknown-linux-musl`
+- native platform package: `@openai/codex-linux-arm64`
 - frontend: Termux
-- persistence: tmux
-- provider login for the initial certificate: OpenAI ChatGPT Plus/Pro (Codex) through Pi's `/login` device flow
+- persistence/session backend: tmux
 
-The runtime deliberately does not install Termux:API. Clipboard integration is optional and separate; the core workflow must remain usable through typed commands, ordinary paste, QR transport, monitored documents, or files.
+The pin is tracked in `tooling/profiles/android/codex-runtime.json`.
+
+The official Codex npm launcher has an explicit Android dispatch path: Android `arm64` selects the Linux-musl ARM64 Codex package. That makes the official npm package the canonical install route here; AgentSwitchboard does not maintain a forked Codex binary installer.
+
+Android/Termux is still a **runtime-proof boundary**. Tracked source compatibility does not prove that the native sandbox, authentication, model calls, or tool execution work on this physical phone until the phone runs the corresponding gates.
 
 ## Entry point
 
@@ -27,7 +35,7 @@ From the repository root:
 ./Start-AgentSwitchboard-Android.sh proof-sprint
 ```
 
-`install` also installs `agentswitchboard-android` into `$PREFIX/bin`, pointing back to the repository checkout at `$AGENT_SWITCHBOARD_REPO` or `~/dev/AgentSwitchboard`.
+`install` installs the Termux floor plus the exact pinned `@openai/codex` version and creates `$PREFIX/bin/agentswitchboard-android`.
 
 With the wrapper installed:
 
@@ -35,7 +43,7 @@ With the wrapper installed:
 agentswitchboard-android
 ```
 
-opens or activates one tmux session named `agentswitchboard-android` and runs Pi from the repository root. Repeating the command attaches to the same logical phone workspace instead of spawning duplicate agent sessions.
+opens or activates one tmux session named `agentswitchboard-android` and launches Codex from the AgentSwitchboard repository. Repeating the command converges on the same phone workspace instead of creating duplicate coding-agent sessions.
 
 ## Login
 
@@ -45,33 +53,58 @@ Run:
 agentswitchboard-android login
 ```
 
-Inside Pi, run `/login`, select **OpenAI ChatGPT Plus/Pro (Codex)**, and choose the device/headless flow when offered. Complete the browser authorization yourself.
+The launcher uses Codex's official device flow:
 
-AgentSwitchboard does not capture the one-time device code or Pi credential files. Never put those values into Git, a QR code, a shared document, or a runtime evidence log.
+```bash
+codex login --device-auth
+```
+
+Complete the browser authorization yourself. The device code is displayed only by Codex in the interactive terminal; AgentSwitchboard does not redirect it into runtime evidence. Do not put device codes, access tokens, API keys, passwords, recovery codes, or Codex credential files into Git, chat, QR payloads, shared documents, or evidence logs.
+
+Read-only authentication state is available through:
+
+```bash
+codex login status
+agentswitchboard-android status
+```
 
 ## Read-only live smoke
 
-After login, exit the interactive Pi UI back to the tmux shell and run:
+After login, enter the persistent tmux workspace and run:
 
 ```bash
 agentswitchboard-android smoke
 ```
 
-The smoke command is bounded to five minutes and gives Pi only `read`, `grep`, `find`, and `ls`. It requires a clean repository, requires tmux, asks Pi to read `AGENTS.md`, and writes JSONL events outside the repository.
+The smoke command:
+
+1. requires the exact pinned Codex version;
+2. requires Codex authentication;
+3. requires a clean AgentSwitchboard checkout and a tmux shell;
+4. runs `codex exec --json --ephemeral -s read-only`;
+5. asks Codex to read `AGENTS.md` without modifying files;
+6. stores stdout JSONL and stderr outside the repository.
 
 A PASS requires all of these from the same run:
 
-1. Pi process exits successfully.
-2. an `agent_end` event exists;
-3. Pi issued a `read` tool call for `AGENTS.md`;
-4. the `read` tool completed without error;
-5. the assistant final message contains `ANDROID_RUNTIME_SMOKE=PASS`.
+1. Codex exits zero;
+2. `turn.completed` exists;
+3. a completed zero-exit `command_execution` references `AGENTS.md`;
+4. the final `agent_message` contains `ANDROID_RUNTIME_SMOKE=PASS`.
 
-This is **live agent/tool behavior proof**, not repository mutation proof.
+This reaches **live-agent-tool-behavior** proof only. It does not prove repository mutation or Herdr.
 
-## First writing certificate
+## Bounded writing sprint
 
-After the smoke passes:
+For writing work, the launcher uses:
+
+```text
+codex exec --json --ephemeral --approve-for-me
+```
+
+`--approve-for-me` is the bounded automation surface chosen for Android: Codex keeps a `workspace-write` sandbox and routes approval requests through its automatic reviewer. AgentSwitchboard deliberately forbids the unsandboxed `--dangerously-bypass-approvals-and-sandbox` / `--yolo` path.
+
+Run a repository-owned first certificate with:
 
 ```bash
 agentswitchboard-android proof-sprint
@@ -80,35 +113,44 @@ agentswitchboard-android proof-sprint
 The command:
 
 1. requires clean `main`;
-2. fetches and fast-forwards to live `origin/main`;
+2. fetches and fast-forwards to `origin/main`;
 3. creates a unique `feat/android-command-transport-<timestamp>` branch;
-4. invokes Pi with the repository-owned bounded task in `tooling/profiles/android/runtime-proof-sprint.prompt.md`;
-5. requires successful `read`, `edit` or `write`, and `bash` tool events;
-6. requires Pi's final completion marker;
-7. requires a new commit, clean tree, `git diff --check`, pushed exact remote head, and an open PR;
-8. writes the runtime evidence outside Git.
+4. invokes Codex with the repository-owned bounded task in `tooling/profiles/android/runtime-proof-sprint.prompt.md`;
+5. requires same-run `AGENTS.md` command evidence, a successful Codex `file_change`, a successful command execution, and the final completion marker;
+6. independently requires a new clean commit, `git diff --check`, exact pushed remote-head equality, and an open PR;
+7. writes runtime evidence outside Git.
 
-A PASS reaches **live-agent-repository-mutation** proof: an Android-hosted agent read the repository, changed tracked files, validated them, committed, pushed, and opened a PR. It still does not prove merge or downstream behavior until those gates are separately observed.
+A PASS reaches **live-agent-repository-mutation** proof.
 
 ## General phone sprint
 
-For later work, create an isolated branch and a prompt file, then run:
+For the Herdr migration plan or later bounded work, put one self-contained sprint prompt in a file on an isolated non-`main` branch:
 
 ```bash
 agentswitchboard-android sprint --prompt-file /path/to/sprint.md
 ```
 
-The launcher refuses to write on `main`, refuses a dirty starting tree, bounds the Pi process to 30 minutes, and requires commit/push/PR evidence before it reports success.
+The launcher refuses a dirty starting tree and refuses writing work on `main`. Codex receives the prompt in a 30-minute bounded run. The harness does not report success until the branch is committed, pushed, clean, exact-head matched to the remote, and associated with an open PR.
+
+## Codex versus Herdr
+
+Keep these responsibilities separate:
+
+- **Codex**: coding/reasoning agent that reads, edits, validates, commits, and prepares PRs.
+- **tmux**: current Android session/persistence backend.
+- **Herdr**: experimental future session/backend migration lane.
+
+Installing Codex does not promote Herdr. A later Herdr backend adapter should launch the same Codex agent contract rather than reintroducing Pi or hiding product behavior in prompts.
 
 ## Evidence
 
-Runtime evidence is local and untracked:
+Local untracked evidence remains under:
 
 ```text
 ~/.local/state/agentswitchboard/android-runtime/
 ```
 
-Key artifacts include:
+Key artifacts:
 
 - `install-result.env`
 - `last-open.env`
@@ -116,8 +158,8 @@ Key artifacts include:
 - `runs/<run-id>/stderr.log`
 - `runs/<run-id>/result.env`
 
-JSONL can contain repository text and the sprint prompt. Treat it as local operational evidence; do not commit it.
+JSONL can include repository text, commands, and task prompts. Keep it local.
 
 ## Proof ceiling
 
-Hosted CI can prove script syntax, registration, static safety checks, and deterministic contracts. Only execution on the intended Android/Termux device can prove Termux package installation, Pi provider login, model response, tool execution, repository mutation, or operator usability.
+Repository and hosted CI can prove the Codex package/version pin, official Android ARM64 dispatch contract, shell syntax, profile registration, sandbox/secret guardrails, and deterministic JSONL evidence rules. Only the intended physical Termux device can prove package installation, ChatGPT device authentication, Android sandbox compatibility, model response, command/file tool behavior, repository mutation, session usability, or later Herdr-backed operation.
