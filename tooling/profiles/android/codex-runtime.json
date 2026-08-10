@@ -1,15 +1,26 @@
 {
   "schema": "agentswitchboard.android-codex-runtime.v1",
   "agent": "codex",
-  "package": "@openai/codex",
   "version": "0.147.0",
   "upstreamRepository": "openai/codex",
   "sourceTag": "rust-v0.147.0",
-  "nodeDispatch": {
-    "platform": "android",
-    "arch": "arm64",
+  "distribution": {
+    "method": "official-github-release-asset",
     "targetTriple": "aarch64-unknown-linux-musl",
-    "platformPackage": "@openai/codex-linux-arm64"
+    "asset": "codex-aarch64-unknown-linux-musl.tar.gz",
+    "size": 91607658,
+    "sha256": "eb677c80f666b1ab8b4b1d083b66e8d614b1281d960bb6f9fd8ca98f58b38b90",
+    "managedInstallPath": "$PREFIX/lib/agentswitchboard/codex/0.147.0/codex",
+    "globalCodexPathMutated": false
+  },
+  "upstreamNpmDispatch": {
+    "package": "@openai/codex",
+    "androidPlatform": "android",
+    "androidArch": "arm64",
+    "targetTriple": "aarch64-unknown-linux-musl",
+    "platformPackage": "@openai/codex-linux-arm64",
+    "installAuthority": "reference-only",
+    "reason": "The official launcher recognizes Android ARM64, but the native optional package is distributed with Linux OS metadata; AgentSwitchboard therefore installs the exact official release asset directly and does not depend on npm platform matching on Termux."
   },
   "authentication": {
     "mode": "chatgpt-device-auth",
@@ -32,5 +43,5 @@
     "herdrMigrationSeparate": true,
     "tmuxRemovalAuthorized": false
   },
-  "proofCeiling": "This tracked contract pins the official Codex package and Android ARM64 dispatch contract. It does not prove installation, ChatGPT authentication, sandbox compatibility, model/tool behavior, repository mutation, Herdr integration, or operator acceptance on a physical Termux device."
+  "proofCeiling": "This tracked contract pins the official Codex release asset, checksum, managed Android install path, authentication route, and execution boundaries. It does not prove the Linux-musl binary executes on the physical Termux device, ChatGPT authentication succeeds, the Android sandbox works, a model responds, tool behavior occurs, repository mutation succeeds, Herdr integration works, or the operator accepts the runtime."
 }
