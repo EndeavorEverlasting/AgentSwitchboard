@@ -1,0 +1,36 @@
+{
+  "schema": "agentswitchboard.android-codex-runtime.v1",
+  "agent": "codex",
+  "package": "@openai/codex",
+  "version": "0.147.0",
+  "upstreamRepository": "openai/codex",
+  "sourceTag": "rust-v0.147.0",
+  "nodeDispatch": {
+    "platform": "android",
+    "arch": "arm64",
+    "targetTriple": "aarch64-unknown-linux-musl",
+    "platformPackage": "@openai/codex-linux-arm64"
+  },
+  "authentication": {
+    "mode": "chatgpt-device-auth",
+    "command": "codex login --device-auth",
+    "statusCommand": "codex login status",
+    "evidencePolicy": "never-record-device-code-or-credentials"
+  },
+  "execution": {
+    "interactive": "codex",
+    "smoke": "codex exec --json --ephemeral -s read-only",
+    "boundedWrite": "codex exec --json --ephemeral --approve-for-me",
+    "forbiddenFlags": [
+      "--dangerously-bypass-approvals-and-sandbox",
+      "--yolo",
+      "--dangerously-bypass-hook-trust"
+    ]
+  },
+  "sessionBackend": {
+    "current": "tmux",
+    "herdrMigrationSeparate": true,
+    "tmuxRemovalAuthorized": false
+  },
+  "proofCeiling": "This tracked contract pins the official Codex package and Android ARM64 dispatch contract. It does not prove installation, ChatGPT authentication, sandbox compatibility, model/tool behavior, repository mutation, Herdr integration, or operator acceptance on a physical Termux device."
+}
