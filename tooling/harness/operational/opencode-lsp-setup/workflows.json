@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "harnessId": "agentswitchboard.opencode-lsp-workstation-setup.v1",
+  "order": ["intake","configure","failure-recovery","handoff"],
+  "workflows": [
+    {
+      "id": "intake",
+      "trigger": "new or resumed OpenCode/LSP workstation request",
+      "steps": ["resolve exact Git root/origin/branch/HEAD","read focused harness files","resolve OpenCode command/version without mutation","inspect existing config locations without printing file contents","classify runtime"],
+      "completionGate": "exact repository and runtime classification recorded"
+    },
+    {
+      "id": "configure",
+      "trigger": "intake proves supported OpenCode runtime and exact AgentSwitchboard repository",
+      "steps": ["re-run identity/version guards","create AgentSwitchboard-owned LOCALAPPDATA state/run roots","write lsp=true overlay only","query OpenCode provider model names without credentials","generate explicit per-launch model launcher","verify overlay/launcher and write receipt/report"],
+      "completionGate": "owned overlay and launcher exist, receipt/report written, existing OpenCode config and tracked checkout unchanged"
+    },
+    {
+      "id": "failure-recovery",
+      "trigger": "inspect/configure/verify returns nonzero or incomplete state",
+      "steps": ["preserve exact receipt/report","repair first deterministic failing boundary only","never weaken repo identity/v2/privacy/config-preservation gates","rerun Inspect before Configure"],
+      "stopConditions": ["product repair required","credentials required","privacy classification not public","v2 runtime detected"]
+    },
+    {
+      "id": "handoff",
+      "trigger": "agent/chat/machine boundary or successful configuration",
+      "steps": ["record repo/branch/HEAD and OpenCode command/version","record overlay/model visibility/launcher","record proof ceiling and one exact next command","exclude credentials and source contents"],
+      "completionGate": "a low-capability agent can continue without rediscovering authority or paths"
+    }
+  ]
+}

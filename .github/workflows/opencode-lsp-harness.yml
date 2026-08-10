@@ -1,0 +1,41 @@
+name: OpenCode LSP harness
+on:
+  push:
+    paths:
+      - 'tooling/harness/operational/opencode-lsp-setup/**'
+      - 'tooling/harness/operational/manifest.json'
+      - 'scripts/Test-OpenCodeLspHarness.ps1'
+      - 'tests/test_opencode_lsp_harness.py'
+      - 'Test-OpenCodeLspHarness.cmd'
+      - '.ai/skills/opencode-lsp-workstation-setup/**'
+      - 'docs/harness/opencode-lsp-workstation-setup.md'
+      - '.github/workflows/opencode-lsp-harness.yml'
+  pull_request:
+    paths:
+      - 'tooling/harness/operational/opencode-lsp-setup/**'
+      - 'tooling/harness/operational/manifest.json'
+      - 'scripts/Test-OpenCodeLspHarness.ps1'
+      - 'tests/test_opencode_lsp_harness.py'
+      - 'Test-OpenCodeLspHarness.cmd'
+      - '.ai/skills/opencode-lsp-workstation-setup/**'
+      - 'docs/harness/opencode-lsp-workstation-setup.md'
+      - '.github/workflows/opencode-lsp-harness.yml'
+permissions:
+  contents: read
+jobs:
+  contract:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependency-free contracts
+        run: python -m unittest tests.test_opencode_lsp_harness -v
+      - name: Harness completeness and PowerShell parse
+        shell: pwsh
+        run: ./scripts/Test-OpenCodeLspHarness.ps1 -RootPath .
+      - name: Diff whitespace
+        shell: bash
+        run: git diff --check

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "harnessId": "agentswitchboard.opencode-lsp-workstation-setup.v1",
+  "title": "OpenCode LSP workstation setup harness",
+  "purpose": "Give low-capability agents and Windows operators one deterministic path to inspect, configure, verify, and hand off OpenCode LSP enablement without changing product code, governance, secrets, or existing OpenCode configuration.",
+  "canonicalOwner": "tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1",
+  "entrypoints": {
+    "runner": "tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1",
+    "operatorCmd": "Test-OpenCodeLspHarness.cmd",
+    "codebaseMap": "tooling/harness/operational/opencode-lsp-setup/codebase-map.json",
+    "workflows": "tooling/harness/operational/opencode-lsp-setup/workflows.json",
+    "artifactRegistry": "tooling/harness/operational/opencode-lsp-setup/artifact-registry.json",
+    "completenessValidator": "scripts/Test-OpenCodeLspHarness.ps1",
+    "portableContract": "tests/test_opencode_lsp_harness.py",
+    "skill": ".ai/skills/opencode-lsp-workstation-setup/SKILL.md",
+    "operatorGuide": "docs/harness/opencode-lsp-workstation-setup.md",
+    "operatorReportTemplate": "tooling/harness/operational/opencode-lsp-setup/operator-report.template.md",
+    "preCommitHook": "tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPreCommit.ps1",
+    "prePushHook": "tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPrePush.ps1"
+  },
+  "upstreamContract": {
+    "configSchema": "https://opencode.ai/config.json",
+    "overlayStrategy": "OPENCODE_CONFIG points at an AgentSwitchboard-owned machine-local overlay; existing global and project config remain untouched.",
+    "stableLspRule": "LSP is disabled by default; lsp=true enables built-in servers whose file types and prerequisites are present.",
+    "v2Boundary": "Current OpenCode V2 documentation accepts LSP configuration but does not provide an LSP runtime; fail closed on a detected v2 command/version."
+  },
+  "recommendedProfile": {
+    "lsp": true,
+    "modelLaunchOnly": "opencode/nemotron-3-ultra-free",
+    "modelPersistence": false
+  },
+  "generatedEvidence": {
+    "tracked": false,
+    "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/runs/<run-id>",
+    "stateRoot": "%LOCALAPPDATA%/AgentSwitchboard/opencode-lsp"
+  },
+  "safety": {
+    "productMutationAllowed": false,
+    "governanceMutationOwned": false,
+    "destructiveGitAllowed": false,
+    "secretCollectionAllowed": false,
+    "existingOpenCodeConfigMutationAllowed": false,
+    "freeModelConfidentialDataAllowed": false,
+    "implicitHookInstallationAllowed": false,
+    "proofCeiling": "Static/hosted validation proves harness structure and setup logic. Workstation execution can prove OpenCode command/version resolution, machine-local overlay generation, model visibility, and launch-command generation. Active LSP diagnostics require opening a supported file and observing runtime behavior."
+  }
+}
