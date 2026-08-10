@@ -1,10 +1,12 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "harnessId": "agentswitchboard.opencode-lsp-workstation-setup.v1",
   "tracked": false,
   "defaultRunRoot": "%LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/runs/<run-id>",
   "configurationArtifactsImmutable": true,
   "artifacts": [
+    {"artifactId":"checkout-resolution-json","fileName":"opencode-lsp-checkout-resolution.json","purpose":"machine-readable preferred-path, canonical checkout, exact-head worktree, and recovery state"},
+    {"artifactId":"checkout-resolution-report","fileName":"opencode-lsp-checkout-resolution.md","purpose":"human-readable non-Git-folder recovery and exact-head worktree report"},
     {"artifactId":"setup-json","fileName":"opencode-lsp-setup.json","purpose":"machine-readable exact Git/OpenCode/setup state"},
     {"artifactId":"operator-report","fileName":"opencode-lsp-operator-report.md","purpose":"human-readable working/broken/missing/next-action report"},
     {"artifactId":"lsp-overlay","fileName":"opencode-lsp.overlay.json","purpose":"run-specific immutable OpenCode fallback config containing lsp=true"},
