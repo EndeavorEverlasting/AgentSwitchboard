@@ -7,21 +7,23 @@ AgentSwitchboard's Android profile is a **Termux + tmux + OpenAI Codex CLI imple
 The Android profile pins:
 
 - coding agent: OpenAI Codex CLI
-- npm package: `@openai/codex`
 - version: `0.147.0`
-- source tag: `openai/codex` `rust-v0.147.0`
-- Node platform: `android`
-- Node architecture: `arm64`
-- native target selected by the official npm launcher: `aarch64-unknown-linux-musl`
-- native platform package: `@openai/codex-linux-arm64`
+- source/release tag: `openai/codex` `rust-v0.147.0`
+- target: `aarch64-unknown-linux-musl`
+- release asset: `codex-aarch64-unknown-linux-musl.tar.gz`
+- exact asset size: `91607658`
+- exact SHA-256: `eb677c80f666b1ab8b4b1d083b66e8d614b1281d960bb6f9fd8ca98f58b38b90`
+- managed binary: `$PREFIX/lib/agentswitchboard/codex/0.147.0/codex`
 - frontend: Termux
 - persistence/session backend: tmux
 
 The pin is tracked in `tooling/profiles/android/codex-runtime.json`.
 
-The official Codex npm launcher has an explicit Android dispatch path: Android `arm64` selects the Linux-musl ARM64 Codex package. That makes the official npm package the canonical install route here; AgentSwitchboard does not maintain a forked Codex binary installer.
+The official Codex npm launcher explicitly recognizes Android ARM64 and maps it to the same `aarch64-unknown-linux-musl` native target. The corresponding optional native npm package is distributed with Linux OS metadata, however, so AgentSwitchboard does not make Termux installation depend on npm platform matching. Instead, the Android profile downloads the exact official OpenAI release asset, verifies its pinned byte size and SHA-256, rejects unsafe archive paths, verifies the extracted binary reports version `0.147.0`, and then installs that binary under an AgentSwitchboard-owned versioned path.
 
-Android/Termux is still a **runtime-proof boundary**. Tracked source compatibility does not prove that the native sandbox, authentication, model calls, or tool execution work on this physical phone until the phone runs the corresponding gates.
+The installer does **not** overwrite an unrelated global `codex` command.
+
+Android/Termux is still a **runtime-proof boundary**. Source and release compatibility do not prove that the Linux-musl binary, native sandbox, authentication, model calls, or tool execution work on this physical phone until the phone runs the corresponding gates.
 
 ## Entry point
 
@@ -35,7 +37,7 @@ From the repository root:
 ./Start-AgentSwitchboard-Android.sh proof-sprint
 ```
 
-`install` installs the Termux floor plus the exact pinned `@openai/codex` version and creates `$PREFIX/bin/agentswitchboard-android`.
+`install` installs the required Termux floor, downloads and verifies the exact pinned Codex release artifact, installs the managed binary, and creates `$PREFIX/bin/agentswitchboard-android` pointing back to the verified repository checkout.
 
 With the wrapper installed:
 
@@ -43,7 +45,9 @@ With the wrapper installed:
 agentswitchboard-android
 ```
 
-opens or activates one tmux session named `agentswitchboard-android` and launches Codex from the AgentSwitchboard repository. Repeating the command converges on the same phone workspace instead of creating duplicate coding-agent sessions.
+opens or activates one tmux session named `agentswitchboard-android` and launches the profile-managed Codex binary from the AgentSwitchboard repository. Repeating the command converges on the same phone workspace instead of creating duplicate coding-agent sessions.
+
+If an older `agentswitchboard-android` tmux session already exists but its foreground pane is not Codex, the launcher fails closed. Preserve any work in that old session and close it explicitly before starting the Codex-backed profile. The launcher never kills that session automatically.
 
 ## Login
 
@@ -59,18 +63,17 @@ The launcher uses Codex's official device flow:
 codex login --device-auth
 ```
 
-Complete the browser authorization yourself. The device code is displayed only by Codex in the interactive terminal; AgentSwitchboard does not redirect it into runtime evidence. Do not put device codes, access tokens, API keys, passwords, recovery codes, or Codex credential files into Git, chat, QR payloads, shared documents, or evidence logs.
+The actual command is executed through the profile-managed Codex binary. Complete the browser authorization yourself. The device code is displayed only by Codex in the interactive terminal; AgentSwitchboard does not redirect it into runtime evidence. Do not put device codes, access tokens, API keys, passwords, recovery codes, or Codex credential files into Git, chat, QR payloads, shared documents, or evidence logs.
 
-Read-only authentication state is available through:
+Read-only authentication/profile state is available through:
 
 ```bash
-codex login status
 agentswitchboard-android status
 ```
 
 ## Read-only live smoke
 
-After login, enter the persistent tmux workspace and run:
+After login, run the smoke from a tmux shell:
 
 ```bash
 agentswitchboard-android smoke
@@ -78,10 +81,10 @@ agentswitchboard-android smoke
 
 The smoke command:
 
-1. requires the exact pinned Codex version;
+1. requires the exact managed Codex `0.147.0` binary;
 2. requires Codex authentication;
 3. requires a clean AgentSwitchboard checkout and a tmux shell;
-4. runs `codex exec --json --ephemeral -s read-only`;
+4. runs the managed binary with `codex exec --json --ephemeral -s read-only`;
 5. asks Codex to read `AGENTS.md` without modifying files;
 6. stores stdout JSONL and stderr outside the repository.
 
@@ -121,6 +124,8 @@ The command:
 7. writes runtime evidence outside Git.
 
 A PASS reaches **live-agent-repository-mutation** proof.
+
+If Codex's native sandbox cannot provide the required Android write boundary, treat that as a real runtime blocker. Do not solve it by enabling `--dangerously-bypass-approvals-and-sandbox`.
 
 ## General phone sprint
 
@@ -162,4 +167,4 @@ JSONL can include repository text, commands, and task prompts. Keep it local.
 
 ## Proof ceiling
 
-Repository and hosted CI can prove the Codex package/version pin, official Android ARM64 dispatch contract, shell syntax, profile registration, sandbox/secret guardrails, and deterministic JSONL evidence rules. Only the intended physical Termux device can prove package installation, ChatGPT device authentication, Android sandbox compatibility, model response, command/file tool behavior, repository mutation, session usability, or later Herdr-backed operation.
+Repository and hosted CI can prove the Codex version/release pin, official ARM64 target identity, exact checksum/size contract, shell syntax, profile registration, sandbox/secret guardrails, and deterministic JSONL evidence rules. Only the intended physical Termux device can prove the release binary executes on Android, ChatGPT device authentication succeeds, the native sandbox works, a model responds, command/file tool behavior occurs, repository mutation succeeds, the tmux launcher is usable, or later Herdr-backed Codex operation works.
