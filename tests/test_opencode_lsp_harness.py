@@ -28,6 +28,18 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         self.assertIn("$effective[''lsp''] = $true",text)
         self.assertIn('Test-ExactLines',text)
         self.assertNotIn('Set-Content -LiteralPath $globalConfig',text)
+    def test_runner_anchors_origin_and_derives_model_provider(self):
+        text=(H/'Invoke-OpenCodeLspWorkstationSetup.ps1').read_text(encoding='utf-8')
+        self.assertIn("$canonicalOriginPattern = '^(?:https://github\\.com/|git@github\\.com:|ssh://git@github\\.com/|git://github\\.com/)EndeavorEverlasting/AgentSwitchboard",text)
+        self.assertIn("$modelSeparator = $ModelId.IndexOf('/')",text)
+        self.assertIn('$modelProvider = $ModelId.Substring(0, $modelSeparator)',text)
+        self.assertIn('& $openCode models $modelProvider',text)
+    def test_runner_preserves_prior_configure_evidence(self):
+        text=(H/'Invoke-OpenCodeLspWorkstationSetup.ps1').read_text(encoding='utf-8')
+        self.assertIn('$preOwnedConfigureDirectory',text)
+        self.assertIn("Get-ChildItem -LiteralPath $requestedConfigurationDirectory -Force",text)
+        self.assertIn("Stop-Setup 'CONFIGURATION_DIRECTORY_ALREADY_OWNED'",text)
+        self.assertLess(text.index("if ($preOwnedConfigureDirectory) { Stop-Setup 'CONFIGURATION_DIRECTORY_ALREADY_OWNED'"), text.index("if ($env:OS -ne 'Windows_NT')"))
     def test_runner_has_no_destructive_git_or_secret_persistence(self):
         text=(H/'Invoke-OpenCodeLspWorkstationSetup.ps1').read_text(encoding='utf-8').lower()
         for token in ('git reset','git clean','git stash','push --force','apikey','password='):
@@ -37,11 +49,15 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         text=(H/'Invoke-OpenCodeLspWorkstationSetup.ps1').read_text(encoding='utf-8')
         for token in ("status = 'failed'",'failureCode = $failureCode','Set-Content -LiteralPath $receiptPath','Set-Content -LiteralPath $reportPath'):
             self.assertIn(token,text)
-        self.assertLess(text.index("$null = New-Item -ItemType Directory -Path $OutputDirectory"), text.index("if ($env:OS -ne 'Windows_NT')"))
+        self.assertLess(text.index("$null = New-Item -ItemType Directory -Path $OutputDirectory"), text.index("if ($preOwnedConfigureDirectory) { Stop-Setup"))
     def test_python_fallback_and_hooks_are_fail_closed(self):
         cmd=(ROOT/'Test-OpenCodeLspHarness.cmd').read_text(encoding='utf-8')
         self.assertIn('python.exe',cmd); self.assertIn('py.exe -3',cmd)
-        pre=(H/'hooks/Invoke-OpenCodeLspPreCommit.ps1').read_text(encoding='utf-8'); self.assertIn('--diff-filter=ACMRD',pre)
+        self.assertIn('if not errorlevel 1 set "PY_KIND=python"',cmd)
+        self.assertIn('if not errorlevel 1 set "PY_KIND=py"',cmd)
+        self.assertLess(cmd.index('python.exe -c'),cmd.index('if not defined PY_KIND ('))
+        pre=(H/'hooks/Invoke-OpenCodeLspPreCommit.ps1').read_text(encoding='utf-8')
+        self.assertIn('--diff-filter=ACMRD',pre); self.assertIn('git -C $RootPath diff --quiet -- $path',pre)
         push=(H/'hooks/Invoke-OpenCodeLspPrePush.ps1').read_text(encoding='utf-8')
         self.assertIn('[Parameter(Mandatory=$true)][string]$BaseRef',push); self.assertIn('rev-parse --verify',push); self.assertNotIn("BaseRef='origin/main'",push)
     def test_canonical_routes_reach_focused_skill(self):

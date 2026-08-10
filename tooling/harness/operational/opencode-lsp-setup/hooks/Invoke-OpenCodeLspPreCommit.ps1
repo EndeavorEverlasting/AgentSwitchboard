@@ -11,6 +11,11 @@ $changed=@(& git -C $RootPath diff --cached --name-only --diff-filter=ACMRD)
 if ($LASTEXITCODE -ne 0) { throw 'Unable to inspect staged files.' }
 $relevant=@($changed | Where-Object { $_ -match '^(SKILLS\.md$|TRIGGERS\.md$|tooling/harness/operational/workflow-registry\.json$|tooling/harness/operational/opencode-lsp-setup/|scripts/Test-OpenCodeLspHarness\.ps1$|tests/test_opencode_lsp_harness\.py$|Test-OpenCodeLspHarness\.cmd$|docs/harness/opencode-lsp-workstation-setup\.md$|\.ai/skills/opencode-lsp-workstation-setup/|\.github/workflows/opencode-lsp-harness\.yml$|tooling/harness/operational/manifest\.json$)' })
 if ($relevant.Count -eq 0) { Write-Host 'SKIP: no staged OpenCode LSP harness paths.'; exit 0 }
+foreach ($path in $relevant) {
+    & git -C $RootPath diff --quiet -- $path
+    if ($LASTEXITCODE -eq 1) { throw "Staged harness path has unstaged differences; refusing to validate a different snapshot: $path" }
+    if ($LASTEXITCODE -ne 0) { throw "Unable to compare staged and working-tree content for: $path" }
+}
 Push-Location -LiteralPath $RootPath
 try {
     & (Join-Path $RootPath 'Test-OpenCodeLspHarness.cmd')

@@ -34,7 +34,29 @@ function Test-ExactLines {
 
 $base = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { [IO.Path]::GetTempPath() }
 $stateRoot = Join-Path $base 'AgentSwitchboard\opencode-lsp'
-if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
+$outputDirectoryWasProvided = -not [string]::IsNullOrWhiteSpace($OutputDirectory)
+$requestedConfigurationDirectory = $null
+$preOwnedConfigureDirectory = $null
+if ($outputDirectoryWasProvided) {
+    $requestedConfigurationDirectory = [IO.Path]::GetFullPath($OutputDirectory)
+    if ($Mode -eq 'Configure' -and (Test-Path -LiteralPath $requestedConfigurationDirectory)) {
+        if (-not (Test-Path -LiteralPath $requestedConfigurationDirectory -PathType Container)) {
+            $preOwnedConfigureDirectory = $requestedConfigurationDirectory
+        }
+        else {
+            $existingEntries = @(Get-ChildItem -LiteralPath $requestedConfigurationDirectory -Force -ErrorAction Stop)
+            if ($existingEntries.Count -gt 0) { $preOwnedConfigureDirectory = $requestedConfigurationDirectory }
+        }
+    }
+}
+if ($preOwnedConfigureDirectory) {
+    $failureRunId = '{0}-{1}' -f ([DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ')), ([guid]::NewGuid().ToString('N').Substring(0,8))
+    $OutputDirectory = Join-Path $stateRoot "runs\$failureRunId"
+}
+elseif ($outputDirectoryWasProvided) {
+    $OutputDirectory = $requestedConfigurationDirectory
+}
+else {
     $runId = '{0}-{1}' -f ([DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ')), ([guid]::NewGuid().ToString('N').Substring(0,8))
     $OutputDirectory = Join-Path $stateRoot "runs\$runId"
 }
@@ -52,6 +74,7 @@ $dirty = $null
 $openCode = $null
 $version = $null
 $runtimeClass = 'unresolved'
+$modelProvider = $null
 $modelVisible = $false
 $modelQueryStatus = 'not-run'
 $configurationRoot = $null
@@ -68,6 +91,7 @@ $nextDependency = 'bounded setup prerequisites remain satisfied'
 $nextCommand = $null
 
 try {
+    if ($preOwnedConfigureDirectory) { Stop-Setup 'CONFIGURATION_DIRECTORY_ALREADY_OWNED' 'Configure requires a new or empty output directory. Existing evidence was preserved and this failure receipt was written to a fresh run.' }
     if ($env:OS -ne 'Windows_NT') { Stop-Setup 'WINDOWS_REQUIRED' 'Workstation configuration is Windows-only.' }
     if ($PSVersionTable.PSVersion.Major -lt 7) { Stop-Setup 'POWERSHELL7_REQUIRED' 'Use PowerShell 7.' }
 
@@ -88,7 +112,8 @@ try {
     }
 
     $origin = ([string](Invoke-GitLines @('remote','get-url','origin'))[0]).Trim()
-    if ($origin -notmatch 'EndeavorEverlasting[/:]AgentSwitchboard(?:\.git)?$') { Stop-Setup 'WRONG_REPOSITORY' 'The supplied checkout is not EndeavorEverlasting/AgentSwitchboard.' }
+    $canonicalOriginPattern = '^(?:https://github\.com/|git@github\.com:|ssh://git@github\.com/|git://github\.com/)EndeavorEverlasting/AgentSwitchboard(?:\.git)?/?$'
+    if ($origin -notmatch $canonicalOriginPattern) { Stop-Setup 'WRONG_REPOSITORY' 'The supplied checkout is not the exact GitHub repository EndeavorEverlasting/AgentSwitchboard.' }
     $repoResolved = $true
     $head = ([string](Invoke-GitLines @('rev-parse','HEAD'))[0]).Trim()
     $branchLines = @(Invoke-GitLines @('branch','--show-current'))
@@ -109,7 +134,10 @@ try {
     if ($version -match '^\s*v?2(?:\.|\b)') { Stop-Setup 'OPENCODE_V2_LSP_UNAVAILABLE' 'Detected OpenCode V2; current upstream V2 documentation does not provide LSP runtime behavior.' }
     $runtimeClass = 'stable-lsp-capable'
 
-    $modelLines = @(& $openCode models opencode 2>&1)
+    $modelSeparator = $ModelId.IndexOf('/')
+    if ($modelSeparator -le 0 -or $modelSeparator -ge ($ModelId.Length - 1)) { Stop-Setup 'MODEL_ID_INVALID' 'ModelId must use provider/model format.' }
+    $modelProvider = $ModelId.Substring(0, $modelSeparator)
+    $modelLines = @(& $openCode models $modelProvider 2>&1)
     if ($LASTEXITCODE -eq 0) {
         $modelQueryStatus = 'pass'
         $modelVisible = @($modelLines | Where-Object { ([string]$_).Trim() -eq $ModelId }).Count -gt 0
@@ -119,7 +147,7 @@ try {
     }
 
     if ($Mode -eq 'Configure' -and -not $modelVisible) {
-        Stop-Setup 'MODEL_NOT_VISIBLE' 'The requested OpenCode model was not proven visible by the bounded model-list query.'
+        Stop-Setup 'MODEL_NOT_VISIBLE' 'The requested OpenCode model was not proven visible by the bounded provider-specific model-list query.'
     }
 
     if ($Mode -eq 'Verify') {
@@ -169,9 +197,6 @@ try {
     )
 
     if ($Mode -eq 'Configure') {
-        foreach ($ownedPath in @($overlayPath, $launcherScriptPath, $launcherCmdPath)) {
-            if (Test-Path -LiteralPath $ownedPath) { Stop-Setup 'CONFIGURATION_DIRECTORY_ALREADY_OWNED' 'Configure refuses to overwrite an existing immutable setup artifact; use a new run directory.' }
-        }
         [ordered]@{'$schema'='https://opencode.ai/config.json';lsp=$true} | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $overlayPath -Encoding utf8NoBOM
         $expectedLauncherScript | Set-Content -LiteralPath $launcherScriptPath -Encoding utf8NoBOM
         $expectedLauncherCmd | Set-Content -LiteralPath $launcherCmdPath -Encoding ascii
@@ -189,7 +214,7 @@ try {
 
     if ($Mode -in @('Configure','Verify')) {
         if (-not $overlayValid) { Stop-Setup 'OVERLAY_INVALID' 'The immutable LSP overlay is missing or does not exactly enable the OpenCode schema/lsp contract.' }
-        if (-not $launcherScriptValid -or -not $launcherCmdValid) { Stop-Setup 'LAUNCHER_MISMATCH' 'The launcher does not exactly match the requested repository, OpenCode executable, overlay, and model.' }
+        if (-not $launcherScriptValid -or -not $launcherCmdValid) { Stop-Setup 'LAUNCHER_MISMATCH' 'The launcher does not exactly match the requested repository, executable, overlay, and model.' }
         if (-not $modelVisible) { Stop-Setup 'MODEL_NOT_VISIBLE' 'The requested model is not visible to the current OpenCode provider view.' }
     }
 }
@@ -247,6 +272,7 @@ $result = [ordered]@{
     opencodeCommand = $openCode
     opencodeVersion = $version
     runtimeClass = $runtimeClass
+    requestedConfigurationDirectory = $requestedConfigurationDirectory
     configurationDirectory = $configurationRoot
     overlayPath = $overlayPath
     overlayValid = $overlayValid
@@ -255,6 +281,7 @@ $result = [ordered]@{
     launcherPath = $launcherCmdPath
     launcherValid = $launcherCmdValid
     modelId = $ModelId
+    modelProvider = $modelProvider
     modelVisible = $modelVisible
     modelQueryStatus = $modelQueryStatus
     inheritedInlineConfigContentsPersisted = $false
@@ -284,6 +311,7 @@ $report = @(
     "- Status: ``$status``",
     "- Failure code: ``$failureCode``",
     "- Model: ``$ModelId``",
+    "- Model provider: ``$modelProvider``",
     "- Model visible: ``$modelVisible``",'',
     '## Working'
 )
@@ -298,6 +326,7 @@ $report | Set-Content -LiteralPath $reportPath -Encoding utf8NoBOM
 Write-Host "OPENCODE_LSP_SETUP_STATUS=$status"
 Write-Host "REPO_HEAD=$head"
 Write-Host "OPENCODE_VERSION=$version"
+Write-Host "MODEL_PROVIDER=$modelProvider"
 Write-Host "MODEL_VISIBLE=$modelVisible"
 Write-Host "CONFIGURATION_DIRECTORY=$configurationRoot"
 Write-Host "OVERLAY=$overlayPath"

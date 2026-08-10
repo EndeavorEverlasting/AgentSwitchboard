@@ -27,11 +27,11 @@ containing:
 
 The generated PowerShell launcher preserves an inherited `OPENCODE_CONFIG` path when one already exists. It also parses inherited `OPENCODE_CONFIG_CONTENT` in memory, preserves its keys, forces `lsp=true`, and passes that merged JSON only to the child OpenCode process. Inherited inline configuration is never copied to receipts or reports.
 
-Configure never overwrites a prior run directory. Every receipt therefore points to the exact immutable overlay and launcher pair that it validated.
+Configure never overwrites a prior non-empty output directory. If a caller points Configure at prior evidence, that directory remains untouched and the failure receipt/report are written to a fresh run instead. Every successful receipt therefore points to the exact immutable overlay and launcher pair that it validated.
 
 ## Interactive model selection
 
-The launcher starts the OpenCode TUI with the current top-level `--model` option and the repository path. The default requested model is `opencode/nemotron-3-ultra-free`; it is selected per launch and is not persisted as the global model.
+The launcher starts the OpenCode TUI with the current top-level `--model` option and the repository path. The default requested model is `opencode/nemotron-3-ultra-free`; it is selected per launch and is not persisted as the global model. Model visibility is checked against the provider prefix parsed from `provider/model`, so the bounded query matches the requested model namespace.
 
 Free trial endpoints are for public/non-confidential material only. Do not submit credentials, customer data, private machine evidence, or confidential source.
 
@@ -62,15 +62,17 @@ After Configure, run the generated CMD, open a `.py` or `.yml` file, and observe
 
 ## Troubleshooting
 
+- `WRONG_REPOSITORY`: the origin must be an exact supported GitHub URL/SCP form for `EndeavorEverlasting/AgentSwitchboard`; similarly named owners are rejected.
 - `OPENCODE_NOT_FOUND`: repair/install OpenCode through its owning workflow; the failure receipt remains local.
 - `OPENCODE_V2_LSP_UNAVAILABLE`: use repository lint/typecheck/test/PowerShell validators until upstream V2 supplies runtime support.
-- `MODEL_NOT_VISIBLE`: connect/refresh the provider and rerun Inspect; never put credentials in repo/evidence.
+- `MODEL_ID_INVALID`: use `provider/model` format.
+- `MODEL_NOT_VISIBLE`: connect/refresh the requested provider and rerun Inspect; never put credentials in repo/evidence.
 - `LAUNCHER_MISMATCH`: do not hand-edit a generated run; create a new Configure run.
-- `CONFIGURATION_DIRECTORY_ALREADY_OWNED`: use the default new run instead of overwriting old evidence.
+- `CONFIGURATION_DIRECTORY_ALREADY_OWNED`: use the default new run or an empty directory instead of overwriting old evidence.
 - inherited inline config is invalid JSON: the generated launcher stops without changing the environment source.
 - no PowerShell diagnostics: expected; current OpenCode built-ins do not include a PowerShell server.
 - Pyright does not start: open a Python file and confirm its requirement can be resolved; do not install arbitrary packages merely to satisfy the harness.
 
 ## Validation
 
-`Test-OpenCodeLspHarness.cmd` resolves Python 3 using `python.exe` or the Windows `py.exe -3` launcher, runs the focused contract/completeness floor, runs the canonical documentation contract, and checks diff hygiene.
+`Test-OpenCodeLspHarness.cmd` first proves a usable Python 3 runtime. It tries `python.exe`, then falls back to `py.exe -3` if the first executable is missing or unusable. It then runs the focused contract/completeness floor, the canonical documentation contract, and diff hygiene.
