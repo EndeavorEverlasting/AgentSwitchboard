@@ -53,5 +53,5 @@
       "consumers": []
     }
   ],
-  "proofCeiling": "The registry proves profile names, ownership, delegation rules, platform separation, and that the tracked Android Termux launcher selects pinned OpenAI Codex as its coding agent while tmux remains the current session backend. It does not prove the Android package floor is installed on a device, Codex ChatGPT authentication succeeds, the Android sandbox works, a model responds, command/file behavior occurs, repository mutation succeeds, Herdr integration works, or the operator accepts the runtime."
+  "proofCeiling": "The registry proves profile names, ownership, delegation rules, platform separation, and that the tracked Android Termux launcher selects pinned OpenAI Codex as its coding agent while tmux remains the current session backend. It does not prove the Android package floor is installed on a device, provider authentication (including Codex ChatGPT device authentication) succeeds, the Android sandbox works, a model responds, tool behavior occurs, repository mutation succeeds, Herdr integration works, or the operator accepts the runtime."
 }
