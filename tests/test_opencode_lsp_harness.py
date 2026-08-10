@@ -25,7 +25,7 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         for token in ('opencode_config_content','opencode/nemotron-3-ultra-free','opencode_v2_lsp_unavailable','configurationdirectory','configuration_directory_already_owned','launcher_mismatch','localappdata','lsp=$true','free trial'):
             self.assertIn(token,lower)
         self.assertIn("if ([string]::IsNullOrWhiteSpace($env:OPENCODE_CONFIG))",text)
-        self.assertIn("$effective['lsp'] = $true",text)
+        self.assertIn("$effective[''lsp''] = $true",text)
         self.assertIn('Test-ExactLines',text)
         self.assertNotIn('Set-Content -LiteralPath $globalConfig',text)
     def test_runner_has_no_destructive_git_or_secret_persistence(self):
