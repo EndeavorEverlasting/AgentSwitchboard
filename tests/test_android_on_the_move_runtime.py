@@ -93,10 +93,15 @@ class AndroidOnTheMoveRuntimeTests(unittest.TestCase):
         self.assertNotIn("--dangerously-bypass-approvals-and-sandbox", text)
         self.assertNotIn("--dangerously-bypass-hook-trust", text)
 
-    def test_existing_non_codex_tmux_session_fails_closed(self):
+    def test_existing_tmux_session_identity_fails_closed(self):
         text = (ROOT / "tooling/profiles/android/AgentSwitchboard-Android.sh").read_text()
         self.assertIn("pane_current_command", text)
+        self.assertIn("pane_current_path", text)
+        self.assertIn("pane_pid", text)
+        self.assertIn('/proc/$pane_pid/exe', text)
         self.assertIn("not Codex; preserve that session and close it explicitly", text)
+        self.assertIn("not requested repo", text)
+        self.assertIn("not running the profile-managed Codex binary", text)
         self.assertNotIn("tmux kill-session", text)
 
     def test_android_profile_registration_is_honest(self):
