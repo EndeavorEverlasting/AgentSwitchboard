@@ -23,23 +23,14 @@
     "operatorReportTemplate": "tooling/harness/operational/templates/operator-report.template.md",
     "preCommitHook": "tooling/harness/operational/hooks/Invoke-OperationalHarnessPreCommit.ps1",
     "prePushHook": "tooling/harness/operational/hooks/Invoke-OperationalHarnessPrePush.ps1",
-    "promptHandoffHarness": "tooling/harness/operational/opencode-prompt-handoff/manifest.json"
+    "promptHandoffHarness": "tooling/harness/operational/opencode-prompt-handoff/manifest.json",
+    "openCodeLspSetupHarness": "tooling/harness/operational/opencode-lsp-setup/manifest.json"
   },
-  "workflowOrder": [
-    "task-intake",
-    "pre-commit-validation",
-    "failure-recovery",
-    "handoff"
-  ],
+  "workflowOrder": ["task-intake","pre-commit-validation","failure-recovery","handoff"],
   "generatedEvidence": {
     "tracked": false,
     "defaultRoot": "operating-system temporary directory/AgentSwitchboard/operational-harness/<run-id>",
-    "artifacts": [
-      "operational-harness-status.json",
-      "operational-harness-report.md",
-      "operational-harness-validation-ledger.json",
-      "operational-harness-handoff.json"
-    ]
+    "artifacts": ["operational-harness-status.json","operational-harness-report.md","operational-harness-validation-ledger.json","operational-harness-handoff.json"]
   },
   "hooks": {
     "implicitInstallationAllowed": false,

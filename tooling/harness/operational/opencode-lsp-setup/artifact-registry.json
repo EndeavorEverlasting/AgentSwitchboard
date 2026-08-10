@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "harnessId": "agentswitchboard.opencode-lsp-workstation-setup.v1",
+  "tracked": false,
+  "defaultRunRoot": "%LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/runs/<run-id>",
+  "stateRoot": "%LOCALAPPDATA%/AgentSwitchboard/opencode-lsp",
+  "artifacts": [
+    {"artifactId":"setup-json","fileName":"opencode-lsp-setup.json","purpose":"machine-readable exact Git/OpenCode/setup state"},
+    {"artifactId":"operator-report","fileName":"opencode-lsp-operator-report.md","purpose":"human-readable working/broken/missing/next-action report"},
+    {"artifactId":"lsp-overlay","fileName":"opencode-lsp.overlay.json","persistent":true,"purpose":"owned OpenCode custom config containing lsp=true only"},
+    {"artifactId":"launcher","fileName":"Open-AgentSwitchboard-OpenCode-Lsp.cmd","persistent":true,"purpose":"owned launcher using overlay and an explicit per-launch free model"}
+  ],
+  "naming": {"runId":"yyyyMMddTHHmmssZ-8hex","files":"fixed canonical names"},
+  "forbiddenContents": ["API keys","OAuth tokens","passwords","cookies","customer data","private hostnames","full environment dumps","clipboard contents","private source text"]
+}

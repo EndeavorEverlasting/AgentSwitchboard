@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "harnessId": "agentswitchboard.opencode-lsp-workstation-setup.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "directories": [
+    {"path":"tooling/harness/operational/opencode-lsp-setup","purpose":"Focused OpenCode/LSP contracts, runner, registries, hooks, and reports."},
+    {"path":"tooling/gnhf","purpose":"Existing OpenCode/GNHF product launcher; reference only in this harness lane."},
+    {"path":"scripts","purpose":"Deterministic PowerShell validation."},
+    {"path":"tests","purpose":"Dependency-free harness contracts."},
+    {"path":".ai/skills","purpose":"Scoped low-capability-agent procedure."},
+    {"path":"docs/harness","purpose":"Operator setup/troubleshooting documentation."}
+  ],
+  "entrypoints": {
+    "validate": "Test-OpenCodeLspHarness.cmd",
+    "inspect": "pwsh -NoLogo -NoProfile -File tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1 -Mode Inspect -RepoPath .",
+    "configure": "pwsh -NoLogo -NoProfile -File tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1 -Mode Configure -RepoPath ."
+  },
+  "configuration": {
+    "upstreamGlobalConfig": "~/.config/opencode/opencode.json",
+    "ownedOverlay": "%LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/opencode-lsp.overlay.json",
+    "activation": "OPENCODE_CONFIG is set only for the generated OpenCode launcher process.",
+    "overlay": {"$schema":"https://opencode.ai/config.json","lsp":true}
+  },
+  "languageFit": [
+    {"language":"Python","server":"pyright","note":"Useful for repository Python tests when OpenCode can resolve the requirement."},
+    {"language":"YAML","server":"yaml-ls","note":"Useful for workflow YAML; current OpenCode can auto-install when downloads are permitted."},
+    {"language":"TypeScript/JavaScript","server":"typescript","note":"Activates only when the target project satisfies TypeScript requirements; not forced here."},
+    {"language":"PowerShell","server":null,"note":"Current OpenCode built-ins do not list PowerShell; use repository PowerShell validators rather than inventing a custom server."}
+  ],
+  "buildTestDeploy": {
+    "build": null,
+    "test": "Test-OpenCodeLspHarness.cmd",
+    "deploy": null,
+    "reason": "This lane is harness infrastructure plus bounded machine-local setup; no product deployment."
+  },
+  "knownTraps": [
+    "Never edit the operator's existing global or project OpenCode config from this harness.",
+    "Never persist a free trial model as a machine-wide default.",
+    "Never send confidential, customer, credential, or private machine data to free trial endpoints.",
+    "lsp=true is configuration proof, not active LSP runtime proof.",
+    "Do not invent a PowerShell LSP.",
+    "Fail closed when OpenCode V2 is detected because current V2 LSP configuration has no runtime effect.",
+    "Do not run arbitrary global package installers merely to manufacture a harness pass."
+  ]
+}
