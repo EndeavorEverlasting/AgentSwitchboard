@@ -1,0 +1,44 @@
+name: External Agent Tooling Catalog
+
+on:
+  pull_request:
+    paths:
+      - 'tooling/harness/operational/external-agent-tooling/**'
+      - '.ai/skills/external-agent-tooling-intake/**'
+      - 'docs/harness/external-agent-tooling-catalog.md'
+      - 'scripts/Test-ExternalAgentToolingCatalog.ps1'
+      - 'tests/test_external_agent_tooling_catalog.py'
+      - 'tooling/harness/operational/manifest.json'
+      - 'tooling/harness/operational/validator-registry.json'
+      - 'tooling/harness/operational/workflow-registry.json'
+      - '.github/workflows/external-agent-tooling-catalog.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'tooling/harness/operational/external-agent-tooling/**'
+      - '.ai/skills/external-agent-tooling-intake/**'
+      - 'docs/harness/external-agent-tooling-catalog.md'
+      - 'scripts/Test-ExternalAgentToolingCatalog.ps1'
+      - 'tests/test_external_agent_tooling_catalog.py'
+      - 'tooling/harness/operational/manifest.json'
+      - 'tooling/harness/operational/validator-registry.json'
+      - 'tooling/harness/operational/workflow-registry.json'
+      - '.github/workflows/external-agent-tooling-catalog.yml'
+
+jobs:
+  contract:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Portable contract
+        run: python tests/test_external_agent_tooling_catalog.py
+      - name: PowerShell contract
+        shell: pwsh
+        run: ./scripts/Test-ExternalAgentToolingCatalog.ps1

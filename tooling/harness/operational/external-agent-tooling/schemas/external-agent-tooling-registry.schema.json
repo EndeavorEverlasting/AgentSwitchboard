@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentswitchboard.external-agent-tooling-registry.schema.json",
+  "title": "AgentSwitchboard external agent tooling registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion","catalogId","capturedDate","authority","policy","sourceBuckets","reportedClaims","entries"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "catalogId": {"const": "agentswitchboard.external-agent-tooling.v1"},
+    "capturedDate": {"type":"string","pattern":"^\\d{4}-\\d{2}-\\d{2}$"},
+    "authority": {"type":"object","additionalProperties":false,"required":["governance","harnessDoctrine","purpose"],"properties":{"governance":{"type":"string"},"harnessDoctrine":{"type":"string"},"purpose":{"type":"string","minLength":1}}},
+    "policy": {"type":"object","additionalProperties":false,"required":["sourceClaimsAreFacts","installationAuthorizedByCatalog","providerCallsAuthorizedByCatalog","networkExecutionAuthorizedByCatalog","liveTargetMutationAuthorizedByCatalog","requiredEvidenceStates","requiredDispositions","adoptionGate"],"properties":{"sourceClaimsAreFacts":{"const":false},"installationAuthorizedByCatalog":{"const":false},"providerCallsAuthorizedByCatalog":{"const":false},"networkExecutionAuthorizedByCatalog":{"const":false},"liveTargetMutationAuthorizedByCatalog":{"const":false},"requiredEvidenceStates":{"type":"array","minItems":4,"items":{"type":"string"}},"requiredDispositions":{"type":"array","minItems":6,"items":{"type":"string"}},"adoptionGate":{"type":"string","minLength":1}}},
+    "sourceBuckets":{"type":"object","minProperties":7,"additionalProperties":{"type":"string"}},
+    "reportedClaims":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["claimId","entryId","claim","evidenceState","reuseAllowedWithoutVerification"],"properties":{"claimId":{"type":"string","minLength":1},"entryId":{"type":"string","minLength":1},"claim":{"type":"string","minLength":1},"evidenceState":{"enum":["reported","partially-verified","verified","unresolved"]},"reuseAllowedWithoutVerification":{"const":false}}}},
+    "entries":{"type":"array","minItems":45,"items":{"type":"object","additionalProperties":false,"required":["id","name","aliases","kind","mentionClass","sourceBucket","category","summary","evidenceState","verificationRequiredBeforeAdoption","disposition","integrationAuthority"],"properties":{"id":{"type":"string","pattern":"^[a-z0-9][a-z0-9-]*$"},"name":{"type":"string","minLength":1},"aliases":{"type":"array","items":{"type":"string"}},"kind":{"type":"string","minLength":1},"mentionClass":{"enum":["primary","compatibility","supporting","comparison"]},"sourceBucket":{"enum":["covered-prior","user-today","video-1","video-2","video-3","video-4","video-5"]},"category":{"type":"string","minLength":1},"summary":{"type":"string","minLength":1},"evidenceState":{"enum":["reported","partially-verified","verified","unresolved"]},"verificationRequiredBeforeAdoption":{"const":true},"disposition":{"enum":["existing-reference","evaluate","compatibility","supporting","comparison","watchlist"]},"integrationAuthority":{"const":"none"}}}}
+  }
+}
