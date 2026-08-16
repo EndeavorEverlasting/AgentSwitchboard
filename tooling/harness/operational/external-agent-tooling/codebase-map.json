@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "mapId": "agentswitchboard.external-agent-tooling-map.v1",
+  "purpose": "Route external tool/framework/plugin evidence into a bounded evaluation path.",
+  "paths": [
+    {
+      "path": "tooling/harness/operational/external-agent-tooling/external-agent-tooling.registry.json",
+      "role": "canonical catalog and evidence-state registry"
+    },
+    {
+      "path": "tooling/harness/operational/external-agent-tooling/schemas/external-agent-tooling-registry.schema.json",
+      "role": "machine-readable catalog shape"
+    },
+    {
+      "path": "tooling/harness/operational/external-agent-tooling/workflows/tool-intake.workflow.json",
+      "role": "intake, verification, overlap, risk, and disposition workflow"
+    },
+    {
+      "path": ".ai/skills/external-agent-tooling-intake/SKILL.md",
+      "role": "agent judgment procedure for external tooling evidence"
+    },
+    {
+      "path": "docs/harness/external-agent-tooling-catalog.md",
+      "role": "operator-facing catalog interpretation"
+    },
+    {
+      "path": "scripts/Test-ExternalAgentToolingCatalog.ps1",
+      "role": "PowerShell completeness validator"
+    },
+    {
+      "path": "tests/test_external_agent_tooling_catalog.py",
+      "role": "portable contract validator"
+    },
+    {
+      "path": "tooling/harness/operational/external-agent-tooling/reports/CURRENT_STATE.md",
+      "role": "tracked English-language operator state"
+    }
+  ],
+  "commands": {
+    "portableValidation": "python3 tests/test_external_agent_tooling_catalog.py",
+    "powershellValidation": "pwsh -NoLogo -NoProfile -File scripts/Test-ExternalAgentToolingCatalog.ps1",
+    "diffCheck": "git diff --check"
+  },
+  "forbidden": "No installer execution, provider call, global configuration mutation, secret collection, or live-target mutation is authorized by this catalog."
+}

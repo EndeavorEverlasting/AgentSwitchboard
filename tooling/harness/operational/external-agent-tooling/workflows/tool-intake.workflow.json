@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "external-agent-tooling-intake",
+  "title": "External agent tooling intake and disposition",
+  "trigger": "A new tool, framework, plugin, provider, protocol, database, skill suite, or architecture is proposed for AgentSwitchboard evaluation or adoption.",
+  "inputs": [
+    "literal supplied name and aliases",
+    "source bucket or source reference",
+    "reported capability claims",
+    "intended AgentSwitchboard use",
+    "current repository overlap"
+  ],
+  "steps": [
+    {"id":"capture","action":"Preserve the literal source claim and aliases without upgrading it to fact.","output":"catalog candidate with reported or unresolved evidence state"},
+    {"id":"classify","action":"Classify kind, category, mention class, and proposed disposition.","output":"routing metadata"},
+    {"id":"overlap","action":"Search existing AgentSwitchboard adapters, prompts, skills, registries, validators, and docs before proposing new ownership.","output":"reuse/extend/create decision evidence"},
+    {"id":"verify-upstream","action":"Before adoption, verify official upstream identity plus pinned version/commit, supported OS, install scope, security/privacy behavior, network/telemetry behavior, expected files, and rollback path.","output":"verification evidence or unresolved blocker"},
+    {"id":"risk-boundary","action":"Determine permissions, subprocess/filesystem/network behavior, provider credentials, persistence, update path, and whether local/private claims are actually proven.","output":"risk assessment"},
+    {"id":"disposition","action":"Choose existing-reference, evaluate, compatibility, supporting, comparison, watchlist, or open a separately scoped implementation sprint.","output":"bounded decision"},
+    {"id":"validate","action":"Run catalog validators and git diff --check for tracked catalog changes.","output":"validator evidence"}
+  ],
+  "stopConditions": [
+    "upstream identity is ambiguous",
+    "required official source cannot be verified",
+    "installation would exceed current sprint authority",
+    "another canonical repo surface already owns the integration",
+    "security/privacy/runtime behavior is materially unresolved"
+  ],
+  "outputs": [
+    "updated tracked registry when evidence changes",
+    "external-agent-tooling-evaluation.json for a bounded evaluation",
+    "external-agent-tooling-operator-report.md",
+    "separate implementation sprint when adoption is approved"
+  ],
+  "proofCeiling": "Evidence intake, classification, overlap analysis, and verified upstream metadata when actually collected; no installation or runtime proof."
+}

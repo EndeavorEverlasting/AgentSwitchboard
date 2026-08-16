@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "harnessId": "agentswitchboard.external-agent-tooling-catalog.v1",
+  "title": "External agent tooling evidence catalog",
+  "authority": {
+    "governance": "AGENTS.md",
+    "harnessDoctrine": "docs/governance/harness-doctrine.md",
+    "parentHarness": "tooling/harness/operational/manifest.json"
+  },
+  "entrypoints": {
+    "registry": "tooling/harness/operational/external-agent-tooling/external-agent-tooling.registry.json",
+    "schema": "tooling/harness/operational/external-agent-tooling/schemas/external-agent-tooling-registry.schema.json",
+    "codebaseMap": "tooling/harness/operational/external-agent-tooling/codebase-map.json",
+    "artifactRegistry": "tooling/harness/operational/external-agent-tooling/artifact-registry.json",
+    "intakeWorkflow": "tooling/harness/operational/external-agent-tooling/workflows/tool-intake.workflow.json",
+    "skill": ".ai/skills/external-agent-tooling-intake/SKILL.md",
+    "operatorGuide": "docs/harness/external-agent-tooling-catalog.md",
+    "currentState": "tooling/harness/operational/external-agent-tooling/reports/CURRENT_STATE.md",
+    "pythonValidator": "tests/test_external_agent_tooling_catalog.py",
+    "powershellValidator": "scripts/Test-ExternalAgentToolingCatalog.ps1"
+  },
+  "catalogCount": 45,
+  "generatedEvidence": {
+    "tracked": false,
+    "defaultRoot": "operating-system temporary directory/AgentSwitchboard/external-agent-tooling/<run-id>",
+    "artifacts": [
+      "external-agent-tooling-evaluation.json",
+      "external-agent-tooling-operator-report.md"
+    ]
+  },
+  "safety": {
+    "catalogGrantsInstallAuthority": false,
+    "catalogGrantsNetworkAuthority": false,
+    "catalogGrantsProviderCallAuthority": false,
+    "catalogGrantsLiveTargetMutationAuthority": false,
+    "implicitHookInstallationAllowed": false,
+    "proofCeiling": "Tracked catalog completeness, provenance labels, routing metadata, and offline/static validation only."
+  }
+}
