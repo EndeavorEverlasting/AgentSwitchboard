@@ -16,218 +16,101 @@ function Add-Result {
         [Parameter(Mandatory)][string]$Name,
         [string]$FailureMessage = ''
     )
-
-    if ($Passed) {
-        [void]$passes.Add($Name)
-    }
-    else {
-        [void]$failures.Add("${Name}: $FailureMessage")
-    }
+    if ($Passed) { [void]$passes.Add($Name) }
+    else { [void]$failures.Add("${Name}: $FailureMessage") }
 }
 
-$relativePath = 'AGENTS.md'
-$governancePath = Join-Path $RootPath $relativePath
-$exists = Test-Path -LiteralPath $governancePath -PathType Leaf
-Add-Result -Passed $exists -Name 'governance/file-exists' -FailureMessage 'AGENTS.md is missing'
+$rootRelative = 'AGENTS.md'
+$detailRelative = 'docs/governance/agent-operating-details.md'
+$rootPath = Join-Path $RootPath $rootRelative
+$detailPath = Join-Path $RootPath $detailRelative
+$expectedDetailBlob = 'c94b797bef04942636af61b980c478919710e067'
+$expectedDetailBytes = 27896
 
-$tracked = $false
-if ($exists) {
-    $null = & git -C $RootPath ls-files --error-unmatch -- $relativePath 2>$null
-    $tracked = $LASTEXITCODE -eq 0
+foreach ($entry in @(
+    @{ Label='root'; Relative=$rootRelative; Path=$rootPath },
+    @{ Label='details'; Relative=$detailRelative; Path=$detailPath }
+)) {
+    $exists = Test-Path -LiteralPath $entry.Path -PathType Leaf
+    Add-Result -Passed $exists -Name "governance/$($entry.Label)-file-exists" -FailureMessage "$($entry.Relative) is missing"
+    $tracked = $false
+    if ($exists) {
+        $null = & git -C $RootPath ls-files --error-unmatch -- $entry.Relative 2>$null
+        $tracked = $LASTEXITCODE -eq 0
+    }
+    Add-Result -Passed $tracked -Name "governance/$($entry.Label)-file-tracked" -FailureMessage "$($entry.Relative) is not tracked by Git"
 }
-Add-Result -Passed $tracked -Name 'governance/file-tracked' -FailureMessage 'AGENTS.md is not tracked by Git'
 
-if ($exists) {
-    $text = Get-Content -LiteralPath $governancePath -Raw
+$rootText = if (Test-Path -LiteralPath $rootPath -PathType Leaf) { Get-Content -LiteralPath $rootPath -Raw } else { '' }
+$detailText = if (Test-Path -LiteralPath $detailPath -PathType Leaf) { Get-Content -LiteralPath $detailPath -Raw } else { '' }
 
-    foreach ($heading in @(
-        '# Agent Operating Contract',
-        '## Agent operating principles',
-        '## Instruction precedence',
-        '## Mandatory sprint declaration',
-        '## Launch order and dependency gates',
-        '## Broad-stride execution and principle reuse',
-        '## Continuous execution and transport independence',
-        '## Agent-facing interface doctrine (AXI)',
-        '## Multi-agent and local-model governance',
-        '## Forbidden behaviors',
-        '## Completion standard'
-    )) {
-        Add-Result -Passed $text.Contains($heading) -Name "governance/heading/$heading" -FailureMessage 'required governance section is missing'
+# Root owns only ambient universal law, precedence, and progressive routing.
+foreach ($token in @(
+    '# Agent Operating Contract',
+    '## Precedence',
+    'Evidence before action',
+    'This governance contract',
+    '## Progressive disclosure reading order',
+    'HARNESS.md',
+    'tooling/harness/context/context.routes.json',
+    'docs/governance/agent-operating-details.md',
+    '## Triggered governance detail',
+    '## Sprint and proof contract',
+    'PR or sprint',
+    'Test-RuntimeEventContract.ps1',
+    'Test-DeviceProfileLauncherContract.ps1'
+)) {
+    Add-Result -Passed $rootText.Contains($token) -Name "governance/root-route/$token" -FailureMessage 'compact root authority/routing token is missing'
+}
+Add-Result -Passed ([Text.Encoding]::UTF8.GetByteCount($rootText) -le 7000) -Name 'governance/root-context-budget' -FailureMessage 'compact root AGENTS.md exceeds 7000 UTF-8 bytes'
+
+# The detailed pre-factor governance remains normative when triggered. Validate the
+# tracked Git object instead of checkout bytes so Windows CRLF normalization cannot
+# create a false loss-of-authority result.
+$detailBlob = $null
+$detailBlobBytes = $null
+if (Test-Path -LiteralPath $detailPath -PathType Leaf) {
+    $blobLines = @(& git -C $RootPath rev-parse "HEAD:$detailRelative" 2>&1)
+    if ($LASTEXITCODE -eq 0 -and $blobLines.Count -gt 0) {
+        $detailBlob = ([string]$blobLines[0]).Trim()
+        $sizeLines = @(& git -C $RootPath cat-file -s $detailBlob 2>&1)
+        if ($LASTEXITCODE -eq 0 -and $sizeLines.Count -gt 0) { $detailBlobBytes = [int](([string]$sizeLines[0]).Trim()) }
     }
+}
+Add-Result -Passed ($detailBlob -eq $expectedDetailBlob) -Name 'governance/details-exact-git-blob' -FailureMessage "expected $expectedDetailBlob, got $detailBlob"
+Add-Result -Passed ($detailBlobBytes -eq $expectedDetailBytes) -Name 'governance/details-exact-size' -FailureMessage "expected $expectedDetailBytes bytes, got $detailBlobBytes"
 
-    foreach ($principle in @(
-        'Evidence before action',
-        'Floor before furniture',
-        'Bounded sprints with declared scope',
-        'One writer per branch',
-        'Reuse before replacing',
-        'No completion without proof'
-    )) {
-        Add-Result -Passed $text.Contains($principle) -Name "governance/principle/$principle" -FailureMessage 'required operating principle is missing'
-    }
-
-    $precedence = @(
-        'Platform, security, legal, and repository-owner instructions.',
-        'This governance contract.',
-        'Task-specific prompts.',
-        'Generic defaults.'
-    )
-    $previousIndex = -1
-    foreach ($item in $precedence) {
-        $index = $text.IndexOf($item, [StringComparison]::Ordinal)
-        Add-Result -Passed ($index -ge 0) -Name "governance/precedence/present/$item" -FailureMessage 'precedence item is missing'
-        Add-Result -Passed ($index -gt $previousIndex) -Name "governance/precedence/order/$item" -FailureMessage 'instruction precedence is out of order'
-        if ($index -ge 0) { $previousIndex = $index }
-    }
-
-    foreach ($field in @(
-        'repository and branch',
-        'lane and mission',
-        'owned scope and forbidden scope',
-        'expected artifacts and validation commands',
-        'proof ceiling'
-    )) {
-        Add-Result -Passed $text.Contains($field) -Name "governance/sprint-declaration/$field" -FailureMessage 'mandatory sprint declaration field is missing'
-    }
-
-    foreach ($rule in @(
-        'One prompt panel goes into one new chat.',
-        'Run them in this exact order.',
-        'A dependency gate is hard',
-        'Parallel-group panels remain contiguous',
-        'disjoint branches or worktrees',
-        'named convergence owner',
-        'Downstream work is blocked',
-        'Each panel is self-contained',
-        'A launch order coordinates work; it does not grant authority'
-    )) {
-        Add-Result -Passed $text.Contains($rule) -Name "governance/launch-order/$rule" -FailureMessage 'required launch-order rule is missing'
-    }
-
-    foreach ($rule in @(
-        'Broad strides are encouraged',
-        'one coherent vertical slice',
-        'Classify every requirement as',
-        '`reuse`',
-        '`extend`',
-        '`repair`',
-        '`retire`',
-        '`create`',
-        'Declare the boundary map',
-        'one canonical owner',
-        'Complete the owned vertical slice',
-        'Principles stay canonical',
-        'Skills describe reusable workflow guidance',
-        'Capabilities expose reusable operations',
-        'Triggers deterministically route conditions',
-        'Application behavior remains in code',
-        'verified, inferred, or unresolved',
-        'Do not weaken a gate',
-        'does not grant merge, release, deployment, or live-target authority'
-    )) {
-        Add-Result -Passed $text.Contains($rule) -Name "governance/broad-stride/$rule" -FailureMessage 'required broad-stride or principle-reuse rule is missing'
-    }
-
-    foreach ($rule in @(
-        'inspect -> decide -> mutate -> validate -> observe -> reconcile -> continue',
-        'Use live capability when it exists',
-        'perform the live read or search and advance the work',
-        'Preserve standing authority',
-        'execute it instead of asking the operator to repeat authorization',
-        'No premature terminal state',
-        'safe authorized work remains',
-        'Stop only at a real blocker',
-        'Treat live coordination surfaces as continuation channels',
-        'monitored live document',
-        'Do not assume clipboard availability',
-        'QR payload',
-        'transports command text; it is not authority',
-        'Prefer robust transport over fragile transcription',
-        'repository-owned launcher',
-        'Preserve evidence across device and app boundaries',
-        'Continuous execution does not mean an unbounded retry loop'
-    )) {
-        Add-Result -Passed $text.Contains($rule) -Name "governance/continuous-execution/$rule" -FailureMessage 'required continuous-execution or transport-independence rule is missing'
-    }
-
-    foreach ($rule in @(
-        'Token-efficient output',
-        'Minimal default schemas',
-        'Content truncation',
-        'Pre-computed aggregates',
-        'Definitive empty states',
-        'Structured errors and exit codes',
-        'Ambient context',
-        'Content first',
-        'Contextual disclosure',
-        'Consistent help',
-        'https://axi.md/'
-    )) {
-        Add-Result -Passed $text.Contains($rule) -Name "governance/axi/$rule" -FailureMessage 'required agent-interface rule is missing'
-    }
-
-    foreach ($rule in @(
-        'Verify the upstream contract',
-        'Treat extensions as executable code',
-        'Prove privacy; do not infer it',
-        'Declare orchestration roles',
-        'Preserve independent evidence',
-        'Make divergence visible',
-        'Separate test authority from implementation',
-        'Bound every loop',
-        'One designated writer',
-        'Log actual execution identity',
-        'official source for the pinned version',
-        'privacy claim requires evidence',
-        'maximum attempts',
-        'provider, model, endpoint class'
-    )) {
-        Add-Result -Passed $text.Contains($rule) -Name "governance/multi-agent/$rule" -FailureMessage 'required multi-agent or local-model rule is missing'
-    }
-
-    foreach ($behavior in @(
-        'Acknowledgment without mutation',
-        'Plans without execution',
-        'Summaries without proof',
-        'Completion claims without running checks',
-        'Secret or credential exposure',
-        'Premature handoff or repeated permission requests',
-        'Clipboard-only command delivery',
-        'Treating QR, live-document, file, issue, or PR-comment transport as new authority',
-        'Re-inventing an established principle',
-        'Trivial-only progress',
-        'Installing or executing unverified third-party agent snippets',
-        'Claiming privacy, model independence, successful fusion, or continuous validation from configuration intent alone'
-    )) {
-        Add-Result -Passed $text.Contains($behavior) -Name "governance/forbidden/$behavior" -FailureMessage 'required forbidden behavior is missing'
-    }
-
-    foreach ($completion in @(
-        'files changed are named',
-        'validation was actually run',
-        'commit SHA exists',
-        'push or PR state is reported',
-        'one exact next command is given',
-        'Opening or updating a PR is not by itself completion',
-        'review integration, merge, runtime tests, implementation, effective-state verification, or artifact readback',
-        'real blocker has been named with its owner, dependency, next executable action, and expected proof'
-    )) {
-        Add-Result -Passed $text.Contains($completion) -Name "governance/completion/$completion" -FailureMessage 'minimum completion evidence is missing'
-    }
+# These representative anchors make failures readable. The exact-object check above
+# is the exhaustive preservation proof for every pre-factor clause.
+foreach ($token in @(
+    '## Agent operating principles',
+    '## Instruction precedence',
+    '## Mandatory sprint declaration',
+    '## Launch order and dependency gates',
+    '## Broad-stride execution and principle reuse',
+    '## Continuous execution and transport independence',
+    '## Agent-facing interface doctrine (AXI)',
+    '## Multi-agent and local-model governance',
+    '## Forbidden behaviors',
+    '## Completion standard',
+    'Floor before furniture',
+    'One prompt panel goes into one new chat.',
+    'A launch order coordinates work; it does not grant authority',
+    'Application behavior remains in code',
+    'inspect -> decide -> mutate -> validate -> observe -> reconcile -> continue',
+    'Token-efficient output',
+    'Prove privacy; do not infer it',
+    'Acknowledgment without mutation',
+    'one exact next command is given'
+)) {
+    Add-Result -Passed $detailText.Contains($token) -Name "governance/details-anchor/$token" -FailureMessage 'preserved governance anchor is missing'
 }
 
 Write-Host 'AGENT GOVERNANCE DOCTRINE' -ForegroundColor Cyan
-foreach ($pass in $passes) {
-    Write-Host "[PASS] $pass" -ForegroundColor Green
-}
-foreach ($failure in $failures) {
-    Write-Host "[FAIL] $failure" -ForegroundColor Red
-}
+foreach ($pass in $passes) { Write-Host "[PASS] $pass" -ForegroundColor Green }
+foreach ($failure in $failures) { Write-Host "[FAIL] $failure" -ForegroundColor Red }
 Write-Host ''
 Write-Host ("Result: {0} passed / {1} failed" -f $passes.Count, $failures.Count)
 
-if ($failures.Count -gt 0) {
-    exit 1
-}
+if ($failures.Count -gt 0) { exit 1 }
 exit 0
