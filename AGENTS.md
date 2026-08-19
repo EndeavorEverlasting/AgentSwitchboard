@@ -5,7 +5,7 @@
 ## Precedence
 
 1. Platform, security, legal, and repository-owner instructions.
-2. This contract, including triggered governance details and the nearest nested `AGENTS.md`.
+2. This governance contract, including triggered governance details and the nearest nested `AGENTS.md`.
 3. Task-specific prompts.
 4. Generic defaults.
 
@@ -44,8 +44,10 @@ Load `docs/governance/agent-operating-details.md` when the task involves launch 
 Also load the owning policy pair when relevant:
 
 - general harness doctrine: `docs/governance/harness-doctrine.md` + `.ai/harness/harness-doctrine.policy.json`;
-- runtime events/listeners/evidence sinks: `docs/governance/runtime-event-contract.md` + `.ai/harness/runtime-event-contract.policy.json`;
-- device/profile launchers and open-or-activate behavior: `docs/governance/device-profile-launcher-contract.md` + `.ai/harness/device-profile-launcher.policy.json`.
+- runtime events/listeners/evidence sinks: `docs/governance/runtime-event-contract.md` + `.ai/harness/runtime-event-contract.policy.json`; validate changes with `Test-RuntimeEventContract.ps1`;
+- device/profile launchers and open-or-activate behavior: `docs/governance/device-profile-launcher-contract.md` + `.ai/harness/device-profile-launcher.policy.json`; validate changes with `Test-DeviceProfileLauncherContract.ps1`.
+
+For a PR or sprint governed by harness doctrine, the selected route must carry its validation order and proof boundary; the deep appendix supplies the detailed launch/dependency rules only when that work triggers them.
 
 ## Sprint and proof contract
 
