@@ -1,0 +1,15 @@
+{
+  "schemaVersion":1,
+  "workflowId":"configure",
+  "trigger":"intake proves supported OpenCode runtime, exact canonical AgentSwitchboard checkout, and requested model visibility",
+  "inputs":["exact checkout","provider/model id","new empty output directory"],
+  "dependencies":["intake gate complete","privacy classification allows requested endpoint","existing OpenCode config remains read-only"],
+  "steps":["re-run repository/runtime/model identity guards","create a new AgentSwitchboard-owned LOCALAPPDATA run","write only the lsp=true overlay","generate per-launch model launcher while merging inherited inline config in memory","verify exact overlay/launcher contents","write sanitized receipt/report"],
+  "outputs":["opencode-lsp-setup.json","opencode-lsp-operator-report.md","opencode-lsp.overlay.json","Open-AgentSwitchboard-OpenCode-Lsp.ps1","Open-AgentSwitchboard-OpenCode-Lsp.cmd"],
+  "artifactRegistry":"tooling/harness/operational/opencode-lsp-setup/artifact-registry.json",
+  "validator":"Test-OpenCodeLspHarness.cmd",
+  "implementation":"tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1",
+  "failurePolicy":"fail closed; preserve the run; repair only the named boundary; never weaken repo identity, privacy, config-preservation, immutability, or launcher-verification gates",
+  "handoff":"on configured status, the generated launcher is the exact next runtime action; active LSP proof is separate",
+  "proofCeiling":"machine-local configuration and launcher proof; no active LSP diagnostic or model-quality proof"
+}

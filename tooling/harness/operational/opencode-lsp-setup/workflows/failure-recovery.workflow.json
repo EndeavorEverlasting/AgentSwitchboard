@@ -1,0 +1,12 @@
+{
+  "schemaVersion":1,
+  "workflowId":"failure-recovery",
+  "trigger":"inspect, configure, verify, checkout recovery, or focused validation returns nonzero/incomplete state",
+  "inputs":["exact failing receipt/report","exact branch/HEAD","first deterministic failure code"],
+  "steps":["preserve evidence and dirty/operator-owned state","repair the first owned failing boundary only","never weaken repository identity, privacy, config-preservation, immutable-output, or validator gates","rerun the failed gate first, then the focused floor"],
+  "outputs":["preserved failure evidence","repaired exact-head validation or named external blocker"],
+  "validator":"Test-OpenCodeLspHarness.cmd",
+  "failurePolicy":"stop when repair requires product code, credentials, confidential data on a free endpoint, unsupported upstream runtime, or another owner's mutation",
+  "handoff":"record owner, dependency, artifact path, exact head, and executable next action",
+  "proofCeiling":"same as the repaired gate; failure recovery does not promote proof"
+}

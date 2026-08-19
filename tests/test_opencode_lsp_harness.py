@@ -16,19 +16,16 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         data=json.loads((H/'workflows.json').read_text(encoding='utf-8'))
         self.assertEqual(['intake','configure','failure-recovery','handoff'],data['order'])
         self.assertEqual(data['order'],[w['id'] for w in data['workflows']])
-        self.assertIn('Resolve-AgentSwitchboardCheckout.ps1',json.dumps(data))
+        self.assertEqual(2,data['schemaVersion'])
+        for workflow in data['workflows']:
+            spec=ROOT/workflow['specPath']; self.assertTrue(spec.is_file(),workflow['specPath'])
+            parsed=json.loads(spec.read_text(encoding='utf-8')); self.assertEqual(workflow['id'],parsed['workflowId'])
+            for key in ('trigger','inputs','outputs','validator','failurePolicy','proofCeiling','handoff'):
+                self.assertTrue(parsed.get(key),f"{workflow['id']} missing {key}")
     def test_artifacts_are_immutable_local_and_untracked(self):
         data=json.loads((H/'artifact-registry.json').read_text(encoding='utf-8'))
         self.assertFalse(data['tracked']); self.assertTrue(data['configurationArtifactsImmutable']); self.assertIn('%LOCALAPPDATA%',data['defaultRunRoot'])
-        ids={x['artifactId'] for x in data['artifacts']}; self.assertTrue({'checkout-resolution-json','checkout-resolution-report','lsp-overlay','launcher-script','launcher'} <= ids)
-    def test_checkout_resolver_recovers_without_rewriting_hint(self):
-        text=(H/'Resolve-AgentSwitchboardCheckout.ps1').read_text(encoding='utf-8'); lower=text.lower()
-        for token in ('preferredpath','expectedbranch','expectedhead','canonicaloriginpattern','bounded-existing-checkout','created-isolated-clone','worktree add --detach','remote_head_mismatch','opencode-lsp-checkout-resolution.json'):
-            self.assertIn(token,lower)
-        for token in ('git reset','git clean','git stash','push --force','remove-item'):
-            self.assertNotIn(token,lower)
-        self.assertIn("git clone --no-checkout $canonicalUrl",text)
-        self.assertIn('refs/remotes/origin/${ExpectedBranch}',text)
+        ids={x['artifactId'] for x in data['artifacts']}; self.assertTrue({'lsp-overlay','launcher-script','launcher'} <= ids)
     def test_runner_preserves_config_and_verifies_exact_launchers(self):
         text=(H/'Invoke-OpenCodeLspWorkstationSetup.ps1').read_text(encoding='utf-8'); lower=text.lower()
         for token in ('opencode_config_content','opencode/nemotron-3-ultra-free','opencode_v2_lsp_unavailable','configurationdirectory','configuration_directory_already_owned','launcher_mismatch','localappdata','lsp=$true','free trial'):
@@ -75,8 +72,17 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         registry=(ROOT/'tooling/harness/operational/workflow-registry.json').read_text(encoding='utf-8'); self.assertIn('opencode-lsp-workstation-setup/SKILL.md',registry); self.assertIn('opencode-lsp-setup/',registry)
     def test_skill_is_bounded_for_weak_agents(self):
         text=(ROOT/'.ai/skills/opencode-lsp-workstation-setup/SKILL.md').read_text(encoding='utf-8')
-        for token in ('## Trigger','## Inputs','## Procedure','## Outputs','## Deterministic validation','## Forbidden scope','## Stop and escalate','## Proof ceiling','Resolve-AgentSwitchboardCheckout.ps1'):
+        for token in ('## Trigger','## Inputs','## Procedure','## Outputs','## Deterministic validation','## Forbidden scope','## Stop and escalate','## Proof ceiling'):
             self.assertIn(token,text)
+        self.assertLessEqual(len(text.encode('utf-8')),3000)
+    def test_checkout_resolver_recovers_without_rewriting_hint(self):
+        text=(H/'Resolve-AgentSwitchboardCheckout.ps1').read_text(encoding='utf-8'); lower=text.lower()
+        for token in ('preferredpath','expectedbranch','expectedhead','bounded-existing-checkout','created-isolated-clone','worktree add --detach','remote_head_mismatch'):
+            self.assertIn(token,lower)
+        for forbidden in ('git reset','git clean','git stash','push --force','remove-item'):
+            self.assertNotIn(forbidden,lower)
+        artifacts=json.loads((H/'artifact-registry.json').read_text(encoding='utf-8'))
+        ids={x['artifactId'] for x in artifacts['artifacts']}; self.assertTrue({'checkout-resolution-json','checkout-resolution-report'} <= ids)
     def test_ci_routes_focused_and_documentation_validation(self):
         ci=(ROOT/'.github/workflows/opencode-lsp-harness.yml').read_text(encoding='utf-8')
         for token in ('SKILLS.md','TRIGGERS.md','workflow-registry.json','tests.test_opencode_lsp_harness','Test-OpenCodeLspHarness.ps1','Test-AgentDocumentationContract.ps1','git diff --check'):

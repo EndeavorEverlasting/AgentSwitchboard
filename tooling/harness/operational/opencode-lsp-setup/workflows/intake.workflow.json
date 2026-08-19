@@ -1,0 +1,13 @@
+{
+  "schemaVersion":1,
+  "workflowId":"intake",
+  "trigger":"new or resumed OpenCode/LSP workstation request",
+  "inputs":["path hint or exact checkout","requested provider/model","current machine runtime"],
+  "dependencies":["AGENTS.md governance","30k opencode-lsp domain record"],
+  "steps":["resolve exact Git root/origin/branch/HEAD or use the bounded checkout resolver","resolve OpenCode command/version without mutation","inspect existing config locations without printing contents","classify model visibility and runtime support"],
+  "outputs":["inspect receipt/report","exact repository/runtime classification"],
+  "validator":"Test-OpenCodeLspHarness.cmd",
+  "failurePolicy":"preserve the first deterministic failure receipt; do not mutate product code or existing OpenCode config",
+  "handoff":"Configure is eligible only when repository/runtime gates pass and requested model visibility is proven when Configure requires it.",
+  "proofCeiling":"identity and configuration prerequisites only"
+}

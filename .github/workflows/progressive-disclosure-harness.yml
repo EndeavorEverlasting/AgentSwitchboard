@@ -1,0 +1,59 @@
+name: Progressive disclosure harness
+
+on:
+  pull_request:
+    paths:
+      - 'AGENTS.md'
+      - 'HARNESS.md'
+      - 'docs/governance/agent-operating-details.md'
+      - 'tooling/harness/context/**'
+      - 'tooling/harness/operational/manifest.json'
+      - 'tooling/harness/operational/opencode-lsp-setup/workflows.json'
+      - 'tooling/harness/operational/opencode-lsp-setup/workflows/**'
+      - '.ai/skills/opencode-lsp-workstation-setup/SKILL.md'
+      - 'scripts/Test-ProgressiveDisclosureHarness.py'
+      - 'tests/test_progressive_disclosure_harness.py'
+      - 'tests/test_opencode_lsp_harness.py'
+      - 'Test-ProgressiveDisclosureHarness.cmd'
+      - '.github/workflows/progressive-disclosure-harness.yml'
+  push:
+    branches:
+      - 'feat/harness-progressive-disclosure-*'
+    paths:
+      - 'AGENTS.md'
+      - 'HARNESS.md'
+      - 'docs/governance/agent-operating-details.md'
+      - 'tooling/harness/context/**'
+      - 'tooling/harness/operational/**'
+      - '.ai/skills/opencode-lsp-workstation-setup/SKILL.md'
+      - 'scripts/Test-ProgressiveDisclosureHarness.py'
+      - 'tests/test_progressive_disclosure_harness.py'
+      - 'tests/test_opencode_lsp_harness.py'
+      - 'Test-ProgressiveDisclosureHarness.cmd'
+      - '.github/workflows/progressive-disclosure-harness.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Progressive disclosure contracts
+        run: python -m unittest tests.test_progressive_disclosure_harness -v
+      - name: Context budget and routing validator
+        run: python scripts/Test-ProgressiveDisclosureHarness.py
+      - name: OpenCode LSP focused contracts
+        run: python -m unittest tests.test_opencode_lsp_harness -v
+      - name: Canonical documentation contract
+        shell: pwsh
+        run: ./scripts/Test-AgentDocumentationContract.ps1 -RootPath .
+      - name: Diff whitespace
+        shell: bash
+        run: git diff --check

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "glossaryId": "agentswitchboard.agent-glossary.v1",
+  "loadCondition": "Load one matching term when unfamiliar wording blocks routing; do not preload the glossary.",
+  "terms": [
+    {"term":"50k","meaning":"orientation zoom: purpose, major subsystems, entrypoints, proof boundary, and next route only"},
+    {"term":"30k","meaning":"one selected capability/domain: responsibilities, inputs/outputs, dependencies, owners, artifacts, validators, next workflow links"},
+    {"term":"15k","meaning":"one selected workflow/spec: procedure, skill judgment, artifact contract, validator reference, failure/handoff policy"},
+    {"term":"artifact","meaning":"bounded generated evidence; naming/location authority belongs to an artifact registry"},
+    {"term":"canonical owner","meaning":"single authoritative file or executable contract; other surfaces reference rather than restate it"},
+    {"term":"defaultLoad","meaning":"files a route may load immediately at its zoom level"},
+    {"term":"onDemand","meaning":"implementation/detail loaded only when the active task needs it"},
+    {"term":"proof ceiling","meaning":"highest claim supported by the evidence actually produced"},
+    {"term":"exact head","meaning":"specific Git commit SHA that validation or runtime evidence applies to"},
+    {"term":"dirty checkout","meaning":"working tree/index has changes that must be preserved rather than silently overwritten"},
+    {"term":"front door","meaning":"canonical operator/agent entry command for a bounded subsystem"},
+    {"term":"receipt","meaning":"machine-readable evidence describing inputs, resulting state, failure identity, and next action"},
+    {"term":"validator","meaning":"deterministic executable check; prose may point to it but must not duplicate its behavior"},
+    {"term":"workflow","meaning":"triggered task contract with inputs, outputs, dependencies, validation, failure policy, proof ceiling, and handoff"}
+  ]
+}

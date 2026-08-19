@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "routerId": "agentswitchboard.progressive-disclosure.v1",
+  "estimate": {"unit": "utf8-bytes", "charsPerEstimatedToken": 4, "note": "Tokenizer unavailable in repository validation; token counts are conservative byte/4 estimates."},
+  "budgets": {
+    "orientation50k": {"maxEstimatedTokens": 1000},
+    "domain30kAdditional": {"maxEstimatedTokens": 2000},
+    "workflow15kAdditional": {"maxEstimatedTokens": 4000}
+  },
+  "orientation": {
+    "query": "What is this app and how is it organized?",
+    "defaultLoad": ["HARNESS.md"],
+    "loadCondition": "after AGENTS.md, before a domain is selected",
+    "neverDefaultLoad": ["CODEBASE_MAP.md", "README.md", "CONTRIBUTING.md", "SKILLS.md", "CAPABILITIES.md", "TRIGGERS.md", "plans/", "docs/", "tests/", "reports/", "implementation code"],
+    "nextRouter": "tooling/harness/context/context.routes.json"
+  },
+  "domains": [
+    {
+      "domainId": "operational",
+      "triggers": ["repository intake", "validation", "failure recovery", "handoff", "PR integration"],
+      "defaultLoad": ["tooling/harness/operational/codebase-map.json", "tooling/harness/operational/workflow-registry.json"],
+      "onDemand": ["tooling/harness/operational/manifest.json", "tooling/harness/operational/validator-registry.json", "tooling/harness/operational/artifact-registry.json", ".ai/skills/operational-harness-routing/SKILL.md", "docs/harness/operational-harness.md"]
+    },
+    {
+      "domainId": "opencode-lsp",
+      "triggers": ["OpenCode LSP", "Nemotron", "free model workstation setup", "language server"],
+      "defaultLoad": ["tooling/harness/context/domains/opencode-lsp.domain.json"],
+      "onDemand": ["tooling/harness/operational/opencode-lsp-setup/manifest.json", "tooling/harness/operational/opencode-lsp-setup/codebase-map.json", "docs/harness/opencode-lsp-workstation-setup.md"]
+    }
+  ],
+  "workflows": [
+    {
+      "workflowId": "opencode-lsp.configure",
+      "domainId": "opencode-lsp",
+      "triggers": ["configure OpenCode LSP", "generate LSP launcher", "enable LSP with per-launch model"],
+      "defaultLoad": [
+        "tooling/harness/operational/opencode-lsp-setup/workflows/configure.workflow.json",
+        ".ai/skills/opencode-lsp-workstation-setup/SKILL.md",
+        "tooling/harness/operational/opencode-lsp-setup/artifact-registry.json"
+      ],
+      "onDemand": [
+        "tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1",
+        "tooling/harness/operational/opencode-lsp-setup/Resolve-AgentSwitchboardCheckout.ps1",
+        "scripts/Test-OpenCodeLspHarness.ps1",
+        "tests/test_opencode_lsp_harness.py"
+      ]
+    }
+  ],
+  "baseline": {
+    "capturedAtHead": "5682bb2b544b1a986d7b14fbe750e5e93cf60f31",
+    "governance": {"path": "AGENTS.md", "bytes": 27896, "gitBlobSha": "c94b797bef04942636af61b980c478919710e067", "measurementPolicy": "reported separately because required safety/governance is outside repo-specific zoom budgets"},
+    "simulations": {
+      "orientation50k": {
+        "query": "What is this app and how is it organized?",
+        "files": ["CODEBASE_MAP.md", "README.md", "CONTRIBUTING.md", "CLAUDE.md", "SKILLS.md", "CAPABILITIES.md", "TRIGGERS.md"],
+        "bytes": 71737,
+        "estimatedTokens": 17935
+      },
+      "domain30kOpencodeLsp": {
+        "query": "How does OpenCode LSP workstation setup work?",
+        "files": ["tooling/harness/operational/opencode-lsp-setup/manifest.json", "tooling/harness/operational/opencode-lsp-setup/codebase-map.json", "tooling/harness/operational/opencode-lsp-setup/workflows.json", "tooling/harness/operational/opencode-lsp-setup/artifact-registry.json", ".ai/skills/opencode-lsp-workstation-setup/SKILL.md"],
+        "bytes": 17318,
+        "estimatedTokens": 4330
+      },
+      "workflow15kOpencodeLspConfigure": {
+        "query": "How do I configure OpenCode LSP with the selected free model?",
+        "files": ["tooling/harness/operational/opencode-lsp-setup/manifest.json", "tooling/harness/operational/opencode-lsp-setup/codebase-map.json", "tooling/harness/operational/opencode-lsp-setup/workflows.json", "tooling/harness/operational/opencode-lsp-setup/artifact-registry.json", ".ai/skills/opencode-lsp-workstation-setup/SKILL.md", "tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1"],
+        "bytes": 34112,
+        "estimatedTokens": 8528
+      }
+    }
+  },
+  "surfaceInventory": [
+    {"path":"CODEBASE_MAP.md","purpose":"legacy broad repository map","owner":"root compatibility surface","loadWhen":"cross-domain legacy lookup only","baselineBytes":15318,"overlap":"duplicates domain navigation","consumer":"human/legacy agent"},
+    {"path":"README.md","purpose":"human project introduction","owner":"project","loadWhen":"human project/background question","baselineBytes":6422,"overlap":"some orientation overlap","consumer":"human"},
+    {"path":"SKILLS.md","purpose":"skill catalog","owner":"agent routing","loadWhen":"selected route needs catalog resolution","baselineBytes":13832,"overlap":"catalog not procedure","consumer":"agent"},
+    {"path":"TRIGGERS.md","purpose":"trigger catalog","owner":"agent routing","loadWhen":"trigger cannot be resolved by focused router","baselineBytes":20965,"overlap":"broad routing catalog","consumer":"agent"},
+    {"path":"CAPABILITIES.md","purpose":"capability catalog","owner":"agent contract","loadWhen":"capability selection","baselineBytes":9851,"overlap":"broad catalog","consumer":"agent"},
+    {"path":"HARNESS.md","purpose":"50k orientation router","owner":"progressive disclosure harness","loadWhen":"every repo entry after governance","baselineBytes":7987,"overlap":"previously embedded workflow prose","consumer":"human/agent"},
+    {"path":"tooling/harness/operational/workflow-registry.json","purpose":"generic lifecycle routing","owner":"operational harness","loadWhen":"operational domain selected","baselineBytes":2948,"overlap":"none; machine routing","consumer":"agent/status reporter"},
+    {"path":"tooling/harness/operational/opencode-lsp-setup/codebase-map.json","purpose":"legacy detailed OpenCode LSP map","owner":"OpenCode LSP harness","loadWhen":"implementation navigation needed","baselineBytes":4306,"overlap":"domain facts now summarized by 30k descriptor","consumer":"agent"},
+    {"path":"tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1","purpose":"deterministic workstation behavior","owner":"OpenCode LSP runtime harness","loadWhen":"implementation/debug/change needed","baselineBytes":16794,"overlap":"must not be copied into prose","consumer":"operator/runtime"}
+  ],
+  "preservedGovernance": {
+    "path": "docs/governance/agent-operating-details.md",
+    "expectedGitBlobSha": "c94b797bef04942636af61b980c478919710e067",
+    "expectedBytes": 27896,
+    "loadCondition": "triggered deep governance only"
+  },
+  "glossary": {"path": "tooling/harness/context/glossary.json", "loadCondition": "only when a repository term is unclear"},
+  "validation": {
+    "command": "Test-ProgressiveDisclosureHarness.cmd",
+    "python": "python scripts/Test-ProgressiveDisclosureHarness.py",
+    "artifactFile": "progressive-disclosure-validation.json",
+    "defaultArtifactRoot": "%LOCALAPPDATA%/AgentSwitchboard/progressive-disclosure/runs/<run-id>/"
+  }
+}

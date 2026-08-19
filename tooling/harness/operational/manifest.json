@@ -11,6 +11,8 @@
   },
   "entrypoints": {
     "startHere": "HARNESS.md",
+    "progressiveDisclosureRouter": "tooling/harness/context/context.routes.json",
+    "agentGlossary": "tooling/harness/context/glossary.json",
     "codebaseMap": "tooling/harness/operational/codebase-map.json",
     "workflowRegistry": "tooling/harness/operational/workflow-registry.json",
     "artifactRegistry": "tooling/harness/operational/artifact-registry.json",

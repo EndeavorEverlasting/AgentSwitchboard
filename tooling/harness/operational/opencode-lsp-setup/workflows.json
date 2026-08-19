@@ -1,31 +1,11 @@
 {
   "schemaVersion": 2,
   "harnessId": "agentswitchboard.opencode-lsp-workstation-setup.v1",
-  "order": ["intake","configure","failure-recovery","handoff"],
+  "order": ["intake", "configure", "failure-recovery", "handoff"],
   "workflows": [
-    {
-      "id": "intake",
-      "trigger": "new or resumed OpenCode/LSP workstation request",
-      "steps": ["treat any supplied repository path as a hint until git rev-parse and canonical origin succeed","when the hint is not a Git checkout, run Resolve-AgentSwitchboardCheckout.ps1 with exact expected branch/head","search only bounded nearby AgentSwitchBoard* candidates and LOCALAPPDATA checkouts","if no canonical checkout exists, create an isolated LOCALAPPDATA clone without rewriting the hinted folder","validate the exact-head isolated harness worktree","resolve OpenCode command/version without mutation","inspect existing config locations without printing file contents","classify runtime"],
-      "completionGate": "exact canonical repository worktree/head and runtime classification recorded"
-    },
-    {
-      "id": "configure",
-      "trigger": "intake proves supported OpenCode runtime and exact AgentSwitchboard repository",
-      "steps": ["re-run identity/version guards","create AgentSwitchboard-owned LOCALAPPDATA state/run roots","write lsp=true overlay only","query OpenCode provider model names without credentials","generate explicit per-launch model launcher","verify overlay/launcher and write receipt/report"],
-      "completionGate": "owned overlay and launcher exist, receipt/report written, existing OpenCode config and tracked checkout unchanged"
-    },
-    {
-      "id": "failure-recovery",
-      "trigger": "inspect/configure/verify returns nonzero or repository resolution fails",
-      "steps": ["preserve exact receipt/report","for a non-Git path, preserve it and route through the checkout resolver instead of treating its name as repository proof","repair first deterministic failing boundary only","never weaken repo identity/exact-head/v2/privacy/config-preservation gates","rerun intake/Inspect before Configure"],
-      "stopConditions": ["Git unavailable and cannot be repaired in owned scope","remote exact branch/head cannot be fetched without force","product repair required","credentials required","privacy classification not public","v2 runtime detected"]
-    },
-    {
-      "id": "handoff",
-      "trigger": "agent/chat/machine boundary or successful configuration",
-      "steps": ["record preferred path hint separately from resolved canonical worktree","record repo/branch/HEAD and OpenCode command/version","record overlay/model visibility/launcher","record proof ceiling and one exact next command","exclude credentials and source contents"],
-      "completionGate": "a low-capability agent can continue without rediscovering repository authority or paths"
-    }
+    {"id":"intake","trigger":"new/resumed OpenCode LSP request","specPath":"tooling/harness/operational/opencode-lsp-setup/workflows/intake.workflow.json"},
+    {"id":"configure","trigger":"intake proves supported runtime and exact repository","specPath":"tooling/harness/operational/opencode-lsp-setup/workflows/configure.workflow.json"},
+    {"id":"failure-recovery","trigger":"inspect/configure/verify fails","specPath":"tooling/harness/operational/opencode-lsp-setup/workflows/failure-recovery.workflow.json"},
+    {"id":"handoff","trigger":"successful configuration or real transfer/blocker","specPath":"tooling/harness/operational/opencode-lsp-setup/workflows/handoff.workflow.json"}
   ]
 }
