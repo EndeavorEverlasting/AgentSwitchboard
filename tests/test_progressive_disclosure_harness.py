@@ -11,6 +11,13 @@ ROOT = Path(__file__).resolve().parents[1]
 ROUTER = ROOT / "tooling/harness/context/context.routes.json"
 
 
+def git(*args: str) -> str:
+    result = subprocess.run(["git", "-C", str(ROOT), *args], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    if result.returncode != 0:
+        raise AssertionError(f"git {' '.join(args)} failed: {result.stderr}")
+    return result.stdout.strip()
+
+
 class ProgressiveDisclosureHarnessTests(unittest.TestCase):
     def test_router_and_glossary_parse(self):
         router = json.loads(ROUTER.read_text(encoding="utf-8"))
@@ -37,11 +44,10 @@ class ProgressiveDisclosureHarnessTests(unittest.TestCase):
     def test_old_governance_is_preserved_exactly_as_triggered_detail(self):
         router = json.loads(ROUTER.read_text(encoding="utf-8"))
         deep = router["preservedGovernance"]
-        data = (ROOT / deep["path"]).read_bytes()
-        import hashlib
-        actual = hashlib.sha1(f"blob {len(data)}\0".encode("ascii") + data).hexdigest()
-        self.assertEqual(deep["expectedGitBlobSha"], actual)
-        self.assertEqual(deep["expectedBytes"], len(data))
+        actual_sha = git("rev-parse", f"HEAD:{deep['path']}")
+        actual_size = int(git("cat-file", "-s", actual_sha))
+        self.assertEqual(deep["expectedGitBlobSha"], actual_sha)
+        self.assertEqual(deep["expectedBytes"], actual_size)
 
     def test_validator_measures_three_retrieval_simulations(self):
         with tempfile.TemporaryDirectory() as temp:
