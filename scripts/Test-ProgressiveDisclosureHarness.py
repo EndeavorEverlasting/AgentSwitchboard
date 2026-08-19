@@ -10,6 +10,9 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 ROUTER_PATH = ROOT / "tooling/harness/context/context.routes.json"
+CANONICAL_GOVERNANCE_PATH = "docs/governance/agent-operating-details.md"
+CANONICAL_GOVERNANCE_BLOB = "c94b797bef04942636af61b980c478919710e067"
+CANONICAL_GOVERNANCE_BYTES = 27896
 
 
 def read_json(path: Path) -> dict:
@@ -34,9 +37,17 @@ def tracked_blob(path: str) -> tuple[str, int]:
 
 
 def measure(paths: list[str], chars_per_token: int) -> dict:
-    total = sum(rel(p).stat().st_size for p in paths)
+    total = 0
+    missing: list[str] = []
+    for path in paths:
+        target = rel(path)
+        if target.is_file():
+            total += target.stat().st_size
+        else:
+            missing.append(path)
     return {
         "files": paths,
+        "missing": missing,
         "bytes": total,
         "estimatedTokens": math.ceil(total / chars_per_token),
     }
@@ -60,25 +71,29 @@ def main() -> int:
     require(router.get("routerId") == "agentswitchboard.progressive-disclosure.v1", "router-id")
     require(cpt == 4, "token-estimate-policy")
 
+    deep = router.get("preservedGovernance", {})
+    require(deep.get("path") == CANONICAL_GOVERNANCE_PATH, "preserved-governance-route-path")
+    require(deep.get("expectedGitBlobSha") == CANONICAL_GOVERNANCE_BLOB, "preserved-governance-route-blob")
+    require(deep.get("expectedBytes") == CANONICAL_GOVERNANCE_BYTES, "preserved-governance-route-size")
+
     all_paths: set[str] = set(router["orientation"]["defaultLoad"])
     all_paths.add(router["orientation"]["nextRouter"])
     all_paths.add(router["glossary"]["path"])
-    all_paths.add(router["preservedGovernance"]["path"])
+    all_paths.add(CANONICAL_GOVERNANCE_PATH)
     for item in router["domains"] + router["workflows"]:
         all_paths.update(item.get("defaultLoad", []))
         all_paths.update(item.get("onDemand", []))
     for path in sorted(all_paths):
         require(rel(path).is_file(), f"broken-route:{path}")
 
-    deep = router["preservedGovernance"]
-    deep_path = rel(deep["path"])
+    deep_path = rel(CANONICAL_GOVERNANCE_PATH)
     actual_deep_sha = None
     actual_deep_size = None
     if deep_path.is_file():
         try:
-            actual_deep_sha, actual_deep_size = tracked_blob(deep["path"])
-            require(actual_deep_size == deep["expectedBytes"], "preserved-governance-size")
-            require(actual_deep_sha == deep["expectedGitBlobSha"], "preserved-governance-blob")
+            actual_deep_sha, actual_deep_size = tracked_blob(CANONICAL_GOVERNANCE_PATH)
+            require(actual_deep_size == CANONICAL_GOVERNANCE_BYTES, "preserved-governance-size")
+            require(actual_deep_sha == CANONICAL_GOVERNANCE_BLOB, "preserved-governance-blob")
         except RuntimeError as exc:
             failures.append(f"preserved-governance-git-object:{exc}")
 
@@ -89,8 +104,8 @@ def main() -> int:
     orientation = measure(router["orientation"]["defaultLoad"], cpt)
     orientation["query"] = router["orientation"]["query"]
     orientation["maxEstimatedTokens"] = router["budgets"]["orientation50k"]["maxEstimatedTokens"]
-    orientation["pass"] = orientation["estimatedTokens"] <= orientation["maxEstimatedTokens"]
-    require(orientation["pass"], "orientation-budget")
+    orientation["pass"] = not orientation["missing"] and orientation["estimatedTokens"] <= orientation["maxEstimatedTokens"]
+    require(orientation["pass"], "orientation-budget-or-route")
     forbidden = tuple(router["orientation"]["neverDefaultLoad"])
     for path in router["orientation"]["defaultLoad"]:
         require(not any(path == f or path.startswith(f.rstrip("/") + "/") for f in forbidden), f"orientation-preloads-deep:{path}")
@@ -98,27 +113,27 @@ def main() -> int:
     domains = {x["domainId"]: x for x in router["domains"]}
     require(args.domain in domains, f"unknown-domain:{args.domain}")
     selected_domain = domains.get(args.domain)
-    domain_measure = {"files": [], "bytes": 0, "estimatedTokens": 0, "query": None, "maxEstimatedTokens": router["budgets"]["domain30kAdditional"]["maxEstimatedTokens"], "pass": False}
+    domain_measure = {"files": [], "missing": [], "bytes": 0, "estimatedTokens": 0, "query": None, "maxEstimatedTokens": router["budgets"]["domain30kAdditional"]["maxEstimatedTokens"], "pass": False}
     if selected_domain:
         domain_measure = measure(selected_domain["defaultLoad"], cpt)
         domain_measure["query"] = "How does one selected domain work?"
         domain_measure["maxEstimatedTokens"] = router["budgets"]["domain30kAdditional"]["maxEstimatedTokens"]
-        domain_measure["pass"] = domain_measure["estimatedTokens"] <= domain_measure["maxEstimatedTokens"]
-        require(domain_measure["pass"], "domain-budget")
+        domain_measure["pass"] = not domain_measure["missing"] and domain_measure["estimatedTokens"] <= domain_measure["maxEstimatedTokens"]
+        require(domain_measure["pass"], "domain-budget-or-route")
         unrelated_defaults = {p for d in router["domains"] if d["domainId"] != args.domain for p in d.get("defaultLoad", [])}
         require(not (set(selected_domain["defaultLoad"]) & unrelated_defaults), "domain-loads-unrelated-domain")
 
     workflows = {x["workflowId"]: x for x in router["workflows"]}
     require(args.workflow in workflows, f"unknown-workflow:{args.workflow}")
     selected_workflow = workflows.get(args.workflow)
-    workflow_measure = {"files": [], "bytes": 0, "estimatedTokens": 0, "query": None, "maxEstimatedTokens": router["budgets"]["workflow15kAdditional"]["maxEstimatedTokens"], "pass": False}
+    workflow_measure = {"files": [], "missing": [], "bytes": 0, "estimatedTokens": 0, "query": None, "maxEstimatedTokens": router["budgets"]["workflow15kAdditional"]["maxEstimatedTokens"], "pass": False}
     if selected_workflow:
         require(selected_workflow["domainId"] == args.domain, "workflow-domain-mismatch")
         workflow_measure = measure(selected_workflow["defaultLoad"], cpt)
         workflow_measure["query"] = "How do I execute or change one selected workflow/spec?"
         workflow_measure["maxEstimatedTokens"] = router["budgets"]["workflow15kAdditional"]["maxEstimatedTokens"]
-        workflow_measure["pass"] = workflow_measure["estimatedTokens"] <= workflow_measure["maxEstimatedTokens"]
-        require(workflow_measure["pass"], "workflow-budget")
+        workflow_measure["pass"] = not workflow_measure["missing"] and workflow_measure["estimatedTokens"] <= workflow_measure["maxEstimatedTokens"]
+        require(workflow_measure["pass"], "workflow-budget-or-route")
         required_roles = {
             "tooling/harness/operational/opencode-lsp-setup/workflows/configure.workflow.json",
             ".ai/skills/opencode-lsp-workstation-setup/SKILL.md",
@@ -126,20 +141,26 @@ def main() -> int:
         }
         require(required_roles.issubset(set(selected_workflow["defaultLoad"])), "workflow-missing-spec-skill-artifact-contract")
 
-    configure_spec = read_json(rel("tooling/harness/operational/opencode-lsp-setup/workflows/configure.workflow.json"))
-    for key in ("trigger", "inputs", "outputs", "dependencies", "validator", "failurePolicy", "proofCeiling", "handoff"):
-        require(bool(configure_spec.get(key)), f"workflow-contract-missing:{key}")
+    configure_spec_path = rel("tooling/harness/operational/opencode-lsp-setup/workflows/configure.workflow.json")
+    if configure_spec_path.is_file():
+        configure_spec = read_json(configure_spec_path)
+        for key in ("trigger", "inputs", "outputs", "dependencies", "validator", "failurePolicy", "proofCeiling", "handoff"):
+            require(bool(configure_spec.get(key)), f"workflow-contract-missing:{key}")
 
-    workflow_index = read_json(rel("tooling/harness/operational/opencode-lsp-setup/workflows.json"))
-    require(workflow_index.get("schemaVersion") == 2, "workflow-index-version")
-    for record in workflow_index.get("workflows", []):
-        spec = record.get("specPath")
-        require(bool(spec) and rel(spec).is_file(), f"workflow-index-broken:{record.get('id')}")
+    workflow_index_path = rel("tooling/harness/operational/opencode-lsp-setup/workflows.json")
+    if workflow_index_path.is_file():
+        workflow_index = read_json(workflow_index_path)
+        require(workflow_index.get("schemaVersion") == 2, "workflow-index-version")
+        for record in workflow_index.get("workflows", []):
+            spec = record.get("specPath")
+            require(bool(spec) and rel(spec).is_file(), f"workflow-index-broken:{record.get('id')}")
 
-    glossary = read_json(rel(router["glossary"]["path"]))
-    terms = {x["term"] for x in glossary.get("terms", [])}
-    for term in ("50k", "30k", "15k", "canonical owner", "defaultLoad", "onDemand", "proof ceiling", "validator"):
-        require(term in terms, f"glossary-missing:{term}")
+    glossary_path = rel(router["glossary"]["path"])
+    if glossary_path.is_file():
+        glossary = read_json(glossary_path)
+        terms = {x["term"] for x in glossary.get("terms", [])}
+        for term in ("50k", "30k", "15k", "canonical owner", "defaultLoad", "onDemand", "proof ceiling", "validator"):
+            require(term in terms, f"glossary-missing:{term}")
 
     baseline = router["baseline"]["simulations"]
     reductions = {
@@ -163,7 +184,7 @@ def main() -> int:
             "workflow15k": workflow_measure,
         },
         "reductions": reductions,
-        "preservedGovernance": {"path": deep["path"], "expectedGitBlobSha": deep["expectedGitBlobSha"], "actualGitBlobSha": actual_deep_sha, "expectedBytes": deep["expectedBytes"], "actualBytes": actual_deep_size},
+        "preservedGovernance": {"path": CANONICAL_GOVERNANCE_PATH, "expectedGitBlobSha": CANONICAL_GOVERNANCE_BLOB, "actualGitBlobSha": actual_deep_sha, "expectedBytes": CANONICAL_GOVERNANCE_BYTES, "actualBytes": actual_deep_size},
         "failures": failures,
     }
 
