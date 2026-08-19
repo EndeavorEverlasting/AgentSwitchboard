@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import math
 from pathlib import Path
+import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,10 +20,17 @@ def rel(path: str) -> Path:
     return ROOT / path
 
 
-def git_blob_sha(path: Path) -> str:
-    data = path.read_bytes()
-    header = f"blob {len(data)}\0".encode("ascii")
-    return hashlib.sha1(header + data).hexdigest()
+def git_output(*args: str) -> str:
+    result = subprocess.run(["git", "-C", str(ROOT), *args], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    if result.returncode != 0:
+        raise RuntimeError(f"git {' '.join(args)} failed: {result.stderr.strip()}")
+    return result.stdout.strip()
+
+
+def tracked_blob(path: str) -> tuple[str, int]:
+    sha = git_output("rev-parse", f"HEAD:{path}")
+    size = int(git_output("cat-file", "-s", sha))
+    return sha, size
 
 
 def measure(paths: list[str], chars_per_token: int) -> dict:
@@ -65,9 +72,15 @@ def main() -> int:
 
     deep = router["preservedGovernance"]
     deep_path = rel(deep["path"])
+    actual_deep_sha = None
+    actual_deep_size = None
     if deep_path.is_file():
-        require(deep_path.stat().st_size == deep["expectedBytes"], "preserved-governance-size")
-        require(git_blob_sha(deep_path) == deep["expectedGitBlobSha"], "preserved-governance-blob")
+        try:
+            actual_deep_sha, actual_deep_size = tracked_blob(deep["path"])
+            require(actual_deep_size == deep["expectedBytes"], "preserved-governance-size")
+            require(actual_deep_sha == deep["expectedGitBlobSha"], "preserved-governance-blob")
+        except RuntimeError as exc:
+            failures.append(f"preserved-governance-git-object:{exc}")
 
     agents = rel("AGENTS.md").read_text(encoding="utf-8")
     for token in ("Progressive disclosure reading order", "HARNESS.md", "context.routes.json", "agent-operating-details.md", "SKILLS.md", "CAPABILITIES.md", "TRIGGERS.md", ".ai/agent-contract.json", "plans/plan-registry.json", "public-plan-coordination"):
@@ -150,7 +163,7 @@ def main() -> int:
             "workflow15k": workflow_measure,
         },
         "reductions": reductions,
-        "preservedGovernance": {"path": deep["path"], "expectedGitBlobSha": deep["expectedGitBlobSha"], "actualGitBlobSha": git_blob_sha(deep_path) if deep_path.is_file() else None},
+        "preservedGovernance": {"path": deep["path"], "expectedGitBlobSha": deep["expectedGitBlobSha"], "actualGitBlobSha": actual_deep_sha, "expectedBytes": deep["expectedBytes"], "actualBytes": actual_deep_size},
         "failures": failures,
     }
 
