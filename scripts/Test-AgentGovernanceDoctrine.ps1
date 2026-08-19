@@ -6,7 +6,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$RootPath = (Resolve-Path -LiteralPath $RootPath).Path
+$RepositoryRoot = (Resolve-Path -LiteralPath $RootPath).Path
 $passes = [System.Collections.Generic.List[string]]::new()
 $failures = [System.Collections.Generic.List[string]]::new()
 
@@ -22,27 +22,27 @@ function Add-Result {
 
 $rootRelative = 'AGENTS.md'
 $detailRelative = 'docs/governance/agent-operating-details.md'
-$rootPath = Join-Path $RootPath $rootRelative
-$detailPath = Join-Path $RootPath $detailRelative
+$rootDocumentPath = Join-Path $RepositoryRoot $rootRelative
+$detailDocumentPath = Join-Path $RepositoryRoot $detailRelative
 $expectedDetailBlob = 'c94b797bef04942636af61b980c478919710e067'
 $expectedDetailBytes = 27896
 
 foreach ($entry in @(
-    @{ Label='root'; Relative=$rootRelative; Path=$rootPath },
-    @{ Label='details'; Relative=$detailRelative; Path=$detailPath }
+    @{ Label='root'; Relative=$rootRelative; Path=$rootDocumentPath },
+    @{ Label='details'; Relative=$detailRelative; Path=$detailDocumentPath }
 )) {
     $exists = Test-Path -LiteralPath $entry.Path -PathType Leaf
     Add-Result -Passed $exists -Name "governance/$($entry.Label)-file-exists" -FailureMessage "$($entry.Relative) is missing"
     $tracked = $false
     if ($exists) {
-        $null = & git -C $RootPath ls-files --error-unmatch -- $entry.Relative 2>$null
+        $null = & git -C $RepositoryRoot ls-files --error-unmatch -- $entry.Relative 2>$null
         $tracked = $LASTEXITCODE -eq 0
     }
     Add-Result -Passed $tracked -Name "governance/$($entry.Label)-file-tracked" -FailureMessage "$($entry.Relative) is not tracked by Git"
 }
 
-$rootText = if (Test-Path -LiteralPath $rootPath -PathType Leaf) { Get-Content -LiteralPath $rootPath -Raw } else { '' }
-$detailText = if (Test-Path -LiteralPath $detailPath -PathType Leaf) { Get-Content -LiteralPath $detailPath -Raw } else { '' }
+$rootText = if (Test-Path -LiteralPath $rootDocumentPath -PathType Leaf) { Get-Content -LiteralPath $rootDocumentPath -Raw } else { '' }
+$detailText = if (Test-Path -LiteralPath $detailDocumentPath -PathType Leaf) { Get-Content -LiteralPath $detailDocumentPath -Raw } else { '' }
 
 # Root owns only ambient universal law, precedence, and progressive routing.
 foreach ($token in @(
@@ -64,24 +64,23 @@ foreach ($token in @(
 }
 Add-Result -Passed ([Text.Encoding]::UTF8.GetByteCount($rootText) -le 7000) -Name 'governance/root-context-budget' -FailureMessage 'compact root AGENTS.md exceeds 7000 UTF-8 bytes'
 
-# The detailed pre-factor governance remains normative when triggered. Validate the
-# tracked Git object instead of checkout bytes so Windows CRLF normalization cannot
-# create a false loss-of-authority result.
+# Detailed pre-factor governance remains normative when triggered. Validate the
+# tracked Git object instead of checkout bytes so CRLF normalization cannot create
+# a false loss-of-authority result.
 $detailBlob = $null
 $detailBlobBytes = $null
-if (Test-Path -LiteralPath $detailPath -PathType Leaf) {
-    $blobLines = @(& git -C $RootPath rev-parse "HEAD:$detailRelative" 2>&1)
+if (Test-Path -LiteralPath $detailDocumentPath -PathType Leaf) {
+    $blobLines = @(& git -C $RepositoryRoot rev-parse "HEAD:$detailRelative" 2>&1)
     if ($LASTEXITCODE -eq 0 -and $blobLines.Count -gt 0) {
         $detailBlob = ([string]$blobLines[0]).Trim()
-        $sizeLines = @(& git -C $RootPath cat-file -s $detailBlob 2>&1)
+        $sizeLines = @(& git -C $RepositoryRoot cat-file -s $detailBlob 2>&1)
         if ($LASTEXITCODE -eq 0 -and $sizeLines.Count -gt 0) { $detailBlobBytes = [int](([string]$sizeLines[0]).Trim()) }
     }
 }
 Add-Result -Passed ($detailBlob -eq $expectedDetailBlob) -Name 'governance/details-exact-git-blob' -FailureMessage "expected $expectedDetailBlob, got $detailBlob"
 Add-Result -Passed ($detailBlobBytes -eq $expectedDetailBytes) -Name 'governance/details-exact-size' -FailureMessage "expected $expectedDetailBytes bytes, got $detailBlobBytes"
 
-# These representative anchors make failures readable. The exact-object check above
-# is the exhaustive preservation proof for every pre-factor clause.
+# Readable anchor failures complement the exact-object preservation proof above.
 foreach ($token in @(
     '## Agent operating principles',
     '## Instruction precedence',
