@@ -73,6 +73,12 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         cmd=(ROOT/'Test-OpenCodeLspHarness.cmd').read_text(encoding='utf-8')
         self.assertEqual(2,cmd.count('-RootPath "%ROOT%."'))
         self.assertNotIn('-RootPath "%ROOT%"',cmd)
+    def test_cmd_propagates_validator_failures_outside_parenthesized_exit(self):
+        cmd=(ROOT/'Test-OpenCodeLspHarness.cmd').read_text(encoding='utf-8')
+        self.assertIn('set "R="',cmd)
+        self.assertGreaterEqual(cmd.count('if defined R goto :fail'),4)
+        self.assertIn(':fail\npopd\nendlocal & exit /b %R%',cmd)
+        self.assertNotIn('(set "R=%ERRORLEVEL%"& popd & endlocal & exit /b %R%)',cmd)
     def test_canonical_routes_reach_focused_skill(self):
         self.assertIn('opencode-lsp-workstation-setup',(ROOT/'SKILLS.md').read_text(encoding='utf-8'))
         triggers=(ROOT/'TRIGGERS.md').read_text(encoding='utf-8'); self.assertIn('opencode.lsp-workstation-setup',triggers); self.assertIn('opencode-lsp-workstation-setup',triggers)
