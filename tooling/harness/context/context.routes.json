@@ -30,9 +30,29 @@
   ],
   "workflows": [
     {
+      "workflowId": "opencode-lsp.intake",
+      "domainId": "opencode-lsp",
+      "query": "How do I inspect and qualify an OpenCode LSP workstation request?",
+      "triggers": ["inspect OpenCode LSP", "resume OpenCode LSP setup", "qualify workstation prerequisites"],
+      "baselineId": "workflow15kOpencodeLsp",
+      "defaultLoad": [
+        "tooling/harness/operational/opencode-lsp-setup/workflows/intake.workflow.json",
+        ".ai/skills/opencode-lsp-workstation-setup/SKILL.md",
+        "tooling/harness/operational/opencode-lsp-setup/artifact-registry.json"
+      ],
+      "onDemand": [
+        "tooling/harness/operational/opencode-lsp-setup/Resolve-AgentSwitchboardCheckout.ps1",
+        "tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1",
+        "scripts/Test-OpenCodeLspHarness.ps1",
+        "tests/test_opencode_lsp_harness.py"
+      ]
+    },
+    {
       "workflowId": "opencode-lsp.configure",
       "domainId": "opencode-lsp",
+      "query": "How do I configure OpenCode LSP with the selected free model?",
       "triggers": ["configure OpenCode LSP", "generate LSP launcher", "enable LSP with per-launch model"],
+      "baselineId": "workflow15kOpencodeLsp",
       "defaultLoad": [
         "tooling/harness/operational/opencode-lsp-setup/workflows/configure.workflow.json",
         ".ai/skills/opencode-lsp-workstation-setup/SKILL.md",
@@ -41,6 +61,42 @@
       "onDemand": [
         "tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1",
         "tooling/harness/operational/opencode-lsp-setup/Resolve-AgentSwitchboardCheckout.ps1",
+        "scripts/Test-OpenCodeLspHarness.ps1",
+        "tests/test_opencode_lsp_harness.py"
+      ]
+    },
+    {
+      "workflowId": "opencode-lsp.failure-recovery",
+      "domainId": "opencode-lsp",
+      "query": "How do I recover an OpenCode LSP harness failure without losing evidence?",
+      "triggers": ["OpenCode LSP failure", "failed inspect", "failed configure", "failed verification"],
+      "baselineId": "workflow15kOpencodeLsp",
+      "defaultLoad": [
+        "tooling/harness/operational/opencode-lsp-setup/workflows/failure-recovery.workflow.json",
+        ".ai/skills/opencode-lsp-workstation-setup/SKILL.md",
+        "tooling/harness/operational/opencode-lsp-setup/artifact-registry.json"
+      ],
+      "onDemand": [
+        "tooling/harness/operational/opencode-lsp-setup/Resolve-AgentSwitchboardCheckout.ps1",
+        "tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1",
+        "scripts/Test-OpenCodeLspHarness.ps1",
+        "tests/test_opencode_lsp_harness.py"
+      ]
+    },
+    {
+      "workflowId": "opencode-lsp.handoff",
+      "domainId": "opencode-lsp",
+      "query": "How do I hand off OpenCode LSP state and the next executable action?",
+      "triggers": ["handoff OpenCode LSP", "transfer workstation state", "record OpenCode blocker"],
+      "baselineId": "workflow15kOpencodeLsp",
+      "defaultLoad": [
+        "tooling/harness/operational/opencode-lsp-setup/workflows/handoff.workflow.json",
+        ".ai/skills/opencode-lsp-workstation-setup/SKILL.md",
+        "tooling/harness/operational/opencode-lsp-setup/artifact-registry.json"
+      ],
+      "onDemand": [
+        "tooling/harness/operational/opencode-lsp-setup/operator-report.template.md",
+        "tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1",
         "scripts/Test-OpenCodeLspHarness.ps1",
         "tests/test_opencode_lsp_harness.py"
       ]
@@ -62,8 +118,8 @@
         "bytes": 17318,
         "estimatedTokens": 4330
       },
-      "workflow15kOpencodeLspConfigure": {
-        "query": "How do I configure OpenCode LSP with the selected free model?",
+      "workflow15kOpencodeLsp": {
+        "query": "How do I execute or change one selected OpenCode LSP workflow?",
         "files": ["tooling/harness/operational/opencode-lsp-setup/manifest.json", "tooling/harness/operational/opencode-lsp-setup/codebase-map.json", "tooling/harness/operational/opencode-lsp-setup/workflows.json", "tooling/harness/operational/opencode-lsp-setup/artifact-registry.json", ".ai/skills/opencode-lsp-workstation-setup/SKILL.md", "tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1"],
         "bytes": 34112,
         "estimatedTokens": 8528

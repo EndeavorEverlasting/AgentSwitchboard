@@ -50,6 +50,10 @@ jobs:
         run: python -m unittest tests.test_progressive_disclosure_harness -v
       - name: Context budget and routing validator
         run: python scripts/Test-ProgressiveDisclosureHarness.py
+      - name: Windows CMD entrypoint
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: Test-ProgressiveDisclosureHarness.cmd
       - name: OpenCode LSP focused contracts
         run: python -m unittest tests.test_opencode_lsp_harness -v
       - name: Canonical documentation contract
