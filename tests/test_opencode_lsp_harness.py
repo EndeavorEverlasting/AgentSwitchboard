@@ -69,6 +69,10 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         self.assertIn('--diff-filter=ACMRD',pre); self.assertIn('git -C $RootPath diff --quiet -- $path',pre)
         push=(H/'hooks/Invoke-OpenCodeLspPrePush.ps1').read_text(encoding='utf-8')
         self.assertIn('[Parameter(Mandatory=$true)][string]$BaseRef',push); self.assertIn('rev-parse --verify',push); self.assertNotIn("BaseRef='origin/main'",push)
+    def test_cmd_avoids_trailing_backslash_quote_boundary(self):
+        cmd=(ROOT/'Test-OpenCodeLspHarness.cmd').read_text(encoding='utf-8')
+        self.assertEqual(2,cmd.count('-RootPath "%ROOT%."'))
+        self.assertNotIn('-RootPath "%ROOT%"',cmd)
     def test_canonical_routes_reach_focused_skill(self):
         self.assertIn('opencode-lsp-workstation-setup',(ROOT/'SKILLS.md').read_text(encoding='utf-8'))
         triggers=(ROOT/'TRIGGERS.md').read_text(encoding='utf-8'); self.assertIn('opencode.lsp-workstation-setup',triggers); self.assertIn('opencode-lsp-workstation-setup',triggers)
