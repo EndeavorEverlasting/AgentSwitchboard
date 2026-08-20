@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 H = ROOT / 'tooling' / 'harness' / 'operational' / 'opencode-lsp-setup'
-MANDATORY = {'manifest.json','codebase-map.json','workflows.json','artifact-registry.json','operator-report.template.md','Resolve-AgentSwitchboardCheckout.ps1','Invoke-OpenCodeLspWorkstationSetup.ps1','hooks/Invoke-OpenCodeLspPreCommit.ps1','hooks/Invoke-OpenCodeLspPrePush.ps1'}
+MANDATORY = {'manifest.json','codebase-map.json','workflows.json','artifact-registry.json','operator-report.template.md','Recover-AgentSwitchboardCheckout.ps1','Resolve-AgentSwitchboardCheckout.ps1','Invoke-OpenCodeLspWorkstationSetup.ps1','hooks/Invoke-OpenCodeLspPreCommit.ps1','hooks/Invoke-OpenCodeLspPrePush.ps1'}
 
 class OpenCodeLspHarnessTests(unittest.TestCase):
     def test_mandatory_files_exist(self):
@@ -76,6 +76,20 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         for token in ("status = 'failed'",'failureCode = $failureCode','Set-Content -LiteralPath $receiptPath','Set-Content -LiteralPath $reportPath','Write-Host "FAILURE_CODE=$failureCode"','Write-Host "FAILURE_MESSAGE=$failureMessage"','Write-Host "NEXT_COMMAND=$nextCommand"'):
             self.assertIn(token,text)
         self.assertLess(text.index("$null = New-Item -ItemType Directory -Path $OutputDirectory"), text.index("if ($preOwnedConfigureDirectory) { Stop-Setup"))
+    def test_wrong_repository_routes_to_fresh_checkout_recovery(self):
+        runner=(H/'Invoke-OpenCodeLspWorkstationSetup.ps1').read_text(encoding='utf-8')
+        router=(H/'Recover-AgentSwitchboardCheckout.ps1').read_text(encoding='utf-8')
+        manifest=json.loads((H/'manifest.json').read_text(encoding='utf-8'))
+        self.assertIn("$checkoutRecoveryRouterPath = Join-Path $PSScriptRoot 'Recover-AgentSwitchboardCheckout.ps1'",runner)
+        self.assertIn("if ($failureCode -eq 'WRONG_REPOSITORY')",runner)
+        self.assertIn("-PreferredPath ' + (ConvertTo-PsLiteral $RepoPath)",runner)
+        self.assertIn('git ls-remote --symref $canonicalUrl HEAD',router)
+        self.assertIn('refs/heads/$defaultBranch',router)
+        self.assertIn('& $resolverPath -PreferredPath $PreferredPath -ExpectedBranch $defaultBranch -ExpectedHead $expectedHead',router)
+        self.assertNotIn('git rev-parse --show-toplevel',runner[runner.index("if ($failureCode -eq 'WRONG_REPOSITORY')"):runner.index('elseif ($repoResolved)')])
+        self.assertEqual('tooling/harness/operational/opencode-lsp-setup/Recover-AgentSwitchboardCheckout.ps1',manifest['entrypoints']['checkoutRecoveryRouter'])
+        for forbidden in ('git reset','git clean','git stash','push --force','remove-item'):
+            self.assertNotIn(forbidden,router.lower())
     def test_python_fallback_and_hooks_are_fail_closed(self):
         cmd=(ROOT/'Test-OpenCodeLspHarness.cmd').read_text(encoding='utf-8')
         self.assertIn('where pwsh.exe >nul 2>nul',cmd)
