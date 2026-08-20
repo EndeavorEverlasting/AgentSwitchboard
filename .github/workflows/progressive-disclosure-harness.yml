@@ -1,0 +1,76 @@
+name: Progressive disclosure harness
+
+on:
+  pull_request:
+    paths:
+      - 'AGENTS.md'
+      - 'HARNESS.md'
+      - 'docs/governance/agent-operating-details.md'
+      - 'tooling/harness/context/**'
+      - 'tooling/harness/operational/manifest.json'
+      - 'tooling/harness/operational/opencode-lsp-setup/workflows.json'
+      - 'tooling/harness/operational/opencode-lsp-setup/workflows/**'
+      - '.ai/skills/opencode-lsp-workstation-setup/SKILL.md'
+      - 'scripts/Test-ProgressiveDisclosureHarness.py'
+      - 'tests/test_progressive_disclosure_harness.py'
+      - 'tests/test_opencode_lsp_harness.py'
+      - 'Test-ProgressiveDisclosureHarness.cmd'
+      - '.github/workflows/progressive-disclosure-harness.yml'
+  push:
+    branches:
+      - 'feat/harness-progressive-disclosure-*'
+    paths:
+      - 'AGENTS.md'
+      - 'HARNESS.md'
+      - 'docs/governance/agent-operating-details.md'
+      - 'tooling/harness/context/**'
+      - 'tooling/harness/operational/**'
+      - '.ai/skills/opencode-lsp-workstation-setup/SKILL.md'
+      - 'scripts/Test-ProgressiveDisclosureHarness.py'
+      - 'tests/test_progressive_disclosure_harness.py'
+      - 'tests/test_opencode_lsp_harness.py'
+      - 'Test-ProgressiveDisclosureHarness.cmd'
+      - '.github/workflows/progressive-disclosure-harness.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Progressive disclosure contracts
+        run: python -m unittest tests.test_progressive_disclosure_harness -v
+      - name: Context budget and routing validator
+        run: python scripts/Test-ProgressiveDisclosureHarness.py
+      - name: Windows CMD entrypoint
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: Test-ProgressiveDisclosureHarness.cmd
+      - name: OpenCode LSP focused contracts
+        run: python -m unittest tests.test_opencode_lsp_harness -v
+      - name: Canonical documentation contract
+        shell: pwsh
+        run: ./scripts/Test-AgentDocumentationContract.ps1 -RootPath .
+      - name: Diff whitespace
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            git diff --check "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}"
+          else
+            before="${{ github.event.before }}"
+            head="${{ github.sha }}"
+            if [[ "$before" =~ ^0+$ ]]; then
+              git diff --check "${head}^..${head}"
+            else
+              git diff --check "${before}...${head}"
+            fi
+          fi

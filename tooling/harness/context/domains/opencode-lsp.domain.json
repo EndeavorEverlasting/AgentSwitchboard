@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "domainId": "opencode-lsp",
+  "zoom": "30k",
+  "purpose": "Configure and verify machine-local OpenCode LSP enablement and a per-launch model without rewriting existing OpenCode configuration.",
+  "responsibilities": [
+    "resolve an exact canonical AgentSwitchboard checkout",
+    "inspect OpenCode executable/version and requested provider/model visibility",
+    "generate immutable local lsp=true overlay and launcher artifacts",
+    "preserve existing global/project/custom/inline OpenCode configuration",
+    "separate configuration proof from active language-server diagnostics"
+  ],
+  "inputs": ["repository path or recovery hint", "requested provider/model", "Windows PowerShell 7 runtime", "for Verify: immutable Configure run"],
+  "outputs": ["checkout-resolution receipt/report when recovery is used", "setup receipt/report", "LSP overlay", "PowerShell/CMD launcher pair"],
+  "dependencies": ["Git", "OpenCode on PATH for Inspect/Configure", "network/provider visibility only when model discovery requires it"],
+  "owners": {
+    "behavior": "tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1",
+    "checkoutRecovery": "tooling/harness/operational/opencode-lsp-setup/Resolve-AgentSwitchboardCheckout.ps1",
+    "workflowIndex": "tooling/harness/operational/opencode-lsp-setup/workflows.json",
+    "artifacts": "tooling/harness/operational/opencode-lsp-setup/artifact-registry.json",
+    "skill": ".ai/skills/opencode-lsp-workstation-setup/SKILL.md"
+  },
+  "workflows": [
+    {"id":"intake","spec":"tooling/harness/operational/opencode-lsp-setup/workflows/intake.workflow.json"},
+    {"id":"configure","spec":"tooling/harness/operational/opencode-lsp-setup/workflows/configure.workflow.json"},
+    {"id":"failure-recovery","spec":"tooling/harness/operational/opencode-lsp-setup/workflows/failure-recovery.workflow.json"},
+    {"id":"handoff","spec":"tooling/harness/operational/opencode-lsp-setup/workflows/handoff.workflow.json"}
+  ],
+  "validators": ["Test-OpenCodeLspHarness.cmd", "scripts/Test-OpenCodeLspHarness.ps1", "tests/test_opencode_lsp_harness.py"],
+  "artifactRegistry": "tooling/harness/operational/opencode-lsp-setup/artifact-registry.json",
+  "next": "Select exactly one workflow spec above. Load implementation code, operator docs, validator source, reports, and history only when that workflow requires inspection or repair.",
+  "proofCeiling": "Domain routing/configuration contracts only; active LSP diagnostics and model behavior remain runtime proof."
+}

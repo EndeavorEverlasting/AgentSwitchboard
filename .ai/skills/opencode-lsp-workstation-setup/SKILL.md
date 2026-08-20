@@ -1,44 +1,32 @@
 ---
 id: opencode-lsp-workstation-setup
-version: 1.2.0
+version: 2.0.0
 status: canonical
 ---
 
 # OpenCode LSP Workstation Setup
 
 ## Trigger
-Use this skill for a Windows request to recover, inspect, enable, verify, or hand off OpenCode LSP configuration when the flow must remain reliable for low-capability or free-model agents. Canonical discovery starts in `SKILLS.md` and `TRIGGERS.md`, then routes through `tooling/harness/operational/workflow-registry.json`.
+Use for Windows OpenCode LSP inspection/configuration, checkout recovery for that setup, or per-launch free-model routing. Start at the 30k `opencode-lsp` domain in `tooling/harness/context/context.routes.json`; do not preload implementation or operator docs.
 
 ## Inputs
-- supplied AgentSwitchboard path as a hint, not assumed repository proof;
-- exact expected harness branch and commit SHA when using unmerged remote work;
-- `tooling/harness/operational/opencode-lsp-setup/manifest.json`;
-- current OpenCode command/version;
-- requested per-launch model, default `opencode/nemotron-3-ultra-free` for public/non-confidential work;
-- current Git branch/HEAD and dirty state after canonical checkout resolution;
-- for Verify, the immutable Configure run directory.
+- selected workflow spec from `tooling/harness/operational/opencode-lsp-setup/workflows/`;
+- exact checkout or path hint;
+- requested `provider/model`;
+- latest receipt when recovering or verifying.
 
 ## Procedure
-1. Prove Git identity before machine configuration. A folder name is not repository proof.
-2. If the supplied path is not a Git checkout, preserve it untouched and run `Resolve-AgentSwitchboardCheckout.ps1` with the exact expected branch/head. Search only bounded nearby AgentSwitchBoard candidates and AgentSwitchboard-owned LOCALAPPDATA checkouts; otherwise create an isolated LOCALAPPDATA clone.
-3. Require an exact canonical GitHub origin, exact expected remote branch/head, and a clean isolated exact-head worktree. Never reset, clean, stash, force-update, or convert the supplied non-Git folder.
-4. Read the focused manifest, map, workflows, and artifact registry from that exact-head worktree.
-5. Run the harness validator, then `Inspect`. Never guess the executable, version, config path, provider, or model.
-6. Fail closed when OpenCode is missing, the checkout is not AgentSwitchboard, or a v2 OpenCode runtime is detected. Preserve local failure receipts/reports.
-7. Configure only into a new immutable `%LOCALAPPDATA%` run directory. Never rewrite existing OpenCode global/project/custom/inline config.
-8. Enable `lsp: true`. The generated launcher preserves inherited `OPENCODE_CONFIG` when present, merges inherited `OPENCODE_CONFIG_CONTENT` in memory, then forces `lsp=true` in the highest-precedence inline config without persisting inherited contents.
-9. Let OpenCode activate supported built-ins only when matching files and prerequisites exist. Do not invent a PowerShell LSP; use repository PowerShell validators.
-10. Keep free models per-launch only. Never persist a free trial model as a machine-wide default.
-11. Use Nemotron/free endpoints only with public/non-confidential content. Stop before customer data, credentials, private machine evidence, or confidential source.
-12. Require exact launcher-content verification, receipt/report, and one exact next command. Active LSP proof requires opening a supported file and observing runtime behavior.
+1. Run the selected workflow's identity/prerequisite gate before mutation.
+2. Treat a supplied path as a hint until canonical Git origin and exact head are proven; preserve non-Git/dirty operator state.
+3. Never rewrite existing OpenCode global/project/custom/inline config. Configure only into a new immutable AgentSwitchboard-owned run.
+4. Keep free models launch-only and use them only for public/non-confidential work.
+5. On failure, preserve the receipt and repair the first owned deterministic boundary; do not weaken gates.
+6. Hand off exact repo/head, receipt/artifacts, proof ceiling, owner/dependency, and one executable next action.
+
+Deterministic file names, model queries, launcher contents, config precedence, and failure codes belong to the runner, workflow specs, and artifact registry—not this skill.
 
 ## Outputs
-- `opencode-lsp-checkout-resolution.json` and `.md` when repository recovery runs;
-- `opencode-lsp-setup.json`;
-- `opencode-lsp-operator-report.md`;
-- immutable `opencode-lsp.overlay.json` after Configure;
-- immutable PowerShell + CMD launcher pair after Configure;
-- exact Git/OpenCode identity and proof ceiling.
+The selected workflow's registered receipt/report/artifacts plus an exact next action.
 
 ## Deterministic validation
 ```powershell
@@ -46,17 +34,10 @@ Test-OpenCodeLspHarness.cmd
 ```
 
 ## Forbidden scope
-- `AGENTS.md` or P00 governance policy mutation;
-- AgentSwitchboard product/bootstrap/runtime changes;
-- secrets or credentials;
-- destructive Git or force ref movement;
-- rewriting/deleting a supplied non-Git folder to manufacture repository proof;
-- existing OpenCode config mutation or persistence of inherited inline-config contents;
-- free trial models as global defaults;
-- claiming `lsp: true` proves an active language server.
+Product/bootstrap code changes, secrets, destructive Git, existing OpenCode config mutation, confidential/private data on free endpoints, global free-model defaults, or claiming configuration proves live LSP diagnostics.
 
 ## Stop and escalate
-Stop when Git itself is unavailable outside owned scope, the exact remote branch/head cannot be fetched without force, installation/repair belongs to another owner, OpenCode V2 is detected, provider authentication is required, privacy is not public/non-confidential for a free model, or live runtime failure requires product code changes.
+Stop when the selected workflow names an external owner: missing/unsupported OpenCode runtime, provider authentication, privacy mismatch, product repair, or another writer's state.
 
 ## Proof ceiling
-Deterministic repository recovery/configuration and bounded workstation evidence only; no provider-privacy, model-quality, active-diagnostics, deployment, or production proof.
+Only the selected workflow's proof ceiling. Live language-server behavior requires runtime observation.

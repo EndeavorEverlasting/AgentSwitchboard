@@ -82,19 +82,18 @@ if ($null -ne $skillText) {
     }
 }
 
+# Progressive disclosure keeps the root contract as a router. Detailed runtime-proof
+# facts remain canonical in the selected skill and machine-readable repository contract,
+# both exhaustively validated below rather than duplicated into AGENTS.md.
 if ($null -ne $agentsText) {
     foreach ($token in @(
         '.ai/skills/end-to-end-runtime-validation/SKILL.md',
-        'exact operator command',
-        'child stdout and stderr evidence',
-        'effective-state readback',
-        'user-visible observation',
-        'idempotence and rollback result'
+        'Operator-visible work crossing shell/process/platform/terminal/TUI/GUI routes'
     )) {
         Add-Check `
             -Condition $agentsText.Contains($token) `
-            -Name "agents/$token" `
-            -FailureMessage 'root agent contract does not route or report end-to-end runtime proof'
+            -Name "agents-route/$token" `
+            -FailureMessage 'root agent contract does not route operator-visible runtime proof to the canonical skill'
     }
 }
 
