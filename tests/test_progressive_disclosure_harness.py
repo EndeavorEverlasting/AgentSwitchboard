@@ -15,6 +15,7 @@ WORKFLOW_INDEX = ROOT / "tooling/harness/operational/opencode-lsp-setup/workflow
 SKILL_PATH = ".ai/skills/opencode-lsp-workstation-setup/SKILL.md"
 ARTIFACT_REGISTRY_PATH = "tooling/harness/operational/opencode-lsp-setup/artifact-registry.json"
 RUNNER_PATH = "tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1"
+REQUIRED_WORKFLOW_KEYS = ("trigger", "inputs", "outputs", "dependencies", "validator", "failurePolicy", "proofCeiling", "handoff")
 
 
 def git(*args: str) -> str:
@@ -67,6 +68,14 @@ class ProgressiveDisclosureHarnessTests(unittest.TestCase):
             self.assertNotIn(RUNNER_PATH, route["defaultLoad"])
             self.assertIn(RUNNER_PATH, route["onDemand"])
             self.assertEqual("workflow15kOpencodeLsp", route["baselineId"])
+
+    def test_each_canonical_workflow_spec_declares_progressive_contract(self):
+        workflow_index = json.loads(WORKFLOW_INDEX.read_text(encoding="utf-8"))
+        for record in workflow_index["workflows"]:
+            spec = json.loads((ROOT / record["specPath"]).read_text(encoding="utf-8"))
+            self.assertEqual(record["id"], spec["workflowId"])
+            for key in REQUIRED_WORKFLOW_KEYS:
+                self.assertTrue(spec.get(key), f"{record['id']} missing {key}")
 
     def test_old_governance_is_preserved_exactly_as_triggered_detail(self):
         router = json.loads(ROUTER.read_text(encoding="utf-8"))
