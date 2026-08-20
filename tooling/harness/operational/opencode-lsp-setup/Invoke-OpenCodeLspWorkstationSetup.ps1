@@ -89,6 +89,7 @@ $failureMessage = $null
 $nextOwner = 'Windows operator'
 $nextDependency = 'bounded setup prerequisites remain satisfied'
 $nextCommand = $null
+$checkoutRecoveryRouterPath = Join-Path $PSScriptRoot 'Recover-AgentSwitchboardCheckout.ps1'
 
 try {
     if ($preOwnedConfigureDirectory) { Stop-Setup 'CONFIGURATION_DIRECTORY_ALREADY_OWNED' 'Configure requires a new or empty output directory. Existing evidence was preserved and this failure receipt was written to a fresh run.' }
@@ -240,7 +241,10 @@ if ($failureCode) {
         default { 'OpenCode LSP harness operator' }
     }
     $nextDependency = 'repair the named failure boundary without changing existing OpenCode config or weakening harness gates'
-    $nextCommand = if ($repoResolved) {
+    $nextCommand = if ($failureCode -eq 'WRONG_REPOSITORY') {
+        '& ' + (ConvertTo-PsLiteral $checkoutRecoveryRouterPath) + ' -PreferredPath ' + (ConvertTo-PsLiteral $RepoPath)
+    }
+    elseif ($repoResolved) {
         "pwsh -NoLogo -NoProfile -File `"$PSCommandPath`" -Mode Inspect -RepoPath `"$RepoPath`""
     }
     else {
