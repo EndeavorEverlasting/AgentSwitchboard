@@ -1,5 +1,6 @@
 from __future__ import annotations
 import json
+import re
 import unittest
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,7 +21,7 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         for workflow in data['workflows']:
             spec=ROOT/workflow['specPath']; self.assertTrue(spec.is_file(),workflow['specPath'])
             parsed=json.loads(spec.read_text(encoding='utf-8')); self.assertEqual(workflow['id'],parsed['workflowId'])
-            for key in ('trigger','inputs','outputs','validator','failurePolicy','proofCeiling','handoff'):
+            for key in ('trigger','inputs','outputs','dependencies','validator','failurePolicy','proofCeiling','handoff'):
                 self.assertTrue(parsed.get(key),f"{workflow['id']} missing {key}")
     def test_artifacts_are_immutable_local_and_untracked(self):
         data=json.loads((H/'artifact-registry.json').read_text(encoding='utf-8'))
@@ -40,6 +41,25 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         self.assertIn("$modelSeparator = $ModelId.IndexOf('/')",text)
         self.assertIn('$modelProvider = $ModelId.Substring(0, $modelSeparator)',text)
         self.assertIn('& $openCode models $modelProvider',text)
+    def test_powershell_regex_literals_match_real_runtime_values(self):
+        runner=(H/'Invoke-OpenCodeLspWorkstationSetup.ps1').read_text(encoding='utf-8')
+        resolver=(H/'Resolve-AgentSwitchboardCheckout.ps1').read_text(encoding='utf-8')
+        canonical='https://github.com/EndeavorEverlasting/AgentSwitchboard.git'
+        for name,text in (('runner',runner),('resolver',resolver)):
+            line=next(line for line in text.splitlines() if line.strip().startswith('$canonicalOriginPattern = '))
+            pattern=line.split("'",2)[1]
+            self.assertIsNotNone(re.fullmatch(pattern,canonical),f'{name} rejected canonical HTTPS origin: {pattern!r}')
+            self.assertIsNone(re.fullmatch(pattern,'https://github.example/EndeavorEverlasting/AgentSwitchboard.git'))
+            catch_line=next(line for line in text.splitlines() if "$raw -match '" in line)
+            catch_pattern=catch_line.split("-match '",1)[1].split("'",1)[0]
+            match=re.fullmatch(catch_pattern,'WRONG_REPOSITORY|canonical origin rejected')
+            self.assertIsNotNone(match,f'{name} failed to parse structured failure envelope: {catch_pattern!r}')
+            self.assertEqual('WRONG_REPOSITORY',match.group(1))
+        version_line=next(line for line in runner.splitlines() if '$version -match ' in line)
+        version_pattern=version_line.split("-match '",1)[1].split("'",1)[0]
+        self.assertIsNotNone(re.search(version_pattern,'2.4.1'))
+        self.assertIsNotNone(re.search(version_pattern,' v2.0.0'))
+        self.assertIsNone(re.search(version_pattern,'1.9.9'))
     def test_runner_preserves_prior_configure_evidence(self):
         text=(H/'Invoke-OpenCodeLspWorkstationSetup.ps1').read_text(encoding='utf-8')
         self.assertIn('$preOwnedConfigureDirectory',text)
@@ -53,7 +73,7 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         self.assertIn('inheritedinlineconfigcontentspersisted = $false',text)
     def test_failure_evidence_contract_exists(self):
         text=(H/'Invoke-OpenCodeLspWorkstationSetup.ps1').read_text(encoding='utf-8')
-        for token in ("status = 'failed'",'failureCode = $failureCode','Set-Content -LiteralPath $receiptPath','Set-Content -LiteralPath $reportPath'):
+        for token in ("status = 'failed'",'failureCode = $failureCode','Set-Content -LiteralPath $receiptPath','Set-Content -LiteralPath $reportPath','Write-Host "FAILURE_CODE=$failureCode"','Write-Host "FAILURE_MESSAGE=$failureMessage"','Write-Host "NEXT_COMMAND=$nextCommand"'):
             self.assertIn(token,text)
         self.assertLess(text.index("$null = New-Item -ItemType Directory -Path $OutputDirectory"), text.index("if ($preOwnedConfigureDirectory) { Stop-Setup"))
     def test_python_fallback_and_hooks_are_fail_closed(self):
