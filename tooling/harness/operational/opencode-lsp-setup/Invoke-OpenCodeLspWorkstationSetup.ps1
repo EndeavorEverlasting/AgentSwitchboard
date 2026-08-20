@@ -324,6 +324,8 @@ $report += @('', '## Privacy boundary', '- Free trial endpoints must not receive
 $report | Set-Content -LiteralPath $reportPath -Encoding utf8NoBOM
 
 Write-Host "OPENCODE_LSP_SETUP_STATUS=$status"
+Write-Host "FAILURE_CODE=$failureCode"
+Write-Host "FAILURE_MESSAGE=$failureMessage"
 Write-Host "REPO_HEAD=$head"
 Write-Host "OPENCODE_VERSION=$version"
 Write-Host "MODEL_PROVIDER=$modelProvider"
@@ -333,5 +335,6 @@ Write-Host "OVERLAY=$overlayPath"
 Write-Host "LAUNCHER=$launcherCmdPath"
 Write-Host "RECEIPT=$receiptPath"
 Write-Host "REPORT=$reportPath"
+Write-Host "NEXT_COMMAND=$nextCommand"
 if ($failureCode) { exit 1 }
 exit 0
