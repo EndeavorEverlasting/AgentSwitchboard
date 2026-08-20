@@ -66,6 +66,16 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         self.assertIn('--diff-filter=ACMRD',pre); self.assertIn('git -C $RootPath diff --quiet -- $path',pre)
         push=(H/'hooks/Invoke-OpenCodeLspPrePush.ps1').read_text(encoding='utf-8')
         self.assertIn('[Parameter(Mandatory=$true)][string]$BaseRef',push); self.assertIn('rev-parse --verify',push); self.assertNotIn("BaseRef='origin/main'",push)
+    def test_cmd_avoids_trailing_backslash_quote_boundary(self):
+        cmd=(ROOT/'Test-OpenCodeLspHarness.cmd').read_text(encoding='utf-8')
+        self.assertEqual(2,cmd.count('-RootPath "%ROOT%."'))
+        self.assertNotIn('-RootPath "%ROOT%"',cmd)
+    def test_cmd_propagates_validator_failures(self):
+        cmd=(ROOT/'Test-OpenCodeLspHarness.cmd').read_text(encoding='utf-8')
+        self.assertIn('set "RESULT="',cmd)
+        self.assertGreaterEqual(cmd.count('if defined RESULT goto :fail'),4)
+        self.assertIn(':fail\npopd\nendlocal & exit /b %RESULT%',cmd)
+        self.assertNotIn('(set "R=%ERRORLEVEL%"& popd & endlocal & exit /b %R%)',cmd)
     def test_canonical_routes_reach_focused_skill(self):
         self.assertIn('opencode-lsp-workstation-setup',(ROOT/'SKILLS.md').read_text(encoding='utf-8'))
         triggers=(ROOT/'TRIGGERS.md').read_text(encoding='utf-8'); self.assertIn('opencode.lsp-workstation-setup',triggers); self.assertIn('opencode-lsp-workstation-setup',triggers)
@@ -85,7 +95,7 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         ids={x['artifactId'] for x in artifacts['artifacts']}; self.assertTrue({'checkout-resolution-json','checkout-resolution-report'} <= ids)
     def test_ci_routes_focused_and_documentation_validation(self):
         ci=(ROOT/'.github/workflows/opencode-lsp-harness.yml').read_text(encoding='utf-8')
-        for token in ('SKILLS.md','TRIGGERS.md','workflow-registry.json','tests.test_opencode_lsp_harness','Test-OpenCodeLspHarness.ps1','Test-AgentDocumentationContract.ps1','git diff --check'):
+        for token in ('SKILLS.md','TRIGGERS.md','workflow-registry.json','tests.test_opencode_lsp_harness','Test-OpenCodeLspHarness.ps1','Test-AgentDocumentationContract.ps1','git diff --check','Windows CMD entrypoint','shell: cmd','run: Test-OpenCodeLspHarness.cmd'):
             self.assertIn(token,ci)
 
 if __name__ == '__main__': unittest.main()
