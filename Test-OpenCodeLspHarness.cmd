@@ -1,7 +1,6 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 set "ROOT=%~dp0"
-where pwsh.exe >nul 2>nul || (echo [FAIL] PowerShell 7 is required.& endlocal & exit /b 127)
 set "PY_KIND="
 where python.exe >nul 2>nul
 if not errorlevel 1 (
@@ -15,23 +14,19 @@ if not defined PY_KIND (
     if not errorlevel 1 set "PY_KIND=py"
   )
 )
-if not defined PY_KIND (echo [FAIL] Python 3 is required: usable python.exe or py.exe -3.& endlocal & exit /b 127)
-pushd "%ROOT%" || (echo [FAIL] Cannot enter repository root.& endlocal & exit /b 2)
+if not defined PY_KIND (echo [FAIL] usable Python 3 is required.& endlocal & exit /b 127)
+pushd "%ROOT%" || (echo [FAIL] cannot enter repository root.& endlocal & exit /b 2)
 if "%PY_KIND%"=="python" (
   python.exe -m unittest tests.test_opencode_lsp_harness -v
 ) else (
   py.exe -3 -m unittest tests.test_opencode_lsp_harness -v
 )
-if errorlevel 1 goto :fail
-pwsh.exe -NoLogo -NoProfile -File "%ROOT%scripts\Test-OpenCodeLspHarness.ps1" -RootPath "%ROOT%"
-if errorlevel 1 goto :fail
-pwsh.exe -NoLogo -NoProfile -File "%ROOT%scripts\Test-AgentDocumentationContract.ps1" -RootPath "%ROOT%"
-if errorlevel 1 goto :fail
+if errorlevel 1 (set "R=%ERRORLEVEL%"& popd & endlocal & exit /b %R%)
+pwsh -NoLogo -NoProfile -File "%ROOT%scripts\Test-OpenCodeLspHarness.ps1" -RootPath "%ROOT%."
+if errorlevel 1 (set "R=%ERRORLEVEL%"& popd & endlocal & exit /b %R%)
+pwsh -NoLogo -NoProfile -File "%ROOT%scripts\Test-AgentDocumentationContract.ps1" -RootPath "%ROOT%."
+if errorlevel 1 (set "R=%ERRORLEVEL%"& popd & endlocal & exit /b %R%)
 git diff --check
-if errorlevel 1 goto :fail
+set "R=%ERRORLEVEL%"
 popd
-endlocal & exit /b 0
-:fail
-set "RESULT=%ERRORLEVEL%"
-popd
-endlocal & exit /b %RESULT%
+endlocal & exit /b %R%
