@@ -89,7 +89,7 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
             self.assertIn(token,text)
     def test_ci_routes_focused_and_documentation_validation(self):
         ci=(ROOT/'.github/workflows/opencode-lsp-harness.yml').read_text(encoding='utf-8')
-        for token in ('SKILLS.md','TRIGGERS.md','workflow-registry.json','tests.test_opencode_lsp_harness','Test-OpenCodeLspHarness.ps1','Test-AgentDocumentationContract.ps1','git diff --check'):
+        for token in ('SKILLS.md','TRIGGERS.md','workflow-registry.json','tests.test_opencode_lsp_harness','Test-OpenCodeLspHarness.ps1','Test-AgentDocumentationContract.ps1','git diff --check','Windows CMD entrypoint','shell: cmd','run: Test-OpenCodeLspHarness.cmd'):
             self.assertIn(token,ci)
 
 if __name__ == '__main__': unittest.main()
