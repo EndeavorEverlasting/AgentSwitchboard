@@ -11,6 +11,10 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 ROUTER = ROOT / "tooling/harness/context/context.routes.json"
 VALIDATOR = ROOT / "scripts/Test-ProgressiveDisclosureHarness.py"
+WORKFLOW_INDEX = ROOT / "tooling/harness/operational/opencode-lsp-setup/workflows.json"
+SKILL_PATH = ".ai/skills/opencode-lsp-workstation-setup/SKILL.md"
+ARTIFACT_REGISTRY_PATH = "tooling/harness/operational/opencode-lsp-setup/artifact-registry.json"
+RUNNER_PATH = "tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1"
 
 
 def git(*args: str) -> str:
@@ -44,13 +48,25 @@ class ProgressiveDisclosureHarnessTests(unittest.TestCase):
         self.assertIn("Do not preload", harness)
         self.assertLessEqual(len(harness.encode("utf-8")), 4000)
 
-    def test_opencode_domain_routes_one_workflow_without_implementation_preload(self):
+    def test_opencode_domain_routes_every_canonical_workflow_without_implementation_preload(self):
         router = json.loads(ROUTER.read_text(encoding="utf-8"))
+        workflow_index = json.loads(WORKFLOW_INDEX.read_text(encoding="utf-8"))
         domain = next(x for x in router["domains"] if x["domainId"] == "opencode-lsp")
-        workflow = next(x for x in router["workflows"] if x["workflowId"] == "opencode-lsp.configure")
         self.assertEqual(["tooling/harness/context/domains/opencode-lsp.domain.json"], domain["defaultLoad"])
-        self.assertNotIn("tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1", workflow["defaultLoad"])
-        self.assertIn("tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1", workflow["onDemand"])
+
+        routed = {x["workflowId"]: x for x in router["workflows"]}
+        canonical = {f"opencode-lsp.{x['id']}": x for x in workflow_index["workflows"]}
+        self.assertEqual(set(canonical), set(routed))
+
+        for workflow_id, record in canonical.items():
+            route = routed[workflow_id]
+            self.assertEqual("opencode-lsp", route["domainId"])
+            self.assertIn(record["specPath"], route["defaultLoad"])
+            self.assertIn(SKILL_PATH, route["defaultLoad"])
+            self.assertIn(ARTIFACT_REGISTRY_PATH, route["defaultLoad"])
+            self.assertNotIn(RUNNER_PATH, route["defaultLoad"])
+            self.assertIn(RUNNER_PATH, route["onDemand"])
+            self.assertEqual("workflow15kOpencodeLsp", route["baselineId"])
 
     def test_old_governance_is_preserved_exactly_as_triggered_detail(self):
         router = json.loads(ROUTER.read_text(encoding="utf-8"))
@@ -84,13 +100,16 @@ class ProgressiveDisclosureHarnessTests(unittest.TestCase):
         self.assertIn(":fail", cmd)
         self.assertIn("endlocal & exit /b %R%", cmd)
 
-    def test_ci_checks_committed_range(self):
+    def test_ci_checks_committed_range_and_executes_windows_cmd_entrypoint(self):
         ci = (ROOT / ".github/workflows/progressive-disclosure-harness.yml").read_text(encoding="utf-8")
         self.assertIn("fetch-depth: 0", ci)
         self.assertIn("github.event.pull_request.base.sha", ci)
         self.assertIn("github.event.pull_request.head.sha", ci)
         self.assertIn("github.event.before", ci)
         self.assertNotIn("run: git diff --check\n", ci)
+        self.assertIn("Windows CMD entrypoint", ci)
+        self.assertIn("shell: cmd", ci)
+        self.assertIn("run: Test-ProgressiveDisclosureHarness.cmd", ci)
 
     def test_validator_measures_three_retrieval_simulations(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -103,6 +122,37 @@ class ProgressiveDisclosureHarnessTests(unittest.TestCase):
             self.assertLessEqual(data["after"]["domain30k"]["estimatedTokens"], 2000)
             self.assertLessEqual(data["after"]["workflow15k"]["estimatedTokens"], 4000)
             self.assertGreaterEqual(data["reductions"]["orientation50kPercent"], 80)
+            self.assertGreaterEqual(data["reductions"]["workflow15kSelectedPercent"], 40)
+            self.assertEqual("opencode-lsp.configure", data["selection"]["workflowId"])
+
+    def test_each_registered_opencode_workflow_validates_its_own_spec(self):
+        workflow_index = json.loads(WORKFLOW_INDEX.read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory() as temp:
+            for record in workflow_index["workflows"]:
+                workflow_id = f"opencode-lsp.{record['id']}"
+                report = Path(temp) / f"{record['id']}.json"
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        str(VALIDATOR),
+                        "--domain", "opencode-lsp",
+                        "--workflow", workflow_id,
+                        "--output", str(report),
+                    ],
+                    cwd=ROOT,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+                self.assertEqual(0, result.returncode, f"{workflow_id}: {result.stdout}{result.stderr}")
+                data = json.loads(report.read_text(encoding="utf-8"))
+                self.assertEqual("PASS", data["status"])
+                self.assertEqual(workflow_id, data["selection"]["workflowId"])
+                self.assertEqual(record["specPath"], data["selection"]["workflowSpec"])
+                self.assertEqual("workflow15kOpencodeLsp", data["selection"]["workflowBaselineId"])
+                self.assertLessEqual(data["after"]["workflow15k"]["estimatedTokens"], 4000)
+                self.assertGreaterEqual(data["reductions"]["workflow15kSelectedPercent"], 40)
 
 
 if __name__ == "__main__":
