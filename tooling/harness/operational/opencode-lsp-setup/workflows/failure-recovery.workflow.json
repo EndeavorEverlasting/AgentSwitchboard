@@ -2,12 +2,12 @@
   "schemaVersion":1,
   "workflowId":"failure-recovery",
   "trigger":"inspect, configure, verify, checkout recovery, or focused validation returns nonzero/incomplete state",
-  "inputs":["exact failing receipt/report","exact branch/HEAD","first deterministic failure code"],
+  "inputs":["exact failing receipt/report","exact branch/HEAD when already resolved","first deterministic failure code"],
   "dependencies":["prior failing-gate evidence is preserved","30k opencode-lsp domain and selected failure-recovery route are current","repair remains inside the harness-owned failure boundary"],
-  "steps":["preserve evidence and dirty/operator-owned state","repair the first owned failing boundary only","never weaken repository identity, privacy, config-preservation, immutable-output, or validator gates","rerun the failed gate first, then the focused floor"],
+  "steps":["preserve evidence and dirty/operator-owned state","for WRONG_REPOSITORY route through the registered recovery router, which resolves the fresh canonical default branch/head and delegates to the bounded checkout resolver","repair the first owned failing boundary only","never weaken repository identity, privacy, config-preservation, immutable-output, or validator gates","rerun the failed gate first, then the focused floor"],
   "outputs":["preserved failure evidence","repaired exact-head validation or named external blocker"],
   "validator":"Test-OpenCodeLspHarness.cmd",
   "failurePolicy":"stop when repair requires product code, credentials, confidential data on a free endpoint, unsupported upstream runtime, or another owner's mutation",
-  "handoff":"record owner, dependency, artifact path, exact head, and executable next action",
+  "handoff":"record owner, dependency, artifact path, exact head, and executable next action; observation-only Git commands are not sufficient when bounded checkout recovery is available",
   "proofCeiling":"same as the repaired gate; failure recovery does not promote proof"
 }

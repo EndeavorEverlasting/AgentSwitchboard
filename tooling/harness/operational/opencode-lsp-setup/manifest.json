@@ -5,6 +5,7 @@
   "purpose": "Give low-capability agents and Windows operators one deterministic path to recover a canonical checkout, inspect, configure, verify, and hand off OpenCode LSP enablement without changing product code, governance, secrets, or existing OpenCode configuration.",
   "canonicalOwner": "tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1",
   "entrypoints": {
+    "checkoutRecoveryRouter": "tooling/harness/operational/opencode-lsp-setup/Recover-AgentSwitchboardCheckout.ps1",
     "checkoutResolver": "tooling/harness/operational/opencode-lsp-setup/Resolve-AgentSwitchboardCheckout.ps1",
     "runner": "tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1",
     "operatorCmd": "Test-OpenCodeLspHarness.cmd",
