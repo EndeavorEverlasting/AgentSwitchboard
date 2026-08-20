@@ -3,6 +3,7 @@
   "workflowId":"handoff",
   "trigger":"successful configuration, agent/chat/machine boundary, or real external blocker",
   "inputs":["exact repo/branch/HEAD","OpenCode command/version","latest receipt/report","configuration artifact paths","remaining blocker if any"],
+  "dependencies":["latest decision-relevant receipt/report or blocker classification is available","configuration artifact paths are included only when they exist","private/confidential data and credentials are excluded from handoff evidence"],
   "steps":["record only decision-relevant state","name working/broken/unproven separately","exclude credentials/private source/private machine evidence","give one exact owner/dependency/command that advances the next unproven gate"],
   "outputs":["human-readable operator report","machine-readable receipt","exact next action"],
   "validator":"Test-OpenCodeLspHarness.cmd",
