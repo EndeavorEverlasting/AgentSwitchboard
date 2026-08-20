@@ -58,6 +58,7 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         self.assertLess(text.index("$null = New-Item -ItemType Directory -Path $OutputDirectory"), text.index("if ($preOwnedConfigureDirectory) { Stop-Setup"))
     def test_python_fallback_and_hooks_are_fail_closed(self):
         cmd=(ROOT/'Test-OpenCodeLspHarness.cmd').read_text(encoding='utf-8')
+        self.assertIn('where pwsh.exe >nul 2>nul',cmd)
         self.assertIn('python.exe',cmd); self.assertIn('py.exe -3',cmd)
         self.assertIn('if not errorlevel 1 set "PY_KIND=python"',cmd)
         self.assertIn('if not errorlevel 1 set "PY_KIND=py"',cmd)
