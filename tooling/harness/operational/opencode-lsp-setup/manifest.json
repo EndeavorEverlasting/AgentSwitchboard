@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 3,
+  "harnessId": "agentswitchboard.opencode-lsp-workstation-setup.v1",
+  "title": "OpenCode LSP workstation setup harness",
+  "purpose": "Give low-capability agents and Windows operators one deterministic path to recover a canonical checkout, inspect, configure, verify, and hand off OpenCode LSP enablement without changing product code, governance, secrets, or existing OpenCode configuration.",
+  "canonicalOwner": "tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1",
+  "entrypoints": {
+    "checkoutResolver": "tooling/harness/operational/opencode-lsp-setup/Resolve-AgentSwitchboardCheckout.ps1",
+    "runner": "tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1",
+    "operatorCmd": "Test-OpenCodeLspHarness.cmd",
+    "codebaseMap": "tooling/harness/operational/opencode-lsp-setup/codebase-map.json",
+    "workflows": "tooling/harness/operational/opencode-lsp-setup/workflows.json",
+    "artifactRegistry": "tooling/harness/operational/opencode-lsp-setup/artifact-registry.json",
+    "completenessValidator": "scripts/Test-OpenCodeLspHarness.ps1",
+    "portableContract": "tests/test_opencode_lsp_harness.py",
+    "skill": ".ai/skills/opencode-lsp-workstation-setup/SKILL.md",
+    "canonicalSkills": "SKILLS.md",
+    "canonicalTriggers": "TRIGGERS.md",
+    "operationalWorkflowRegistry": "tooling/harness/operational/workflow-registry.json",
+    "operatorGuide": "docs/harness/opencode-lsp-workstation-setup.md",
+    "operatorReportTemplate": "tooling/harness/operational/opencode-lsp-setup/operator-report.template.md",
+    "preCommitHook": "tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPreCommit.ps1",
+    "prePushHook": "tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPrePush.ps1"
+  },
+  "repositoryRecovery": {
+    "preferredPathIsHintOnly": true,
+    "boundedDiscovery": ["preferred path","preferred direct children","preferred parent siblings named AgentSwitchBoard*","LOCALAPPDATA AgentSwitchboard checkouts"],
+    "fallback": "%LOCALAPPDATA%/AgentSwitchboard/checkouts/canonical-<head8>",
+    "proofRule": "Only an exact canonical GitHub origin plus expected branch/head may become the setup worktree; a non-Git folder is preserved and never upgraded in place.",
+    "destructiveCleanupAllowed": false
+  },
+  "upstreamContract": {
+    "configSchema": "https://opencode.ai/config.json",
+    "stableLspRule": "LSP is disabled by default; lsp=true enables built-in servers whose file types and prerequisites are present.",
+    "configPrecedenceRule": "OPENCODE_CONFIG_CONTENT is the highest runtime config source; the generated launcher preserves inherited inline values in memory and forces lsp=true there.",
+    "interactiveModelRule": "The current OpenCode TUI accepts --model/-m on the top-level opencode command.",
+    "v2Boundary": "Current OpenCode V2 documentation accepts LSP configuration but does not provide an LSP runtime; fail closed on a detected v2 command/version."
+  },
+  "recommendedProfile": {
+    "lsp": true,
+    "modelLaunchOnly": "opencode/nemotron-3-ultra-free",
+    "modelPersistence": false
+  },
+  "generatedEvidence": {
+    "tracked": false,
+    "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/runs/<run-id>",
+    "configurationArtifactsImmutable": true
+  },
+  "safety": {
+    "productMutationAllowed": false,
+    "governanceMutationOwned": false,
+    "destructiveGitAllowed": false,
+    "secretCollectionAllowed": false,
+    "existingOpenCodeConfigMutationAllowed": false,
+    "freeModelConfidentialDataAllowed": false,
+    "implicitHookInstallationAllowed": false,
+    "proofCeiling": "Static/hosted validation proves harness structure and setup logic. Checkout recovery can prove canonical repository acquisition and exact-head isolated worktree state. Workstation execution can prove OpenCode command/version resolution, immutable machine-local config artifacts, model visibility, and launcher generation. Active LSP diagnostics require opening a supported file and observing runtime behavior."
+  }
+}
