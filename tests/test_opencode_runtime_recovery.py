@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -22,6 +25,13 @@ def executable_powershell(text: str) -> str:
     return "\n".join(
         line for line in text.splitlines() if not line.lstrip().startswith("#")
     )
+
+
+def literal_here_string(text: str, variable: str) -> str:
+    marker = f"${variable} = @'\n"
+    start = text.index(marker) + len(marker)
+    end = text.index("\n'@", start)
+    return text[start:end]
 
 
 class TestOpenCodeRuntimeRecovery(unittest.TestCase):
@@ -54,6 +64,7 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
             "function Invoke-WslBash",
             "timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s",
             "curl --connect-timeout 15 --max-time __INSTALL_TIMEOUT__",
+            "bash -s -- --no-modify-path",
             "-TimeoutSeconds ($InstallTimeoutSeconds + 30)",
             "OPENCODE_INSTALL_WINDOWS_TIMEOUT",
             "OPENCODE_INSTALL_WSL_TIMEOUT",
@@ -65,10 +76,8 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
             text.index("$installResult = Invoke-WslBash -Script $installScript"),
         )
 
-    def test_repair_uses_deterministic_managed_install_path(self) -> None:
+    def test_repair_uses_bounded_user_local_install_paths(self) -> None:
         text = read(ROUTER)
-        managed_path = 'export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"'
-        self.assertIn(managed_path, text)
         self.assertIn('export OPENCODE_INSTALL_DIR="$HOME/.opencode/bin"', text)
         self.assertIn(
             '$initialVersionScript = "set -u`n$($script:initialOpenCodePath) --version"',
@@ -79,18 +88,107 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
             text,
         )
         self.assertNotIn("$versionScript", text)
+        self.assertNotIn(".Replace('\\\"', '\"')", text)
 
         install_block = text[
             text.index("$installScript = @'") : text.index("$installResult = Invoke-WslBash -Script $installScript")
         ]
         self.assertIn('export OPENCODE_INSTALL_DIR="$HOME/.opencode/bin"', install_block)
+        self.assertIn("bash -s -- --no-modify-path", install_block)
 
+        discovery_block = text[
+            text.index("$discoveryScript = @'") : text.index("$discovery = Invoke-WslBash -Script $discoveryScript")
+        ]
         post_discovery_block = text[
             text.index("$postInstallDiscoveryScript = @'") : text.index("$postDiscovery = Invoke-WslBash -Script $postInstallDiscoveryScript")
         ]
-        self.assertIn('managed="$HOME/.opencode/bin/opencode"', post_discovery_block)
-        self.assertIn('if [ -x "$managed" ]', post_discovery_block)
-        self.assertNotIn("command -v opencode", post_discovery_block)
+        for block in (discovery_block, post_discovery_block):
+            for candidate in (
+                '"$HOME/.opencode/bin/opencode"',
+                '"${XDG_BIN_DIR:-}/opencode"',
+                '"$HOME/bin/opencode"',
+                '"$HOME/.local/bin/opencode"',
+            ):
+                self.assertIn(candidate, block)
+            self.assertIn('for candidate in "${candidates[@]}"', block)
+            self.assertNotIn("command -v opencode", block)
+            self.assertNotIn(":$PATH", block)
+
+        self.assertIn('timeout 5s "$candidate" --version', post_discovery_block)
+        self.assertIn('[ -n "$version" ]', post_discovery_block)
+        self.assertIn(
+            "Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_FOUND' 'OpenCode installation returned success but no version-healthy executable was found in the bounded WSL install locations.'",
+            text,
+        )
+
+    @unittest.skipIf(os.name == "nt", "Bash payload semantics are exercised on Ubuntu CI")
+    def test_initial_discovery_ignores_unregistered_inherited_path(self) -> None:
+        script = literal_here_string(read(ROUTER), "discoveryScript")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            home = root / "home"
+            home.mkdir()
+            system_bin = root / "system-bin"
+            system_bin.mkdir()
+            unregistered = system_bin / "opencode"
+            unregistered.write_text("#!/usr/bin/env bash\nprintf '1.18.19\\n'\n", encoding="utf-8")
+            unregistered.chmod(0o755)
+
+            env = os.environ.copy()
+            env["HOME"] = str(home)
+            env.pop("XDG_BIN_DIR", None)
+            env["PATH"] = f"{system_bin}:{env.get('PATH', '')}"
+            completed = subprocess.run(
+                ["bash", "-c", script],
+                env=env,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(44, completed.returncode, completed.stderr)
+            self.assertEqual("", completed.stdout.strip())
+
+    @unittest.skipIf(os.name == "nt", "Bash payload semantics are exercised on Ubuntu CI")
+    def test_post_install_discovery_skips_stale_candidate_and_resolves_linux_home(self) -> None:
+        script = literal_here_string(read(ROUTER), "postInstallDiscoveryScript")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            home = Path(temp_dir)
+            stale = home / ".opencode" / "bin" / "opencode"
+            stale.parent.mkdir(parents=True)
+            stale.write_text("#!/usr/bin/env bash\nexit 1\n", encoding="utf-8")
+            stale.chmod(0o755)
+
+            healthy = home / "bin" / "opencode"
+            healthy.parent.mkdir(parents=True)
+            healthy.write_text("#!/usr/bin/env bash\nprintf '1.18.19\\n'\n", encoding="utf-8")
+            healthy.chmod(0o755)
+
+            env = os.environ.copy()
+            env["HOME"] = str(home)
+            env.pop("XDG_BIN_DIR", None)
+            completed = subprocess.run(
+                ["bash", "-c", script],
+                env=env,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(0, completed.returncode, completed.stderr)
+            self.assertEqual(str(healthy), completed.stdout.strip())
+            self.assertNotEqual(str(stale), completed.stdout.strip())
+            self.assertNotIn("C:\\Users\\", completed.stdout)
+
+    def test_generated_windows_shim_uses_native_cmd_quotes(self) -> None:
+        text = read(ROUTER)
+        self.assertIn(
+            "('\"{0}\" -d \"{1}\" --exec \"{2}\" %*' -f $wslPath, $Distribution, $script:openCodePath)",
+            text,
+        )
+        self.assertNotIn(".Replace('\\\"', '\"')", text)
 
     def test_existing_but_unhealthy_runtime_advances_to_one_install(self) -> None:
         text = read(ROUTER)
@@ -181,15 +279,23 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
         )
         self.assertEqual("Ubuntu", recovery["distribution"])
         self.assertEqual(180, recovery["defaultInstallTimeoutSeconds"])
-        self.assertEqual("$HOME/.opencode/bin", recovery["wslInstallDirectory"])
+        self.assertEqual("$HOME/.opencode/bin", recovery["wslPreferredInstallDirectory"])
+        self.assertEqual(
+            ["$HOME/.opencode/bin", "$XDG_BIN_DIR", "$HOME/bin", "$HOME/.local/bin"],
+            recovery["wslAcceptedInstallLocations"],
+        )
         self.assertTrue(recovery["localAppDataRequired"])
+        self.assertFalse(recovery["inheritedPathDiscoveryAllowed"])
+        self.assertFalse(recovery["shellProfileMutationAllowed"])
         self.assertFalse(recovery["unrelatedToolInstallationAllowed"])
         self.assertTrue(recovery["unhealthyExistingRuntimeRepairAllowed"])
         self.assertTrue(recovery["recoveryEvidenceBeforeInspectRequired"])
         self.assertFalse(recovery["sameStateRetryAllowed"])
         self.assertIn("exact command path", recovery["proofRule"])
         self.assertIn("receipt/report", recovery["proofRule"])
-        self.assertIn("deterministic", recovery["proofRule"])
+        self.assertIn("version-healthy", recovery["proofRule"])
+        self.assertIn("bounded user-local install locations", recovery["proofRule"])
+        self.assertIn("inherited path", recovery["proofRule"].lower())
 
     def test_failure_workflow_requires_unhealthy_repair_and_preinspect_evidence(self) -> None:
         workflow = json.loads(read(WORKFLOW))

@@ -45,16 +45,26 @@ foreach ($token in @('git ls-remote --symref','refs/heads/$defaultbranch','resol
 foreach ($forbidden in @('git reset','git clean','git stash','push --force','remove-item')) { if ($recoveryRouterLower.Contains($forbidden)) { [void]$failures.Add("recovery-router-forbidden-token:$forbidden") } }
 $runtimeRecoveryRouter = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/Recover-OpenCodeRuntime.ps1') -Raw
 $runtimeRecoveryRouterLower = $runtimeRecoveryRouter.ToLowerInvariant()
-foreach ($token in @('installtimeoutseconds = 180','https://opencode.ai/install','agentswitchboard\bin\opencode.cmd','requires localappdata','invoke-boundedprocess','timeout --signal=term','export path="$home/.opencode/bin:$home/.local/bin:$path"','export opencode_install_dir="$home/.opencode/bin"','opencode-command-discovery','opencode-version-probe','$initialversionscript = "set -u`n$($script:initialopencodepath) --version"','managed="$home/.opencode/bin/opencode"','$postdiscovery = invoke-wslbash -script $postinstalldiscoveryscript','$postversionscript = "set -u`n$($script:opencodepath) --version"','existing-runtime-version-failed','existing-runtime-version-timeout','opencode-install','post-install-command-discovery','post-install-version-probe','opencode-runtime-recovery.json','opencode-runtime-recovery.md','write-recoveryevidence','laststdoutpresent','laststderrpresent','secretorenvironmentdumppersisted = $false','inspect-handoff','opencode_inspect_handoff_timeout')) { if (-not $runtimeRecoveryRouterLower.Contains($token)) { [void]$failures.Add("runtime-recovery-router-contract:$token") } }
+foreach ($token in @('installtimeoutseconds = 180','https://opencode.ai/install','agentswitchboard\bin\opencode.cmd','requires localappdata','invoke-boundedprocess','timeout --signal=term','xdg_bin_dir','export opencode_install_dir="$home/.opencode/bin"','bash -s -- --no-modify-path','opencode-command-discovery','opencode-version-probe','$initialversionscript = "set -u`n$($script:initialopencodepath) --version"','candidates=(','"$home/.opencode/bin/opencode"','"${xdg_bin_dir:-}/opencode"','"$home/bin/opencode"','"$home/.local/bin/opencode"','timeout 5s "$candidate" --version','[ -n "$version" ]','$postdiscovery = invoke-wslbash -script $postinstalldiscoveryscript','$postversionscript = "set -u`n$($script:opencodepath) --version"','existing-runtime-version-failed','existing-runtime-version-timeout','opencode-install','post-install-command-discovery','post-install-version-probe','version-healthy executable','bounded wsl install locations','opencode-runtime-recovery.json','opencode-runtime-recovery.md','write-recoveryevidence','laststdoutpresent','laststderrpresent','secretorenvironmentdumppersisted = $false','inspect-handoff','opencode_inspect_handoff_timeout')) { if (-not $runtimeRecoveryRouterLower.Contains($token)) { [void]$failures.Add("runtime-recovery-router-contract:$token") } }
 foreach ($forbidden in @('repair-technician-command-shims.cmd','agent_switchboard_no_pause','setup-technicianagentswitchboard.ps1','antigravity.google','git reset','git clean','git stash','push --force','remove-item')) { if ($runtimeRecoveryRouterLower.Contains($forbidden)) { [void]$failures.Add("runtime-recovery-router-forbidden-token:$forbidden") } }
 if ($runtimeRecoveryRouter.Contains('$versionScript')) { [void]$failures.Add('runtime-recovery-shared-version-script-can-be-undefined') }
+$discoveryStart = $runtimeRecoveryRouterLower.IndexOf("`$discoveryscript = @'")
+$discoveryEnd = $runtimeRecoveryRouterLower.IndexOf('$discovery = invoke-wslbash -script $discoveryscript')
+if ($discoveryStart -lt 0 -or $discoveryEnd -le $discoveryStart) { [void]$failures.Add('runtime-recovery-initial-discovery-block-missing') }
+else {
+ $discoveryBlock = $runtimeRecoveryRouterLower.Substring($discoveryStart, $discoveryEnd - $discoveryStart)
+ if ($discoveryBlock.Contains('command -v opencode')) { [void]$failures.Add('runtime-recovery-initial-discovery-uses-path-winner') }
+ if ($discoveryBlock.Contains(':$path')) { [void]$failures.Add('runtime-recovery-initial-discovery-inherits-path') }
+ foreach ($candidate in @('"$home/.opencode/bin/opencode"','"${xdg_bin_dir:-}/opencode"','"$home/bin/opencode"','"$home/.local/bin/opencode"')) { if (-not $discoveryBlock.Contains($candidate)) { [void]$failures.Add("runtime-recovery-initial-candidate-missing:$candidate") } }
+}
 $installStart = $runtimeRecoveryRouterLower.IndexOf("`$installscript = @'")
 $installEnd = $runtimeRecoveryRouterLower.IndexOf('$installresult = invoke-wslbash -script $installscript')
 if ($installStart -lt 0 -or $installEnd -le $installStart) { [void]$failures.Add('runtime-recovery-install-block-missing') }
 else {
  $installBlock = $runtimeRecoveryRouterLower.Substring($installStart, $installEnd - $installStart)
  if ($installBlock.Contains('command -v opencode')) { [void]$failures.Add('runtime-recovery-unhealthy-install-skipped-by-command-presence') }
- if (-not $installBlock.Contains('export opencode_install_dir="$home/.opencode/bin"')) { [void]$failures.Add('runtime-recovery-install-dir-not-pinned') }
+ if (-not $installBlock.Contains('export opencode_install_dir="$home/.opencode/bin"')) { [void]$failures.Add('runtime-recovery-preferred-install-dir-missing') }
+ if (-not $installBlock.Contains('bash -s -- --no-modify-path')) { [void]$failures.Add('runtime-recovery-shell-profile-mutation-not-disabled') }
 }
 $postDiscoveryStart = $runtimeRecoveryRouterLower.IndexOf("`$postinstalldiscoveryscript = @'")
 $postDiscoveryEnd = $runtimeRecoveryRouterLower.IndexOf('$postdiscovery = invoke-wslbash -script $postinstalldiscoveryscript')
@@ -62,7 +72,9 @@ if ($postDiscoveryStart -lt 0 -or $postDiscoveryEnd -le $postDiscoveryStart) { [
 else {
  $postDiscoveryBlock = $runtimeRecoveryRouterLower.Substring($postDiscoveryStart, $postDiscoveryEnd - $postDiscoveryStart)
  if ($postDiscoveryBlock.Contains('command -v opencode')) { [void]$failures.Add('runtime-recovery-post-install-uses-path-winner') }
- if (-not $postDiscoveryBlock.Contains('managed="$home/.opencode/bin/opencode"')) { [void]$failures.Add('runtime-recovery-post-install-managed-binary-missing') }
+ foreach ($candidate in @('"$home/.opencode/bin/opencode"','"${xdg_bin_dir:-}/opencode"','"$home/bin/opencode"','"$home/.local/bin/opencode"')) { if (-not $postDiscoveryBlock.Contains($candidate)) { [void]$failures.Add("runtime-recovery-post-install-candidate-missing:$candidate") } }
+ if (-not $postDiscoveryBlock.Contains('timeout 5s "$candidate" --version')) { [void]$failures.Add('runtime-recovery-post-install-candidate-health-not-bounded') }
+ if (-not $postDiscoveryBlock.Contains('[ -n "$version" ]')) { [void]$failures.Add('runtime-recovery-post-install-empty-version-accepted') }
 }
 $resolver = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/Resolve-AgentSwitchboardCheckout.ps1') -Raw
 $resolverLower = $resolver.ToLowerInvariant()
@@ -81,7 +93,14 @@ if ([bool]$manifest.runtimeRecovery.unrelatedToolInstallationAllowed) { [void]$f
 if (-not [bool]$manifest.runtimeRecovery.unhealthyExistingRuntimeRepairAllowed) { [void]$failures.Add('manifest-runtime-recovery-disallows-unhealthy-repair') }
 if (-not [bool]$manifest.runtimeRecovery.recoveryEvidenceBeforeInspectRequired) { [void]$failures.Add('manifest-runtime-recovery-evidence-not-required') }
 if (-not [bool]$manifest.runtimeRecovery.localAppDataRequired) { [void]$failures.Add('manifest-runtime-recovery-localappdata-not-required') }
-if ([string]$manifest.runtimeRecovery.wslInstallDirectory -ne '$HOME/.opencode/bin') { [void]$failures.Add('manifest-runtime-recovery-install-dir-mismatch') }
+if ([bool]$manifest.runtimeRecovery.inheritedPathDiscoveryAllowed) { [void]$failures.Add('manifest-runtime-recovery-allows-inherited-path-discovery') }
+if ([bool]$manifest.runtimeRecovery.shellProfileMutationAllowed) { [void]$failures.Add('manifest-runtime-recovery-allows-shell-profile-mutation') }
+if ([string]$manifest.runtimeRecovery.wslPreferredInstallDirectory -ne '$HOME/.opencode/bin') { [void]$failures.Add('manifest-runtime-recovery-preferred-install-dir-mismatch') }
+$acceptedInstallLocations = @($manifest.runtimeRecovery.wslAcceptedInstallLocations | ForEach-Object { [string]$_ })
+foreach ($expectedLocation in @('$HOME/.opencode/bin','$XDG_BIN_DIR','$HOME/bin','$HOME/.local/bin')) { if ($expectedLocation -notin $acceptedInstallLocations) { [void]$failures.Add("manifest-runtime-recovery-install-location-missing:$expectedLocation") } }
+$manifestProofRule = ([string]$manifest.runtimeRecovery.proofRule).ToLowerInvariant()
+if (-not $manifestProofRule.Contains('version-healthy')) { [void]$failures.Add('manifest-runtime-recovery-version-health-selection-missing') }
+if (-not $manifestProofRule.Contains('inherited path')) { [void]$failures.Add('manifest-runtime-recovery-inherited-path-rule-missing') }
 $artifacts = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/artifact-registry.json') -Raw | ConvertFrom-Json
 $artifactIds = @($artifacts.artifacts | ForEach-Object { [string]$_.artifactId })
 foreach ($artifactId in @('runtime-recovery-json','runtime-recovery-report')) { if ($artifactId -notin $artifactIds) { [void]$failures.Add("runtime-recovery-artifact-missing:$artifactId") } }

@@ -225,17 +225,25 @@ try {
     $script:stage = 'opencode-command-discovery'
     $discoveryScript = @'
 set -u
-export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
-if command -v opencode >/dev/null 2>&1; then
-  command -v opencode
-  exit 0
-fi
+candidates=(
+  "$HOME/.opencode/bin/opencode"
+  "${XDG_BIN_DIR:-}/opencode"
+  "$HOME/bin/opencode"
+  "$HOME/.local/bin/opencode"
+)
+for candidate in "${candidates[@]}"; do
+  [ "$candidate" != "/opencode" ] || continue
+  if [ -x "$candidate" ]; then
+    printf '%s\n' "$candidate"
+    exit 0
+  fi
+done
 exit 44
 '@
     $discovery = Invoke-WslBash -Script $discoveryScript -TimeoutSeconds 30
     Set-LastResult -Result $discovery
     if ($discovery.TimedOut) {
-        Stop-Recovery 'OPENCODE_COMMAND_DISCOVERY_TIMEOUT' 'OpenCode command discovery timed out after 30 seconds.'
+        Stop-Recovery 'OPENCODE_COMMAND_DISCOVERY_TIMEOUT' 'Bounded OpenCode command discovery timed out after 30 seconds.'
     }
     if ($discovery.ExitCode -eq 0) {
         $script:initialOpenCodePath = Get-FirstOutputLine -Text $discovery.Stdout
@@ -298,7 +306,7 @@ exit 0
         $installScript = @'
 set -euo pipefail
 export OPENCODE_INSTALL_DIR="$HOME/.opencode/bin"
-timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash -lc 'set -euo pipefail; curl --connect-timeout 15 --max-time __INSTALL_TIMEOUT__ -fsSL https://opencode.ai/install | bash'
+timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash -lc 'set -euo pipefail; curl --connect-timeout 15 --max-time __INSTALL_TIMEOUT__ -fsSL https://opencode.ai/install | bash -s -- --no-modify-path'
 '@.Replace('__INSTALL_TIMEOUT__', [string]$InstallTimeoutSeconds)
         $installResult = Invoke-WslBash -Script $installScript -TimeoutSeconds ($InstallTimeoutSeconds + 30)
         Set-LastResult -Result $installResult
@@ -317,24 +325,33 @@ timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash -lc 'set -euo p
         $script:stage = 'post-install-command-discovery'
         $postInstallDiscoveryScript = @'
 set -u
-managed="$HOME/.opencode/bin/opencode"
-if [ -x "$managed" ]; then
-  printf '%s\n' "$managed"
-  exit 0
-fi
+candidates=(
+  "$HOME/.opencode/bin/opencode"
+  "${XDG_BIN_DIR:-}/opencode"
+  "$HOME/bin/opencode"
+  "$HOME/.local/bin/opencode"
+)
+for candidate in "${candidates[@]}"; do
+  [ "$candidate" != "/opencode" ] || continue
+  [ -x "$candidate" ] || continue
+  if version="$(timeout 5s "$candidate" --version 2>/dev/null)" && [ -n "$version" ]; then
+    printf '%s\n' "$candidate"
+    exit 0
+  fi
+done
 exit 45
 '@
         $postDiscovery = Invoke-WslBash -Script $postInstallDiscoveryScript -TimeoutSeconds 30
         Set-LastResult -Result $postDiscovery
         if ($postDiscovery.TimedOut) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_TIMEOUT' 'Canonical OpenCode command discovery timed out after installation.'
+            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_TIMEOUT' 'Bounded version-healthy OpenCode discovery timed out after installation.'
         }
         if ($postDiscovery.ExitCode -ne 0) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_FOUND' "OpenCode installation returned success but $HOME/.opencode/bin/opencode was not executable."
+            Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_FOUND' 'OpenCode installation returned success but no version-healthy executable was found in the bounded WSL install locations.'
         }
         $script:openCodePath = Get-FirstOutputLine -Text $postDiscovery.Stdout
         if ([string]::IsNullOrWhiteSpace($script:openCodePath)) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_EMPTY' 'OpenCode installation returned success without the canonical managed command path.'
+            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_EMPTY' 'OpenCode installation returned success without a bounded version-healthy command path.'
         }
         Assert-SafeOpenCodePath -Path $script:openCodePath
 
