@@ -225,21 +225,25 @@ try {
     $script:stage = 'opencode-command-discovery'
     $discoveryScript = @'
 set -u
-if [ -n "${XDG_BIN_DIR:-}" ]; then
-  export PATH="$HOME/.opencode/bin:$XDG_BIN_DIR:$HOME/.local/bin:$HOME/bin:$PATH"
-else
-  export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$HOME/bin:$PATH"
-fi
-if command -v opencode >/dev/null 2>&1; then
-  command -v opencode
-  exit 0
-fi
+candidates=(
+  "$HOME/.opencode/bin/opencode"
+  "${XDG_BIN_DIR:-}/opencode"
+  "$HOME/bin/opencode"
+  "$HOME/.local/bin/opencode"
+)
+for candidate in "${candidates[@]}"; do
+  [ "$candidate" != "/opencode" ] || continue
+  if [ -x "$candidate" ]; then
+    printf '%s\n' "$candidate"
+    exit 0
+  fi
+done
 exit 44
 '@
     $discovery = Invoke-WslBash -Script $discoveryScript -TimeoutSeconds 30
     Set-LastResult -Result $discovery
     if ($discovery.TimedOut) {
-        Stop-Recovery 'OPENCODE_COMMAND_DISCOVERY_TIMEOUT' 'OpenCode command discovery timed out after 30 seconds.'
+        Stop-Recovery 'OPENCODE_COMMAND_DISCOVERY_TIMEOUT' 'Bounded OpenCode command discovery timed out after 30 seconds.'
     }
     if ($discovery.ExitCode -eq 0) {
         $script:initialOpenCodePath = Get-FirstOutputLine -Text $discovery.Stdout
