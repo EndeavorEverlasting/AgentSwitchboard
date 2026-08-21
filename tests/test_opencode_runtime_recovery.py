@@ -33,6 +33,7 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
         self.assertIn("$Distribution = 'Ubuntu'", text)
         self.assertIn("https://opencode.ai/install", text)
         self.assertIn("AgentSwitchboard\\bin\\opencode.cmd", text)
+        self.assertIn("requires LOCALAPPDATA", text)
         self.assertIn("'inspect-handoff'", text)
         self.assertIn("exit 0", text)
 
@@ -67,8 +68,17 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
     def test_repair_uses_deterministic_managed_install_path(self) -> None:
         text = read(ROUTER)
         managed_path = 'export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"'
-        self.assertGreaterEqual(text.count(managed_path), 2)
+        self.assertIn(managed_path, text)
         self.assertIn('export OPENCODE_INSTALL_DIR="$HOME/.opencode/bin"', text)
+        self.assertIn(
+            '$initialVersionScript = "set -u`n$($script:initialOpenCodePath) --version"',
+            text,
+        )
+        self.assertIn(
+            '$postVersionScript = "set -u`n$($script:openCodePath) --version"',
+            text,
+        )
+        self.assertNotIn("$versionScript", text)
 
         install_block = text[
             text.index("$installScript = @'") : text.index("$installResult = Invoke-WslBash -Script $installScript")
@@ -165,11 +175,12 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
         self.assertEqual("Ubuntu", recovery["distribution"])
         self.assertEqual(180, recovery["defaultInstallTimeoutSeconds"])
         self.assertEqual("$HOME/.opencode/bin", recovery["wslInstallDirectory"])
+        self.assertTrue(recovery["localAppDataRequired"])
         self.assertFalse(recovery["unrelatedToolInstallationAllowed"])
         self.assertTrue(recovery["unhealthyExistingRuntimeRepairAllowed"])
         self.assertTrue(recovery["recoveryEvidenceBeforeInspectRequired"])
         self.assertFalse(recovery["sameStateRetryAllowed"])
-        self.assertIn("version probe", recovery["proofRule"])
+        self.assertIn("exact command path", recovery["proofRule"])
         self.assertIn("receipt/report", recovery["proofRule"])
         self.assertIn("deterministic", recovery["proofRule"])
 
