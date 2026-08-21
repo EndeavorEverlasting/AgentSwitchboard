@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 5,
+  "schemaVersion": 8,
   "harnessId": "agentswitchboard.opencode-lsp-workstation-setup.v1",
   "title": "OpenCode LSP workstation setup harness",
   "purpose": "Give low-capability agents and Windows operators one deterministic path to recover a canonical checkout, recover the Windows-facing OpenCode runtime, inspect, configure, verify, and hand off OpenCode LSP enablement without changing product code, governance, secrets, or existing OpenCode configuration.",
@@ -37,8 +37,12 @@
     "repairOwner": "tooling/harness/operational/opencode-lsp-setup",
     "distribution": "Ubuntu",
     "defaultInstallTimeoutSeconds": 180,
+    "wslInstallDirectory": "$HOME/.opencode/bin",
+    "localAppDataRequired": true,
     "unrelatedToolInstallationAllowed": false,
-    "proofRule": "A PATH miss must probe the canonical AgentSwitchboard shim before declaring OpenCode missing. If both are absent, OPENCODE_NOT_FOUND routes through the registered runtime recovery router, which probes only the requested WSL OpenCode runtime, performs a bounded OpenCode-only installation when needed, writes only the canonical AgentSwitchboard OpenCode shim, and re-enters Inspect automatically.",
+    "unhealthyExistingRuntimeRepairAllowed": true,
+    "recoveryEvidenceBeforeInspectRequired": true,
+    "proofRule": "OPENCODE_NOT_FOUND routes through the registered runtime recovery router. Recovery requires LOCALAPPDATA so the router and Inspect use the same canonical AgentSwitchboard shim/state root. The router separates command discovery from version health, verifies each initial and post-install runtime by its exact command path after safe-path validation, treats either an absent command or a discovered command whose bounded version probe times out/fails as an OpenCode-only repair reason, pins the official installer to the deterministic $HOME/.opencode/bin recovery directory and gives that directory PATH precedence, runs the installer once inside dual timeout boundaries, proves command path plus version, writes only the canonical AgentSwitchboard shim, records runtime-recovery receipt/report evidence for terminal stages after recovery run initialization including failures before Inspect, then re-enters bounded Inspect automatically.",
     "sameStateRetryAllowed": false
   },
   "upstreamContract": {
@@ -66,6 +70,6 @@
     "existingOpenCodeConfigMutationAllowed": false,
     "freeModelConfidentialDataAllowed": false,
     "implicitHookInstallationAllowed": false,
-    "proofCeiling": "Static/hosted validation proves harness structure and setup logic. Checkout recovery can prove canonical repository acquisition and exact-head isolated worktree state. Workstation execution can prove OpenCode command/version resolution, immutable machine-local config artifacts, model visibility, and launcher generation. Active LSP diagnostics require opening a supported file and observing runtime behavior."
+    "proofCeiling": "Static/hosted validation proves harness structure and setup logic. Checkout recovery can prove canonical repository acquisition and exact-head isolated worktree state. Runtime-recovery receipts can prove the bounded local discovery/version/install/shim/Inspect-handoff state without persisting command output or environment contents. Workstation execution can prove OpenCode command/version resolution, immutable machine-local config artifacts, model visibility, and launcher generation. Active LSP diagnostics require opening a supported file and observing runtime behavior."
   }
 }

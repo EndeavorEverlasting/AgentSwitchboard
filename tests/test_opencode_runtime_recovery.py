@@ -11,6 +11,7 @@ ROUTER = H / "Recover-OpenCodeRuntime.ps1"
 RUNNER = H / "Invoke-OpenCodeLspWorkstationSetup.ps1"
 MANIFEST = H / "manifest.json"
 WORKFLOW = H / "workflows" / "failure-recovery.workflow.json"
+ARTIFACTS = H / "artifact-registry.json"
 
 
 def read(path: Path) -> str:
@@ -32,8 +33,9 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
         self.assertIn("$Distribution = 'Ubuntu'", text)
         self.assertIn("https://opencode.ai/install", text)
         self.assertIn("AgentSwitchboard\\bin\\opencode.cmd", text)
-        self.assertIn("-Mode Inspect", text)
-        self.assertIn("exit $LASTEXITCODE", text)
+        self.assertIn("requires LOCALAPPDATA", text)
+        self.assertIn("'inspect-handoff'", text)
+        self.assertIn("exit 0", text)
 
         self.assertNotIn("Repair-Technician-Command-Shims.cmd", executable)
         self.assertNotIn("AGENT_SWITCHBOARD_NO_PAUSE", executable)
@@ -53,14 +55,86 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
             "timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s",
             "curl --connect-timeout 15 --max-time __INSTALL_TIMEOUT__",
             "-TimeoutSeconds ($InstallTimeoutSeconds + 30)",
-            "$runtimeProbe.ExitCode -eq 124 -or $runtimeProbe.ExitCode -eq 137",
+            "OPENCODE_INSTALL_WINDOWS_TIMEOUT",
+            "OPENCODE_INSTALL_WSL_TIMEOUT",
         ):
             self.assertIn(token, text, token)
 
         self.assertLess(
             text.index("$installScript = @'"),
-            text.index("$runtimeProbe = Invoke-WslBash -Script $installScript"),
+            text.index("$installResult = Invoke-WslBash -Script $installScript"),
         )
+
+    def test_repair_uses_deterministic_managed_install_path(self) -> None:
+        text = read(ROUTER)
+        managed_path = 'export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"'
+        self.assertIn(managed_path, text)
+        self.assertIn('export OPENCODE_INSTALL_DIR="$HOME/.opencode/bin"', text)
+        self.assertIn(
+            '$initialVersionScript = "set -u`n$($script:initialOpenCodePath) --version"',
+            text,
+        )
+        self.assertIn(
+            '$postVersionScript = "set -u`n$($script:openCodePath) --version"',
+            text,
+        )
+        self.assertNotIn("$versionScript", text)
+
+        install_block = text[
+            text.index("$installScript = @'") : text.index("$installResult = Invoke-WslBash -Script $installScript")
+        ]
+        self.assertIn('export OPENCODE_INSTALL_DIR="$HOME/.opencode/bin"', install_block)
+
+        post_discovery_block = text[
+            text.index("$postInstallDiscoveryScript = @'") : text.index("$postDiscovery = Invoke-WslBash -Script $postInstallDiscoveryScript")
+        ]
+        self.assertIn('managed="$HOME/.opencode/bin/opencode"', post_discovery_block)
+        self.assertIn('if [ -x "$managed" ]', post_discovery_block)
+        self.assertNotIn("command -v opencode", post_discovery_block)
+
+    def test_existing_but_unhealthy_runtime_advances_to_one_install(self) -> None:
+        text = read(ROUTER)
+
+        for token in (
+            "$script:stage = 'opencode-command-discovery'",
+            "$script:stage = 'opencode-version-probe'",
+            "$script:installReason = 'existing-runtime-version-timeout'",
+            "$script:installReason = 'existing-runtime-version-failed'",
+            "$script:installReason = 'command-not-found'",
+            "$script:stage = 'opencode-install'",
+            "$script:installAttempted = $true",
+            "$script:stage = 'post-install-command-discovery'",
+            "$script:stage = 'post-install-version-probe'",
+            "OPENCODE_POST_INSTALL_VERSION_FAILED",
+        ):
+            self.assertIn(token, text, token)
+
+        install_block = text[
+            text.index("$installScript = @'") : text.index("$installResult = Invoke-WslBash -Script $installScript")
+        ]
+        self.assertNotIn("command -v opencode", install_block)
+        self.assertNotIn("if ! command -v opencode", install_block)
+
+    def test_runtime_recovery_writes_stage_evidence_after_run_initialization(self) -> None:
+        text = read(ROUTER)
+        artifacts = json.loads(read(ARTIFACTS))
+        ids = {item["artifactId"] for item in artifacts["artifacts"]}
+
+        for token in (
+            "opencode-runtime-recovery.json",
+            "opencode-runtime-recovery.md",
+            "function Write-RecoveryEvidence",
+            "Write-RecoveryEvidence",
+            "lastStdoutPresent",
+            "lastStderrPresent",
+            "secretOrEnvironmentDumpPersisted = $false",
+            "OPENCODE_RUNTIME_RECOVERY_STAGE=",
+            "OPENCODE_RUNTIME_RECOVERY_FAILURE_CODE=",
+        ):
+            self.assertIn(token, text, token)
+        self.assertTrue({"runtime-recovery-json", "runtime-recovery-report"} <= ids)
+        self.assertNotIn("lastStdout =", text)
+        self.assertNotIn("lastStderr =", text)
 
     def test_post_recovery_inspect_probes_are_bounded(self) -> None:
         text = read(RUNNER)
@@ -86,10 +160,10 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
         for token in (
             "exit 61",
             "exit 62",
-            "requires curl inside WSL",
-            "requires GNU timeout inside WSL",
+            "OPENCODE_INSTALL_CURL_MISSING",
+            "OPENCODE_INSTALL_TIMEOUT_TOOL_MISSING",
             "unrelated technician tools will not be installed as a side effect",
-            "WSL returned an unsafe OpenCode command path",
+            "OPENCODE_PATH_UNSAFE",
         ):
             self.assertIn(token, text, token)
 
@@ -107,17 +181,25 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
         )
         self.assertEqual("Ubuntu", recovery["distribution"])
         self.assertEqual(180, recovery["defaultInstallTimeoutSeconds"])
+        self.assertEqual("$HOME/.opencode/bin", recovery["wslInstallDirectory"])
+        self.assertTrue(recovery["localAppDataRequired"])
         self.assertFalse(recovery["unrelatedToolInstallationAllowed"])
+        self.assertTrue(recovery["unhealthyExistingRuntimeRepairAllowed"])
+        self.assertTrue(recovery["recoveryEvidenceBeforeInspectRequired"])
         self.assertFalse(recovery["sameStateRetryAllowed"])
-        self.assertIn("bounded OpenCode-only installation", recovery["proofRule"])
+        self.assertIn("exact command path", recovery["proofRule"])
+        self.assertIn("receipt/report", recovery["proofRule"])
+        self.assertIn("deterministic", recovery["proofRule"])
 
-    def test_failure_workflow_forbids_broad_recovery_and_hangs(self) -> None:
+    def test_failure_workflow_requires_unhealthy_repair_and_preinspect_evidence(self) -> None:
         workflow = json.loads(read(WORKFLOW))
         text = " ".join(workflow["steps"]).lower()
 
-        self.assertIn("do not delegate opencode_not_found to broad technician setup", text)
-        self.assertIn("install unrelated agent tools such as agy", text)
-        self.assertIn("bound network-backed opencode installation", text)
+        self.assertIn("existing but unhealthy opencode command", text)
+        self.assertIn("one bounded opencode-only install", text)
+        self.assertIn("opencode-runtime-recovery.json", text)
+        self.assertIn("failures before inspect", text)
+        self.assertIn("do not delegate opencode_not_found or unhealthy runtime repair to broad technician setup", text)
         self.assertIn("instead of hanging indefinitely", text)
 
     def test_router_contains_no_destructive_or_config_mutation(self) -> None:
