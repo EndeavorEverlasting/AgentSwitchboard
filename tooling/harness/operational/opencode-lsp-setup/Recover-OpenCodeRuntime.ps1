@@ -225,14 +225,17 @@ try {
     $script:stage = 'opencode-command-discovery'
     $discoveryScript = @'
 set -u
-export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
+if [ -n "${XDG_BIN_DIR:-}" ]; then
+  export PATH="$HOME/.opencode/bin:$XDG_BIN_DIR:$HOME/.local/bin:$HOME/bin:$PATH"
+else
+  export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$HOME/bin:$PATH"
+fi
 if command -v opencode >/dev/null 2>&1; then
   command -v opencode
   exit 0
 fi
 exit 44
 '@
-    $discoveryScript = $discoveryScript.Replace('\"', '"')
     $discovery = Invoke-WslBash -Script $discoveryScript -TimeoutSeconds 30
     Set-LastResult -Result $discovery
     if ($discovery.TimedOut) {
@@ -301,7 +304,6 @@ set -euo pipefail
 export OPENCODE_INSTALL_DIR="$HOME/.opencode/bin"
 timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash -lc 'set -euo pipefail; curl --connect-timeout 15 --max-time __INSTALL_TIMEOUT__ -fsSL https://opencode.ai/install | bash -s -- --no-modify-path'
 '@.Replace('__INSTALL_TIMEOUT__', [string]$InstallTimeoutSeconds)
-        $installScript = $installScript.Replace('\"', '"')
         $installResult = Invoke-WslBash -Script $installScript -TimeoutSeconds ($InstallTimeoutSeconds + 30)
         Set-LastResult -Result $installResult
         if (-not [string]::IsNullOrWhiteSpace($installResult.Stdout)) { Write-Host $installResult.Stdout }
@@ -319,25 +321,32 @@ timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash -lc 'set -euo p
         $script:stage = 'post-install-command-discovery'
         $postInstallDiscoveryScript = @'
 set -u
-managed="$HOME/.opencode/bin/opencode"
-if [ -x "$managed" ]; then
-  printf '%s\n' "$managed"
-  exit 0
-fi
+candidates=(
+  "$HOME/.opencode/bin/opencode"
+  "${XDG_BIN_DIR:-}/opencode"
+  "$HOME/bin/opencode"
+  "$HOME/.local/bin/opencode"
+)
+for candidate in "${candidates[@]}"; do
+  [ "$candidate" != "/opencode" ] || continue
+  if [ -x "$candidate" ]; then
+    printf '%s\n' "$candidate"
+    exit 0
+  fi
+done
 exit 45
 '@
-        $postInstallDiscoveryScript = $postInstallDiscoveryScript.Replace('\"', '"')
         $postDiscovery = Invoke-WslBash -Script $postInstallDiscoveryScript -TimeoutSeconds 30
         Set-LastResult -Result $postDiscovery
         if ($postDiscovery.TimedOut) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_TIMEOUT' 'Canonical OpenCode command discovery timed out after installation.'
+            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_TIMEOUT' 'Bounded OpenCode command discovery timed out after installation.'
         }
         if ($postDiscovery.ExitCode -ne 0) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_FOUND' 'OpenCode installation returned success but $HOME/.opencode/bin/opencode was not executable.'
+            Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_FOUND' 'OpenCode installation returned success but no executable was found in the bounded WSL install locations.'
         }
         $script:openCodePath = Get-FirstOutputLine -Text $postDiscovery.Stdout
         if ([string]::IsNullOrWhiteSpace($script:openCodePath)) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_EMPTY' 'OpenCode installation returned success without the canonical managed command path.'
+            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_EMPTY' 'OpenCode installation returned success without a bounded managed command path.'
         }
         Assert-SafeOpenCodePath -Path $script:openCodePath
 
@@ -364,7 +373,7 @@ exit 45
     $null = New-Item -ItemType Directory -Path $shimDirectory -Force
     $shimLines = @(
         '@echo off',
-        ('"{0}" -d "{1}" --exec "{2}" %*' -f $wslPath, $Distribution, $script:openCodePath).Replace('\"', '"'),
+        ('"{0}" -d "{1}" --exec "{2}" %*' -f $wslPath, $Distribution, $script:openCodePath),
         'exit /b %ERRORLEVEL%'
     )
     [System.IO.File]::WriteAllLines($canonicalShim, $shimLines, [System.Text.Encoding]::ASCII)
