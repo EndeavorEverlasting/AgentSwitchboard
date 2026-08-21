@@ -62,8 +62,8 @@ pwsh -NoLogo -NoProfile -File tooling/harness/operational/opencode-lsp-setup/Inv
 
 - require Windows `LOCALAPPDATA` so runtime recovery and Inspect share exactly one AgentSwitchboard state/shim root; do not invent a temporary canonical-shim location that Inspect cannot consume;
 - probe only the requested WSL distribution for the OpenCode command;
-- search a bounded user-local PATH consisting of `$HOME/.opencode/bin`, `$XDG_BIN_DIR` when present, `$HOME/.local/bin`, and `$HOME/bin`; do not search arbitrary filesystem locations;
-- validate a discovered command by its exact safe path rather than by a second name lookup;
+- enumerate only `$HOME/.opencode/bin`, `$XDG_BIN_DIR` when present, `$HOME/bin`, and `$HOME/.local/bin`; inherited WSL `PATH` is not a runtime source and arbitrary filesystem locations are never searched;
+- validate a discovered command by its exact safe path rather than by a name lookup;
 - treat a command that exits nonzero, returns no version, or times out as an unhealthy runtime rather than as success;
 - when OpenCode is absent or unhealthy, require existing `curl` and GNU `timeout`, request `$HOME/.opencode/bin` through `OPENCODE_INSTALL_DIR`, and run the official OpenCode installer once with `--no-modify-path` so recovery does not edit `.bashrc`, `.profile`, or other shell startup files;
 - bound the network-backed install in Linux and again from the Windows parent process;
@@ -85,11 +85,12 @@ After Configure, run the generated CMD, open a `.py` or `.yml` file, and observe
 - `WRONG_REPOSITORY`: the origin must be an exact supported GitHub URL/SCP form for `EndeavorEverlasting/AgentSwitchboard`; similarly named owners are rejected.
 - `OPENCODE_NOT_FOUND`: run the registered runtime recovery router. It repairs OpenCode only and must not delegate to broad command-shim/technician setup.
 - missing `LOCALAPPDATA`: stop before recovery; the router will not create a shim under a different state root than Inspect uses.
-- existing `opencode` command but version exit nonzero/empty: the runtime router treats it as `existing-runtime-version-failed`, performs one bounded official reinstall, then examines only the registered user-local install locations, skips stale/broken candidates, and independently verifies the selected exact path.
+- OpenCode only on inherited/system WSL `PATH`: recovery deliberately ignores it and installs/resolves a bounded user-local runtime before creating the canonical Windows shim.
+- existing bounded `opencode` command but version exit nonzero/empty: the runtime router treats it as `existing-runtime-version-failed`, performs one bounded official reinstall, then examines only the registered user-local install locations, skips stale/broken candidates, and independently verifies the selected exact path.
 - `OPENCODE_POST_INSTALL_NOT_FOUND`: the official installer returned success but no version-healthy executable exists in the bounded user-local install locations; preserve the runtime-recovery receipt rather than substituting a Windows `$HOME` path or searching the filesystem broadly.
 - `OPENCODE_INSTALL_FAILED`: inspect the runtime-recovery stage/exit evidence and console installer detail; do not route through unrelated tool installers.
 - `OPENCODE_POST_INSTALL_VERSION_FAILED`: a candidate passed bounded selection but failed the independent exact-path proof; preserve the runtime-recovery receipt/report as the exact runtime blocker.
-- OpenCode recovery timeout: preserve the recovery receipt/report and treat network/upstream runtime access as the blocker; do not retry through unrelated tool installers.
+- OpenCode recovery timeout: preserve the runtime-recovery receipt/report and treat network/upstream runtime access as the blocker; do not retry through unrelated tool installers.
 - OpenCode recovery missing `curl` or GNU `timeout`: repair that prerequisite explicitly or use an already healthy OpenCode runtime; the focused router will not install unrelated technician tooling as a side effect.
 - `OPENCODE_V2_LSP_UNAVAILABLE`: use repository lint/typecheck/test/PowerShell validators until upstream V2 supplies runtime support.
 - `MODEL_ID_INVALID`: use `provider/model` format.
