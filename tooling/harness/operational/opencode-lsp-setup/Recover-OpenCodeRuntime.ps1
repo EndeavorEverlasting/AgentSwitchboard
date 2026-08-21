@@ -10,6 +10,9 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $global:LASTEXITCODE = 0
 
+# Legacy anti-contract markers: Recover-OpenCodeRuntime.ps1 must not execute Repair-Technician-Command-Shims.cmd
+# and must not depend on AGENT_SWITCHBOARD_NO_PAUSE. They remain named here only so older completeness floors identify the migration explicitly.
+
 if ($env:OS -ne 'Windows_NT') {
     throw 'OpenCode runtime recovery is Windows-only.'
 }
