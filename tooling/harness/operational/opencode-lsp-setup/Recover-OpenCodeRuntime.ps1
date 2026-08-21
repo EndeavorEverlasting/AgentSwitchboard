@@ -71,10 +71,13 @@ if ($env:OS -ne 'Windows_NT') {
 if ($PSVersionTable.PSVersion.Major -lt 7) {
     throw 'OpenCode runtime recovery requires PowerShell 7.'
 }
+if ([string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+    throw 'OpenCode runtime recovery requires LOCALAPPDATA so recovery and Inspect share the same canonical AgentSwitchboard shim.'
+}
 
 $RepoPath = (Resolve-Path -LiteralPath $RepoPath -ErrorAction Stop).Path
 $runnerPath = Join-Path $RepoPath 'tooling\harness\operational\opencode-lsp-setup\Invoke-OpenCodeLspWorkstationSetup.ps1'
-$stateBase = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { [IO.Path]::GetTempPath() }
+$stateBase = $env:LOCALAPPDATA
 $stateRoot = Join-Path $stateBase 'AgentSwitchboard\opencode-lsp'
 $runId = '{0}-{1}' -f ([DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ')), ([guid]::NewGuid().ToString('N').Substring(0,8))
 $runRoot = Join-Path $stateRoot "runs\$runId"
@@ -242,12 +245,8 @@ exit 44
         Assert-SafeOpenCodePath -Path $script:initialOpenCodePath
 
         $script:stage = 'opencode-version-probe'
-        $versionScript = @'
-set -u
-export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
-opencode --version
-'@
-        $initialVersion = Invoke-WslBash -Script $versionScript -TimeoutSeconds 30
+        $initialVersionScript = "set -u`n$($script:initialOpenCodePath) --version"
+        $initialVersion = Invoke-WslBash -Script $initialVersionScript -TimeoutSeconds 30
         Set-LastResult -Result $initialVersion
         $script:initialVersionExitCode = $initialVersion.ExitCode
         $script:initialVersionTimedOut = [bool]$initialVersion.TimedOut
@@ -331,7 +330,8 @@ timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash -lc 'set -euo p
         Assert-SafeOpenCodePath -Path $script:openCodePath
 
         $script:stage = 'post-install-version-probe'
-        $postVersion = Invoke-WslBash -Script $versionScript -TimeoutSeconds 30
+        $postVersionScript = "set -u`n$($script:openCodePath) --version"
+        $postVersion = Invoke-WslBash -Script $postVersionScript -TimeoutSeconds 30
         Set-LastResult -Result $postVersion
         if ($postVersion.TimedOut) {
             Stop-Recovery 'OPENCODE_POST_INSTALL_VERSION_TIMEOUT' 'OpenCode version probing timed out after bounded installation.'
