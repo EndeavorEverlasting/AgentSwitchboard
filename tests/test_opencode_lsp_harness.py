@@ -40,7 +40,8 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         self.assertIn("$canonicalOriginPattern = '^(?:https://github\\.com/|git@github\\.com:|ssh://git@github\\.com/|git://github\\.com/)EndeavorEverlasting/AgentSwitchboard",text)
         self.assertIn("$modelSeparator = $ModelId.IndexOf('/')",text)
         self.assertIn('$modelProvider = $ModelId.Substring(0, $modelSeparator)',text)
-        self.assertIn('& $openCode models $modelProvider',text)
+        self.assertIn("$modelResult = Invoke-BoundedProcess -FilePath $openCode -ArgumentList @('models', $modelProvider)",text)
+        self.assertNotIn('@(& $openCode models $modelProvider 2>&1)',text)
     def test_runner_materializes_git_identity_lines_before_scalar_conversion(self):
         text=(H/'Invoke-OpenCodeLspWorkstationSetup.ps1').read_text(encoding='utf-8')
         self.assertIn("$originLines = @(Invoke-GitLines @('remote','get-url','origin'))",text)
@@ -112,13 +113,14 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         self.assertNotIn('-Mode Inspect',block)
         self.assertEqual('tooling/harness/operational/opencode-lsp-setup/Recover-OpenCodeRuntime.ps1',manifest['entrypoints']['runtimeRecoveryRouter'])
         self.assertFalse(manifest['runtimeRecovery']['sameStateRetryAllowed'])
-        for token in ('Repair-Technician-Command-Shims.cmd','AGENT_SWITCHBOARD_NO_PAUSE','AgentSwitchboard\\bin\\opencode.cmd','-Mode Inspect','exit $LASTEXITCODE'):
+        for token in ('InstallTimeoutSeconds = 180','https://opencode.ai/install','AgentSwitchboard\\bin\\opencode.cmd','-Mode Inspect','exit $LASTEXITCODE'):
             self.assertIn(token,router)
-        for forbidden in ('git reset','git clean','git stash','push --force','remove-item'):
-            self.assertNotIn(forbidden,router.lower())
+        for forbidden in ('Repair-Technician-Command-Shims.cmd','AGENT_SWITCHBOARD_NO_PAUSE','Setup-TechnicianAgentSwitchboard.ps1','git reset','git clean','git stash','push --force','remove-item'):
+            self.assertNotIn(forbidden,router)
         workflow_text=' '.join(workflow['steps']).lower() + ' ' + workflow['handoff'].lower()
         self.assertIn('never emit the same failing gate as its own next action',workflow_text)
         self.assertIn('same-state retry commands are insufficient',workflow_text)
+        self.assertIn('do not delegate opencode_not_found to broad technician setup',workflow_text)
     def test_python_fallback_and_hooks_are_fail_closed(self):
         cmd=(ROOT/'Test-OpenCodeLspHarness.cmd').read_text(encoding='utf-8')
         self.assertIn('where pwsh.exe >nul 2>nul',cmd)
@@ -159,7 +161,7 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         ids={x['artifactId'] for x in artifacts['artifacts']}; self.assertTrue({'checkout-resolution-json','checkout-resolution-report'} <= ids)
     def test_ci_routes_focused_and_documentation_validation(self):
         ci=(ROOT/'.github/workflows/opencode-lsp-harness.yml').read_text(encoding='utf-8')
-        for token in ('SKILLS.md','TRIGGERS.md','workflow-registry.json','tests.test_opencode_lsp_harness','Test-OpenCodeLspHarness.ps1','Test-AgentDocumentationContract.ps1','git diff --check','Windows CMD entrypoint','shell: cmd','run: Test-OpenCodeLspHarness.cmd'):
+        for token in ('SKILLS.md','TRIGGERS.md','workflow-registry.json','tests.test_opencode_lsp_harness','tests.test_opencode_runtime_recovery','Test-OpenCodeLspHarness.ps1','Test-AgentDocumentationContract.ps1','git diff --check','Windows CMD entrypoint','shell: cmd','run: Test-OpenCodeLspHarness.cmd'):
             self.assertIn(token,ci)
 
 if __name__ == '__main__': unittest.main()
