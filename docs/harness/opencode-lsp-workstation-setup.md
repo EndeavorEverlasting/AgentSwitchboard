@@ -56,18 +56,21 @@ To re-verify an existing Configure run without rewriting it:
 pwsh -NoLogo -NoProfile -File tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1 -Mode Verify -RepoPath . -ConfigurationDirectory '<configure-run-directory>'
 ```
 
-## Missing-runtime recovery
+## Missing or unhealthy runtime recovery
 
 `OPENCODE_NOT_FOUND` is owned by `Recover-OpenCodeRuntime.ps1`. The recovery is deliberately narrower than technician workstation setup:
 
-- probe only the requested WSL distribution for `opencode`;
-- if missing, require `curl` and GNU `timeout`, then run only the official OpenCode install route;
+- probe only the requested WSL distribution for the OpenCode command;
+- probe `opencode --version` separately so a discovered command that exits nonzero, returns no version, or times out is treated as an unhealthy runtime rather than as success;
+- when OpenCode is absent or unhealthy, require existing `curl` and GNU `timeout`, then run the official OpenCode installer once even when an older/broken command is already discoverable;
 - bound the network-backed install in Linux and again from the Windows parent process;
-- do not install or repair unrelated agents such as AGY, Hermes, tmux, or WezTerm;
-- write only `%LOCALAPPDATA%\AgentSwitchboard\bin\opencode.cmd` after the WSL command path and version are proven;
-- automatically re-enter Inspect after recovery.
+- independently rediscover the command and version after install before writing `%LOCALAPPDATA%\AgentSwitchboard\bin\opencode.cmd`;
+- write `%LOCALAPPDATA%\AgentSwitchboard\opencode-lsp\runs\<run-id>\opencode-runtime-recovery.json` and `.md` for every terminal recovery state, including failures before Inspect;
+- persist stage, exit code, timeout state, and whether stdout/stderr existed, but not raw command output, environment dumps, credentials, or inherited OpenCode configuration;
+- automatically re-enter Inspect through a bounded parent process after runtime recovery;
+- do not install or repair unrelated agents such as AGY, Hermes, tmux, or WezTerm.
 
-The default install timeout is 180 seconds. A timeout or missing prerequisite is a named blocker, not a reason to fall back to the broad technician setup.
+The default install timeout is 180 seconds. A timeout, missing prerequisite, failed official installer, or still-unhealthy post-install version probe is a named blocker, not a reason to fall back to broad technician setup.
 
 ## Runtime proof
 
@@ -76,9 +79,12 @@ After Configure, run the generated CMD, open a `.py` or `.yml` file, and observe
 ## Troubleshooting
 
 - `WRONG_REPOSITORY`: the origin must be an exact supported GitHub URL/SCP form for `EndeavorEverlasting/AgentSwitchboard`; similarly named owners are rejected.
-- `OPENCODE_NOT_FOUND`: run the registered runtime recovery router. It repairs OpenCode only and must not delegate to the broad command-shim/technician setup path.
-- OpenCode recovery timeout: preserve the failure output and treat network access to the official installer as the blocker; do not retry through unrelated tool installers.
-- OpenCode recovery missing `curl` or GNU `timeout`: repair that prerequisite explicitly or use an already installed OpenCode runtime; the focused router will not install unrelated technician tooling as a side effect.
+- `OPENCODE_NOT_FOUND`: run the registered runtime recovery router. It repairs OpenCode only and must not delegate to broad command-shim/technician setup.
+- existing `opencode` command but version exit nonzero/empty: the runtime router treats it as `existing-runtime-version-failed`, performs one bounded official reinstall, and then independently reprobes command/version.
+- `OPENCODE_INSTALL_FAILED`: inspect the runtime-recovery stage/exit evidence and console installer detail; do not route through unrelated tool installers.
+- `OPENCODE_POST_INSTALL_VERSION_FAILED`: the official installer completed but the runtime is still unhealthy; preserve the runtime-recovery receipt/report as the exact external-runtime blocker.
+- OpenCode recovery timeout: preserve the recovery receipt/report and treat network/upstream runtime access as the blocker; do not retry through unrelated tool installers.
+- OpenCode recovery missing `curl` or GNU `timeout`: repair that prerequisite explicitly or use an already healthy OpenCode runtime; the focused router will not install unrelated technician tooling as a side effect.
 - `OPENCODE_V2_LSP_UNAVAILABLE`: use repository lint/typecheck/test/PowerShell validators until upstream V2 supplies runtime support.
 - `MODEL_ID_INVALID`: use `provider/model` format.
 - `MODEL_NOT_VISIBLE`: connect/refresh the requested provider and rerun Inspect; never put credentials in repo/evidence.
