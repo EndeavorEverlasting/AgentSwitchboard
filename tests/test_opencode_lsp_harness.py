@@ -41,6 +41,15 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         self.assertIn("$modelSeparator = $ModelId.IndexOf('/')",text)
         self.assertIn('$modelProvider = $ModelId.Substring(0, $modelSeparator)',text)
         self.assertIn('& $openCode models $modelProvider',text)
+    def test_runner_materializes_git_identity_lines_before_scalar_conversion(self):
+        text=(H/'Invoke-OpenCodeLspWorkstationSetup.ps1').read_text(encoding='utf-8')
+        self.assertIn("$originLines = @(Invoke-GitLines @('remote','get-url','origin'))",text)
+        self.assertIn('$origin = ([string]$originLines[0]).Trim()',text)
+        self.assertIn("$headLines = @(Invoke-GitLines @('rev-parse','HEAD'))",text)
+        self.assertIn('$head = ([string]$headLines[0]).Trim()',text)
+        self.assertIn("Stop-Setup 'GIT_IDENTITY_OUTPUT_EMPTY'",text)
+        self.assertNotIn("([string](Invoke-GitLines @('remote','get-url','origin'))[0])",text)
+        self.assertNotIn("([string](Invoke-GitLines @('rev-parse','HEAD'))[0])",text)
     def test_powershell_regex_literals_match_real_runtime_values(self):
         runner=(H/'Invoke-OpenCodeLspWorkstationSetup.ps1').read_text(encoding='utf-8')
         resolver=(H/'Resolve-AgentSwitchboardCheckout.ps1').read_text(encoding='utf-8')
