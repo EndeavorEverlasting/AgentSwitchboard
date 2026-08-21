@@ -1,11 +1,12 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "harnessId": "agentswitchboard.opencode-lsp-workstation-setup.v1",
   "title": "OpenCode LSP workstation setup harness",
-  "purpose": "Give low-capability agents and Windows operators one deterministic path to recover a canonical checkout, inspect, configure, verify, and hand off OpenCode LSP enablement without changing product code, governance, secrets, or existing OpenCode configuration.",
+  "purpose": "Give low-capability agents and Windows operators one deterministic path to recover a canonical checkout, recover the Windows-facing OpenCode runtime, inspect, configure, verify, and hand off OpenCode LSP enablement without changing product code, governance, secrets, or existing OpenCode configuration.",
   "canonicalOwner": "tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1",
   "entrypoints": {
     "checkoutRecoveryRouter": "tooling/harness/operational/opencode-lsp-setup/Recover-AgentSwitchboardCheckout.ps1",
+    "runtimeRecoveryRouter": "tooling/harness/operational/opencode-lsp-setup/Recover-OpenCodeRuntime.ps1",
     "checkoutResolver": "tooling/harness/operational/opencode-lsp-setup/Resolve-AgentSwitchboardCheckout.ps1",
     "runner": "tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1",
     "operatorCmd": "Test-OpenCodeLspHarness.cmd",
@@ -29,6 +30,13 @@
     "fallback": "%LOCALAPPDATA%/AgentSwitchboard/checkouts/canonical-<head8>",
     "proofRule": "Only an exact canonical GitHub origin plus expected branch/head may become the setup worktree; a non-Git folder is preserved and never upgraded in place.",
     "destructiveCleanupAllowed": false
+  },
+  "runtimeRecovery": {
+    "canonicalWindowsShim": "%LOCALAPPDATA%/AgentSwitchboard/bin/opencode.cmd",
+    "repairEntrypoint": "Repair-Technician-Command-Shims.cmd",
+    "repairOwner": "tooling/profiles/windows/technician-live-cert",
+    "proofRule": "A PATH miss must probe the canonical AgentSwitchboard shim before declaring OpenCode missing. If both are absent, OPENCODE_NOT_FOUND routes through the registered runtime recovery router, which runs the canonical command-shim repair, proves the shim exists, and re-enters Inspect automatically.",
+    "sameStateRetryAllowed": false
   },
   "upstreamContract": {
     "configSchema": "https://opencode.ai/config.json",
