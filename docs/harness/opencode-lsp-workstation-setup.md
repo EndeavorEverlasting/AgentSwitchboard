@@ -62,12 +62,12 @@ pwsh -NoLogo -NoProfile -File tooling/harness/operational/opencode-lsp-setup/Inv
 
 - require Windows `LOCALAPPDATA` so runtime recovery and Inspect share exactly one AgentSwitchboard state/shim root; do not invent a temporary canonical-shim location that Inspect cannot consume;
 - probe only the requested WSL distribution for the OpenCode command;
-- put `$HOME/.opencode/bin` first in the recovery PATH so a repaired managed runtime takes precedence over an older broken user command;
+- search a bounded user-local PATH consisting of `$HOME/.opencode/bin`, `$XDG_BIN_DIR` when present, `$HOME/.local/bin`, and `$HOME/bin`; do not search arbitrary filesystem locations;
 - validate a discovered command by its exact safe path rather than by a second name lookup;
 - treat a command that exits nonzero, returns no version, or times out as an unhealthy runtime rather than as success;
-- when OpenCode is absent or unhealthy, require existing `curl` and GNU `timeout`, export `OPENCODE_INSTALL_DIR=$HOME/.opencode/bin`, then run the official OpenCode installer once even when an older/broken command is already discoverable;
+- when OpenCode is absent or unhealthy, require existing `curl` and GNU `timeout`, request `$HOME/.opencode/bin` through `OPENCODE_INSTALL_DIR`, and run the official installer once with `--no-modify-path` so recovery does not edit `.bashrc`, `.profile`, or other shell startup files;
 - bound the network-backed install in Linux and again from the Windows parent process;
-- independently rediscover the command after install and validate that exact safe path with `--version` before writing `%LOCALAPPDATA%\AgentSwitchboard\bin\opencode.cmd`;
+- after install, accept an executable only from `$HOME/.opencode/bin`, `$XDG_BIN_DIR`, `$HOME/bin`, or `$HOME/.local/bin`, then validate that exact safe path with `--version` before writing `%LOCALAPPDATA%\AgentSwitchboard\bin\opencode.cmd`;
 - after the recovery run directory is initialized, write `%LOCALAPPDATA%\AgentSwitchboard\opencode-lsp\runs\<run-id>\opencode-runtime-recovery.json` and `.md` for every terminal runtime stage, including failures before Inspect;
 - persist stage, exit code, timeout state, and whether stdout/stderr existed, but not raw command output, environment dumps, credentials, or inherited OpenCode configuration;
 - automatically re-enter Inspect through a bounded parent process after runtime recovery;
@@ -84,7 +84,8 @@ After Configure, run the generated CMD, open a `.py` or `.yml` file, and observe
 - `WRONG_REPOSITORY`: the origin must be an exact supported GitHub URL/SCP form for `EndeavorEverlasting/AgentSwitchboard`; similarly named owners are rejected.
 - `OPENCODE_NOT_FOUND`: run the registered runtime recovery router. It repairs OpenCode only and must not delegate to broad command-shim/technician setup.
 - missing `LOCALAPPDATA`: stop before recovery; the router will not create a shim under a different state root than Inspect uses.
-- existing `opencode` command but version exit nonzero/empty: the runtime router treats it as `existing-runtime-version-failed`, performs one bounded official reinstall into `$HOME/.opencode/bin`, gives that path precedence, and then independently verifies the exact rediscovered path.
+- existing `opencode` command but version exit nonzero/empty: the runtime router treats it as `existing-runtime-version-failed`, performs one bounded official reinstall, then resolves only the registered user-local install locations and independently verifies the exact recovered path.
+- `OPENCODE_POST_INSTALL_NOT_FOUND`: the official installer returned success but no executable exists in the bounded user-local install locations; preserve the runtime-recovery receipt rather than substituting a Windows `$HOME` path or searching the filesystem broadly.
 - `OPENCODE_INSTALL_FAILED`: inspect the runtime-recovery stage/exit evidence and console installer detail; do not route through unrelated tool installers.
 - `OPENCODE_POST_INSTALL_VERSION_FAILED`: the official installer completed but the exact recovered runtime is still unhealthy; preserve the runtime-recovery receipt/report as the external-runtime blocker.
 - OpenCode recovery timeout: preserve the recovery receipt/report and treat network/upstream runtime access as the blocker; do not retry through unrelated tool installers.
