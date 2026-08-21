@@ -60,12 +60,14 @@ pwsh -NoLogo -NoProfile -File tooling/harness/operational/opencode-lsp-setup/Inv
 
 `OPENCODE_NOT_FOUND` is owned by `Recover-OpenCodeRuntime.ps1`. The recovery is deliberately narrower than technician workstation setup:
 
+- require Windows `LOCALAPPDATA` so runtime recovery and Inspect share exactly one AgentSwitchboard state/shim root; do not invent a temporary canonical-shim location that Inspect cannot consume;
 - probe only the requested WSL distribution for the OpenCode command;
 - put `$HOME/.opencode/bin` first in the recovery PATH so a repaired managed runtime takes precedence over an older broken user command;
-- probe `opencode --version` separately so a discovered command that exits nonzero, returns no version, or times out is treated as an unhealthy runtime rather than as success;
+- validate a discovered command by its exact safe path rather than by a second name lookup;
+- treat a command that exits nonzero, returns no version, or times out as an unhealthy runtime rather than as success;
 - when OpenCode is absent or unhealthy, require existing `curl` and GNU `timeout`, export `OPENCODE_INSTALL_DIR=$HOME/.opencode/bin`, then run the official OpenCode installer once even when an older/broken command is already discoverable;
 - bound the network-backed install in Linux and again from the Windows parent process;
-- independently rediscover the command and version after install before writing `%LOCALAPPDATA%\AgentSwitchboard\bin\opencode.cmd`;
+- independently rediscover the command after install and validate that exact safe path with `--version` before writing `%LOCALAPPDATA%\AgentSwitchboard\bin\opencode.cmd`;
 - after the recovery run directory is initialized, write `%LOCALAPPDATA%\AgentSwitchboard\opencode-lsp\runs\<run-id>\opencode-runtime-recovery.json` and `.md` for every terminal runtime stage, including failures before Inspect;
 - persist stage, exit code, timeout state, and whether stdout/stderr existed, but not raw command output, environment dumps, credentials, or inherited OpenCode configuration;
 - automatically re-enter Inspect through a bounded parent process after runtime recovery;
@@ -81,9 +83,10 @@ After Configure, run the generated CMD, open a `.py` or `.yml` file, and observe
 
 - `WRONG_REPOSITORY`: the origin must be an exact supported GitHub URL/SCP form for `EndeavorEverlasting/AgentSwitchboard`; similarly named owners are rejected.
 - `OPENCODE_NOT_FOUND`: run the registered runtime recovery router. It repairs OpenCode only and must not delegate to broad command-shim/technician setup.
-- existing `opencode` command but version exit nonzero/empty: the runtime router treats it as `existing-runtime-version-failed`, performs one bounded official reinstall into `$HOME/.opencode/bin`, gives that path precedence, and then independently reprobes command/version.
+- missing `LOCALAPPDATA`: stop before recovery; the router will not create a shim under a different state root than Inspect uses.
+- existing `opencode` command but version exit nonzero/empty: the runtime router treats it as `existing-runtime-version-failed`, performs one bounded official reinstall into `$HOME/.opencode/bin`, gives that path precedence, and then independently verifies the exact rediscovered path.
 - `OPENCODE_INSTALL_FAILED`: inspect the runtime-recovery stage/exit evidence and console installer detail; do not route through unrelated tool installers.
-- `OPENCODE_POST_INSTALL_VERSION_FAILED`: the official installer completed but the runtime is still unhealthy; preserve the runtime-recovery receipt/report as the exact external-runtime blocker.
+- `OPENCODE_POST_INSTALL_VERSION_FAILED`: the official installer completed but the exact recovered runtime is still unhealthy; preserve the runtime-recovery receipt/report as the external-runtime blocker.
 - OpenCode recovery timeout: preserve the recovery receipt/report and treat network/upstream runtime access as the blocker; do not retry through unrelated tool installers.
 - OpenCode recovery missing `curl` or GNU `timeout`: repair that prerequisite explicitly or use an already healthy OpenCode runtime; the focused router will not install unrelated technician tooling as a side effect.
 - `OPENCODE_V2_LSP_UNAVAILABLE`: use repository lint/typecheck/test/PowerShell validators until upstream V2 supplies runtime support.
