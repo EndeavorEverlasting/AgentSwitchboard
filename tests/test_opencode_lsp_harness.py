@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 H = ROOT / 'tooling' / 'harness' / 'operational' / 'opencode-lsp-setup'
-MANDATORY = {'manifest.json','codebase-map.json','workflows.json','artifact-registry.json','operator-report.template.md','Recover-AgentSwitchboardCheckout.ps1','Resolve-AgentSwitchboardCheckout.ps1','Invoke-OpenCodeLspWorkstationSetup.ps1','hooks/Invoke-OpenCodeLspPreCommit.ps1','hooks/Invoke-OpenCodeLspPrePush.ps1'}
+MANDATORY = {'manifest.json','codebase-map.json','workflows.json','artifact-registry.json','operator-report.template.md','Recover-AgentSwitchboardCheckout.ps1','Recover-OpenCodeRuntime.ps1','Resolve-AgentSwitchboardCheckout.ps1','Invoke-OpenCodeLspWorkstationSetup.ps1','hooks/Invoke-OpenCodeLspPreCommit.ps1','hooks/Invoke-OpenCodeLspPrePush.ps1'}
 
 class OpenCodeLspHarnessTests(unittest.TestCase):
     def test_mandatory_files_exist(self):
@@ -95,10 +95,30 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         self.assertIn('git ls-remote --symref $canonicalUrl HEAD',router)
         self.assertIn('refs/heads/$defaultBranch',router)
         self.assertIn('& $resolverPath -PreferredPath $PreferredPath -ExpectedBranch $defaultBranch -ExpectedHead $expectedHead',router)
-        self.assertNotIn('git rev-parse --show-toplevel',runner[runner.index("if ($failureCode -eq 'WRONG_REPOSITORY')"):runner.index('elseif ($repoResolved)')])
+        self.assertNotIn('git rev-parse --show-toplevel',runner[runner.index("if ($failureCode -eq 'WRONG_REPOSITORY')"):runner.index("elseif ($failureCode -eq 'OPENCODE_NOT_FOUND'")])
         self.assertEqual('tooling/harness/operational/opencode-lsp-setup/Recover-AgentSwitchboardCheckout.ps1',manifest['entrypoints']['checkoutRecoveryRouter'])
         for forbidden in ('git reset','git clean','git stash','push --force','remove-item'):
             self.assertNotIn(forbidden,router.lower())
+    def test_opencode_not_found_advances_through_runtime_recovery(self):
+        runner=(H/'Invoke-OpenCodeLspWorkstationSetup.ps1').read_text(encoding='utf-8')
+        router=(H/'Recover-OpenCodeRuntime.ps1').read_text(encoding='utf-8')
+        manifest=json.loads((H/'manifest.json').read_text(encoding='utf-8'))
+        workflow=json.loads((H/'workflows/failure-recovery.workflow.json').read_text(encoding='utf-8'))
+        self.assertIn("$runtimeRecoveryRouterPath = Join-Path $PSScriptRoot 'Recover-OpenCodeRuntime.ps1'",runner)
+        self.assertIn("Join-Path $env:LOCALAPPDATA 'AgentSwitchboard\\bin\\opencode.cmd'",runner)
+        self.assertIn("elseif ($failureCode -eq 'OPENCODE_NOT_FOUND' -and $repoResolved)",runner)
+        block=runner[runner.index("elseif ($failureCode -eq 'OPENCODE_NOT_FOUND'"):runner.index('elseif ($repoResolved)')]
+        self.assertIn('$runtimeRecoveryRouterPath',block)
+        self.assertNotIn('-Mode Inspect',block)
+        self.assertEqual('tooling/harness/operational/opencode-lsp-setup/Recover-OpenCodeRuntime.ps1',manifest['entrypoints']['runtimeRecoveryRouter'])
+        self.assertFalse(manifest['runtimeRecovery']['sameStateRetryAllowed'])
+        for token in ('Repair-Technician-Command-Shims.cmd','AGENT_SWITCHBOARD_NO_PAUSE','AgentSwitchboard\\bin\\opencode.cmd','-Mode Inspect','exit $LASTEXITCODE'):
+            self.assertIn(token,router)
+        for forbidden in ('git reset','git clean','git stash','push --force','remove-item'):
+            self.assertNotIn(forbidden,router.lower())
+        workflow_text=' '.join(workflow['steps']).lower() + ' ' + workflow['handoff'].lower()
+        self.assertIn('never emit the same failing gate as its own next action',workflow_text)
+        self.assertIn('same-state retry commands are insufficient',workflow_text)
     def test_python_fallback_and_hooks_are_fail_closed(self):
         cmd=(ROOT/'Test-OpenCodeLspHarness.cmd').read_text(encoding='utf-8')
         self.assertIn('where pwsh.exe >nul 2>nul',cmd)
