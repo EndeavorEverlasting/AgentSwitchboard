@@ -1,0 +1,15 @@
+{
+  "schema": "agentswitchboard.code-search-validator-registry.v1",
+  "validators": [
+    {"id": "python-contract", "command": "python tests/test_code_search_harness.py", "scope": "provider rules, routing, command construction, fixtures, docs, and safety"},
+    {"id": "completeness", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-CodeSearchHarnessCompleteness.ps1", "scope": "tracked component existence and JSON parse"},
+    {"id": "status", "command": "python tooling/code-search/Get-CodeSearchHarnessStatus.py --no-write", "scope": "read-only human status generation"},
+    {"id": "documentation", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1", "scope": "repository documentation compatibility"},
+    {"id": "diff-hygiene", "command": "git diff --check", "scope": "patch hygiene"}
+  ],
+  "hooks": {
+    "preCommit": "tooling/code-search/hooks/Invoke-CodeSearchHarnessPreCommit.ps1",
+    "prePush": "tooling/code-search/hooks/Invoke-CodeSearchHarnessPrePush.ps1"
+  },
+  "hookInstallation": "manual-only; never installed implicitly"
+}

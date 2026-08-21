@@ -1,0 +1,9 @@
+{
+  "id": "code-search-task-intake",
+  "trigger": "Agent needs to locate symbols, implementations, contracts, errors, or cross-file references without scanning the repository manually.",
+  "inputs": ["repository identity", "query intent", "privacy boundary", "local resource budget"],
+  "steps": ["read manifest and provider registry", "classify query as filename/content/symbol/regex/cross-repo", "preserve repository visibility and privacy boundary", "route to provider selection"],
+  "outputs": ["normalized query intent", "provider-selection request"],
+  "failureHandling": ["if repository identity or privacy boundary is unknown, stop before provider use"],
+  "proofCeiling": "intake and routing only"
+}
