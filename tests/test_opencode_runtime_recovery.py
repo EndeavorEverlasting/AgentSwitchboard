@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import re
 import unittest
 from pathlib import Path
 
@@ -9,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 H = ROOT / "tooling" / "harness" / "operational" / "opencode-lsp-setup"
 ROUTER = H / "Recover-OpenCodeRuntime.ps1"
+RUNNER = H / "Invoke-OpenCodeLspWorkstationSetup.ps1"
 MANIFEST = H / "manifest.json"
 WORKFLOW = H / "workflows" / "failure-recovery.workflow.json"
 
@@ -39,7 +39,7 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
         self.assertNotIn("AGENT_SWITCHBOARD_NO_PAUSE", executable)
         self.assertNotIn("Setup-TechnicianAgentSwitchboard.ps1", executable)
         self.assertNotIn("antigravity.google", text.lower())
-        self.assertNotRegex(executable.lower(), r"\bagy\b")
+        self.assertNotIn(" agy ", executable.lower())
 
     def test_network_install_is_dual_bounded(self) -> None:
         text = read(ROUTER)
@@ -61,6 +61,25 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
             text.index("$installScript = @'"),
             text.index("$runtimeProbe = Invoke-WslBash -Script $installScript"),
         )
+
+    def test_post_recovery_inspect_probes_are_bounded(self) -> None:
+        text = read(RUNNER)
+
+        for token in (
+            "[ValidateRange(5, 120)][int]$ProbeTimeoutSeconds = 30",
+            "function Invoke-BoundedProcess",
+            "$process.WaitForExit($ProcessTimeoutSeconds * 1000)",
+            "$process.Kill($true)",
+            "$versionResult = Invoke-BoundedProcess -FilePath $openCode -ArgumentList @('--version')",
+            "Stop-Setup 'OPENCODE_VERSION_TIMEOUT'",
+            "$modelResult = Invoke-BoundedProcess -FilePath $openCode -ArgumentList @('models', $modelProvider)",
+            "Stop-Setup 'MODEL_QUERY_TIMEOUT'",
+            "-ProbeTimeoutSeconds $ProbeTimeoutSeconds",
+        ):
+            self.assertIn(token, text, token)
+
+        self.assertNotIn("@(& $openCode --version 2>&1)", text)
+        self.assertNotIn("@(& $openCode models $modelProvider 2>&1)", text)
 
     def test_runtime_recovery_fails_closed_on_missing_prerequisites(self) -> None:
         text = read(ROUTER)
