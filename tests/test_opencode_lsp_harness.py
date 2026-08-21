@@ -113,14 +113,14 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         self.assertNotIn('-Mode Inspect',block)
         self.assertEqual('tooling/harness/operational/opencode-lsp-setup/Recover-OpenCodeRuntime.ps1',manifest['entrypoints']['runtimeRecoveryRouter'])
         self.assertFalse(manifest['runtimeRecovery']['sameStateRetryAllowed'])
-        for token in ('InstallTimeoutSeconds = 180','https://opencode.ai/install','AgentSwitchboard\\bin\\opencode.cmd','-Mode Inspect','exit $LASTEXITCODE'):
+        for token in ('InstallTimeoutSeconds = 180','https://opencode.ai/install','AgentSwitchboard\\bin\\opencode.cmd',"'inspect-handoff'","'-Mode','Inspect'",'Write-RecoveryEvidence'):
             self.assertIn(token,router)
         for forbidden in ('Repair-Technician-Command-Shims.cmd','AGENT_SWITCHBOARD_NO_PAUSE','Setup-TechnicianAgentSwitchboard.ps1','git reset','git clean','git stash','push --force','remove-item'):
             self.assertNotIn(forbidden,router)
         workflow_text=' '.join(workflow['steps']).lower() + ' ' + workflow['handoff'].lower()
         self.assertIn('never emit the same failing gate as its own next action',workflow_text)
         self.assertIn('same-state retry commands are insufficient',workflow_text)
-        self.assertIn('do not delegate opencode_not_found to broad technician setup',workflow_text)
+        self.assertIn('do not delegate opencode_not_found or unhealthy runtime repair to broad technician setup',workflow_text)
     def test_python_fallback_and_hooks_are_fail_closed(self):
         cmd=(ROOT/'Test-OpenCodeLspHarness.cmd').read_text(encoding='utf-8')
         self.assertIn('where pwsh.exe >nul 2>nul',cmd)
