@@ -33,12 +33,7 @@ try {
     $repairCode = $LASTEXITCODE
 }
 finally {
-    if ($null -eq $priorNoPause) {
-        Remove-Item Env:AGENT_SWITCHBOARD_NO_PAUSE -ErrorAction SilentlyContinue
-    }
-    else {
-        $env:AGENT_SWITCHBOARD_NO_PAUSE = $priorNoPause
-    }
+    $env:AGENT_SWITCHBOARD_NO_PAUSE = $priorNoPause
 }
 
 if ($repairCode -ne 0) {
