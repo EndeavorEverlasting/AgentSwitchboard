@@ -222,7 +222,7 @@ try {
     $script:stage = 'opencode-command-discovery'
     $discoveryScript = @'
 set -u
-export PATH="$HOME/.local/bin:$HOME/.opencode/bin:$PATH"
+export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
 if command -v opencode >/dev/null 2>&1; then
   command -v opencode
   exit 0
@@ -244,7 +244,7 @@ exit 44
         $script:stage = 'opencode-version-probe'
         $versionScript = @'
 set -u
-export PATH="$HOME/.local/bin:$HOME/.opencode/bin:$PATH"
+export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"
 opencode --version
 '@
         $initialVersion = Invoke-WslBash -Script $versionScript -TimeoutSeconds 30
@@ -298,6 +298,7 @@ exit 0
         $script:installAttempted = $true
         $installScript = @'
 set -euo pipefail
+export OPENCODE_INSTALL_DIR="$HOME/.opencode/bin"
 timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash -lc 'set -euo pipefail; curl --connect-timeout 15 --max-time __INSTALL_TIMEOUT__ -fsSL https://opencode.ai/install | bash'
 '@.Replace('__INSTALL_TIMEOUT__', [string]$InstallTimeoutSeconds)
         $installResult = Invoke-WslBash -Script $installScript -TimeoutSeconds ($InstallTimeoutSeconds + 30)
