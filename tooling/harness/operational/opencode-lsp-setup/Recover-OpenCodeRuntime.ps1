@@ -315,17 +315,26 @@ timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash -lc 'set -euo p
         }
 
         $script:stage = 'post-install-command-discovery'
-        $postDiscovery = Invoke-WslBash -Script $discoveryScript -TimeoutSeconds 30
+        $postInstallDiscoveryScript = @'
+set -u
+managed="$HOME/.opencode/bin/opencode"
+if [ -x "$managed" ]; then
+  printf '%s\n' "$managed"
+  exit 0
+fi
+exit 45
+'@
+        $postDiscovery = Invoke-WslBash -Script $postInstallDiscoveryScript -TimeoutSeconds 30
         Set-LastResult -Result $postDiscovery
         if ($postDiscovery.TimedOut) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_TIMEOUT' 'OpenCode command discovery timed out after installation.'
+            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_TIMEOUT' 'Canonical OpenCode command discovery timed out after installation.'
         }
         if ($postDiscovery.ExitCode -ne 0) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_FOUND' "OpenCode installation returned success but command discovery failed with exit code $($postDiscovery.ExitCode)."
+            Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_FOUND' "OpenCode installation returned success but $HOME/.opencode/bin/opencode was not executable."
         }
         $script:openCodePath = Get-FirstOutputLine -Text $postDiscovery.Stdout
         if ([string]::IsNullOrWhiteSpace($script:openCodePath)) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_EMPTY' 'OpenCode installation returned success without a discoverable command path.'
+            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_EMPTY' 'OpenCode installation returned success without the canonical managed command path.'
         }
         Assert-SafeOpenCodePath -Path $script:openCodePath
 
