@@ -4,7 +4,8 @@ param(
     [string]$RepoPath,
     [string]$ModelId = 'opencode/nemotron-3-ultra-free',
     [string]$OutputDirectory,
-    [string]$ConfigurationDirectory
+    [string]$ConfigurationDirectory,
+    [ValidateRange(5, 120)][int]$ProbeTimeoutSeconds = 30
 )
 
 Set-StrictMode -Version Latest
@@ -30,6 +31,51 @@ function Test-ExactLines {
         if ($actual[$i] -cne $Expected[$i]) { return $false }
     }
     return $true
+}
+
+function Invoke-BoundedProcess {
+    param(
+        [Parameter(Mandatory)][string]$FilePath,
+        [string[]]$ArgumentList = @(),
+        [ValidateRange(1, 300)][int]$ProcessTimeoutSeconds = 30
+    )
+
+    $psi = [System.Diagnostics.ProcessStartInfo]::new()
+    $psi.UseShellExecute = $false
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.CreateNoWindow = $true
+
+    if ([IO.Path]::GetExtension($FilePath) -ieq '.cmd') {
+        $psi.FileName = Join-Path $env:SystemRoot 'System32\cmd.exe'
+        [void]$psi.ArgumentList.Add('/d')
+        [void]$psi.ArgumentList.Add('/c')
+        [void]$psi.ArgumentList.Add($FilePath)
+    }
+    else {
+        $psi.FileName = $FilePath
+    }
+    foreach ($argument in $ArgumentList) {
+        [void]$psi.ArgumentList.Add([string]$argument)
+    }
+
+    $process = [System.Diagnostics.Process]::new()
+    $process.StartInfo = $psi
+    [void]$process.Start()
+    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+    $stderrTask = $process.StandardError.ReadToEndAsync()
+    $timedOut = -not $process.WaitForExit($ProcessTimeoutSeconds * 1000)
+    if ($timedOut) {
+        try { $process.Kill($true) } catch {}
+        try { $process.WaitForExit() } catch {}
+    }
+
+    return [pscustomobject]@{
+        ExitCode = if ($timedOut) { $null } else { $process.ExitCode }
+        TimedOut = $timedOut
+        Stdout = ([string]$stdoutTask.GetAwaiter().GetResult()).Trim()
+        Stderr = ([string]$stderrTask.GetAwaiter().GetResult()).Trim()
+    }
 }
 
 $base = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { [IO.Path]::GetTempPath() }
@@ -146,8 +192,11 @@ try {
     else {
         Stop-Setup 'OPENCODE_NOT_FOUND' 'No OpenCode command is available on PATH and the canonical AgentSwitchboard OpenCode shim is missing.'
     }
-    $versionLines = @(& $openCode --version 2>&1)
-    if ($LASTEXITCODE -ne 0 -or $versionLines.Count -eq 0 -or [string]::IsNullOrWhiteSpace([string]$versionLines[0])) { Stop-Setup 'OPENCODE_VERSION_FAILED' 'Unable to read the installed OpenCode version.' }
+
+    $versionResult = Invoke-BoundedProcess -FilePath $openCode -ArgumentList @('--version') -ProcessTimeoutSeconds $ProbeTimeoutSeconds
+    if ($versionResult.TimedOut) { Stop-Setup 'OPENCODE_VERSION_TIMEOUT' "OpenCode version probing exceeded $ProbeTimeoutSeconds seconds." }
+    $versionLines = @($versionResult.Stdout -split "[`r`n]+" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    if ($versionResult.ExitCode -ne 0 -or $versionLines.Count -eq 0) { Stop-Setup 'OPENCODE_VERSION_FAILED' 'Unable to read the installed OpenCode version.' }
     $version = ([string]$versionLines[0]).Trim()
     if ($version -match '^\s*v?2(?:\.|\b)') { Stop-Setup 'OPENCODE_V2_LSP_UNAVAILABLE' 'Detected OpenCode V2; current upstream V2 documentation does not provide LSP runtime behavior.' }
     $runtimeClass = 'stable-lsp-capable'
@@ -155,8 +204,10 @@ try {
     $modelSeparator = $ModelId.IndexOf('/')
     if ($modelSeparator -le 0 -or $modelSeparator -ge ($ModelId.Length - 1)) { Stop-Setup 'MODEL_ID_INVALID' 'ModelId must use provider/model format.' }
     $modelProvider = $ModelId.Substring(0, $modelSeparator)
-    $modelLines = @(& $openCode models $modelProvider 2>&1)
-    if ($LASTEXITCODE -eq 0) {
+    $modelResult = Invoke-BoundedProcess -FilePath $openCode -ArgumentList @('models', $modelProvider) -ProcessTimeoutSeconds $ProbeTimeoutSeconds
+    if ($modelResult.TimedOut) { Stop-Setup 'MODEL_QUERY_TIMEOUT' "OpenCode provider/model discovery exceeded $ProbeTimeoutSeconds seconds." }
+    $modelLines = @($modelResult.Stdout -split "[`r`n]+" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    if ($modelResult.ExitCode -eq 0) {
         $modelQueryStatus = 'pass'
         $modelVisible = @($modelLines | Where-Object { ([string]$_).Trim() -eq $ModelId }).Count -gt 0
     }
@@ -252,6 +303,8 @@ if ($failureCode) {
     $status = 'failed'
     $nextOwner = switch ($failureCode) {
         'OPENCODE_NOT_FOUND' { 'OpenCode installation/runtime owner' }
+        'OPENCODE_VERSION_TIMEOUT' { 'OpenCode installation/runtime owner' }
+        'MODEL_QUERY_TIMEOUT' { 'OpenCode provider/model connection owner' }
         'OPENCODE_V2_LSP_UNAVAILABLE' { 'OpenCode upstream/runtime owner' }
         'MODEL_NOT_VISIBLE' { 'OpenCode provider/model connection owner' }
         'WRONG_REPOSITORY' { 'repository operator' }
@@ -265,7 +318,7 @@ if ($failureCode) {
         '& ' + (ConvertTo-PsLiteral $runtimeRecoveryRouterPath) + ' -RepoPath ' + (ConvertTo-PsLiteral $RepoPath) + ' -ModelId ' + (ConvertTo-PsLiteral $ModelId)
     }
     elseif ($repoResolved) {
-        "pwsh -NoLogo -NoProfile -File `"$PSCommandPath`" -Mode Inspect -RepoPath `"$RepoPath`""
+        "pwsh -NoLogo -NoProfile -File `"$PSCommandPath`" -Mode Inspect -RepoPath `"$RepoPath`" -ModelId `"$ModelId`" -ProbeTimeoutSeconds $ProbeTimeoutSeconds"
     }
     else {
         'git rev-parse --show-toplevel'
@@ -275,7 +328,7 @@ else {
     $status = if ($Mode -eq 'Inspect') { 'inspected' } elseif ($Mode -eq 'Configure') { 'configured' } else { 'verified' }
     $nextDependency = if ($Mode -eq 'Inspect') { 'status=inspected and the requested model is visible before Configure' } else { 'configuration artifacts remain exact and public/non-confidential content only is used with free trial models' }
     $nextCommand = if ($Mode -eq 'Inspect') {
-        "pwsh -NoLogo -NoProfile -File `"$PSCommandPath`" -Mode Configure -RepoPath `"$RepoPath`" -ModelId `"$ModelId`""
+        "pwsh -NoLogo -NoProfile -File `"$PSCommandPath`" -Mode Configure -RepoPath `"$RepoPath`" -ModelId `"$ModelId`" -ProbeTimeoutSeconds $ProbeTimeoutSeconds"
     }
     else {
         "& `"$launcherCmdPath`""
