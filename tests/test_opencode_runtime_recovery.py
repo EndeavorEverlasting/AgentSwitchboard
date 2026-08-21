@@ -78,14 +78,6 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
 
     def test_repair_uses_bounded_user_local_install_paths(self) -> None:
         text = read(ROUTER)
-        self.assertIn(
-            'export PATH="$HOME/.opencode/bin:$XDG_BIN_DIR:$HOME/.local/bin:$HOME/bin:$PATH"',
-            text,
-        )
-        self.assertIn(
-            'export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$HOME/bin:$PATH"',
-            text,
-        )
         self.assertIn('export OPENCODE_INSTALL_DIR="$HOME/.opencode/bin"', text)
         self.assertIn(
             '$initialVersionScript = "set -u`n$($script:initialOpenCodePath) --version"',
@@ -104,24 +96,59 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
         self.assertIn('export OPENCODE_INSTALL_DIR="$HOME/.opencode/bin"', install_block)
         self.assertIn("bash -s -- --no-modify-path", install_block)
 
+        discovery_block = text[
+            text.index("$discoveryScript = @'") : text.index("$discovery = Invoke-WslBash -Script $discoveryScript")
+        ]
         post_discovery_block = text[
             text.index("$postInstallDiscoveryScript = @'") : text.index("$postDiscovery = Invoke-WslBash -Script $postInstallDiscoveryScript")
         ]
-        for candidate in (
-            '"$HOME/.opencode/bin/opencode"',
-            '"${XDG_BIN_DIR:-}/opencode"',
-            '"$HOME/bin/opencode"',
-            '"$HOME/.local/bin/opencode"',
-        ):
-            self.assertIn(candidate, post_discovery_block)
-        self.assertIn('for candidate in "${candidates[@]}"', post_discovery_block)
+        for block in (discovery_block, post_discovery_block):
+            for candidate in (
+                '"$HOME/.opencode/bin/opencode"',
+                '"${XDG_BIN_DIR:-}/opencode"',
+                '"$HOME/bin/opencode"',
+                '"$HOME/.local/bin/opencode"',
+            ):
+                self.assertIn(candidate, block)
+            self.assertIn('for candidate in "${candidates[@]}"', block)
+            self.assertNotIn("command -v opencode", block)
+            self.assertNotIn(":$PATH", block)
+
         self.assertIn('timeout 5s "$candidate" --version', post_discovery_block)
         self.assertIn('[ -n "$version" ]', post_discovery_block)
-        self.assertNotIn("command -v opencode", post_discovery_block)
         self.assertIn(
             "Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_FOUND' 'OpenCode installation returned success but no version-healthy executable was found in the bounded WSL install locations.'",
             text,
         )
+
+    @unittest.skipIf(os.name == "nt", "Bash payload semantics are exercised on Ubuntu CI")
+    def test_initial_discovery_ignores_unregistered_inherited_path(self) -> None:
+        script = literal_here_string(read(ROUTER), "discoveryScript")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            home = root / "home"
+            home.mkdir()
+            system_bin = root / "system-bin"
+            system_bin.mkdir()
+            unregistered = system_bin / "opencode"
+            unregistered.write_text("#!/usr/bin/env bash\nprintf '1.18.19\\n'\n", encoding="utf-8")
+            unregistered.chmod(0o755)
+
+            env = os.environ.copy()
+            env["HOME"] = str(home)
+            env.pop("XDG_BIN_DIR", None)
+            env["PATH"] = f"{system_bin}:{env.get('PATH', '')}"
+            completed = subprocess.run(
+                ["bash", "-c", script],
+                env=env,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(44, completed.returncode, completed.stderr)
+            self.assertEqual("", completed.stdout.strip())
 
     @unittest.skipIf(os.name == "nt", "Bash payload semantics are exercised on Ubuntu CI")
     def test_post_install_discovery_skips_stale_candidate_and_resolves_linux_home(self) -> None:
@@ -258,6 +285,7 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
             recovery["wslAcceptedInstallLocations"],
         )
         self.assertTrue(recovery["localAppDataRequired"])
+        self.assertFalse(recovery["inheritedPathDiscoveryAllowed"])
         self.assertFalse(recovery["shellProfileMutationAllowed"])
         self.assertFalse(recovery["unrelatedToolInstallationAllowed"])
         self.assertTrue(recovery["unhealthyExistingRuntimeRepairAllowed"])
@@ -267,6 +295,7 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
         self.assertIn("receipt/report", recovery["proofRule"])
         self.assertIn("version-healthy", recovery["proofRule"])
         self.assertIn("bounded user-local install locations", recovery["proofRule"])
+        self.assertIn("inherited path", recovery["proofRule"].lower())
 
     def test_failure_workflow_requires_unhealthy_repair_and_preinspect_evidence(self) -> None:
         workflow = json.loads(read(WORKFLOW))
