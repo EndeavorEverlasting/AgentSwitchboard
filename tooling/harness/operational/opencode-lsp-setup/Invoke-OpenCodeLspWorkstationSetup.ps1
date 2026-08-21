@@ -90,6 +90,7 @@ $nextOwner = 'Windows operator'
 $nextDependency = 'bounded setup prerequisites remain satisfied'
 $nextCommand = $null
 $checkoutRecoveryRouterPath = Join-Path $PSScriptRoot 'Recover-AgentSwitchboardCheckout.ps1'
+$runtimeRecoveryRouterPath = Join-Path $PSScriptRoot 'Recover-OpenCodeRuntime.ps1'
 
 try {
     if ($preOwnedConfigureDirectory) { Stop-Setup 'CONFIGURATION_DIRECTORY_ALREADY_OWNED' 'Configure requires a new or empty output directory. Existing evidence was preserved and this failure receipt was written to a fresh run.' }
@@ -135,8 +136,16 @@ try {
         $candidate = Get-Command $name -ErrorAction SilentlyContinue | Select-Object -First 1
         if ($candidate) { $commands += $candidate }
     }
-    if ($commands.Count -eq 0) { Stop-Setup 'OPENCODE_NOT_FOUND' 'No OpenCode command is available on PATH.' }
-    $openCode = [string]$commands[0].Source
+    $canonicalShim = if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA 'AgentSwitchboard\bin\opencode.cmd' } else { $null }
+    if ($commands.Count -gt 0) {
+        $openCode = [string]$commands[0].Source
+    }
+    elseif ($canonicalShim -and (Test-Path -LiteralPath $canonicalShim -PathType Leaf)) {
+        $openCode = (Resolve-Path -LiteralPath $canonicalShim -ErrorAction Stop).Path
+    }
+    else {
+        Stop-Setup 'OPENCODE_NOT_FOUND' 'No OpenCode command is available on PATH and the canonical AgentSwitchboard OpenCode shim is missing.'
+    }
     $versionLines = @(& $openCode --version 2>&1)
     if ($LASTEXITCODE -ne 0 -or $versionLines.Count -eq 0 -or [string]::IsNullOrWhiteSpace([string]$versionLines[0])) { Stop-Setup 'OPENCODE_VERSION_FAILED' 'Unable to read the installed OpenCode version.' }
     $version = ([string]$versionLines[0]).Trim()
@@ -251,6 +260,9 @@ if ($failureCode) {
     $nextDependency = 'repair the named failure boundary without changing existing OpenCode config or weakening harness gates'
     $nextCommand = if ($failureCode -eq 'WRONG_REPOSITORY') {
         '& ' + (ConvertTo-PsLiteral $checkoutRecoveryRouterPath) + ' -PreferredPath ' + (ConvertTo-PsLiteral $RepoPath)
+    }
+    elseif ($failureCode -eq 'OPENCODE_NOT_FOUND' -and $repoResolved) {
+        '& ' + (ConvertTo-PsLiteral $runtimeRecoveryRouterPath) + ' -RepoPath ' + (ConvertTo-PsLiteral $RepoPath) + ' -ModelId ' + (ConvertTo-PsLiteral $ModelId)
     }
     elseif ($repoResolved) {
         "pwsh -NoLogo -NoProfile -File `"$PSCommandPath`" -Mode Inspect -RepoPath `"$RepoPath`""
