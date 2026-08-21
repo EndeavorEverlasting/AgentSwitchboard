@@ -329,7 +329,8 @@ candidates=(
 )
 for candidate in "${candidates[@]}"; do
   [ "$candidate" != "/opencode" ] || continue
-  if [ -x "$candidate" ]; then
+  [ -x "$candidate" ] || continue
+  if version="$(timeout 5s "$candidate" --version 2>/dev/null)" && [ -n "$version" ]; then
     printf '%s\n' "$candidate"
     exit 0
   fi
@@ -339,14 +340,14 @@ exit 45
         $postDiscovery = Invoke-WslBash -Script $postInstallDiscoveryScript -TimeoutSeconds 30
         Set-LastResult -Result $postDiscovery
         if ($postDiscovery.TimedOut) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_TIMEOUT' 'Bounded OpenCode command discovery timed out after installation.'
+            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_TIMEOUT' 'Bounded version-healthy OpenCode discovery timed out after installation.'
         }
         if ($postDiscovery.ExitCode -ne 0) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_FOUND' 'OpenCode installation returned success but no executable was found in the bounded WSL install locations.'
+            Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_FOUND' 'OpenCode installation returned success but no version-healthy executable was found in the bounded WSL install locations.'
         }
         $script:openCodePath = Get-FirstOutputLine -Text $postDiscovery.Stdout
         if ([string]::IsNullOrWhiteSpace($script:openCodePath)) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_EMPTY' 'OpenCode installation returned success without a bounded managed command path.'
+            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_EMPTY' 'OpenCode installation returned success without a bounded version-healthy command path.'
         }
         Assert-SafeOpenCodePath -Path $script:openCodePath
 
