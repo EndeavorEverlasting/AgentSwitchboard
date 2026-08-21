@@ -232,6 +232,7 @@ if command -v opencode >/dev/null 2>&1; then
 fi
 exit 44
 '@
+    $discoveryScript = $discoveryScript.Replace('\"', '"')
     $discovery = Invoke-WslBash -Script $discoveryScript -TimeoutSeconds 30
     Set-LastResult -Result $discovery
     if ($discovery.TimedOut) {
@@ -298,8 +299,9 @@ exit 0
         $installScript = @'
 set -euo pipefail
 export OPENCODE_INSTALL_DIR="$HOME/.opencode/bin"
-timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash -lc 'set -euo pipefail; curl --connect-timeout 15 --max-time __INSTALL_TIMEOUT__ -fsSL https://opencode.ai/install | bash'
+timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash -lc 'set -euo pipefail; curl --connect-timeout 15 --max-time __INSTALL_TIMEOUT__ -fsSL https://opencode.ai/install | bash -s -- --no-modify-path'
 '@.Replace('__INSTALL_TIMEOUT__', [string]$InstallTimeoutSeconds)
+        $installScript = $installScript.Replace('\"', '"')
         $installResult = Invoke-WslBash -Script $installScript -TimeoutSeconds ($InstallTimeoutSeconds + 30)
         Set-LastResult -Result $installResult
         if (-not [string]::IsNullOrWhiteSpace($installResult.Stdout)) { Write-Host $installResult.Stdout }
@@ -324,13 +326,14 @@ if [ -x "$managed" ]; then
 fi
 exit 45
 '@
+        $postInstallDiscoveryScript = $postInstallDiscoveryScript.Replace('\"', '"')
         $postDiscovery = Invoke-WslBash -Script $postInstallDiscoveryScript -TimeoutSeconds 30
         Set-LastResult -Result $postDiscovery
         if ($postDiscovery.TimedOut) {
             Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_TIMEOUT' 'Canonical OpenCode command discovery timed out after installation.'
         }
         if ($postDiscovery.ExitCode -ne 0) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_FOUND' "OpenCode installation returned success but $HOME/.opencode/bin/opencode was not executable."
+            Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_FOUND' 'OpenCode installation returned success but $HOME/.opencode/bin/opencode was not executable.'
         }
         $script:openCodePath = Get-FirstOutputLine -Text $postDiscovery.Stdout
         if ([string]::IsNullOrWhiteSpace($script:openCodePath)) {
@@ -361,7 +364,7 @@ exit 45
     $null = New-Item -ItemType Directory -Path $shimDirectory -Force
     $shimLines = @(
         '@echo off',
-        ('"{0}" -d "{1}" --exec "{2}" %*' -f $wslPath, $Distribution, $script:openCodePath),
+        ('"{0}" -d "{1}" --exec "{2}" %*' -f $wslPath, $Distribution, $script:openCodePath).Replace('\"', '"'),
         'exit /b %ERRORLEVEL%'
     )
     [System.IO.File]::WriteAllLines($canonicalShim, $shimLines, [System.Text.Encoding]::ASCII)
