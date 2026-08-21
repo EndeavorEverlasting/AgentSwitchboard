@@ -95,6 +95,24 @@ if ($failures.Count -eq 0) {
     foreach ($token in @('Setup-AgentSwitchboard.ps1','Get-AgentSwitchboardStartupReport.ps1',"Write-CommandShim -Name 'AgentSwitchboard'",'AgentSwitchboard.lnk','-ListAgents','fresh-shell-agentswitchboard','stateObserved','proofCeiling')) {
         Require-Token -Text $ready -Token $token -Label 'readiness engine'
     }
+    foreach ($token in @(
+        'function ConvertTo-WslBashPayload',
+        'return $Script.Replace("`r`n", "`n").Replace("`r", "`n")',
+        '$linuxSetup = ConvertTo-WslBashPayload -Script $linuxSetup',
+        '$toolWindowScript = ConvertTo-WslBashPayload -Script $toolWindowScript'
+    )) {
+        Require-Token -Text $ready -Token $token -Label 'WSL bash payload normalization'
+    }
+    $linuxNormalize = $ready.IndexOf('$linuxSetup = ConvertTo-WslBashPayload -Script $linuxSetup')
+    $linuxInvoke = $ready.IndexOf('& $wslPath -d $Distribution -- bash -lc $linuxSetup')
+    if ($linuxNormalize -lt 0 -or $linuxInvoke -lt 0 -or $linuxNormalize -gt $linuxInvoke) {
+        Add-Failure 'Linux setup payload must be LF-normalized before bash -lc execution.'
+    }
+    $windowNormalize = $ready.IndexOf('$toolWindowScript = ConvertTo-WslBashPayload -Script $toolWindowScript')
+    $windowInvoke = $ready.IndexOf('& $wslPath -d $Distribution -- bash -lc $toolWindowScript')
+    if ($windowNormalize -lt 0 -or $windowInvoke -lt 0 -or $windowNormalize -gt $windowInvoke) {
+        Add-Failure 'Agent-window payload must be LF-normalized before bash -lc execution.'
+    }
 
     Require-Token -Text $compat -Token 'Invoke-TechnicianAgentSwitchboardReady.ps1' -Label 'compatibility setup'
     Require-Token -Text $launcher -Token 'windows-profile-launch-plan.v2' -Label 'profile launcher'
