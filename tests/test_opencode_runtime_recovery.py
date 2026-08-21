@@ -85,6 +85,13 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
         ]
         self.assertIn('export OPENCODE_INSTALL_DIR="$HOME/.opencode/bin"', install_block)
 
+        post_discovery_block = text[
+            text.index("$postInstallDiscoveryScript = @'") : text.index("$postDiscovery = Invoke-WslBash -Script $postInstallDiscoveryScript")
+        ]
+        self.assertIn('managed="$HOME/.opencode/bin/opencode"', post_discovery_block)
+        self.assertIn('if [ -x "$managed" ]', post_discovery_block)
+        self.assertNotIn("command -v opencode", post_discovery_block)
+
     def test_existing_but_unhealthy_runtime_advances_to_one_install(self) -> None:
         text = read(ROUTER)
 
