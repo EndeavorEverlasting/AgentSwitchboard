@@ -112,11 +112,19 @@ try {
         return $lines
     }
 
-    $origin = ([string](Invoke-GitLines @('remote','get-url','origin'))[0]).Trim()
+    $originLines = @(Invoke-GitLines @('remote','get-url','origin'))
+    if ($originLines.Count -eq 0 -or [string]::IsNullOrWhiteSpace([string]$originLines[0])) {
+        Stop-Setup 'GIT_IDENTITY_OUTPUT_EMPTY' 'Git returned no origin URL for the supplied checkout.'
+    }
+    $origin = ([string]$originLines[0]).Trim()
     $canonicalOriginPattern = '^(?:https://github\.com/|git@github\.com:|ssh://git@github\.com/|git://github\.com/)EndeavorEverlasting/AgentSwitchboard(?:\.git)?/?$'
     if ($origin -notmatch $canonicalOriginPattern) { Stop-Setup 'WRONG_REPOSITORY' 'The supplied checkout is not the exact GitHub repository EndeavorEverlasting/AgentSwitchboard.' }
     $repoResolved = $true
-    $head = ([string](Invoke-GitLines @('rev-parse','HEAD'))[0]).Trim()
+    $headLines = @(Invoke-GitLines @('rev-parse','HEAD'))
+    if ($headLines.Count -eq 0 -or [string]::IsNullOrWhiteSpace([string]$headLines[0])) {
+        Stop-Setup 'GIT_IDENTITY_OUTPUT_EMPTY' 'Git returned no HEAD commit for the supplied checkout.'
+    }
+    $head = ([string]$headLines[0]).Trim()
     $branchLines = @(Invoke-GitLines @('branch','--show-current'))
     if ($branchLines.Count -gt 0 -and -not [string]::IsNullOrWhiteSpace([string]$branchLines[0])) { $branch = ([string]$branchLines[0]).Trim() } else { $branch = '<detached>' }
     $dirtyLines = @(Invoke-GitLines @('status','--porcelain=v1') | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
