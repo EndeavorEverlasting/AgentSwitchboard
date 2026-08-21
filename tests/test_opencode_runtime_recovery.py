@@ -64,6 +64,17 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
             text.index("$installResult = Invoke-WslBash -Script $installScript"),
         )
 
+    def test_repair_uses_deterministic_managed_install_path(self) -> None:
+        text = read(ROUTER)
+        managed_path = 'export PATH="$HOME/.opencode/bin:$HOME/.local/bin:$PATH"'
+        self.assertGreaterEqual(text.count(managed_path), 2)
+        self.assertIn('export OPENCODE_INSTALL_DIR="$HOME/.opencode/bin"', text)
+
+        install_block = text[
+            text.index("$installScript = @'") : text.index("$installResult = Invoke-WslBash -Script $installScript")
+        ]
+        self.assertIn('export OPENCODE_INSTALL_DIR="$HOME/.opencode/bin"', install_block)
+
     def test_existing_but_unhealthy_runtime_advances_to_one_install(self) -> None:
         text = read(ROUTER)
 
@@ -87,7 +98,7 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
         self.assertNotIn("command -v opencode", install_block)
         self.assertNotIn("if ! command -v opencode", install_block)
 
-    def test_runtime_recovery_always_writes_stage_evidence(self) -> None:
+    def test_runtime_recovery_writes_stage_evidence_after_run_initialization(self) -> None:
         text = read(ROUTER)
         artifacts = json.loads(read(ARTIFACTS))
         ids = {item["artifactId"] for item in artifacts["artifacts"]}
@@ -153,12 +164,14 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
         )
         self.assertEqual("Ubuntu", recovery["distribution"])
         self.assertEqual(180, recovery["defaultInstallTimeoutSeconds"])
+        self.assertEqual("$HOME/.opencode/bin", recovery["wslInstallDirectory"])
         self.assertFalse(recovery["unrelatedToolInstallationAllowed"])
         self.assertTrue(recovery["unhealthyExistingRuntimeRepairAllowed"])
         self.assertTrue(recovery["recoveryEvidenceBeforeInspectRequired"])
         self.assertFalse(recovery["sameStateRetryAllowed"])
         self.assertIn("version probe", recovery["proofRule"])
         self.assertIn("receipt/report", recovery["proofRule"])
+        self.assertIn("deterministic", recovery["proofRule"])
 
     def test_failure_workflow_requires_unhealthy_repair_and_preinspect_evidence(self) -> None:
         workflow = json.loads(read(WORKFLOW))
