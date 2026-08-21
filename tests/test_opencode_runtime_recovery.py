@@ -115,22 +115,29 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
         ):
             self.assertIn(candidate, post_discovery_block)
         self.assertIn('for candidate in "${candidates[@]}"', post_discovery_block)
+        self.assertIn('timeout 5s "$candidate" --version', post_discovery_block)
+        self.assertIn('[ -n "$version" ]', post_discovery_block)
         self.assertNotIn("command -v opencode", post_discovery_block)
         self.assertIn(
-            "Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_FOUND' 'OpenCode installation returned success but no executable was found in the bounded WSL install locations.'",
+            "Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_FOUND' 'OpenCode installation returned success but no version-healthy executable was found in the bounded WSL install locations.'",
             text,
         )
 
     @unittest.skipIf(os.name == "nt", "Bash payload semantics are exercised on Ubuntu CI")
-    def test_post_install_discovery_payload_resolves_linux_home(self) -> None:
+    def test_post_install_discovery_skips_stale_candidate_and_resolves_linux_home(self) -> None:
         script = literal_here_string(read(ROUTER), "postInstallDiscoveryScript")
 
         with tempfile.TemporaryDirectory() as temp_dir:
             home = Path(temp_dir)
-            target = home / ".opencode" / "bin" / "opencode"
-            target.parent.mkdir(parents=True)
-            target.write_text("#!/usr/bin/env bash\nprintf '1.18.19\\n'\n", encoding="utf-8")
-            target.chmod(0o755)
+            stale = home / ".opencode" / "bin" / "opencode"
+            stale.parent.mkdir(parents=True)
+            stale.write_text("#!/usr/bin/env bash\nexit 1\n", encoding="utf-8")
+            stale.chmod(0o755)
+
+            healthy = home / "bin" / "opencode"
+            healthy.parent.mkdir(parents=True)
+            healthy.write_text("#!/usr/bin/env bash\nprintf '1.18.19\\n'\n", encoding="utf-8")
+            healthy.chmod(0o755)
 
             env = os.environ.copy()
             env["HOME"] = str(home)
@@ -144,7 +151,8 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
             )
 
             self.assertEqual(0, completed.returncode, completed.stderr)
-            self.assertEqual(str(target), completed.stdout.strip())
+            self.assertEqual(str(healthy), completed.stdout.strip())
+            self.assertNotEqual(str(stale), completed.stdout.strip())
             self.assertNotIn("C:\\Users\\", completed.stdout)
 
     def test_generated_windows_shim_uses_native_cmd_quotes(self) -> None:
@@ -257,6 +265,7 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
         self.assertFalse(recovery["sameStateRetryAllowed"])
         self.assertIn("exact command path", recovery["proofRule"])
         self.assertIn("receipt/report", recovery["proofRule"])
+        self.assertIn("version-healthy", recovery["proofRule"])
         self.assertIn("bounded user-local install locations", recovery["proofRule"])
 
     def test_failure_workflow_requires_unhealthy_repair_and_preinspect_evidence(self) -> None:
