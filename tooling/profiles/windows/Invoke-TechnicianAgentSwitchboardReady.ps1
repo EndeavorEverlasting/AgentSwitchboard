@@ -103,6 +103,12 @@ function ConvertFrom-NativeText {
     return ([string]$Value).Replace(([char]0).ToString(), [string]::Empty)
 }
 
+function ConvertTo-WslBashPayload {
+    param([Parameter(Mandatory)][string]$Script)
+
+    return $Script.Replace("`r`n", "`n").Replace("`r", "`n")
+}
+
 function Refresh-WindowsPath {
     $segments = [System.Collections.Generic.List[string]]::new()
     foreach ($segment in @(
@@ -380,6 +386,7 @@ agy --version
 command -v opencode
 opencode --version
 '@
+    $linuxSetup = ConvertTo-WslBashPayload -Script $linuxSetup
 
     & $wslPath -d $Distribution -- bash -lc $linuxSetup
     if ($LASTEXITCODE -ne 0) {
@@ -510,6 +517,7 @@ else
   tmux select-window -t "$session:$window"
 fi
 '@.Replace('__TOOL__', $Mode).Replace('__TOOL_PATH__', $toolPath)
+        $toolWindowScript = ConvertTo-WslBashPayload -Script $toolWindowScript
 
         & $wslPath -d $Distribution -- bash -lc $toolWindowScript
         if ($LASTEXITCODE -ne 0) {
