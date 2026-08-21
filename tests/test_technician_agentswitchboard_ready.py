@@ -55,6 +55,22 @@ class TestTechnicianAgentSwitchboardReady(unittest.TestCase):
         self.assertNotIn("git clean", text.lower())
         self.assertNotIn("git stash", text.lower())
 
+    def test_multiline_wsl_bash_payloads_are_lf_normalized(self) -> None:
+        text = read(READY_ENGINE)
+        self.assertIn("function ConvertTo-WslBashPayload", text)
+        self.assertIn('return $Script.Replace("`r`n", "`n").Replace("`r", "`n")', text)
+        self.assertIn("$linuxSetup = ConvertTo-WslBashPayload -Script $linuxSetup", text)
+        self.assertIn("$toolWindowScript = ConvertTo-WslBashPayload -Script $toolWindowScript", text)
+        self.assertLess(
+            text.index("$linuxSetup = ConvertTo-WslBashPayload -Script $linuxSetup"),
+            text.index("& $wslPath -d $Distribution -- bash -lc $linuxSetup"),
+        )
+        self.assertLess(
+            text.index("$toolWindowScript = ConvertTo-WslBashPayload -Script $toolWindowScript"),
+            text.index("& $wslPath -d $Distribution -- bash -lc $toolWindowScript"),
+        )
+        self.assertEqual(2, text.count("set -euo pipefail"))
+
     def test_compatibility_entrypoint_delegates_to_ready_engine(self) -> None:
         text = read(COMPAT_SETUP)
         self.assertIn("Invoke-TechnicianAgentSwitchboardReady.ps1", text)
