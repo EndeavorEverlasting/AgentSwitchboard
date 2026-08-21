@@ -12,6 +12,7 @@ $required = @(
  'tooling/harness/operational/opencode-lsp-setup/artifact-registry.json',
  'tooling/harness/operational/opencode-lsp-setup/operator-report.template.md',
  'tooling/harness/operational/opencode-lsp-setup/Recover-AgentSwitchboardCheckout.ps1',
+ 'tooling/harness/operational/opencode-lsp-setup/Recover-OpenCodeRuntime.ps1',
  'tooling/harness/operational/opencode-lsp-setup/Resolve-AgentSwitchboardCheckout.ps1',
  'tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1',
  'tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPreCommit.ps1',
@@ -22,11 +23,11 @@ $required = @(
 )
 $failures = [Collections.Generic.List[string]]::new()
 foreach ($p in $required) { if (-not (Test-Path -LiteralPath (Join-Path $RootPath $p) -PathType Leaf)) { [void]$failures.Add("missing:$p") } }
-foreach ($p in @('manifest.json','codebase-map.json','workflows.json','artifact-registry.json')) {
+foreach ($p in @('manifest.json','codebase-map.json','workflows.json','artifact-registry.json','workflows/failure-recovery.workflow.json')) {
  try { $null = Get-Content -LiteralPath (Join-Path $RootPath "tooling/harness/operational/opencode-lsp-setup/$p") -Raw | ConvertFrom-Json }
  catch { [void]$failures.Add("invalid-json:$p") }
 }
-foreach ($p in @('tooling/harness/operational/opencode-lsp-setup/Recover-AgentSwitchboardCheckout.ps1','tooling/harness/operational/opencode-lsp-setup/Resolve-AgentSwitchboardCheckout.ps1','tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1','tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPreCommit.ps1','tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPrePush.ps1','scripts/Test-OpenCodeLspHarness.ps1')) {
+foreach ($p in @('tooling/harness/operational/opencode-lsp-setup/Recover-AgentSwitchboardCheckout.ps1','tooling/harness/operational/opencode-lsp-setup/Recover-OpenCodeRuntime.ps1','tooling/harness/operational/opencode-lsp-setup/Resolve-AgentSwitchboardCheckout.ps1','tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1','tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPreCommit.ps1','tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPrePush.ps1','scripts/Test-OpenCodeLspHarness.ps1')) {
  $tokens=$null; $errors=$null; [void][Management.Automation.Language.Parser]::ParseFile((Join-Path $RootPath $p),[ref]$tokens,[ref]$errors)
  if ($errors.Count -gt 0) { [void]$failures.Add("powershell-parse:${p}:$($errors[0].Message)") }
 }
@@ -42,16 +43,25 @@ $recoveryRouter = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/harness
 $recoveryRouterLower = $recoveryRouter.ToLowerInvariant()
 foreach ($token in @('git ls-remote --symref','refs/heads/$defaultbranch','resolve-agentswitchboardcheckout.ps1','-expectedbranch $defaultbranch','-expectedhead $expectedhead')) { if (-not $recoveryRouterLower.Contains($token)) { [void]$failures.Add("recovery-router-contract:$token") } }
 foreach ($forbidden in @('git reset','git clean','git stash','push --force','remove-item')) { if ($recoveryRouterLower.Contains($forbidden)) { [void]$failures.Add("recovery-router-forbidden-token:$forbidden") } }
+$runtimeRecoveryRouter = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/Recover-OpenCodeRuntime.ps1') -Raw
+$runtimeRecoveryRouterLower = $runtimeRecoveryRouter.ToLowerInvariant()
+foreach ($token in @('repair-technician-command-shims.cmd','agent_switchboard_no_pause','agentswitchboard\bin\opencode.cmd','-mode inspect','exit $lastexitcode')) { if (-not $runtimeRecoveryRouterLower.Contains($token)) { [void]$failures.Add("runtime-recovery-router-contract:$token") } }
+foreach ($forbidden in @('git reset','git clean','git stash','push --force','remove-item')) { if ($runtimeRecoveryRouterLower.Contains($forbidden)) { [void]$failures.Add("runtime-recovery-router-forbidden-token:$forbidden") } }
 $resolver = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/Resolve-AgentSwitchboardCheckout.ps1') -Raw
 $resolverLower = $resolver.ToLowerInvariant()
 foreach ($token in @('preferredpath','expectedbranch','expectedhead','canonicaloriginpattern','bounded-existing-checkout','created-isolated-clone','worktree add --detach','remote_head_mismatch','opencode-lsp-checkout-resolution.json')) { if (-not $resolverLower.Contains($token)) { [void]$failures.Add("resolver-contract:$token") } }
 foreach ($forbidden in @('git reset','git clean','git stash','push --force','remove-item')) { if ($resolverLower.Contains($forbidden)) { [void]$failures.Add("resolver-forbidden-token:$forbidden") } }
 $runner = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1') -Raw
 $runnerLower = $runner.ToLowerInvariant()
-foreach ($token in @('opencode_config_content','opencode/nemotron-3-ultra-free','opencode_v2_lsp_unavailable','configurationdirectory','configuration_directory_already_owned','launcher_mismatch','canonicaloriginpattern','modelprovider','localappdata','lsp=$true','free trial','wrong_repository','recover-agentswitchboardcheckout.ps1','-preferredpath','git_identity_output_empty','$originlines = @(invoke-gitlines','$origin = ([string]$originlines[0]).trim()','$headlines = @(invoke-gitlines','$head = ([string]$headlines[0]).trim()')) { if (-not $runnerLower.Contains($token)) { [void]$failures.Add("runner-contract:$token") } }
+foreach ($token in @('opencode_config_content','opencode/nemotron-3-ultra-free','opencode_v2_lsp_unavailable','configurationdirectory','configuration_directory_already_owned','launcher_mismatch','canonicaloriginpattern','modelprovider','localappdata','lsp=$true','free trial','wrong_repository','recover-agentswitchboardcheckout.ps1','recover-opencoderuntime.ps1','-preferredpath','git_identity_output_empty','$originlines = @(invoke-gitlines','$origin = ([string]$originlines[0]).trim()','$headlines = @(invoke-gitlines','$head = ([string]$headlines[0]).trim()','agentswitchboard\bin\opencode.cmd',"elseif (`$failurecode -eq 'opencode_not_found' -and `$reporesolved)")) { if (-not $runnerLower.Contains($token)) { [void]$failures.Add("runner-contract:$token") } }
 foreach ($ambiguous in @("([string](Invoke-GitLines @('remote','get-url','origin'))[0])","([string](Invoke-GitLines @('rev-parse','HEAD'))[0])")) { if ($runner.Contains($ambiguous)) { [void]$failures.Add("runner-ambiguous-git-scalar:$ambiguous") } }
 if ($runner.Contains('Set-Content -LiteralPath $globalConfig')) { [void]$failures.Add('runner-contract:existing-global-config-mutation') }
 foreach ($forbidden in @('git reset','git clean','git stash','push --force','apikey','password=')) { if ($runnerLower.Contains($forbidden)) { [void]$failures.Add("forbidden-token:$forbidden") } }
+$manifest = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/manifest.json') -Raw | ConvertFrom-Json
+if ([string]$manifest.entrypoints.runtimeRecoveryRouter -ne 'tooling/harness/operational/opencode-lsp-setup/Recover-OpenCodeRuntime.ps1') { [void]$failures.Add('manifest-runtime-recovery-router-missing') }
+if ([bool]$manifest.runtimeRecovery.sameStateRetryAllowed) { [void]$failures.Add('manifest-runtime-recovery-allows-same-state-retry') }
+$failureWorkflow = (Get-Content -LiteralPath (Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/workflows/failure-recovery.workflow.json') -Raw).ToLowerInvariant()
+foreach ($token in @('opencode_not_found','never emit the same failing gate as its own next action','same-state retry commands are insufficient')) { if (-not $failureWorkflow.Contains($token)) { [void]$failures.Add("failure-recovery-progress-contract:$token") } }
 $cmd = Get-Content -LiteralPath (Join-Path $RootPath 'Test-OpenCodeLspHarness.cmd') -Raw
 foreach ($token in @('python.exe -c','py.exe -3 -c','if not errorlevel 1 set "PY_KIND=python"','if not errorlevel 1 set "PY_KIND=py"','Test-AgentDocumentationContract.ps1')) { if (-not $cmd.Contains($token)) { [void]$failures.Add("cmd-contract:$token") } }
 $preCommit = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPreCommit.ps1') -Raw
