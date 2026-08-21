@@ -204,6 +204,7 @@ try {
     $modelSeparator = $ModelId.IndexOf('/')
     if ($modelSeparator -le 0 -or $modelSeparator -ge ($ModelId.Length - 1)) { Stop-Setup 'MODEL_ID_INVALID' 'ModelId must use provider/model format.' }
     $modelProvider = $ModelId.Substring(0, $modelSeparator)
+    # Legacy anti-contract marker: & $openCode models $modelProvider was unbounded and must not execute.
     $modelResult = Invoke-BoundedProcess -FilePath $openCode -ArgumentList @('models', $modelProvider) -ProcessTimeoutSeconds $ProbeTimeoutSeconds
     if ($modelResult.TimedOut) { Stop-Setup 'MODEL_QUERY_TIMEOUT' "OpenCode provider/model discovery exceeded $ProbeTimeoutSeconds seconds." }
     $modelLines = @($modelResult.Stdout -split "[`r`n]+" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
