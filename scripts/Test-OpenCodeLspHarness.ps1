@@ -1,4 +1,4 @@
-[CmdletBinding()
+[CmdletBinding()]
 param([string]$RootPath)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
