@@ -1,4 +1,4 @@
-[CmdletBinding()]
+[CmdletBinding()
 param([string]$RootPath)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -73,7 +73,7 @@ else {
  $postDiscoveryBlock = $runtimeRecoveryRouterLower.Substring($postDiscoveryStart, $postDiscoveryEnd - $postDiscoveryStart)
  if ($postDiscoveryBlock.Contains('command -v opencode')) { [void]$failures.Add('runtime-recovery-post-install-uses-path-winner') }
  if ($postDiscoveryBlock.Contains('candidates=(')) { [void]$failures.Add('runtime-recovery-post-install-guesses-alternate-paths') }
- foreach ($token in @('managed="$home/.opencode/bin/opencode"','timeout __runtime_probe_timeout__s "$managed" --version','class=illegal-instruction','class=bus-error','class=segmentation-fault','state=healthy','state=unhealthy')) { if (-not $postDiscoveryBlock.Contains($token)) { [void]$failures.Add("runtime-recovery-post-install-health-contract:$token") } }
+ foreach ($token in @('managed="$home/.opencode/bin/opencode"','timeout __runtime_probe_timeout__s "$managed" --version','failure_class=''illegal-instruction''','failure_class=''bus-error''','failure_class=''segmentation-fault''','class=%s','state=healthy','state=unhealthy')) { if (-not $postDiscoveryBlock.Contains($token)) { [void]$failures.Add("runtime-recovery-post-install-health-contract:$token") } }
 }
 $resolver = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/Resolve-AgentSwitchboardCheckout.ps1') -Raw
 $resolverLower = $resolver.ToLowerInvariant()
