@@ -15,6 +15,7 @@ RUNNER = H / "Invoke-OpenCodeLspWorkstationSetup.ps1"
 MANIFEST = H / "manifest.json"
 WORKFLOW = H / "workflows" / "failure-recovery.workflow.json"
 ARTIFACTS = H / "artifact-registry.json"
+INSTALLER_COMMIT = "3a31c4ea801915c0b050df4b3842997ea62b6e93"
 
 
 def read(path: Path) -> str:
@@ -34,6 +35,14 @@ def literal_here_string(text: str, variable: str) -> str:
     return text[start:end]
 
 
+def post_install_health_script(probe_timeout: str = "2", kill_after: str = "1") -> str:
+    return (
+        literal_here_string(read(ROUTER), "postInstallDiscoveryScript")
+        .replace("__RUNTIME_PROBE_TIMEOUT__", probe_timeout)
+        .replace("__RUNTIME_KILL_AFTER__", kill_after)
+    )
+
+
 class TestOpenCodeRuntimeRecovery(unittest.TestCase):
     def test_runtime_recovery_is_opencode_only(self) -> None:
         text = read(ROUTER)
@@ -41,7 +50,8 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
 
         self.assertIn("[ValidateRange(30, 900)][int]$InstallTimeoutSeconds = 180", text)
         self.assertIn("$Distribution = 'Ubuntu'", text)
-        self.assertIn("https://opencode.ai/install", text)
+        self.assertIn(INSTALLER_COMMIT, text)
+        self.assertIn("raw.githubusercontent.com/anomalyco/opencode", text)
         self.assertIn("AgentSwitchboard\\bin\\opencode.cmd", text)
         self.assertIn("requires LOCALAPPDATA", text)
         self.assertIn("'inspect-handoff'", text)
@@ -53,7 +63,7 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
         self.assertNotIn("antigravity.google", text.lower())
         self.assertNotIn(" agy ", executable.lower())
 
-    def test_network_install_is_dual_bounded_and_contract_checked(self) -> None:
+    def test_network_install_is_dual_bounded_and_pinned(self) -> None:
         text = read(ROUTER)
 
         for token in (
@@ -62,6 +72,9 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
             "$process.Kill($true)",
             "function ConvertTo-WslBashPayload",
             "function Invoke-WslBash",
+            f"$installerSourceCommit = '{INSTALLER_COMMIT}'",
+            "https://raw.githubusercontent.com/anomalyco/opencode/__INSTALLER_COMMIT__/install",
+            ".Replace('__INSTALLER_COMMIT__', $installerSourceCommit)",
             "timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s curl",
             "curl --connect-timeout 15 --max-time __INSTALL_TIMEOUT__",
             "grep -Fq 'INSTALL_DIR=$HOME/.opencode/bin'",
@@ -110,7 +123,10 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
         ]
         self.assertIn('managed="$HOME/.opencode/bin/opencode"', post_block)
         self.assertNotIn("candidates=(", post_block)
-        self.assertIn('timeout __RUNTIME_PROBE_TIMEOUT__s "$managed" --version', post_block)
+        self.assertIn(
+            'timeout --signal=TERM --kill-after=__RUNTIME_KILL_AFTER__s __RUNTIME_PROBE_TIMEOUT__s "$managed" --version',
+            post_block,
+        )
         self.assertIn("illegal-instruction", post_block)
         self.assertIn("bus-error", post_block)
         self.assertIn("segmentation-fault", post_block)
@@ -144,9 +160,7 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
 
     @unittest.skipIf(os.name == "nt", "Bash payload semantics are exercised on Ubuntu CI")
     def test_post_install_health_payload_accepts_official_path(self) -> None:
-        script = literal_here_string(read(ROUTER), "postInstallDiscoveryScript").replace(
-            "__RUNTIME_PROBE_TIMEOUT__", "2"
-        )
+        script = post_install_health_script()
 
         with tempfile.TemporaryDirectory() as temp_dir:
             home = Path(temp_dir)
@@ -170,9 +184,7 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
 
     @unittest.skipIf(os.name == "nt", "Bash payload semantics are exercised on Ubuntu CI")
     def test_post_install_health_payload_classifies_illegal_instruction_without_raw_stderr(self) -> None:
-        script = literal_here_string(read(ROUTER), "postInstallDiscoveryScript").replace(
-            "__RUNTIME_PROBE_TIMEOUT__", "2"
-        )
+        script = post_install_health_script()
 
         with tempfile.TemporaryDirectory() as temp_dir:
             home = Path(temp_dir)
@@ -200,9 +212,7 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
 
     @unittest.skipIf(os.name == "nt", "Bash payload semantics are exercised on Ubuntu CI")
     def test_post_install_health_payload_keeps_segmentation_core_dump_native(self) -> None:
-        script = literal_here_string(read(ROUTER), "postInstallDiscoveryScript").replace(
-            "__RUNTIME_PROBE_TIMEOUT__", "2"
-        )
+        script = post_install_health_script()
 
         with tempfile.TemporaryDirectory() as temp_dir:
             home = Path(temp_dir)
@@ -227,6 +237,53 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
             self.assertIn("CLASS=segmentation-fault", completed.stdout)
             self.assertNotIn("Segmentation fault", completed.stdout)
             self.assertEqual("", completed.stderr.strip())
+
+    @unittest.skipIf(os.name == "nt", "Bash payload semantics are exercised on Ubuntu CI")
+    def test_post_install_health_payload_forces_kill_after_sigterm_ignore(self) -> None:
+        script = post_install_health_script(probe_timeout="1", kill_after="1")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            home = Path(temp_dir)
+            target = home / ".opencode" / "bin" / "opencode"
+            target.parent.mkdir(parents=True)
+            target.write_text(
+                "#!/usr/bin/env bash\ntrap '' TERM\nwhile :; do sleep 0.1; done\n",
+                encoding="utf-8",
+            )
+            target.chmod(0o755)
+
+            env = os.environ.copy()
+            env["HOME"] = str(home)
+            completed = subprocess.run(
+                ["bash", "-c", script],
+                env=env,
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=6,
+            )
+
+            self.assertEqual(47, completed.returncode)
+            self.assertIn("STATE=unhealthy", completed.stdout)
+            self.assertRegex(completed.stdout, r"EXIT=(124|137)")
+            self.assertIn("CLASS=timeout", completed.stdout)
+            self.assertEqual("", completed.stderr.strip())
+
+    def test_final_reproof_owns_typed_health_evidence(self) -> None:
+        text = read(ROUTER)
+        for token in (
+            "$script:postInstallHealthState = 'unhealthy'",
+            "$script:postInstallFailureClass = 'reproof-timeout'",
+            "$script:postInstallFailureClass = 'reproof-version-failed'",
+            "$script:postInstallHealthState = 'healthy'",
+            "$script:postInstallVersionExitCode = 0",
+            "$script:postInstallFailureClass = 'none'",
+        ):
+            self.assertIn(token, text, token)
+        self.assertLess(
+            text.index("$script:postInstallFailureClass = 'reproof-timeout'"),
+            text.index("$script:stage = 'shim-write'"),
+        )
 
     def test_generated_windows_shim_uses_native_cmd_quotes(self) -> None:
         text = read(ROUTER)
@@ -269,6 +326,7 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
             "opencode-runtime-recovery.md",
             "function Write-RecoveryEvidence",
             "Write-RecoveryEvidence",
+            "installerSourceCommit",
             "officialInstallPath",
             "postInstallHealthState",
             "postInstallVersionExitCode",
@@ -326,7 +384,15 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
         self.assertEqual("Ubuntu", recovery["distribution"])
         self.assertEqual(180, recovery["defaultInstallTimeoutSeconds"])
         self.assertEqual("$HOME/.opencode/bin/opencode", recovery["officialInstallerExecutablePath"])
+        self.assertEqual("anomalyco/opencode", recovery["installerSourceRepository"])
+        self.assertEqual(INSTALLER_COMMIT, recovery["installerSourceCommit"])
+        self.assertEqual(
+            f"https://raw.githubusercontent.com/anomalyco/opencode/{INSTALLER_COMMIT}/install",
+            recovery["installerSourceUrl"],
+        )
+        self.assertTrue(recovery["installerSourceImmutable"])
         self.assertEqual(30, recovery["postInstallVersionProbeTimeoutSeconds"])
+        self.assertEqual(10, recovery["postInstallKillAfterSeconds"])
         self.assertTrue(recovery["installerContractVerificationRequired"])
         self.assertTrue(recovery["localAppDataRequired"])
         self.assertFalse(recovery["inheritedPathDiscoveryAllowed"])
@@ -335,8 +401,9 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
         self.assertTrue(recovery["unhealthyExistingRuntimeRepairAllowed"])
         self.assertTrue(recovery["recoveryEvidenceBeforeInspectRequired"])
         self.assertFalse(recovery["sameStateRetryAllowed"])
-        self.assertIn("official installer", recovery["proofRule"].lower())
-        self.assertIn("typed", recovery["proofRule"].lower())
+        self.assertIn("immutable", recovery["proofRule"].lower())
+        self.assertIn("forced-kill", recovery["proofRule"].lower())
+        self.assertIn("final shim-creation health gate", recovery["proofRule"].lower())
         self.assertIn("raw stderr", recovery["proofRule"].lower())
 
     def test_failure_workflow_requires_unhealthy_repair_and_preinspect_evidence(self) -> None:
