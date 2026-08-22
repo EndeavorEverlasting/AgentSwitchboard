@@ -35,6 +35,15 @@ def literal_here_string(text: str, variable: str) -> str:
     return text[start:end]
 
 
+def install_download_script(installer_path: str, install_timeout: str = "5") -> str:
+    return (
+        literal_here_string(read(ROUTER), "installScript")
+        .replace("__INSTALL_TIMEOUT__", install_timeout)
+        .replace("__INSTALLER_COMMIT__", INSTALLER_COMMIT)
+        .replace("__INSTALLER_PATH__", installer_path)
+    )
+
+
 def post_install_health_script(probe_timeout: str = "2", kill_after: str = "1") -> str:
     return (
         literal_here_string(read(ROUTER), "postInstallDiscoveryScript")
@@ -73,13 +82,15 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
             "function ConvertTo-WslBashPayload",
             "function Invoke-WslBash",
             f"$installerSourceCommit = '{INSTALLER_COMMIT}'",
+            "$installerTempPath = '/tmp/agentswitchboard-opencode-{0}.install.sh' -f $runId",
             "https://raw.githubusercontent.com/anomalyco/opencode/__INSTALLER_COMMIT__/install",
             ".Replace('__INSTALLER_COMMIT__', $installerSourceCommit)",
+            ".Replace('__INSTALLER_PATH__', $installerTempPath)",
             "timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s curl",
             "curl --connect-timeout 15 --max-time __INSTALL_TIMEOUT__",
             "grep -Fq 'INSTALL_DIR=$HOME/.opencode/bin'",
             "grep -Fq -- '--no-modify-path'",
-            'bash "$installer" --no-modify-path',
+            'bash "__INSTALLER_PATH__" --no-modify-path',
             "OPENCODE_INSTALLER_CONTRACT_DRIFT",
             "-TimeoutSeconds ($InstallTimeoutSeconds + 30)",
             "OPENCODE_INSTALL_WINDOWS_TIMEOUT",
@@ -88,10 +99,62 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
             self.assertIn(token, text, token)
 
         self.assertNotIn("OPENCODE_INSTALL_DIR", text)
+        self.assertNotIn('installer="$(mktemp)"', text)
         self.assertLess(
             text.index("$installScript = @'"),
             text.index("$installResult = Invoke-WslBash -Script $installScript"),
         )
+
+    @unittest.skipIf(os.name == "nt", "Bash payload semantics are exercised on Ubuntu CI")
+    def test_install_payload_passes_nonblank_literal_output_path(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            fake_bin = root / "bin"
+            fake_bin.mkdir()
+            capture = root / "curl-output-path.txt"
+            installer_path = root / "agentswitchboard-opencode-test.install.sh"
+            fake_curl = fake_bin / "curl"
+            fake_curl.write_text(
+                "#!/usr/bin/env bash\n"
+                "set -u\n"
+                "output=''\n"
+                "while [ \"$#\" -gt 0 ]; do\n"
+                "  if [ \"$1\" = '-o' ]; then\n"
+                "    shift\n"
+                "    output=\"${1:-}\"\n"
+                "  fi\n"
+                "  shift || true\n"
+                "done\n"
+                "[ -n \"$output\" ] || exit 91\n"
+                "cat >\"$output\" <<'EOF'\n"
+                "#!/usr/bin/env bash\n"
+                "# INSTALL_DIR=$HOME/.opencode/bin\n"
+                "# --no-modify-path\n"
+                "exit 0\n"
+                "EOF\n"
+                "chmod 755 \"$output\"\n"
+                "printf '%s\\n' \"$output\" >\"$CAPTURE_FILE\"\n",
+                encoding="utf-8",
+            )
+            fake_curl.chmod(0o755)
+
+            env = os.environ.copy()
+            env["PATH"] = f"{fake_bin}:{env.get('PATH', '')}"
+            env["CAPTURE_FILE"] = str(capture)
+            script = install_download_script(str(installer_path))
+            completed = subprocess.run(
+                ["bash", "-c", script],
+                env=env,
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=10,
+            )
+
+            self.assertEqual(0, completed.returncode, completed.stderr)
+            self.assertEqual(str(installer_path), capture.read_text(encoding="utf-8").strip())
+            self.assertFalse(installer_path.exists(), "EXIT trap must remove the injected installer path")
+            self.assertNotIn("blank argument", completed.stderr.lower())
 
     def test_initial_discovery_remains_bounded_but_post_install_uses_official_path(self) -> None:
         text = read(ROUTER)
@@ -315,6 +378,7 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
             text.index("$installScript = @'") : text.index("$installResult = Invoke-WslBash -Script $installScript")
         ]
         self.assertNotIn("command -v opencode", install_block)
+        self.assertNotIn('installer="$(mktemp)"', install_block)
 
     def test_runtime_recovery_writes_typed_post_install_evidence(self) -> None:
         text = read(ROUTER)
@@ -391,6 +455,8 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
             recovery["installerSourceUrl"],
         )
         self.assertTrue(recovery["installerSourceImmutable"])
+        self.assertEqual("/tmp/agentswitchboard-opencode-<runId>.install.sh", recovery["installerTempPathTemplate"])
+        self.assertTrue(recovery["installerTempPathInjectedByHost"])
         self.assertEqual(30, recovery["postInstallVersionProbeTimeoutSeconds"])
         self.assertEqual(10, recovery["postInstallKillAfterSeconds"])
         self.assertTrue(recovery["installerContractVerificationRequired"])
@@ -402,6 +468,7 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
         self.assertTrue(recovery["recoveryEvidenceBeforeInspectRequired"])
         self.assertFalse(recovery["sameStateRetryAllowed"])
         self.assertIn("immutable", recovery["proofRule"].lower())
+        self.assertIn("host-injected", recovery["proofRule"].lower())
         self.assertIn("forced-kill", recovery["proofRule"].lower())
         self.assertIn("final shim-creation health gate", recovery["proofRule"].lower())
         self.assertIn("raw stderr", recovery["proofRule"].lower())
