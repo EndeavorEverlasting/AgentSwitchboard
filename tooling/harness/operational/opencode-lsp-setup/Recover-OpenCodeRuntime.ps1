@@ -102,6 +102,10 @@ $script:installAttempted = $false
 $script:installReason = $null
 $script:openCodePath = $null
 $script:openCodeVersion = $null
+$script:officialInstallPath = $null
+$script:postInstallHealthState = $null
+$script:postInstallVersionExitCode = $null
+$script:postInstallFailureClass = $null
 $script:inspectExitCode = $null
 $script:inspectFailureCode = $null
 
@@ -132,6 +136,20 @@ function Get-FirstOutputLine {
     return [string]$lines[0]
 }
 
+function Get-KeyedOutputValue {
+    param(
+        [AllowNull()][string]$Text,
+        [Parameter(Mandatory)][string]$Key
+    )
+
+    foreach ($line in @($Text -split "[`r`n]+")) {
+        if ($line -match ('^{0}=(.*)$' -f [regex]::Escape($Key))) {
+            return [string]$Matches[1]
+        }
+    }
+    return $null
+}
+
 function Assert-SafeOpenCodePath {
     param([Parameter(Mandatory)][string]$Path)
     if ($Path -notmatch '^/[A-Za-z0-9._/+~-]+$') {
@@ -156,6 +174,10 @@ function Write-RecoveryEvidence {
         initialVersionTimedOut = $script:initialVersionTimedOut
         installAttempted = $script:installAttempted
         installReason = $script:installReason
+        officialInstallPath = $script:officialInstallPath
+        postInstallHealthState = $script:postInstallHealthState
+        postInstallVersionExitCode = $script:postInstallVersionExitCode
+        postInstallFailureClass = $script:postInstallFailureClass
         recoveredOpenCodePath = $script:openCodePath
         recoveredOpenCodeVersion = $script:openCodeVersion
         canonicalShim = $canonicalShim
@@ -181,6 +203,10 @@ function Write-RecoveryEvidence {
         "- Initial version exit: ``$($script:initialVersionExitCode)``",
         "- Install attempted: ``$($script:installAttempted)``",
         "- Install reason: ``$($script:installReason)``",
+        "- Official install path: ``$($script:officialInstallPath)``",
+        "- Post-install health: ``$($script:postInstallHealthState)``",
+        "- Post-install version exit: ``$($script:postInstallVersionExitCode)``",
+        "- Post-install failure class: ``$($script:postInstallFailureClass)``",
         "- Recovered OpenCode path: ``$($script:openCodePath)``",
         "- Recovered OpenCode version: ``$($script:openCodeVersion)``",
         "- Canonical shim: ``$canonicalShim``",
@@ -190,7 +216,7 @@ function Write-RecoveryEvidence {
         "- Last stderr present: ``$($script:lastStderrPresent)``",
         "- Inspect exit: ``$($script:inspectExitCode)``",
         "- Inspect failure code: ``$($script:inspectFailureCode)``",'',
-        'No environment dump, provider credential, or inherited OpenCode configuration content is persisted in this recovery evidence.'
+        'No environment dump, provider credential, raw OpenCode stderr, or inherited OpenCode configuration content is persisted in this recovery evidence.'
     )
     $report | Set-Content -LiteralPath $reportPath -Encoding utf8NoBOM
 
@@ -284,6 +310,7 @@ exit 44
 set -u
 command -v curl >/dev/null 2>&1 || exit 61
 command -v timeout >/dev/null 2>&1 || exit 62
+command -v grep >/dev/null 2>&1 || exit 63
 exit 0
 '@
         $prerequisiteProbe = Invoke-WslBash -Script $prerequisiteScript -TimeoutSeconds 30
@@ -297,6 +324,9 @@ exit 0
         if ($prerequisiteProbe.ExitCode -eq 62) {
             Stop-Recovery 'OPENCODE_INSTALL_TIMEOUT_TOOL_MISSING' "OpenCode-only recovery requires GNU timeout inside WSL '$Distribution' so network installation cannot hang indefinitely."
         }
+        if ($prerequisiteProbe.ExitCode -eq 63) {
+            Stop-Recovery 'OPENCODE_INSTALL_GREP_MISSING' "OpenCode-only recovery requires grep inside WSL '$Distribution' so the downloaded installer contract can be verified before execution."
+        }
         if ($prerequisiteProbe.ExitCode -ne 0) {
             Stop-Recovery 'OPENCODE_INSTALL_PREREQUISITE_FAILED' "OpenCode installation prerequisite discovery failed with exit code $($prerequisiteProbe.ExitCode)."
         }
@@ -305,8 +335,12 @@ exit 0
         $script:installAttempted = $true
         $installScript = @'
 set -euo pipefail
-export OPENCODE_INSTALL_DIR="$HOME/.opencode/bin"
-timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash -lc 'set -euo pipefail; curl --connect-timeout 15 --max-time __INSTALL_TIMEOUT__ -fsSL https://opencode.ai/install | bash -s -- --no-modify-path'
+installer="$(mktemp)"
+trap 'rm -f "$installer"' EXIT
+timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s curl --connect-timeout 15 --max-time __INSTALL_TIMEOUT__ -fsSL https://opencode.ai/install -o "$installer"
+grep -Fq 'INSTALL_DIR=$HOME/.opencode/bin' "$installer" || exit 63
+grep -Fq -- '--no-modify-path' "$installer" || exit 64
+timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash "$installer" --no-modify-path
 '@.Replace('__INSTALL_TIMEOUT__', [string]$InstallTimeoutSeconds)
         $installResult = Invoke-WslBash -Script $installScript -TimeoutSeconds ($InstallTimeoutSeconds + 30)
         Set-LastResult -Result $installResult
@@ -318,6 +352,9 @@ timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash -lc 'set -euo p
         if ($installResult.ExitCode -eq 124 -or $installResult.ExitCode -eq 137) {
             Stop-Recovery 'OPENCODE_INSTALL_WSL_TIMEOUT' "OpenCode installation exceeded the bounded WSL install timeout of $InstallTimeoutSeconds seconds."
         }
+        if ($installResult.ExitCode -eq 63 -or $installResult.ExitCode -eq 64) {
+            Stop-Recovery 'OPENCODE_INSTALLER_CONTRACT_DRIFT' 'The downloaded official OpenCode installer no longer matches the reviewed install-path or shell-profile-mutation contract.'
+        }
         if ($installResult.ExitCode -ne 0) {
             Stop-Recovery 'OPENCODE_INSTALL_FAILED' "The official OpenCode installer returned exit code $($installResult.ExitCode)."
         }
@@ -325,33 +362,80 @@ timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash -lc 'set -euo p
         $script:stage = 'post-install-command-discovery'
         $postInstallDiscoveryScript = @'
 set -u
-candidates=(
-  "$HOME/.opencode/bin/opencode"
-  "${XDG_BIN_DIR:-}/opencode"
-  "$HOME/bin/opencode"
-  "$HOME/.local/bin/opencode"
-)
-for candidate in "${candidates[@]}"; do
-  [ "$candidate" != "/opencode" ] || continue
-  [ -x "$candidate" ] || continue
-  if version="$(timeout 5s "$candidate" --version 2>/dev/null)" && [ -n "$version" ]; then
-    printf '%s\n' "$candidate"
-    exit 0
-  fi
-done
-exit 45
-'@
-        $postDiscovery = Invoke-WslBash -Script $postInstallDiscoveryScript -TimeoutSeconds 30
+managed="$HOME/.opencode/bin/opencode"
+printf 'PATH=%s\n' "$managed"
+if [ ! -e "$managed" ]; then
+  printf 'STATE=missing\nEXIT=45\nCLASS=missing\n'
+  exit 45
+fi
+if [ ! -x "$managed" ]; then
+  printf 'STATE=not-executable\nEXIT=46\nCLASS=not-executable\n'
+  exit 46
+fi
+stderr_file="$(mktemp)"
+trap 'rm -f "$stderr_file"' EXIT
+set +e
+version="$(timeout __RUNTIME_PROBE_TIMEOUT__s "$managed" --version 2>"$stderr_file")"
+version_code=$?
+set -e
+failure_class='version-failed'
+if [ "$version_code" -eq 124 ] || [ "$version_code" -eq 137 ]; then
+  failure_class='timeout'
+elif [ "$version_code" -eq 132 ] || grep -Eqi 'illegal instruction|invalid opcode|cpu lacks avx|core dumped' "$stderr_file"; then
+  failure_class='illegal-instruction'
+elif [ "$version_code" -eq 135 ]; then
+  failure_class='bus-error'
+elif [ "$version_code" -eq 139 ]; then
+  failure_class='segmentation-fault'
+elif [ "$version_code" -eq 126 ]; then
+  failure_class='not-executable'
+fi
+if [ "$version_code" -eq 0 ] && [ -n "$version" ]; then
+  printf 'STATE=healthy\nEXIT=0\nCLASS=none\nVERSION=%s\n' "$version"
+  exit 0
+fi
+printf 'STATE=unhealthy\nEXIT=%s\nCLASS=%s\n' "$version_code" "$failure_class"
+exit 47
+'@.Replace('__RUNTIME_PROBE_TIMEOUT__', '30')
+        $postDiscovery = Invoke-WslBash -Script $postInstallDiscoveryScript -TimeoutSeconds 45
         Set-LastResult -Result $postDiscovery
+        $script:officialInstallPath = Get-KeyedOutputValue -Text $postDiscovery.Stdout -Key 'PATH'
+        $script:postInstallHealthState = Get-KeyedOutputValue -Text $postDiscovery.Stdout -Key 'STATE'
+        $postInstallExitText = Get-KeyedOutputValue -Text $postDiscovery.Stdout -Key 'EXIT'
+        if ($postInstallExitText -match '^[0-9]+$') { $script:postInstallVersionExitCode = [int]$postInstallExitText }
+        $script:postInstallFailureClass = Get-KeyedOutputValue -Text $postDiscovery.Stdout -Key 'CLASS'
+        if (-not [string]::IsNullOrWhiteSpace($script:officialInstallPath)) {
+            Assert-SafeOpenCodePath -Path $script:officialInstallPath
+        }
         if ($postDiscovery.TimedOut) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_TIMEOUT' 'Bounded version-healthy OpenCode discovery timed out after installation.'
+            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_TIMEOUT' 'Official OpenCode install-path health discovery exceeded 45 seconds.'
+        }
+        if ($postDiscovery.ExitCode -eq 45) {
+            Stop-Recovery 'OPENCODE_POST_INSTALL_MISSING' 'The official installer returned success but $HOME/.opencode/bin/opencode was missing afterward.'
+        }
+        if ($postDiscovery.ExitCode -eq 46) {
+            Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_EXECUTABLE' 'The official installer returned success but $HOME/.opencode/bin/opencode was not executable afterward.'
+        }
+        if ($postDiscovery.ExitCode -eq 47) {
+            switch ($script:postInstallFailureClass) {
+                'timeout' { Stop-Recovery 'OPENCODE_POST_INSTALL_VERSION_TIMEOUT' 'The freshly installed OpenCode binary did not return --version within 30 seconds.' }
+                'illegal-instruction' { Stop-Recovery 'OPENCODE_POST_INSTALL_CPU_INCOMPATIBLE' 'The freshly installed OpenCode binary failed with an illegal-instruction/native CPU compatibility signature.' }
+                'bus-error' { Stop-Recovery 'OPENCODE_POST_INSTALL_NATIVE_CRASH' 'The freshly installed OpenCode binary failed with a native bus-error signature.' }
+                'segmentation-fault' { Stop-Recovery 'OPENCODE_POST_INSTALL_NATIVE_CRASH' 'The freshly installed OpenCode binary failed with a native segmentation-fault signature.' }
+                'not-executable' { Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_EXECUTABLE' 'The freshly installed OpenCode binary could not be executed.' }
+                default { Stop-Recovery 'OPENCODE_POST_INSTALL_VERSION_FAILED' "The freshly installed OpenCode binary failed its bounded --version health probe with exit code $($script:postInstallVersionExitCode)." }
+            }
         }
         if ($postDiscovery.ExitCode -ne 0) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_FOUND' 'OpenCode installation returned success but no version-healthy executable was found in the bounded WSL install locations.'
+            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_FAILED' "Official OpenCode install-path health discovery returned unexpected exit code $($postDiscovery.ExitCode)."
         }
-        $script:openCodePath = Get-FirstOutputLine -Text $postDiscovery.Stdout
-        if ([string]::IsNullOrWhiteSpace($script:openCodePath)) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_EMPTY' 'OpenCode installation returned success without a bounded version-healthy command path.'
+        if ($script:postInstallHealthState -ne 'healthy') {
+            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_EMPTY' 'Official OpenCode install-path health discovery returned success without a healthy state.'
+        }
+        $script:openCodePath = $script:officialInstallPath
+        $script:openCodeVersion = Get-KeyedOutputValue -Text $postDiscovery.Stdout -Key 'VERSION'
+        if ([string]::IsNullOrWhiteSpace($script:openCodePath) -or [string]::IsNullOrWhiteSpace($script:openCodeVersion)) {
+            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_EMPTY' 'Official OpenCode install-path health discovery returned success without an exact path and version.'
         }
         Assert-SafeOpenCodePath -Path $script:openCodePath
 
