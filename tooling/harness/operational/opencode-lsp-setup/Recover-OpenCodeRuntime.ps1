@@ -381,7 +381,7 @@ set -e
 failure_class='version-failed'
 if [ "$version_code" -eq 124 ] || [ "$version_code" -eq 137 ]; then
   failure_class='timeout'
-elif [ "$version_code" -eq 132 ] || grep -Eqi 'illegal instruction|invalid opcode|cpu lacks avx|core dumped' "$stderr_file"; then
+elif [ "$version_code" -eq 132 ] || grep -Eqi 'illegal instruction|invalid opcode|cpu lacks avx' "$stderr_file"; then
   failure_class='illegal-instruction'
 elif [ "$version_code" -eq 135 ]; then
   failure_class='bus-error'
