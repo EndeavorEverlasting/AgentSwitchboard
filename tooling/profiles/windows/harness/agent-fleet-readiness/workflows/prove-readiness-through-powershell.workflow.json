@@ -1,0 +1,68 @@
+{
+  "schema": "agentswitchboard.agent-fleet-readiness-workflow.v1",
+  "workflowId": "prove-readiness-through-powershell",
+  "purpose": "Prove installed fleet readiness through the repository-owned PowerShell implementation so Windows policy that blocks a CMD compatibility shim cannot strand a healthy fleet.",
+  "inputs": [
+    "fleet-state",
+    "installed-operator-implementation",
+    "optional installed-operator-launcher observation",
+    "verified pwsh command",
+    "repository startup reporter"
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "name": "verify readiness authority",
+      "checks": [
+        "state.json exists as a file",
+        "Start-AgentSwitchboard.ps1 exists as a file",
+        "pwsh resolves in the active Windows environment"
+      ],
+      "stopIfMissing": true
+    },
+    {
+      "order": 2,
+      "name": "classify optional CMD shim",
+      "action": "If agent-switchboard.cmd was attempted and returned Access is denied or exit 5, record cmd-shim-blocked. Do not retry the shim, rerun setup, or downgrade fleet state solely for this boundary."
+    },
+    {
+      "order": 3,
+      "name": "invoke PowerShell readiness",
+      "command": "pwsh -NoLogo -NoProfile -File \"%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\Start-AgentSwitchboard.ps1\" -ListAgents",
+      "capture": [
+        "exact command",
+        "stdout",
+        "stderr",
+        "exit code"
+      ],
+      "success": "exit code 0 with current readiness output",
+      "stopIfFailed": true
+    },
+    {
+      "order": 4,
+      "name": "generate canonical readiness artifact",
+      "command": "pwsh -NoLogo -NoProfile -File tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
+      "resolve": [
+        "startup-readiness-json",
+        "startup-readiness-markdown"
+      ],
+      "rule": "Resolve fresh artifacts through the tracked artifact registry; do not guess timestamped filenames."
+    },
+    {
+      "order": 5,
+      "name": "classify adapter state",
+      "rules": [
+        "adapter-ready may continue to target-repository gates",
+        "verification-required must preserve provider/model/auth proof",
+        "Hermes blocked alone may remain TBD/deferred",
+        "blocked requested non-optional adapter stops that agent route"
+      ]
+    },
+    {
+      "order": 6,
+      "name": "handoff",
+      "action": "Report PowerShell launcher path, optional CMD shim state, -ListAgents exit, readiness artifact path/status, adapter classification, proof ceiling, and one exact next command."
+    }
+  ],
+  "proofCeiling": "Proves local installed PowerShell launcher execution and current adapter readiness on the observed workstation. It does not prove provider authentication, exact model availability, quota, hosted response, repository delivery, merge, or deployment."
+}
