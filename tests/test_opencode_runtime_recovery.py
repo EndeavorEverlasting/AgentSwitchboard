@@ -114,6 +114,7 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
         self.assertIn("illegal-instruction", post_block)
         self.assertIn("bus-error", post_block)
         self.assertIn("segmentation-fault", post_block)
+        self.assertNotIn("core dumped'", post_block)
         self.assertIn("STATE=healthy", post_block)
 
     @unittest.skipIf(os.name == "nt", "Bash payload semantics are exercised on Ubuntu CI")
@@ -195,6 +196,36 @@ class TestOpenCodeRuntimeRecovery(unittest.TestCase):
             self.assertIn("EXIT=132", completed.stdout)
             self.assertIn("CLASS=illegal-instruction", completed.stdout)
             self.assertNotIn("Illegal instruction", completed.stdout)
+            self.assertEqual("", completed.stderr.strip())
+
+    @unittest.skipIf(os.name == "nt", "Bash payload semantics are exercised on Ubuntu CI")
+    def test_post_install_health_payload_keeps_segmentation_core_dump_native(self) -> None:
+        script = literal_here_string(read(ROUTER), "postInstallDiscoveryScript").replace(
+            "__RUNTIME_PROBE_TIMEOUT__", "2"
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            home = Path(temp_dir)
+            target = home / ".opencode" / "bin" / "opencode"
+            target.parent.mkdir(parents=True)
+            target.write_text(
+                "#!/usr/bin/env bash\necho 'Segmentation fault (core dumped)' >&2\nexit 139\n",
+                encoding="utf-8",
+            )
+            target.chmod(0o755)
+
+            env = os.environ.copy()
+            env["HOME"] = str(home)
+            completed = subprocess.run(
+                ["bash", "-c", script], env=env, capture_output=True, text=True, check=False
+            )
+
+            self.assertEqual(47, completed.returncode)
+            self.assertIn(f"PATH={target}", completed.stdout)
+            self.assertIn("STATE=unhealthy", completed.stdout)
+            self.assertIn("EXIT=139", completed.stdout)
+            self.assertIn("CLASS=segmentation-fault", completed.stdout)
+            self.assertNotIn("Segmentation fault", completed.stdout)
             self.assertEqual("", completed.stderr.strip())
 
     def test_generated_windows_shim_uses_native_cmd_quotes(self) -> None:
