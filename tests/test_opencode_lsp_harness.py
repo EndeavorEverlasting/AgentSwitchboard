@@ -113,8 +113,10 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         self.assertNotIn('-Mode Inspect',block)
         self.assertEqual('tooling/harness/operational/opencode-lsp-setup/Recover-OpenCodeRuntime.ps1',manifest['entrypoints']['runtimeRecoveryRouter'])
         self.assertFalse(manifest['runtimeRecovery']['sameStateRetryAllowed'])
-        for token in ('InstallTimeoutSeconds = 180','https://opencode.ai/install','AgentSwitchboard\\bin\\opencode.cmd',"'inspect-handoff'","'-Mode','Inspect'",'Write-RecoveryEvidence'):
+        for token in ('InstallTimeoutSeconds = 180','raw.githubusercontent.com/anomalyco/opencode','3a31c4ea801915c0b050df4b3842997ea62b6e93','installerSourceCommit','AgentSwitchboard\\bin\\opencode.cmd',"'inspect-handoff'","'-Mode','Inspect'",'Write-RecoveryEvidence'):
             self.assertIn(token,router)
+        self.assertTrue(manifest['runtimeRecovery']['installerSourceImmutable'])
+        self.assertEqual('3a31c4ea801915c0b050df4b3842997ea62b6e93',manifest['runtimeRecovery']['installerSourceCommit'])
         for forbidden in ('Repair-Technician-Command-Shims.cmd','AGENT_SWITCHBOARD_NO_PAUSE','Setup-TechnicianAgentSwitchboard.ps1','git reset','git clean','git stash','push --force','remove-item'):
             self.assertNotIn(forbidden,router)
         workflow_text=' '.join(workflow['steps']).lower() + ' ' + workflow['handoff'].lower()

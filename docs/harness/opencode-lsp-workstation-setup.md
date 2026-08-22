@@ -60,21 +60,25 @@ pwsh -NoLogo -NoProfile -File tooling/harness/operational/opencode-lsp-setup/Inv
 
 `OPENCODE_NOT_FOUND` is owned by `Recover-OpenCodeRuntime.ps1`. The recovery is deliberately narrower than technician workstation setup:
 
-- require Windows `LOCALAPPDATA` so runtime recovery and Inspect share exactly one AgentSwitchboard state/shim root; do not invent a temporary canonical-shim location that Inspect cannot consume;
-- probe only the requested WSL distribution for the OpenCode command;
-- enumerate only `$HOME/.opencode/bin`, `$XDG_BIN_DIR` when present, `$HOME/bin`, and `$HOME/.local/bin`; inherited WSL `PATH` is not a runtime source and arbitrary filesystem locations are never searched;
-- validate a discovered command by its exact safe path rather than by a name lookup;
-- treat a command that exits nonzero, returns no version, or times out as an unhealthy runtime rather than as success;
-- when OpenCode is absent or unhealthy, require existing `curl` and GNU `timeout`, request `$HOME/.opencode/bin` through `OPENCODE_INSTALL_DIR`, and run the official OpenCode installer once with `--no-modify-path` so recovery does not edit `.bashrc`, `.profile`, or other shell startup files;
-- bound the network-backed install in Linux and again from the Windows parent process;
-- after install, inspect only `$HOME/.opencode/bin`, `$XDG_BIN_DIR`, `$HOME/bin`, and `$HOME/.local/bin`; give each executable candidate a five-second version-health probe, skip stale/broken candidates, and select the first candidate that returns a non-empty version;
-- independently validate the selected exact safe path with `--version` again before writing `%LOCALAPPDATA%\AgentSwitchboard\bin\opencode.cmd`;
-- after the recovery run directory is initialized, write `%LOCALAPPDATA%\AgentSwitchboard\opencode-lsp\runs\<run-id>\opencode-runtime-recovery.json` and `.md` for every terminal runtime stage, including failures before Inspect;
-- persist stage, exit code, timeout state, and whether stdout/stderr existed, but not raw command output, environment dumps, credentials, or inherited OpenCode configuration;
+- require Windows `LOCALAPPDATA` so runtime recovery and Inspect share exactly one AgentSwitchboard state/shim root;
+- probe only the requested WSL distribution for an existing OpenCode command;
+- initial discovery enumerates only `$HOME/.opencode/bin`, `$XDG_BIN_DIR` when present, `$HOME/bin`, and `$HOME/.local/bin`; inherited WSL `PATH` and arbitrary filesystem search are not runtime sources;
+- validate any discovered command by its exact safe path and a bounded version probe;
+- when OpenCode is absent or unhealthy, require existing `curl`, GNU `timeout`, and `grep` only; unrelated technician tooling is not installed;
+- use the reviewed official installer from immutable upstream commit `anomalyco/opencode@3a31c4ea801915c0b050df4b3842997ea62b6e93`, rather than executing whatever happens to be on the mutable `dev` branch later;
+- download that exact commit-pinned installer to a temporary WSL file and verify before execution that it still contains the reviewed `INSTALL_DIR=$HOME/.opencode/bin` and `--no-modify-path` contract;
+- execute that same pinned file with shell-profile mutation disabled; record the installer source commit in runtime evidence;
+- do not rely on `OPENCODE_INSTALL_DIR`: the reviewed upstream installer owns its install directory internally;
+- bound installer download/execution in Linux and again from the Windows parent process;
+- after the pinned installer returns success, judge only its reviewed exact executable path `$HOME/.opencode/bin/opencode`; do not reinterpret a failed binary as an alternate-path discovery problem;
+- give that exact binary 30 seconds for `--version`, with a 10-second `--kill-after` deadline so a process that ignores SIGTERM still terminates and yields typed timeout evidence;
+- classify post-install health as typed evidence: healthy, missing, not-executable, timeout, illegal-instruction, bus-error, segmentation-fault, or generic version failure;
+- persist only installer source commit, exact path, typed health state, exit code, and failure class. Raw OpenCode stderr, environment dumps, credentials, and inherited OpenCode configuration are not persisted;
+- independently validate a healthy exact path with `--version` again before writing `%LOCALAPPDATA%\AgentSwitchboard\bin\opencode.cmd`; that reproof is the final shim-creation health gate and overwrites typed health evidence on timeout/failure;
 - automatically re-enter Inspect through a bounded parent process after runtime recovery;
 - do not install or repair unrelated agents such as AGY, Hermes, tmux, or WezTerm.
 
-The default install timeout is 180 seconds. A timeout, missing prerequisite, failed official installer, or absence of a version-healthy bounded candidate is a named blocker, not a reason to fall back to broad technician setup.
+The default install timeout is 180 seconds. An immutable installer-source change requires an explicit repository update/review; a failed pinned install or typed unhealthy native runtime is a named blocker, not a reason to broaden filesystem search or fall back to technician-wide setup.
 
 ## Runtime proof
 
@@ -86,12 +90,17 @@ After Configure, run the generated CMD, open a `.py` or `.yml` file, and observe
 - `OPENCODE_NOT_FOUND`: run the registered runtime recovery router. It repairs OpenCode only and must not delegate to broad command-shim/technician setup.
 - missing `LOCALAPPDATA`: stop before recovery; the router will not create a shim under a different state root than Inspect uses.
 - OpenCode only on inherited/system WSL `PATH`: recovery deliberately ignores it and installs/resolves a bounded user-local runtime before creating the canonical Windows shim.
-- existing bounded `opencode` command but version exit nonzero/empty: the runtime router treats it as `existing-runtime-version-failed`, performs one bounded official reinstall, then examines only the registered user-local install locations, skips stale/broken candidates, and independently verifies the selected exact path.
-- `OPENCODE_POST_INSTALL_NOT_FOUND`: the official installer returned success but no version-healthy executable exists in the bounded user-local install locations; preserve the runtime-recovery receipt rather than substituting a Windows `$HOME` path or searching the filesystem broadly.
-- `OPENCODE_INSTALL_FAILED`: inspect the runtime-recovery stage/exit evidence and console installer detail; do not route through unrelated tool installers.
-- `OPENCODE_POST_INSTALL_VERSION_FAILED`: a candidate passed bounded selection but failed the independent exact-path proof; preserve the runtime-recovery receipt/report as the exact runtime blocker.
-- OpenCode recovery timeout: preserve the runtime-recovery receipt/report and treat network/upstream runtime access as the blocker; do not retry through unrelated tool installers.
-- OpenCode recovery missing `curl` or GNU `timeout`: repair that prerequisite explicitly or use an already healthy OpenCode runtime; the focused router will not install unrelated technician tooling as a side effect.
+- existing bounded `opencode` command but version exit nonzero/empty: recovery performs one bounded pinned official reinstall, then judges the official installer path rather than searching other locations.
+- installer provenance needs updating: review the current upstream `anomalyco/opencode` installer, update the pinned source commit and contract together, and revalidate; do not silently switch recovery back to a mutable branch URL.
+- `OPENCODE_INSTALLER_CONTRACT_DRIFT`: the pinned installer no longer matches the repository's reviewed install-path/no-profile-mutation assertions; stop before execution.
+- `OPENCODE_POST_INSTALL_MISSING`: the installer returned success but its reviewed executable path is absent.
+- `OPENCODE_POST_INSTALL_NOT_EXECUTABLE`: the installer returned success but its reviewed executable path cannot be executed.
+- `OPENCODE_POST_INSTALL_VERSION_TIMEOUT`: the fresh binary or its final independent reproof did not complete within its bounded timeout; typed evidence distinguishes the initial health probe from `reproof-timeout`.
+- `OPENCODE_POST_INSTALL_CPU_INCOMPATIBLE`: the fresh binary produced a SIGILL-specific illegal-instruction/native CPU-compatibility signature. Generic `core dumped` text alone is not sufficient for this class.
+- `OPENCODE_POST_INSTALL_NATIVE_CRASH`: the fresh binary produced a bus-error or segmentation-fault signature. Preserve the typed receipt as the external native-runtime blocker.
+- `OPENCODE_POST_INSTALL_VERSION_FAILED`: the exact installer binary or final reproof returned another bounded nonzero/empty version result; the receipt records its exit code/failure class without persisting raw stderr.
+- `OPENCODE_INSTALL_FAILED`: inspect the recovery stage/exit evidence and console installer detail; do not route through unrelated tool installers.
+- OpenCode recovery missing `curl`, GNU `timeout`, or `grep`: repair that prerequisite explicitly or use an already healthy OpenCode runtime; the focused router will not install unrelated technician tooling as a side effect.
 - `OPENCODE_V2_LSP_UNAVAILABLE`: use repository lint/typecheck/test/PowerShell validators until upstream V2 supplies runtime support.
 - `MODEL_ID_INVALID`: use `provider/model` format.
 - `MODEL_NOT_VISIBLE`: connect/refresh the requested provider and rerun Inspect; never put credentials in repo/evidence.
