@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 13,
+  "schemaVersion": 14,
   "harnessId": "agentswitchboard.opencode-lsp-workstation-setup.v1",
   "title": "OpenCode LSP workstation setup harness",
   "purpose": "Give low-capability agents and Windows operators one deterministic path to recover a canonical checkout, recover the Windows-facing OpenCode runtime, inspect, configure, verify, and hand off OpenCode LSP enablement without changing product code, governance, secrets, or existing OpenCode configuration.",
@@ -44,6 +44,8 @@
     "installerSourceUrl": "https://raw.githubusercontent.com/anomalyco/opencode/3a31c4ea801915c0b050df4b3842997ea62b6e93/install",
     "installerSourceImmutable": true,
     "installerContractVerificationRequired": true,
+    "installerTempPathTemplate": "/tmp/agentswitchboard-opencode-<runId>.install.sh",
+    "installerTempPathInjectedByHost": true,
     "postInstallVersionProbeTimeoutSeconds": 30,
     "postInstallKillAfterSeconds": 10,
     "localAppDataRequired": true,
@@ -52,7 +54,7 @@
     "unrelatedToolInstallationAllowed": false,
     "unhealthyExistingRuntimeRepairAllowed": true,
     "recoveryEvidenceBeforeInspectRequired": true,
-    "proofRule": "OPENCODE_NOT_FOUND routes through the registered runtime recovery router. Recovery requires LOCALAPPDATA so the router and Inspect use the same canonical AgentSwitchboard shim/state root. Initial discovery is limited to the registered user-local locations and never accepts inherited PATH. The repair downloads the reviewed official installer from an immutable anomalyco/opencode commit, verifies its expected install-path and --no-modify-path contract before execution, and records that source commit in recovery evidence. After a successful pinned installer run, recovery judges only $HOME/.opencode/bin/opencode. Its bounded 30-second --version health probe includes a 10-second forced-kill deadline and records typed state, exit code, and failure class such as timeout, illegal-instruction, bus-error, segmentation-fault, missing, or not-executable while persisting no raw stderr. The independent exact-path version reproof is the final shim-creation health gate and overwrites typed health evidence on timeout/failure so receipts describe the actual terminal gate. A healthy exact path is then written to the canonical AgentSwitchboard shim and bounded Inspect is re-entered automatically.",
+    "proofRule": "OPENCODE_NOT_FOUND routes through the registered runtime recovery router. Recovery requires LOCALAPPDATA so the router and Inspect use the same canonical AgentSwitchboard shim/state root. Initial discovery is limited to the registered user-local locations and never accepts inherited PATH. The repair downloads the reviewed official installer from an immutable anomalyco/opencode commit, verifies its expected install-path and --no-modify-path contract before execution, and records that source commit in recovery evidence. The installer download target is a run-scoped host-injected literal /tmp path so Windows-to-WSL transport never depends on a Bash-local temp-path variable surviving argument serialization. After a successful pinned installer run, recovery judges only $HOME/.opencode/bin/opencode. Its bounded 30-second --version health probe includes a 10-second forced-kill deadline and records typed state, exit code, and failure class such as timeout, illegal-instruction, bus-error, segmentation-fault, missing, or not-executable while persisting no raw stderr. The independent exact-path version reproof is the final shim-creation health gate and overwrites typed health evidence on timeout/failure so receipts describe the actual terminal gate. A healthy exact path is then written to the canonical AgentSwitchboard shim and bounded Inspect is re-entered automatically.",
     "sameStateRetryAllowed": false
   },
   "upstreamContract": {
@@ -80,6 +82,6 @@
     "existingOpenCodeConfigMutationAllowed": false,
     "freeModelConfidentialDataAllowed": false,
     "implicitHookInstallationAllowed": false,
-    "proofCeiling": "Static/hosted validation proves harness structure, immutable installer provenance, installer-contract gating, typed post-install health classification, forced timeout termination, final reproof evidence consistency, and setup logic. Checkout recovery can prove canonical repository acquisition and exact-head isolated worktree state. Runtime-recovery receipts can prove the bounded local discovery/version/install/shim/Inspect-handoff state without persisting raw OpenCode stderr, environment contents, or credentials. Workstation execution can prove OpenCode command/version resolution, immutable machine-local config artifacts, model visibility, and launcher generation. Active LSP diagnostics require opening a supported file and observing runtime behavior."
+    "proofCeiling": "Static/hosted validation proves harness structure, immutable installer provenance, installer-contract gating, host-injected installer-path transport, typed post-install health classification, forced timeout termination, final reproof evidence consistency, and setup logic. Checkout recovery can prove canonical repository acquisition and exact-head isolated worktree state. Runtime-recovery receipts can prove the bounded local discovery/version/install/shim/Inspect-handoff state without persisting raw OpenCode stderr, environment contents, or credentials. Workstation execution can prove OpenCode command/version resolution, immutable machine-local config artifacts, model visibility, and launcher generation. Active LSP diagnostics require opening a supported file and observing runtime behavior."
   }
 }

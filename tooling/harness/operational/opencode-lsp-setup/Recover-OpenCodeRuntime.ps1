@@ -87,6 +87,10 @@ $reportPath = Join-Path $runRoot 'opencode-runtime-recovery.md'
 $canonicalShim = Join-Path $stateBase 'AgentSwitchboard\bin\opencode.cmd'
 $wslPath = Join-Path $env:SystemRoot 'System32\wsl.exe'
 $installerSourceCommit = '3a31c4ea801915c0b050df4b3842997ea62b6e93'
+$installerTempPath = '/tmp/agentswitchboard-opencode-{0}.install.sh' -f $runId
+if ($installerTempPath -notmatch '^/tmp/agentswitchboard-opencode-[A-Za-z0-9-]+\.install\.sh$') {
+    throw 'OpenCode runtime recovery generated an unsafe WSL installer temp path.'
+}
 
 $script:stage = 'initialize'
 $script:status = 'failed'
@@ -338,13 +342,12 @@ exit 0
         $script:installAttempted = $true
         $installScript = @'
 set -euo pipefail
-installer="$(mktemp)"
-trap 'rm -f "$installer"' EXIT
-timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s curl --connect-timeout 15 --max-time __INSTALL_TIMEOUT__ -fsSL https://raw.githubusercontent.com/anomalyco/opencode/__INSTALLER_COMMIT__/install -o "$installer"
-grep -Fq 'INSTALL_DIR=$HOME/.opencode/bin' "$installer" || exit 63
-grep -Fq -- '--no-modify-path' "$installer" || exit 64
-timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash "$installer" --no-modify-path
-'@.Replace('__INSTALL_TIMEOUT__', [string]$InstallTimeoutSeconds).Replace('__INSTALLER_COMMIT__', $installerSourceCommit)
+trap 'rm -f "__INSTALLER_PATH__"' EXIT
+timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s curl --connect-timeout 15 --max-time __INSTALL_TIMEOUT__ -fsSL https://raw.githubusercontent.com/anomalyco/opencode/__INSTALLER_COMMIT__/install -o "__INSTALLER_PATH__"
+grep -Fq 'INSTALL_DIR=$HOME/.opencode/bin' "__INSTALLER_PATH__" || exit 63
+grep -Fq -- '--no-modify-path' "__INSTALLER_PATH__" || exit 64
+timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash "__INSTALLER_PATH__" --no-modify-path
+'@.Replace('__INSTALL_TIMEOUT__', [string]$InstallTimeoutSeconds).Replace('__INSTALLER_COMMIT__', $installerSourceCommit).Replace('__INSTALLER_PATH__', $installerTempPath)
         $installResult = Invoke-WslBash -Script $installScript -TimeoutSeconds ($InstallTimeoutSeconds + 30)
         Set-LastResult -Result $installResult
         if (-not [string]::IsNullOrWhiteSpace($installResult.Stdout)) { Write-Host $installResult.Stdout }
