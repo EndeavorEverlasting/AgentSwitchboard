@@ -86,6 +86,7 @@ $receiptPath = Join-Path $runRoot 'opencode-runtime-recovery.json'
 $reportPath = Join-Path $runRoot 'opencode-runtime-recovery.md'
 $canonicalShim = Join-Path $stateBase 'AgentSwitchboard\bin\opencode.cmd'
 $wslPath = Join-Path $env:SystemRoot 'System32\wsl.exe'
+$installerSourceCommit = '3a31c4ea801915c0b050df4b3842997ea62b6e93'
 
 $script:stage = 'initialize'
 $script:status = 'failed'
@@ -169,6 +170,7 @@ function Write-RecoveryEvidence {
         distribution = $Distribution
         modelId = $ModelId
         installTimeoutSeconds = $InstallTimeoutSeconds
+        installerSourceCommit = $installerSourceCommit
         initialOpenCodePath = $script:initialOpenCodePath
         initialVersionExitCode = $script:initialVersionExitCode
         initialVersionTimedOut = $script:initialVersionTimedOut
@@ -199,6 +201,7 @@ function Write-RecoveryEvidence {
         "- Failure code: ``$($script:failureCode)``",
         "- Failure message: ``$($script:failureMessage)``",
         "- Distribution: ``$Distribution``",
+        "- Installer source commit: ``$installerSourceCommit``",
         "- Initial OpenCode path: ``$($script:initialOpenCodePath)``",
         "- Initial version exit: ``$($script:initialVersionExitCode)``",
         "- Install attempted: ``$($script:installAttempted)``",
@@ -325,7 +328,7 @@ exit 0
             Stop-Recovery 'OPENCODE_INSTALL_TIMEOUT_TOOL_MISSING' "OpenCode-only recovery requires GNU timeout inside WSL '$Distribution' so network installation cannot hang indefinitely."
         }
         if ($prerequisiteProbe.ExitCode -eq 63) {
-            Stop-Recovery 'OPENCODE_INSTALL_GREP_MISSING' "OpenCode-only recovery requires grep inside WSL '$Distribution' so the downloaded installer contract can be verified before execution."
+            Stop-Recovery 'OPENCODE_INSTALL_GREP_MISSING' "OpenCode-only recovery requires grep inside WSL '$Distribution' so the pinned installer contract can be verified before execution."
         }
         if ($prerequisiteProbe.ExitCode -ne 0) {
             Stop-Recovery 'OPENCODE_INSTALL_PREREQUISITE_FAILED' "OpenCode installation prerequisite discovery failed with exit code $($prerequisiteProbe.ExitCode)."
@@ -337,11 +340,11 @@ exit 0
 set -euo pipefail
 installer="$(mktemp)"
 trap 'rm -f "$installer"' EXIT
-timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s curl --connect-timeout 15 --max-time __INSTALL_TIMEOUT__ -fsSL https://opencode.ai/install -o "$installer"
+timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s curl --connect-timeout 15 --max-time __INSTALL_TIMEOUT__ -fsSL https://raw.githubusercontent.com/anomalyco/opencode/__INSTALLER_COMMIT__/install -o "$installer"
 grep -Fq 'INSTALL_DIR=$HOME/.opencode/bin' "$installer" || exit 63
 grep -Fq -- '--no-modify-path' "$installer" || exit 64
 timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash "$installer" --no-modify-path
-'@.Replace('__INSTALL_TIMEOUT__', [string]$InstallTimeoutSeconds)
+'@.Replace('__INSTALL_TIMEOUT__', [string]$InstallTimeoutSeconds).Replace('__INSTALLER_COMMIT__', $installerSourceCommit)
         $installResult = Invoke-WslBash -Script $installScript -TimeoutSeconds ($InstallTimeoutSeconds + 30)
         Set-LastResult -Result $installResult
         if (-not [string]::IsNullOrWhiteSpace($installResult.Stdout)) { Write-Host $installResult.Stdout }
@@ -353,10 +356,10 @@ timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash "$installer" --
             Stop-Recovery 'OPENCODE_INSTALL_WSL_TIMEOUT' "OpenCode installation exceeded the bounded WSL install timeout of $InstallTimeoutSeconds seconds."
         }
         if ($installResult.ExitCode -eq 63 -or $installResult.ExitCode -eq 64) {
-            Stop-Recovery 'OPENCODE_INSTALLER_CONTRACT_DRIFT' 'The downloaded official OpenCode installer no longer matches the reviewed install-path or shell-profile-mutation contract.'
+            Stop-Recovery 'OPENCODE_INSTALLER_CONTRACT_DRIFT' 'The pinned official OpenCode installer no longer matches the reviewed install-path or shell-profile-mutation contract.'
         }
         if ($installResult.ExitCode -ne 0) {
-            Stop-Recovery 'OPENCODE_INSTALL_FAILED' "The official OpenCode installer returned exit code $($installResult.ExitCode)."
+            Stop-Recovery 'OPENCODE_INSTALL_FAILED' "The pinned official OpenCode installer returned exit code $($installResult.ExitCode)."
         }
 
         $script:stage = 'post-install-command-discovery'
@@ -375,7 +378,7 @@ fi
 stderr_file="$(mktemp)"
 trap 'rm -f "$stderr_file"' EXIT
 set +e
-version="$(timeout __RUNTIME_PROBE_TIMEOUT__s "$managed" --version 2>"$stderr_file")"
+version="$(timeout --signal=TERM --kill-after=__RUNTIME_KILL_AFTER__s __RUNTIME_PROBE_TIMEOUT__s "$managed" --version 2>"$stderr_file")"
 version_code=$?
 set -e
 failure_class='version-failed'
@@ -396,7 +399,7 @@ if [ "$version_code" -eq 0 ] && [ -n "$version" ]; then
 fi
 printf 'STATE=unhealthy\nEXIT=%s\nCLASS=%s\n' "$version_code" "$failure_class"
 exit 47
-'@.Replace('__RUNTIME_PROBE_TIMEOUT__', '30')
+'@.Replace('__RUNTIME_PROBE_TIMEOUT__', '30').Replace('__RUNTIME_KILL_AFTER__', '10')
         $postDiscovery = Invoke-WslBash -Script $postInstallDiscoveryScript -TimeoutSeconds 45
         Set-LastResult -Result $postDiscovery
         $script:officialInstallPath = Get-KeyedOutputValue -Text $postDiscovery.Stdout -Key 'PATH'
@@ -408,17 +411,20 @@ exit 47
             Assert-SafeOpenCodePath -Path $script:officialInstallPath
         }
         if ($postDiscovery.TimedOut) {
+            $script:postInstallHealthState = 'unhealthy'
+            $script:postInstallFailureClass = 'outer-timeout'
+            $script:postInstallVersionExitCode = 124
             Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_TIMEOUT' 'Official OpenCode install-path health discovery exceeded 45 seconds.'
         }
         if ($postDiscovery.ExitCode -eq 45) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_MISSING' 'The official installer returned success but $HOME/.opencode/bin/opencode was missing afterward.'
+            Stop-Recovery 'OPENCODE_POST_INSTALL_MISSING' 'The pinned official installer returned success but $HOME/.opencode/bin/opencode was missing afterward.'
         }
         if ($postDiscovery.ExitCode -eq 46) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_EXECUTABLE' 'The official installer returned success but $HOME/.opencode/bin/opencode was not executable afterward.'
+            Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_EXECUTABLE' 'The pinned official installer returned success but $HOME/.opencode/bin/opencode was not executable afterward.'
         }
         if ($postDiscovery.ExitCode -eq 47) {
             switch ($script:postInstallFailureClass) {
-                'timeout' { Stop-Recovery 'OPENCODE_POST_INSTALL_VERSION_TIMEOUT' 'The freshly installed OpenCode binary did not return --version within 30 seconds.' }
+                'timeout' { Stop-Recovery 'OPENCODE_POST_INSTALL_VERSION_TIMEOUT' 'The freshly installed OpenCode binary did not return --version within the bounded 30-second health probe.' }
                 'illegal-instruction' { Stop-Recovery 'OPENCODE_POST_INSTALL_CPU_INCOMPATIBLE' 'The freshly installed OpenCode binary failed with an illegal-instruction/native CPU compatibility signature.' }
                 'bus-error' { Stop-Recovery 'OPENCODE_POST_INSTALL_NATIVE_CRASH' 'The freshly installed OpenCode binary failed with a native bus-error signature.' }
                 'segmentation-fault' { Stop-Recovery 'OPENCODE_POST_INSTALL_NATIVE_CRASH' 'The freshly installed OpenCode binary failed with a native segmentation-fault signature.' }
@@ -444,12 +450,22 @@ exit 47
         $postVersion = Invoke-WslBash -Script $postVersionScript -TimeoutSeconds 30
         Set-LastResult -Result $postVersion
         if ($postVersion.TimedOut) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_VERSION_TIMEOUT' 'OpenCode version probing timed out after bounded installation.'
+            $script:postInstallHealthState = 'unhealthy'
+            $script:postInstallVersionExitCode = 124
+            $script:postInstallFailureClass = 'reproof-timeout'
+            Stop-Recovery 'OPENCODE_POST_INSTALL_VERSION_TIMEOUT' 'OpenCode version reproof timed out after bounded installation.'
         }
-        $script:openCodeVersion = Get-FirstOutputLine -Text $postVersion.Stdout
-        if ($postVersion.ExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($script:openCodeVersion)) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_VERSION_FAILED' "OpenCode remained unhealthy after bounded installation; version probe exit=$($postVersion.ExitCode)."
+        $postVersionText = Get-FirstOutputLine -Text $postVersion.Stdout
+        if ($postVersion.ExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($postVersionText)) {
+            $script:postInstallHealthState = 'unhealthy'
+            $script:postInstallVersionExitCode = $postVersion.ExitCode
+            $script:postInstallFailureClass = 'reproof-version-failed'
+            Stop-Recovery 'OPENCODE_POST_INSTALL_VERSION_FAILED' "OpenCode failed its independent exact-path version reproof; exit=$($postVersion.ExitCode)."
         }
+        $script:openCodeVersion = $postVersionText
+        $script:postInstallHealthState = 'healthy'
+        $script:postInstallVersionExitCode = 0
+        $script:postInstallFailureClass = 'none'
     }
 
     if ([string]::IsNullOrWhiteSpace($script:openCodePath) -or [string]::IsNullOrWhiteSpace($script:openCodeVersion)) {
