@@ -42,6 +42,11 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
         for token in (
             "function Get-LatestRuntimeReceiptPath",
             "opencode-release-pinned-retry.json",
+            "$retryRunId =",
+            "$retryRunRoot = Join-Path $runtimeRunsRoot $retryRunId",
+            "New-Item -ItemType Directory -Path $retryRunRoot -Force",
+            "$attemptPath = Join-Path $retryRunRoot 'opencode-release-pinned-retry.json'",
+            "retryRunId = $retryRunId",
             "sourceRunId",
             "resultRunId",
             "OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED",
@@ -55,8 +60,9 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
         marker_write = text.index("$attemptReceipt | ConvertTo-Json")
         dispatch = text.index("& ([scriptblock]::Create($bootstrapText))")
         self.assertLess(marker_write, dispatch, "attempt evidence must exist before retry dispatch")
-        self.assertIn("[string]$attempt.sourceRunId -eq $priorRunId", text)
-        self.assertIn("[string]$attempt.resultRunId -eq $priorRunId", text)
+        self.assertIn("$sourceRunId -eq $priorRunId", text)
+        self.assertIn("$resultRunId -eq $priorRunId", text)
+        self.assertNotIn("Join-Path (Split-Path -Parent $latestReceiptPath) 'opencode-release-pinned-retry.json'", text)
 
     def test_release_is_selected_on_windows_and_forwarded_to_wsl(self) -> None:
         text = read(RETRY)
@@ -123,11 +129,17 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
         self.assertTrue(recovery["releaseVersionForwardedThroughWslEnv"])
         self.assertTrue(recovery["releasePinnedRetryRequiresPriorMissingReceipt"])
         self.assertEqual("opencode-release-pinned-retry.json", recovery["releasePinnedRetryAttemptArtifact"])
+        self.assertEqual(
+            "%LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/runs/<retry-run-id>",
+            recovery["releasePinnedRetryAttemptRoot"],
+        )
         self.assertTrue(recovery["releasePinnedRetrySingleAttemptEnforced"])
         proof = recovery["proofRule"].lower()
         self.assertIn("moving latest-release discovery", proof)
+        self.assertIn("retryrunid", proof)
         self.assertIn("sourcerunid", proof)
         self.assertIn("resultrunid", proof)
+        self.assertIn("without mutating either runtime-recovery run", proof)
         self.assertIn("already_attempted", proof)
 
         artifacts = json.loads(read(ARTIFACTS))
@@ -156,6 +168,7 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
         self.assertIn("OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED", docs)
         self.assertIn("opencode-release-pinned-retry.json", docs)
         self.assertIn("run it from any powershell directory", lower)
+        self.assertIn("own retry run directory", lower)
 
     def test_local_and_hosted_harnesses_run_this_contract_and_parse_retry(self) -> None:
         module = "tests.test_opencode_release_pinned_retry"
