@@ -18,7 +18,6 @@ $relativeRoot = 'tooling/harness/operational/opencode-lsp-setup'
 $callerLocation = [string](Get-Location).Path
 $runId = '{0}-{1}' -f ([DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ')), ([guid]::NewGuid().ToString('N').Substring(0,8))
 $stageRoot = Join-Path ([IO.Path]::GetTempPath()) "AgentSwitchboard-bootstrap-$runId"
-$finalExitCode = 1
 
 function Stop-Bootstrap {
     param([Parameter(Mandatory)][string]$Code, [Parameter(Mandatory)][string]$Message)
@@ -142,17 +141,19 @@ try {
     Write-Host "BOOTSTRAP_VERIFIED_HEAD=$actualHead"
     Write-Host "BOOTSTRAP_ACTIVE_LOCATION=$([string](Get-Location).Path)"
 
-    if ($Mode -eq 'ResolveOnly') {
-        $finalExitCode = 0
-    }
-    else {
+    if ($Mode -ne 'ResolveOnly') {
         $runtimeRecovery = Join-Path $verifiedRoot "$relativeRoot/Recover-OpenCodeRuntime.ps1"
         if (-not (Test-Path -LiteralPath $runtimeRecovery -PathType Leaf)) {
             Stop-Bootstrap 'BOOTSTRAP_RUNTIME_ROUTER_MISSING' 'The verified exact-head worktree is missing Recover-OpenCodeRuntime.ps1.'
         }
         & pwsh -NoLogo -NoProfile -File $runtimeRecovery -RepoPath $verifiedRoot -ModelId $ModelId -Distribution $Distribution -InstallTimeoutSeconds $InstallTimeoutSeconds
-        $finalExitCode = $LASTEXITCODE
+        $runtimeExit = $LASTEXITCODE
+        if ($runtimeExit -ne 0) {
+            Stop-Bootstrap 'BOOTSTRAP_RUNTIME_RECOVERY_FAILED' "Focused OpenCode runtime recovery returned exit code $runtimeExit after canonical root verification."
+        }
     }
+
+    $global:LASTEXITCODE = 0
 }
 catch {
     $raw = [string]$_.Exception.Message
@@ -164,12 +165,10 @@ catch {
         Write-Host 'BOOTSTRAP_FAILURE_CODE=BOOTSTRAP_UNEXPECTED_FAILURE'
         Write-Host 'BOOTSTRAP_FAILURE_MESSAGE=The cwd-independent AgentSwitchboard bootstrap failed before dispatch.'
     }
-    $finalExitCode = 1
+    throw
 }
 finally {
     if (Test-Path -LiteralPath $stageRoot) {
         Remove-Item -LiteralPath $stageRoot -Recurse -Force -ErrorAction SilentlyContinue
     }
 }
-
-exit $finalExitCode
