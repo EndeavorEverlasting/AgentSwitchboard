@@ -49,10 +49,19 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
+          $canonical = 'https://github.com/EndeavorEverlasting/AgentSwitchboard.git'
           $wrongRoot = Join-Path $env:RUNNER_TEMP 'unrelated-working-directory'
           New-Item -ItemType Directory -Path $wrongRoot -Force | Out-Null
           Set-Location -LiteralPath $wrongRoot
           & "$env:GITHUB_WORKSPACE\tooling\harness\operational\opencode-lsp-setup\Invoke-AgentSwitchboardOpenCodeBootstrap.ps1" -Mode ResolveOnly
+          $active = [string](Get-Location).Path
+          $top = ([string](git rev-parse --show-toplevel)).Trim()
+          $origin = ([string](git remote get-url origin)).Trim()
+          $head = ([string](git rev-parse HEAD)).Trim().ToLowerInvariant()
+          $remoteHead = ((([string](git ls-remote $canonical HEAD)) -split '\s+')[0]).Trim().ToLowerInvariant()
+          if ($active -ne $top) { throw "bootstrap did not leave the caller at the verified root: active=$active top=$top" }
+          if ($origin -ne $canonical) { throw "bootstrap corrected to the wrong remote: $origin" }
+          if ($head -ne $remoteHead) { throw "bootstrap corrected to stale head: local=$head remote=$remoteHead" }
       - name: Windows CMD entrypoint
         if: runner.os == 'Windows'
         shell: cmd
