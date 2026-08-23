@@ -70,7 +70,7 @@ function Invoke-GitLines {
 
     $result = Invoke-BoundedProcess -FilePath $gitPath -ArgumentList $Arguments -ProcessTimeoutSeconds $NetworkTimeoutSeconds
     if ($result.TimedOut) {
-        Stop-Bootstrap 'BOOTSTRAP_GIT_TIMEOUT' "git $($Arguments -join ' ') exceeded the bounded $NetworkTimeoutSeconds-second remote-resolution window."
+        Stop-Bootstrap 'BOOTSTRAP_GIT_TIMEOUT' "git $($Arguments -join ' ') exceeded the bounded $NetworkTimeoutSeconds-second Git-operation window."
     }
     if ($result.ExitCode -ne 0) {
         Stop-Bootstrap 'BOOTSTRAP_GIT_FAILED' "git $($Arguments -join ' ') failed while resolving canonical repository state."
@@ -159,7 +159,8 @@ try {
     $resolutionResult = Invoke-BoundedProcess -FilePath $pwshPath -ArgumentList @(
         '-NoLogo','-NoProfile','-File',$resolverPath,
         '-ExpectedBranch',$defaultBranch,
-        '-ExpectedHead',$expectedHead
+        '-ExpectedHead',$expectedHead,
+        '-AllowRemoteBranchAdvance'
     ) -ProcessTimeoutSeconds $CheckoutTimeoutSeconds
     if ($resolutionResult.TimedOut) {
         Stop-Bootstrap 'BOOTSTRAP_CHECKOUT_RECOVERY_TIMEOUT' "Exact-head checkout recovery exceeded the bounded $CheckoutTimeoutSeconds-second window."
@@ -180,29 +181,29 @@ try {
         Stop-Bootstrap 'BOOTSTRAP_RESOLVED_ROOT_MISSING' 'Checkout recovery did not return a reachable AgentSwitchboard worktree.'
     }
 
-    $rootLines = @(& $gitPath -C $resolved rev-parse --show-toplevel 2>&1)
-    if ($LASTEXITCODE -ne 0 -or $rootLines.Count -eq 0) {
+    $rootLines = @(Invoke-GitLines -Arguments @('-C',$resolved,'rev-parse','--show-toplevel'))
+    if ($rootLines.Count -eq 0) {
         Stop-Bootstrap 'BOOTSTRAP_ROOT_VERIFICATION_FAILED' 'Resolved worktree failed git rev-parse --show-toplevel.'
     }
     $verifiedRoot = ([string]$rootLines[0]).Trim()
-    $originLines = @(& $gitPath -C $verifiedRoot remote get-url origin 2>&1)
-    if ($LASTEXITCODE -ne 0 -or $originLines.Count -eq 0) {
+    $originLines = @(Invoke-GitLines -Arguments @('-C',$verifiedRoot,'remote','get-url','origin'))
+    if ($originLines.Count -eq 0) {
         Stop-Bootstrap 'BOOTSTRAP_ORIGIN_VERIFICATION_FAILED' 'Resolved worktree did not expose an origin remote.'
     }
     $origin = ([string]$originLines[0]).Trim()
     if ($origin -notmatch $canonicalOriginPattern) {
         Stop-Bootstrap 'BOOTSTRAP_WRONG_REPOSITORY' "Resolved worktree origin is not $repository."
     }
-    $actualHeadLines = @(& $gitPath -C $verifiedRoot rev-parse HEAD 2>&1)
-    if ($LASTEXITCODE -ne 0 -or $actualHeadLines.Count -eq 0) {
+    $actualHeadLines = @(Invoke-GitLines -Arguments @('-C',$verifiedRoot,'rev-parse','HEAD'))
+    if ($actualHeadLines.Count -eq 0) {
         Stop-Bootstrap 'BOOTSTRAP_HEAD_VERIFICATION_FAILED' 'Resolved AgentSwitchboard worktree HEAD could not be read.'
     }
     $actualHead = ([string]$actualHeadLines[0]).Trim().ToLowerInvariant()
     if ($actualHead -ne $expectedHead) {
-        Stop-Bootstrap 'BOOTSTRAP_HEAD_MISMATCH' "Resolved AgentSwitchboard worktree is at $actualHead, not current default head $expectedHead."
+        Stop-Bootstrap 'BOOTSTRAP_HEAD_MISMATCH' "Resolved AgentSwitchboard worktree is at $actualHead, not selected default-head snapshot $expectedHead."
     }
-    $dirtyLines = @(& $gitPath -C $verifiedRoot status --porcelain=v1 2>&1)
-    if ($LASTEXITCODE -ne 0 -or $dirtyLines.Count -gt 0) {
+    $dirtyLines = @(Invoke-GitLines -Arguments @('-C',$verifiedRoot,'status','--porcelain=v1'))
+    if ($dirtyLines.Count -gt 0) {
         Stop-Bootstrap 'BOOTSTRAP_WORKTREE_NOT_CLEAN' 'Resolved exact-head AgentSwitchboard worktree is not clean; it was preserved and not rewritten.'
     }
 
