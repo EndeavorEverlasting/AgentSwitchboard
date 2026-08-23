@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "post-integration-local-adoption",
+  "title": "Adopt an integrated change into a local checkout before use",
+  "purpose": "Prevent remote merge proof from being mistaken for local workstation availability. Establish refreshed remote containment, safely update or isolate a local checkout, then execute the newly available validator or launcher from that proven checkout.",
+  "triggers": [
+    "merged change must now run on a workstation",
+    "newly merged command is missing locally",
+    "remote integration is complete but local adoption is unproved",
+    "operator asks why a merged command is not available"
+  ],
+  "inputs": [
+    "repository path or a bounded repository resolver",
+    "integration SHA that introduced the required command or artifact",
+    "remote name, normally origin",
+    "canonical validator or launcher path resolved from tracked harness metadata"
+  ],
+  "steps": [
+    "Resolve the actual Git root; do not assume the current shell directory is the repository.",
+    "Refresh remote truth with git fetch --all --prune --tags before branch-sensitive conclusions.",
+    "Resolve the remote default branch from refs/remotes/origin/HEAD or a provider/symref query; do not assume main.",
+    "Prove the integration SHA is an ancestor of the refreshed remote default head with git merge-base --is-ancestor.",
+    "Inspect current branch, tracking relationship, HEAD, and git status --short before mutation.",
+    "If the current checkout is clean, on the default branch, and behind-only, advance it with git pull --ff-only. If it already contains the integration SHA, do not invent a pull.",
+    "If the checkout is dirty, diverged, on separately owned work, or otherwise unsafe to fast-forward, preserve it unchanged and use an isolated worktree or repository-approved equivalent at the refreshed default head for proof.",
+    "In the chosen adoption checkout, prove the integration SHA is an ancestor of HEAD and run git ls-files --error-unmatch -- <path> to prove the required validator or launcher is tracked before invoking it.",
+    "Run the owning validator first, then run/open the canonical operator artifact only when the requested proof level requires it; propagate every nonzero exit.",
+    "Record the adoption checkout path, observed HEAD, integration SHA, containment result, validator command/result, launcher/artifact path, and remaining runtime proof ceiling in the handoff/report."
+  ],
+  "forbidden": [
+    "claiming remote merge means a local checkout already has the file",
+    "git reset --hard",
+    "git clean",
+    "force push",
+    "discarding or stashing unrelated dirty work without explicit ownership",
+    "executing an untracked or guessed launcher path"
+  ],
+  "outputs": [
+    "refreshed default-branch identity",
+    "local adoption checkout path and HEAD",
+    "integration containment proof",
+    "owning validator result",
+    "canonical launcher or artifact result when executable proof is requested",
+    "clean handoff with the next unproved gate"
+  ],
+  "proofCeiling": "Proves only the local checkout and commands actually observed in this workflow. Remote integration proof alone never establishes physical workstation adoption or runtime success."
+}
