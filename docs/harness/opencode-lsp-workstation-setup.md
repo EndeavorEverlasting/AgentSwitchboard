@@ -120,7 +120,7 @@ The retry is location-free. Run it from any PowerShell directory:
 $u='https://api.github.com/repos/EndeavorEverlasting/AgentSwitchboard/contents/tooling/harness/operational/opencode-lsp-setup/Retry-OpenCodeRuntimeWithPinnedRelease.ps1'; $r=Invoke-RestMethod -Uri $u -TimeoutSec 30; $s=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(($r.content -replace '\s',''))); & ([scriptblock]::Create($s))
 ```
 
-Before dispatch, the helper writes `opencode-release-pinned-retry.json` beside the source runtime receipt. It records only source run ID, selected release, attempt time, result run ID when available, status, and the fact that no environment dump is persisted. A runtime run already bound as the source or result of that artifact fails closed with `OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED`; the failure workflow does not loop this repair indefinitely.
+Before dispatch, the helper creates its own retry run directory under `%LOCALAPPDATA%\AgentSwitchboard\opencode-lsp\runs` and writes `opencode-release-pinned-retry.json` there. It records only retry run ID, source run ID, selected release, attempt time, result run ID when available, status, and the fact that no environment dump is persisted. It does not modify the source or resulting runtime-recovery run. A runtime run already bound as the source or result of that artifact fails closed with `OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED`; the failure workflow does not loop this repair indefinitely.
 
 ## Runtime proof
 
