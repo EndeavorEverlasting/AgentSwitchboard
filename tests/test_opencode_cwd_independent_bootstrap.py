@@ -20,19 +20,19 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
 
         for token in (
             "$canonicalUrl = 'https://github.com/EndeavorEverlasting/AgentSwitchboard.git'",
-            "git @Arguments",
+            "function Invoke-BoundedProcess",
             "$symrefLines = @(Invoke-GitLines -Arguments @('ls-remote','--symref',$canonicalUrl,'HEAD'))",
             "$headLines = @(Invoke-GitLines -Arguments @('ls-remote',$canonicalUrl,\"refs/heads/$defaultBranch\"))",
-            "$rawBase/$expectedHead/$relativeRoot/$name",
-            "'Recover-AgentSwitchboardCheckout.ps1'",
-            "'Resolve-AgentSwitchboardCheckout.ps1'",
-            "$resolutionLine = & pwsh -NoLogo -NoProfile -File $checkoutRouter",
-            "git -C $resolved rev-parse --show-toplevel",
-            "git -C $verifiedRoot remote get-url origin",
-            "git -C $verifiedRoot rev-parse HEAD",
-            "git -C $verifiedRoot status --porcelain=v1",
+            "$resolverUri = \"$rawBase/$expectedHead/$relativeRoot/Resolve-AgentSwitchboardCheckout.ps1\"",
+            "Save-BoundedRemoteFile -Uri $resolverUri -Destination $resolverPath",
+            "'-ExpectedBranch',$defaultBranch",
+            "'-ExpectedHead',$expectedHead",
+            "$resolutionResult = Invoke-BoundedProcess -FilePath $pwshPath",
+            "BOOTSTRAP_CHECKOUT_RECOVERY_TIMEOUT",
             "Set-Location -LiteralPath $verifiedRoot",
             'Join-Path $verifiedRoot "$relativeRoot/Recover-OpenCodeRuntime.ps1"',
+            "$runtimeResult = Invoke-BoundedProcess -FilePath $pwshPath",
+            "BOOTSTRAP_RUNTIME_RECOVERY_TIMEOUT",
             "BOOTSTRAP_CALLER_LOCATION=",
             "BOOTSTRAP_RESOLVED_ROOT=",
             "BOOTSTRAP_VERIFIED_ORIGIN=",
@@ -46,6 +46,7 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
             text.index('Join-Path $verifiedRoot "$relativeRoot/Recover-OpenCodeRuntime.ps1"'),
         )
         self.assertNotIn("-PreferredPath", text)
+        self.assertNotIn("Recover-AgentSwitchboardCheckout.ps1", text)
         self.assertNotIn("\nexit ", text.lower())
         for forbidden in (
             "onedrive",
@@ -57,10 +58,25 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, lower, forbidden)
 
+    def test_bootstrap_network_and_child_stages_are_bounded(self) -> None:
+        text = BOOTSTRAP.read_text(encoding="utf-8")
+        for token in (
+            "[ValidateRange(5, 120)][int]$NetworkTimeoutSeconds = 30",
+            "[ValidateRange(30, 300)][int]$CheckoutTimeoutSeconds = 120",
+            "$process.WaitForExit($ProcessTimeoutSeconds * 1000)",
+            "$process.Kill($true)",
+            "$client.Timeout = [TimeSpan]::FromSeconds($NetworkTimeoutSeconds)",
+            "BOOTSTRAP_GIT_TIMEOUT",
+            "BOOTSTRAP_STAGE_DOWNLOAD_TIMEOUT",
+            "BOOTSTRAP_CHECKOUT_RECOVERY_TIMEOUT",
+            "BOOTSTRAP_RUNTIME_RECOVERY_TIMEOUT",
+        ):
+            self.assertIn(token, text, token)
+
     def test_bootstrap_staging_is_exact_head_and_ephemeral(self) -> None:
         text = BOOTSTRAP.read_text(encoding="utf-8")
         self.assertIn("[IO.Path]::GetTempPath()", text)
-        self.assertIn("Invoke-WebRequest -Uri $uri -OutFile $destination", text)
+        self.assertIn("[IO.File]::WriteAllBytes($Destination, $bytes)", text)
         self.assertIn("Remove-Item -LiteralPath $stageRoot -Recurse -Force", text)
         self.assertIn("BOOTSTRAP_STAGE_DOWNLOAD_FAILED", text)
         self.assertIn("BOOTSTRAP_HEAD_MISMATCH", text)
@@ -73,15 +89,21 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
     def test_manifest_registers_location_free_operator_entrypoint(self) -> None:
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         recovery = manifest["repositoryRecovery"]
+        self.assertEqual(17, manifest["schemaVersion"])
         self.assertEqual(
             "tooling/harness/operational/opencode-lsp-setup/Invoke-AgentSwitchboardOpenCodeBootstrap.ps1",
             manifest["entrypoints"]["cwdIndependentBootstrap"],
         )
         self.assertTrue(recovery["operatorInvocationCwdIndependent"])
         self.assertFalse(recovery["knownLocalRepoPathRequired"])
-        self.assertTrue(recovery["bootstrapStagesExactDefaultHeadRouters"])
+        self.assertTrue(recovery["bootstrapStagesExactDefaultHeadResolver"])
+        self.assertTrue(recovery["bootstrapResolvesRemoteHeadOnce"])
+        self.assertEqual(30, recovery["bootstrapNetworkTimeoutSeconds"])
+        self.assertEqual(120, recovery["bootstrapCheckoutTimeoutSeconds"])
         self.assertIn("current directory", recovery["proofRule"].lower())
         self.assertIn("remote identity", recovery["proofRule"].lower())
+        self.assertIn("resolved once", recovery["proofRule"].lower())
+        self.assertIn("bounded", recovery["proofRule"].lower())
 
     def test_operator_guide_starts_with_location_free_bootstrap(self) -> None:
         text = DOCS.read_text(encoding="utf-8")
@@ -91,10 +113,12 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
             "https://api.github.com/repos/EndeavorEverlasting/AgentSwitchboard/contents/tooling/harness/operational/opencode-lsp-setup/Invoke-AgentSwitchboardOpenCodeBootstrap.ps1",
             text,
         )
+        self.assertIn("-TimeoutSec 30", text)
         self.assertIn("FromBase64String", text)
         self.assertIn("Set-Location -LiteralPath", text)
         self.assertIn("BOOTSTRAP_VERIFIED_ORIGIN", text)
         self.assertIn("BOOTSTRAP_VERIFIED_HEAD", text)
+        self.assertIn("resolved once", lower)
 
     def test_windows_smoke_normalizes_git_and_powershell_paths(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
