@@ -2,7 +2,8 @@
 param(
     [string]$PreferredPath,
     [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$ExpectedBranch,
-    [Parameter(Mandatory=$true)][ValidatePattern('^[0-9a-fA-F]{40}$')][string]$ExpectedHead
+    [Parameter(Mandatory=$true)][ValidatePattern('^[0-9a-fA-F]{40}$')][string]$ExpectedHead,
+    [switch]$AllowRemoteBranchAdvance
 )
 
 Set-StrictMode -Version Latest
@@ -25,6 +26,8 @@ $sourceMode = 'unresolved'
 $worktreePath = $null
 $origin = $null
 $actualHead = $null
+$remoteHeadAtResolution = $null
+$remoteAdvancedAfterSnapshot = $false
 $failureCode = $null
 $failureMessage = $null
 $searchedCandidates = [Collections.Generic.List[string]]::new()
@@ -122,8 +125,18 @@ try {
 
     $remoteHeadLines = @(& git -C $sourceRoot rev-parse "refs/remotes/origin/$ExpectedBranch" 2>&1)
     if ($LASTEXITCODE -ne 0 -or $remoteHeadLines.Count -eq 0) { Stop-Recovery 'EXPECTED_BRANCH_NOT_RESOLVED' 'The fetched harness branch could not be resolved.' }
-    $remoteHead = ([string]$remoteHeadLines[0]).Trim().ToLowerInvariant()
-    if ($remoteHead -ne $ExpectedHead.ToLowerInvariant()) { Stop-Recovery 'REMOTE_HEAD_MISMATCH' "The remote harness branch is at $remoteHead, not expected exact head $ExpectedHead. Refusing stale proof." }
+    $remoteHeadAtResolution = ([string]$remoteHeadLines[0]).Trim().ToLowerInvariant()
+    $expectedHeadNormalized = $ExpectedHead.ToLowerInvariant()
+    if ($remoteHeadAtResolution -ne $expectedHeadNormalized) {
+        if (-not $AllowRemoteBranchAdvance) {
+            Stop-Recovery 'REMOTE_HEAD_MISMATCH' "The remote harness branch is at $remoteHeadAtResolution, not expected exact head $ExpectedHead. Refusing stale proof."
+        }
+        $ancestorLines = @(& git -C $sourceRoot merge-base --is-ancestor $ExpectedHead "refs/remotes/origin/$ExpectedBranch" 2>&1)
+        if ($LASTEXITCODE -ne 0) {
+            Stop-Recovery 'EXPECTED_HEAD_NO_LONGER_REACHABLE' "The remote branch moved to $remoteHeadAtResolution and the selected exact head $ExpectedHead is no longer an ancestor. Refusing to reinterpret the snapshot."
+        }
+        $remoteAdvancedAfterSnapshot = $true
+    }
 
     $worktreeRoot = Join-Path $base 'AgentSwitchboard\worktrees'
     $null = New-Item -ItemType Directory -Path $worktreeRoot -Force
@@ -137,7 +150,7 @@ try {
             $existingDirtyLines = @(& git -C $worktreePath status --porcelain=v1 2>&1)
             if ($LASTEXITCODE -eq 0 -and $existingHeadLines.Count -gt 0) {
                 $existingHead = ([string]$existingHeadLines[0]).Trim().ToLowerInvariant()
-                $canReuse = ($existingHead -eq $ExpectedHead.ToLowerInvariant()) -and ($existingDirtyLines.Count -eq 0)
+                $canReuse = ($existingHead -eq $expectedHeadNormalized) -and ($existingDirtyLines.Count -eq 0)
             }
         }
         if (-not $canReuse) {
@@ -155,7 +168,7 @@ try {
     $worktreeHeadLines = @(& git -C $worktreePath rev-parse HEAD 2>&1)
     if ($LASTEXITCODE -ne 0 -or $worktreeHeadLines.Count -eq 0) { Stop-Recovery 'WORKTREE_HEAD_FAILED' 'Unable to read the isolated proof worktree HEAD.' }
     $actualHead = ([string]$worktreeHeadLines[0]).Trim().ToLowerInvariant()
-    if ($actualHead -ne $ExpectedHead.ToLowerInvariant()) { Stop-Recovery 'WORKTREE_HEAD_MISMATCH' "Isolated worktree is at $actualHead, not $ExpectedHead." }
+    if ($actualHead -ne $expectedHeadNormalized) { Stop-Recovery 'WORKTREE_HEAD_MISMATCH' "Isolated worktree is at $actualHead, not $ExpectedHead." }
     $worktreeDirty = @(& git -C $worktreePath status --porcelain=v1 2>&1)
     if ($LASTEXITCODE -ne 0 -or $worktreeDirty.Count -gt 0) { Stop-Recovery 'WORKTREE_NOT_CLEAN' 'The isolated exact-head worktree is not clean; it was preserved and not rewritten.' }
 }
@@ -184,7 +197,10 @@ $result = [ordered]@{
     sourceRepoPath = $sourceRoot
     origin = $origin
     expectedBranch = $ExpectedBranch
-    expectedHead = $ExpectedHead.ToLowerInvariant()
+    expectedHead = $expectedHeadNormalized
+    allowRemoteBranchAdvance = [bool]$AllowRemoteBranchAdvance
+    remoteHeadAtResolution = $remoteHeadAtResolution
+    remoteAdvancedAfterSnapshot = $remoteAdvancedAfterSnapshot
     resolvedWorktreePath = $worktreePath
     actualHead = $actualHead
     searchedCandidateCount = $searchedCandidates.Count
@@ -202,6 +218,8 @@ $result | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $receiptPath -Encod
     "- Source repo: $sourceRoot",
     "- Expected branch: $ExpectedBranch",
     "- Expected HEAD: $ExpectedHead",
+    "- Remote HEAD at resolution: $remoteHeadAtResolution",
+    "- Remote advanced after selected snapshot: $remoteAdvancedAfterSnapshot",
     "- Resolved worktree: $worktreePath",
     "- Actual HEAD: $actualHead",
     "- Failure: $failureCode $failureMessage",
