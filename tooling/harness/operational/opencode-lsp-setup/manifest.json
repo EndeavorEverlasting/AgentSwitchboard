@@ -1,10 +1,11 @@
 {
-  "schemaVersion": 15,
+  "schemaVersion": 16,
   "harnessId": "agentswitchboard.opencode-lsp-workstation-setup.v1",
   "title": "OpenCode LSP workstation setup harness",
   "purpose": "Give low-capability agents and Windows operators one deterministic path to recover a canonical checkout, recover the Windows-facing OpenCode runtime, inspect, configure, verify, and hand off OpenCode LSP enablement without changing product code, governance, secrets, or existing OpenCode configuration.",
   "canonicalOwner": "tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1",
   "entrypoints": {
+    "cwdIndependentBootstrap": "tooling/harness/operational/opencode-lsp-setup/Invoke-AgentSwitchboardOpenCodeBootstrap.ps1",
     "checkoutRecoveryRouter": "tooling/harness/operational/opencode-lsp-setup/Recover-AgentSwitchboardCheckout.ps1",
     "runtimeRecoveryRouter": "tooling/harness/operational/opencode-lsp-setup/Recover-OpenCodeRuntime.ps1",
     "checkoutResolver": "tooling/harness/operational/opencode-lsp-setup/Resolve-AgentSwitchboardCheckout.ps1",
@@ -25,10 +26,15 @@
     "prePushHook": "tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPrePush.ps1"
   },
   "repositoryRecovery": {
+    "operatorInvocationCwdIndependent": true,
+    "knownLocalRepoPathRequired": false,
+    "bootstrapStagesExactDefaultHeadRouters": true,
+    "bootstrapRemoteContentEndpoint": "https://api.github.com/repos/EndeavorEverlasting/AgentSwitchboard/contents/tooling/harness/operational/opencode-lsp-setup/Invoke-AgentSwitchboardOpenCodeBootstrap.ps1",
+    "bootstrapStaging": "ephemeral OS temp directory removed after dispatch",
     "preferredPathIsHintOnly": true,
-    "boundedDiscovery": ["preferred path","preferred direct children","preferred parent siblings named AgentSwitchBoard*","LOCALAPPDATA AgentSwitchboard checkouts"],
+    "boundedDiscovery": ["preferred path when explicitly supplied to the internal resolver","current directory as an untrusted candidate","preferred direct children","preferred parent siblings named AgentSwitchBoard*","LOCALAPPDATA AgentSwitchboard checkouts"],
     "fallback": "%LOCALAPPDATA%/AgentSwitchboard/checkouts/canonical-<head8>",
-    "proofRule": "Only an exact canonical GitHub origin plus expected branch/head may become the setup worktree; a non-Git folder is preserved and never upgraded in place.",
+    "proofRule": "The public operator bootstrap does not require a known local repository path and must work from an arbitrary current directory, including another Git repository. It resolves the canonical remote default branch/head, stages the checkout router and resolver from that exact SHA, invokes recovery without a PreferredPath, verifies the resolved root by canonical remote identity plus exact head and clean status, then Set-Location targets that verified root before dispatch. Only an exact canonical GitHub origin plus expected branch/head may become the setup worktree; wrong or similarly named current directories are ignored and preserved.",
     "destructiveCleanupAllowed": false
   },
   "runtimeRecovery": {
@@ -85,6 +91,6 @@
     "existingOpenCodeConfigMutationAllowed": false,
     "freeModelConfidentialDataAllowed": false,
     "implicitHookInstallationAllowed": false,
-    "proofCeiling": "Static/hosted validation proves harness structure, immutable installer provenance, installer-contract gating, host-injected installer-path transport, deterministic installer shell input, process-exit evidence capture, exact-path classification after nonzero installer exits, typed post-install health classification, forced timeout termination, final reproof evidence consistency, and setup logic. Checkout recovery can prove canonical repository acquisition and exact-head isolated worktree state. Runtime-recovery receipts can prove the bounded local discovery/version/install/shim/Inspect-handoff state without persisting raw OpenCode stderr, environment contents, or credentials. Workstation execution can prove OpenCode command/version resolution, immutable machine-local config artifacts, model visibility, and launcher generation. Active LSP diagnostics require opening a supported file and observing runtime behavior."
+    "proofCeiling": "Static/hosted validation proves cwd-independent bootstrap routing, exact-default-head router staging, canonical checkout/root verification, immutable installer provenance, installer-contract gating, host-injected installer-path transport, deterministic installer shell input, process-exit evidence capture, exact-path classification after nonzero installer exits, typed post-install health classification, forced timeout termination, final reproof evidence consistency, and setup logic. Checkout recovery can prove canonical repository acquisition and exact-head isolated worktree state. Runtime-recovery receipts can prove the bounded local discovery/version/install/shim/Inspect-handoff state without persisting raw OpenCode stderr, environment contents, or credentials. Workstation execution can prove OpenCode command/version resolution, immutable machine-local config artifacts, model visibility, and launcher generation. Active LSP diagnostics require opening a supported file and observing runtime behavior."
   }
 }
