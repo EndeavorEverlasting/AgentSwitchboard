@@ -137,7 +137,7 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
         self.assertIn("Set-Location -LiteralPath", text)
         self.assertIn("BOOTSTRAP_VERIFIED_ORIGIN", text)
         self.assertIn("BOOTSTRAP_VERIFIED_HEAD", text)
-        self.assertIn("resolved once", lower)
+        self.assertIn("exact head once", lower)
         self.assertIn("ancestor", lower)
 
     def test_windows_smoke_normalizes_git_and_powershell_paths(self) -> None:
