@@ -10,6 +10,7 @@ H = ROOT / "tooling" / "harness" / "operational" / "opencode-lsp-setup"
 BOOTSTRAP = H / "Invoke-AgentSwitchboardOpenCodeBootstrap.ps1"
 MANIFEST = H / "manifest.json"
 DOCS = ROOT / "docs" / "harness" / "opencode-lsp-workstation-setup.md"
+WORKFLOW = ROOT / ".github" / "workflows" / "opencode-lsp-harness.yml"
 
 
 class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
@@ -94,6 +95,15 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
         self.assertIn("Set-Location -LiteralPath", text)
         self.assertIn("BOOTSTRAP_VERIFIED_ORIGIN", text)
         self.assertIn("BOOTSTRAP_VERIFIED_HEAD", text)
+
+    def test_windows_smoke_normalizes_git_and_powershell_paths(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("[IO.Path]::GetFullPath([string](Get-Location).Path)", text)
+        self.assertIn("[IO.Path]::GetFullPath(([string](git rev-parse --show-toplevel)).Trim())", text)
+        self.assertIn("[StringComparison]::OrdinalIgnoreCase", text)
+        self.assertNotIn("if ($active -ne $top)", text)
+        self.assertIn("if ($origin -ne $canonical)", text)
+        self.assertIn("if ($head -ne $remoteHead)", text)
 
 
 if __name__ == "__main__":
