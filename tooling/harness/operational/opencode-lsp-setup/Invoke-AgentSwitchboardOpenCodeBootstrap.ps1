@@ -151,17 +151,23 @@ try {
     if (-not (Test-Path -LiteralPath $resolverPath -PathType Leaf)) {
         Stop-Bootstrap 'BOOTSTRAP_STAGE_FILE_MISSING' 'Exact-head bootstrap staging did not create Resolve-AgentSwitchboardCheckout.ps1.'
     }
+    $resolverText = [IO.File]::ReadAllText($resolverPath)
+    $resolverSupportsBranchAdvance = $resolverText -match '\[switch\]\$AllowRemoteBranchAdvance'
 
     Write-Host "BOOTSTRAP_CALLER_LOCATION=$callerLocation"
     Write-Host "BOOTSTRAP_DEFAULT_BRANCH=$defaultBranch"
     Write-Host "BOOTSTRAP_EXPECTED_HEAD=$expectedHead"
+    Write-Host "BOOTSTRAP_RESOLVER_SUPPORTS_BRANCH_ADVANCE=$resolverSupportsBranchAdvance"
 
-    $resolutionResult = Invoke-BoundedProcess -FilePath $pwshPath -ArgumentList @(
-        '-NoLogo','-NoProfile','-File',$resolverPath,
-        '-ExpectedBranch',$defaultBranch,
-        '-ExpectedHead',$expectedHead,
-        '-AllowRemoteBranchAdvance'
-    ) -ProcessTimeoutSeconds $CheckoutTimeoutSeconds
+    $resolverArguments = [Collections.Generic.List[string]]::new()
+    foreach ($argument in @('-NoLogo','-NoProfile','-File',$resolverPath,'-ExpectedBranch',$defaultBranch,'-ExpectedHead',$expectedHead)) {
+        [void]$resolverArguments.Add([string]$argument)
+    }
+    if ($resolverSupportsBranchAdvance) {
+        [void]$resolverArguments.Add('-AllowRemoteBranchAdvance')
+    }
+
+    $resolutionResult = Invoke-BoundedProcess -FilePath $pwshPath -ArgumentList $resolverArguments.ToArray() -ProcessTimeoutSeconds $CheckoutTimeoutSeconds
     if ($resolutionResult.TimedOut) {
         Stop-Bootstrap 'BOOTSTRAP_CHECKOUT_RECOVERY_TIMEOUT' "Exact-head checkout recovery exceeded the bounded $CheckoutTimeoutSeconds-second window."
     }
