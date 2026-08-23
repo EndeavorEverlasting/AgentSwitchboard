@@ -92,6 +92,13 @@ def main() -> None:
     require(blocked.status == "CONTRADICTION_BLOCK", "enum contradiction must block")
     require(not calls, "contradicting value must not execute")
 
+    tampered_packet = json.loads(json.dumps(packet))
+    tampered_packet["action"]["argumentConstraints"]["visibility"]["enum"].append("secret")
+    calls.clear()
+    blocked = mod.intercept_and_execute(tampered_packet, contradiction, lambda action: calls.append(action))
+    require(blocked.status == "GROUNDING_FAILURE" and "packet_constraint_mismatch" in blocked.reason, "packet constraint tampering must fail against current authority")
+    require(not calls, "tampered packet must not execute")
+
     malformed = {"tool": packet["action"]["name"], "arguments": {}}
     blocked = mod.gate_proposal(packet, malformed)
     require(blocked.status == "SCHEMA_MISMATCH", "malformed proposal must be schema mismatch")
