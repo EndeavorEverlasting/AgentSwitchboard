@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "id": "prompt-kit-scheduled-sync",
+  "platform": "windows",
+  "source": {
+    "repository": "https://github.com/EndeavorEverlasting/web-excel-repair-triage.git",
+    "versionIdentity": "remote-default-branch-commit-sha",
+    "website": "web/prompt-kit/index.html",
+    "upstreamValidation": "scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check"
+  },
+  "consent": {
+    "defaultEnabled": false,
+    "networkRequiresEnabledToggle": true,
+    "enableAction": "PromptKit-Website-Sync.cmd Enable",
+    "disableAction": "PromptKit-Website-Sync.cmd Disable"
+  },
+  "schedule": {
+    "taskName": "AgentSwitchboard-PromptKitWebsiteSync",
+    "defaultIntervalMinutes": 60,
+    "minimumIntervalMinutes": 15,
+    "principal": "current-interactive-user",
+    "runLevel": "limited",
+    "multipleInstances": "ignore-new",
+    "executionLimitMinutes": 10,
+    "repetitionDurationDays": 3650
+  },
+  "localState": {
+    "root": "%LOCALAPPDATA%/AgentSwitchboard/prompt-kit-sync",
+    "config": "config.json",
+    "state": "state.json",
+    "lastRun": "last-run.json",
+    "managedSource": "source/web-excel-repair-triage",
+    "websiteReleases": "website/releases/<source-sha>/index.html",
+    "defaultRetentionCount": 2
+  },
+  "safety": {
+    "developerCheckoutUntouched": true,
+    "forceReset": false,
+    "gitClean": false,
+    "discardLocalChanges": false,
+    "dirtyManagedCheckoutBehavior": "fail-closed",
+    "divergedManagedCheckoutBehavior": "fail-closed",
+    "autoOpenScheduledRun": false,
+    "credentialsStored": false
+  },
+  "entrypoints": {
+    "operator": "PromptKit-Website-Sync.cmd",
+    "manager": "tooling/profiles/windows/Manage-PromptKitWebsiteSchedule.ps1",
+    "poller": "tooling/profiles/windows/Sync-PromptKitWebsite.ps1",
+    "validator": "scripts/Test-PromptKitScheduledSync.ps1",
+    "tests": "tests/test_prompt_kit_scheduled_sync.py",
+    "guide": "docs/harness/prompt-kit-scheduled-sync.md"
+  },
+  "proofCeiling": "Repository contract and deterministic source-level tests prove opt-in scheduling, polling identity, fail-closed update policy, upstream validation routing, and artifact publication logic. Live Task Scheduler registration, GitHub reachability, exact upstream generator execution, and browser opening require Windows runtime proof."
+}

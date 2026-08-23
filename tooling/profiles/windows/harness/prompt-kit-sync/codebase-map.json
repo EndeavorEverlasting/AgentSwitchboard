@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "prompt-kit-scheduled-sync",
+  "purpose": "Opt-in Windows polling and local extraction of the canonical Prompt Kit website from web-excel-repair-triage.",
+  "operatorJourneys": {
+    "enable": "PromptKit-Website-Sync.cmd Enable -IntervalMinutes 60",
+    "status": "PromptKit-Website-Sync.cmd Status",
+    "pollNow": "PromptKit-Website-Sync.cmd Run",
+    "open": "PromptKit-Website-Sync.cmd Open",
+    "disable": "PromptKit-Website-Sync.cmd Disable"
+  },
+  "callStack": [
+    "PromptKit-Website-Sync.cmd",
+    "tooling/profiles/windows/Manage-PromptKitWebsiteSchedule.ps1",
+    "tooling/profiles/windows/Sync-PromptKitWebsite.ps1",
+    "git ls-remote --symref <canonical-repo> HEAD",
+    "managed checkout fetch + merge --ff-only",
+    "upstream build_prompt_kit_registry.py --check",
+    "%LOCALAPPDATA%/AgentSwitchboard/prompt-kit-sync/website/releases/<sha>/index.html"
+  ],
+  "stateOwners": {
+    "trackedPolicy": "tooling/profiles/windows/harness/prompt-kit-sync/prompt-kit-sync.manifest.json",
+    "localConsent": "%LOCALAPPDATA%/AgentSwitchboard/prompt-kit-sync/config.json",
+    "localCurrentArtifact": "%LOCALAPPDATA%/AgentSwitchboard/prompt-kit-sync/state.json",
+    "localLastRun": "%LOCALAPPDATA%/AgentSwitchboard/prompt-kit-sync/last-run.json"
+  },
+  "knownTraps": [
+    "Do not point the poller at a developer Prompt Kit checkout; it owns a separate managed source cache.",
+    "Do not infer a version from timestamps. The remote default-branch commit SHA is the version identity.",
+    "Do not reset, clean, or overwrite a dirty or diverged managed checkout. Fail closed.",
+    "Do not register the scheduled task without the explicit Enable action.",
+    "Do not auto-open a browser from scheduled polls. Open is an explicit operator action."
+  ]
+}
