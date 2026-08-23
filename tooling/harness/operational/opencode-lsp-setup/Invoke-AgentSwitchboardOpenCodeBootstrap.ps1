@@ -47,7 +47,7 @@ try {
         Stop-Bootstrap 'BOOTSTRAP_GIT_NOT_FOUND' 'Git is required to resolve or acquire AgentSwitchboard from any working directory.'
     }
 
-    $symrefLines = Invoke-GitLines -Arguments @('ls-remote','--symref',$canonicalUrl,'HEAD')
+    $symrefLines = @(Invoke-GitLines -Arguments @('ls-remote','--symref',$canonicalUrl,'HEAD'))
     $defaultBranch = $null
     foreach ($line in $symrefLines) {
         $match = [regex]::Match([string]$line, '^ref:\s+refs/heads/(?<branch>[^\s]+)\s+HEAD$')
@@ -60,7 +60,7 @@ try {
         Stop-Bootstrap 'BOOTSTRAP_DEFAULT_BRANCH_NOT_FOUND' 'GitHub did not return the AgentSwitchboard default-branch symref.'
     }
 
-    $headLines = Invoke-GitLines -Arguments @('ls-remote',$canonicalUrl,"refs/heads/$defaultBranch")
+    $headLines = @(Invoke-GitLines -Arguments @('ls-remote',$canonicalUrl,"refs/heads/$defaultBranch"))
     if ($headLines.Count -eq 0 -or [string]::IsNullOrWhiteSpace([string]$headLines[0])) {
         Stop-Bootstrap 'BOOTSTRAP_DEFAULT_HEAD_NOT_FOUND' 'GitHub did not return the current AgentSwitchboard default-branch head.'
     }
