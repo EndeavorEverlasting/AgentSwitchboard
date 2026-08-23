@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 H = ROOT / "tooling" / "harness" / "operational" / "opencode-lsp-setup"
 BOOTSTRAP = H / "Invoke-AgentSwitchboardOpenCodeBootstrap.ps1"
+RESOLVER = H / "Resolve-AgentSwitchboardCheckout.ps1"
 MANIFEST = H / "manifest.json"
 DOCS = ROOT / "docs" / "harness" / "opencode-lsp-workstation-setup.md"
 WORKFLOW = ROOT / ".github" / "workflows" / "opencode-lsp-harness.yml"
@@ -27,6 +28,7 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
             "Save-BoundedRemoteFile -Uri $resolverUri -Destination $resolverPath",
             "'-ExpectedBranch',$defaultBranch",
             "'-ExpectedHead',$expectedHead",
+            "'-AllowRemoteBranchAdvance'",
             "$resolutionResult = Invoke-BoundedProcess -FilePath $pwshPath",
             "BOOTSTRAP_CHECKOUT_RECOVERY_TIMEOUT",
             "Set-Location -LiteralPath $verifiedRoot",
@@ -72,6 +74,7 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
             "BOOTSTRAP_RUNTIME_RECOVERY_TIMEOUT",
         ):
             self.assertIn(token, text, token)
+        self.assertNotIn("@(& $gitPath", text)
 
     def test_bootstrap_staging_is_exact_head_and_ephemeral(self) -> None:
         text = BOOTSTRAP.read_text(encoding="utf-8")
@@ -85,6 +88,21 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
         self.assertNotIn("git clean", text.lower())
         self.assertNotIn("git stash", text.lower())
         self.assertNotIn("push --force", text.lower())
+
+    def test_resolver_preserves_selected_snapshot_across_normal_branch_advance(self) -> None:
+        text = RESOLVER.read_text(encoding="utf-8")
+        for token in (
+            "[switch]$AllowRemoteBranchAdvance",
+            "if (-not $AllowRemoteBranchAdvance)",
+            "merge-base --is-ancestor $ExpectedHead",
+            "EXPECTED_HEAD_NO_LONGER_REACHABLE",
+            "$remoteAdvancedAfterSnapshot = $true",
+            "allowRemoteBranchAdvance = [bool]$AllowRemoteBranchAdvance",
+            "remoteHeadAtResolution = $remoteHeadAtResolution",
+            "remoteAdvancedAfterSnapshot = $remoteAdvancedAfterSnapshot",
+        ):
+            self.assertIn(token, text, token)
+        self.assertIn("REMOTE_HEAD_MISMATCH", text, "strict existing callers must remain fail-closed")
 
     def test_manifest_registers_location_free_operator_entrypoint(self) -> None:
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
@@ -104,6 +122,7 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
         self.assertIn("remote identity", recovery["proofRule"].lower())
         self.assertIn("resolved once", recovery["proofRule"].lower())
         self.assertIn("bounded", recovery["proofRule"].lower())
+        self.assertIn("ancestor", recovery["proofRule"].lower())
 
     def test_operator_guide_starts_with_location_free_bootstrap(self) -> None:
         text = DOCS.read_text(encoding="utf-8")
@@ -119,6 +138,7 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
         self.assertIn("BOOTSTRAP_VERIFIED_ORIGIN", text)
         self.assertIn("BOOTSTRAP_VERIFIED_HEAD", text)
         self.assertIn("resolved once", lower)
+        self.assertIn("ancestor", lower)
 
     def test_windows_smoke_normalizes_git_and_powershell_paths(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
