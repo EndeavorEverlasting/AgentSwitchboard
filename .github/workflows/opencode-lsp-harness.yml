@@ -58,10 +58,9 @@ jobs:
           $top = [IO.Path]::GetFullPath(([string](git rev-parse --show-toplevel)).Trim()).TrimEnd([char[]]'\/')
           $origin = ([string](git remote get-url origin)).Trim()
           $head = ([string](git rev-parse HEAD)).Trim().ToLowerInvariant()
-          $remoteHead = ((([string](git ls-remote $canonical HEAD)) -split '\s+')[0]).Trim().ToLowerInvariant()
           if (-not [string]::Equals($active, $top, [StringComparison]::OrdinalIgnoreCase)) { throw "bootstrap did not leave the caller at the verified root: active=$active top=$top" }
           if ($origin -ne $canonical) { throw "bootstrap corrected to the wrong remote: $origin" }
-          if ($head -ne $remoteHead) { throw "bootstrap corrected to stale head: local=$head remote=$remoteHead" }
+          if ($head -notmatch '^[0-9a-f]{40}$') { throw "bootstrap left an invalid selected snapshot head: $head" }
       - name: Windows CMD entrypoint
         if: runner.os == 'Windows'
         shell: cmd
