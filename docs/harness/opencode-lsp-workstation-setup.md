@@ -110,6 +110,18 @@ pwsh -NoLogo -NoProfile -File tooling/harness/operational/opencode-lsp-setup/Inv
 
 The default install timeout is 180 seconds. An immutable installer-source change requires an explicit repository update/review; a typed unhealthy native runtime is a named blocker, not a reason to broaden filesystem search or fall back to technician-wide setup.
 
+### Release-pinned retry after a missing binary
+
+If the preserved runtime receipt proves `OPENCODE_POST_INSTALL_MISSING` after the reviewed installer returned nonzero, do not simply rerun the same install. `Retry-OpenCodeRuntimeWithPinnedRelease.ps1` owns one bounded retry for that exact state. It resolves one semantic OpenCode release through the Windows host GitHub API, temporarily forwards only `VERSION` into WSL through `WSLENV`, and then re-enters the current canonical bootstrap. The reviewed installer source commit remains unchanged; only its already-supported explicit release input is supplied. Prior `VERSION`/`WSLENV` values are restored afterward.
+
+The retry is location-free. Run it from any PowerShell directory:
+
+```powershell
+$u='https://api.github.com/repos/EndeavorEverlasting/AgentSwitchboard/contents/tooling/harness/operational/opencode-lsp-setup/Retry-OpenCodeRuntimeWithPinnedRelease.ps1'; $r=Invoke-RestMethod -Uri $u -TimeoutSec 30; $s=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(($r.content -replace '\s',''))); & ([scriptblock]::Create($s))
+```
+
+Before dispatch, the helper writes `opencode-release-pinned-retry.json` beside the source runtime receipt. It records only source run ID, selected release, attempt time, result run ID when available, status, and the fact that no environment dump is persisted. A runtime run already bound as the source or result of that artifact fails closed with `OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED`; the failure workflow does not loop this repair indefinitely.
+
 ## Runtime proof
 
 After Configure, run the generated CMD, open a `.py` or `.yml` file, and observe OpenCode server/diagnostic behavior. Configuration proof is not LSP runtime proof.
@@ -131,7 +143,8 @@ After Configure, run the generated CMD, open a `.py` or `.yml` file, and observe
 - existing bounded `opencode` command but version exit nonzero/empty: recovery performs one bounded pinned official reinstall, then judges the official installer path rather than searching other locations.
 - installer provenance needs updating: review the current upstream `anomalyco/opencode` installer, update the pinned source commit and contract together, and revalidate; do not silently switch recovery back to a mutable branch URL.
 - `OPENCODE_INSTALLER_CONTRACT_DRIFT`: the pinned installer no longer matches the repository's reviewed install-path/no-profile-mutation assertions; stop before execution.
-- `OPENCODE_POST_INSTALL_MISSING`: after the installer attempt, its reviewed executable path is absent.
+- `OPENCODE_POST_INSTALL_MISSING`: after a nonzero installer attempt, use the evidence-gated release-pinned retry above once rather than repeating the same moving release-discovery path inside WSL.
+- `OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED`: this failure chain has already consumed its one host-selected-release retry; preserve the resulting runtime receipt and diagnose that next typed gate rather than looping.
 - `OPENCODE_POST_INSTALL_NOT_EXECUTABLE`: after the installer attempt, its reviewed executable path cannot be executed.
 - `OPENCODE_POST_INSTALL_VERSION_TIMEOUT`: the fresh binary or its final independent reproof did not complete within its bounded timeout.
 - `OPENCODE_POST_INSTALL_CPU_INCOMPATIBLE`: the fresh binary produced a SIGILL-specific illegal-instruction/native CPU-compatibility signature.
@@ -149,4 +162,4 @@ After Configure, run the generated CMD, open a `.py` or `.yml` file, and observe
 
 ## Validation
 
-`Test-OpenCodeLspHarness.cmd` proves a usable Python 3 runtime, runs the focused harness plus cwd-independent-bootstrap contracts, runs PowerShell completeness and canonical documentation validation, and finishes with diff hygiene. Hosted Windows CI additionally starts from an unrelated temporary directory and executes `Invoke-AgentSwitchboardOpenCodeBootstrap.ps1 -Mode ResolveOnly` so current-working-directory independence is exercised as behavior rather than inferred from tokens. The smoke verifies that the same caller runspace ends at a canonical AgentSwitchboard root; the bootstrap itself proves that root is at the selected remote snapshot before returning success.
+`Test-OpenCodeLspHarness.cmd` proves a usable Python 3 runtime, runs the focused harness, cwd-independent-bootstrap, and release-pinned-retry contracts, runs PowerShell completeness and canonical documentation validation, and finishes with diff hygiene. Hosted Windows/Ubuntu CI parses the retry entrypoint and runs its focused contracts; hosted Windows additionally starts from an unrelated temporary directory and executes `Invoke-AgentSwitchboardOpenCodeBootstrap.ps1 -Mode ResolveOnly` so current-working-directory independence is exercised as behavior rather than inferred from tokens. The smoke verifies that the same caller runspace ends at a canonical AgentSwitchboard root; the bootstrap itself proves that root is at the selected remote snapshot before returning success.
