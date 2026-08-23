@@ -111,8 +111,14 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
             "Remove-Item Env:WSLENV",
         ):
             self.assertIn(token, text, token)
-        self.assertLess(text.index("$env:VERSION = $selectedVersion"), text.index("& ([scriptblock]::Create($bootstrapText))"))
-        self.assertLess(text.index("& ([scriptblock]::Create($bootstrapText))"), text.index("finally {"))
+        dispatch = text.index("& ([scriptblock]::Create($bootstrapText))")
+        cleanup = text.index("finally {", dispatch)
+        version_restore = text.index("if ($hadVersion)", cleanup)
+        wslenv_restore = text.index("if ($hadWslEnv)", cleanup)
+        self.assertLess(text.index("$env:VERSION = $selectedVersion"), dispatch)
+        self.assertLess(dispatch, cleanup)
+        self.assertLess(cleanup, version_restore)
+        self.assertLess(cleanup, wslenv_restore)
 
     def test_retry_does_not_expand_into_broad_workstation_setup(self) -> None:
         lower = read(RETRY).lower()
