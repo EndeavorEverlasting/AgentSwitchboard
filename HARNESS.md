@@ -19,6 +19,7 @@ AgentSwitchboard is a Windows-first control surface for installing, configuring,
 - Progressive router: `tooling/harness/context/context.routes.json`
 - Agent glossary: `tooling/harness/context/glossary.json` — load only for an unclear term.
 - Generic operational router: `tooling/harness/operational/workflow-registry.json`
+- Harness component inventory: `tooling/harness/operational/harness-components.registry.json`
 - Machine-readable repository contract: `.ai/agent-contract.json`
 
 ## Commands that matter
@@ -26,9 +27,16 @@ AgentSwitchboard is a Windows-first control surface for installing, configuring,
 ```powershell
 Test-ProgressiveDisclosureHarness.cmd
 python tooling/harness/operational/Get-OperationalHarnessStatus.py --task "describe the task"
+pwsh -NoLogo -NoProfile -File scripts/Test-HarnessInfrastructureCompleteness.ps1
 ```
 
-The first command proves context budgets/routing. The second selects the operational workflow and specialized skill without requiring every catalog to be read.
+These prove context routing, select the operational route, and verify the tracked harness inventory without preloading every catalog.
+
+## Harness infrastructure work
+
+For harness builds/repairs, load `.ai/skills/operational-harness-routing/SKILL.md` and `tooling/harness/operational/harness-components.registry.json`. Reuse registered owners; do not create a parallel harness.
+
+Remote merge is not local adoption. Before using a newly merged local command, load `tooling/harness/operational/workflows/post-integration-local-adoption.workflow.json` and `.ai/skills/post-integration-local-adoption/SKILL.md`; fetch, prove containment, fast-forward only clean behind-only work or use an isolated worktree, then run the tracked command.
 
 ## Drill down, one layer at a time
 
@@ -40,4 +48,4 @@ For OpenCode LSP work, the 30k owner is `tooling/harness/context/domains/opencod
 
 ## Proof boundary
 
-A green context harness proves routing integrity, path resolution, preserved governance authority, and measured context ceilings. It does **not** prove product behavior, provider/model quality, workstation state, live LSP diagnostics, deployment, or user-visible success. Run the selected domain/workflow validator for that proof.
+A green context or harness-infrastructure completeness gate proves routing/inventory integrity, path resolution, tracked component presence, preserved governance authority, and measured context/static contracts. It does **not** prove product behavior, provider/model quality, workstation adoption, live LSP diagnostics, deployment, or user-visible success. Run the selected domain/workflow validator and, when required, the post-integration local-adoption workflow for that proof.
