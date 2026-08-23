@@ -10,6 +10,7 @@ on:
       - 'scripts/Test-OpenCodeLspHarness.ps1'
       - 'tests/test_opencode_lsp_harness.py'
       - 'tests/test_opencode_runtime_recovery.py'
+      - 'tests/test_opencode_installer_exit_grounding.py'
       - 'Test-OpenCodeLspHarness.cmd'
       - '.ai/skills/opencode-lsp-workstation-setup/**'
       - 'docs/harness/opencode-lsp-workstation-setup.md'
@@ -24,6 +25,7 @@ on:
       - 'scripts/Test-OpenCodeLspHarness.ps1'
       - 'tests/test_opencode_lsp_harness.py'
       - 'tests/test_opencode_runtime_recovery.py'
+      - 'tests/test_opencode_installer_exit_grounding.py'
       - 'Test-OpenCodeLspHarness.cmd'
       - '.ai/skills/opencode-lsp-workstation-setup/**'
       - 'docs/harness/opencode-lsp-workstation-setup.md'
@@ -40,7 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Dependency-free contracts
-        run: python -m unittest tests.test_opencode_lsp_harness tests.test_opencode_runtime_recovery -v
+        run: python -m unittest tests.test_opencode_lsp_harness tests.test_opencode_runtime_recovery tests.test_opencode_installer_exit_grounding -v
       - name: Windows CMD entrypoint
         if: runner.os == 'Windows'
         shell: cmd
