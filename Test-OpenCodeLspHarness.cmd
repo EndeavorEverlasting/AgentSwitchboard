@@ -22,13 +22,13 @@ if "%PY_KIND%"=="python" goto :run_python
 goto :run_py
 
 :run_python
-python.exe -m unittest tests.test_opencode_lsp_harness tests.test_opencode_cwd_independent_bootstrap -v
+python.exe -m unittest tests.test_opencode_lsp_harness tests.test_opencode_cwd_independent_bootstrap tests.test_opencode_release_pinned_retry -v
 if errorlevel 1 set "RESULT=%ERRORLEVEL%"
 if defined RESULT goto :fail
 goto :powershell_checks
 
 :run_py
-py.exe -3 -m unittest tests.test_opencode_lsp_harness tests.test_opencode_cwd_independent_bootstrap -v
+py.exe -3 -m unittest tests.test_opencode_lsp_harness tests.test_opencode_cwd_independent_bootstrap tests.test_opencode_release_pinned_retry -v
 if errorlevel 1 set "RESULT=%ERRORLEVEL%"
 if defined RESULT goto :fail
 
