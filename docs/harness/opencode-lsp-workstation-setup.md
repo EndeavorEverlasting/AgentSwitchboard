@@ -10,7 +10,7 @@ It does not edit governance, AgentSwitchboard product launchers, existing OpenCo
 
 The operator must not need to know, remember, or first navigate to an AgentSwitchboard checkout. The canonical bootstrap is `Invoke-AgentSwitchboardOpenCodeBootstrap.ps1`, and it is designed to run from any PowerShell directory, including another Git repository.
 
-Use GitHub's repository-content endpoint so the initial command does not assume a local path or a remembered checkout. The initial API request is bounded to 30 seconds. The bootstrap then independently resolves the current remote default branch and exact HEAD once, stages `Resolve-AgentSwitchboardCheckout.ps1` from that exact SHA with a bounded download, and passes the same immutable branch/SHA directly to the bounded resolver child. There is no second remote-head decision. After checkout recovery it verifies the resulting root by origin, exact HEAD, and clean status, performs `Set-Location -LiteralPath` to that verified root, and only then dispatches bounded runtime recovery.
+Use GitHub's repository-content endpoint so the initial command does not assume a local path or a remembered checkout. The initial API request is bounded to 30 seconds. The bootstrap then independently resolves the current remote default branch and exact HEAD once, stages `Resolve-AgentSwitchboardCheckout.ps1` from that exact SHA with a bounded download, and passes the same immutable branch/SHA directly to the bounded resolver child. There is no second head selection. If the branch advances after the snapshot is selected, the resolver continues only when the selected SHA remains an ancestor of the freshly fetched branch; a force-style rewrite that makes the snapshot unreachable fails closed. The worktree remains pinned to the originally selected SHA. After checkout recovery the bootstrap verifies the resulting root by origin, exact selected HEAD, and clean status, performs `Set-Location -LiteralPath` to that verified root, and only then dispatches bounded runtime recovery.
 
 ```powershell
 $u='https://api.github.com/repos/EndeavorEverlasting/AgentSwitchboard/contents/tooling/harness/operational/opencode-lsp-setup/Invoke-AgentSwitchboardOpenCodeBootstrap.ps1'; $r=Invoke-RestMethod -Uri $u -TimeoutSec 30; $s=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(($r.content -replace '\s',''))); & ([scriptblock]::Create($s))
@@ -21,10 +21,10 @@ Successful routing prints evidence such as:
 ```text
 BOOTSTRAP_CALLER_LOCATION=<where the operator happened to start>
 BOOTSTRAP_DEFAULT_BRANCH=<current configured default branch>
-BOOTSTRAP_EXPECTED_HEAD=<current remote default-branch SHA>
+BOOTSTRAP_EXPECTED_HEAD=<selected remote default-branch snapshot>
 BOOTSTRAP_RESOLVED_ROOT=<verified AgentSwitchboard worktree>
 BOOTSTRAP_VERIFIED_ORIGIN=https://github.com/EndeavorEverlasting/AgentSwitchboard.git
-BOOTSTRAP_VERIFIED_HEAD=<same resolved SHA>
+BOOTSTRAP_VERIFIED_HEAD=<same selected snapshot>
 BOOTSTRAP_ACTIVE_LOCATION=<same verified AgentSwitchboard worktree>
 ```
 
@@ -117,12 +117,13 @@ After Configure, run the generated CMD, open a `.py` or `.yml` file, and observe
 ## Troubleshooting
 
 - starting PowerShell in the wrong repo or an arbitrary directory: use the location-free bootstrap above; do not ask the operator to find an AgentSwitchboard worktree first.
-- `BOOTSTRAP_GIT_TIMEOUT`: canonical remote branch/head resolution exceeded its bounded network window.
+- `BOOTSTRAP_GIT_TIMEOUT`: a Git operation exceeded its bounded window.
 - `BOOTSTRAP_STAGE_DOWNLOAD_TIMEOUT`: exact-head resolver staging exceeded its bounded network window.
 - `BOOTSTRAP_CHECKOUT_RECOVERY_TIMEOUT`: exact-head checkout resolution exceeded its bounded child-process window.
 - `BOOTSTRAP_RUNTIME_RECOVERY_TIMEOUT`: focused runtime recovery exceeded its bounded parent window.
+- `EXPECTED_HEAD_NO_LONGER_REACHABLE`: the branch changed after snapshot selection and the selected SHA is no longer an ancestor of the freshly fetched branch; the bootstrap refuses to reinterpret the requested snapshot.
 - `BOOTSTRAP_WRONG_REPOSITORY`: a resolved root failed canonical origin verification; unrelated folders are preserved.
-- `BOOTSTRAP_HEAD_MISMATCH`: the acquired worktree does not match the exact head already passed to the resolver; stale or inconsistent proof is refused.
+- `BOOTSTRAP_HEAD_MISMATCH`: the acquired worktree does not match the already selected remote snapshot; inconsistent proof is refused.
 - `WRONG_REPOSITORY`: repository-local setup reached the wrong origin; route through the location-free bootstrap rather than manually navigating.
 - `OPENCODE_NOT_FOUND`: runtime recovery repairs OpenCode only and must not delegate to broad command-shim/technician setup.
 - missing `LOCALAPPDATA`: stop before recovery; the router will not create a shim under a different state root than Inspect uses.
@@ -148,4 +149,4 @@ After Configure, run the generated CMD, open a `.py` or `.yml` file, and observe
 
 ## Validation
 
-`Test-OpenCodeLspHarness.cmd` proves a usable Python 3 runtime, runs the focused harness plus cwd-independent-bootstrap contracts, runs PowerShell completeness and canonical documentation validation, and finishes with diff hygiene. Hosted Windows CI additionally starts from an unrelated temporary directory and executes `Invoke-AgentSwitchboardOpenCodeBootstrap.ps1 -Mode ResolveOnly` so current-working-directory independence is exercised as behavior rather than inferred from tokens. The smoke verifies that the same caller runspace ends at the canonical AgentSwitchboard root and current remote head.
+`Test-OpenCodeLspHarness.cmd` proves a usable Python 3 runtime, runs the focused harness plus cwd-independent-bootstrap contracts, runs PowerShell completeness and canonical documentation validation, and finishes with diff hygiene. Hosted Windows CI additionally starts from an unrelated temporary directory and executes `Invoke-AgentSwitchboardOpenCodeBootstrap.ps1 -Mode ResolveOnly` so current-working-directory independence is exercised as behavior rather than inferred from tokens. The smoke verifies that the same caller runspace ends at a canonical AgentSwitchboard root; the bootstrap itself proves that root is at the selected remote snapshot before returning success.
