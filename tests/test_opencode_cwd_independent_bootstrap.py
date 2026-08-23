@@ -147,7 +147,9 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
         self.assertIn("[StringComparison]::OrdinalIgnoreCase", text)
         self.assertNotIn("if ($active -ne $top)", text)
         self.assertIn("if ($origin -ne $canonical)", text)
-        self.assertIn("if ($head -ne $remoteHead)", text)
+        self.assertIn("if ($head -notmatch '^[0-9a-f]{40}$')", text)
+        self.assertNotIn("git ls-remote $canonical HEAD", text)
+        self.assertNotIn("if ($head -ne $remoteHead)", text)
 
 
 if __name__ == "__main__":
