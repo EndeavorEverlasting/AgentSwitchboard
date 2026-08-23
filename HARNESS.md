@@ -30,13 +30,13 @@ python tooling/harness/operational/Get-OperationalHarnessStatus.py --task "descr
 pwsh -NoLogo -NoProfile -File scripts/Test-HarnessInfrastructureCompleteness.ps1
 ```
 
-The first command proves context budgets/routing. The second selects the operational workflow and specialized skill without requiring every catalog to be read. The third proves that the repository-level harness inventory is present, tracked, parseable, and wired to its scoped procedures.
+These prove context routing, select the operational route, and verify the tracked harness inventory without preloading every catalog.
 
 ## Harness infrastructure work
 
-When the task is to build or repair harness infrastructure, load `.ai/skills/operational-harness-routing/SKILL.md` and `tooling/harness/operational/harness-components.registry.json`. Reuse the registered canonical map/workflow/artifact/validator/hook owners instead of creating a parallel harness just to satisfy a checklist.
+For harness builds/repairs, load `.ai/skills/operational-harness-routing/SKILL.md` and `tooling/harness/operational/harness-components.registry.json`. Reuse registered owners; do not create a parallel harness.
 
-A remote merge is not local workstation adoption. When a newly merged validator, launcher, or command must run on an operator workstation or another checkout, load `tooling/harness/operational/workflows/post-integration-local-adoption.workflow.json` and `.ai/skills/post-integration-local-adoption/SKILL.md`. Refresh/fetch, prove integration containment, fast-forward only a clean behind-only default-branch checkout (or preserve work through an isolated proof worktree), then invoke the tracked command from that proven checkout.
+Remote merge is not local adoption. Before using a newly merged local command, load `tooling/harness/operational/workflows/post-integration-local-adoption.workflow.json` and `.ai/skills/post-integration-local-adoption/SKILL.md`; fetch, prove containment, fast-forward only clean behind-only work or use an isolated worktree, then run the tracked command.
 
 ## Drill down, one layer at a time
 
