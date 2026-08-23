@@ -21,26 +21,46 @@ def read(path: Path) -> str:
 
 
 class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
-    def test_retry_is_evidence_gated_before_network_or_mutation(self) -> None:
+    def test_retry_is_distribution_bound_and_evidence_gated(self) -> None:
         text = read(RETRY)
         for token in (
-            "opencode-runtime-recovery.json",
+            "function Get-RuntimeReceiptsForDistribution",
+            "RequestedDistribution",
+            "receipt.distribution",
+            "OPENCODE_PINNED_RETRY_DISTRIBUTION_MISMATCH",
             "OPENCODE_POST_INSTALL_MISSING",
             "installAttempted",
             "installerExitCode",
             "OPENCODE_PINNED_RETRY_NOT_APPLICABLE",
         ):
             self.assertIn(token, text, token)
+        selection = text.index("$selectedEvidence = $distributionReceipts[0]")
         gate = text.index("if ([string]$priorReceipt.failureCode")
         release = text.index("$releaseApiUrl =")
-        bootstrap = text.index("$bootstrapApiUrl =")
+        self.assertLess(selection, gate)
         self.assertLess(gate, release)
-        self.assertLess(release, bootstrap)
 
-    def test_retry_is_durably_single_use_per_failure_chain(self) -> None:
+    def test_retry_claim_is_atomic_and_precedes_network_mutation(self) -> None:
         text = read(RETRY)
         for token in (
-            "function Get-LatestRuntimeReceiptPath",
+            "$claimRoot = Join-Path $stateRoot 'retry-claims'",
+            "$claimPath = Join-Path $claimRoot \"$priorRunId.claim\"",
+            "[IO.FileMode]::CreateNew",
+            "[IO.FileShare]::None",
+            "OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED",
+            "agentswitchboard.opencode-release-pinned-retry-claim.v1",
+            "secretOrEnvironmentDumpPersisted = $false",
+        ):
+            self.assertIn(token, text, token)
+        claim = text.index("[IO.File]::Open($claimPath")
+        release = text.index("Invoke-RestMethod -Uri $releaseApiUrl")
+        dispatch = text.index("& ([scriptblock]::Create($bootstrapText))")
+        self.assertLess(claim, release)
+        self.assertLess(claim, dispatch)
+
+    def test_retry_artifact_is_isolated_and_binds_all_new_result_runs(self) -> None:
+        text = read(RETRY)
+        for token in (
             "opencode-release-pinned-retry.json",
             "$retryRunId =",
             "$retryRunRoot = Join-Path $runtimeRunsRoot $retryRunId",
@@ -49,19 +69,18 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
             "retryRunId = $retryRunId",
             "sourceRunId",
             "resultRunId",
-            "OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED",
-            "agentswitchboard.opencode-release-pinned-retry.v1",
-            "secretOrEnvironmentDumpPersisted = $false",
-            "OPENCODE_PINNED_RETRY_ATTEMPT_RECEIPT=",
+            "resultRunIds",
             "completed-with-runtime-receipt",
+            "completed-with-ambiguous-runtime-receipts",
             "completed-without-new-runtime-receipt",
+            "OPENCODE_PINNED_RETRY_SOURCE_STALE",
         ):
             self.assertIn(token, text, token)
         marker_write = text.index("$attemptReceipt | ConvertTo-Json")
         dispatch = text.index("& ([scriptblock]::Create($bootstrapText))")
-        self.assertLess(marker_write, dispatch, "attempt evidence must exist before retry dispatch")
-        self.assertIn("$sourceRunId -eq $priorRunId", text)
-        self.assertIn("$resultRunId -eq $priorRunId", text)
+        self.assertLess(marker_write, dispatch)
+        self.assertIn("$resultRunIds -contains $priorRunId", text)
+        self.assertIn("$_ -notin $preexistingRunIds", text)
         self.assertNotIn("Join-Path (Split-Path -Parent $latestReceiptPath) 'opencode-release-pinned-retry.json'", text)
 
     def test_release_is_selected_on_windows_and_forwarded_to_wsl(self) -> None:
@@ -134,11 +153,18 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
             recovery["releasePinnedRetryAttemptRoot"],
         )
         self.assertTrue(recovery["releasePinnedRetrySingleAttemptEnforced"])
+        self.assertTrue(recovery["releasePinnedRetryDistributionBound"])
+        self.assertEqual(
+            "%LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/retry-claims/<source-run-id>.claim",
+            recovery["releasePinnedRetryClaim"],
+        )
         proof = recovery["proofRule"].lower()
         self.assertIn("moving latest-release discovery", proof)
+        self.assertIn("requested distribution", proof)
+        self.assertIn("atomic", proof)
         self.assertIn("retryrunid", proof)
         self.assertIn("sourcerunid", proof)
-        self.assertIn("resultrunid", proof)
+        self.assertIn("resultrunids", proof)
         self.assertIn("without mutating either runtime-recovery run", proof)
         self.assertIn("already_attempted", proof)
 
@@ -169,6 +195,8 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
         self.assertIn("opencode-release-pinned-retry.json", docs)
         self.assertIn("run it from any powershell directory", lower)
         self.assertIn("own retry run directory", lower)
+        self.assertIn("requested wsl distribution", lower)
+        self.assertIn("atomic claim", lower)
 
     def test_local_and_hosted_harnesses_run_this_contract_and_parse_retry(self) -> None:
         module = "tests.test_opencode_release_pinned_retry"
