@@ -92,6 +92,8 @@ class TestOpenCodeInstallerExitGrounding(unittest.TestCase):
     @unittest.skipIf(os.name == "nt", "Bash payload semantics are exercised on Ubuntu CI")
     def test_nonzero_installer_with_healthy_exact_path_is_observably_healthy(self) -> None:
         installer_body = """#!/usr/bin/env bash
+# INSTALL_DIR=$HOME/.opencode/bin
+# --no-modify-path
 set -eu
 [ "${SHELL:-}" = "/bin/bash" ] || exit 92
 mkdir -p "$HOME/.opencode/bin"
@@ -144,6 +146,8 @@ exit 1"""
     @unittest.skipIf(os.name == "nt", "Bash payload semantics are exercised on Ubuntu CI")
     def test_nonzero_installer_without_binary_is_observably_missing(self) -> None:
         installer_body = """#!/usr/bin/env bash
+# INSTALL_DIR=$HOME/.opencode/bin
+# --no-modify-path
 set -eu
 [ "${SHELL:-}" = "/bin/bash" ] || exit 92
 exit 1"""
