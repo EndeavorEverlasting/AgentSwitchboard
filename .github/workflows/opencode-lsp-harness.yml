@@ -52,7 +52,8 @@ jobs:
         run: |
           $tokens = $null
           $errors = $null
-          [void][Management.Automation.Language.Parser]::ParseFile("$env:GITHUB_WORKSPACE\tooling\harness\operational\opencode-lsp-setup\Retry-OpenCodeRuntimeWithPinnedRelease.ps1", [ref]$tokens, [ref]$errors)
+          $retryPath = Join-Path $env:GITHUB_WORKSPACE 'tooling/harness/operational/opencode-lsp-setup/Retry-OpenCodeRuntimeWithPinnedRelease.ps1'
+          [void][Management.Automation.Language.Parser]::ParseFile($retryPath, [ref]$tokens, [ref]$errors)
           if ($errors.Count -gt 0) { throw "release-pinned retry parse failed: $($errors[0].Message)" }
       - name: CWD-independent bootstrap smoke
         if: runner.os == 'Windows'
