@@ -192,6 +192,28 @@ def _source_freshness_error(packet: dict[str, Any]) -> str | None:
     current_allowed = list(args_schema["properties"].keys())
     if current_allowed != packet["action"]["allowedArguments"]:
         return "stale_argument_surface"
+    current_required = list(args_schema.get("required", []))
+    if current_required != packet["action"]["requiredArguments"]:
+        return "stale_required_arguments"
+
+    packet_constraints = packet["action"]["argumentConstraints"]
+    for required_name in current_required:
+        if required_name not in packet_constraints:
+            return f"packet_required_constraint_missing:{required_name}"
+    for name, constraint in packet_constraints.items():
+        if name not in args_schema["properties"]:
+            return f"packet_constraint_not_in_authority:{name}"
+        if constraint != args_schema["properties"][name]:
+            return f"packet_constraint_mismatch:{name}"
+
+    expected_field_sources = {"tool": "/properties/tool/const"}
+    for name in packet_constraints:
+        expected_field_sources[f"arguments.{name}"] = f"/properties/arguments/properties/{_pointer_escape(name)}"
+    if packet["fieldSources"] != expected_field_sources:
+        return "packet_field_sources_mismatch"
+    expected_critical_fields = ["tool", *[f"arguments.{name}" for name in packet_constraints]]
+    if packet["criticalFields"] != expected_critical_fields:
+        return "packet_critical_fields_mismatch"
     return None
 
 
