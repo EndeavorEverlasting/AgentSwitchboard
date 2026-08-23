@@ -20,8 +20,8 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
         for token in (
             "$canonicalUrl = 'https://github.com/EndeavorEverlasting/AgentSwitchboard.git'",
             "git @Arguments",
-            "'ls-remote','--symref',$canonicalUrl,'HEAD'",
-            '"refs/heads/$defaultBranch"',
+            "$symrefLines = @(Invoke-GitLines -Arguments @('ls-remote','--symref',$canonicalUrl,'HEAD'))",
+            "$headLines = @(Invoke-GitLines -Arguments @('ls-remote',$canonicalUrl,\"refs/heads/$defaultBranch\"))",
             "$rawBase/$expectedHead/$relativeRoot/$name",
             "'Recover-AgentSwitchboardCheckout.ps1'",
             "'Resolve-AgentSwitchboardCheckout.ps1'",
@@ -45,6 +45,7 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
             text.index('Join-Path $verifiedRoot "$relativeRoot/Recover-OpenCodeRuntime.ps1"'),
         )
         self.assertNotIn("-PreferredPath", text)
+        self.assertNotIn("\nexit ", text.lower())
         for forbidden in (
             "onedrive",
             "desktop\\dev",
