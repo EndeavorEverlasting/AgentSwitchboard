@@ -10,23 +10,27 @@ It does not edit governance, AgentSwitchboard product launchers, existing OpenCo
 
 The operator must not need to know, remember, or first navigate to an AgentSwitchboard checkout. The canonical bootstrap is `Invoke-AgentSwitchboardOpenCodeBootstrap.ps1`, and it is designed to run from any PowerShell directory, including another Git repository.
 
-Use GitHub's repository-content endpoint so the initial command does not assume a local path or a remembered checkout. The endpoint follows the repository's configured default branch. The bootstrap then independently resolves the current remote default branch and exact HEAD, stages the checkout router/resolver from that exact SHA, verifies the resulting root by origin and HEAD, performs `Set-Location -LiteralPath` to the verified root, and only then dispatches runtime recovery.
+Use GitHub's repository-content endpoint so the initial command does not assume a local path or a remembered checkout. The initial API request is bounded to 30 seconds. The bootstrap then independently resolves the current remote default branch and exact HEAD once, stages `Resolve-AgentSwitchboardCheckout.ps1` from that exact SHA with a bounded download, and passes the same immutable branch/SHA directly to the bounded resolver child. There is no second remote-head decision. After checkout recovery it verifies the resulting root by origin, exact HEAD, and clean status, performs `Set-Location -LiteralPath` to that verified root, and only then dispatches bounded runtime recovery.
 
 ```powershell
-$u='https://api.github.com/repos/EndeavorEverlasting/AgentSwitchboard/contents/tooling/harness/operational/opencode-lsp-setup/Invoke-AgentSwitchboardOpenCodeBootstrap.ps1'; $r=Invoke-RestMethod -Uri $u; $s=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(($r.content -replace '\s',''))); & ([scriptblock]::Create($s))
+$u='https://api.github.com/repos/EndeavorEverlasting/AgentSwitchboard/contents/tooling/harness/operational/opencode-lsp-setup/Invoke-AgentSwitchboardOpenCodeBootstrap.ps1'; $r=Invoke-RestMethod -Uri $u -TimeoutSec 30; $s=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(($r.content -replace '\s',''))); & ([scriptblock]::Create($s))
 ```
 
 Successful routing prints evidence such as:
 
 ```text
 BOOTSTRAP_CALLER_LOCATION=<where the operator happened to start>
+BOOTSTRAP_DEFAULT_BRANCH=<current configured default branch>
+BOOTSTRAP_EXPECTED_HEAD=<current remote default-branch SHA>
 BOOTSTRAP_RESOLVED_ROOT=<verified AgentSwitchboard worktree>
 BOOTSTRAP_VERIFIED_ORIGIN=https://github.com/EndeavorEverlasting/AgentSwitchboard.git
-BOOTSTRAP_VERIFIED_HEAD=<current remote default-branch SHA>
+BOOTSTRAP_VERIFIED_HEAD=<same resolved SHA>
 BOOTSTRAP_ACTIVE_LOCATION=<same verified AgentSwitchboard worktree>
 ```
 
 A wrong current directory is not an operator error. It is an untrusted candidate that the resolver ignores when its remote identity does not match. If no canonical local checkout is usable, the existing checkout resolver acquires an isolated canonical checkout under `%LOCALAPPDATA%\AgentSwitchboard` without deleting or rewriting the unrelated working directory.
+
+Remote Git resolution and exact-head staging default to 30-second bounds. The checkout child defaults to 120 seconds. Runtime recovery has its own internal deadlines plus a parent bootstrap deadline. Network or child-process stalls therefore return typed bootstrap failures instead of hanging indefinitely.
 
 `-Mode ResolveOnly` stops after checkout/root verification. The default `-Mode Recover` continues directly into focused OpenCode runtime recovery.
 
@@ -113,8 +117,12 @@ After Configure, run the generated CMD, open a `.py` or `.yml` file, and observe
 ## Troubleshooting
 
 - starting PowerShell in the wrong repo or an arbitrary directory: use the location-free bootstrap above; do not ask the operator to find an AgentSwitchboard worktree first.
+- `BOOTSTRAP_GIT_TIMEOUT`: canonical remote branch/head resolution exceeded its bounded network window.
+- `BOOTSTRAP_STAGE_DOWNLOAD_TIMEOUT`: exact-head resolver staging exceeded its bounded network window.
+- `BOOTSTRAP_CHECKOUT_RECOVERY_TIMEOUT`: exact-head checkout resolution exceeded its bounded child-process window.
+- `BOOTSTRAP_RUNTIME_RECOVERY_TIMEOUT`: focused runtime recovery exceeded its bounded parent window.
 - `BOOTSTRAP_WRONG_REPOSITORY`: a resolved root failed canonical origin verification; unrelated folders are preserved.
-- `BOOTSTRAP_HEAD_MISMATCH`: the acquired worktree does not match the freshly resolved remote default HEAD; stale proof is refused.
+- `BOOTSTRAP_HEAD_MISMATCH`: the acquired worktree does not match the exact head already passed to the resolver; stale or inconsistent proof is refused.
 - `WRONG_REPOSITORY`: repository-local setup reached the wrong origin; route through the location-free bootstrap rather than manually navigating.
 - `OPENCODE_NOT_FOUND`: runtime recovery repairs OpenCode only and must not delegate to broad command-shim/technician setup.
 - missing `LOCALAPPDATA`: stop before recovery; the router will not create a shim under a different state root than Inspect uses.
@@ -140,4 +148,4 @@ After Configure, run the generated CMD, open a `.py` or `.yml` file, and observe
 
 ## Validation
 
-`Test-OpenCodeLspHarness.cmd` proves a usable Python 3 runtime, runs the focused harness plus cwd-independent-bootstrap contracts, runs PowerShell completeness and canonical documentation validation, and finishes with diff hygiene. Hosted Windows CI additionally starts from an unrelated temporary directory and executes `Invoke-AgentSwitchboardOpenCodeBootstrap.ps1 -Mode ResolveOnly` so current-working-directory independence is exercised as behavior rather than inferred from tokens.
+`Test-OpenCodeLspHarness.cmd` proves a usable Python 3 runtime, runs the focused harness plus cwd-independent-bootstrap contracts, runs PowerShell completeness and canonical documentation validation, and finishes with diff hygiene. Hosted Windows CI additionally starts from an unrelated temporary directory and executes `Invoke-AgentSwitchboardOpenCodeBootstrap.ps1 -Mode ResolveOnly` so current-working-directory independence is exercised as behavior rather than inferred from tokens. The smoke verifies that the same caller runspace ends at the canonical AgentSwitchboard root and current remote head.
