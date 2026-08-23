@@ -26,9 +26,11 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
             "$headLines = @(Invoke-GitLines -Arguments @('ls-remote',$canonicalUrl,\"refs/heads/$defaultBranch\"))",
             "$resolverUri = \"$rawBase/$expectedHead/$relativeRoot/Resolve-AgentSwitchboardCheckout.ps1\"",
             "Save-BoundedRemoteFile -Uri $resolverUri -Destination $resolverPath",
+            "$resolverText = [IO.File]::ReadAllText($resolverPath)",
+            "$resolverSupportsBranchAdvance = $resolverText -match '\\[switch\\]\\$AllowRemoteBranchAdvance'",
+            "BOOTSTRAP_RESOLVER_SUPPORTS_BRANCH_ADVANCE=",
             "'-ExpectedBranch',$defaultBranch",
             "'-ExpectedHead',$expectedHead",
-            "'-AllowRemoteBranchAdvance'",
             "$resolutionResult = Invoke-BoundedProcess -FilePath $pwshPath",
             "BOOTSTRAP_CHECKOUT_RECOVERY_TIMEOUT",
             "Set-Location -LiteralPath $verifiedRoot",
@@ -43,6 +45,9 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
         ):
             self.assertIn(token, text, token)
 
+        capability_guard = text.index("if ($resolverSupportsBranchAdvance)")
+        switch_add = text.index("[void]$resolverArguments.Add('-AllowRemoteBranchAdvance')")
+        self.assertLess(capability_guard, switch_add)
         self.assertLess(
             text.index("Set-Location -LiteralPath $verifiedRoot"),
             text.index('Join-Path $verifiedRoot "$relativeRoot/Recover-OpenCodeRuntime.ps1"'),
