@@ -15,6 +15,28 @@ function Stop-Retry {
     throw ([InvalidOperationException]::new("$Code|$Message"))
 }
 
+function Get-LatestRuntimeReceiptPath {
+    param([Parameter(Mandatory)][string]$RunsRoot)
+
+    $item = @(
+        Get-ChildItem -LiteralPath $RunsRoot -Filter 'opencode-runtime-recovery.json' -File -Recurse -ErrorAction SilentlyContinue |
+            Sort-Object LastWriteTimeUtc -Descending |
+            Select-Object -First 1
+    )
+    if ($item.Count -eq 0) { return $null }
+    return [string]$item[0].FullName
+}
+
+function Read-JsonFile {
+    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][string]$FailureCode)
+    try {
+        return Get-Content -LiteralPath $Path -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+    }
+    catch {
+        Stop-Retry $FailureCode "Machine-local retry evidence could not be parsed: $Path"
+    }
+}
+
 if ($env:OS -ne 'Windows_NT') {
     Stop-Retry 'OPENCODE_PINNED_RETRY_WINDOWS_ONLY' 'The release-pinned OpenCode retry is Windows-only.'
 }
@@ -26,20 +48,24 @@ if ([string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
 }
 
 $runtimeRunsRoot = Join-Path $env:LOCALAPPDATA 'AgentSwitchboard\opencode-lsp\runs'
-$latestReceiptPath = @(
-    Get-ChildItem -LiteralPath $runtimeRunsRoot -Filter 'opencode-runtime-recovery.json' -File -Recurse -ErrorAction SilentlyContinue |
-        Sort-Object LastWriteTimeUtc -Descending |
-        Select-Object -First 1
-).FullName
+$latestReceiptPath = Get-LatestRuntimeReceiptPath -RunsRoot $runtimeRunsRoot
 if ([string]::IsNullOrWhiteSpace([string]$latestReceiptPath)) {
     Stop-Retry 'OPENCODE_PINNED_RETRY_RECEIPT_MISSING' 'No prior OpenCode runtime-recovery receipt was found; this retry is only valid after a proven installer failure.'
 }
-
-try {
-    $priorReceipt = Get-Content -LiteralPath $latestReceiptPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+$priorReceipt = Read-JsonFile -Path $latestReceiptPath -FailureCode 'OPENCODE_PINNED_RETRY_RECEIPT_INVALID'
+$priorRunId = [string]$priorReceipt.runId
+if ([string]::IsNullOrWhiteSpace($priorRunId)) {
+    Stop-Retry 'OPENCODE_PINNED_RETRY_RECEIPT_INVALID' 'The latest OpenCode runtime-recovery receipt did not contain a runId.'
 }
-catch {
-    Stop-Retry 'OPENCODE_PINNED_RETRY_RECEIPT_INVALID' 'The latest OpenCode runtime-recovery receipt could not be parsed.'
+
+foreach ($attemptFile in @(
+    Get-ChildItem -LiteralPath $runtimeRunsRoot -Filter 'opencode-release-pinned-retry.json' -File -Recurse -ErrorAction SilentlyContinue
+)) {
+    try { $attempt = Get-Content -LiteralPath $attemptFile.FullName -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop }
+    catch { continue }
+    if ([string]$attempt.sourceRunId -eq $priorRunId -or [string]$attempt.resultRunId -eq $priorRunId) {
+        Stop-Retry 'OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED' "The latest runtime-recovery run '$priorRunId' is already bound to a release-pinned retry attempt."
+    }
 }
 
 if ([string]$priorReceipt.failureCode -ne 'OPENCODE_POST_INSTALL_MISSING' -or
@@ -84,6 +110,22 @@ catch {
     Stop-Retry 'OPENCODE_PINNED_RETRY_BOOTSTRAP_INVALID' 'Canonical bootstrap content could not be decoded.'
 }
 
+$attemptPath = Join-Path (Split-Path -Parent $latestReceiptPath) 'opencode-release-pinned-retry.json'
+if (Test-Path -LiteralPath $attemptPath) {
+    Stop-Retry 'OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED' "The source runtime-recovery run '$priorRunId' already contains a release-pinned retry attempt receipt."
+}
+$attemptReceipt = [ordered]@{
+    schema = 'agentswitchboard.opencode-release-pinned-retry.v1'
+    sourceRunId = $priorRunId
+    selectedVersion = $selectedVersion
+    releaseSelectionOwner = 'windows-github-api'
+    attemptedAt = [DateTime]::UtcNow.ToString('o')
+    resultRunId = $null
+    status = 'started'
+    secretOrEnvironmentDumpPersisted = $false
+}
+$attemptReceipt | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $attemptPath -Encoding utf8NoBOM
+
 $hadVersion = Test-Path Env:VERSION
 $priorVersion = if ($hadVersion) { [string]$env:VERSION } else { $null }
 $hadWslEnv = Test-Path Env:WSLENV
@@ -101,11 +143,29 @@ try {
     $env:VERSION = $selectedVersion
     $env:WSLENV = ($wslEntries -join ':')
     Write-Host "OPENCODE_PINNED_RETRY_PRIOR_RECEIPT=$latestReceiptPath"
+    Write-Host "OPENCODE_PINNED_RETRY_ATTEMPT_RECEIPT=$attemptPath"
     Write-Host "OPENCODE_PINNED_RETRY_RELEASE=$selectedVersion"
     Write-Host 'OPENCODE_PINNED_RETRY_RELEASE_SOURCE=windows-github-api'
     & ([scriptblock]::Create($bootstrapText)) -ModelId $ModelId -Distribution $Distribution -InstallTimeoutSeconds $InstallTimeoutSeconds -NetworkTimeoutSeconds $NetworkTimeoutSeconds
 }
 finally {
+    $resultReceiptPath = Get-LatestRuntimeReceiptPath -RunsRoot $runtimeRunsRoot
+    if (-not [string]::IsNullOrWhiteSpace([string]$resultReceiptPath) -and
+        -not [string]::Equals($resultReceiptPath, $latestReceiptPath, [StringComparison]::OrdinalIgnoreCase)) {
+        try {
+            $resultReceipt = Get-Content -LiteralPath $resultReceiptPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+            $attemptReceipt.resultRunId = [string]$resultReceipt.runId
+            $attemptReceipt.status = 'completed-with-runtime-receipt'
+        }
+        catch {
+            $attemptReceipt.status = 'completed-with-unreadable-runtime-receipt'
+        }
+    }
+    else {
+        $attemptReceipt.status = 'completed-without-new-runtime-receipt'
+    }
+    $attemptReceipt | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $attemptPath -Encoding utf8NoBOM
+
     if ($hadVersion) { $env:VERSION = $priorVersion } else { Remove-Item Env:VERSION -ErrorAction SilentlyContinue }
     if ($hadWslEnv) { $env:WSLENV = $priorWslEnv } else { Remove-Item Env:WSLENV -ErrorAction SilentlyContinue }
 }
