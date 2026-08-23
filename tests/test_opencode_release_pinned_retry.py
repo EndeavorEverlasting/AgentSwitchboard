@@ -11,6 +11,7 @@ RETRY = H / "Retry-OpenCodeRuntimeWithPinnedRelease.ps1"
 MANIFEST = H / "manifest.json"
 ARTIFACTS = H / "artifact-registry.json"
 FAILURE_WORKFLOW = H / "workflows" / "failure-recovery.workflow.json"
+DOCS = ROOT / "docs" / "harness" / "opencode-lsp-workstation-setup.md"
 ROOT_CMD = ROOT / "Test-OpenCodeLspHarness.cmd"
 CI = ROOT / ".github" / "workflows" / "opencode-lsp-harness.yml"
 
@@ -142,6 +143,19 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
         policy = workflow["failurePolicy"].lower()
         self.assertIn("release-pinned retry", policy)
         self.assertIn("attempted once", policy)
+
+    def test_operator_guide_has_location_free_retry_and_stop_condition(self) -> None:
+        docs = read(DOCS)
+        lower = docs.lower()
+        self.assertIn("release-pinned retry after a missing binary", lower)
+        self.assertIn("Retry-OpenCodeRuntimeWithPinnedRelease.ps1", docs)
+        self.assertIn(
+            "https://api.github.com/repos/EndeavorEverlasting/AgentSwitchboard/contents/tooling/harness/operational/opencode-lsp-setup/Retry-OpenCodeRuntimeWithPinnedRelease.ps1",
+            docs,
+        )
+        self.assertIn("OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED", docs)
+        self.assertIn("opencode-release-pinned-retry.json", docs)
+        self.assertIn("run it from any powershell directory", lower)
 
     def test_local_and_hosted_harnesses_run_this_contract_and_parse_retry(self) -> None:
         module = "tests.test_opencode_release_pinned_retry"
