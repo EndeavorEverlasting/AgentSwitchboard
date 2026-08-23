@@ -63,7 +63,9 @@ foreach ($attemptFile in @(
 )) {
     try { $attempt = Get-Content -LiteralPath $attemptFile.FullName -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop }
     catch { continue }
-    if ([string]$attempt.sourceRunId -eq $priorRunId -or [string]$attempt.resultRunId -eq $priorRunId) {
+    $sourceRunId = if ($attempt.PSObject.Properties.Name -contains 'sourceRunId') { [string]$attempt.sourceRunId } else { '' }
+    $resultRunId = if ($attempt.PSObject.Properties.Name -contains 'resultRunId') { [string]$attempt.resultRunId } else { '' }
+    if ($sourceRunId -eq $priorRunId -or $resultRunId -eq $priorRunId) {
         Stop-Retry 'OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED' "The latest runtime-recovery run '$priorRunId' is already bound to a release-pinned retry attempt."
     }
 }
@@ -110,12 +112,13 @@ catch {
     Stop-Retry 'OPENCODE_PINNED_RETRY_BOOTSTRAP_INVALID' 'Canonical bootstrap content could not be decoded.'
 }
 
-$attemptPath = Join-Path (Split-Path -Parent $latestReceiptPath) 'opencode-release-pinned-retry.json'
-if (Test-Path -LiteralPath $attemptPath) {
-    Stop-Retry 'OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED' "The source runtime-recovery run '$priorRunId' already contains a release-pinned retry attempt receipt."
-}
+$retryRunId = '{0}-{1}' -f ([DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ')), ([guid]::NewGuid().ToString('N').Substring(0,8))
+$retryRunRoot = Join-Path $runtimeRunsRoot $retryRunId
+$null = New-Item -ItemType Directory -Path $retryRunRoot -Force
+$attemptPath = Join-Path $retryRunRoot 'opencode-release-pinned-retry.json'
 $attemptReceipt = [ordered]@{
     schema = 'agentswitchboard.opencode-release-pinned-retry.v1'
+    retryRunId = $retryRunId
     sourceRunId = $priorRunId
     selectedVersion = $selectedVersion
     releaseSelectionOwner = 'windows-github-api'
