@@ -11,6 +11,7 @@ on:
       - 'tests/test_opencode_lsp_harness.py'
       - 'tests/test_opencode_runtime_recovery.py'
       - 'tests/test_opencode_installer_exit_grounding.py'
+      - 'tests/test_opencode_cwd_independent_bootstrap.py'
       - 'Test-OpenCodeLspHarness.cmd'
       - '.ai/skills/opencode-lsp-workstation-setup/**'
       - 'docs/harness/opencode-lsp-workstation-setup.md'
@@ -26,6 +27,7 @@ on:
       - 'tests/test_opencode_lsp_harness.py'
       - 'tests/test_opencode_runtime_recovery.py'
       - 'tests/test_opencode_installer_exit_grounding.py'
+      - 'tests/test_opencode_cwd_independent_bootstrap.py'
       - 'Test-OpenCodeLspHarness.cmd'
       - '.ai/skills/opencode-lsp-workstation-setup/**'
       - 'docs/harness/opencode-lsp-workstation-setup.md'
@@ -42,7 +44,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Dependency-free contracts
-        run: python -m unittest tests.test_opencode_lsp_harness tests.test_opencode_runtime_recovery tests.test_opencode_installer_exit_grounding -v
+        run: python -m unittest tests.test_opencode_lsp_harness tests.test_opencode_runtime_recovery tests.test_opencode_installer_exit_grounding tests.test_opencode_cwd_independent_bootstrap -v
+      - name: CWD-independent bootstrap smoke
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $wrongRoot = Join-Path $env:RUNNER_TEMP 'unrelated-working-directory'
+          New-Item -ItemType Directory -Path $wrongRoot -Force | Out-Null
+          Set-Location -LiteralPath $wrongRoot
+          & "$env:GITHUB_WORKSPACE\tooling\harness\operational\opencode-lsp-setup\Invoke-AgentSwitchboardOpenCodeBootstrap.ps1" -Mode ResolveOnly
       - name: Windows CMD entrypoint
         if: runner.os == 'Windows'
         shell: cmd
