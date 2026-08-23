@@ -106,7 +106,9 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
         self.assertIn("opencode_post_install_missing", joined)
         self.assertIn("release-pinned retry", joined)
         self.assertIn("windows host", joined)
-        self.assertIn("one retry", workflow["failurePolicy"].lower())
+        policy = workflow["failurePolicy"].lower()
+        self.assertIn("release-pinned retry", policy)
+        self.assertIn("attempted once", policy)
 
     def test_local_and_hosted_harnesses_run_this_contract_and_parse_retry(self) -> None:
         module = "tests.test_opencode_release_pinned_retry"
