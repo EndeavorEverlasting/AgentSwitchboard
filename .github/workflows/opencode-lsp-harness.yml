@@ -11,6 +11,7 @@ on:
       - 'tests/test_opencode_lsp_harness.py'
       - 'tests/test_opencode_runtime_recovery.py'
       - 'tests/test_opencode_installer_exit_grounding.py'
+      - 'tests/test_opencode_cwd_independent_bootstrap.py'
       - 'Test-OpenCodeLspHarness.cmd'
       - '.ai/skills/opencode-lsp-workstation-setup/**'
       - 'docs/harness/opencode-lsp-workstation-setup.md'
@@ -26,6 +27,7 @@ on:
       - 'tests/test_opencode_lsp_harness.py'
       - 'tests/test_opencode_runtime_recovery.py'
       - 'tests/test_opencode_installer_exit_grounding.py'
+      - 'tests/test_opencode_cwd_independent_bootstrap.py'
       - 'Test-OpenCodeLspHarness.cmd'
       - '.ai/skills/opencode-lsp-workstation-setup/**'
       - 'docs/harness/opencode-lsp-workstation-setup.md'
@@ -42,7 +44,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Dependency-free contracts
-        run: python -m unittest tests.test_opencode_lsp_harness tests.test_opencode_runtime_recovery tests.test_opencode_installer_exit_grounding -v
+        run: python -m unittest tests.test_opencode_lsp_harness tests.test_opencode_runtime_recovery tests.test_opencode_installer_exit_grounding tests.test_opencode_cwd_independent_bootstrap -v
+      - name: CWD-independent bootstrap smoke
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $canonical = 'https://github.com/EndeavorEverlasting/AgentSwitchboard.git'
+          $wrongRoot = Join-Path $env:RUNNER_TEMP 'unrelated-working-directory'
+          New-Item -ItemType Directory -Path $wrongRoot -Force | Out-Null
+          Set-Location -LiteralPath $wrongRoot
+          & "$env:GITHUB_WORKSPACE\tooling\harness\operational\opencode-lsp-setup\Invoke-AgentSwitchboardOpenCodeBootstrap.ps1" -Mode ResolveOnly
+          $active = [IO.Path]::GetFullPath([string](Get-Location).Path).TrimEnd([char[]]'\/')
+          $top = [IO.Path]::GetFullPath(([string](git rev-parse --show-toplevel)).Trim()).TrimEnd([char[]]'\/')
+          $origin = ([string](git remote get-url origin)).Trim()
+          $canonicalOrigin = ($canonical.TrimEnd('/') -replace '\.git$','')
+          $actualOrigin = ($origin.TrimEnd('/') -replace '\.git$','')
+          $head = ([string](git rev-parse HEAD)).Trim().ToLowerInvariant()
+          if (-not [string]::Equals($active, $top, [StringComparison]::OrdinalIgnoreCase)) { throw "bootstrap did not leave the caller at the verified root: active=$active top=$top" }
+          if (-not [string]::Equals($actualOrigin, $canonicalOrigin, [StringComparison]::OrdinalIgnoreCase)) { throw "bootstrap corrected to the wrong remote: $origin" }
+          if ($head -notmatch '^[0-9a-f]{40}$') { throw "bootstrap left an invalid selected snapshot head: $head" }
       - name: Windows CMD entrypoint
         if: runner.os == 'Windows'
         shell: cmd
