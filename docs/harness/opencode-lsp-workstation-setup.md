@@ -112,7 +112,7 @@ The default install timeout is 180 seconds. An immutable installer-source change
 
 ### Release-pinned retry after a missing binary
 
-If the preserved runtime receipt proves `OPENCODE_POST_INSTALL_MISSING` after the reviewed installer returned nonzero, do not simply rerun the same install. `Retry-OpenCodeRuntimeWithPinnedRelease.ps1` owns one bounded retry for that exact state. It resolves one semantic OpenCode release through the Windows host GitHub API, temporarily forwards only `VERSION` into WSL through `WSLENV`, and then re-enters the current canonical bootstrap. The reviewed installer source commit remains unchanged; only its already-supported explicit release input is supplied. Prior `VERSION`/`WSLENV` values are restored afterward.
+If the newest parseable runtime receipt for the requested WSL distribution proves `OPENCODE_POST_INSTALL_MISSING` after the reviewed installer returned nonzero, do not simply rerun the same install. `Retry-OpenCodeRuntimeWithPinnedRelease.ps1` owns one bounded retry for that exact state. It selects evidence only for the requested WSL distribution, atomically claims the source run before any release-network or installer mutation, resolves one semantic OpenCode release through the Windows host GitHub API, temporarily forwards only `VERSION` into WSL through `WSLENV`, and then re-enters the current canonical bootstrap. The reviewed installer source commit remains unchanged; only its already-supported explicit release input is supplied. Prior `VERSION`/`WSLENV` values are restored afterward.
 
 The retry is location-free. Run it from any PowerShell directory:
 
@@ -120,7 +120,9 @@ The retry is location-free. Run it from any PowerShell directory:
 $u='https://api.github.com/repos/EndeavorEverlasting/AgentSwitchboard/contents/tooling/harness/operational/opencode-lsp-setup/Retry-OpenCodeRuntimeWithPinnedRelease.ps1'; $r=Invoke-RestMethod -Uri $u -TimeoutSec 30; $s=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(($r.content -replace '\s',''))); & ([scriptblock]::Create($s))
 ```
 
-Before dispatch, the helper creates its own retry run directory under `%LOCALAPPDATA%\AgentSwitchboard\opencode-lsp\runs` and writes `opencode-release-pinned-retry.json` there. It records only retry run ID, source run ID, selected release, attempt time, result run ID when available, status, and the fact that no environment dump is persisted. It does not modify the source or resulting runtime-recovery run. A runtime run already bound as the source or result of that artifact fails closed with `OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED`; the failure workflow does not loop this repair indefinitely.
+Before release lookup, the helper creates an atomic claim at `%LOCALAPPDATA%\AgentSwitchboard\opencode-lsp\retry-claims\<source-run-id>.claim` using create-new semantics; a collision fails closed with `OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED`. It then creates its own retry run directory under `%LOCALAPPDATA%\AgentSwitchboard\opencode-lsp\runs` and writes `opencode-release-pinned-retry.json` there. The artifact records only retry run ID, source run ID, requested distribution, selected release, attempt time, result run ID when unique, every new same-distribution result run ID, status, and the fact that no environment dump is persisted. It does not modify the source or resulting runtime-recovery runs.
+
+Immediately before bootstrap dispatch, the helper verifies that the claimed source is still the newest runtime receipt for the requested WSL distribution. If a newer same-distribution receipt appeared concurrently, it fails closed with `OPENCODE_PINNED_RETRY_SOURCE_STALE` instead of installing against stale evidence. A runtime run already bound as the source or result of a retry artifact also fails closed with `OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED`; the failure workflow does not loop this repair indefinitely.
 
 ## Runtime proof
 
@@ -144,7 +146,8 @@ After Configure, run the generated CMD, open a `.py` or `.yml` file, and observe
 - installer provenance needs updating: review the current upstream `anomalyco/opencode` installer, update the pinned source commit and contract together, and revalidate; do not silently switch recovery back to a mutable branch URL.
 - `OPENCODE_INSTALLER_CONTRACT_DRIFT`: the pinned installer no longer matches the repository's reviewed install-path/no-profile-mutation assertions; stop before execution.
 - `OPENCODE_POST_INSTALL_MISSING`: after a nonzero installer attempt, use the evidence-gated release-pinned retry above once rather than repeating the same moving release-discovery path inside WSL.
-- `OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED`: this failure chain has already consumed its one host-selected-release retry; preserve the resulting runtime receipt and diagnose that next typed gate rather than looping.
+- `OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED`: this failure chain has already consumed or claimed its one host-selected-release retry; preserve the resulting evidence and diagnose that next typed gate rather than looping.
+- `OPENCODE_PINNED_RETRY_SOURCE_STALE`: a newer runtime receipt for the requested WSL distribution appeared after the source was claimed; installer dispatch is refused rather than acting on stale evidence.
 - `OPENCODE_POST_INSTALL_NOT_EXECUTABLE`: after the installer attempt, its reviewed executable path cannot be executed.
 - `OPENCODE_POST_INSTALL_VERSION_TIMEOUT`: the fresh binary or its final independent reproof did not complete within its bounded timeout.
 - `OPENCODE_POST_INSTALL_CPU_INCOMPATIBLE`: the fresh binary produced a SIGILL-specific illegal-instruction/native CPU-compatibility signature.
