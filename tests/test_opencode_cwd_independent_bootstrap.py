@@ -112,7 +112,7 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
     def test_manifest_registers_location_free_operator_entrypoint(self) -> None:
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         recovery = manifest["repositoryRecovery"]
-        self.assertEqual(17, manifest["schemaVersion"])
+        self.assertEqual(18, manifest["schemaVersion"])
         self.assertEqual(
             "tooling/harness/operational/opencode-lsp-setup/Invoke-AgentSwitchboardOpenCodeBootstrap.ps1",
             manifest["entrypoints"]["cwdIndependentBootstrap"],
@@ -121,6 +121,7 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
         self.assertFalse(recovery["knownLocalRepoPathRequired"])
         self.assertTrue(recovery["bootstrapStagesExactDefaultHeadResolver"])
         self.assertTrue(recovery["bootstrapResolvesRemoteHeadOnce"])
+        self.assertTrue(recovery["bootstrapNegotiatesResolverCapabilities"])
         self.assertEqual(30, recovery["bootstrapNetworkTimeoutSeconds"])
         self.assertEqual(120, recovery["bootstrapCheckoutTimeoutSeconds"])
         self.assertIn("current directory", recovery["proofRule"].lower())
@@ -128,6 +129,8 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
         self.assertIn("resolved once", recovery["proofRule"].lower())
         self.assertIn("bounded", recovery["proofRule"].lower())
         self.assertIn("ancestor", recovery["proofRule"].lower())
+        self.assertIn("capability", recovery["proofRule"].lower())
+        self.assertIn("older published resolvers", recovery["proofRule"].lower())
 
     def test_operator_guide_starts_with_location_free_bootstrap(self) -> None:
         text = DOCS.read_text(encoding="utf-8")
