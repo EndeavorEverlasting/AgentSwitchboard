@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 H = ROOT / "tooling" / "harness" / "operational" / "opencode-lsp-setup"
 RETRY = H / "Retry-OpenCodeRuntimeWithPinnedRelease.ps1"
 MANIFEST = H / "manifest.json"
+ARTIFACTS = H / "artifact-registry.json"
 FAILURE_WORKFLOW = H / "workflows" / "failure-recovery.workflow.json"
 ROOT_CMD = ROOT / "Test-OpenCodeLspHarness.cmd"
 CI = ROOT / ".github" / "workflows" / "opencode-lsp-harness.yml"
@@ -34,6 +35,27 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
         bootstrap = text.index("$bootstrapApiUrl =")
         self.assertLess(gate, release)
         self.assertLess(release, bootstrap)
+
+    def test_retry_is_durably_single_use_per_failure_chain(self) -> None:
+        text = read(RETRY)
+        for token in (
+            "function Get-LatestRuntimeReceiptPath",
+            "opencode-release-pinned-retry.json",
+            "sourceRunId",
+            "resultRunId",
+            "OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED",
+            "agentswitchboard.opencode-release-pinned-retry.v1",
+            "secretOrEnvironmentDumpPersisted = $false",
+            "OPENCODE_PINNED_RETRY_ATTEMPT_RECEIPT=",
+            "completed-with-runtime-receipt",
+            "completed-without-new-runtime-receipt",
+        ):
+            self.assertIn(token, text, token)
+        marker_write = text.index("$attemptReceipt | ConvertTo-Json")
+        dispatch = text.index("& ([scriptblock]::Create($bootstrapText))")
+        self.assertLess(marker_write, dispatch, "attempt evidence must exist before retry dispatch")
+        self.assertIn("[string]$attempt.sourceRunId -eq $priorRunId", text)
+        self.assertIn("[string]$attempt.resultRunId -eq $priorRunId", text)
 
     def test_release_is_selected_on_windows_and_forwarded_to_wsl(self) -> None:
         text = read(RETRY)
@@ -84,7 +106,7 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, lower, forbidden)
 
-    def test_manifest_and_failure_workflow_register_one_bounded_retry(self) -> None:
+    def test_manifest_artifacts_and_failure_workflow_register_one_bounded_retry(self) -> None:
         manifest = json.loads(read(MANIFEST))
         recovery = manifest["runtimeRecovery"]
         self.assertEqual(
@@ -99,7 +121,18 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
         self.assertEqual(30, recovery["releaseMetadataTimeoutSeconds"])
         self.assertTrue(recovery["releaseVersionForwardedThroughWslEnv"])
         self.assertTrue(recovery["releasePinnedRetryRequiresPriorMissingReceipt"])
-        self.assertIn("moving latest-release discovery", recovery["proofRule"].lower())
+        self.assertEqual("opencode-release-pinned-retry.json", recovery["releasePinnedRetryAttemptArtifact"])
+        self.assertTrue(recovery["releasePinnedRetrySingleAttemptEnforced"])
+        proof = recovery["proofRule"].lower()
+        self.assertIn("moving latest-release discovery", proof)
+        self.assertIn("sourcerunid", proof)
+        self.assertIn("resultrunid", proof)
+        self.assertIn("already_attempted", proof)
+
+        artifacts = json.loads(read(ARTIFACTS))
+        retry_artifacts = [a for a in artifacts["artifacts"] if a["artifactId"] == "release-pinned-retry-json"]
+        self.assertEqual(1, len(retry_artifacts))
+        self.assertEqual("opencode-release-pinned-retry.json", retry_artifacts[0]["fileName"])
 
         workflow = json.loads(read(FAILURE_WORKFLOW))
         joined = " ".join(workflow["steps"]).lower()
@@ -117,6 +150,7 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
         self.assertIn("tests/test_opencode_release_pinned_retry.py", ci)
         self.assertIn(module, ci)
         self.assertIn("Retry-OpenCodeRuntimeWithPinnedRelease.ps1", ci)
+        self.assertIn("Join-Path $env:GITHUB_WORKSPACE", ci)
         self.assertIn("Parser]::ParseFile", ci)
 
 
