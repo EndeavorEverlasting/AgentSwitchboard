@@ -1,0 +1,46 @@
+name: Prompt Kit scheduled sync
+
+on:
+  pull_request:
+    paths:
+      - 'PromptKit-Website-Sync.cmd'
+      - 'tooling/profiles/windows/Sync-PromptKitWebsite.ps1'
+      - 'tooling/profiles/windows/Manage-PromptKitWebsiteSchedule.ps1'
+      - 'tooling/profiles/windows/harness/prompt-kit-sync/**'
+      - 'scripts/Test-PromptKitScheduledSync.ps1'
+      - 'tests/test_prompt_kit_scheduled_sync.py'
+      - 'docs/harness/prompt-kit-scheduled-sync.md'
+      - '.github/workflows/prompt-kit-scheduled-sync.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'PromptKit-Website-Sync.cmd'
+      - 'tooling/profiles/windows/Sync-PromptKitWebsite.ps1'
+      - 'tooling/profiles/windows/Manage-PromptKitWebsiteSchedule.ps1'
+      - 'tooling/profiles/windows/harness/prompt-kit-sync/**'
+      - 'scripts/Test-PromptKitScheduledSync.ps1'
+      - 'tests/test_prompt_kit_scheduled_sync.py'
+      - 'docs/harness/prompt-kit-scheduled-sync.md'
+      - '.github/workflows/prompt-kit-scheduled-sync.yml'
+
+jobs:
+  contract-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Run dependency-free source contracts
+        run: python -m unittest tests.test_prompt_kit_scheduled_sync -v
+
+  contract-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Parse PowerShell and run contracts
+        shell: powershell
+        run: .\scripts\Test-PromptKitScheduledSync.ps1
