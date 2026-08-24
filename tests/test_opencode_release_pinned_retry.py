@@ -36,7 +36,7 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
             self.assertIn(token, text, token)
         selection = text.index("$selectedEvidence = $distributionReceipts[0]")
         gate = text.index("if ([string]$priorReceipt.failureCode")
-        release = text.index("$releaseApiUrl =")
+        release = text.index("Resolve-OpenCodeReleaseVersion -TimeoutSeconds")
         self.assertLess(selection, gate)
         self.assertLess(gate, release)
 
@@ -48,15 +48,61 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
             "[IO.FileMode]::CreateNew",
             "[IO.FileShare]::None",
             "OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED",
-            "agentswitchboard.opencode-release-pinned-retry-claim.v1",
+            "agentswitchboard.opencode-release-pinned-retry-claim.v2",
+            "retryRunId = $retryRunId",
+            "dispatchStarted = $false",
             "secretOrEnvironmentDumpPersisted = $false",
         ):
             self.assertIn(token, text, token)
         claim = text.index("[IO.File]::Open($claimPath")
-        release = text.index("Invoke-RestMethod -Uri $releaseApiUrl")
+        release = text.index("Resolve-OpenCodeReleaseVersion -TimeoutSeconds")
         dispatch = text.index("& ([scriptblock]::Create($bootstrapText))")
         self.assertLess(claim, release)
         self.assertLess(claim, dispatch)
+
+    def test_predispatch_claim_is_leased_recoverable_and_dispatch_is_consumed(self) -> None:
+        text = read(RETRY)
+        for token in (
+            "$claimLeaseSeconds = (3 * $NetworkTimeoutSeconds) + 30",
+            "function Test-AttemptConsumed",
+            "function Release-OwnedPreDispatchClaim",
+            "abandoned-before-dispatch",
+            "OPENCODE_PINNED_RETRY_RECOVERED_PREDISPATCH_CLAIM=",
+            "pre-dispatch-failed",
+            "preDispatchFailureCode",
+            "if (-not $dispatchStarted)",
+            "Release-OwnedPreDispatchClaim -Path $claimPath -RetryRunId $retryRunId",
+            "$dispatchStarted = $true",
+        ):
+            self.assertIn(token, text, token)
+        lease = text.index("$claimLeaseSeconds =")
+        stale_reclaim = text.index("OPENCODE_PINNED_RETRY_RECOVERED_PREDISPATCH_CLAIM=")
+        claim = text.index("[IO.File]::Open($claimPath")
+        dispatch_started = text.index("$dispatchStarted = $true")
+        bootstrap_dispatch = text.index("& ([scriptblock]::Create($bootstrapText))")
+        self.assertLess(lease, stale_reclaim)
+        self.assertLess(stale_reclaim, claim)
+        self.assertLess(claim, dispatch_started)
+        self.assertLess(dispatch_started, bootstrap_dispatch)
+
+    def test_release_redirect_is_primary_and_rest_api_is_bounded_fallback(self) -> None:
+        text = read(RETRY)
+        for token in (
+            "function Resolve-OpenCodeReleaseVersion",
+            "https://github.com/anomalyco/opencode/releases/latest",
+            "Invoke-WebRequest -Uri $releaseRedirectUrl",
+            "-MaximumRedirection 5",
+            "BaseResponse.RequestMessage.RequestUri.AbsoluteUri",
+            "windows-github-release-redirect",
+            "https://api.github.com/repos/anomalyco/opencode/releases/latest",
+            "Invoke-RestMethod -Uri $releaseApiUrl",
+            "windows-github-api",
+            "OPENCODE_RELEASE_DISCOVERY_FAILED",
+        ):
+            self.assertIn(token, text, token)
+        redirect = text.index("Invoke-WebRequest -Uri $releaseRedirectUrl")
+        rest = text.index("Invoke-RestMethod -Uri $releaseApiUrl")
+        self.assertLess(redirect, rest)
 
     def test_retry_artifact_is_isolated_and_binds_all_new_result_runs(self) -> None:
         text = read(RETRY)
@@ -79,24 +125,35 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
         marker_write = text.index("$attemptReceipt | ConvertTo-Json")
         dispatch = text.index("& ([scriptblock]::Create($bootstrapText))")
         self.assertLess(marker_write, dispatch)
-        self.assertIn("$resultRunIds -contains $priorRunId", text)
         self.assertIn("$_ -notin $preexistingRunIds", text)
         self.assertNotIn("Join-Path (Split-Path -Parent $latestReceiptPath) 'opencode-release-pinned-retry.json'", text)
 
-    def test_release_is_selected_on_windows_and_forwarded_to_wsl(self) -> None:
+    def test_release_is_forwarded_to_wsl_without_broad_setup(self) -> None:
         text = read(RETRY)
         for token in (
-            "https://api.github.com/repos/anomalyco/opencode/releases/latest",
-            "Invoke-RestMethod -Uri $releaseApiUrl",
-            "-TimeoutSec $NetworkTimeoutSeconds",
-            "^v(?<version>[0-9]+(?:\\.[0-9]+){2}",
             "$env:VERSION = $selectedVersion",
             "$env:WSLENV = ($wslEntries -join ':')",
             "$wslEntries += 'VERSION'",
-            "OPENCODE_PINNED_RETRY_RELEASE_SOURCE=windows-github-api",
+            "OPENCODE_PINNED_RETRY_RELEASE_SOURCE=$releaseSelectionOwner",
         ):
             self.assertIn(token, text, token)
         self.assertNotIn("OPENCODE_INSTALL_DIR", text)
+        lower = text.lower()
+        for forbidden in (
+            "setup-technicianagentswitchboard",
+            "repair-technician-command-shims",
+            "winget",
+            "choco ",
+            "scoop ",
+            "apt install",
+            "npm install",
+            "git reset",
+            "git clean",
+            "push --force",
+            "apikey",
+            "password=",
+        ):
+            self.assertNotIn(forbidden, lower, forbidden)
 
     def test_retry_reenters_current_canonical_bootstrap_and_restores_environment(self) -> None:
         text = read(RETRY)
@@ -120,35 +177,21 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
         self.assertLess(cleanup, version_restore)
         self.assertLess(cleanup, wslenv_restore)
 
-    def test_retry_does_not_expand_into_broad_workstation_setup(self) -> None:
-        lower = read(RETRY).lower()
-        for forbidden in (
-            "setup-technicianagentswitchboard",
-            "repair-technician-command-shims",
-            "winget",
-            "choco ",
-            "scoop ",
-            "apt install",
-            "npm install",
-            "git reset",
-            "git clean",
-            "push --force",
-            "apikey",
-            "password=",
-        ):
-            self.assertNotIn(forbidden, lower, forbidden)
-
-    def test_manifest_artifacts_and_failure_workflow_register_one_bounded_retry(self) -> None:
+    def test_manifest_artifacts_and_failure_workflow_register_bounded_retry(self) -> None:
         manifest = json.loads(read(MANIFEST))
         recovery = manifest["runtimeRecovery"]
         self.assertEqual(
             "tooling/harness/operational/opencode-lsp-setup/Retry-OpenCodeRuntimeWithPinnedRelease.ps1",
             manifest["entrypoints"]["releasePinnedRuntimeRetry"],
         )
-        self.assertEqual("windows-github-api", recovery["releaseSelectionOwner"])
+        self.assertEqual("windows-github-release-redirect-with-api-fallback", recovery["releaseSelectionOwner"])
+        self.assertEqual(
+            "https://github.com/anomalyco/opencode/releases/latest",
+            recovery["releaseRedirectUrl"],
+        )
         self.assertEqual(
             "https://api.github.com/repos/anomalyco/opencode/releases/latest",
-            recovery["releaseMetadataUrl"],
+            recovery["releaseApiFallbackUrl"],
         )
         self.assertEqual(30, recovery["releaseMetadataTimeoutSeconds"])
         self.assertTrue(recovery["releaseVersionForwardedThroughWslEnv"])
@@ -160,19 +203,17 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
         )
         self.assertTrue(recovery["releasePinnedRetrySingleAttemptEnforced"])
         self.assertTrue(recovery["releasePinnedRetryDistributionBound"])
-        self.assertEqual(
-            "%LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/retry-claims/<source-run-id>.claim",
-            recovery["releasePinnedRetryClaim"],
-        )
+        self.assertTrue(recovery["releasePinnedRetryPreDispatchClaimRecoverable"])
+        self.assertEqual("(3 * NetworkTimeoutSeconds) + 30", recovery["releasePinnedRetryClaimLeaseSecondsFormula"])
         proof = recovery["proofRule"].lower()
-        self.assertIn("moving latest-release discovery", proof)
+        self.assertIn("redirect", proof)
+        self.assertIn("rest", proof)
+        self.assertIn("pre-dispatch", proof)
+        self.assertIn("lease", proof)
         self.assertIn("requested distribution", proof)
         self.assertIn("atomic", proof)
         self.assertIn("retryrunid", proof)
         self.assertIn("sourcerunid", proof)
-        self.assertIn("resultrunids", proof)
-        self.assertIn("without mutating either runtime-recovery run", proof)
-        self.assertIn("already_attempted", proof)
 
         artifacts = json.loads(read(ARTIFACTS))
         retry_artifacts = [a for a in artifacts["artifacts"] if a["artifactId"] == "release-pinned-retry-json"]
@@ -183,12 +224,13 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
         joined = " ".join(workflow["steps"]).lower()
         self.assertIn("opencode_post_install_missing", joined)
         self.assertIn("release-pinned retry", joined)
-        self.assertIn("windows host", joined)
+        self.assertIn("github release redirect", joined)
+        self.assertIn("pre-dispatch", joined)
         policy = workflow["failurePolicy"].lower()
-        self.assertIn("release-pinned retry", policy)
+        self.assertIn("installer dispatch", policy)
         self.assertIn("attempted once", policy)
 
-    def test_operator_guide_has_location_free_retry_and_stop_condition(self) -> None:
+    def test_operator_guide_has_location_free_retry_and_predispatch_recovery(self) -> None:
         docs = read(DOCS)
         lower = docs.lower()
         self.assertIn("release-pinned retry after a missing binary", lower)
@@ -198,11 +240,11 @@ class TestOpenCodeReleasePinnedRetry(unittest.TestCase):
             docs,
         )
         self.assertIn("OPENCODE_PINNED_RETRY_ALREADY_ATTEMPTED", docs)
-        self.assertIn("opencode-release-pinned-retry.json", docs)
+        self.assertIn("OPENCODE_PINNED_RETRY_RECOVERED_PREDISPATCH_CLAIM", docs)
+        self.assertIn("OPENCODE_RELEASE_DISCOVERY_FAILED", docs)
         self.assertIn("run it from any powershell directory", lower)
-        self.assertIn("own retry run directory", lower)
         self.assertIn("requested wsl distribution", lower)
-        self.assertIn("atomic claim", lower)
+        self.assertIn("pre-dispatch lease", lower)
 
     def test_local_and_hosted_harnesses_run_this_contract_and_parse_retry(self) -> None:
         module = "tests.test_opencode_release_pinned_retry"
