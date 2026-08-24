@@ -52,7 +52,8 @@ function Get-RetryAttemptsForSourceRun {
     )) {
         try { $attempt = Get-Content -LiteralPath $item.FullName -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop }
         catch { continue }
-        if ([string]$attempt.sourceRunId -ne $SourceRunId) { continue }
+        $attemptSourceRunId = if ($attempt.PSObject.Properties.Name -contains 'sourceRunId') { [string]$attempt.sourceRunId } else { '' }
+        if ($attemptSourceRunId -ne $SourceRunId) { continue }
         [void]$matches.Add([pscustomobject]@{
             Path = [string]$item.FullName
             Attempt = $attempt
