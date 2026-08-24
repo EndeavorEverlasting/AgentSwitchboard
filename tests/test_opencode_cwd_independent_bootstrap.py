@@ -112,7 +112,7 @@ class TestOpenCodeCwdIndependentBootstrap(unittest.TestCase):
     def test_manifest_registers_location_free_operator_entrypoint(self) -> None:
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         recovery = manifest["repositoryRecovery"]
-        self.assertEqual(18, manifest["schemaVersion"])
+        self.assertEqual(19, manifest["schemaVersion"])
         self.assertEqual(
             "tooling/harness/operational/opencode-lsp-setup/Invoke-AgentSwitchboardOpenCodeBootstrap.ps1",
             manifest["entrypoints"]["cwdIndependentBootstrap"],
