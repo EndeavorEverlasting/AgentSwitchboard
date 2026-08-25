@@ -1,0 +1,79 @@
+name: Repository knowledge reuse contract
+
+on:
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - ".ai/harness/harness-doctrine.policy.json"
+      - ".ai/skills/repo-intake/SKILL.md"
+      - "docs/governance/harness-doctrine.md"
+      - "docs/architecture/agentic-software-factory.md"
+      - "templates/repository-agent-contract/AGENTS.md"
+      - "templates/repository-agent-contract/.ai/harness/harness-doctrine.policy.json"
+      - "templates/repository-agent-contract/docs/governance/harness-doctrine.md"
+      - "scripts/Test-RepositoryKnowledgeReuseContract.ps1"
+      - ".github/workflows/repository-knowledge-reuse-contract.yml"
+  push:
+    branches: [main]
+    paths:
+      - "AGENTS.md"
+      - ".ai/harness/harness-doctrine.policy.json"
+      - ".ai/skills/repo-intake/SKILL.md"
+      - "docs/governance/harness-doctrine.md"
+      - "docs/architecture/agentic-software-factory.md"
+      - "templates/repository-agent-contract/AGENTS.md"
+      - "templates/repository-agent-contract/.ai/harness/harness-doctrine.policy.json"
+      - "templates/repository-agent-contract/docs/governance/harness-doctrine.md"
+      - "scripts/Test-RepositoryKnowledgeReuseContract.ps1"
+      - ".github/workflows/repository-knowledge-reuse-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Verify exact candidate
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+
+      - name: Parse validator
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+            'scripts/Test-RepositoryKnowledgeReuseContract.ps1',
+            [ref]$tokens,
+            [ref]$errors
+          )
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+
+      - name: Validate repository knowledge reuse contract
+        shell: pwsh
+        run: ./scripts/Test-RepositoryKnowledgeReuseContract.ps1
+
+      - name: Check repository hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${GITHUB_BASE_REF:-}" ]]; then
+            git diff --check "origin/${GITHUB_BASE_REF}...HEAD"
+          else
+            git diff --check HEAD^
+          fi
+          test -z "$(git status --short)"
