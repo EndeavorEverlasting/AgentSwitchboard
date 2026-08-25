@@ -14,6 +14,26 @@ Task-specific execution rules override generic closeout behavior when they remai
 
 Evidence comes before confidence. Preserve existing work before cleanup. Reuse existing contracts and helpers before invention. Completion requires checks, artifacts, and commit or GitHub evidence appropriate to the requested action.
 
+## Repository knowledge reuse / anti-rediscovery
+
+**Repository knowledge is compiled state.** Model reasoning should be spent on unresolved decisions, not on reconstructing principles, owners, interfaces, helpers, or constraints that the repository already records.
+
+Before inventing a new abstraction, prompt, skill, workflow, schema, validator, helper, architecture rule, or external research lane, perform the smallest sufficient local discovery pass in this order:
+
+1. repository law and nearest ownership contracts;
+2. architecture, ADRs, specifications, and external-system contracts;
+3. manifests, registries, schemas, workflow maps, and context routes;
+4. canonical skills, validators/tests, plans/reports, and generated evidence;
+5. implementation helpers and relevant Git/PR history;
+6. repository-family/shared AgentSwitchboard doctrine when the local repository delegates that concern;
+7. approved external or Drive-authoritative evidence only for gaps that remain unresolved.
+
+The discovery output is evidence, not ceremony. Record at least: `question | surfaces searched | canonical owner found | reusable truth | unresolved gap | external search needed`. If a canonical owner exists, strengthen or reuse it. If the same principle already exists in another form, link the identities rather than restating competing truth. A new local abstraction or external search requires an explicit unresolved gap; recency alone never overrides repository authority.
+
+Deterministic hydration is preferred when the same known state can be gathered repeatedly: scripts/hooks should snapshot current Git state, manifests, registries, issues, configs, or other bounded evidence before agent reasoning when that saves repeated tool/search turns without broad context dumping.
+
+External prior-art research is downstream of this rule. It may compare alternatives, fill an evidenced gap, or challenge a local assumption, but it must not replace repository discovery or silently supersede repository-owned decisions.
+
 ## Action-commitment rule
 
 A prompt, title, mission, or expected output that claims it will install, set up, build, execute, repair, configure, upgrade, deploy, merge, or release something must require the corresponding mutation and proof.

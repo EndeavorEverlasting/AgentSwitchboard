@@ -17,6 +17,7 @@ Local product law may strengthen but never silently weaken a higher-priority bou
 - Establish repository identity, authority, owner, dependencies, safe scope, and proof ceiling before mutation.
 - One active writer per branch/worktree. Parallel writers require disjoint ownership and a convergence owner.
 - Reuse healthy code, schemas, registries, validators, workflows, and skills before creating alternatives.
+- **Repository knowledge is compiled state.** Before inventing, re-deriving, or searching outward, search the repository's canonical law, architecture/ADRs/specs, manifests/registries, skills, validators/tests, plans/reports, implementation helpers, and relevant history. Reuse the proven owner and truth; external research or a new abstraction requires an explicit unresolved gap.
 - Keep judgment in skills; deterministic behavior belongs in code, schemas, registries, validators, workflows, and artifacts.
 - Preserve unrelated dirty work. Never use destructive Git as a cleanup shortcut.
 - Protect credentials, personal/customer data, private hostnames, private source, large dumps, and machine-local evidence.
