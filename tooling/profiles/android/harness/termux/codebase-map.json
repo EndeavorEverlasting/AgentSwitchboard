@@ -5,16 +5,18 @@
     "authority": [".ai/agent-contract.json", ".ai/harness/repository-family.registry.json", "AGENTS.md"],
     "routing": ["SKILLS.md", "TRIGGERS.md", ".ai/harness/app-composition.graph.json"],
     "runtime": ["Start-AgentSwitchboard-Android.sh", "tooling/profiles/android/AgentSwitchboard-Android.sh", ".ai/harness/device-profile-registry.json", "docs/workstation/android-on-the-move-runtime.md"],
-    "harness": ["tooling/profiles/android/harness/termux/", "tooling/profiles/android/hooks/"],
+    "harness": ["tooling/profiles/android/harness/termux/", "tooling/profiles/android/harness/herdr/", "tooling/profiles/android/hooks/"],
     "skills": [".ai/skills/android-termux-repo-bootstrap/SKILL.md", ".ai/skills/android-termux-terminal-recovery/SKILL.md"],
-    "validators": ["tests/test_android_termux_harness.py", "tests/test_android_termux_modal_state_harness.py", "scripts/Test-AndroidTermuxHarnessCompleteness.ps1", "scripts/Test-AndroidTermuxModalStateHarness.ps1", "scripts/Get-RepositoryFamilyHarnessStatus.ps1", "scripts/Test-AppHarness.ps1", ".github/workflows/android-termux-harness.yml"]
+    "validators": ["tests/test_android_termux_harness.py", "tests/test_android_termux_modal_state_harness.py", "tests/test_android_herdr_migration.py", "scripts/Test-AndroidTermuxHarnessCompleteness.ps1", "scripts/Test-AndroidTermuxModalStateHarness.ps1", "scripts/Get-RepositoryFamilyHarnessStatus.ps1", "scripts/Test-AppHarness.ps1", ".github/workflows/android-termux-harness.yml", ".github/workflows/android-herdr-migration.yml"]
   },
   "entrypoints": {
     "runtime": "./Start-AgentSwitchboard-Android.sh",
     "terminalStateInspector": "bash tooling/profiles/android/harness/termux/Inspect-TerminalState.sh [session:window.pane]",
+    "herdrMigrationProbe": "bash Test-AgentSwitchboard-Android-Herdr.sh evidence",
     "harnessPrerequisiteInstall": "pkg install -y python",
     "portableHarnessValidation": "python tests/test_android_termux_harness.py",
     "modalStateValidation": "python tests/test_android_termux_modal_state_harness.py",
+    "herdrMigrationValidation": "python tests/test_android_herdr_migration.py",
     "repositoryFamilyStatus": "pwsh -NoLogo -NoProfile -File scripts/Get-RepositoryFamilyHarnessStatus.ps1",
     "aggregateHarness": "pwsh -NoLogo -NoProfile -File scripts/Test-AppHarness.ps1",
     "preCommit": "bash tooling/profiles/android/hooks/Invoke-AndroidTermuxHarnessPreCommit.sh",
@@ -23,6 +25,7 @@
   "operatorCommands": {
     "paneInventory": "tmux list-panes -a -F '#S:#I.#P active=#{pane_active} cmd=#{pane_current_command}'",
     "inspectTerminalState": "bash tooling/profiles/android/harness/termux/Inspect-TerminalState.sh <session:window.pane>",
+    "herdrMigrationEvidence": "bash Test-AgentSwitchboard-Android-Herdr.sh evidence",
     "boundedCurrentPaneCapture": "tmux capture-pane -p -S -200",
     "boundedTargetPaneCapture": "tmux capture-pane -p -S -200 -t <session:window.pane>",
     "humanScrollbackFallback": "Ctrl+B then [; use PgUp/PgDn/arrows; q exits copy mode",
@@ -42,6 +45,8 @@
     "Do not confuse the commands used to prepare a repository or launch nano with the content of sprint.md. The prompt file must contain the bounded task instructions that the coding agent should execute.",
     "Do not fetch origin/main or create a branch until a usable local clone and expected origin have been verified.",
     "The portable harness validator requires Python; the harness owns the Python package prerequisite rather than silently expanding the Android runtime installer.",
+    "Herdr upstream documents stable Linux/macOS binaries but does not currently claim Android/Termux support; Linux aarch64 availability is not Android compatibility proof.",
+    "Do not replace tmux, run automatic device_config mutations, or claim background persistence until same-device Herdr evidence clears the migration gates.",
     "Repository-family status is a PowerShell probe; on Termux without PowerShell, read the agent contract and family registry locally and defer family-level status proof to hosted or PowerShell validation rather than inventing a pass.",
     "Root SKILLS.md and TRIGGERS.md are the discovery surface; the aggregate app-composition graph must register the Android validator so Test-AppHarness cannot pass while the Android harness is broken.",
     "Keep Git repositories under Termux HOME, not shared storage.",
@@ -50,8 +55,8 @@
   ],
   "buildTestDeploy": {
     "build": "No separate build; JSON/Markdown/shell harness assets are tracked source.",
-    "test": ["python tests/test_android_termux_harness.py", "python tests/test_android_termux_modal_state_harness.py", "pwsh -NoLogo -NoProfile -File scripts/Test-AndroidTermuxHarnessCompleteness.ps1", "pwsh -NoLogo -NoProfile -File scripts/Test-AndroidTermuxModalStateHarness.ps1", "pwsh -NoLogo -NoProfile -File scripts/Test-AppHarness.ps1", "git diff --check"],
-    "deploy": "Merge reviewed harness changes; no implicit hook install and no Android package/runtime deployment from this lane."
+    "test": ["python tests/test_android_termux_harness.py", "python tests/test_android_termux_modal_state_harness.py", "python tests/test_android_herdr_migration.py", "pwsh -NoLogo -NoProfile -File scripts/Test-AndroidTermuxHarnessCompleteness.ps1", "pwsh -NoLogo -NoProfile -File scripts/Test-AndroidTermuxModalStateHarness.ps1", "pwsh -NoLogo -NoProfile -File scripts/Test-AppHarness.ps1", "git diff --check"],
+    "deploy": "Merge reviewed harness changes; no implicit hook install, Android package/runtime deployment, or Herdr promotion from this lane."
   },
-  "proofCeiling": "Maps tracked ownership, root discovery, aggregate composition, commands, modal exit contracts and traps only; it does not prove a particular Android UI, clipboard, foreground-process health, provider, model, tool invocation, repository-family status on Termux without PowerShell, or runtime mutation."
+  "proofCeiling": "Maps tracked ownership, root discovery, aggregate composition, commands, modal exit contracts, Herdr migration gates and traps only; it does not prove a particular Android UI, clipboard, foreground-process health, Herdr Android compatibility, provider, model, tool invocation, repository-family status on Termux without PowerShell, or runtime mutation."
 }
