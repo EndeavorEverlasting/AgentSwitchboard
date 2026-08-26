@@ -1,0 +1,60 @@
+name: Context workspace boundary
+
+on:
+  pull_request:
+    paths:
+      - ".ai/harness/context-workspace-boundary.contract.json"
+      - "docs/governance/context-workspace-boundary.md"
+      - "scripts/test_context_workspace_boundary.py"
+      - ".github/workflows/context-workspace-boundary.yml"
+      - ".ai/harness/harness-doctrine.policy.json"
+      - "tooling/harness/context/context.routes.json"
+      - ".ai/harness/repository-work-ledger.policy.json"
+  push:
+    branches: [main]
+    paths:
+      - ".ai/harness/context-workspace-boundary.contract.json"
+      - "docs/governance/context-workspace-boundary.md"
+      - "scripts/test_context_workspace_boundary.py"
+      - ".github/workflows/context-workspace-boundary.yml"
+      - ".ai/harness/harness-doctrine.policy.json"
+      - "tooling/harness/context/context.routes.json"
+      - ".ai/harness/repository-work-ledger.policy.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Verify exact candidate
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - name: Validate JSON
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m json.tool .ai/harness/context-workspace-boundary.contract.json >/dev/null
+      - name: Validate context workspace contract
+        shell: bash
+        run: python3 scripts/test_context_workspace_boundary.py
+      - name: Check repository hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${GITHUB_BASE_REF:-}" ]]; then
+            git diff --check "origin/${GITHUB_BASE_REF}...HEAD"
+          else
+            git diff --check HEAD^
+          fi
+          test -z "$(git status --short)"
