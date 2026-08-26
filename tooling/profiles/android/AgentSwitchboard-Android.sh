@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PI_PACKAGE='@earendil-works/pi-coding-agent'
-PI_VERSION='0.82.1'
+CODEX_VERSION='0.147.0'
+CODEX_RELEASE_TAG='rust-v0.147.0'
+CODEX_TARGET_TRIPLE='aarch64-unknown-linux-musl'
+CODEX_RELEASE_ASSET="codex-${CODEX_TARGET_TRIPLE}.tar.gz"
+CODEX_RELEASE_SIZE='91607658'
+CODEX_RELEASE_SHA256='eb677c80f666b1ab8b4b1d083b66e8d614b1281d960bb6f9fd8ca98f58b38b90'
+CODEX_RELEASE_URL="https://github.com/openai/codex/releases/download/${CODEX_RELEASE_TAG}/${CODEX_RELEASE_ASSET}"
 EXPECTED_REPO_SSH='git@github.com:EndeavorEverlasting/AgentSwitchboard.git'
 EXPECTED_REPO_HTTPS='https://github.com/EndeavorEverlasting/AgentSwitchboard.git'
 DEFAULT_SESSION="${AGENT_SWITCHBOARD_ANDROID_SESSION:-agentswitchboard-android}"
 STATE_ROOT="${XDG_STATE_HOME:-$HOME/.local/state}/agentswitchboard/android-runtime"
-SESSION_ROOT="$STATE_ROOT/pi-sessions"
+TERMUX_PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
+CODEX_MANAGED_ROOT="$TERMUX_PREFIX/lib/agentswitchboard/codex/$CODEX_VERSION"
+CODEX_BIN="$CODEX_MANAGED_ROOT/codex"
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 DEFAULT_REPO="$(CDPATH= cd -- "$SCRIPT_DIR/../../.." && pwd)"
@@ -27,19 +34,19 @@ Usage:
   Start-AgentSwitchboard-Android.sh sprint --prompt-file PATH
 
 Modes:
-  open-or-activate  Open or activate one tmux-backed Pi workspace.
-  status            Read-only readiness and Git state.
-  install           Install/verify the pinned Pi runtime and Termux floor.
-  login             Open the Pi workspace for interactive /login.
-  smoke             Read-only model/tool runtime proof with durable JSONL evidence.
-  proof-sprint      Run the repository-owned first phone editing sprint.
-  sprint            Run a supplied bounded sprint on an already-isolated branch.
+  open-or-activate  Open or activate one tmux-backed Codex workspace.
+  status            Read-only Codex, authentication, repository, and Git state.
+  install           Install/verify the pinned official Codex release asset and Termux floor.
+  login             Sign in to Codex with the official device-auth flow.
+  smoke             Read-only Codex command/tool runtime proof with durable JSONL evidence.
+  proof-sprint      Run the repository-owned first phone editing sprint with Codex.
+  sprint            Run a supplied bounded Codex sprint on an already-isolated branch.
 
 Generated runtime evidence stays outside the repository under:
   ~/.local/state/agentswitchboard/android-runtime
 
-This launcher never prints or records OAuth device codes, tokens, passwords,
-recovery codes, or private SSH key material.
+This launcher never prints or records OAuth device codes, access tokens, API keys,
+passwords, recovery codes, or private SSH key material.
 EOF
 }
 
@@ -63,6 +70,8 @@ require_termux() {
     *) fail "unexpected PREFIX '$PREFIX'; Android runtime requires Termux" ;;
   esac
   command -v pkg >/dev/null 2>&1 || fail 'pkg is unavailable'
+  arch="$(uname -m)"
+  [ "$arch" = 'aarch64' ] || fail "unsupported Android architecture '$arch'; pinned Codex runtime requires aarch64"
 }
 
 repo_origin() {
@@ -78,17 +87,19 @@ assert_repo() {
   esac
 }
 
-pi_version() {
-  command -v pi >/dev/null 2>&1 || return 1
-  pi --version 2>/dev/null | awk '{print $NF}' | tail -n 1
+codex_version() {
+  [ -x "$CODEX_BIN" ] || return 1
+  "$CODEX_BIN" --version 2>/dev/null | awk '{print $NF}' | tail -n 1
 }
 
-assert_pi() {
-  command -v node >/dev/null 2>&1 || fail 'node is missing; run install'
-  command -v npm >/dev/null 2>&1 || fail 'npm is missing; run install'
-  command -v pi >/dev/null 2>&1 || fail 'pi is missing; run install'
-  actual="$(pi_version || true)"
-  [ "$actual" = "$PI_VERSION" ] || fail "Pi version '$actual' does not match required $PI_VERSION; run install"
+assert_codex() {
+  [ -x "$CODEX_BIN" ] || fail "managed Codex is missing at $CODEX_BIN; run install"
+  actual="$(codex_version || true)"
+  [ "$actual" = "$CODEX_VERSION" ] || fail "Codex version '$actual' does not match required $CODEX_VERSION; run install"
+}
+
+assert_codex_auth() {
+  "$CODEX_BIN" login status >/dev/null 2>&1 || fail 'Codex is not authenticated; run agentswitchboard-android login'
 }
 
 assert_tmux() {
@@ -121,22 +132,33 @@ status() {
   head="$(git -C "$REPO_ROOT" rev-parse HEAD)"
   dirty='false'
   [ -z "$(git -C "$REPO_ROOT" status --porcelain)" ] || dirty='true'
+
   printf 'profile=android\n'
-  printf 'runtime=pi\n'
-  printf 'runtime_required_version=%s\n' "$PI_VERSION"
-  printf 'runtime_observed_version=%s\n' "$(pi_version || printf missing)"
+  printf 'agent=codex\n'
+  printf 'runtime=codex\n'
+  printf 'runtime_required_version=%s\n' "$CODEX_VERSION"
+  printf 'runtime_observed_version=%s\n' "$(codex_version || printf missing)"
+  printf 'codex_release_tag=%s\n' "$CODEX_RELEASE_TAG"
+  printf 'codex_release_asset=%s\n' "$CODEX_RELEASE_ASSET"
+  printf 'codex_release_sha256=%s\n' "$CODEX_RELEASE_SHA256"
+  printf 'codex_target=%s\n' "$CODEX_TARGET_TRIPLE"
+  printf 'codex_managed_path=%s\n' "$CODEX_BIN"
   printf 'repo=%s\n' "$REPO_ROOT"
   printf 'origin=%s\n' "$(repo_origin)"
   printf 'branch=%s\n' "$branch"
   printf 'head=%s\n' "$head"
   printf 'dirty=%s\n' "$dirty"
   if [ -n "${TMUX:-}" ]; then printf 'tmux=attached\n'; else printf 'tmux=outside\n'; fi
+  if [ -x "$CODEX_BIN" ] && "$CODEX_BIN" login status >/dev/null 2>&1; then
+    printf 'codex_auth=ready\n'
+  else
+    printf 'codex_auth=unproved\n'
+  fi
   if command -v gh >/dev/null 2>&1 && gh auth status --hostname github.com >/dev/null 2>&1; then
     printf 'github_auth=ready\n'
   else
     printf 'github_auth=unproved\n'
   fi
-  if command -v node >/dev/null 2>&1; then printf 'node=%s\n' "$(node --version)"; else printf 'node=missing\n'; fi
   printf 'state_root=%s\n' "$STATE_ROOT"
   printf 'proof_level=readiness-only\n'
 }
@@ -144,83 +166,168 @@ status() {
 install_runtime() {
   require_termux
   assert_repo
-  mkdir -p "$STATE_ROOT/install-logs" "$SESSION_ROOT"
+  mkdir -p "$STATE_ROOT/install-logs"
   run_id="$(timestamp)"
   log="$STATE_ROOT/install-logs/install-$run_id.log"
+  tmp_root="$(mktemp -d "${TMPDIR:-$PREFIX/tmp}/agentswitchboard-codex.XXXXXX")"
+  archive="$tmp_root/$CODEX_RELEASE_ASSET"
+  extract_root="$tmp_root/extract"
+  archive_list="$tmp_root/archive-list.txt"
+  mkdir -p "$extract_root"
 
-  info "Installing Termux runtime floor; log=$log"
-  {
-    pkg install -y git openssh tmux gh jq nodejs
-    node -e 'const [M,m]=process.versions.node.split(".").map(Number); if (M < 22 || (M === 22 && m < 19)) process.exit(1)'
-    npm install -g --ignore-scripts "${PI_PACKAGE}@${PI_VERSION}"
-    actual="$(pi_version)"
-    [ "$actual" = "$PI_VERSION" ]
-    npm list -g --depth=0 "$PI_PACKAGE"
-  } >"$log" 2>&1 || {
+  cleanup_install_tmp() {
+    rm -rf "$tmp_root"
+  }
+  trap cleanup_install_tmp EXIT HUP INT TERM
+
+  info "Installing official pinned Codex release asset; log=$log"
+  pkg install -y git openssh tmux gh jq curl tar coreutils findutils >"$log" 2>&1 || {
     rc=$?
     tail -n 30 "$log" >&2 || true
-    fail "runtime install failed exit=$rc log=$log"
+    fail "Termux dependency install failed exit=$rc log=$log"
   }
 
+  curl --fail --location --retry 3 --proto '=https' --tlsv1.2 \
+    --output "$archive" "$CODEX_RELEASE_URL" >>"$log" 2>&1 || {
+    rc=$?
+    tail -n 30 "$log" >&2 || true
+    fail "Codex release download failed exit=$rc log=$log"
+  }
+
+  actual_size="$(wc -c < "$archive" | tr -d '[:space:]')"
+  [ "$actual_size" = "$CODEX_RELEASE_SIZE" ] ||
+    fail "Codex release size mismatch expected=$CODEX_RELEASE_SIZE actual=$actual_size"
+
+  actual_sha="$(sha256sum "$archive" | awk '{print $1}')"
+  [ "$actual_sha" = "$CODEX_RELEASE_SHA256" ] ||
+    fail "Codex release SHA-256 mismatch expected=$CODEX_RELEASE_SHA256 actual=$actual_sha"
+
+  tar -tzf "$archive" >"$archive_list" || fail 'Codex release archive listing failed'
+  if grep -Eq '(^/|(^|/)\.\.(/|$))' "$archive_list"; then
+    fail 'Codex release archive contains an unsafe path'
+  fi
+
+  tar -xzf "$archive" -C "$extract_root" >>"$log" 2>&1 ||
+    fail 'Codex release archive extraction failed'
+
+  mapfile -t candidates < <(
+    find "$extract_root" -type f \
+      \( -name 'codex' -o -name "codex-$CODEX_TARGET_TRIPLE" \) -print
+  )
+  [ "${#candidates[@]}" -eq 1 ] ||
+    fail "Codex release must contain exactly one recognized executable; found=${#candidates[@]}"
+
+  candidate="${candidates[0]}"
+  chmod 0755 "$candidate"
+  candidate_version="$("$candidate" --version 2>/dev/null | awk '{print $NF}' | tail -n 1)"
+  [ "$candidate_version" = "$CODEX_VERSION" ] ||
+    fail "downloaded Codex version '$candidate_version' does not match required $CODEX_VERSION"
+
+  mkdir -p "$CODEX_MANAGED_ROOT"
+  staged="$CODEX_MANAGED_ROOT/.codex.$$.tmp"
+  cp "$candidate" "$staged"
+  chmod 0755 "$staged"
+  mv -f "$staged" "$CODEX_BIN"
+
+  actual="$(codex_version)"
+  [ "$actual" = "$CODEX_VERSION" ] ||
+    fail "installed Codex version '$actual' does not match required $CODEX_VERSION"
+
   wrapper="$PREFIX/bin/agentswitchboard-android"
-  cat >"$wrapper" <<'WRAPPER'
-#!/data/data/com.termux/files/usr/bin/bash
-set -e
-repo="${AGENT_SWITCHBOARD_REPO:-$HOME/dev/AgentSwitchboard}"
-exec "$repo/Start-AgentSwitchboard-Android.sh" "$@"
-WRAPPER
+  {
+    printf '%s\n' '#!/data/data/com.termux/files/usr/bin/bash'
+    printf '%s\n' 'set -e'
+    printf 'repo=%q\n' "$REPO_ROOT"
+    printf '%s\n' 'exec "$repo/Start-AgentSwitchboard-Android.sh" "$@"'
+  } > "$wrapper"
   chmod 0755 "$wrapper"
 
-  actual="$(pi_version)"
   write_env_result "$STATE_ROOT/install-result.env" \
     'profile=android' \
-    'runtime=pi' \
-    "pi_package=$PI_PACKAGE" \
-    "pi_version=$actual" \
-    "node_version=$(node --version)" \
+    'agent=codex' \
+    'runtime=codex' \
+    "codex_version=$actual" \
+    "codex_release_tag=$CODEX_RELEASE_TAG" \
+    "codex_release_asset=$CODEX_RELEASE_ASSET" \
+    "codex_release_size=$actual_size" \
+    "codex_release_sha256=$actual_sha" \
+    "codex_target=$CODEX_TARGET_TRIPLE" \
+    "codex_managed_path=$CODEX_BIN" \
     "wrapper=$wrapper" \
     "timestamp_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     'proof=installed-command-verification'
 
-  pass "pinned Pi runtime installed version=$actual"
+  cleanup_install_tmp
+  trap - EXIT HUP INT TERM
+
+  pass "official pinned Codex CLI installed version=$actual"
   printf 'EVIDENCE=%s\n' "$STATE_ROOT/install-result.env"
   printf 'NEXT=agentswitchboard-android login\n'
+}
+
+assert_codex_tmux_session_identity() {
+  session="$1"
+  pane_command="$(tmux display-message -p -t "$session:0.0" '#{pane_current_command}' 2>/dev/null || true)"
+  pane_path="$(tmux display-message -p -t "$session:0.0" '#{pane_current_path}' 2>/dev/null || true)"
+  pane_pid="$(tmux display-message -p -t "$session:0.0" '#{pane_pid}' 2>/dev/null || true)"
+
+  repo_real="$(cd "$REPO_ROOT" 2>/dev/null && pwd -P || true)"
+  pane_real="$(cd "$pane_path" 2>/dev/null && pwd -P || true)"
+  codex_real="$(readlink -f "$CODEX_BIN" 2>/dev/null || true)"
+  pane_exe=''
+  case "$pane_pid" in
+    ''|*[!0-9]*) ;;
+    *) pane_exe="$(readlink -f "/proc/$pane_pid/exe" 2>/dev/null || true)" ;;
+  esac
+
+  [ "$pane_command" = 'codex' ] ||
+    fail "tmux session '$session' pane command '${pane_command:-unknown}' is not Codex; preserve that session and close it explicitly before Android-profile cutover"
+  [ -n "$repo_real" ] && [ "$pane_real" = "$repo_real" ] ||
+    fail "tmux session '$session' belongs to '${pane_path:-unknown}', not requested repo '$REPO_ROOT'; preserve it instead of cross-attaching"
+  [ -n "$codex_real" ] && [ "$pane_exe" = "$codex_real" ] ||
+    fail "tmux session '$session' is not running the profile-managed Codex binary '$CODEX_BIN'; preserve it instead of relabeling it"
 }
 
 open_or_activate() {
   require_termux
   assert_repo
-  assert_pi
+  assert_codex
   assert_tmux
-  mkdir -p "$STATE_ROOT" "$SESSION_ROOT"
+  mkdir -p "$STATE_ROOT"
 
   if tmux has-session -t "$DEFAULT_SESSION" 2>/dev/null; then
+    assert_codex_tmux_session_identity "$DEFAULT_SESSION"
     outcome='activated'
   else
     launch_log="$STATE_ROOT/open-or-activate-$(timestamp).log"
-    if tmux new-session -d -s "$DEFAULT_SESSION" -c "$REPO_ROOT" \
-      "PI_TELEMETRY=0 PI_SKIP_VERSION_CHECK=1 PI_CODING_AGENT_SESSION_DIR='$SESSION_ROOT' exec pi --approve" \
+    printf -v launch_cmd 'exec %q -C %q' "$CODEX_BIN" "$REPO_ROOT"
+    if tmux new-session -d -s "$DEFAULT_SESSION" -c "$REPO_ROOT" "$launch_cmd" \
       >"$launch_log" 2>&1; then
+      assert_codex_tmux_session_identity "$DEFAULT_SESSION"
       outcome='opened'
     elif tmux has-session -t "$DEFAULT_SESSION" 2>/dev/null; then
+      assert_codex_tmux_session_identity "$DEFAULT_SESSION"
       outcome='activated-after-race'
     else
       tail -n 30 "$launch_log" >&2 || true
-      fail "Pi tmux session failed to start; log=$launch_log"
+      fail "Codex tmux session failed to start; log=$launch_log"
     fi
   fi
 
   write_env_result "$STATE_ROOT/last-open.env" \
     'profile=android' \
-    'runtime=pi' \
+    'agent=codex' \
+    'runtime=codex' \
+    "codex_version=$(codex_version)" \
     "outcome=$outcome" \
     "session=$DEFAULT_SESSION" \
+    'pane_command=codex' \
     "repo=$REPO_ROOT" \
     "head=$(git -C "$REPO_ROOT" rev-parse HEAD)" \
     "timestamp_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-    'proof=launcher-session-only'
+    'proof=launcher-session-identity'
 
-  pass "outcome=$outcome session=$DEFAULT_SESSION"
+  pass "outcome=$outcome agent=codex session=$DEFAULT_SESSION"
   if [ -n "${TMUX:-}" ]; then
     current="$(tmux display-message -p '#S' 2>/dev/null || true)"
     [ "$current" = "$DEFAULT_SESSION" ] && exit 0
@@ -232,36 +339,75 @@ open_or_activate() {
 login_runtime() {
   require_termux
   assert_repo
-  assert_pi
-  assert_tmux
+  assert_codex
+
+  if "$CODEX_BIN" login status >/dev/null 2>&1; then
+    pass 'Codex authentication is already ready'
+    return 0
+  fi
+
   printf '%s\n' \
-    '[ACTION] Pi will open in the persistent AgentSwitchboard Android tmux workspace.' \
-    '[ACTION] In Pi, type /login and choose OpenAI ChatGPT Plus/Pro (Codex).' \
-    '[ACTION] Choose the device/headless flow when offered and complete authorization in the browser.' \
-    '[SECRET] Do not copy the device code, OAuth token, or credential files into logs, Git, or chat.'
-  open_or_activate
+    '[ACTION] Starting the official Codex device-auth flow.' \
+    '[ACTION] Complete authorization in your browser, then return to Termux.' \
+    '[SECRET] The device code and resulting credentials are not written to AgentSwitchboard evidence.' \
+    '[SECRET] Do not copy device codes, tokens, API keys, passwords, or credential files into Git, logs, or chat.'
+  "$CODEX_BIN" login --device-auth
+  "$CODEX_BIN" login status >/dev/null 2>&1 ||
+    fail 'Codex login command returned but authentication status is not ready'
+  pass 'Codex ChatGPT authentication is ready'
 }
 
-assistant_marker_present() {
+codex_marker_present() {
   events="$1"
   marker="$2"
   jq -s -e --arg marker "$marker" '
     any(.[];
-      .type == "message_end"
-      and .message.role == "assistant"
-      and ((.message.content // []) | tostring | contains($marker))
+      .type == "item.completed"
+      and .item.type == "agent_message"
+      and ((.item.text // "") | contains($marker))
     )
   ' "$events" >/dev/null
 }
 
-successful_tool_present() {
+codex_turn_completed() {
   events="$1"
-  tool="$2"
-  jq -s -e --arg tool "$tool" '
+  jq -s -e 'any(.[]; .type == "turn.completed")' "$events" >/dev/null
+}
+
+successful_command_matching() {
+  events="$1"
+  needle="$2"
+  jq -s -e --arg needle "$needle" '
     any(.[];
-      .type == "tool_execution_end"
-      and .toolName == $tool
-      and .isError == false
+      .type == "item.completed"
+      and .item.type == "command_execution"
+      and .item.status == "completed"
+      and ((.item.exit_code // 0) == 0)
+      and ((.item.command // "") | contains($needle))
+    )
+  ' "$events" >/dev/null
+}
+
+successful_command_present() {
+  events="$1"
+  jq -s -e '
+    any(.[];
+      .type == "item.completed"
+      and .item.type == "command_execution"
+      and .item.status == "completed"
+      and ((.item.exit_code // 0) == 0)
+    )
+  ' "$events" >/dev/null
+}
+
+successful_file_change_present() {
+  events="$1"
+  jq -s -e '
+    any(.[];
+      .type == "item.completed"
+      and .item.type == "file_change"
+      and .item.status == "completed"
+      and ((.item.changes // []) | length > 0)
     )
   ' "$events" >/dev/null
 }
@@ -269,7 +415,8 @@ successful_tool_present() {
 smoke_runtime() {
   require_termux
   assert_repo
-  assert_pi
+  assert_codex
+  assert_codex_auth
   assert_tmux
   command -v jq >/dev/null 2>&1 || fail 'jq is missing; run install'
   [ -n "${TMUX:-}" ] || fail 'smoke must run from inside tmux'
@@ -284,16 +431,10 @@ smoke_runtime() {
   branch="$(git -C "$REPO_ROOT" branch --show-current)"
   head="$(git -C "$REPO_ROOT" rev-parse HEAD)"
 
-  prompt='Read AGENTS.md with the read tool. Then briefly state what rule prevents premature handoff. End your final assistant message with the exact line ANDROID_RUNTIME_SMOKE=PASS'
+  prompt='Read AGENTS.md using a shell command, briefly state the rule that prevents premature handoff, and end the final answer with the exact line ANDROID_RUNTIME_SMOKE=PASS. Do not modify any file.'
   set +e
-  (
-    cd "$REPO_ROOT"
-    timeout 300 env \
-      PI_TELEMETRY=0 \
-      PI_SKIP_VERSION_CHECK=1 \
-      PI_CODING_AGENT_SESSION_DIR="$SESSION_ROOT" \
-      pi --mode json --approve --no-session --tools read,grep,find,ls "$prompt"
-  ) >"$events" 2>"$stderr_log"
+  timeout 300 "$CODEX_BIN" exec --json --ephemeral -s read-only -C "$REPO_ROOT" "$prompt" \
+    >"$events" 2>"$stderr_log"
   rc=$?
   set -e
 
@@ -302,33 +443,26 @@ smoke_runtime() {
       'result=fail' "exit=$rc" "branch=$branch" "head=$head" \
       "events=$events" "stderr=$stderr_log"
     tail -n 30 "$stderr_log" >&2 || true
-    fail "Pi smoke command failed exit=$rc result=$result"
+    fail "Codex smoke command failed exit=$rc result=$result"
   }
 
-  jq -s -e 'any(.[]; .type == "agent_end")' "$events" >/dev/null ||
-    fail "agent_end missing; events=$events"
-  jq -s -e '
-    any(.[];
-      .type == "tool_execution_start"
-      and .toolName == "read"
-      and ((.args // {}) | tostring | contains("AGENTS.md"))
-    )
-  ' "$events" >/dev/null || fail "AGENTS.md read tool call missing; events=$events"
-  successful_tool_present "$events" read ||
-    fail "successful read tool completion missing; events=$events"
-  assistant_marker_present "$events" 'ANDROID_RUNTIME_SMOKE=PASS' ||
-    fail "assistant behavior marker missing; events=$events"
+  codex_turn_completed "$events" || fail "turn.completed missing; events=$events"
+  successful_command_matching "$events" 'AGENTS.md' ||
+    fail "successful AGENTS.md command proof missing; events=$events"
+  codex_marker_present "$events" 'ANDROID_RUNTIME_SMOKE=PASS' ||
+    fail "completion marker missing; events=$events"
 
   write_env_result "$result" \
     'result=pass' \
+    'agent=codex' \
     'proof_level=live-agent-tool-behavior' \
     "branch=$branch" \
     "head=$head" \
-    "pi_version=$(pi_version)" \
+    "codex_version=$(codex_version)" \
     "events=$events" \
     "stderr=$stderr_log" \
     "timestamp_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  pass 'Android Pi smoke observed model response + AGENTS.md read tool execution'
+  pass 'Android Codex smoke observed model response + successful AGENTS.md command execution'
   printf 'PROOF_LEVEL=live-agent-tool-behavior\n'
   printf 'EVIDENCE=%s\n' "$result"
   printf 'EVENTS=%s\n' "$events"
@@ -337,7 +471,8 @@ smoke_runtime() {
 run_sprint() {
   require_termux
   assert_repo
-  assert_pi
+  assert_codex
+  assert_codex_auth
   assert_tmux
   assert_gh_auth
   command -v jq >/dev/null 2>&1 || fail 'jq is missing; run install'
@@ -360,7 +495,7 @@ run_sprint() {
 
   sprint_text="$(cat "$prompt_file")"
   envelope="$(cat <<EOF
-You are the designated writer for this bounded AgentSwitchboard sprint on Android Termux.
+You are Codex, the designated writer for this bounded AgentSwitchboard sprint on Android Termux.
 Read AGENTS.md before mutation. Execute the task below rather than returning a plan.
 Use repository-owned validators. Preserve unrelated work. Do not expose credentials.
 Commit and push completed owned work and open or update a PR when safe.
@@ -374,15 +509,8 @@ EOF
 )"
 
   set +e
-  (
-    cd "$REPO_ROOT"
-    timeout 1800 env \
-      PI_TELEMETRY=0 \
-      PI_SKIP_VERSION_CHECK=1 \
-      PI_CODING_AGENT_SESSION_DIR="$SESSION_ROOT" \
-      pi --mode json --approve --name "$run_id" \
-        --tools read,bash,edit,write,grep,find,ls "$envelope"
-  ) >"$events" 2>"$stderr_log"
+  timeout 1800 "$CODEX_BIN" exec --json --ephemeral --approve-for-me -C "$REPO_ROOT" "$envelope" \
+    >"$events" 2>"$stderr_log"
   rc=$?
   set -e
 
@@ -391,15 +519,17 @@ EOF
       'result=fail' "exit=$rc" "branch=$branch" "start_head=$start_head" \
       "events=$events" "stderr=$stderr_log"
     tail -n 30 "$stderr_log" >&2 || true
-    fail "Pi sprint process failed exit=$rc result=$result"
+    fail "Codex sprint process failed exit=$rc result=$result"
   fi
 
-  successful_tool_present "$events" read || fail "read tool proof missing; events=$events"
-  if ! successful_tool_present "$events" edit && ! successful_tool_present "$events" write; then
-    fail "no successful edit/write tool proof; events=$events"
-  fi
-  successful_tool_present "$events" bash || fail "bash tool proof missing; events=$events"
-  assistant_marker_present "$events" 'ANDROID_RUNTIME_SPRINT=COMPLETE' ||
+  codex_turn_completed "$events" || fail "turn.completed missing; events=$events"
+  successful_command_matching "$events" 'AGENTS.md' ||
+    fail "AGENTS.md command proof missing; events=$events"
+  successful_file_change_present "$events" ||
+    fail "no successful Codex file-change proof; events=$events"
+  successful_command_present "$events" ||
+    fail "no successful Codex command-execution proof; events=$events"
+  codex_marker_present "$events" 'ANDROID_RUNTIME_SPRINT=COMPLETE' ||
     fail "completion marker missing; events=$events"
 
   end_head="$(git -C "$REPO_ROOT" rev-parse HEAD)"
@@ -408,25 +538,27 @@ EOF
   git -C "$REPO_ROOT" diff --check "$start_head...$end_head"
 
   remote_head="$(git -C "$REPO_ROOT" ls-remote origin "refs/heads/$branch" | awk 'NR==1 {print $1}')"
-  [ "$remote_head" = "$end_head" ] || fail "remote branch does not match local HEAD local=$end_head remote=${remote_head:-missing}"
+  [ "$remote_head" = "$end_head" ] ||
+    fail "remote branch does not match local HEAD local=$end_head remote=${remote_head:-missing}"
 
   pr_url="$(cd "$REPO_ROOT" && gh pr view "$branch" --json url --jq .url 2>/dev/null || true)"
   [ -n "$pr_url" ] || fail 'no PR found for sprint branch'
 
   write_env_result "$result" \
     'result=pass' \
+    'agent=codex' \
     'proof_level=live-agent-repository-mutation' \
     "branch=$branch" \
     "start_head=$start_head" \
     "end_head=$end_head" \
     "remote_head=$remote_head" \
     "pr_url=$pr_url" \
-    "pi_version=$(pi_version)" \
+    "codex_version=$(codex_version)" \
     "events=$events" \
     "stderr=$stderr_log" \
     "timestamp_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-  pass "live Android agent sprint committed and pushed branch=$branch"
+  pass "live Android Codex sprint committed and pushed branch=$branch"
   printf 'PROOF_LEVEL=live-agent-repository-mutation\n'
   printf 'HEAD=%s\n' "$end_head"
   printf 'PR_URL=%s\n' "$pr_url"
@@ -437,7 +569,8 @@ EOF
 proof_sprint() {
   require_termux
   assert_repo
-  assert_pi
+  assert_codex
+  assert_codex_auth
   assert_tmux
   assert_gh_auth
   [ -n "${TMUX:-}" ] || fail 'proof-sprint must run from inside tmux'
