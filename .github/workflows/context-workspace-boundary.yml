@@ -5,6 +5,7 @@ on:
     paths:
       - "HARNESS.md"
       - ".ai/harness/context-workspace-boundary.contract.json"
+      - ".ai/harness/schemas/context-workspace-boundary.schema.json"
       - "docs/governance/context-workspace-boundary.md"
       - "scripts/test_context_workspace_boundary.py"
       - ".github/workflows/context-workspace-boundary.yml"
@@ -16,6 +17,7 @@ on:
     paths:
       - "HARNESS.md"
       - ".ai/harness/context-workspace-boundary.contract.json"
+      - ".ai/harness/schemas/context-workspace-boundary.schema.json"
       - "docs/governance/context-workspace-boundary.md"
       - "scripts/test_context_workspace_boundary.py"
       - ".github/workflows/context-workspace-boundary.yml"
@@ -42,11 +44,12 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
-      - name: Validate JSON
+      - name: Validate JSON surfaces
         shell: bash
         run: |
           set -euo pipefail
           python3 -m json.tool .ai/harness/context-workspace-boundary.contract.json >/dev/null
+          python3 -m json.tool .ai/harness/schemas/context-workspace-boundary.schema.json >/dev/null
       - name: Validate context workspace contract
         shell: bash
         run: python3 scripts/test_context_workspace_boundary.py
