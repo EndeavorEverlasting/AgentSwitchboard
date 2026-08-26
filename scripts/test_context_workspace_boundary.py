@@ -70,7 +70,7 @@ for token in (
     "Operator and agent projections",
     "Session-start hydration",
     "Lessons and feedback memory",
-    "not promoted into universal AgentSwitchboard law",
+    "promoted into universal AgentSwitchboard law",
     "consumer-local validator",
 ):
     require(token.lower() in doc.lower(), f"doctrine token missing: {token}")
