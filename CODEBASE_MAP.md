@@ -142,6 +142,18 @@ The focused implementation map is `tooling/profiles/windows/harness/tmux-new-ins
 - `Repair-ProviderRoutedGnhf.cmd`, `Setup-AgentSwitchboard.cmd`, and `AgentSwitchboard.cmd` — operator front doors.
 - `%LOCALAPPDATA%\AgentSwitchboard\` — installed state and logs; never tracked authority.
 
+## Agent fleet readiness harness
+
+- `tooling/profiles/windows/harness/agent-fleet-readiness/codebase-map.json` — focused lifecycle map and known sequencing traps.
+- `tooling/profiles/windows/harness/agent-fleet-readiness/artifact-registry.json` — installed fleet state, setup evidence, readiness reports, and provider-route artifacts.
+- `tooling/profiles/windows/harness/agent-fleet-readiness/workflows/` — bootstrap/readiness selection, task pickup, failure recovery, and handoff.
+- `.ai/skills/agent-fleet-readiness/SKILL.md` — experimental bounded procedure selected before post-setup fleet commands when bootstrap/readiness state is unknown or an installed launcher/state is missing.
+- `scripts/Test-AgentFleetReadinessHarnessCompleteness.ps1` and `tests/test_agent_fleet_readiness_harness.py` — deterministic lifecycle and regression validation.
+- `docs/harness/agent-fleet-readiness.md` — operator-facing state gate and recovery guide.
+- `.github/workflows/agent-fleet-readiness-harness.yml` — Windows/Linux exact-head contract gate.
+
+This harness separates terminal/tmux readiness from GNHF fleet installation. Before `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet\agent-switchboard.cmd -ListAgents` or a bounded sprint is recommended, inspect both `state.json` and the installed launcher: neither means `not-bootstrapped`, exactly one means `partial-or-inconsistent`, and both require current readiness listing before agent selection. Canonical `SKILLS.md`/`TRIGGERS.md` routing remains unchanged because this sprint does not own the P00 governance contract.
+
 ## Workstation, governance, and adoption
 
 - `tooling/wsl/` and `docs/workstation/` — Windows, WSL, tmux, and workstation operations.
@@ -177,6 +189,7 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 - `scripts/Test-TmuxNewInstanceShortcutHarness.ps1`
 - `scripts/Test-AppOutputContextEngine.ps1`
 - `scripts/Test-PiHarnessCompleteness.ps1`
+- `scripts/Test-AgentFleetReadinessHarnessCompleteness.ps1`
 - `scripts/Test-AgentDocumentationContract.ps1`
 - `scripts/Test-RepositoryFamilyHarness.ps1`
 - `scripts/Test-PublicPlanContracts.ps1`
@@ -185,6 +198,6 @@ This slice makes AgentSwitchboard the policy, routing, evidence, validation, and
 
 ## Generated evidence and proof boundary
 
-Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, Windows launch-mode, tmux shortcut, and Pi evidence is untracked. End-to-end runtime evidence is also local-operational and untracked unless deliberately minimized and reviewed as a public fixture. Evidence may contain local paths, versions, Git state, minimized operational payloads, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
+Generated family, startup, app-harness, app-output-context, runtime-event, device-profile, Windows launch-mode, tmux shortcut, agent-fleet-readiness, and Pi evidence is untracked. End-to-end runtime evidence is also local-operational and untracked unless deliberately minimized and reviewed as a public fixture. Evidence may contain local paths, versions, Git state, minimized operational payloads, or attributed model identities and must remain outside tracked authority unless deliberately reviewed as a public fixture.
 
-Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, launch-mode classification, shortcut allocation, or workflow semantics. Neither proves application runtime, an exact operator path, an open-or-activate result, a distinct WezTerm instance on the operator workstation, duplicate prevention, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, model quality, external target behavior, deployment, or operator acceptance.
+Contract validity proves declared shape. Synthetic fixtures prove bounded causality, ownership, contextualization, launch-mode classification, shortcut allocation, fleet-readiness classification, or workflow semantics. Neither proves application runtime, an exact operator path, an open-or-activate result, a distinct WezTerm instance on the operator workstation, duplicate prevention, SysAdminSuite certification, Pi installation, extension compatibility, provider delivery, endpoint privacy, model quality, external target behavior, deployment, or operator acceptance.

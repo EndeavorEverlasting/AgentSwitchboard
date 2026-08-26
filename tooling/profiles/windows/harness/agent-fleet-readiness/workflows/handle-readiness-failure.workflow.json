@@ -1,0 +1,50 @@
+{
+  "schema": "agentswitchboard.agent-fleet-readiness-workflow.v1",
+  "workflowId": "handle-readiness-failure",
+  "purpose": "Classify and recover from fleet setup/readiness failures without mislabeling stale paths, shell mistakes, optional Hermes problems, blocked CMD shims, provider failures, tmux state, or target-repository gates.",
+  "steps": [
+    {
+      "order": 1,
+      "name": "preserve evidence",
+      "action": "Capture exact command, shell, current directory, exit code, setup-summary/setup-transcript or startup-readiness artifact, installed state observations, and any blocked compatibility-shim signal before retrying."
+    },
+    {
+      "order": 2,
+      "name": "classify boundary",
+      "classes": {
+        "repository-path-invalid": "selected directory is missing or is not the expected repository root; repair path discovery before Git/setup",
+        "shell-command-mismatch": "command belongs to a different shell, such as PowerShell irm used in cmd.exe; repair delivery syntax before diagnosing product/provider state",
+        "cmd-shim-blocked": "state.json and Start-AgentSwitchboard.ps1 are healthy but agent-switchboard.cmd is missing or Windows denies shim execution, including Access is denied / exit 5; use the PowerShell readiness workflow",
+        "hermes-deferred": "Hermes unavailable, skipped, blocked, or hanging while core setup is the priority; use -SkipHermesInstall, record Hermes=TBD, continue core proof",
+        "readiness-launcher-missing": "installed Start-AgentSwitchboard.ps1 absent; bootstrap/readiness-state failure",
+        "state-missing": "fleet state absent; bootstrap/readiness-state failure",
+        "partial-install": "exactly one of state or installed PowerShell readiness launcher exists; repair/reuse setup required",
+        "adapter-blocked": "fleet installed but requested non-optional adapter unavailable",
+        "provider-verification": "adapter available but authentication/model/quota/hosted response remains launch-time proof",
+        "target-repo-dirty": "target repository does not satisfy GNHF launch contract",
+        "sprint-runtime": "fleet and target gates passed; failure occurred after sprint launch"
+      }
+    },
+    {
+      "order": 3,
+      "name": "repair owning boundary only",
+      "action": "Repair repository discovery for path failures; repair shell delivery for parser failures; route a blocked CMD shim to installed Start-AgentSwitchboard.ps1 through pwsh; defer Hermes through the repository-owned skip flag; use setup/readiness surfaces for core bootstrap problems; provider flow for provider problems; target-repo isolation for dirty work."
+    },
+    {
+      "order": 4,
+      "name": "avoid proof inflation",
+      "action": "Do not call a stale path an installer failure, a CMD parser error a Hermes failure, a blocked CMD compatibility shim a fleet failure, a missing PowerShell readiness launcher an agent failure, tmux attachment fleet installation proof, or adapter readiness hosted-response proof."
+    },
+    {
+      "order": 5,
+      "name": "rerun exact failed gate",
+      "action": "After repair, rerun only from a known safe state and preserve the first failed artifact as a separate attempt. For cmd-shim-blocked, do not retry the blocked shim; execute the canonical PowerShell readiness path instead. Do not retry Hermes in the core-autoconfig lane after it has been deferred."
+    },
+    {
+      "order": 6,
+      "name": "handoff",
+      "action": "Report boundary, shell, resolved repo root, PowerShell readiness launcher state, optional CMD shim state, evidence path, Hermes deferred/TBD state when applicable, repaired state, remaining unproved gate, and one exact next command."
+    }
+  ],
+  "proofCeiling": "Failure classification and recovery routing only; success requires observed artifacts from the repaired owning boundary."
+}
