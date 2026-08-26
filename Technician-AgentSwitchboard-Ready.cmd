@@ -29,11 +29,19 @@ if errorlevel 1 (
   goto :finish
 )
 
+set "BOOTSTRAP=%REPO_ROOT%\tooling\profiles\windows\Invoke-TechnicianBootstrapPrerequisites.ps1"
+if not exist "%BOOTSTRAP%" (
+  echo [FAIL] Canonical technician prerequisite gate is missing:
+  echo        %BOOTSTRAP%
+  set "RESULT=24"
+  goto :finish
+)
+
 set "ENGINE=%REPO_ROOT%\tooling\profiles\windows\Invoke-TechnicianAgentSwitchboardReady.ps1"
 if not exist "%ENGINE%" (
   echo [FAIL] Canonical technician readiness engine is missing:
   echo        %ENGINE%
-  set "RESULT=24"
+  set "RESULT=25"
   goto :finish
 )
 
@@ -44,6 +52,10 @@ echo Mode:       %MODE%
 echo Repository: %REPO_ROOT%
 echo Git ref:    %GIT_REF%
 echo.
+
+pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%BOOTSTRAP%" -RepoRoot "%REPO_ROOT%"
+set "RESULT=%ERRORLEVEL%"
+if not "%RESULT%"=="0" goto :finish
 
 pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%ENGINE%" -Mode "%MODE%" -RepoRoot "%REPO_ROOT%" -GitRef "%GIT_REF%"
 set "RESULT=%ERRORLEVEL%"
