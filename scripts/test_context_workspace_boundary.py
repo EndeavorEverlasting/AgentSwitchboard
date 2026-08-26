@@ -19,6 +19,7 @@ knowledge = load_json(".ai/harness/harness-doctrine.policy.json")
 routes = load_json("tooling/harness/context/context.routes.json")
 ledger = load_json(".ai/harness/repository-work-ledger.policy.json")
 doc = (ROOT / "docs/governance/context-workspace-boundary.md").read_text(encoding="utf-8")
+harness = (ROOT / "HARNESS.md").read_text(encoding="utf-8")
 
 require(contract["schemaVersion"] == 1, "schemaVersion must remain 1")
 require(contract["contractId"] == "agentswitchboard.context-workspace-boundary.v1", "contract id changed")
@@ -74,5 +75,7 @@ for token in (
 ):
     require(token.lower() in doc.lower(), f"doctrine token missing: {token}")
 
+require(".ai/harness/context-workspace-boundary.contract.json" in harness, "HARNESS.md must route split context/implementation work to the contract")
+require("docs/governance/context-workspace-boundary.md" in harness, "HARNESS.md must route to the human doctrine")
 require("docs.google.com/" not in doc.lower(), "tracked doctrine must not embed private Drive links")
 print("PASS: context workspace boundary contract")
