@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "contractId": "agentswitchboard.context-workspace-boundary.v1",
+  "contractVersion": "1.0.0",
+  "canonicalRepository": "EndeavorEverlasting/AgentSwitchboard",
+  "purpose": "Define how a context/intent workspace and an implementation repository may be separated without duplicating authority or converting authored project state into false runtime truth.",
+  "owns": [
+    "cross-repository context-versus-implementation authority",
+    "stable context-to-implementation identity mapping",
+    "operator-versus-agent projections from one canonical artifact graph",
+    "bounded session-start context hydration boundary"
+  ],
+  "composesWith": {
+    "repositoryKnowledgeReuse": ".ai/harness/harness-doctrine.policy.json#knowledgeReuse",
+    "progressiveDisclosure": "tooling/harness/context/context.routes.json",
+    "workState": ".ai/harness/repository-work-ledger.policy.json"
+  },
+  "doesNotOwn": [
+    "repository-local product behavior",
+    "repository-local work-status vocabulary",
+    "general progressive-disclosure budgets",
+    "prompt or skill implementation details",
+    "provider/runtime/deployment authority"
+  ],
+  "roles": {
+    "contextAuthority": {
+      "owns": ["intent", "epics", "specifications", "architecture decisions", "conventions", "coordination logs", "project lessons"],
+      "mustNotClaim": ["implementation exists", "tests pass", "runtime works", "deployment succeeded"]
+    },
+    "implementationAuthority": {
+      "owns": ["source code", "tests", "build scripts", "deployment scripts", "runtime configuration", "implementation-derived status"],
+      "mustNotDuplicate": ["canonical project intent", "canonical cross-project roadmap", "canonical decision history"]
+    }
+  },
+  "rules": {
+    "singleAuthorityPerConcern": true,
+    "sameRepositoryMayHoldBothRoles": true,
+    "splitRepositoriesRequireExplicitMapping": true,
+    "authoredStatusCannotOverrideDerivedImplementationEvidence": true,
+    "recencyAloneCannotResolveCrossRepositoryConflict": true,
+    "operatorAndAgentViewsMustProjectFromSameCanonicalGraph": true,
+    "agentViewMayBeMoreVerboseButNotMoreAuthoritative": true,
+    "sessionStartHydrationMustBeBoundedAndDeterministicWhenPractical": true,
+    "sessionStartHydrationCannotOverrideGovernanceOrInjectSecrets": true,
+    "lessonsRequireProvenanceScopeAndOwner": true,
+    "lessonsCannotAutoRewriteCanonicalSkillsOrPolicy": true
+  },
+  "recommendedContextArtifacts": [
+    "epics/",
+    "specs/",
+    "adrs/",
+    "conventions/",
+    "coordination logs",
+    "lessons/"
+  ],
+  "projectionContract": {
+    "operatorMode": "concise active-state summary for human navigation",
+    "agentMode": "machine-parseable identities, dependencies, authority, proof pointers, and unresolved gaps",
+    "sourceRule": "both projections derive from the same registered artifacts; neither is a separately maintained truth store"
+  },
+  "consumerRequirements": {
+    "adoptionManifest": true,
+    "repositoryLocalValidator": true,
+    "pairedRepositoryIdentity": true,
+    "authorityMap": true,
+    "staleReferenceHandling": true,
+    "consumerOwnsItsTests": true,
+    "remoteValidatorExecutionForbidden": true,
+    "localRulesMayStrengthen": true,
+    "localRulesMayWeaken": false
+  },
+  "proofCeiling": "repository/static contract compatibility only; no cross-repository freshness, product implementation, runtime, provider, deployment, or user-visible behavior is proven without consumer-local evidence"
+}
