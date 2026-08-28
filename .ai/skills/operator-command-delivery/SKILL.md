@@ -9,7 +9,7 @@ owner: EndeavorEverlasting/AgentSwitchboard
 
 ## Trigger
 
-Use this skill before producing a copy-paste command for an operator when the command crosses repository, shell, process, installer, terminal, TUI, or GUI boundaries. Also use it after a command fails before the intended runtime proof, especially for HTTP 404, malformed PowerShell, missing downloaded files, blocked child-process launch, terminal closure, or lost diagnostics.
+Use this skill before producing a copy-paste command for an operator when the command crosses repository, shell, process, installer, terminal, TUI, or GUI boundaries. Also use it after a command fails before the intended runtime proof, especially for HTTP 404, malformed PowerShell, missing downloaded files, blocked child-process launch, terminal closure, lost diagnostics, or a visible paste/display anomaly such as unexpected `?` glyphs.
 
 ## Required inputs
 
@@ -29,13 +29,14 @@ Use this skill before producing a copy-paste command for an operator when the co
 3. Resolve every required remote file at that exact commit before writing the operator command. A commit existing does not prove a file path exists there.
 4. Before the delivered command depends on an external executable, resolve its exact path and prove that exact file can start using `scripts/Test-OperatorChildExecutableLaunch.ps1` or an equivalent bounded probe with `UseShellExecute=false`, timeout, captured stdout/stderr, and durable evidence. `where`, `Get-Command`, file existence, download success, and version metadata without process creation are not launch proof.
 5. If an executable launch is blocked, stop before downstream runtime work, classify the boundary as `child-executable-launch`, print the launch artifact, and do not substitute another wrapper whose own launchability is unproven.
-6. Build the command for the declared shell only. For PowerShell, environment variables use `$env:NAME`; reject `$env\\:NAME` and other escaped punctuation introduced by transport or formatting.
-7. Strip prompt and transcript material. Never include `PS C:\\...>`, `>>`, `+ CategoryInfo`, or copied shell decorations inside the command body.
-8. Preserve the interactive parent shell. Do not use a PowerShell `exit` statement anywhere in a command pasted at an interactive prompt, including after a semicolon. When a child must propagate a nonzero code, run the child process, capture `$LASTEXITCODE`, print it, persist evidence, and raise/return failure without closing the parent terminal.
-9. For parameterized `gh api` reads, use explicit read semantics such as `gh api --method GET <endpoint> -f ref=<resolvedCommit>` instead of an interpolated content query string. Every file read must use the exact commit produced by the preceding ref-resolution step.
-10. Resolve the canonical downstream artifact from tracked repository evidence before delivery. The command must print or open that artifact after execution whenever the owning runtime produces it.
-11. Save the exact candidate command to a temporary `.ps1` file and run `pwsh -NoLogo -NoProfile -File scripts/Test-OperatorCommandDeliveryHarnessCompleteness.ps1 -CandidatePath <candidate.ps1>` plus `python -m unittest tests.test_operator_command_delivery_harness` before publishing a new command form when repository execution is available. The validator must inspect the candidate itself; fixture-only validation is insufficient.
-12. Deliver only the command body the operator should paste. Do not place prompt markers or escaped Markdown punctuation inside it.
+6. If the operator reports that pasted text is visibly wrong, especially unexpected question-mark or replacement glyphs, run `scripts/Inspect-OperatorTerminalPasteBoundary.ps1` before changing terminal settings. The probe may read the clipboard or a supplied fixture/file, records only hash/count/encoding metadata, and never persists raw captured text. A clean captured-input result leaves terminal/font/PSReadLine/WezTerm presentation unproven.
+7. Build the command for the declared shell only. For PowerShell, environment variables use `$env:NAME`; reject `$env\\:NAME` and other escaped punctuation introduced by transport or formatting.
+8. Strip prompt and transcript material. Never include `PS C:\\...>`, `>>`, `+ CategoryInfo`, or copied shell decorations inside the command body.
+9. Preserve the interactive parent shell. Do not use a PowerShell `exit` statement anywhere in a command pasted at an interactive prompt, including after a semicolon. When a child must propagate a nonzero code, run the child process, capture `$LASTEXITCODE`, print it, persist evidence, and raise/return failure without closing the parent terminal.
+10. For parameterized `gh api` reads, use explicit read semantics such as `gh api --method GET <endpoint> -f ref=<resolvedCommit>` instead of an interpolated content query string. Every file read must use the exact commit produced by the preceding ref-resolution step.
+11. Resolve the canonical downstream artifact from tracked repository evidence before delivery. The command must print or open that artifact after execution whenever the owning runtime produces it.
+12. Save the exact candidate command to a temporary `.ps1` file and run `pwsh -NoLogo -NoProfile -File scripts/Test-OperatorCommandDeliveryHarnessCompleteness.ps1 -CandidatePath <candidate.ps1>` plus `python -m unittest tests.test_operator_command_delivery_harness tests.test_operator_terminal_paste_boundary` before publishing a new command form when repository execution is available. The validator must inspect the candidate itself; fixture-only validation is insufficient.
+13. Deliver only the command body the operator should paste. Do not place prompt markers or escaped Markdown punctuation inside it.
 
 ## Expected outputs
 
@@ -43,6 +44,7 @@ Use this skill before producing a copy-paste command for an operator when the co
 - verified required file list;
 - exact child executable path(s) and launch-proof artifact(s);
 - transport-integrity result for the actual candidate command;
+- terminal-paste boundary artifact when a visual paste anomaly is being diagnosed;
 - interactive-shell safety result for the actual candidate command;
 - one operator command;
 - canonical downstream artifact path;
@@ -52,22 +54,23 @@ Use this skill before producing a copy-paste command for an operator when the co
 
 ```powershell
 pwsh -NoLogo -NoProfile -File scripts/Test-OperatorCommandDeliveryHarnessCompleteness.ps1 -CandidatePath <candidate.ps1>
-python -m unittest tests.test_operator_command_delivery_harness
+python -m unittest tests.test_operator_command_delivery_harness tests.test_operator_terminal_paste_boundary
 ```
 
-The positive fixture must pass. The corrupted fixture containing `$env\\:TEMP`, a PowerShell prompt prefix, query-string content retrieval, and top-level or inline `exit` must be detected as invalid. The child-launch regression fixture must classify `Access is denied.` before any downstream artifact as `child-executable-launch-blocked`. The candidate path is required when validating a command for publication so the published command cannot bypass the canned fixtures.
+The positive fixture must pass. The corrupted fixture containing `$env\\:TEMP`, a PowerShell prompt prefix, query-string content retrieval, and top-level or inline `exit` must be detected as invalid. The child-launch regression fixture must classify `Access is denied.` before any downstream artifact as `child-executable-launch-blocked`. Terminal-paste fixtures must distinguish clean Unicode captured input from captured literal `?` characters without treating a clean capture as rendering proof. The candidate path is required when validating a command for publication so the published command cannot bypass the canned fixtures.
 
 ## Proof promotion
 
-Command-delivery validation proves source resolution, child-executable launchability for the bounded probe, and command transport integrity only. A successful downstream child exit can promote only to the proof level owned by that downstream validator or launcher. Tmux live proof, for example, still requires its runtime artifact to record `tmuxClientAttachedObserved=true` and `proofLevel=tmux-client-attached`.
+Command-delivery validation proves source resolution, child-executable launchability for the bounded probe, command transport integrity, and—when used—the exact captured-input classification only. `captured-input-clean-presentation-unproven` explicitly does not prove glyph rendering, font coverage, PSReadLine behavior, WezTerm configuration, or tmux presentation. A successful downstream child exit can promote only to the proof level owned by that downstream validator or launcher. Tmux live proof, for example, still requires its runtime artifact to record `tmuxClientAttachedObserved=true` and `proofLevel=tmux-client-attached`.
 
 ## Forbidden scope
 
 - Do not change product behavior merely to make a command easier to deliver.
+- Do not mutate terminal configuration, fonts, registry settings, or reinstall software solely because a visible glyph looked wrong before the captured-input boundary is classified.
 - Do not weaken P00, runtime, provider, launcher, or artifact gates.
-- Do not commit generated operator evidence, usernames, hostnames, credentials, tokens, or private endpoints.
+- Do not commit generated operator evidence, usernames, hostnames, credentials, tokens, raw clipboard text, or private endpoints.
 - Do not install implicit Git hooks; the tracked hook is opt-in and documentation-driven.
-- Do not claim GUI, TUI, tmux attachment, hosted response, or operator acceptance from static command or executable-launch validation.
+- Do not claim GUI, TUI, tmux attachment, terminal rendering correctness, hosted response, or operator acceptance from static command, captured-input, or executable-launch validation.
 
 ## Stop and escalate
 
