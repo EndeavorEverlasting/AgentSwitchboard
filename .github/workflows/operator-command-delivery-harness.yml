@@ -8,7 +8,9 @@ on:
       - 'docs/harness/operator-command-delivery.md'
       - 'scripts/Test-OperatorCommandDeliveryHarnessCompleteness.ps1'
       - 'scripts/Test-OperatorChildExecutableLaunch.ps1'
+      - 'scripts/Inspect-OperatorTerminalPasteBoundary.ps1'
       - 'tests/test_operator_command_delivery_harness.py'
+      - 'tests/test_operator_terminal_paste_boundary.py'
       - '.github/workflows/operator-command-delivery-harness.yml'
   workflow_dispatch:
 
@@ -31,7 +33,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Validate dependency-free harness contract
-        run: python -m unittest tests.test_operator_command_delivery_harness
+        run: python -m unittest tests.test_operator_command_delivery_harness tests.test_operator_terminal_paste_boundary
       - name: Validate PowerShell harness completeness
         shell: pwsh
         run: pwsh -NoLogo -NoProfile -File scripts/Test-OperatorCommandDeliveryHarnessCompleteness.ps1
@@ -41,6 +43,7 @@ jobs:
           $paths = @(
             'scripts/Test-OperatorCommandDeliveryHarnessCompleteness.ps1',
             'scripts/Test-OperatorChildExecutableLaunch.ps1',
+            'scripts/Inspect-OperatorTerminalPasteBoundary.ps1',
             'tooling/profiles/windows/harness/operator-command-delivery/hooks/pre-push.ps1',
             'tooling/profiles/windows/harness/operator-command-delivery/fixtures/valid-powershell-command.fixture.ps1'
           )
@@ -53,6 +56,31 @@ jobs:
               throw "PowerShell parse failed: $path"
             }
           }
+      - name: Prove terminal paste boundary fixtures
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'terminal-paste-boundary'
+          New-Item -ItemType Directory -Path $out -Force | Out-Null
+
+          $cleanArtifact = Join-Path $out 'clean.json'
+          & pwsh -NoLogo -NoProfile -File scripts/Inspect-OperatorTerminalPasteBoundary.ps1 `
+            -InputPath tooling/profiles/windows/harness/operator-command-delivery/fixtures/terminal-paste-clean.fixture.txt `
+            -OutputPath $cleanArtifact
+          if ($LASTEXITCODE -ne 0) { throw "Clean terminal-paste probe failed: $LASTEXITCODE" }
+          $clean = Get-Content -LiteralPath $cleanArtifact -Raw | ConvertFrom-Json
+          if ($clean.classification -ne 'captured-input-clean-presentation-unproven') { throw "Unexpected clean classification: $($clean.classification)" }
+          if ($clean.literalQuestionMarkCount -ne 0 -or $clean.replacementCharacterCount -ne 0) { throw 'Clean fixture unexpectedly contains question/replacement characters.' }
+          if ($clean.rawTextPersisted -ne $false -or 'rawText' -in $clean.PSObject.Properties.Name) { throw 'Probe persisted raw captured text.' }
+
+          $questionArtifact = Join-Path $out 'question.json'
+          & pwsh -NoLogo -NoProfile -File scripts/Inspect-OperatorTerminalPasteBoundary.ps1 `
+            -InputPath tooling/profiles/windows/harness/operator-command-delivery/fixtures/terminal-paste-question-mark.fixture.txt `
+            -OutputPath $questionArtifact
+          if ($LASTEXITCODE -ne 0) { throw "Question-mark terminal-paste probe failed: $LASTEXITCODE" }
+          $question = Get-Content -LiteralPath $questionArtifact -Raw | ConvertFrom-Json
+          if ($question.classification -ne 'captured-input-contains-question-mark') { throw "Unexpected question-mark classification: $($question.classification)" }
+          if ($question.literalQuestionMarkCount -lt 1) { throw 'Question-mark fixture did not preserve its regression character.' }
+          if ($question.rawTextPersisted -ne $false -or 'rawText' -in $question.PSObject.Properties.Name) { throw 'Probe persisted raw captured text.' }
       - name: Prove concrete pwsh child launch
         shell: pwsh
         run: |
