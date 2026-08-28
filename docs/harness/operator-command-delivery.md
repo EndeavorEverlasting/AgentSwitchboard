@@ -92,4 +92,4 @@ When a command fails before the intended runtime gate, preserve the failed comma
 
 ## Proof ceiling
 
-Passing this harness proves command-source resolution rules, bounded launchability of explicitly probed child executables, transport-integrity contracts, captured-input classification when invoked, interactive-shell safety rules, component discoverability, and deterministic regression detection. It does not prove terminal presentation correctness or the downstream runtime until their owning live evidence gates pass.
+Passing this harness proves command-source resolution rules, bounded launchability of explicitly probed child executables, transport-integrity contracts, captured-input classification when invoked, interactive-shell safety rules, component discoverability, and deterministic regression detection. It does not prove the downstream runtime, and it does not prove terminal presentation correctness, until their owning live evidence gates pass.
