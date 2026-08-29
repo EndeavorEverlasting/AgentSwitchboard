@@ -31,6 +31,8 @@ class AuggieReadinessContract(unittest.TestCase):
             'UseShellExecute = $false',
             "ArgumentList @('--version')",
             "ArgumentList @('--help')",
+            ".EndsWith('.cmd'",
+            "@('/d', '/s', '/c', $FilePath)",
             'acpServerAdvertised',
             'nonInteractivePrintAdvertised',
             "'acp:auggie --acp'",

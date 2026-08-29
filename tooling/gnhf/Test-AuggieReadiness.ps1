@@ -40,6 +40,13 @@ function Invoke-BoundedProbe {
                 [void]$psi.ArgumentList.Add($prefix)
             }
         }
+        elseif ($FilePath.EndsWith('.cmd', [StringComparison]::OrdinalIgnoreCase) -or $FilePath.EndsWith('.bat', [StringComparison]::OrdinalIgnoreCase)) {
+            $cmd = if ($env:ComSpec) { $env:ComSpec } else { (Get-Command cmd.exe -ErrorAction Stop).Source }
+            $psi.FileName = $cmd
+            foreach ($prefix in @('/d', '/s', '/c', $FilePath)) {
+                [void]$psi.ArgumentList.Add($prefix)
+            }
+        }
         else {
             $psi.FileName = $FilePath
         }
