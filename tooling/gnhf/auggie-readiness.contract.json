@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "contractId": "agentswitchboard.auggie-readiness.v1",
+  "canonicalRepository": "EndeavorEverlasting/AgentSwitchboard",
+  "purpose": "Own the read-only boundary between Auggie command discovery and any future AgentSwitchboard ACP/GNHF integration.",
+  "entrypoints": {
+    "probe": "tooling/gnhf/Test-AuggieReadiness.ps1",
+    "readyFixture": "tooling/gnhf/fixtures/auggie-ready.fixture.ps1",
+    "blockedFixture": "tooling/gnhf/fixtures/auggie-no-acp.fixture.ps1",
+    "contractTest": "tests/test_auggie_readiness_contract.py",
+    "operatorGuide": "docs/workstation/auggie-readiness.md",
+    "ci": ".github/workflows/auggie-readiness.yml"
+  },
+  "upstreamContract": {
+    "cliReference": "https://docs.augmentcode.com/cli/reference",
+    "acpDocumentation": "https://docs.augmentcode.com/cli/acp",
+    "acpServerCommand": "auggie --acp",
+    "nonInteractiveFlag": "--print"
+  },
+  "readinessRequires": [
+    "auggie command resolves",
+    "auggie --version exits zero within the bounded timeout",
+    "auggie --help exits zero within the bounded timeout",
+    "help output advertises --acp"
+  ],
+  "forbiddenActions": [
+    "install Auggie",
+    "run Auggie login or token commands",
+    "start the ACP server during readiness classification",
+    "read or persist provider credentials",
+    "mutate a repository",
+    "claim authentication or ACP handshake from help output"
+  ],
+  "artifact": {
+    "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\auggie-readiness\\runs\\<runId>\\auggie-readiness-result.json",
+    "tracked": false,
+    "rawHelpPersisted": false
+  },
+  "proofCeiling": "CLI readiness and advertised capability discovery only; authentication, ACP handshake, model/provider readiness, repository mutation, terminal presentation, and unattended GNHF execution require separate live proof."
+}
