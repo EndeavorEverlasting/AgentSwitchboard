@@ -114,7 +114,11 @@ catch { [void]$failures.Add("codebase/semantic: $($_.Exception.Message)") }
 $preflightText = $textByPath['tooling/pi/Test-PiWorkstationPrereqs.ps1']
 foreach ($token in @(
     'agentswitchboard.pi-workstation-prereqs.v1',
-    'npm view',
+    'Invoke-NpmJson',
+    '[string]$verification.package',
+    '[string]$verification.legacyPackage.package',
+    "'engines'",
+    "'deprecated'",
     'upstream-drift',
     'installed-version-drift',
     'ready-to-install',
