@@ -25,12 +25,14 @@ function Read-Tracked([string]$RelativePath) {
 $requiredFiles = @(
     'tooling/pi/harness/codebase-map.json',
     'tooling/pi/harness/pi-adapter.registry.json',
+    'tooling/pi/harness/upstream-verification.json',
     'tooling/pi/harness/artifact-registry.json',
     'tooling/pi/harness/workflows/task-intake.workflow.json',
     'tooling/pi/harness/workflows/opinion-fusion.workflow.json',
     'tooling/pi/harness/workflows/autovalidate.workflow.json',
     'tooling/pi/harness/schemas/pi-harness-contracts.schema.json',
     '.ai/skills/pi-fusion-orchestration/SKILL.md',
+    'tooling/pi/Test-PiWorkstationPrereqs.ps1',
     'tooling/pi/Get-PiHarnessStatus.ps1',
     'tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1',
     'tests/test_pi_harness_contracts.py',
@@ -48,6 +50,7 @@ foreach ($relativePath in $requiredFiles) {
 foreach ($relativePath in @(
     'tooling/pi/harness/codebase-map.json',
     'tooling/pi/harness/pi-adapter.registry.json',
+    'tooling/pi/harness/upstream-verification.json',
     'tooling/pi/harness/artifact-registry.json',
     'tooling/pi/harness/workflows/task-intake.workflow.json',
     'tooling/pi/harness/workflows/opinion-fusion.workflow.json',
@@ -66,9 +69,28 @@ foreach ($relativePath in @(
 }
 
 try {
+    $verification = $textByPath['tooling/pi/harness/upstream-verification.json'] | ConvertFrom-Json
+    Check ($verification.schema -eq 'agentswitchboard.pi-upstream-verification.v1') 'upstream/schema' 'unexpected upstream verification schema'
+    Check ($verification.package -eq '@earendil-works/pi-coding-agent') 'upstream/package' 'current Pi package identity is not pinned'
+    Check ($verification.version -eq '0.84.4') 'upstream/version' 'unexpected Pi version pin'
+    Check ($verification.sourceRepository -eq 'earendil-works/pi') 'upstream/source' 'unexpected Pi source repository'
+    Check ($verification.minimumNodeVersion -eq '22.19.0') 'upstream/node-minimum' 'unexpected minimum Node version'
+    Check ($verification.nodeEngine -eq '>=22.19.0') 'upstream/node-engine' 'unexpected Node engine contract'
+    Check ($verification.installCommand -eq 'npm install -g --ignore-scripts @earendil-works/pi-coding-agent@0.84.4') 'upstream/install' 'install command is not exact or lifecycle scripts are not disabled'
+    Check ($verification.legacyPackage.package -eq '@mariozechner/pi-coding-agent') 'upstream/legacy-package' 'legacy package identity is missing'
+    Check ($verification.legacyPackage.deprecated -eq $true) 'upstream/legacy-deprecated' 'legacy package is not recorded as deprecated'
+    Check (-not [string]::IsNullOrWhiteSpace([string]$verification.legacyPackage.deprecatedMessage)) 'upstream/legacy-message' 'legacy deprecation message is missing'
+}
+catch { [void]$failures.Add("upstream/semantic: $($_.Exception.Message)") }
+
+try {
     $registry = $textByPath['tooling/pi/harness/pi-adapter.registry.json'] | ConvertFrom-Json
     Check ($registry.schema -eq 'agentswitchboard.pi-adapter-registry.v1') 'registry/schema' 'unexpected registry schema'
-    Check ($registry.upstream.status -eq 'verification-required') 'registry/upstream-verification' 'upstream version must fail closed until verified'
+    Check ($registry.upstream.package -eq '@earendil-works/pi-coding-agent') 'registry/upstream-package' 'registry still points at a deprecated Pi package'
+    Check ($registry.upstream.sourceRepository -eq 'earendil-works/pi') 'registry/upstream-source' 'registry points at the wrong Pi source repository'
+    Check ($registry.upstream.pinnedVersion -eq $verification.version) 'registry/upstream-version' 'registry pin does not match the verification record'
+    Check ($registry.upstream.status -eq 'verified-prerequisite') 'registry/upstream-verification' 'upstream prerequisite identity is not verified'
+    Check ($registry.upstream.verificationRecord -eq 'tooling/pi/harness/upstream-verification.json') 'registry/upstream-record' 'registry does not bind the verification record'
     Check ($registry.configuration.preferredScope -eq 'project-local') 'registry/project-local' 'project-local configuration is not preferred'
     Check ($registry.configuration.globalConfigurationMutationAllowed -eq $false) 'registry/no-global-mutation' 'global configuration mutation is allowed'
     Check ($registry.configuration.implicitHookInstallationAllowed -eq $false) 'registry/no-implicit-hooks' 'implicit hook installation is allowed'
@@ -79,6 +101,32 @@ try {
     }
 }
 catch { [void]$failures.Add("registry/semantic: $($_.Exception.Message)") }
+
+try {
+    $codebase = $textByPath['tooling/pi/harness/codebase-map.json'] | ConvertFrom-Json
+    Check ($codebase.entrypoints.workstationPrereqs -eq 'tooling/pi/Test-PiWorkstationPrereqs.ps1') 'codebase/preflight' 'workstation prerequisite entrypoint is not registered'
+    Check ($codebase.entrypoints.upstreamVerification -eq 'tooling/pi/harness/upstream-verification.json') 'codebase/upstream' 'upstream verification record is not registered'
+    $commandText = (@($codebase.commands | ForEach-Object { [string]$_.command }) -join "`n")
+    Check ($commandText -match [regex]::Escape('tooling/pi/Test-PiWorkstationPrereqs.ps1')) 'codebase/preflight-command' 'operator preflight command is missing'
+}
+catch { [void]$failures.Add("codebase/semantic: $($_.Exception.Message)") }
+
+$preflightText = $textByPath['tooling/pi/Test-PiWorkstationPrereqs.ps1']
+foreach ($token in @(
+    'agentswitchboard.pi-workstation-prereqs.v1',
+    'npm view',
+    'upstream-drift',
+    'installed-version-drift',
+    'ready-to-install',
+    'NoNetwork',
+    'AllowUnready',
+    'paths = $npmPaths',
+    'legacyPackage'
+)) {
+    Check ($preflightText.Contains($token)) "preflight/$token" 'workstation prerequisite contract token is missing'
+}
+Check (-not $preflightText.Contains('npm install -g @mariozechner/pi-coding-agent')) 'preflight/no-legacy-install' 'preflight embeds the deprecated install path'
+Check ($preflightText.Contains('Read-only local prerequisite and live npm metadata proof')) 'preflight/proof-ceiling' 'preflight proof ceiling is missing'
 
 $expectedWorkflows = @{
     'tooling/pi/harness/workflows/task-intake.workflow.json' = 'pi-task-intake'
@@ -137,6 +185,7 @@ catch { [void]$failures.Add("central/artifacts: $($_.Exception.Message)") }
 $deployableContractPaths = @(
     'tooling/pi/harness/codebase-map.json',
     'tooling/pi/harness/pi-adapter.registry.json',
+    'tooling/pi/harness/upstream-verification.json',
     'tooling/pi/harness/artifact-registry.json',
     'tooling/pi/harness/workflows/task-intake.workflow.json',
     'tooling/pi/harness/workflows/opinion-fusion.workflow.json',
@@ -154,6 +203,10 @@ foreach ($forbidden in @(
 )) {
     Check (-not $deployableText.Contains($forbidden)) "forbidden/$forbidden" 'unverified installation, API, permission bypass, or privacy shortcut is embedded in a deployable contract'
 }
+
+$docsText = $textByPath['docs/harness/pi-operational-harness.md']
+Check ($docsText.Contains('Test-PiWorkstationPrereqs.ps1')) 'docs/preflight' 'operator guide does not route through the workstation prerequisite preflight'
+Check ($docsText.Contains('@earendil-works/pi-coding-agent@0.84.4')) 'docs/current-pin' 'operator guide does not name the current verified Pi pin'
 
 Write-Host 'PI HARNESS COMPLETENESS' -ForegroundColor Cyan
 $passes | ForEach-Object { Write-Host "[PASS] $_" -ForegroundColor Green }
