@@ -65,6 +65,11 @@ def main() -> None:
     preflight = preflight_path.read_text(encoding="utf-8-sig")
     for token in (
         "agentswitchboard.pi-workstation-prereqs.v1",
+        "Invoke-NpmJson",
+        "[string]$verification.package",
+        "[string]$verification.legacyPackage.package",
+        "'engines'",
+        "'deprecated'",
         "upstream-drift",
         "installed-version-drift",
         "ready-to-install",
@@ -75,7 +80,6 @@ def main() -> None:
     ):
         assert token in preflight, f"missing preflight contract token: {token}"
     assert "npm install -g @mariozechner/pi-coding-agent" not in preflight
-    assert "npm" in preflight and "view" in preflight
 
     artifacts_names = [item["fileName"] for item in artifacts["artifacts"]]
     assert artifacts["tracked"] is False
