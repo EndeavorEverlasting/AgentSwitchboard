@@ -9,6 +9,11 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $RootPath = (Resolve-Path -LiteralPath $RootPath).Path
 
+function ConvertTo-PowerShellSingleQuotedLiteral {
+    param([Parameter(Mandatory)][string]$Value)
+    return "'" + ($Value -replace "'", "''") + "'"
+}
+
 $required = @(
     'tooling/pi/harness/codebase-map.json',
     'tooling/pi/harness/pi-adapter.registry.json',
@@ -62,12 +67,16 @@ $gaps = @(
 
 $status = if ($missing.Count -eq 0) { 'contract-ready' } else { 'incomplete' }
 $piState = if ($null -eq $piCommand) { 'missing' } else { 'present-unverified' }
-$nextCommand = if ($missing.Count -eq 0) {
-    'pwsh -NoLogo -NoProfile -File tooling/pi/Test-PiWorkstationPrereqs.ps1'
+$rootLiteral = ConvertTo-PowerShellSingleQuotedLiteral -Value $RootPath
+$nextRelativePath = if ($missing.Count -eq 0) {
+    'tooling/pi/Test-PiWorkstationPrereqs.ps1'
 }
 else {
-    'pwsh -NoLogo -NoProfile -File scripts/Test-PiHarnessCompleteness.ps1'
+    'scripts/Test-PiHarnessCompleteness.ps1'
 }
+$nextScriptPath = Join-Path $RootPath $nextRelativePath
+$nextScriptLiteral = ConvertTo-PowerShellSingleQuotedLiteral -Value $nextScriptPath
+$nextCommand = "pwsh -NoLogo -NoProfile -File $nextScriptLiteral -RootPath $rootLiteral"
 
 $result = [ordered]@{
     schema = 'agentswitchboard.pi-harness-status.v1'
