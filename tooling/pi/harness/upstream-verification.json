@@ -3,12 +3,32 @@
   "verifiedAt": "2026-09-03",
   "package": "@earendil-works/pi-coding-agent",
   "version": "0.84.4",
+  "versionTag": "v0.84.4",
   "sourceRepository": "earendil-works/pi",
+  "sourceUrl": "https://github.com/earendil-works/pi",
+  "packageManifestUrl": "https://github.com/earendil-works/pi/blob/v0.84.4/packages/coding-agent/package.json",
+  "documentationUrl": "https://github.com/earendil-works/pi/blob/v0.84.4/packages/coding-agent/docs/index.md",
+  "windowsDocumentationUrl": "https://github.com/earendil-works/pi/blob/v0.84.4/packages/coding-agent/docs/windows.md",
+  "supportedOperatingSystems": [
+    "Windows",
+    "Linux",
+    "macOS"
+  ],
   "minimumNodeVersion": "22.19.0",
   "nodeEngine": ">=22.19.0",
   "executable": "pi",
   "versionProbe": "pi --version",
   "installCommand": "npm install -g --ignore-scripts @earendil-works/pi-coding-agent@0.84.4",
+  "rollbackCommand": "npm uninstall -g @earendil-works/pi-coding-agent",
+  "expectedFiles": [
+    "package.json",
+    "dist/bundle/cli.js",
+    "npm-shrinkwrap.json"
+  ],
+  "expectedExecutableMapping": {
+    "command": "pi",
+    "packageRelativePath": "dist/bundle/cli.js"
+  },
   "shellRequirement": "bash",
   "windowsShellDiscovery": [
     "reviewed shellPath in Pi project settings",
@@ -25,6 +45,20 @@
     "npm view @earendil-works/pi-coding-agent version engines --json",
     "npm view @mariozechner/pi-coding-agent version deprecated --json"
   ],
+  "officialEvidence": [
+    {
+      "claim": "package identity, version, Node engine, executable mapping, and published file surfaces",
+      "source": "packages/coding-agent/package.json@v0.84.4"
+    },
+    {
+      "claim": "npm install and uninstall commands plus Linux/macOS installation support",
+      "source": "packages/coding-agent/docs/index.md@v0.84.4"
+    },
+    {
+      "claim": "Windows support and Bash discovery order",
+      "source": "packages/coding-agent/docs/windows.md@v0.84.4"
+    }
+  ],
   "configurationScope": "project-local",
-  "proofCeiling": "Tracked upstream identity and prerequisite floor verified on 2026-09-03. A workstation must still resolve live npm metadata, local Node/npm/Git/bash paths and versions, and installed Pi identity before installation or runtime claims."
+  "proofCeiling": "Official v0.84.4 source records package identity, source URL, supported desktop operating systems, expected package files and executable mapping, Node floor, install command, and rollback path. A workstation must still resolve live npm metadata, local Node/npm/Git/bash paths and versions, and installed Pi identity before installation or runtime claims."
 }
