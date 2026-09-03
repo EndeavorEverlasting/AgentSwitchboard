@@ -2,11 +2,14 @@
   "schema": "agentswitchboard.pi-codebase-map.v1",
   "harnessId": "agentswitchboard.pi-operational-harness.v1",
   "repository": "EndeavorEverlasting/AgentSwitchboard",
-  "purpose": "Map the smallest repository surfaces a Pi-backed agent needs for intake, bounded orchestration, validation, artifact production, and handoff.",
+  "purpose": "Map the smallest repository surfaces a Pi-backed agent needs for workstation prerequisite proof, intake, bounded orchestration, validation, artifact production, and handoff.",
   "entrypoints": {
     "governance": "AGENTS.md",
     "rootMap": "CODEBASE_MAP.md",
     "manifest": ".ai/harness/manifest.json",
+    "workstationPrereqs": "tooling/pi/Test-PiWorkstationPrereqs.ps1",
+    "workstationPrereqContracts": "tests/Test-PiWorkstationPrereqsContracts.ps1",
+    "upstreamVerification": "tooling/pi/harness/upstream-verification.json",
     "workflowIntake": "tooling/pi/harness/workflows/task-intake.workflow.json",
     "workflowFusion": "tooling/pi/harness/workflows/opinion-fusion.workflow.json",
     "workflowAutovalidate": "tooling/pi/harness/workflows/autovalidate.workflow.json",
@@ -18,14 +21,16 @@
   "directories": [
     {"path": ".ai/harness", "purpose": "Canonical manifests, schemas, workflows, registries, fixtures, and proof policy."},
     {"path": ".ai/skills", "purpose": "Scoped agent procedures; no product behavior belongs only in prose."},
-    {"path": "tooling/pi/harness", "purpose": "Pi adapter maps, workflows, schemas, and artifact contracts."},
+    {"path": "tooling/pi/harness", "purpose": "Pi adapter maps, upstream verification, workflows, schemas, and artifact contracts."},
     {"path": "tooling/pi/hooks", "purpose": "Opt-in local validation hooks; never installed implicitly."},
     {"path": "scripts", "purpose": "Repository-level deterministic validators and read-only probes."},
-    {"path": "tests", "purpose": "Dependency-free structural and behavioral contracts."},
+    {"path": "tests", "purpose": "Dependency-free structural and executable behavioral contracts."},
     {"path": "docs/harness", "purpose": "English operator guidance, status, gaps, risks, and proof ceilings."},
     {"path": ".github/workflows", "purpose": "Cross-platform CI proof gates."}
   ],
   "commands": [
+    {"name": "Pi workstation prerequisites", "command": "pwsh -NoLogo -NoProfile -File tooling/pi/Test-PiWorkstationPrereqs.ps1", "effect": "read-only", "proof": "local Node/npm/Git/bash/Pi identity plus live npm upstream drift gate"},
+    {"name": "Pi workstation prerequisite contracts", "command": "pwsh -NoLogo -NoProfile -File tests/Test-PiWorkstationPrereqsContracts.ps1", "effect": "temporary local test evidence only", "proof": "structured missing-record failure, bounded path evidence, and Windows project shellPath precedence"},
     {"name": "Pi harness status", "command": "pwsh -NoLogo -NoProfile -File tooling/pi/Get-PiHarnessStatus.ps1", "effect": "read-only", "proof": "repository contract readiness only"},
     {"name": "Pi completeness", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-PiHarnessCompleteness.ps1", "effect": "read-only", "proof": "tracked component and contract consistency"},
     {"name": "Pi dependency-free contracts", "command": "python tests/test_pi_harness_contracts.py", "effect": "read-only", "proof": "JSON and workflow semantics"},
@@ -34,11 +39,14 @@
   ],
   "knownTraps": [
     "Do not infer Pi installation, provider readiness, privacy, or model delivery from configuration files.",
+    "Do not install when live npm metadata differs from the tracked Pi upstream verification record; refresh and review the pin first.",
+    "Record bounded npm/Pi command-path evidence with total and omitted counts because Windows user-level shims may precede Program Files installations.",
+    "Honor a reviewed project-local Pi shellPath before Windows Git defaults or PATH fallbacks.",
     "Do not execute third-party extension snippets until the pinned upstream API and permissions are reviewed.",
     "Enforce one writer per branch; architect, builder, validator, and adjudicator roles must not share write authority.",
     "Do not fuse unattributed outputs or hide unresolved divergence.",
     "Do not run autovalidation without attempt, wall-clock, token, cancellation, and no-progress bounds.",
     "Do not store prompts, raw model output, credentials, or local endpoint evidence in tracked artifacts."
   ],
-  "proofCeiling": "Repository map and deterministic offline contracts only; no Pi runtime, provider, model, extension, network, privacy, or code-delivery proof."
+  "proofCeiling": "Repository map, upstream prerequisite record, workstation preflight contract, and deterministic offline contracts only; no Pi installation, provider, model, extension, network privacy, or code-delivery proof."
 }

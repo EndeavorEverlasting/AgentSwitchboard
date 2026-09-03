@@ -2,11 +2,12 @@
   "schema": "agentswitchboard.pi-adapter-registry.v1",
   "registryId": "agentswitchboard.pi-adapters.v1",
   "upstream": {
-    "package": "@mariozechner/pi-coding-agent",
-    "sourceRepository": "badlogic/pi-mono",
-    "pinnedVersion": null,
-    "status": "verification-required",
-    "rule": "Resolve and record an exact installed version and its official API contract before installation or extension execution."
+    "package": "@earendil-works/pi-coding-agent",
+    "sourceRepository": "earendil-works/pi",
+    "pinnedVersion": "0.84.4",
+    "status": "verified-prerequisite",
+    "verificationRecord": "tooling/pi/harness/upstream-verification.json",
+    "rule": "Run the repository workstation prerequisite preflight and require live npm metadata to match the tracked verification record before installation or extension execution."
   },
   "configuration": {
     "preferredScope": "project-local",
@@ -59,5 +60,5 @@
     "containsRawPrompt": false,
     "containsRawModelOutput": false
   },
-  "proofCeiling": "Adapter registry and routing contract only; no package installation, extension compatibility, provider availability, local privacy, model response, or repository mutation proof."
+  "proofCeiling": "Verified upstream prerequisite identity and routing contract only; no package installation, extension compatibility, provider availability, endpoint privacy, model response, or repository mutation proof."
 }
