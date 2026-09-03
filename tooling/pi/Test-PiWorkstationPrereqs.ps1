@@ -11,6 +11,18 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $RootPath = (Resolve-Path -LiteralPath $RootPath).Path
 
+function Get-OptionalPropertyValue {
+    param(
+        [AllowNull()][object]$InputObject,
+        [Parameter(Mandatory)][string]$Name
+    )
+
+    if ($null -eq $InputObject) { return $null }
+    $property = $InputObject.PSObject.Properties[$Name]
+    if ($null -eq $property) { return $null }
+    return $property.Value
+}
+
 function Get-NativeCommandPaths {
     param([Parameter(Mandatory)][string[]]$Names)
 
@@ -42,9 +54,36 @@ function Get-VersionProbe {
     catch { return $null }
 }
 
+function Get-ProjectShellPath {
+    param([Parameter(Mandatory)][string]$RepositoryRoot)
+
+    $settingsPath = Join-Path $RepositoryRoot '.pi/settings.json'
+    if (-not (Test-Path -LiteralPath $settingsPath -PathType Leaf)) { return $null }
+    try {
+        $settings = Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json
+        $configured = Get-OptionalPropertyValue -InputObject $settings -Name 'shellPath'
+        if ([string]::IsNullOrWhiteSpace([string]$configured)) { return $null }
+        $expanded = [Environment]::ExpandEnvironmentVariables([string]$configured)
+        if (-not [System.IO.Path]::IsPathRooted($expanded)) {
+            $expanded = Join-Path $RepositoryRoot $expanded
+        }
+        if (Test-Path -LiteralPath $expanded -PathType Leaf) {
+            return (Resolve-Path -LiteralPath $expanded).Path
+        }
+    }
+    catch { return $null }
+    return $null
+}
+
 function Get-BashPaths {
+    param([Parameter(Mandatory)][string]$RepositoryRoot)
+
     $candidates = [System.Collections.Generic.List[string]]::new()
     if ($IsWindows) {
+        $configuredShellPath = Get-ProjectShellPath -RepositoryRoot $RepositoryRoot
+        if ($configuredShellPath -and -not $candidates.Contains($configuredShellPath)) {
+            [void]$candidates.Add($configuredShellPath)
+        }
         foreach ($candidate in @(
             $(if ($env:ProgramFiles) { Join-Path $env:ProgramFiles 'Git\bin\bash.exe' }),
             $(if (${env:ProgramFiles(x86)}) { Join-Path ${env:ProgramFiles(x86)} 'Git\bin\bash.exe' })
@@ -73,29 +112,113 @@ function Invoke-NpmJson {
     return $raw | ConvertFrom-Json
 }
 
-function Get-OptionalPropertyValue {
+function Get-BoundedPathEvidence {
     param(
-        [AllowNull()][object]$InputObject,
-        [Parameter(Mandatory)][string]$Name
+        [AllowNull()][string[]]$Paths,
+        [ValidateRange(1, 50)][int]$Limit = 8
     )
 
-    if ($null -eq $InputObject) { return $null }
-    $property = $InputObject.PSObject.Properties[$Name]
-    if ($null -eq $property) { return $null }
-    return $property.Value
+    $all = @($Paths | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    $visible = @($all | Select-Object -First $Limit)
+    return [ordered]@{
+        state = if ($all.Count -eq 0) { 'empty' } else { 'present' }
+        total = $all.Count
+        omitted = [Math]::Max(0, $all.Count - $visible.Count)
+        paths = @($visible)
+    }
 }
 
-$verificationPath = Join-Path $RootPath 'tooling/pi/harness/upstream-verification.json'
-if (-not (Test-Path -LiteralPath $verificationPath -PathType Leaf)) {
-    throw "Tracked Pi upstream verification is missing: $verificationPath"
+function Format-BoundedPathEvidence {
+    param([Parameter(Mandatory)][System.Collections.IDictionary]$Evidence)
+
+    if ([int]$Evidence.total -eq 0) { return '<none>' }
+    $text = (@($Evidence.paths) -join '; ')
+    if ([int]$Evidence.omitted -gt 0) { $text += " (+$($Evidence.omitted) omitted)" }
+    return $text
 }
-$verification = Get-Content -LiteralPath $verificationPath -Raw | ConvertFrom-Json
+
+function Save-PreflightReport {
+    param(
+        [Parameter(Mandatory)][System.Collections.IDictionary]$Result,
+        [Parameter(Mandatory)][string[]]$MarkdownLines
+    )
+
+    if ($NoWrite) { return }
+    $targetDirectory = $OutputDirectory
+    if ([string]::IsNullOrWhiteSpace($targetDirectory)) {
+        $targetDirectory = Join-Path ([System.IO.Path]::GetTempPath()) 'AgentSwitchboard/PiHarness/prereqs'
+    }
+    $null = New-Item -ItemType Directory -Path $targetDirectory -Force
+    $jsonPath = Join-Path $targetDirectory 'pi-workstation-prereqs.json'
+    $mdPath = Join-Path $targetDirectory 'pi-workstation-prereqs.md'
+    $Result | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $jsonPath -Encoding utf8
+    $MarkdownLines | Set-Content -LiteralPath $mdPath -Encoding utf8
+    Write-Host "JSON: $jsonPath"
+    Write-Host "Report: $mdPath"
+}
+
+$verificationRelativePath = 'tooling/pi/harness/upstream-verification.json'
+$verificationPath = Join-Path $RootPath $verificationRelativePath
+if (-not (Test-Path -LiteralPath $verificationPath -PathType Leaf)) {
+    $result = [ordered]@{
+        schema = 'agentswitchboard.pi-workstation-prereqs.v1'
+        status = 'blocked-prerequisite'
+        repository = 'EndeavorEverlasting/AgentSwitchboard'
+        root = $RootPath
+        error = [ordered]@{
+            code = 'UPSTREAM_VERIFICATION_MISSING'
+            message = "Tracked Pi upstream verification is missing: $verificationPath"
+        }
+        recoveryAction = "Restore $verificationRelativePath from the current repository revision, then rerun this preflight."
+        proofCeiling = 'No workstation install decision can be made without the tracked upstream verification record.'
+    }
+    Write-Host "`n=== PI WORKSTATION PREREQUISITES ===" -ForegroundColor Cyan
+    Write-Host 'Decision: blocked-prerequisite'
+    Write-Host "Error: $($result.error.code)"
+    Write-Host "Recovery: $($result.recoveryAction)"
+    Save-PreflightReport -Result $result -MarkdownLines @(
+        '# Pi Workstation Prerequisites', '', '- Status: blocked-prerequisite', "- Error: $($result.error.code)", "- Recovery: $($result.recoveryAction)", '', '## Proof ceiling', $result.proofCeiling
+    )
+    exit 1
+}
+
+try {
+    $verification = Get-Content -LiteralPath $verificationPath -Raw | ConvertFrom-Json
+}
+catch {
+    $result = [ordered]@{
+        schema = 'agentswitchboard.pi-workstation-prereqs.v1'
+        status = 'blocked-prerequisite'
+        repository = 'EndeavorEverlasting/AgentSwitchboard'
+        root = $RootPath
+        error = [ordered]@{
+            code = 'UPSTREAM_VERIFICATION_INVALID'
+            message = $_.Exception.Message
+        }
+        recoveryAction = "Repair or restore $verificationRelativePath from the current repository revision, then rerun this preflight."
+        proofCeiling = 'No workstation install decision can be made from an unreadable upstream verification record.'
+    }
+    Write-Host "`n=== PI WORKSTATION PREREQUISITES ===" -ForegroundColor Cyan
+    Write-Host 'Decision: blocked-prerequisite'
+    Write-Host "Error: $($result.error.code)"
+    Write-Host "Recovery: $($result.recoveryAction)"
+    Save-PreflightReport -Result $result -MarkdownLines @(
+        '# Pi Workstation Prerequisites', '', '- Status: blocked-prerequisite', "- Error: $($result.error.code)", "- Recovery: $($result.recoveryAction)", '', '## Proof ceiling', $result.proofCeiling
+    )
+    exit 1
+}
 
 $nodePaths = @(Get-NativeCommandPaths -Names $(if ($IsWindows) { @('node.exe', 'node') } else { @('node') }))
 $npmPaths = @(Get-NativeCommandPaths -Names $(if ($IsWindows) { @('npm.cmd', 'npm.exe', 'npm') } else { @('npm') }))
 $gitPaths = @(Get-NativeCommandPaths -Names $(if ($IsWindows) { @('git.exe', 'git') } else { @('git') }))
 $piPaths = @(Get-NativeCommandPaths -Names $(if ($IsWindows) { @('pi.cmd', 'pi.exe', 'pi') } else { @('pi') }))
-$bashPaths = @(Get-BashPaths)
+$bashPaths = @(Get-BashPaths -RepositoryRoot $RootPath)
+
+$nodePathEvidence = Get-BoundedPathEvidence -Paths $nodePaths
+$npmPathEvidence = Get-BoundedPathEvidence -Paths $npmPaths
+$gitPathEvidence = Get-BoundedPathEvidence -Paths $gitPaths
+$piPathEvidence = Get-BoundedPathEvidence -Paths $piPaths
+$bashPathEvidence = Get-BoundedPathEvidence -Paths $bashPaths
 
 $nodePath = $nodePaths | Select-Object -First 1
 $npmPath = $npmPaths | Select-Object -First 1
@@ -208,6 +331,7 @@ $result = [ordered]@{
     schema = 'agentswitchboard.pi-workstation-prereqs.v1'
     status = $status
     repository = 'EndeavorEverlasting/AgentSwitchboard'
+    root = $RootPath
     machine = [ordered]@{
         computerName = [string]$env:COMPUTERNAME
         platform = if ($IsWindows) { 'windows' } else { 'non-windows' }
@@ -221,11 +345,11 @@ $result = [ordered]@{
         sourceRepository = [string]$verification.sourceRepository
     }
     observed = [ordered]@{
-        node = [ordered]@{ ready = [bool]$nodeReady; version = if ($nodeProbe) { $nodeProbe.version } else { $null }; paths = $nodePaths }
-        npm = [ordered]@{ ready = [bool]$npmReady; version = if ($npmProbe) { $npmProbe.version } else { $null }; paths = $npmPaths }
-        git = [ordered]@{ ready = [bool]$gitReady; version = if ($gitProbe) { $gitProbe.version } else { $null }; paths = $gitPaths }
-        bash = [ordered]@{ ready = [bool]$bashReady; version = if ($bashProbe) { $bashProbe.version } else { $null }; paths = $bashPaths }
-        pi = [ordered]@{ state = $piState; version = if ($piProbe) { $piProbe.version } else { $null }; paths = $piPaths }
+        node = [ordered]@{ ready = [bool]$nodeReady; version = if ($nodeProbe) { $nodeProbe.version } else { $null }; pathState = $nodePathEvidence.state; pathCount = $nodePathEvidence.total; pathsOmitted = $nodePathEvidence.omitted; paths = $nodePathEvidence.paths }
+        npm = [ordered]@{ ready = [bool]$npmReady; version = if ($npmProbe) { $npmProbe.version } else { $null }; pathState = $npmPathEvidence.state; pathCount = $npmPathEvidence.total; pathsOmitted = $npmPathEvidence.omitted; paths = $npmPathEvidence.paths }
+        git = [ordered]@{ ready = [bool]$gitReady; version = if ($gitProbe) { $gitProbe.version } else { $null }; pathState = $gitPathEvidence.state; pathCount = $gitPathEvidence.total; pathsOmitted = $gitPathEvidence.omitted; paths = $gitPathEvidence.paths }
+        bash = [ordered]@{ ready = [bool]$bashReady; version = if ($bashProbe) { $bashProbe.version } else { $null }; pathState = $bashPathEvidence.state; pathCount = $bashPathEvidence.total; pathsOmitted = $bashPathEvidence.omitted; paths = $bashPathEvidence.paths }
+        pi = [ordered]@{ state = $piState; version = if ($piProbe) { $piProbe.version } else { $null }; pathState = $piPathEvidence.state; pathCount = $piPathEvidence.total; pathsOmitted = $piPathEvidence.omitted; paths = $piPathEvidence.paths }
         upstream = [ordered]@{ state = $upstreamState; version = $liveVersion; nodeEngine = $liveNodeEngine; error = $upstreamError }
         legacyPackage = [ordered]@{ version = $legacyVersion; deprecated = $legacyDeprecated; message = $legacyMessage }
     }
@@ -240,37 +364,28 @@ Write-Host "`n=== PI WORKSTATION PREREQUISITES ===" -ForegroundColor Cyan
 $rows | Format-Table -AutoSize | Out-Host
 Write-Host "Decision: $status"
 Write-Host "Tracked package: $($verification.package)@$($verification.version)"
-Write-Host "npm resolution: $($npmPaths -join '; ')"
+Write-Host "npm resolution: $(Format-BoundedPathEvidence -Evidence $npmPathEvidence)"
 if ($upstreamError) { Write-Host "Upstream note: $upstreamError" }
 if ($status -eq 'ready-to-install') { Write-Host "Verified install command: $($verification.installCommand)" }
 
-if (-not $NoWrite) {
-    if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
-        $OutputDirectory = Join-Path ([System.IO.Path]::GetTempPath()) 'AgentSwitchboard/PiHarness/prereqs'
-    }
-    $null = New-Item -ItemType Directory -Path $OutputDirectory -Force
-    $jsonPath = Join-Path $OutputDirectory 'pi-workstation-prereqs.json'
-    $mdPath = Join-Path $OutputDirectory 'pi-workstation-prereqs.md'
-    $result | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $jsonPath -Encoding utf8
-
-    $markdown = @(
-        '# Pi Workstation Prerequisites',
-        '',
-        "- Status: $status",
-        "- Tracked package: $($verification.package)@$($verification.version)",
-        "- Minimum Node: $($verification.minimumNodeVersion)",
-        "- npm paths: $($npmPaths -join '; ')",
-        "- Bash paths: $($bashPaths -join '; ')",
-        "- Pi state: $piState",
-        "- Upstream state: $upstreamState",
-        '',
-        '## Proof ceiling',
-        $result.proofCeiling
-    )
-    $markdown | Set-Content -LiteralPath $mdPath -Encoding utf8
-    Write-Host "JSON: $jsonPath"
-    Write-Host "Report: $mdPath"
-}
+$markdown = @(
+    '# Pi Workstation Prerequisites',
+    '',
+    "- Status: $status",
+    "- Tracked package: $($verification.package)@$($verification.version)",
+    "- Minimum Node: $($verification.minimumNodeVersion)",
+    "- Node paths: $(Format-BoundedPathEvidence -Evidence $nodePathEvidence)",
+    "- npm paths: $(Format-BoundedPathEvidence -Evidence $npmPathEvidence)",
+    "- Git paths: $(Format-BoundedPathEvidence -Evidence $gitPathEvidence)",
+    "- Bash paths: $(Format-BoundedPathEvidence -Evidence $bashPathEvidence)",
+    "- Pi paths: $(Format-BoundedPathEvidence -Evidence $piPathEvidence)",
+    "- Pi state: $piState",
+    "- Upstream state: $upstreamState",
+    '',
+    '## Proof ceiling',
+    $result.proofCeiling
+)
+Save-PreflightReport -Result $result -MarkdownLines $markdown
 
 if ($AllowUnready) { exit 0 }
 if ($status -in @('ready-to-install', 'already-installed')) { exit 0 }
