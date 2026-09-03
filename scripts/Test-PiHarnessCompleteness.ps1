@@ -115,6 +115,9 @@ $preflightText = $textByPath['tooling/pi/Test-PiWorkstationPrereqs.ps1']
 foreach ($token in @(
     'agentswitchboard.pi-workstation-prereqs.v1',
     'Invoke-NpmJson',
+    'Get-OptionalPropertyValue',
+    'metadataShapeComplete',
+    'Live npm metadata was reachable but missing one or more expected version, engine, or deprecation fields.',
     '[string]$verification.package',
     '[string]$verification.legacyPackage.package',
     "'engines'",
@@ -131,6 +134,15 @@ foreach ($token in @(
 }
 Check (-not $preflightText.Contains('npm install -g @mariozechner/pi-coding-agent')) 'preflight/no-legacy-install' 'preflight embeds the deprecated install path'
 Check ($preflightText.Contains('Read-only local prerequisite and live npm metadata proof')) 'preflight/proof-ceiling' 'preflight proof ceiling is missing'
+
+$statusText = $textByPath['tooling/pi/Get-PiHarnessStatus.ps1']
+foreach ($token in @(
+    'ConvertTo-PowerShellSingleQuotedLiteral',
+    '$nextScriptPath = Join-Path $RootPath $nextRelativePath',
+    '-RootPath $rootLiteral'
+)) {
+    Check ($statusText.Contains($token)) "status/$token" 'status continuation is not bound to the inspected repository root'
+}
 
 $expectedWorkflows = @{
     'tooling/pi/harness/workflows/task-intake.workflow.json' = 'pi-task-intake'
