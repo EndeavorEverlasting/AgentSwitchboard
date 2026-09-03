@@ -27,6 +27,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Run Pi workstation prerequisite report-only path
+        shell: pwsh
+        run: ./tooling/pi/Test-PiWorkstationPrereqs.ps1 -NoNetwork -NoWrite -AllowUnready
       - name: Run dependency-free Pi contracts
         run: python tests/test_pi_harness_contracts.py
       - name: Run Pi completeness contract
@@ -57,6 +60,7 @@ jobs:
           $failures = [System.Collections.Generic.List[string]]::new()
           foreach ($path in @(
             'scripts/Test-PiHarnessCompleteness.ps1',
+            'tooling/pi/Test-PiWorkstationPrereqs.ps1',
             'tooling/pi/Get-PiHarnessStatus.ps1',
             'tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1'
           )) {
@@ -69,6 +73,9 @@ jobs:
             $failures | ForEach-Object { Write-Error $_ }
             exit 1
           }
+      - name: Run Pi workstation prerequisite report-only path
+        shell: pwsh
+        run: ./tooling/pi/Test-PiWorkstationPrereqs.ps1 -NoNetwork -NoWrite -AllowUnready
       - name: Run dependency-free Pi contracts
         shell: pwsh
         run: python tests/test_pi_harness_contracts.py
