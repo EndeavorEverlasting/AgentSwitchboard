@@ -25,6 +25,7 @@ $required = @(
     'tooling/pi/harness/schemas/pi-harness-contracts.schema.json',
     '.ai/skills/pi-fusion-orchestration/SKILL.md',
     'tooling/pi/Test-PiWorkstationPrereqs.ps1',
+    'tests/Test-PiWorkstationPrereqsContracts.ps1',
     'scripts/Test-PiHarnessCompleteness.ps1',
     'tests/test_pi_harness_contracts.py',
     'tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1',
@@ -51,7 +52,7 @@ if ($null -ne $piCommand) { $piPath = $piCommand.Source }
 
 $missing = @($componentResults | Where-Object { -not $_.exists -or -not $_.tracked })
 $working = @(
-    'Repository-native Pi upstream verification, workstation preflight, maps, workflows, artifact contracts, schemas, skill, validator, hook, CI, and operator guide are declared.'
+    'Repository-native Pi upstream verification, workstation preflight, executable prerequisite contracts, maps, workflows, artifact contracts, schemas, skill, validator, hook, CI, and operator guide are declared.'
     'Workflow selection, opinion fusion, and autovalidation are bounded and require one designated writer.'
     'Generated Pi evidence is local-only and raw prompts or transcripts are forbidden from tracked artifacts.'
 )
