@@ -1,0 +1,30 @@
+{
+  "schema": "agentswitchboard.pi-upstream-verification.v1",
+  "verifiedAt": "2026-09-03",
+  "package": "@earendil-works/pi-coding-agent",
+  "version": "0.84.4",
+  "sourceRepository": "earendil-works/pi",
+  "minimumNodeVersion": "22.19.0",
+  "nodeEngine": ">=22.19.0",
+  "executable": "pi",
+  "versionProbe": "pi --version",
+  "installCommand": "npm install -g --ignore-scripts @earendil-works/pi-coding-agent@0.84.4",
+  "shellRequirement": "bash",
+  "windowsShellDiscovery": [
+    "reviewed shellPath in Pi project settings",
+    "C:\\Program Files\\Git\\bin\\bash.exe",
+    "bash.exe on PATH"
+  ],
+  "legacyPackage": {
+    "package": "@mariozechner/pi-coding-agent",
+    "lastObservedVersion": "0.73.1",
+    "deprecated": true,
+    "deprecatedMessage": "please use @earendil-works/pi-coding-agent instead going forward"
+  },
+  "verificationCommands": [
+    "npm view @earendil-works/pi-coding-agent version engines --json",
+    "npm view @mariozechner/pi-coding-agent version deprecated --json"
+  ],
+  "configurationScope": "project-local",
+  "proofCeiling": "Tracked upstream identity and prerequisite floor verified on 2026-09-03. A workstation must still resolve live npm metadata, local Node/npm/Git/bash paths and versions, and installed Pi identity before installation or runtime claims."
+}
