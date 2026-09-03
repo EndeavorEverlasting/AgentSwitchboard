@@ -73,6 +73,18 @@ function Invoke-NpmJson {
     return $raw | ConvertFrom-Json
 }
 
+function Get-OptionalPropertyValue {
+    param(
+        [AllowNull()][object]$InputObject,
+        [Parameter(Mandatory)][string]$Name
+    )
+
+    if ($null -eq $InputObject) { return $null }
+    $property = $InputObject.PSObject.Properties[$Name]
+    if ($null -eq $property) { return $null }
+    return $property.Value
+}
+
 $verificationPath = Join-Path $RootPath 'tooling/pi/harness/upstream-verification.json'
 if (-not (Test-Path -LiteralPath $verificationPath -PathType Leaf)) {
     throw "Tracked Pi upstream verification is missing: $verificationPath"
@@ -120,13 +132,35 @@ if (-not $NoNetwork) {
         try {
             $live = Invoke-NpmJson -NpmPath $npmPath -Arguments @('view', [string]$verification.package, 'version', 'engines', '--json')
             $legacy = Invoke-NpmJson -NpmPath $npmPath -Arguments @('view', [string]$verification.legacyPackage.package, 'version', 'deprecated', '--json')
-            $liveVersion = [string]$live.version
-            $liveNodeEngine = [string]$live.engines.node
-            $legacyVersion = [string]$legacy.version
-            $legacyMessage = [string]$legacy.deprecated
-            $legacyDeprecated = -not [string]::IsNullOrWhiteSpace($legacyMessage)
 
-            $matchesTracked = (
+            $liveVersionValue = Get-OptionalPropertyValue -InputObject $live -Name 'version'
+            $liveEngines = Get-OptionalPropertyValue -InputObject $live -Name 'engines'
+            $liveNodeEngineValue = Get-OptionalPropertyValue -InputObject $liveEngines -Name 'node'
+            $legacyVersionValue = Get-OptionalPropertyValue -InputObject $legacy -Name 'version'
+            $legacyDeprecatedValue = Get-OptionalPropertyValue -InputObject $legacy -Name 'deprecated'
+
+            $liveVersion = if ($null -eq $liveVersionValue) { $null } else { [string]$liveVersionValue }
+            $liveNodeEngine = if ($null -eq $liveNodeEngineValue) { $null } else { [string]$liveNodeEngineValue }
+            $legacyVersion = if ($null -eq $legacyVersionValue) { $null } else { [string]$legacyVersionValue }
+            $legacyMessage = if ($null -eq $legacyDeprecatedValue) { $null } else { [string]$legacyDeprecatedValue }
+            $legacyDeprecated = if ($legacyDeprecatedValue -is [bool]) {
+                [bool]$legacyDeprecatedValue
+            }
+            elseif ($legacyDeprecatedValue -is [string]) {
+                -not [string]::IsNullOrWhiteSpace($legacyMessage)
+            }
+            else {
+                $null
+            }
+
+            $metadataShapeComplete = (
+                -not [string]::IsNullOrWhiteSpace($liveVersion) -and
+                -not [string]::IsNullOrWhiteSpace($liveNodeEngine) -and
+                -not [string]::IsNullOrWhiteSpace($legacyVersion) -and
+                $null -ne $legacyDeprecated -and
+                -not [string]::IsNullOrWhiteSpace($legacyMessage)
+            )
+            $matchesTracked = $metadataShapeComplete -and (
                 $liveVersion -eq [string]$verification.version -and
                 $liveNodeEngine -eq [string]$verification.nodeEngine -and
                 $legacyVersion -eq [string]$verification.legacyPackage.lastObservedVersion -and
@@ -134,6 +168,9 @@ if (-not $NoNetwork) {
                 $legacyMessage -eq [string]$verification.legacyPackage.deprecatedMessage
             )
             $upstreamState = if ($matchesTracked) { 'live-match' } else { 'drift' }
+            if (-not $metadataShapeComplete) {
+                $upstreamError = 'Live npm metadata was reachable but missing one or more expected version, engine, or deprecation fields.'
+            }
         }
         catch {
             $upstreamState = 'unavailable'
@@ -204,7 +241,7 @@ $rows | Format-Table -AutoSize | Out-Host
 Write-Host "Decision: $status"
 Write-Host "Tracked package: $($verification.package)@$($verification.version)"
 Write-Host "npm resolution: $($npmPaths -join '; ')"
-if ($upstreamError) { Write-Host "Upstream error: $upstreamError" }
+if ($upstreamError) { Write-Host "Upstream note: $upstreamError" }
 if ($status -eq 'ready-to-install') { Write-Host "Verified install command: $($verification.installCommand)" }
 
 if (-not $NoWrite) {
