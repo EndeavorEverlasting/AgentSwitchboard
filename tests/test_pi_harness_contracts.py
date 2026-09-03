@@ -67,6 +67,11 @@ def main() -> None:
         "agentswitchboard.pi-workstation-prereqs.v1",
         "Invoke-NpmJson",
         "Get-OptionalPropertyValue",
+        "Get-ProjectShellPath",
+        "Get-BoundedPathEvidence",
+        "pathsOmitted",
+        "UPSTREAM_VERIFICATION_MISSING",
+        "recoveryAction",
         "metadataShapeComplete",
         "Live npm metadata was reachable but missing one or more expected version, engine, or deprecation fields.",
         "[string]$verification.package",
@@ -78,11 +83,21 @@ def main() -> None:
         "ready-to-install",
         "NoNetwork",
         "AllowUnready",
-        "paths = $npmPaths",
         "legacyPackage",
     ):
         assert token in preflight, f"missing preflight contract token: {token}"
     assert "npm install -g @mariozechner/pi-coding-agent" not in preflight
+
+    executable_contract = ROOT / "tests/Test-PiWorkstationPrereqsContracts.ps1"
+    assert executable_contract.is_file()
+    executable_text = executable_contract.read_text(encoding="utf-8-sig")
+    for token in (
+        "UPSTREAM_VERIFICATION_MISSING",
+        "pathsOmitted",
+        "configured-shell/precedence",
+        "shellPath",
+    ):
+        assert token in executable_text, f"missing executable prerequisite contract token: {token}"
 
     status_path = ROOT / "tooling/pi/Get-PiHarnessStatus.ps1"
     status_text = status_path.read_text(encoding="utf-8-sig")
