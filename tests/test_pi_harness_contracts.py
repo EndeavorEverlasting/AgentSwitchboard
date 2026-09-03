@@ -66,6 +66,9 @@ def main() -> None:
     for token in (
         "agentswitchboard.pi-workstation-prereqs.v1",
         "Invoke-NpmJson",
+        "Get-OptionalPropertyValue",
+        "metadataShapeComplete",
+        "Live npm metadata was reachable but missing one or more expected version, engine, or deprecation fields.",
         "[string]$verification.package",
         "[string]$verification.legacyPackage.package",
         "'engines'",
@@ -80,6 +83,15 @@ def main() -> None:
     ):
         assert token in preflight, f"missing preflight contract token: {token}"
     assert "npm install -g @mariozechner/pi-coding-agent" not in preflight
+
+    status_path = ROOT / "tooling/pi/Get-PiHarnessStatus.ps1"
+    status_text = status_path.read_text(encoding="utf-8-sig")
+    for token in (
+        "ConvertTo-PowerShellSingleQuotedLiteral",
+        "$nextScriptPath = Join-Path $RootPath $nextRelativePath",
+        "-RootPath $rootLiteral",
+    ):
+        assert token in status_text, f"missing root-bound status continuation token: {token}"
 
     artifacts_names = [item["fileName"] for item in artifacts["artifacts"]]
     assert artifacts["tracked"] is False
