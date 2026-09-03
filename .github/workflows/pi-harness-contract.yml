@@ -7,6 +7,7 @@ on:
       - ".ai/skills/pi-fusion-orchestration/**"
       - "scripts/Test-PiHarnessCompleteness.ps1"
       - "tests/test_pi_harness_contracts.py"
+      - "tests/Test-PiWorkstationPrereqsContracts.ps1"
       - "docs/harness/pi-operational-harness.md"
       - ".ai/harness/manifest.json"
       - ".ai/harness/artifact-registry.json"
@@ -30,6 +31,9 @@ jobs:
       - name: Run Pi workstation prerequisite report-only path
         shell: pwsh
         run: ./tooling/pi/Test-PiWorkstationPrereqs.ps1 -NoNetwork -NoWrite -AllowUnready
+      - name: Run executable Pi workstation prerequisite contracts
+        shell: pwsh
+        run: ./tests/Test-PiWorkstationPrereqsContracts.ps1
       - name: Run dependency-free Pi contracts
         run: python tests/test_pi_harness_contracts.py
       - name: Run Pi completeness contract
@@ -62,7 +66,8 @@ jobs:
             'scripts/Test-PiHarnessCompleteness.ps1',
             'tooling/pi/Test-PiWorkstationPrereqs.ps1',
             'tooling/pi/Get-PiHarnessStatus.ps1',
-            'tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1'
+            'tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1',
+            'tests/Test-PiWorkstationPrereqsContracts.ps1'
           )) {
             $tokens = $null
             $errors = $null
@@ -76,6 +81,9 @@ jobs:
       - name: Run Pi workstation prerequisite report-only path
         shell: pwsh
         run: ./tooling/pi/Test-PiWorkstationPrereqs.ps1 -NoNetwork -NoWrite -AllowUnready
+      - name: Run executable Pi workstation prerequisite contracts
+        shell: pwsh
+        run: ./tests/Test-PiWorkstationPrereqsContracts.ps1
       - name: Run dependency-free Pi contracts
         shell: pwsh
         run: python tests/test_pi_harness_contracts.py
