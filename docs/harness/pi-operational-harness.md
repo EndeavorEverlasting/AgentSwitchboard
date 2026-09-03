@@ -1,20 +1,23 @@
 # Pi Operational Harness
 
-AgentSwitchboard treats Pi as an execution adapter beneath repository governance, workflow selection, evidence policy, and branch ownership. The harness now owns a read-only workstation prerequisite gate, but it does not install Pi and does not assume that a local endpoint, extension, provider, or model is safe or available.
+AgentSwitchboard treats Pi as an execution adapter beneath repository governance, workflow selection, evidence policy, and branch ownership. The harness owns a read-only workstation prerequisite gate, but it does not install Pi and does not assume that a local endpoint, extension, provider, or model is safe or available.
 
 ## What is working
 
 - A fresh agent can start at `AGENTS.md`, `CODEBASE_MAP.md`, and `.ai/harness/manifest.json`, then follow the Pi-specific codebase map.
 - `tooling/pi/Test-PiWorkstationPrereqs.ps1` is the canonical request -> workstation evidence -> install-decision gate.
 - The tracked upstream prerequisite record pins `@earendil-works/pi-coding-agent@0.84.4`, source repository `earendil-works/pi`, and Node.js `>=22.19.0`, verified on 2026-09-03.
-- The preflight resolves PowerShell, Node, npm, Git, bash, and any existing Pi command; preserves every discovered npm/Pi path; and reports whether Pi is absent, exact, unverifiable, or version-drifted.
-- In normal mode the preflight resolves live npm metadata for the current package and the deprecated `@mariozechner/pi-coding-agent` package. Installation is not eligible if live metadata differs from the tracked verification record.
-- CI may use explicit `-NoNetwork -NoWrite -AllowUnready` report-only mode to prove parser/contract behavior without pretending a hosted runner is an installable Pi workstation.
+- The preflight resolves PowerShell, Node, npm, Git, bash, and any existing Pi command. Command-path evidence is capped at eight paths per tool, records the total and omitted count, and represents empty resolution explicitly.
+- On Windows, Bash discovery honors a reviewed project-local `.pi/settings.json` `shellPath` before Git-for-Windows defaults and PATH fallbacks.
+- In normal mode the preflight resolves live npm metadata for the current package and the deprecated `@mariozechner/pi-coding-agent` package. Installation is not eligible if live metadata differs from the tracked verification record; reachable metadata with missing expected fields is classified as drift rather than network unavailability.
+- A missing or unreadable tracked upstream-verification record produces a structured `blocked-prerequisite` report with an error code and recovery action instead of throwing before evidence exists.
+- CI may use explicit `-NoNetwork -NoWrite -AllowUnready` report-only mode to prove parser/contract behavior without pretending a hosted runner is an installable Pi workstation. Missing/invalid tracked verification remains a hard failure even in report-only mode.
 - Task intake selects exactly one route: single-agent, opinion fusion, autovalidate, or blocked.
 - Opinion fusion separates architect, builder, adjudicator, and designated-writer responsibilities.
 - Autovalidation freezes architect-owned acceptance gates before builder mutation.
 - Every multi-agent route requires one writer per branch, attributed execution identity, explicit limits, local-only artifacts, and a proof ceiling.
 - A repository-owned validator proves the component set is present, tracked, parseable, centrally registered, bound to the current Pi upstream identity, and free of known unverified install/API shortcuts.
+- Executable prerequisite contracts prove structured missing-record failure, bounded path evidence, and configured Windows Bash precedence where Windows Bash is available.
 - The opt-in pre-commit script runs focused contracts and rejects generated Pi runtime evidence from staged changes.
 - Windows and Linux CI run the focused PowerShell and dependency-free Python contracts.
 
@@ -43,7 +46,8 @@ AgentSwitchboard treats Pi as an execution adapter beneath repository governance
 | Scoped skill | `.ai/skills/pi-fusion-orchestration/SKILL.md` |
 | Status report | `tooling/pi/Get-PiHarnessStatus.ps1` |
 | Completeness validator | `scripts/Test-PiHarnessCompleteness.ps1` |
-| Dependency-free test | `tests/test_pi_harness_contracts.py` |
+| Executable prerequisite contracts | `tests/Test-PiWorkstationPrereqsContracts.ps1` |
+| Dependency-free structural contracts | `tests/test_pi_harness_contracts.py` |
 | Optional hook | `tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1` |
 | CI | `.github/workflows/pi-harness-contract.yml` |
 
@@ -57,27 +61,28 @@ pwsh -NoLogo -NoProfile -File tooling/pi/Test-PiWorkstationPrereqs.ps1
 
 The gate is read-only. It checks:
 
-1. PowerShell identity;
-2. Node version against the tracked minimum;
-3. npm version and every resolved npm command path;
-4. Git availability;
-5. Git Bash on Windows or bash on non-Windows systems;
-6. existing Pi executable path/version when present;
-7. live `@earendil-works/pi-coding-agent` version and Node engine;
-8. live legacy-package deprecation metadata;
-9. exact equality between live upstream metadata and the tracked verification record.
+1. the tracked upstream-verification record exists and parses;
+2. PowerShell identity;
+3. Node version against the tracked minimum;
+4. npm version and bounded command-path resolution evidence;
+5. Git availability;
+6. reviewed project `shellPath`, then Git Bash on Windows or bash on non-Windows systems;
+7. existing Pi executable path/version when present;
+8. live `@earendil-works/pi-coding-agent` version and Node engine;
+9. live legacy-package deprecation metadata;
+10. exact equality between live upstream metadata and the tracked verification record.
 
 Terminal decisions are:
 
 - `ready-to-install` — local prerequisites pass, Pi is absent, and live npm metadata matches the tracked pin;
 - `already-installed` — local prerequisites pass and installed Pi exactly matches the tracked pin;
-- `blocked-prerequisite` — Node/npm/Git/bash is missing or unverifiable;
-- `upstream-drift` — live package/version/engine/deprecation metadata differs from the tracked record;
-- `upstream-unavailable` — current npm metadata cannot be resolved;
+- `blocked-prerequisite` — a tracked prerequisite record is missing/invalid or Node/npm/Git/bash is missing or unverifiable;
+- `upstream-drift` — live package/version/engine/deprecation metadata differs from the tracked record or is reachable but structurally incomplete;
+- `upstream-unavailable` — current npm metadata cannot be reached or parsed;
 - `installed-version-drift` — Pi exists but does not match the tracked version;
 - `offline-upstream-unverified` — network verification was explicitly skipped.
 
-`-AllowUnready` changes only the process exit behavior for report/CI use. It never promotes an unready status to installable. `-NoNetwork` never proves the current upstream state.
+`-AllowUnready` changes process exit behavior only for ordinary workstation/report readiness states. It never promotes an unready status to installable and does not suppress a missing/invalid tracked-verification failure. `-NoNetwork` never proves the current upstream state.
 
 Generated prerequisite evidence is local-only under the system temporary directory by default and must not be committed.
 
@@ -95,6 +100,7 @@ Use **blocked** when repository state, authority, live upstream identity, provid
 
 ```powershell
 pwsh -NoLogo -NoProfile -File tooling/pi/Test-PiWorkstationPrereqs.ps1 -NoNetwork -NoWrite -AllowUnready
+pwsh -NoLogo -NoProfile -File tests/Test-PiWorkstationPrereqsContracts.ps1
 pwsh -NoLogo -NoProfile -File scripts/Test-PiHarnessCompleteness.ps1
 python tests/test_pi_harness_contracts.py
 pwsh -NoLogo -NoProfile -File tooling/pi/Get-PiHarnessStatus.ps1
@@ -102,7 +108,7 @@ Test-AppHarness.cmd
 git diff --check
 ```
 
-The preflight report-only invocation proves the tracked/offline command path without making a live registry or workstation-readiness claim. The next two checks are the focused Pi harness proof. The status report renders what is working, broken, and missing. The aggregate harness verifies the wider registered repository composition.
+The preflight report-only invocation proves the tracked/offline command path without making a live registry or workstation-readiness claim. The executable prerequisite contracts exercise failure/report behavior and evidence bounds. The next two checks prove the broader Pi harness structure. The status report renders what is working, broken, and missing. The aggregate harness verifies the wider registered repository composition.
 
 ## Hook policy
 
@@ -122,4 +128,4 @@ Do not track credentials, raw prompts, raw model transcripts, customer data, pri
 
 ## Proof ceiling
 
-This harness proves repository structure, the tracked Pi upstream prerequisite identity, workstation-preflight contract shape, route contracts, schema and registry shape, one-writer enforcement, bounded workflow semantics, focused validators, hook availability, CI wiring, and English operator guidance. A successful live workstation preflight additionally proves only the observed local prerequisites and current npm metadata at that run. It does not install Pi, prove extension compatibility, authenticate a provider, prove endpoint privacy, prove a model response, prove fusion/autovalidation success, deliver repository changes, deploy, or establish operator acceptance.
+This harness proves repository structure, the tracked Pi upstream prerequisite identity, workstation-preflight contract shape and deterministic failure behavior, bounded local path evidence, route contracts, schema and registry shape, one-writer enforcement, bounded workflow semantics, focused validators, hook availability, CI wiring, and English operator guidance. A successful live workstation preflight additionally proves only the observed local prerequisites and current npm metadata at that run. It does not install Pi, prove extension compatibility, authenticate a provider, prove endpoint privacy, prove a model response, prove fusion/autovalidation success, deliver repository changes, deploy, or establish operator acceptance.
