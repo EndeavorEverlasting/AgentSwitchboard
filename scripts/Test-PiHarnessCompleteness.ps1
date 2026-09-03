@@ -35,6 +35,7 @@ $requiredFiles = @(
     'tooling/pi/Test-PiWorkstationPrereqs.ps1',
     'tooling/pi/Get-PiHarnessStatus.ps1',
     'tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1',
+    'tests/Test-PiWorkstationPrereqsContracts.ps1',
     'tests/test_pi_harness_contracts.py',
     'docs/harness/pi-operational-harness.md',
     '.github/workflows/pi-harness-contract.yml',
@@ -111,11 +112,16 @@ try {
 }
 catch { [void]$failures.Add("codebase/semantic: $($_.Exception.Message)") }
 
-$preflightText = $textByPath['tooling/pi/Test-PiWorkstationPrereqs.ps1']
+$preflightText = [string]$textByPath['tooling/pi/Test-PiWorkstationPrereqs.ps1']
 foreach ($token in @(
     'agentswitchboard.pi-workstation-prereqs.v1',
     'Invoke-NpmJson',
     'Get-OptionalPropertyValue',
+    'Get-ProjectShellPath',
+    'Get-BoundedPathEvidence',
+    'pathsOmitted',
+    'UPSTREAM_VERIFICATION_MISSING',
+    'recoveryAction',
     'metadataShapeComplete',
     'Live npm metadata was reachable but missing one or more expected version, engine, or deprecation fields.',
     '[string]$verification.package',
@@ -127,7 +133,6 @@ foreach ($token in @(
     'ready-to-install',
     'NoNetwork',
     'AllowUnready',
-    'paths = $npmPaths',
     'legacyPackage'
 )) {
     Check ($preflightText.Contains($token)) "preflight/$token" 'workstation prerequisite contract token is missing'
@@ -135,7 +140,7 @@ foreach ($token in @(
 Check (-not $preflightText.Contains('npm install -g @mariozechner/pi-coding-agent')) 'preflight/no-legacy-install' 'preflight embeds the deprecated install path'
 Check ($preflightText.Contains('Read-only local prerequisite and live npm metadata proof')) 'preflight/proof-ceiling' 'preflight proof ceiling is missing'
 
-$statusText = $textByPath['tooling/pi/Get-PiHarnessStatus.ps1']
+$statusText = [string]$textByPath['tooling/pi/Get-PiHarnessStatus.ps1']
 foreach ($token in @(
     'ConvertTo-PowerShellSingleQuotedLiteral',
     '$nextScriptPath = Join-Path $RootPath $nextRelativePath',
@@ -160,16 +165,16 @@ foreach ($path in $expectedWorkflows.Keys) {
     catch { [void]$failures.Add("workflow/$path`: $($_.Exception.Message)") }
 }
 
-$fusionText = $textByPath['tooling/pi/harness/workflows/opinion-fusion.workflow.json']
+$fusionText = [string]$textByPath['tooling/pi/harness/workflows/opinion-fusion.workflow.json']
 foreach ($token in @('inputSha256','consensus','divergence','unresolved risks','designated writer')) {
     Check ($fusionText -match [regex]::Escape($token)) "fusion/$token" 'fusion workflow token is missing'
 }
-$autoText = $textByPath['tooling/pi/harness/workflows/autovalidate.workflow.json']
+$autoText = [string]$textByPath['tooling/pi/harness/workflows/autovalidate.workflow.json']
 foreach ($token in @('maximumAttempts','maximumWallClockMinutes','maximumNoProgressAttempts','frozen gate','one branch writer')) {
     Check ($autoText -match [regex]::Escape($token)) "autovalidate/$token" 'autovalidate bound or authority rule is missing'
 }
 
-$skillText = $textByPath['.ai/skills/pi-fusion-orchestration/SKILL.md']
+$skillText = [string]$textByPath['.ai/skills/pi-fusion-orchestration/SKILL.md']
 foreach ($token in @('id: pi-fusion-orchestration','status: experimental','## Trigger','## Inputs','## Procedure','## Outputs','## Deterministic validation','## Forbidden scope','## Stop and escalate')) {
     Check ($skillText.Contains($token)) "skill/$token" 'skill contract token is missing'
 }
@@ -209,7 +214,7 @@ $deployableContractPaths = @(
     '.ai/skills/pi-fusion-orchestration/SKILL.md',
     'docs/harness/pi-operational-harness.md'
 )
-$deployableText = ($deployableContractPaths | ForEach-Object { $textByPath[$_] }) -join "`n"
+$deployableText = ($deployableContractPaths | ForEach-Object { [string]$textByPath[$_] }) -join "`n"
 foreach ($forbidden in @(
     'npm install -g @mariozechner/pi-coding-agent',
     '%USERPROFILE%\.pi',
@@ -220,7 +225,7 @@ foreach ($forbidden in @(
     Check (-not $deployableText.Contains($forbidden)) "forbidden/$forbidden" 'unverified installation, API, permission bypass, or privacy shortcut is embedded in a deployable contract'
 }
 
-$docsText = $textByPath['docs/harness/pi-operational-harness.md']
+$docsText = [string]$textByPath['docs/harness/pi-operational-harness.md']
 Check ($docsText.Contains('Test-PiWorkstationPrereqs.ps1')) 'docs/preflight' 'operator guide does not route through the workstation prerequisite preflight'
 Check ($docsText.Contains('@earendil-works/pi-coding-agent@0.84.4')) 'docs/current-pin' 'operator guide does not name the current verified Pi pin'
 
