@@ -2,6 +2,7 @@
 param(
     [string]$RootPath = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)),
     [string]$OutputDirectory,
+    [ValidateRange(1, 120)][int]$ProbeTimeoutSeconds = 15,
     [switch]$NoNetwork,
     [switch]$NoWrite,
     [switch]$AllowUnready
@@ -37,21 +38,117 @@ function Get-NativeCommandPaths {
     return @($paths)
 }
 
+function Invoke-BoundedProbe {
+    param(
+        [Parameter(Mandatory)][string]$FilePath,
+        [Parameter(Mandatory)][string[]]$ArgumentList,
+        [Parameter(Mandatory)][int]$Timeout
+    )
+
+    $result = [ordered]@{
+        exitCode = $null
+        timedOut = $false
+        startError = $null
+        output = ''
+    }
+
+    $process = $null
+    try {
+        $psi = [Diagnostics.ProcessStartInfo]::new()
+        $psi.UseShellExecute = $false
+        $psi.RedirectStandardOutput = $true
+        $psi.RedirectStandardError = $true
+        $psi.RedirectStandardInput = $true
+        $psi.CreateNoWindow = $true
+
+        if ($FilePath.EndsWith('.ps1', [StringComparison]::OrdinalIgnoreCase)) {
+            $pwsh = Get-Command pwsh -ErrorAction Stop
+            $psi.FileName = $pwsh.Source
+            foreach ($prefix in @('-NoLogo', '-NoProfile', '-File', $FilePath)) {
+                [void]$psi.ArgumentList.Add($prefix)
+            }
+        }
+        elseif ($FilePath.EndsWith('.cmd', [StringComparison]::OrdinalIgnoreCase) -or $FilePath.EndsWith('.bat', [StringComparison]::OrdinalIgnoreCase)) {
+            $cmd = if ($env:ComSpec) { $env:ComSpec } else { (Get-Command cmd.exe -ErrorAction Stop).Source }
+            $psi.FileName = $cmd
+            foreach ($prefix in @('/d', '/s', '/c', $FilePath)) {
+                [void]$psi.ArgumentList.Add($prefix)
+            }
+        }
+        else {
+            $psi.FileName = $FilePath
+        }
+
+        foreach ($argument in $ArgumentList) {
+            [void]$psi.ArgumentList.Add($argument)
+        }
+
+        $process = [Diagnostics.Process]::new()
+        $process.StartInfo = $psi
+        [void]$process.Start()
+        $process.StandardInput.Close()
+        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+        $stderrTask = $process.StandardError.ReadToEndAsync()
+
+        if (-not $process.WaitForExit($Timeout * 1000)) {
+            $result.timedOut = $true
+            try { $process.Kill($true) } catch {}
+            try { $process.WaitForExit() } catch {}
+        }
+        else {
+            $result.exitCode = $process.ExitCode
+        }
+
+        $stdout = $stdoutTask.GetAwaiter().GetResult()
+        $stderr = $stderrTask.GetAwaiter().GetResult()
+        $combined = (($stdout, $stderr) -join [Environment]::NewLine).Trim()
+        if ($combined.Length -gt 16384) {
+            $combined = $combined.Substring(0, 16384) + "`n<output truncated>"
+        }
+        $result.output = $combined
+    }
+    catch {
+        $result.startError = $_.Exception.Message
+    }
+    finally {
+        if ($process) { $process.Dispose() }
+    }
+
+    return [pscustomobject]$result
+}
+
 function Get-VersionProbe {
     param(
         [string]$Path,
         [string]$Pattern = '(?<!\d)(\d+\.\d+\.\d+)(?!\d)'
     )
 
-    if ([string]::IsNullOrWhiteSpace($Path)) { return $null }
-    try {
-        $raw = (& $Path --version 2>&1 | Out-String).Trim()
-        if ($LASTEXITCODE -ne 0) { return $null }
-        $match = [regex]::Match($raw, $Pattern)
-        if (-not $match.Success) { return $null }
-        return [pscustomobject]@{ version = $match.Groups[1].Value; raw = $raw }
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        return [pscustomobject]@{ state = 'missing'; version = $null; raw = $null; exitCode = $null; timedOut = $false; startError = $null }
     }
-    catch { return $null }
+
+    $probe = Invoke-BoundedProbe -FilePath $Path -ArgumentList @('--version') -Timeout $ProbeTimeoutSeconds
+    $state = if ($probe.timedOut) { 'timeout' }
+    elseif ($probe.startError) { 'start-error' }
+    elseif ($probe.exitCode -ne 0) { 'nonzero-exit' }
+    elseif ([string]::IsNullOrWhiteSpace([string]$probe.output)) { 'empty-output' }
+    else { 'completed' }
+
+    $version = $null
+    if ($state -eq 'completed') {
+        $match = [regex]::Match([string]$probe.output, $Pattern)
+        if ($match.Success) { $version = $match.Groups[1].Value }
+        else { $state = 'unparseable-version' }
+    }
+
+    return [pscustomobject]@{
+        state = $state
+        version = $version
+        raw = if ($state -eq 'completed') { [string]$probe.output } else { $null }
+        exitCode = $probe.exitCode
+        timedOut = [bool]$probe.timedOut
+        startError = $probe.startError
+    }
 }
 
 function Get-ProjectShellPath {
@@ -105,11 +202,36 @@ function Invoke-NpmJson {
         [Parameter(Mandatory)][string[]]$Arguments
     )
 
-    $raw = (& $NpmPath @Arguments 2>$null | Out-String).Trim()
-    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($raw)) {
-        throw "npm command failed: npm $($Arguments -join ' ')"
+    $probe = Invoke-BoundedProbe -FilePath $NpmPath -ArgumentList $Arguments -Timeout $ProbeTimeoutSeconds
+    if ($probe.timedOut) {
+        return [pscustomobject]@{ state = 'timeout'; value = $null; error = "npm probe timed out after $ProbeTimeoutSeconds second(s)."; exitCode = $null }
     }
-    return $raw | ConvertFrom-Json
+    if ($probe.startError) {
+        return [pscustomobject]@{ state = 'start-error'; value = $null; error = $probe.startError; exitCode = $null }
+    }
+    if ($probe.exitCode -ne 0) {
+        return [pscustomobject]@{ state = 'nonzero-exit'; value = $null; error = "npm probe exited with code $($probe.exitCode)."; exitCode = $probe.exitCode }
+    }
+    if ([string]::IsNullOrWhiteSpace([string]$probe.output)) {
+        return [pscustomobject]@{ state = 'empty-output'; value = $null; error = 'npm probe returned no JSON.'; exitCode = $probe.exitCode }
+    }
+    try {
+        return [pscustomobject]@{ state = 'completed'; value = ([string]$probe.output | ConvertFrom-Json); error = $null; exitCode = $probe.exitCode }
+    }
+    catch {
+        return [pscustomobject]@{ state = 'invalid-json'; value = $null; error = $_.Exception.Message; exitCode = $probe.exitCode }
+    }
+}
+
+function Normalize-RepositoryUrl {
+    param([AllowNull()][object]$Value)
+    if ($null -eq $Value) { return $null }
+    $text = if ($Value -is [string]) { [string]$Value } else { [string](Get-OptionalPropertyValue -InputObject $Value -Name 'url') }
+    if ([string]::IsNullOrWhiteSpace($text)) { return $null }
+    $text = $text.Trim()
+    if ($text.StartsWith('git+', [StringComparison]::OrdinalIgnoreCase)) { $text = $text.Substring(4) }
+    if ($text.EndsWith('.git', [StringComparison]::OrdinalIgnoreCase)) { $text = $text.Substring(0, $text.Length - 4) }
+    return $text.TrimEnd('/')
 }
 
 function Get-BoundedPathEvidence {
@@ -137,6 +259,26 @@ function Format-BoundedPathEvidence {
     return $text
 }
 
+function Get-AbsolutePath {
+    param([Parameter(Mandatory)][string]$Path)
+    if ([System.IO.Path]::IsPathRooted($Path)) { return [System.IO.Path]::GetFullPath($Path) }
+    return [System.IO.Path]::GetFullPath((Join-Path (Get-Location).Path $Path))
+}
+
+function Test-PathInsideRoot {
+    param(
+        [Parameter(Mandatory)][string]$Candidate,
+        [Parameter(Mandatory)][string]$Root
+    )
+
+    $candidateFull = (Get-AbsolutePath -Path $Candidate).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+    $rootFull = (Get-AbsolutePath -Path $Root).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+    $comparison = if ($IsWindows) { [StringComparison]::OrdinalIgnoreCase } else { [StringComparison]::Ordinal }
+    if ($candidateFull.Equals($rootFull, $comparison)) { return $true }
+    $rootPrefix = $rootFull + [System.IO.Path]::DirectorySeparatorChar
+    return $candidateFull.StartsWith($rootPrefix, $comparison)
+}
+
 function Save-PreflightReport {
     param(
         [Parameter(Mandatory)][System.Collections.IDictionary]$Result,
@@ -144,17 +286,28 @@ function Save-PreflightReport {
     )
 
     if ($NoWrite) { return }
-    $targetDirectory = $OutputDirectory
-    if ([string]::IsNullOrWhiteSpace($targetDirectory)) {
-        $targetDirectory = Join-Path ([System.IO.Path]::GetTempPath()) 'AgentSwitchboard/PiHarness/prereqs'
-    }
-    $null = New-Item -ItemType Directory -Path $targetDirectory -Force
-    $jsonPath = Join-Path $targetDirectory 'pi-workstation-prereqs.json'
-    $mdPath = Join-Path $targetDirectory 'pi-workstation-prereqs.md'
+    $null = New-Item -ItemType Directory -Path $script:ResolvedOutputDirectory -Force
+    $jsonPath = Join-Path $script:ResolvedOutputDirectory 'pi-workstation-prereqs.json'
+    $mdPath = Join-Path $script:ResolvedOutputDirectory 'pi-workstation-prereqs.md'
     $Result | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $jsonPath -Encoding utf8
     $MarkdownLines | Set-Content -LiteralPath $mdPath -Encoding utf8
     Write-Host "JSON: $jsonPath"
     Write-Host "Report: $mdPath"
+}
+
+$ResolvedOutputDirectory = $null
+if (-not $NoWrite) {
+    $candidateOutputDirectory = if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
+        Join-Path ([System.IO.Path]::GetTempPath()) 'AgentSwitchboard/PiHarness/prereqs'
+    }
+    else {
+        $OutputDirectory
+    }
+    $ResolvedOutputDirectory = Get-AbsolutePath -Path $candidateOutputDirectory
+    if (Test-PathInsideRoot -Candidate $ResolvedOutputDirectory -Root $RootPath) {
+        Write-Error "[OUTPUT_DIRECTORY_INSIDE_REPOSITORY] Pi workstation evidence must remain outside the repository: $ResolvedOutputDirectory"
+        exit 1
+    }
 }
 
 $verificationRelativePath = 'tooling/pi/harness/upstream-verification.json'
@@ -208,6 +361,49 @@ catch {
     exit 1
 }
 
+$currentPlatform = if ($IsWindows) { 'Windows' } elseif ($IsLinux) { 'Linux' } elseif ($IsMacOS) { 'macOS' } else { 'Unknown' }
+$requiredVerificationStrings = @(
+    [string]$verification.package,
+    [string]$verification.version,
+    [string]$verification.versionTag,
+    [string]$verification.sourceRepository,
+    [string]$verification.sourceUrl,
+    [string]$verification.minimumNodeVersion,
+    [string]$verification.nodeEngine,
+    [string]$verification.executable,
+    [string]$verification.installCommand,
+    [string]$verification.rollbackCommand,
+    [string]$verification.expectedExecutableMapping.command,
+    [string]$verification.expectedExecutableMapping.packageRelativePath
+)
+$verificationComplete = -not ($requiredVerificationStrings | Where-Object { [string]::IsNullOrWhiteSpace($_) })
+$verificationComplete = $verificationComplete -and @($verification.supportedOperatingSystems).Count -gt 0
+$verificationComplete = $verificationComplete -and @($verification.expectedFiles).Count -gt 0
+$verificationComplete = $verificationComplete -and @($verification.officialEvidence).Count -gt 0
+$verificationComplete = $verificationComplete -and (@($verification.supportedOperatingSystems) -contains $currentPlatform)
+if (-not $verificationComplete) {
+    $result = [ordered]@{
+        schema = 'agentswitchboard.pi-workstation-prereqs.v1'
+        status = 'blocked-prerequisite'
+        repository = 'EndeavorEverlasting/AgentSwitchboard'
+        root = $RootPath
+        error = [ordered]@{
+            code = 'UPSTREAM_VERIFICATION_INCOMPLETE'
+            message = "Tracked Pi upstream verification is incomplete for platform '$currentPlatform'."
+        }
+        recoveryAction = "Complete the official upstream adoption evidence in $verificationRelativePath before installation is eligible."
+        proofCeiling = 'No workstation install decision can be made from an incomplete upstream adoption record.'
+    }
+    Write-Host "`n=== PI WORKSTATION PREREQUISITES ===" -ForegroundColor Cyan
+    Write-Host 'Decision: blocked-prerequisite'
+    Write-Host "Error: $($result.error.code)"
+    Write-Host "Recovery: $($result.recoveryAction)"
+    Save-PreflightReport -Result $result -MarkdownLines @(
+        '# Pi Workstation Prerequisites', '', '- Status: blocked-prerequisite', "- Error: $($result.error.code)", "- Recovery: $($result.recoveryAction)", '', '## Proof ceiling', $result.proofCeiling
+    )
+    exit 1
+}
+
 $nodePaths = @(Get-NativeCommandPaths -Names $(if ($IsWindows) { @('node.exe', 'node') } else { @('node') }))
 $npmPaths = @(Get-NativeCommandPaths -Names $(if ($IsWindows) { @('npm.cmd', 'npm.exe', 'npm') } else { @('npm') }))
 $gitPaths = @(Get-NativeCommandPaths -Names $(if ($IsWindows) { @('git.exe', 'git') } else { @('git') }))
@@ -233,15 +429,18 @@ $piProbe = Get-VersionProbe -Path $piPath
 $bashProbe = Get-VersionProbe -Path $bashPath -Pattern '(\d+\.\d+(?:\.\d+)?)'
 
 $minimumNode = [version]([string]$verification.minimumNodeVersion)
-$nodeReady = $nodeProbe -and ([version]$nodeProbe.version -ge $minimumNode)
-$npmReady = [bool]$npmProbe
-$gitReady = [bool]$gitProbe
-$bashReady = [bool]$bashProbe
+$nodeReady = -not [string]::IsNullOrWhiteSpace([string]$nodeProbe.version) -and ([version]$nodeProbe.version -ge $minimumNode)
+$npmReady = -not [string]::IsNullOrWhiteSpace([string]$npmProbe.version)
+$gitReady = -not [string]::IsNullOrWhiteSpace([string]$gitProbe.version)
+$bashReady = -not [string]::IsNullOrWhiteSpace([string]$bashProbe.version)
 
 $upstreamState = if ($NoNetwork) { 'tracked-only' } else { 'unresolved' }
 $upstreamError = $null
+$upstreamFailureCode = $null
 $liveVersion = $null
 $liveNodeEngine = $null
+$liveRepositoryUrl = $null
+$liveExecutablePath = $null
 $legacyVersion = $null
 $legacyDeprecated = $null
 $legacyMessage = $null
@@ -249,21 +448,34 @@ $legacyMessage = $null
 if (-not $NoNetwork) {
     if (-not $npmReady) {
         $upstreamState = 'unavailable'
-        $upstreamError = 'npm is unavailable, so live upstream metadata cannot be resolved.'
+        $upstreamFailureCode = if ($npmProbe.timedOut) { 'NPM_VERSION_PROBE_TIMEOUT' } else { 'NPM_UNAVAILABLE' }
+        $upstreamError = "npm is unavailable for live upstream metadata. Probe state: $($npmProbe.state)."
     }
     else {
-        try {
-            $live = Invoke-NpmJson -NpmPath $npmPath -Arguments @('view', [string]$verification.package, 'version', 'engines', '--json')
-            $legacy = Invoke-NpmJson -NpmPath $npmPath -Arguments @('view', [string]$verification.legacyPackage.package, 'version', 'deprecated', '--json')
-
+        $liveProbe = Invoke-NpmJson -NpmPath $npmPath -Arguments @('view', [string]$verification.package, 'version', 'engines', 'repository', 'bin', '--json')
+        $legacyProbe = Invoke-NpmJson -NpmPath $npmPath -Arguments @('view', [string]$verification.legacyPackage.package, 'version', 'deprecated', '--json')
+        if ($liveProbe.state -ne 'completed' -or $legacyProbe.state -ne 'completed') {
+            $upstreamState = 'unavailable'
+            $failedProbe = if ($liveProbe.state -ne 'completed') { $liveProbe } else { $legacyProbe }
+            $upstreamFailureCode = if ($failedProbe.state -eq 'timeout') { 'UPSTREAM_PROBE_TIMEOUT' } else { 'UPSTREAM_PROBE_FAILED' }
+            $upstreamError = $failedProbe.error
+        }
+        else {
+            $live = $liveProbe.value
+            $legacy = $legacyProbe.value
             $liveVersionValue = Get-OptionalPropertyValue -InputObject $live -Name 'version'
             $liveEngines = Get-OptionalPropertyValue -InputObject $live -Name 'engines'
             $liveNodeEngineValue = Get-OptionalPropertyValue -InputObject $liveEngines -Name 'node'
+            $liveRepository = Get-OptionalPropertyValue -InputObject $live -Name 'repository'
+            $liveBin = Get-OptionalPropertyValue -InputObject $live -Name 'bin'
+            $liveExecutableValue = Get-OptionalPropertyValue -InputObject $liveBin -Name ([string]$verification.executable)
             $legacyVersionValue = Get-OptionalPropertyValue -InputObject $legacy -Name 'version'
             $legacyDeprecatedValue = Get-OptionalPropertyValue -InputObject $legacy -Name 'deprecated'
 
             $liveVersion = if ($null -eq $liveVersionValue) { $null } else { [string]$liveVersionValue }
             $liveNodeEngine = if ($null -eq $liveNodeEngineValue) { $null } else { [string]$liveNodeEngineValue }
+            $liveRepositoryUrl = Normalize-RepositoryUrl -Value $liveRepository
+            $liveExecutablePath = if ($null -eq $liveExecutableValue) { $null } else { [string]$liveExecutableValue }
             $legacyVersion = if ($null -eq $legacyVersionValue) { $null } else { [string]$legacyVersionValue }
             $legacyMessage = if ($null -eq $legacyDeprecatedValue) { $null } else { [string]$legacyDeprecatedValue }
             $legacyDeprecated = if ($legacyDeprecatedValue -is [bool]) {
@@ -279,31 +491,37 @@ if (-not $NoNetwork) {
             $metadataShapeComplete = (
                 -not [string]::IsNullOrWhiteSpace($liveVersion) -and
                 -not [string]::IsNullOrWhiteSpace($liveNodeEngine) -and
+                -not [string]::IsNullOrWhiteSpace($liveRepositoryUrl) -and
+                -not [string]::IsNullOrWhiteSpace($liveExecutablePath) -and
                 -not [string]::IsNullOrWhiteSpace($legacyVersion) -and
                 $null -ne $legacyDeprecated -and
                 -not [string]::IsNullOrWhiteSpace($legacyMessage)
             )
+            $trackedRepositoryUrl = Normalize-RepositoryUrl -Value ([string]$verification.sourceUrl)
             $matchesTracked = $metadataShapeComplete -and (
                 $liveVersion -eq [string]$verification.version -and
                 $liveNodeEngine -eq [string]$verification.nodeEngine -and
+                $liveRepositoryUrl -eq $trackedRepositoryUrl -and
+                $liveExecutablePath -eq [string]$verification.expectedExecutableMapping.packageRelativePath -and
                 $legacyVersion -eq [string]$verification.legacyPackage.lastObservedVersion -and
                 $legacyDeprecated -eq [bool]$verification.legacyPackage.deprecated -and
                 $legacyMessage -eq [string]$verification.legacyPackage.deprecatedMessage
             )
             $upstreamState = if ($matchesTracked) { 'live-match' } else { 'drift' }
             if (-not $metadataShapeComplete) {
-                $upstreamError = 'Live npm metadata was reachable but missing one or more expected version, engine, or deprecation fields.'
+                $upstreamFailureCode = 'UPSTREAM_METADATA_INCOMPLETE'
+                $upstreamError = 'Live npm metadata was reachable but missing one or more expected version, engine, repository, executable, or deprecation fields.'
             }
-        }
-        catch {
-            $upstreamState = 'unavailable'
-            $upstreamError = $_.Exception.Message
+            elseif (-not $matchesTracked) {
+                $upstreamFailureCode = 'UPSTREAM_METADATA_DRIFT'
+                $upstreamError = 'Live npm metadata differs from the tracked upstream adoption record.'
+            }
         }
     }
 }
 
 $piState = if (-not $piPath) { 'missing' }
-elseif (-not $piProbe) { 'unverified' }
+elseif ([string]::IsNullOrWhiteSpace([string]$piProbe.version)) { if ($piProbe.timedOut) { 'probe-timeout' } else { 'unverified' } }
 elseif ($piProbe.version -eq [string]$verification.version) { 'exact' }
 else { 'version-drift' }
 
@@ -312,18 +530,18 @@ $status = if (-not $prerequisitesReady) { 'blocked-prerequisite' }
 elseif ($NoNetwork) { 'offline-upstream-unverified' }
 elseif ($upstreamState -eq 'drift') { 'upstream-drift' }
 elseif ($upstreamState -ne 'live-match') { 'upstream-unavailable' }
-elseif ($piState -eq 'version-drift' -or $piState -eq 'unverified') { 'installed-version-drift' }
+elseif ($piState -in @('version-drift', 'unverified', 'probe-timeout')) { 'installed-version-drift' }
 elseif ($piState -eq 'exact') { 'already-installed' }
 else { 'ready-to-install' }
 
 $rows = @(
     [pscustomobject]@{ Gate = 'PowerShell'; Result = 'PASS'; Observed = [string]$PSVersionTable.PSVersion },
-    [pscustomobject]@{ Gate = 'Node'; Result = if ($nodeReady) { 'PASS' } else { 'FAIL' }; Observed = if ($nodeProbe) { "$($nodeProbe.version) @ $nodePath" } else { 'missing or unverifiable' } },
-    [pscustomobject]@{ Gate = 'npm'; Result = if ($npmReady) { 'PASS' } else { 'FAIL' }; Observed = if ($npmProbe) { "$($npmProbe.version) @ $npmPath" } else { 'missing or unverifiable' } },
-    [pscustomobject]@{ Gate = 'Git'; Result = if ($gitReady) { 'PASS' } else { 'FAIL' }; Observed = if ($gitProbe) { "$($gitProbe.version) @ $gitPath" } else { 'missing or unverifiable' } },
-    [pscustomobject]@{ Gate = 'Bash'; Result = if ($bashReady) { 'PASS' } else { 'FAIL' }; Observed = if ($bashProbe) { "$($bashProbe.version) @ $bashPath" } else { 'missing or unverifiable' } },
-    [pscustomobject]@{ Gate = 'Pi'; Result = if ($piState -eq 'exact') { 'PASS' } elseif ($piState -eq 'missing') { 'INFO' } else { 'FAIL' }; Observed = if ($piProbe) { "$($piProbe.version) @ $piPath" } else { $piState } },
-    [pscustomobject]@{ Gate = 'Current upstream'; Result = if ($upstreamState -eq 'live-match') { 'PASS' } elseif ($NoNetwork) { 'SKIP' } else { 'FAIL' }; Observed = if ($liveVersion) { "$liveVersion / node $liveNodeEngine" } else { $upstreamState } },
+    [pscustomobject]@{ Gate = 'Node'; Result = if ($nodeReady) { 'PASS' } else { 'FAIL' }; Observed = if ($nodeReady) { "$($nodeProbe.version) @ $nodePath" } else { "$($nodeProbe.state) @ $nodePath" } },
+    [pscustomobject]@{ Gate = 'npm'; Result = if ($npmReady) { 'PASS' } else { 'FAIL' }; Observed = if ($npmReady) { "$($npmProbe.version) @ $npmPath" } else { "$($npmProbe.state) @ $npmPath" } },
+    [pscustomobject]@{ Gate = 'Git'; Result = if ($gitReady) { 'PASS' } else { 'FAIL' }; Observed = if ($gitReady) { "$($gitProbe.version) @ $gitPath" } else { "$($gitProbe.state) @ $gitPath" } },
+    [pscustomobject]@{ Gate = 'Bash'; Result = if ($bashReady) { 'PASS' } else { 'FAIL' }; Observed = if ($bashReady) { "$($bashProbe.version) @ $bashPath" } else { "$($bashProbe.state) @ $bashPath" } },
+    [pscustomobject]@{ Gate = 'Pi'; Result = if ($piState -eq 'exact') { 'PASS' } elseif ($piState -eq 'missing') { 'INFO' } else { 'FAIL' }; Observed = if ($piState -eq 'missing') { 'missing' } else { "$piState @ $piPath" } },
+    [pscustomobject]@{ Gate = 'Current upstream'; Result = if ($upstreamState -eq 'live-match') { 'PASS' } elseif ($NoNetwork) { 'SKIP' } else { 'FAIL' }; Observed = if ($liveVersion) { "$liveVersion / node $liveNodeEngine / $liveRepositoryUrl" } else { $upstreamState } },
     [pscustomobject]@{ Gate = 'Legacy package'; Result = if ($legacyDeprecated -eq $true) { 'PASS' } elseif ($NoNetwork) { 'SKIP' } else { 'FAIL' }; Observed = if ($legacyVersion) { "$legacyVersion / deprecated=$legacyDeprecated" } else { $upstreamState } }
 )
 
@@ -334,7 +552,7 @@ $result = [ordered]@{
     root = $RootPath
     machine = [ordered]@{
         computerName = [string]$env:COMPUTERNAME
-        platform = if ($IsWindows) { 'windows' } else { 'non-windows' }
+        platform = $currentPlatform
         powerShell = [string]$PSVersionTable.PSVersion
     }
     trackedUpstream = [ordered]@{
@@ -343,21 +561,26 @@ $result = [ordered]@{
         version = [string]$verification.version
         nodeEngine = [string]$verification.nodeEngine
         sourceRepository = [string]$verification.sourceRepository
+        sourceUrl = [string]$verification.sourceUrl
+        rollbackCommand = [string]$verification.rollbackCommand
+        expectedFiles = @($verification.expectedFiles)
     }
     observed = [ordered]@{
-        node = [ordered]@{ ready = [bool]$nodeReady; version = if ($nodeProbe) { $nodeProbe.version } else { $null }; pathState = $nodePathEvidence.state; pathCount = $nodePathEvidence.total; pathsOmitted = $nodePathEvidence.omitted; paths = $nodePathEvidence.paths }
-        npm = [ordered]@{ ready = [bool]$npmReady; version = if ($npmProbe) { $npmProbe.version } else { $null }; pathState = $npmPathEvidence.state; pathCount = $npmPathEvidence.total; pathsOmitted = $npmPathEvidence.omitted; paths = $npmPathEvidence.paths }
-        git = [ordered]@{ ready = [bool]$gitReady; version = if ($gitProbe) { $gitProbe.version } else { $null }; pathState = $gitPathEvidence.state; pathCount = $gitPathEvidence.total; pathsOmitted = $gitPathEvidence.omitted; paths = $gitPathEvidence.paths }
-        bash = [ordered]@{ ready = [bool]$bashReady; version = if ($bashProbe) { $bashProbe.version } else { $null }; pathState = $bashPathEvidence.state; pathCount = $bashPathEvidence.total; pathsOmitted = $bashPathEvidence.omitted; paths = $bashPathEvidence.paths }
-        pi = [ordered]@{ state = $piState; version = if ($piProbe) { $piProbe.version } else { $null }; pathState = $piPathEvidence.state; pathCount = $piPathEvidence.total; pathsOmitted = $piPathEvidence.omitted; paths = $piPathEvidence.paths }
-        upstream = [ordered]@{ state = $upstreamState; version = $liveVersion; nodeEngine = $liveNodeEngine; error = $upstreamError }
+        node = [ordered]@{ ready = [bool]$nodeReady; version = $nodeProbe.version; probeState = $nodeProbe.state; timedOut = [bool]$nodeProbe.timedOut; pathState = $nodePathEvidence.state; pathCount = $nodePathEvidence.total; pathsOmitted = $nodePathEvidence.omitted; paths = $nodePathEvidence.paths }
+        npm = [ordered]@{ ready = [bool]$npmReady; version = $npmProbe.version; probeState = $npmProbe.state; timedOut = [bool]$npmProbe.timedOut; pathState = $npmPathEvidence.state; pathCount = $npmPathEvidence.total; pathsOmitted = $npmPathEvidence.omitted; paths = $npmPathEvidence.paths }
+        git = [ordered]@{ ready = [bool]$gitReady; version = $gitProbe.version; probeState = $gitProbe.state; timedOut = [bool]$gitProbe.timedOut; pathState = $gitPathEvidence.state; pathCount = $gitPathEvidence.total; pathsOmitted = $gitPathEvidence.omitted; paths = $gitPathEvidence.paths }
+        bash = [ordered]@{ ready = [bool]$bashReady; version = $bashProbe.version; probeState = $bashProbe.state; timedOut = [bool]$bashProbe.timedOut; pathState = $bashPathEvidence.state; pathCount = $bashPathEvidence.total; pathsOmitted = $bashPathEvidence.omitted; paths = $bashPathEvidence.paths }
+        pi = [ordered]@{ state = $piState; version = $piProbe.version; probeState = $piProbe.state; timedOut = [bool]$piProbe.timedOut; pathState = $piPathEvidence.state; pathCount = $piPathEvidence.total; pathsOmitted = $piPathEvidence.omitted; paths = $piPathEvidence.paths }
+        upstream = [ordered]@{ state = $upstreamState; version = $liveVersion; nodeEngine = $liveNodeEngine; repositoryUrl = $liveRepositoryUrl; executablePath = $liveExecutablePath; failureCode = $upstreamFailureCode; error = $upstreamError }
         legacyPackage = [ordered]@{ version = $legacyVersion; deprecated = $legacyDeprecated; message = $legacyMessage }
     }
     installDecision = [ordered]@{
         ready = ($status -eq 'ready-to-install')
         command = if ($status -eq 'ready-to-install') { [string]$verification.installCommand } else { $null }
+        rollbackCommand = if ($status -eq 'ready-to-install') { [string]$verification.rollbackCommand } else { $null }
     }
-    proofCeiling = 'Read-only local prerequisite and live npm metadata proof. This does not install Pi, mutate Pi configuration, authenticate a provider, prove a model response, or establish endpoint privacy.'
+    probeTimeoutSeconds = $ProbeTimeoutSeconds
+    proofCeiling = 'Read-only local prerequisite and bounded live npm metadata proof. This does not install Pi, mutate Pi configuration, authenticate a provider, prove a model response, or establish endpoint privacy.'
 }
 
 Write-Host "`n=== PI WORKSTATION PREREQUISITES ===" -ForegroundColor Cyan
@@ -365,6 +588,7 @@ $rows | Format-Table -AutoSize | Out-Host
 Write-Host "Decision: $status"
 Write-Host "Tracked package: $($verification.package)@$($verification.version)"
 Write-Host "npm resolution: $(Format-BoundedPathEvidence -Evidence $npmPathEvidence)"
+if ($upstreamFailureCode) { Write-Host "Upstream classification: $upstreamFailureCode" }
 if ($upstreamError) { Write-Host "Upstream note: $upstreamError" }
 if ($status -eq 'ready-to-install') { Write-Host "Verified install command: $($verification.installCommand)" }
 
@@ -374,6 +598,7 @@ $markdown = @(
     "- Status: $status",
     "- Tracked package: $($verification.package)@$($verification.version)",
     "- Minimum Node: $($verification.minimumNodeVersion)",
+    "- Probe timeout: $ProbeTimeoutSeconds second(s)",
     "- Node paths: $(Format-BoundedPathEvidence -Evidence $nodePathEvidence)",
     "- npm paths: $(Format-BoundedPathEvidence -Evidence $npmPathEvidence)",
     "- Git paths: $(Format-BoundedPathEvidence -Evidence $gitPathEvidence)",
@@ -381,6 +606,7 @@ $markdown = @(
     "- Pi paths: $(Format-BoundedPathEvidence -Evidence $piPathEvidence)",
     "- Pi state: $piState",
     "- Upstream state: $upstreamState",
+    "- Upstream failure code: $upstreamFailureCode",
     '',
     '## Proof ceiling',
     $result.proofCeiling
