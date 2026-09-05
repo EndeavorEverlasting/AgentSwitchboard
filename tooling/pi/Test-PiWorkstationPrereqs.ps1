@@ -282,7 +282,7 @@ function Test-PathInsideRoot {
 function Save-PreflightReport {
     param(
         [Parameter(Mandatory)][System.Collections.IDictionary]$Result,
-        [Parameter(Mandatory)][string[]]$MarkdownLines
+        [Parameter(Mandatory)][AllowEmptyString()][AllowEmptyCollection()][string[]]$MarkdownLines
     )
 
     if ($NoWrite) { return }

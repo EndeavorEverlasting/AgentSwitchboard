@@ -74,10 +74,19 @@ try {
     Check ($verification.schema -eq 'agentswitchboard.pi-upstream-verification.v1') 'upstream/schema' 'unexpected upstream verification schema'
     Check ($verification.package -eq '@earendil-works/pi-coding-agent') 'upstream/package' 'current Pi package identity is not pinned'
     Check ($verification.version -eq '0.84.4') 'upstream/version' 'unexpected Pi version pin'
+    Check ($verification.versionTag -eq 'v0.84.4') 'upstream/version-tag' 'unexpected version tag'
     Check ($verification.sourceRepository -eq 'earendil-works/pi') 'upstream/source' 'unexpected Pi source repository'
+    Check ($verification.sourceUrl -eq 'https://github.com/earendil-works/pi') 'upstream/source-url' 'source URL is missing'
     Check ($verification.minimumNodeVersion -eq '22.19.0') 'upstream/node-minimum' 'unexpected minimum Node version'
     Check ($verification.nodeEngine -eq '>=22.19.0') 'upstream/node-engine' 'unexpected Node engine contract'
     Check ($verification.installCommand -eq 'npm install -g --ignore-scripts @earendil-works/pi-coding-agent@0.84.4') 'upstream/install' 'install command is not exact or lifecycle scripts are not disabled'
+    Check ($verification.rollbackCommand -eq 'npm uninstall -g @earendil-works/pi-coding-agent') 'upstream/rollback' 'rollback command is missing or incorrect'
+    Check (@($verification.supportedOperatingSystems).Count -ge 3) 'upstream/supported-os' 'supported OS list is incomplete'
+    Check (@($verification.supportedOperatingSystems) -contains 'Windows') 'upstream/supported-windows' 'Windows is not in supported OS'
+    Check (@($verification.expectedFiles).Count -ge 3) 'upstream/expected-files' 'expectedFiles is incomplete; package files are not declared'
+    Check ($verification.expectedExecutableMapping.command -eq 'pi') 'upstream/executable-command' 'expected executable command is missing'
+    Check ($verification.expectedExecutableMapping.packageRelativePath -eq 'dist/bundle/cli.js') 'upstream/executable-path' 'expected executable mapping is incorrect'
+    Check (@($verification.officialEvidence).Count -ge 3) 'upstream/official-evidence' 'official evidence sources are missing'
     Check ($verification.legacyPackage.package -eq '@mariozechner/pi-coding-agent') 'upstream/legacy-package' 'legacy package identity is missing'
     Check ($verification.legacyPackage.deprecated -eq $true) 'upstream/legacy-deprecated' 'legacy package is not recorded as deprecated'
     Check (-not [string]::IsNullOrWhiteSpace([string]$verification.legacyPackage.deprecatedMessage)) 'upstream/legacy-message' 'legacy deprecation message is missing'
@@ -116,29 +125,44 @@ $preflightText = [string]$textByPath['tooling/pi/Test-PiWorkstationPrereqs.ps1']
 foreach ($token in @(
     'agentswitchboard.pi-workstation-prereqs.v1',
     'Invoke-NpmJson',
+    'Invoke-BoundedProbe',
     'Get-OptionalPropertyValue',
     'Get-ProjectShellPath',
     'Get-BoundedPathEvidence',
+    'Get-AbsolutePath',
+    'Test-PathInsideRoot',
+    'Normalize-RepositoryUrl',
+    'ProbeTimeoutSeconds',
+    'OUTPUT_DIRECTORY_INSIDE_REPOSITORY',
     'pathsOmitted',
     'UPSTREAM_VERIFICATION_MISSING',
+    'UPSTREAM_VERIFICATION_INCOMPLETE',
     'recoveryAction',
     'metadataShapeComplete',
-    'Live npm metadata was reachable but missing one or more expected version, engine, or deprecation fields.',
+    'Live npm metadata was reachable but missing one or more expected version, engine, repository, executable, or deprecation fields.',
     '[string]$verification.package',
     '[string]$verification.legacyPackage.package',
     "'engines'",
     "'deprecated'",
+    "'repository'",
+    "'bin'",
     'upstream-drift',
     'installed-version-drift',
     'ready-to-install',
+    'probe-timeout',
     'NoNetwork',
     'AllowUnready',
-    'legacyPackage'
+    'legacyPackage',
+    'repositoryUrl',
+    'executablePath',
+    'failureCode',
+    'probeTimeoutSeconds'
 )) {
     Check ($preflightText.Contains($token)) "preflight/$token" 'workstation prerequisite contract token is missing'
 }
 Check (-not $preflightText.Contains('npm install -g @mariozechner/pi-coding-agent')) 'preflight/no-legacy-install' 'preflight embeds the deprecated install path'
-Check ($preflightText.Contains('Read-only local prerequisite and live npm metadata proof')) 'preflight/proof-ceiling' 'preflight proof ceiling is missing'
+Check ($preflightText.Contains('Read-only local prerequisite and bounded live npm metadata proof')) 'preflight/proof-ceiling' 'preflight proof ceiling is missing'
+Check ($preflightText.Contains('Read-only local prerequisite and bounded live npm metadata proof')) 'preflight/bounded-proof' 'bounded probe proof ceiling is missing'
 
 $statusText = [string]$textByPath['tooling/pi/Get-PiHarnessStatus.ps1']
 foreach ($token in @(
@@ -203,6 +227,11 @@ try {
 }
 catch { [void]$failures.Add("central/artifacts: $($_.Exception.Message)") }
 
+$hookText = [string]$textByPath['tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1']
+foreach ($token in @('pi-workstation-prereqs.json', 'pi-workstation-prereqs.md', 'pi-harness-status.json', 'pi-harness-status.md')) {
+    Check ($hookText.Contains($token)) "hook/$token" 'pre-commit does not defensively reject generated Pi evidence filename'
+}
+
 $deployableContractPaths = @(
     'tooling/pi/harness/codebase-map.json',
     'tooling/pi/harness/pi-adapter.registry.json',
@@ -228,6 +257,8 @@ foreach ($forbidden in @(
 $docsText = [string]$textByPath['docs/harness/pi-operational-harness.md']
 Check ($docsText.Contains('Test-PiWorkstationPrereqs.ps1')) 'docs/preflight' 'operator guide does not route through the workstation prerequisite preflight'
 Check ($docsText.Contains('@earendil-works/pi-coding-agent@0.84.4')) 'docs/current-pin' 'operator guide does not name the current verified Pi pin'
+Check ($docsText.Contains('ProbeTimeoutSeconds') -or $docsText.Contains('Probe timeout')) 'docs/probe-timeout' 'operator guide does not document bounded probe timeout'
+Check ($docsText.Contains('outside the repository') -or $docsText.Contains('OUTPUT_DIRECTORY_INSIDE_REPOSITORY')) 'docs/output-root' 'operator guide does not document evidence output-root protection'
 
 Write-Host 'PI HARNESS COMPLETENESS' -ForegroundColor Cyan
 $passes | ForEach-Object { Write-Host "[PASS] $_" -ForegroundColor Green }

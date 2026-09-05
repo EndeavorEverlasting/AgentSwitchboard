@@ -33,16 +33,24 @@ def main() -> None:
     assert codebase["entrypoints"]["upstreamVerification"] == "tooling/pi/harness/upstream-verification.json"
     assert any("one writer" in trap.lower() for trap in codebase["knownTraps"])
     assert any("live npm metadata" in trap.lower() for trap in codebase["knownTraps"])
-    assert any("npm" in trap.lower() and "paths" in trap.lower() for trap in codebase["knownTraps"])
+    assert any("npm" in trap.lower() and "path" in trap.lower() for trap in codebase["knownTraps"])
 
     assert upstream["schema"] == "agentswitchboard.pi-upstream-verification.v1"
     assert upstream["verifiedAt"] == "2026-09-03"
     assert upstream["package"] == "@earendil-works/pi-coding-agent"
     assert upstream["version"] == "0.84.4"
+    assert upstream["versionTag"] == "v0.84.4"
     assert upstream["sourceRepository"] == "earendil-works/pi"
+    assert upstream["sourceUrl"] == "https://github.com/earendil-works/pi"
     assert upstream["minimumNodeVersion"] == "22.19.0"
     assert upstream["nodeEngine"] == ">=22.19.0"
     assert "--ignore-scripts" in upstream["installCommand"]
+    assert upstream["rollbackCommand"] == "npm uninstall -g @earendil-works/pi-coding-agent"
+    assert len(upstream["supportedOperatingSystems"]) >= 3 and "Windows" in upstream["supportedOperatingSystems"]
+    assert len(upstream["expectedFiles"]) >= 3 and "dist/bundle/cli.js" in upstream["expectedFiles"]
+    assert upstream["expectedExecutableMapping"]["command"] == "pi"
+    assert upstream["expectedExecutableMapping"]["packageRelativePath"] == "dist/bundle/cli.js"
+    assert len(upstream["officialEvidence"]) >= 3
     assert upstream["legacyPackage"]["package"] == "@mariozechner/pi-coding-agent"
     assert upstream["legacyPackage"]["deprecated"] is True
     assert upstream["legacyPackage"]["deprecatedMessage"]
@@ -66,27 +74,42 @@ def main() -> None:
     for token in (
         "agentswitchboard.pi-workstation-prereqs.v1",
         "Invoke-NpmJson",
+        "Invoke-BoundedProbe",
         "Get-OptionalPropertyValue",
         "Get-ProjectShellPath",
         "Get-BoundedPathEvidence",
+        "Get-AbsolutePath",
+        "Test-PathInsideRoot",
+        "Normalize-RepositoryUrl",
+        "ProbeTimeoutSeconds",
+        "OUTPUT_DIRECTORY_INSIDE_REPOSITORY",
         "pathsOmitted",
         "UPSTREAM_VERIFICATION_MISSING",
+        "UPSTREAM_VERIFICATION_INCOMPLETE",
         "recoveryAction",
         "metadataShapeComplete",
-        "Live npm metadata was reachable but missing one or more expected version, engine, or deprecation fields.",
+        "Live npm metadata was reachable but missing one or more expected version, engine, repository, executable, or deprecation fields.",
         "[string]$verification.package",
         "[string]$verification.legacyPackage.package",
         "'engines'",
         "'deprecated'",
+        "'repository'",
+        "'bin'",
         "upstream-drift",
         "installed-version-drift",
         "ready-to-install",
+        "probe-timeout",
         "NoNetwork",
         "AllowUnready",
         "legacyPackage",
+        "repositoryUrl",
+        "executablePath",
+        "failureCode",
+        "probeTimeoutSeconds",
     ):
         assert token in preflight, f"missing preflight contract token: {token}"
     assert "npm install -g @mariozechner/pi-coding-agent" not in preflight
+    assert "Read-only local prerequisite and bounded live npm metadata proof" in preflight
 
     executable_contract = ROOT / "tests/Test-PiWorkstationPrereqsContracts.ps1"
     assert executable_contract.is_file()
@@ -98,6 +121,11 @@ def main() -> None:
         "shellPath",
     ):
         assert token in executable_text, f"missing executable prerequisite contract token: {token}"
+
+    hook_path = ROOT / "tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1"
+    hook_text = hook_path.read_text(encoding="utf-8-sig")
+    for token in ("pi-workstation-prereqs.json", "pi-workstation-prereqs.md", "pi-harness-status.json"):
+        assert token in hook_text, f"pre-commit missing blocked evidence token: {token}"
 
     status_path = ROOT / "tooling/pi/Get-PiHarnessStatus.ps1"
     status_text = status_path.read_text(encoding="utf-8-sig")

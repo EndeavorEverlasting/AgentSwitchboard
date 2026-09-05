@@ -7,9 +7,9 @@ AgentSwitchboard treats Pi as an execution adapter beneath repository governance
 - A fresh agent can start at `AGENTS.md`, `CODEBASE_MAP.md`, and `.ai/harness/manifest.json`, then follow the Pi-specific codebase map.
 - `tooling/pi/Test-PiWorkstationPrereqs.ps1` is the canonical request -> workstation evidence -> install-decision gate.
 - The tracked upstream prerequisite record pins `@earendil-works/pi-coding-agent@0.84.4`, source repository `earendil-works/pi`, and Node.js `>=22.19.0`, verified on 2026-09-03.
-- The preflight resolves PowerShell, Node, npm, Git, bash, and any existing Pi command. Command-path evidence is capped at eight paths per tool, records the total and omitted count, and represents empty resolution explicitly.
+- The preflight resolves PowerShell, Node, npm, Git, bash, and any existing Pi command. Command-path evidence is capped at eight paths per tool, records the total and omitted count, and represents empty resolution explicitly. External version probes and live npm metadata probes are bounded by `ProbeTimeoutSeconds` (default 15s) via `Invoke-BoundedProbe` with `timedOut`/`failureCode` reporting, and generated evidence is rejected if the `OutputDirectory` resolves inside the repository (`OUTPUT_DIRECTORY_INSIDE_REPOSITORY`).
 - On Windows, Bash discovery honors a reviewed project-local `.pi/settings.json` `shellPath` before Git-for-Windows defaults and PATH fallbacks.
-- In normal mode the preflight resolves live npm metadata for the current package and the deprecated `@mariozechner/pi-coding-agent` package. Installation is not eligible if live metadata differs from the tracked verification record; reachable metadata with missing expected fields is classified as drift rather than network unavailability.
+- In normal mode the preflight resolves live npm metadata for the current package and the deprecated `@mariozechner/pi-coding-agent` package. Installation is not eligible if live metadata differs from the tracked verification record; reachable metadata with missing expected fields is classified as drift rather than network unavailability. All external probes run through bounded `ProbeTimeoutSeconds` process execution with captured `timedOut`/`probeState`/`failureCode` classification, and structured `repositoryUrl`/`executablePath` drift is enforced.
 - A missing or unreadable tracked upstream-verification record produces a structured `blocked-prerequisite` report with an error code and recovery action instead of throwing before evidence exists.
 - CI may use explicit `-NoNetwork -NoWrite -AllowUnready` report-only mode to prove parser/contract behavior without pretending a hosted runner is an installable Pi workstation. Missing/invalid tracked verification remains a hard failure even in report-only mode.
 - Task intake selects exactly one route: single-agent, opinion fusion, autovalidate, or blocked.
@@ -84,7 +84,7 @@ Terminal decisions are:
 
 `-AllowUnready` changes process exit behavior only for ordinary workstation/report readiness states. It never promotes an unready status to installable and does not suppress a missing/invalid tracked-verification failure. `-NoNetwork` never proves the current upstream state.
 
-Generated prerequisite evidence is local-only under the system temporary directory by default and must not be committed.
+Generated prerequisite evidence is local-only under the system temporary directory by default and must not be committed. The reporter defaults to the OS temporary directory but any explicit `OutputDirectory` that resolves inside the repository is rejected with `OUTPUT_DIRECTORY_INSIDE_REPOSITORY` before any JSON/markdown is written.
 
 ## Workflow selection
 
