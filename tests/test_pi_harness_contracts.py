@@ -20,6 +20,7 @@ def load(relative: str) -> dict:
 def main() -> None:
     codebase = load("tooling/pi/harness/codebase-map.json")
     registry = load("tooling/pi/harness/pi-adapter.registry.json")
+    upstream = load("tooling/pi/harness/upstream-verification.json")
     artifacts = load("tooling/pi/harness/artifact-registry.json")
     schema = load("tooling/pi/harness/schemas/pi-harness-contracts.schema.json")
     intake = load("tooling/pi/harness/workflows/task-intake.workflow.json")
@@ -28,10 +29,38 @@ def main() -> None:
 
     assert codebase["schema"] == "agentswitchboard.pi-codebase-map.v1"
     assert codebase["entrypoints"]["validator"] == "scripts/Test-PiHarnessCompleteness.ps1"
+    assert codebase["entrypoints"]["workstationPrereqs"] == "tooling/pi/Test-PiWorkstationPrereqs.ps1"
+    assert codebase["entrypoints"]["upstreamVerification"] == "tooling/pi/harness/upstream-verification.json"
     assert any("one writer" in trap.lower() for trap in codebase["knownTraps"])
+    assert any("live npm metadata" in trap.lower() for trap in codebase["knownTraps"])
+    assert any("npm" in trap.lower() and "path" in trap.lower() for trap in codebase["knownTraps"])
+
+    assert upstream["schema"] == "agentswitchboard.pi-upstream-verification.v1"
+    assert upstream["verifiedAt"] == "2026-09-03"
+    assert upstream["package"] == "@earendil-works/pi-coding-agent"
+    assert upstream["version"] == "0.84.4"
+    assert upstream["versionTag"] == "v0.84.4"
+    assert upstream["sourceRepository"] == "earendil-works/pi"
+    assert upstream["sourceUrl"] == "https://github.com/earendil-works/pi"
+    assert upstream["minimumNodeVersion"] == "22.19.0"
+    assert upstream["nodeEngine"] == ">=22.19.0"
+    assert "--ignore-scripts" in upstream["installCommand"]
+    assert upstream["rollbackCommand"] == "npm uninstall -g @earendil-works/pi-coding-agent"
+    assert len(upstream["supportedOperatingSystems"]) >= 3 and "Windows" in upstream["supportedOperatingSystems"]
+    assert len(upstream["expectedFiles"]) >= 3 and "dist/bundle/cli.js" in upstream["expectedFiles"]
+    assert upstream["expectedExecutableMapping"]["command"] == "pi"
+    assert upstream["expectedExecutableMapping"]["packageRelativePath"] == "dist/bundle/cli.js"
+    assert len(upstream["officialEvidence"]) >= 3
+    assert upstream["legacyPackage"]["package"] == "@mariozechner/pi-coding-agent"
+    assert upstream["legacyPackage"]["deprecated"] is True
+    assert upstream["legacyPackage"]["deprecatedMessage"]
 
     assert registry["schema"] == "agentswitchboard.pi-adapter-registry.v1"
-    assert registry["upstream"]["status"] == "verification-required"
+    assert registry["upstream"]["package"] == upstream["package"]
+    assert registry["upstream"]["sourceRepository"] == upstream["sourceRepository"]
+    assert registry["upstream"]["pinnedVersion"] == upstream["version"]
+    assert registry["upstream"]["status"] == "verified-prerequisite"
+    assert registry["upstream"]["verificationRecord"] == "tooling/pi/harness/upstream-verification.json"
     assert registry["configuration"]["preferredScope"] == "project-local"
     assert registry["configuration"]["globalConfigurationMutationAllowed"] is False
     assert registry["configuration"]["implicitHookInstallationAllowed"] is False
@@ -39,11 +68,79 @@ def main() -> None:
     assert all(route["writerCount"] == 1 for route in registry["routes"])
     assert all(route["status"] == "contract-only" for route in registry["routes"])
 
+    preflight_path = ROOT / "tooling/pi/Test-PiWorkstationPrereqs.ps1"
+    assert preflight_path.is_file()
+    preflight = preflight_path.read_text(encoding="utf-8-sig")
+    for token in (
+        "agentswitchboard.pi-workstation-prereqs.v1",
+        "Invoke-NpmJson",
+        "Invoke-BoundedProbe",
+        "Get-OptionalPropertyValue",
+        "Get-ProjectShellPath",
+        "Get-BoundedPathEvidence",
+        "Get-AbsolutePath",
+        "Test-PathInsideRoot",
+        "Normalize-RepositoryUrl",
+        "ProbeTimeoutSeconds",
+        "OUTPUT_DIRECTORY_INSIDE_REPOSITORY",
+        "pathsOmitted",
+        "UPSTREAM_VERIFICATION_MISSING",
+        "UPSTREAM_VERIFICATION_INCOMPLETE",
+        "recoveryAction",
+        "metadataShapeComplete",
+        "Live npm metadata was reachable but missing one or more expected version, engine, repository, executable, or deprecation fields.",
+        "[string]$verification.package",
+        "[string]$verification.legacyPackage.package",
+        "'engines'",
+        "'deprecated'",
+        "'repository'",
+        "'bin'",
+        "upstream-drift",
+        "installed-version-drift",
+        "ready-to-install",
+        "probe-timeout",
+        "NoNetwork",
+        "AllowUnready",
+        "legacyPackage",
+        "repositoryUrl",
+        "executablePath",
+        "failureCode",
+        "probeTimeoutSeconds",
+    ):
+        assert token in preflight, f"missing preflight contract token: {token}"
+    assert "npm install -g @mariozechner/pi-coding-agent" not in preflight
+    assert "Read-only local prerequisite and bounded live npm metadata proof" in preflight
+
+    executable_contract = ROOT / "tests/Test-PiWorkstationPrereqsContracts.ps1"
+    assert executable_contract.is_file()
+    executable_text = executable_contract.read_text(encoding="utf-8-sig")
+    for token in (
+        "UPSTREAM_VERIFICATION_MISSING",
+        "pathsOmitted",
+        "configured-shell/precedence",
+        "shellPath",
+    ):
+        assert token in executable_text, f"missing executable prerequisite contract token: {token}"
+
+    hook_path = ROOT / "tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1"
+    hook_text = hook_path.read_text(encoding="utf-8-sig")
+    for token in ("pi-workstation-prereqs.json", "pi-workstation-prereqs.md", "pi-harness-status.json"):
+        assert token in hook_text, f"pre-commit missing blocked evidence token: {token}"
+
+    status_path = ROOT / "tooling/pi/Get-PiHarnessStatus.ps1"
+    status_text = status_path.read_text(encoding="utf-8-sig")
+    for token in (
+        "ConvertTo-PowerShellSingleQuotedLiteral",
+        "$nextScriptPath = Join-Path $RootPath $nextRelativePath",
+        "-RootPath $rootLiteral",
+    ):
+        assert token in status_text, f"missing root-bound status continuation token: {token}"
+
+    artifacts_names = [item["fileName"] for item in artifacts["artifacts"]]
     assert artifacts["tracked"] is False
-    names = [item["fileName"] for item in artifacts["artifacts"]]
-    assert len(names) == len(set(names)), "artifact filenames must be unique"
-    assert "pi-fusion-result.json" in names
-    assert "pi-validation-ledger.json" in names
+    assert len(artifacts_names) == len(set(artifacts_names)), "artifact filenames must be unique"
+    assert "pi-fusion-result.json" in artifacts_names
+    assert "pi-validation-ledger.json" in artifacts_names
     forbidden = " ".join(artifacts["forbiddenContent"]).lower()
     assert "credentials" in forbidden and "raw prompts" in forbidden
 
@@ -88,6 +185,7 @@ def main() -> None:
         for path in (
             "tooling/pi/harness/codebase-map.json",
             "tooling/pi/harness/pi-adapter.registry.json",
+            "tooling/pi/harness/upstream-verification.json",
             "tooling/pi/harness/artifact-registry.json",
             "tooling/pi/harness/workflows/task-intake.workflow.json",
             "tooling/pi/harness/workflows/opinion-fusion.workflow.json",

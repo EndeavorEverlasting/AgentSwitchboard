@@ -18,7 +18,7 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $staged = @(& git -C $RootPath diff --cached --name-only)
-$blockedPatterns = @('pi-run-context.json', 'pi-fusion-result.json', 'pi-validation-ledger.json', 'pi-operator-report.md', 'pi-final-handoff.json')
+$blockedPatterns = @('pi-run-context.json', 'pi-fusion-result.json', 'pi-validation-ledger.json', 'pi-operator-report.md', 'pi-final-handoff.json', 'pi-workstation-prereqs.json', 'pi-workstation-prereqs.md', 'pi-harness-status.json', 'pi-harness-status.md')
 $blocked = @($staged | Where-Object { $name = $_; $blockedPatterns | Where-Object { $name.EndsWith($_, [StringComparison]::OrdinalIgnoreCase) } })
 if ($blocked.Count -gt 0) {
     Write-Error ("Generated Pi runtime evidence must remain untracked: {0}" -f ($blocked -join ', '))

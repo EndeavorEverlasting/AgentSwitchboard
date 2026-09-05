@@ -9,15 +9,23 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $RootPath = (Resolve-Path -LiteralPath $RootPath).Path
 
+function ConvertTo-PowerShellSingleQuotedLiteral {
+    param([Parameter(Mandatory)][string]$Value)
+    return "'" + ($Value -replace "'", "''") + "'"
+}
+
 $required = @(
     'tooling/pi/harness/codebase-map.json',
     'tooling/pi/harness/pi-adapter.registry.json',
+    'tooling/pi/harness/upstream-verification.json',
     'tooling/pi/harness/artifact-registry.json',
     'tooling/pi/harness/workflows/task-intake.workflow.json',
     'tooling/pi/harness/workflows/opinion-fusion.workflow.json',
     'tooling/pi/harness/workflows/autovalidate.workflow.json',
     'tooling/pi/harness/schemas/pi-harness-contracts.schema.json',
     '.ai/skills/pi-fusion-orchestration/SKILL.md',
+    'tooling/pi/Test-PiWorkstationPrereqs.ps1',
+    'tests/Test-PiWorkstationPrereqsContracts.ps1',
     'scripts/Test-PiHarnessCompleteness.ps1',
     'tests/test_pi_harness_contracts.py',
     'tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1',
@@ -44,7 +52,7 @@ if ($null -ne $piCommand) { $piPath = $piCommand.Source }
 
 $missing = @($componentResults | Where-Object { -not $_.exists -or -not $_.tracked })
 $working = @(
-    'Repository-native Pi maps, workflows, artifact contracts, schemas, skill, validator, hook, CI, and operator guide are declared.'
+    'Repository-native Pi upstream verification, workstation preflight, executable prerequisite contracts, maps, workflows, artifact contracts, schemas, skill, validator, hook, CI, and operator guide are declared.'
     'Workflow selection, opinion fusion, and autovalidation are bounded and require one designated writer.'
     'Generated Pi evidence is local-only and raw prompts or transcripts are forbidden from tracked artifacts.'
 )
@@ -52,15 +60,24 @@ $broken = @()
 if ($missing.Count -gt 0) { $broken += "$($missing.Count) required tracked component(s) are missing or untracked." }
 if ($dirty) { $broken += 'The checkout is dirty; a write lane must preserve or isolate unrelated work.' }
 $gaps = @(
-    'Pi installation and exact version are not proven by this report.'
-    'Extension API compatibility is not proven until a pinned upstream version is validated.'
+    'Pi installation and exact local version are not proven by this status report; the workstation prerequisite preflight owns that evidence.'
+    'Live npm metadata must match the tracked upstream verification record before installation is eligible.'
     'Provider/model availability, privacy, telemetry, network behavior, and model response remain runtime proof.'
     'Fusion quality and autovalidation effectiveness require a separate authorized runtime lane.'
 )
 
 $status = if ($missing.Count -eq 0) { 'contract-ready' } else { 'incomplete' }
 $piState = if ($null -eq $piCommand) { 'missing' } else { 'present-unverified' }
-$nextCommand = 'pwsh -NoLogo -NoProfile -File scripts/Test-PiHarnessCompleteness.ps1'
+$rootLiteral = ConvertTo-PowerShellSingleQuotedLiteral -Value $RootPath
+$nextRelativePath = if ($missing.Count -eq 0) {
+    'tooling/pi/Test-PiWorkstationPrereqs.ps1'
+}
+else {
+    'scripts/Test-PiHarnessCompleteness.ps1'
+}
+$nextScriptPath = Join-Path $RootPath $nextRelativePath
+$nextScriptLiteral = ConvertTo-PowerShellSingleQuotedLiteral -Value $nextScriptPath
+$nextCommand = "pwsh -NoLogo -NoProfile -File $nextScriptLiteral -RootPath $rootLiteral"
 
 $result = [ordered]@{
     schema = 'agentswitchboard.pi-harness-status.v1'
@@ -76,7 +93,7 @@ $result = [ordered]@{
     broken = $broken
     missing = @($missing | ForEach-Object { $_.path })
     gaps = $gaps
-    proofCeiling = 'Read-only repository contract and command-presence status only; no Pi or provider runtime proof.'
+    proofCeiling = 'Read-only repository contract and command-presence status only; workstation prerequisites and live upstream drift are delegated to the Pi workstation preflight.'
     nextCommand = $nextCommand
 }
 
