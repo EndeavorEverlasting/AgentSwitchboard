@@ -1,0 +1,9 @@
+{
+  "schema": "agentswitchboard.deepseek-usage-window.v1",
+  "verified": false,
+  "rateClass": "unverified",
+  "effectiveMultiplier": null,
+  "verifiedAt": null,
+  "validUntil": null,
+  "source": "Replace with current verified provider/operator evidence before copying to deepseek-usage-windows.json."
+}
