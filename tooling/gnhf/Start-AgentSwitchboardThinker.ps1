@@ -194,6 +194,10 @@ SOURCE OBJECTIVE:
 $objective
 "@
 
+# Claude/OpenCode currently receive their prompt as a process argument. Keep well below the
+# Windows CreateProcess command-line ceiling; Codex is exempt because its prompt is streamed on stdin.
+$maxArgvPromptChars = 28000
+
 $policy = Import-AgentSwitchboardThinkerPolicy -PolicyPath $PolicyPath
 $resolvedMode = Resolve-AgentSwitchboardThinkerMode -Mode $Mode -Policy $policy
 $readiness = @{}
@@ -212,13 +216,44 @@ foreach ($routeIdValue in $chain) {
         $routeId = [string]$route.id
     }
 
-    if (-not (Test-OpenCodeRouteModel -Route $route)) {
+    if ([string]$route.runner -ne "codex-exec" -and $wrappedPrompt.Length -gt $maxArgvPromptChars) {
+        $readiness[$routeId] = $false
+        [void]$attempts.Add([ordered]@{
+            route = $routeId
+            status = "preflight-blocked"
+            reason = "prompt exceeds safe Windows argv cap for this runner"
+            promptChars = $wrappedPrompt.Length
+            maxArgvPromptChars = $maxArgvPromptChars
+        })
+        continue
+    }
+
+    try {
+        $modelReady = Test-OpenCodeRouteModel -Route $route
+    }
+    catch {
+        $readiness[$routeId] = $false
+        $diagnostic = $_.Exception.Message
+        if ($diagnostic.Length -gt 1200) { $diagnostic = $diagnostic.Substring($diagnostic.Length - 1200) }
+        [void]$attempts.Add([ordered]@{ route = $routeId; status = "preflight-blocked"; reason = "model preflight threw"; diagnostic = $diagnostic })
+        continue
+    }
+    if (-not $modelReady) {
         $readiness[$routeId] = $false
         [void]$attempts.Add([ordered]@{ route = $routeId; status = "preflight-blocked"; reason = "exact model not listed by OpenCode" })
         continue
     }
 
-    $attempt = Invoke-SelectedThinker -Route $route -PromptText $wrappedPrompt
+    try {
+        $attempt = Invoke-SelectedThinker -Route $route -PromptText $wrappedPrompt
+    }
+    catch {
+        $readiness[$routeId] = $false
+        $diagnostic = $_.Exception.Message
+        if ($diagnostic.Length -gt 1200) { $diagnostic = $diagnostic.Substring($diagnostic.Length - 1200) }
+        [void]$attempts.Add([ordered]@{ route = $routeId; status = "failed"; exitCode = $null; timedOut = $false; diagnostic = $diagnostic })
+        continue
+    }
     if ($attempt.exitCode -ne 0 -or $attempt.timedOut -or [string]::IsNullOrWhiteSpace($attempt.plan)) {
         $readiness[$routeId] = $false
         $diagnostic = [string]$attempt.diagnostic
@@ -245,6 +280,7 @@ $evidence = [ordered]@{
     objectivePath = $PromptPath
     objectiveChars = $objective.Length
     objectiveSha256 = Get-Sha256Text -Text $objective
+    maxArgvPromptChars = $maxArgvPromptChars
     selectedRoute = if ($finalRoute) { [string]$finalRoute.id } else { $null }
     provider = if ($finalRoute) { [string]$finalRoute.provider } else { $null }
     model = if ($finalRoute) { $finalRoute.model } else { $null }
