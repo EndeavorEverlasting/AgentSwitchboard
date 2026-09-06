@@ -294,10 +294,12 @@ try {
         "Setup-AgentSwitchboard.cmd",
         "Test-HermesSetupContracts.ps1",
         "gnhf-fleet.example.json",
+        "Gnhf.Process.ps1",
         "Thinker.Route.ps1",
         "Start-AgentSwitchboardThinker.ps1",
         "Start-AgentSwitchboardThinker.cmd",
         "thinker-route.policy.json",
+        "deepseek-usage-windows.example.json",
         "THINKER_ROUTE.md"
     )) {
         Copy-SetupFile -Source (Join-Path $PSScriptRoot $fileName) -Destination (Join-Path $InstallRoot $fileName)
