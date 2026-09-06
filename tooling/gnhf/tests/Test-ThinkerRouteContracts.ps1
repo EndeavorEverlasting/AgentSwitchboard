@@ -16,10 +16,12 @@ function Check {
 
 $policyPath = Join-Path $RootPath "thinker-route.policy.json"
 $routePath = Join-Path $RootPath "Thinker.Route.ps1"
+$processPath = Join-Path $RootPath "Gnhf.Process.ps1"
 $launcherPath = Join-Path $RootPath "Start-AgentSwitchboardThinker.ps1"
 $cmdPath = Join-Path $RootPath "Start-AgentSwitchboardThinker.cmd"
 $setupPath = Join-Path $RootPath "Setup-AgentSwitchboard.ps1"
-foreach ($path in @($policyPath, $routePath, $launcherPath, $cmdPath, $setupPath)) {
+$rateExamplePath = Join-Path $RootPath "deepseek-usage-windows.example.json"
+foreach ($path in @($policyPath, $routePath, $processPath, $launcherPath, $cmdPath, $setupPath, $rateExamplePath)) {
     Check (Test-Path -LiteralPath $path -PathType Leaf) "required/$([IO.Path]::GetFileName($path))" "file missing"
 }
 
@@ -38,7 +40,11 @@ foreach ($routeId in @($policy.chains.free)) {
 Check ($routesById["deepseek"].model -eq "deepseek/deepseek-v4-pro") "policy/deepseek-model" "DeepSeek route no longer matches reviewed provider route"
 Check ($routesById["opencode-muse"].model -eq "opencode/muse-spark-1.3-contributor-free") "policy/muse-free-model" "Muse free route changed"
 
-foreach ($scriptPath in @($routePath, $launcherPath, $setupPath)) {
+$rateExample = Get-Content -LiteralPath $rateExamplePath -Raw | ConvertFrom-Json
+Check ($rateExample.schema -eq "agentswitchboard.deepseek-usage-window.v1") "rate/example-schema" "DeepSeek usage template schema mismatch"
+Check ($rateExample.verified -eq $false) "rate/example-fail-closed" "DeepSeek usage template must not authorize launches"
+
+foreach ($scriptPath in @($routePath, $processPath, $launcherPath, $setupPath)) {
     $tokens = $null
     $errors = $null
     [void][Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$tokens, [ref]$errors)
@@ -62,6 +68,41 @@ $blocked = Resolve-AgentSwitchboardThinkerRoute -Mode Standard -PolicyPath $poli
 Check ($blocked.status -eq "blocked") "resolve/blocked-explicit" "no-route state is not explicit"
 Check (@($blocked.skipped).Count -eq 6) "resolve/blocked-evidence" "blocked result does not preserve every skipped route"
 
+$rateTemp = Join-Path ([IO.Path]::GetTempPath()) ("agentswitchboard-rate-window-{0}.json" -f [guid]::NewGuid().ToString("N"))
+$now = [DateTimeOffset]::UtcNow
+try {
+    [ordered]@{
+        schema = "agentswitchboard.deepseek-usage-window.v1"
+        verified = $true
+        rateClass = "standard"
+        effectiveMultiplier = 1.0
+        verifiedAt = $now.AddMinutes(-1).ToString("o")
+        validUntil = $now.AddMinutes(30).ToString("o")
+        source = "contract fixture"
+    } | ConvertTo-Json | Set-Content -LiteralPath $rateTemp -Encoding utf8NoBOM
+    $rateReady = Test-AgentSwitchboardDeepSeekRateWindow -SchedulePath $rateTemp -Now $now
+    Check ($rateReady.ready) "rate/standard-ready" "verified standard window was not eligible: $($rateReady.reason)"
+
+    $double = Get-Content -LiteralPath $rateTemp -Raw | ConvertFrom-Json
+    $double.rateClass = "double-usage"
+    $double | ConvertTo-Json | Set-Content -LiteralPath $rateTemp -Encoding utf8NoBOM
+    $rateDouble = Test-AgentSwitchboardDeepSeekRateWindow -SchedulePath $rateTemp -Now $now
+    Check (-not $rateDouble.ready) "rate/double-usage-blocked" "double-usage window was incorrectly eligible"
+
+    $expired = Get-Content -LiteralPath $rateTemp -Raw | ConvertFrom-Json
+    $expired.rateClass = "discounted"
+    $expired.effectiveMultiplier = 0.5
+    $expired.validUntil = $now.AddMinutes(-1).ToString("o")
+    $expired | ConvertTo-Json | Set-Content -LiteralPath $rateTemp -Encoding utf8NoBOM
+    $rateExpired = Test-AgentSwitchboardDeepSeekRateWindow -SchedulePath $rateTemp -Now $now
+    Check (-not $rateExpired.ready) "rate/expired-blocked" "expired window was incorrectly eligible"
+}
+finally {
+    if (Test-Path -LiteralPath $rateTemp) { Remove-Item -LiteralPath $rateTemp -Force }
+}
+$missingRate = Test-AgentSwitchboardDeepSeekRateWindow -SchedulePath (Join-Path ([IO.Path]::GetTempPath()) ("missing-{0}.json" -f [guid]::NewGuid().ToString("N"))) -Now $now
+Check (-not $missingRate.ready) "rate/missing-blocked" "missing schedule was incorrectly eligible"
+
 $launcherText = Get-Content -LiteralPath $launcherPath -Raw
 Check ($launcherText.Contains('"--sandbox", "read-only"')) "launcher/codex-read-only" "Codex thinker is not pinned read-only"
 Check ($launcherText.Contains('"--permission-mode", "plan"')) "launcher/claude-plan-mode" "Claude thinker is not pinned to plan permissions"
@@ -73,6 +114,10 @@ Check ($launcherText.Contains('prompt exceeds safe Windows argv cap for this run
 Check ($launcherText.Contains('objectiveSha256')) "launcher/input-digest" "thinker evidence does not identify source objective"
 Check ($launcherText.Contains('planSha256')) "launcher/output-digest" "thinker evidence does not identify plan artifact"
 Check ($launcherText.Contains('model preflight threw')) "launcher/preflight-exception-fallback" "provider preflight exceptions can abort the fallback chain"
+Check ($launcherText.Contains('Test-AgentSwitchboardDeepSeekRateWindow')) "launcher/deepseek-rate-gate" "DeepSeek route bypasses the verified usage-window gate"
+Check ($launcherText.Contains('deepseek-usage-windows.json')) "launcher/deepseek-rate-path" "DeepSeek route does not use the canonical runtime schedule path"
+Check ($launcherText.Contains('New-GnhfProcessStartInfo')) "launcher/shim-safe-dispatch" "thinker processes do not reuse the Windows shim-safe dispatch helper"
+Check ($launcherText.Contains('[guid]::NewGuid().ToString("N")')) "launcher/collision-resistant-run-id" "plan/evidence run identity can collide at timestamp resolution"
 Check (-not $launcherText.Contains('git push')) "launcher/no-push" "thinker launcher contains push behavior"
 Check (-not $launcherText.Contains('git commit')) "launcher/no-commit" "thinker launcher contains commit behavior"
 
@@ -82,10 +127,12 @@ Check ($cmdText.Contains('exit /b %_code%')) "install/cmd-exit-code" "installed 
 
 $setupText = Get-Content -LiteralPath $setupPath -Raw
 foreach ($installedFile in @(
+    'Gnhf.Process.ps1',
     'Thinker.Route.ps1',
     'Start-AgentSwitchboardThinker.ps1',
     'Start-AgentSwitchboardThinker.cmd',
     'thinker-route.policy.json',
+    'deepseek-usage-windows.example.json',
     'THINKER_ROUTE.md'
 )) {
     Check ($setupText.Contains('"' + $installedFile + '"')) "install/setup-copies/$installedFile" "setup does not install $installedFile"
