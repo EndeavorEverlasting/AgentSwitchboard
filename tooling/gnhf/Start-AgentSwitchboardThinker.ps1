@@ -5,7 +5,7 @@ param(
     [ValidateSet("Auto", "Standard", "Free")][string]$Mode = "Auto",
     [string]$OutputPath,
     [string]$PolicyPath = (Join-Path $PSScriptRoot "thinker-route.policy.json"),
-    [ValidateRange(1000, 120000)][int]$MaxObjectiveChars = 60000,
+    [ValidateRange(1000, 26000)][int]$MaxObjectiveChars = 24000,
     [ValidateRange(1000, 50000)][int]$MaxPlanChars = 24000,
     [ValidateRange(5, 900)][int]$TimeoutSeconds = 300,
     [string]$InstallRoot = "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet"
@@ -190,53 +190,60 @@ SOURCE OBJECTIVE:
 $objective
 "@
 
-# Claude/OpenCode currently receive their prompt as a process argument. Keep well below the
-# Windows CreateProcess command-line ceiling; Codex is exempt because its prompt is streamed on stdin.
+# Claude/OpenCode currently receive their prompt as a process argument. The public objective cap
+# keeps every accepted objective under a safe Windows argv ceiling after the wrapper is added.
 $maxArgvPromptChars = 28000
+if ($wrappedPrompt.Length -gt $maxArgvPromptChars) {
+    throw "Compiled thinker prompt is $($wrappedPrompt.Length) characters; safe Windows transport cap is $maxArgvPromptChars. Reduce the bounded objective."
+}
 
 $policy = Import-AgentSwitchboardThinkerPolicy -PolicyPath $PolicyPath
 $resolvedMode = Resolve-AgentSwitchboardThinkerMode -Mode $Mode -Policy $policy
 $readiness = @{}
 $attempts = [System.Collections.Generic.List[object]]::new()
+$recordedRoutes = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
 $chain = @($policy.chains.PSObject.Properties[$resolvedMode].Value)
 $finalRoute = $null
 $finalPlan = $null
 $deepSeekRateWindow = $null
 
+function Add-ThinkerRouteEvidence {
+    param(
+        [Parameter(Mandatory)][string]$RouteId,
+        [Parameter(Mandatory)][hashtable]$Record
+    )
+    if (-not $recordedRoutes.Add($RouteId)) { return }
+    $Record["route"] = $RouteId
+    [void]$attempts.Add([pscustomobject]$Record)
+}
+
 foreach ($routeIdValue in $chain) {
     $routeId = [string]$routeIdValue
     $resolution = Resolve-AgentSwitchboardThinkerRoute -Mode $(if ($resolvedMode -eq "free") { "Free" } else { "Standard" }) -PolicyPath $PolicyPath -ReadinessOverride $readiness
+    foreach ($skippedRoute in @($resolution.skipped)) {
+        Add-ThinkerRouteEvidence -RouteId ([string]$skippedRoute.routeId) -Record @{
+            status = "unavailable"
+            reason = [string]$skippedRoute.reason
+        }
+    }
     if ($resolution.status -ne "selected") { break }
     $route = $resolution.route
     if ([string]$route.id -ne $routeId) {
-        # Earlier routes may already be marked unavailable. Always act on the resolver's next eligible route.
+        # Earlier routes may already be unavailable. Always act on the resolver's next eligible route.
         $routeId = [string]$route.id
-    }
-
-    if ([string]$route.runner -ne "codex-exec" -and $wrappedPrompt.Length -gt $maxArgvPromptChars) {
-        $readiness[$routeId] = $false
-        [void]$attempts.Add([ordered]@{
-            route = $routeId
-            status = "preflight-blocked"
-            reason = "prompt exceeds safe Windows argv cap for this runner"
-            promptChars = $wrappedPrompt.Length
-            maxArgvPromptChars = $maxArgvPromptChars
-        })
-        continue
     }
 
     if ($routeId -eq "deepseek") {
         $deepSeekRateWindow = Test-AgentSwitchboardDeepSeekRateWindow -SchedulePath (Join-Path $InstallRoot "deepseek-usage-windows.json")
         if (-not $deepSeekRateWindow.ready) {
             $readiness[$routeId] = $false
-            [void]$attempts.Add([ordered]@{
-                route = $routeId
+            Add-ThinkerRouteEvidence -RouteId $routeId -Record @{
                 status = "preflight-blocked"
                 reason = $deepSeekRateWindow.reason
                 rateClass = $deepSeekRateWindow.rateClass
                 effectiveMultiplier = $deepSeekRateWindow.effectiveMultiplier
                 schedulePath = $deepSeekRateWindow.schedulePath
-            })
+            }
             continue
         }
     }
@@ -248,12 +255,12 @@ foreach ($routeIdValue in $chain) {
         $readiness[$routeId] = $false
         $diagnostic = $_.Exception.Message
         if ($diagnostic.Length -gt 1200) { $diagnostic = $diagnostic.Substring($diagnostic.Length - 1200) }
-        [void]$attempts.Add([ordered]@{ route = $routeId; status = "preflight-blocked"; reason = "model preflight threw"; diagnostic = $diagnostic })
+        Add-ThinkerRouteEvidence -RouteId $routeId -Record @{ status = "preflight-blocked"; reason = "model preflight threw"; diagnostic = $diagnostic }
         continue
     }
     if (-not $modelReady) {
         $readiness[$routeId] = $false
-        [void]$attempts.Add([ordered]@{ route = $routeId; status = "preflight-blocked"; reason = "exact model not listed by OpenCode" })
+        Add-ThinkerRouteEvidence -RouteId $routeId -Record @{ status = "preflight-blocked"; reason = "exact model not listed by OpenCode" }
         continue
     }
 
@@ -264,25 +271,25 @@ foreach ($routeIdValue in $chain) {
         $readiness[$routeId] = $false
         $diagnostic = $_.Exception.Message
         if ($diagnostic.Length -gt 1200) { $diagnostic = $diagnostic.Substring($diagnostic.Length - 1200) }
-        [void]$attempts.Add([ordered]@{ route = $routeId; status = "failed"; exitCode = $null; timedOut = $false; diagnostic = $diagnostic })
+        Add-ThinkerRouteEvidence -RouteId $routeId -Record @{ status = "failed"; exitCode = $null; timedOut = $false; diagnostic = $diagnostic }
         continue
     }
     if ($attempt.exitCode -ne 0 -or $attempt.timedOut -or [string]::IsNullOrWhiteSpace($attempt.plan)) {
         $readiness[$routeId] = $false
         $diagnostic = [string]$attempt.diagnostic
         if ($diagnostic.Length -gt 1200) { $diagnostic = $diagnostic.Substring($diagnostic.Length - 1200) }
-        [void]$attempts.Add([ordered]@{ route = $routeId; status = "failed"; exitCode = $attempt.exitCode; timedOut = $attempt.timedOut; diagnostic = $diagnostic })
+        Add-ThinkerRouteEvidence -RouteId $routeId -Record @{ status = "failed"; exitCode = $attempt.exitCode; timedOut = $attempt.timedOut; diagnostic = $diagnostic }
         continue
     }
     if ($attempt.plan.Length -gt $MaxPlanChars) {
         $readiness[$routeId] = $false
-        [void]$attempts.Add([ordered]@{ route = $routeId; status = "rejected"; reason = "plan exceeded MaxPlanChars"; actualChars = $attempt.plan.Length })
+        Add-ThinkerRouteEvidence -RouteId $routeId -Record @{ status = "rejected"; reason = "plan exceeded MaxPlanChars"; actualChars = $attempt.plan.Length }
         continue
     }
 
     $finalRoute = $route
     $finalPlan = $attempt.plan.Trim()
-    [void]$attempts.Add([ordered]@{ route = $routeId; status = "selected"; exitCode = $attempt.exitCode; planChars = $finalPlan.Length })
+    Add-ThinkerRouteEvidence -RouteId $routeId -Record @{ status = "selected"; exitCode = $attempt.exitCode; planChars = $finalPlan.Length }
     break
 }
 
