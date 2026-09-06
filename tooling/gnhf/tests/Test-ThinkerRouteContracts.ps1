@@ -63,11 +63,14 @@ Check (@($blocked.skipped).Count -eq 6) "resolve/blocked-evidence" "blocked resu
 $launcherText = Get-Content -LiteralPath $launcherPath -Raw
 Check ($launcherText.Contains('"--sandbox", "read-only"')) "launcher/codex-read-only" "Codex thinker is not pinned read-only"
 Check ($launcherText.Contains('"--permission-mode", "plan"')) "launcher/claude-plan-mode" "Claude thinker is not pinned to plan permissions"
-Check ($launcherText.Contains("'*' = \"deny\"")) "launcher/opencode-deny-default" "OpenCode thinker does not deny tools by default"
+Check ($launcherText.Contains('''*'' = "deny"')) "launcher/opencode-deny-default" "OpenCode thinker does not deny tools by default"
 Check ($launcherText.Contains('MaxObjectiveChars')) "launcher/objective-cap" "objective context is unbounded"
 Check ($launcherText.Contains('MaxPlanChars')) "launcher/plan-cap" "plan output is unbounded"
+Check ($launcherText.Contains('$maxArgvPromptChars = 28000')) "launcher/windows-argv-bound" "argv-based thinker prompt is not bounded for Windows"
+Check ($launcherText.Contains('prompt exceeds safe Windows argv cap for this runner')) "launcher/windows-argv-fallback" "oversized argv prompts do not fall through deterministically"
 Check ($launcherText.Contains('objectiveSha256')) "launcher/input-digest" "thinker evidence does not identify source objective"
 Check ($launcherText.Contains('planSha256')) "launcher/output-digest" "thinker evidence does not identify plan artifact"
+Check ($launcherText.Contains('model preflight threw')) "launcher/preflight-exception-fallback" "provider preflight exceptions can abort the fallback chain"
 Check (-not $launcherText.Contains('git push')) "launcher/no-push" "thinker launcher contains push behavior"
 Check (-not $launcherText.Contains('git commit')) "launcher/no-commit" "thinker launcher contains commit behavior"
 
