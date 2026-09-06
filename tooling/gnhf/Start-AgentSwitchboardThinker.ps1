@@ -19,10 +19,14 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
 }
 
 $routeHelpers = Join-Path $PSScriptRoot "Thinker.Route.ps1"
-if (-not (Test-Path -LiteralPath $routeHelpers -PathType Leaf)) {
-    throw "Thinker route helpers not found: $routeHelpers"
+$processHelpers = Join-Path $PSScriptRoot "Gnhf.Process.ps1"
+foreach ($helper in @($routeHelpers, $processHelpers)) {
+    if (-not (Test-Path -LiteralPath $helper -PathType Leaf)) {
+        throw "Thinker runtime helper not found: $helper"
+    }
 }
 . $routeHelpers
+. $processHelpers
 
 $RepoPath = [IO.Path]::GetFullPath($RepoPath)
 $PromptPath = [IO.Path]::GetFullPath($PromptPath)
@@ -46,17 +50,17 @@ $plansRoot = Join-Path $InstallRoot "plans"
 $logsRoot = Join-Path $InstallRoot "logs\thinker-routes"
 [void](New-Item -ItemType Directory -Path $plansRoot -Force)
 [void](New-Item -ItemType Directory -Path $logsRoot -Force)
-$stamp = Get-Date -Format "yyyyMMdd-HHmmss-fff"
+$runId = "{0}-{1}" -f (Get-Date -Format "yyyyMMdd-HHmmss-fff"), [guid]::NewGuid().ToString("N")
 if (-not $OutputPath) {
     $safeRepo = ((Split-Path -Leaf $RepoPath) -replace '[^A-Za-z0-9._-]', '-')
-    $OutputPath = Join-Path $plansRoot "$stamp-$safeRepo-SYSTEM_PLAN.md"
+    $OutputPath = Join-Path $plansRoot "$runId-$safeRepo-SYSTEM_PLAN.md"
 }
 else {
     $OutputPath = [IO.Path]::GetFullPath($OutputPath)
     $parent = Split-Path -Parent $OutputPath
     if ($parent) { [void](New-Item -ItemType Directory -Path $parent -Force) }
 }
-$evidencePath = Join-Path $logsRoot "$stamp-thinker-route.json"
+$evidencePath = Join-Path $logsRoot "$runId-thinker-route.json"
 
 function Get-Sha256Text {
     param([Parameter(Mandatory)][string]$Text)
@@ -77,15 +81,7 @@ function Invoke-ThinkerProcess {
         [Parameter(Mandatory)][int]$BoundSeconds
     )
 
-    $psi = [Diagnostics.ProcessStartInfo]::new()
-    $psi.FileName = $FilePath
-    $psi.WorkingDirectory = $WorkingDirectory
-    $psi.UseShellExecute = $false
-    $psi.RedirectStandardOutput = $true
-    $psi.RedirectStandardError = $true
-    $psi.RedirectStandardInput = $true
-    $psi.CreateNoWindow = $true
-    foreach ($argument in $ArgumentList) { [void]$psi.ArgumentList.Add($argument) }
+    $psi = New-GnhfProcessStartInfo -FilePath $FilePath -ArgumentList $ArgumentList -WorkingDirectory $WorkingDirectory
     if ($EnvironmentOverride) {
         foreach ($key in $EnvironmentOverride.Keys) { $psi.Environment[[string]$key] = [string]$EnvironmentOverride[$key] }
     }
@@ -205,6 +201,7 @@ $attempts = [System.Collections.Generic.List[object]]::new()
 $chain = @($policy.chains.PSObject.Properties[$resolvedMode].Value)
 $finalRoute = $null
 $finalPlan = $null
+$deepSeekRateWindow = $null
 
 foreach ($routeIdValue in $chain) {
     $routeId = [string]$routeIdValue
@@ -226,6 +223,22 @@ foreach ($routeIdValue in $chain) {
             maxArgvPromptChars = $maxArgvPromptChars
         })
         continue
+    }
+
+    if ($routeId -eq "deepseek") {
+        $deepSeekRateWindow = Test-AgentSwitchboardDeepSeekRateWindow -SchedulePath (Join-Path $InstallRoot "deepseek-usage-windows.json")
+        if (-not $deepSeekRateWindow.ready) {
+            $readiness[$routeId] = $false
+            [void]$attempts.Add([ordered]@{
+                route = $routeId
+                status = "preflight-blocked"
+                reason = $deepSeekRateWindow.reason
+                rateClass = $deepSeekRateWindow.rateClass
+                effectiveMultiplier = $deepSeekRateWindow.effectiveMultiplier
+                schedulePath = $deepSeekRateWindow.schedulePath
+            })
+            continue
+        }
     }
 
     try {
@@ -275,6 +288,7 @@ foreach ($routeIdValue in $chain) {
 
 $evidence = [ordered]@{
     schema = "agentswitchboard.thinker-run.v1"
+    runId = $runId
     mode = $resolvedMode
     repository = $RepoPath
     objectivePath = $PromptPath
@@ -284,6 +298,15 @@ $evidence = [ordered]@{
     selectedRoute = if ($finalRoute) { [string]$finalRoute.id } else { $null }
     provider = if ($finalRoute) { [string]$finalRoute.provider } else { $null }
     model = if ($finalRoute) { $finalRoute.model } else { $null }
+    deepSeekRateWindow = if ($deepSeekRateWindow) { [ordered]@{
+        ready = $deepSeekRateWindow.ready
+        reason = $deepSeekRateWindow.reason
+        rateClass = $deepSeekRateWindow.rateClass
+        effectiveMultiplier = $deepSeekRateWindow.effectiveMultiplier
+        verifiedAt = $deepSeekRateWindow.verifiedAt
+        validUntil = $deepSeekRateWindow.validUntil
+        schedulePath = $deepSeekRateWindow.schedulePath
+    } } else { $null }
     attempts = @($attempts)
     outputPath = if ($finalPlan) { $OutputPath } else { $null }
     planChars = if ($finalPlan) { $finalPlan.Length } else { 0 }
