@@ -17,7 +17,9 @@ function Check {
 $policyPath = Join-Path $RootPath "thinker-route.policy.json"
 $routePath = Join-Path $RootPath "Thinker.Route.ps1"
 $launcherPath = Join-Path $RootPath "Start-AgentSwitchboardThinker.ps1"
-foreach ($path in @($policyPath, $routePath, $launcherPath)) {
+$cmdPath = Join-Path $RootPath "Start-AgentSwitchboardThinker.cmd"
+$setupPath = Join-Path $RootPath "Setup-AgentSwitchboard.ps1"
+foreach ($path in @($policyPath, $routePath, $launcherPath, $cmdPath, $setupPath)) {
     Check (Test-Path -LiteralPath $path -PathType Leaf) "required/$([IO.Path]::GetFileName($path))" "file missing"
 }
 
@@ -36,7 +38,7 @@ foreach ($routeId in @($policy.chains.free)) {
 Check ($routesById["deepseek"].model -eq "deepseek/deepseek-v4-pro") "policy/deepseek-model" "DeepSeek route no longer matches reviewed provider route"
 Check ($routesById["opencode-muse"].model -eq "opencode/muse-spark-1.3-contributor-free") "policy/muse-free-model" "Muse free route changed"
 
-foreach ($scriptPath in @($routePath, $launcherPath)) {
+foreach ($scriptPath in @($routePath, $launcherPath, $setupPath)) {
     $tokens = $null
     $errors = $null
     [void][Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$tokens, [ref]$errors)
@@ -73,6 +75,23 @@ Check ($launcherText.Contains('planSha256')) "launcher/output-digest" "thinker e
 Check ($launcherText.Contains('model preflight threw')) "launcher/preflight-exception-fallback" "provider preflight exceptions can abort the fallback chain"
 Check (-not $launcherText.Contains('git push')) "launcher/no-push" "thinker launcher contains push behavior"
 Check (-not $launcherText.Contains('git commit')) "launcher/no-commit" "thinker launcher contains commit behavior"
+
+$cmdText = Get-Content -LiteralPath $cmdPath -Raw
+Check ($cmdText.Contains('Start-AgentSwitchboardThinker.ps1')) "install/cmd-delegates" "installed CMD launcher does not delegate to thinker PowerShell"
+Check ($cmdText.Contains('exit /b %_code%')) "install/cmd-exit-code" "installed CMD launcher does not preserve exit code"
+
+$setupText = Get-Content -LiteralPath $setupPath -Raw
+foreach ($installedFile in @(
+    'Thinker.Route.ps1',
+    'Start-AgentSwitchboardThinker.ps1',
+    'Start-AgentSwitchboardThinker.cmd',
+    'thinker-route.policy.json',
+    'THINKER_ROUTE.md'
+)) {
+    Check ($setupText.Contains('"' + $installedFile + '"')) "install/setup-copies/$installedFile" "setup does not install $installedFile"
+}
+Check ($setupText.Contains('tests\Test-ThinkerRouteContracts.ps1')) "install/setup-runs-thinker-validator" "setup does not run the thinker contract validator"
+Check ($setupText.Contains('Thinker routing contract validation failed')) "install/setup-fails-closed" "setup does not fail when thinker validation fails"
 
 Write-Host "DETERMINISTIC THINKER ROUTE CONTRACTS" -ForegroundColor Cyan
 $passes | ForEach-Object { Write-Host "[PASS] $_" -ForegroundColor Green }
