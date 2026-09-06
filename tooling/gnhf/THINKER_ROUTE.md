@@ -15,7 +15,7 @@ Standard mode is fixed in `thinker-route.policy.json`:
 
 Free mode never walks the paid/subscription portion of the chain. It starts at Muse, then Nemotron, then Big Pickle. Free-model availability is intentionally re-probed from OpenCode before a run because those catalog entries can be temporary.
 
-Route order is data, not model judgment. A route falls through only on deterministic evidence: missing command, exact-model preflight failure, timeout, nonzero exit, empty result, or violation of the plan-size contract. The launcher never asks one model whether another model is smart enough.
+Route order is data, not model judgment. A route falls through only on deterministic evidence: missing command, exact-model preflight failure, timeout, nonzero exit, empty result, or violation of a transport/plan-size contract. The launcher never asks one model whether another model is smart enough.
 
 ## Token-saving contract
 
@@ -26,6 +26,7 @@ Route order is data, not model judgment. A route falls through only on determini
 - Runtime evidence stores route/status/digests, not the full prompt or plan body.
 - Builders receive `SYSTEM_PLAN.md`, not the original chat transcript.
 - Test failures should be reduced to decision-relevant failure envelopes before routing them back to the owning builder; do not replay verbose test logs into the thinker.
+- Claude/OpenCode routes use an explicit safe Windows argv ceiling. If a compiled thinker prompt is too large for that transport, those routes are skipped deterministically; Codex remains eligible because its prompt is streamed through stdin.
 
 ## Read-only enforcement
 
@@ -34,6 +35,24 @@ Route order is data, not model judgment. A route falls through only on determini
 - OpenCode receives an inline config whose default permission is `deny`; only `read`, `glob`, `grep`, and `lsp` are allowed. Sharing is disabled.
 
 The launcher itself writes the final plan and a compact evidence receipt under the AgentSwitchboard fleet directory. Model processes are not granted a write lane.
+
+## Install on P-Top
+
+The normal AgentSwitchboard setup now installs the thinker resolver, policy, documentation, and CMD/PowerShell launchers under `%LOCALAPPDATA%\AgentSwitchboard\GnhfFleet` and runs the thinker contract validator before setup can report success.
+
+From the canonical AgentSwitchboard checkout:
+
+```powershell
+.\tooling\gnhf\Setup-AgentSwitchboard.cmd
+```
+
+After setup, the installed entrypoint is:
+
+```powershell
+$thinker = "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet\Start-AgentSwitchboardThinker.cmd"
+```
+
+Setup does not authenticate providers for you. Each selected thinker still has to be usable through its own CLI/provider session, and OpenCode model routes are re-probed at launch.
 
 ## Use
 
@@ -49,10 +68,19 @@ pwsh -NoLogo -NoProfile -File .\tooling\gnhf\Start-AgentSwitchboardThinker.ps1 `
   -Mode Auto
 ```
 
+Or use the installed control-plane launcher after setup:
+
+```powershell
+& "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet\Start-AgentSwitchboardThinker.cmd" `
+  -RepoPath $repo `
+  -PromptPath $objective `
+  -Mode Auto
+```
+
 Set free mode explicitly:
 
 ```powershell
-pwsh -NoLogo -NoProfile -File .\tooling\gnhf\Start-AgentSwitchboardThinker.ps1 `
+& "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet\Start-AgentSwitchboardThinker.cmd" `
   -RepoPath $repo `
   -PromptPath $objective `
   -Mode Free
@@ -72,4 +100,4 @@ The next builder receives the generated plan path plus its own bounded execution
 
 ## Proof ceiling
 
-Repository contracts prove deterministic ordering, free-mode exclusion, read-only launcher flags/configuration, context/output caps, and compact evidence behavior. They do not prove that P-Top currently has authenticated Claude, Codex, DeepSeek, or OpenCode sessions, nor that a temporary free model remains available after the last model preflight.
+Repository contracts prove deterministic ordering, free-mode exclusion, read-only launcher flags/configuration, setup/install wiring, context/output caps, and compact evidence behavior. They do not prove that P-Top currently has authenticated Claude, Codex, DeepSeek, or OpenCode sessions, nor that a temporary free model remains available after the last model preflight.
