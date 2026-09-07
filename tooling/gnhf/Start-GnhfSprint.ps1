@@ -9,7 +9,8 @@ param(
     [ValidateRange(0, 1000000000)][int]$MaxTokens = 500000,
     [Parameter(Mandatory)][string]$StopWhen,
     [string]$InstallRoot = "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet",
-    [switch]$PushBranch
+    [switch]$PushBranch,
+    [switch]$RepairCurrentGnhfBranch
 )
 
 Set-StrictMode -Version Latest
@@ -97,7 +98,12 @@ $branch = $branch.Trim()
 if ([string]::IsNullOrWhiteSpace($branch)) {
     throw "Detached HEAD is not allowed for an unattended sprint."
 }
-if ($branch.StartsWith("gnhf/")) {
+if ($RepairCurrentGnhfBranch) {
+    if (-not $branch.StartsWith("gnhf/", [StringComparison]::OrdinalIgnoreCase)) {
+        throw "-RepairCurrentGnhfBranch may run only inside an existing gnhf/* worktree. Current branch: $branch"
+    }
+}
+elseif ($branch.StartsWith("gnhf/", [StringComparison]::OrdinalIgnoreCase)) {
     throw "Launch worktree mode from a non-GNHF base branch. Current branch: $branch"
 }
 
@@ -116,21 +122,24 @@ else {
 }
 
 $logsRoot = Ensure-GnhfFleetDirectory -Path (Join-Path $InstallRoot "logs")
-$timestamp = Get-Date -Format "yyyyMMdd-HHmmss-fff"
+$runId = "{0}-{1}" -f (Get-Date -Format "yyyyMMdd-HHmmss-fff"), [guid]::NewGuid().ToString("N")
 $safeName = ($Name -replace "[^A-Za-z0-9._-]", "-").Trim("-")
 if ([string]::IsNullOrWhiteSpace($safeName)) {
     $safeName = "gnhf-sprint"
 }
-$runLogDir = Ensure-GnhfFleetDirectory -Path (Join-Path $logsRoot "$timestamp-$safeName")
+$runLogDir = Ensure-GnhfFleetDirectory -Path (Join-Path $logsRoot "$runId-$safeName")
 $transcriptPath = Join-Path $runLogDir "launcher-transcript.txt"
 $summaryPath = Join-Path $runLogDir "launcher-summary.json"
 
+$executionMode = if ($RepairCurrentGnhfBranch) { "current-branch-repair" } else { "isolated-worktree" }
 $summary = [ordered]@{
     schemaVersion = 1
+    runId = $runId
     name = $Name
     startedAt = (Get-Date).ToString("o")
     repoPath = $RepoPath
     baseBranch = $branch
+    executionMode = $executionMode
     agentRequested = $Agent
     agentSpec = $agentSpec
     maxIterations = $MaxIterations
@@ -148,7 +157,12 @@ $summary = [ordered]@{
 $gnhfArguments = [System.Collections.Generic.List[string]]::new()
 [void]$gnhfArguments.Add("--agent")
 [void]$gnhfArguments.Add($agentSpec)
-[void]$gnhfArguments.Add("--worktree")
+if ($RepairCurrentGnhfBranch) {
+    [void]$gnhfArguments.Add("--current-branch")
+}
+else {
+    [void]$gnhfArguments.Add("--worktree")
+}
 [void]$gnhfArguments.Add("--max-iterations")
 [void]$gnhfArguments.Add([string]$MaxIterations)
 if ($MaxTokens -gt 0) {
@@ -175,6 +189,7 @@ try {
     Write-Host "`n=== GNHF SPRINT ===" -ForegroundColor Cyan
     Write-Host "Repo:       $RepoPath"
     Write-Host "Base:       $branch"
+    Write-Host "Mode:       $executionMode"
     Write-Host "Agent:      $agentSpec"
     Write-Host "Iterations: $MaxIterations"
     Write-Host "Token cap:  $MaxTokens"
