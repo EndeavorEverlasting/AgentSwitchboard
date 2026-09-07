@@ -78,6 +78,9 @@ else {
 if ([string]::IsNullOrWhiteSpace($objective)) {
     throw "The sprint prompt is empty."
 }
+if ($RepairCurrentGnhfBranch -and $PushBranch) {
+    throw "-RepairCurrentGnhfBranch cannot be combined with -PushBranch. Repair mode is local-only."
+}
 
 $insideOutput = @(Invoke-Git -Arguments @("rev-parse", "--is-inside-work-tree"))
 $insideWorkTree = if ($insideOutput.Count -gt 0) { [string]$insideOutput[0] } else { "" }
@@ -85,6 +88,9 @@ $insideWorkTree = $insideWorkTree.Trim()
 if ($insideWorkTree -ne "true") {
     throw "Target path is not a Git working tree: $RepoPath"
 }
+
+$repoRootOutput = @(Invoke-Git -Arguments @("rev-parse", "--show-toplevel"))
+$repoRoot = if ($repoRootOutput.Count -gt 0) { [IO.Path]::GetFullPath(([string]$repoRootOutput[0]).Trim()) } else { $RepoPath }
 
 $dirty = @(Invoke-Git -Arguments @("status", "--porcelain=v1"))
 $dirty = @($dirty | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
@@ -101,6 +107,23 @@ if ([string]::IsNullOrWhiteSpace($branch)) {
 if ($RepairCurrentGnhfBranch) {
     if (-not $branch.StartsWith("gnhf/", [StringComparison]::OrdinalIgnoreCase)) {
         throw "-RepairCurrentGnhfBranch may run only inside an existing gnhf/* worktree. Current branch: $branch"
+    }
+
+    $gitDirOutput = @(Invoke-Git -Arguments @("rev-parse", "--path-format=absolute", "--git-dir"))
+    $commonDirOutput = @(Invoke-Git -Arguments @("rev-parse", "--path-format=absolute", "--git-common-dir"))
+    $gitDir = if ($gitDirOutput.Count -gt 0) { [IO.Path]::GetFullPath(([string]$gitDirOutput[0]).Trim()) } else { "" }
+    $commonDir = if ($commonDirOutput.Count -gt 0) { [IO.Path]::GetFullPath(([string]$commonDirOutput[0]).Trim()) } else { "" }
+    if ([string]::IsNullOrWhiteSpace($gitDir) -or [string]::IsNullOrWhiteSpace($commonDir) -or
+        $gitDir.Equals($commonDir, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "-RepairCurrentGnhfBranch requires a linked Git worktree; the primary checkout is not an authorized repair target."
+    }
+
+    $registered = @(Invoke-Git -Arguments @("worktree", "list", "--porcelain"))
+    $registeredPaths = @($registered | Where-Object { ([string]$_).StartsWith("worktree ") } | ForEach-Object {
+        [IO.Path]::GetFullPath(([string]$_).Substring(9).Trim())
+    })
+    if (-not ($registeredPaths | Where-Object { $_.Equals($repoRoot, [StringComparison]::OrdinalIgnoreCase) })) {
+        throw "-RepairCurrentGnhfBranch requires a currently registered linked Git worktree. Target: $repoRoot"
     }
 }
 elseif ($branch.StartsWith("gnhf/", [StringComparison]::OrdinalIgnoreCase)) {
