@@ -33,6 +33,7 @@ jobs:
           Set-Location -LiteralPath $env:GITHUB_WORKSPACE
           pwsh -NoLogo -NoProfile -File .\tooling\gnhf\tests\Test-ProviderRoutedGnhfContracts.ps1
           pwsh -NoLogo -NoProfile -File .\tooling\gnhf\tests\Test-ThinkerRouteContracts.ps1
+          pwsh -NoLogo -NoProfile -File .\tooling\gnhf\tests\Test-TokenSavingLoopContracts.ps1
 
   linux-static-floor:
     runs-on: ubuntu-latest
@@ -53,6 +54,12 @@ jobs:
             tooling/gnhf/Thinker.Route.ps1
             tooling/gnhf/Start-AgentSwitchboardThinker.ps1
             tooling/gnhf/thinker-route.policy.json
+            tooling/gnhf/TokenSaving.Route.ps1
+            tooling/gnhf/Start-AgentSwitchboardTokenSavingLoop.ps1
+            tooling/gnhf/Start-AgentSwitchboardTokenSavingLoop.cmd
+            tooling/gnhf/Start-AgentSwitchboardEmergencyFree.ps1
+            tooling/gnhf/Start-AgentSwitchboardEmergencyFree.cmd
+            tooling/gnhf/Start-GnhfSprint.ps1
             Repair-ProviderRoutedGnhf.cmd
           )
           ! grep -InE 'C:\\Users\\[^$%{<]' "${runtime_files[@]}"
