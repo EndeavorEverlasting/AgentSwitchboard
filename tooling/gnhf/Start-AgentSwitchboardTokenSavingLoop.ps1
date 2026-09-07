@@ -42,11 +42,96 @@ if ($builder.status -ne "selected") {
     $details = @($builder.skipped | ForEach-Object { "$($_.route): $($_.reason)" }) -join "; "
     throw "No builder is ready. $details"
 }
+$initialBuilderIdentity = Get-AgentSwitchboardBuilderExecutionIdentity -Route $builder.route -State $state -Role initial-builder
 
 $dirty = @(& git -C $RepoPath status --porcelain=v1 2>&1)
 if ($LASTEXITCODE -ne 0) { throw "Target path is not a usable Git worktree: $RepoPath" }
 if (@($dirty | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }).Count -gt 0) {
     throw "Token-saving loop requires a clean target checkout before creating its isolated builder worktree."
+}
+
+function Invoke-BoundedCliHelp {
+    param(
+        [Parameter(Mandatory)][string]$CommandPath,
+        [Parameter(Mandatory)][string]$WorkingDirectory,
+        [ValidateRange(5, 60)][int]$TimeoutSeconds = 15
+    )
+
+    $psi = New-GnhfProcessStartInfo -FilePath $CommandPath -ArgumentList @("--help") -WorkingDirectory $WorkingDirectory
+    $process = [Diagnostics.Process]::new()
+    $process.StartInfo = $psi
+    try {
+        [void]$process.Start()
+        $process.StandardInput.Close()
+        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+        $stderrTask = $process.StandardError.ReadToEndAsync()
+        $timedOut = -not $process.WaitForExit($TimeoutSeconds * 1000)
+        if ($timedOut) {
+            try { $process.Kill($true) } catch {}
+            try { $process.WaitForExit(5000) | Out-Null } catch {}
+        }
+        $stdoutReady = $false; $stderrReady = $false
+        try { $stdoutReady = $stdoutTask.Wait(5000) } catch {}
+        try { $stderrReady = $stderrTask.Wait(5000) } catch {}
+        if ($timedOut -or -not ($stdoutReady -and $stderrReady)) {
+            return [pscustomobject]@{ ready = $false; output = ""; reason = "GNHF help probe timed out or did not drain output" }
+        }
+        $output = (($stdoutTask.GetAwaiter().GetResult(), $stderrTask.GetAwaiter().GetResult()) -join [Environment]::NewLine).Trim()
+        if ($process.ExitCode -ne 0) {
+            return [pscustomobject]@{ ready = $false; output = $output; reason = "GNHF help probe exited $($process.ExitCode)" }
+        }
+        return [pscustomobject]@{ ready = $true; output = $output; reason = "GNHF help probe succeeded" }
+    }
+    finally { $process.Dispose() }
+}
+
+$effectiveMaxRepairCycles = $MaxRepairCycles
+$repairCapability = [ordered]@{
+    requestedCycles = $MaxRepairCycles
+    effectiveCycles = $MaxRepairCycles
+    launcherParameter = $false
+    gnhfCurrentBranch = $false
+    gnhfCommandPath = $null
+    reason = "repair not requested"
+}
+if ($MaxRepairCycles -gt 0) {
+    $gnhfLauncherCommand = Get-Command -Name $gnhfLauncher -CommandType ExternalScript -ErrorAction Stop
+    if (-not $gnhfLauncherCommand.Parameters.ContainsKey("RepairCurrentGnhfBranch")) {
+        throw "Installed GNHF launcher does not support -RepairCurrentGnhfBranch: $gnhfLauncher. Rerun AgentSwitchboard setup before spending model tokens."
+    }
+    $repairCapability.launcherParameter = $true
+
+    $gnhfState = Get-AgentSwitchboardOptionalProperty -InputObject $state -Name "gnhf"
+    $configuredGnhfPath = [string](Get-AgentSwitchboardOptionalProperty -InputObject $gnhfState -Name "commandPath" -Default "")
+    $gnhfCommandPath = $null
+    if ($configuredGnhfPath -and (Test-Path -LiteralPath $configuredGnhfPath -PathType Leaf)) {
+        $gnhfCommandPath = (Get-Item -LiteralPath $configuredGnhfPath -Force).FullName
+    }
+    else {
+        $gnhfCommand = Get-Command gnhf -ErrorAction SilentlyContinue
+        if ($gnhfCommand) { $gnhfCommandPath = $gnhfCommand.Source }
+    }
+    $repairCapability.gnhfCommandPath = $gnhfCommandPath
+
+    if (-not $gnhfCommandPath) {
+        $effectiveMaxRepairCycles = 0
+        $repairCapability.reason = "repair disabled before model spend: GNHF command unavailable"
+    }
+    else {
+        $helpProbe = Invoke-BoundedCliHelp -CommandPath $gnhfCommandPath -WorkingDirectory $RepoPath
+        if ($helpProbe.ready -and $helpProbe.output -match '(?m)(^|\s)--current-branch([\s,]|$)') {
+            $repairCapability.gnhfCurrentBranch = $true
+            $repairCapability.reason = "repair runtime supports --current-branch"
+        }
+        else {
+            $effectiveMaxRepairCycles = 0
+            $repairCapability.reason = "repair disabled before model spend: installed GNHF does not prove --current-branch support"
+        }
+    }
+    $repairCapability.effectiveCycles = $effectiveMaxRepairCycles
+    if ($effectiveMaxRepairCycles -eq 0) {
+        Write-Warning $repairCapability.reason
+    }
 }
 
 $runId = "{0}-{1}" -f (Get-Date -Format "yyyyMMdd-HHmmss-fff"), [guid]::NewGuid().ToString("N")
@@ -203,9 +288,12 @@ function Write-Receipt {
         builderSelected = $builder.route
         builderEvidence = $builder.evidence
         builderSkipped = @($builder.skipped)
+        initialBuilderExecution = $initialBuilderIdentity
         validationCommandSha256 = $validationCommandSha256
         maxInitialIterations = $MaxInitialIterations
-        maxRepairCycles = $MaxRepairCycles
+        maxRepairCyclesRequested = $MaxRepairCycles
+        maxRepairCyclesEffective = $effectiveMaxRepairCycles
+        repairCapability = $repairCapability
         maxTokensPerBuilderRun = $MaxTokensPerBuilderRun
         maxFailureChars = $MaxFailureChars
         worktreePath = $worktreePath
@@ -228,7 +316,11 @@ try {
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $planPath -PathType Leaf)) {
         throw "Thinker did not produce SYSTEM_PLAN.md."
     }
-    $thinkerPlan = (Get-Content -LiteralPath $planPath -Raw).TrimEnd()
+    $thinkerPlan = Get-Content -LiteralPath $planPath -Raw
+    if ([string]::IsNullOrWhiteSpace($thinkerPlan)) {
+        throw "Thinker produced an empty SYSTEM_PLAN.md. Refusing to spend builder tokens."
+    }
+    $thinkerPlan = $thinkerPlan.TrimEnd()
     $planText = "$thinkerPlan`n`n$runMarker`n"
     Set-Content -LiteralPath $planPath -Value $planText -Encoding utf8NoBOM -NoNewline
     $planSha256 = Get-AgentSwitchboardSha256Text -Text $planText
@@ -262,8 +354,9 @@ try {
     })
 
     $repairCycle = 0
-    while (($validation.exitCode -ne 0 -or $validation.timedOut) -and $repairCycle -lt $MaxRepairCycles) {
+    while (($validation.exitCode -ne 0 -or $validation.timedOut) -and $repairCycle -lt $effectiveMaxRepairCycles) {
         $repairCycle++
+        $preRepairHead = $validation.headSha
         $envelope = New-AgentSwitchboardFailureEnvelope `
             -ValidationNumber $validation.number `
             -ExitCode $validation.exitCode `
@@ -295,13 +388,17 @@ $($envelope.excerpt)
 Commit a coherent bounded repair, then stop. The orchestrator will rerun the deterministic validator itself.
 "@
         Set-Content -LiteralPath $repairPromptPath -Value $repairPrompt -Encoding utf8NoBOM
-        [void]$repairRecords.Add([ordered]@{
+        $repairIdentity = Get-AgentSwitchboardBuilderExecutionIdentity -Route $builder.route -State $state -Role repair-builder
+        $repairRecord = [ordered]@{
             cycle = $repairCycle
             failureEnvelopeSha256 = Get-AgentSwitchboardSha256Text -Text ($envelope | ConvertTo-Json -Depth 5 -Compress)
             promptPath = $repairPromptPath
             promptChars = $repairPrompt.Length
-            inputHeadSha = $validation.headSha
-        })
+            inputHeadSha = $preRepairHead
+            executionIdentity = $repairIdentity
+            outputHeadSha = $null
+        }
+        [void]$repairRecords.Add($repairRecord)
 
         & pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File $gnhfLauncher `
             -RepoPath $worktreePath `
@@ -314,6 +411,12 @@ Commit a coherent bounded repair, then stop. The orchestrator will rerun the det
             -InstallRoot $InstallRoot `
             -RepairCurrentGnhfBranch
         if ($LASTEXITCODE -ne 0) { throw "Builder repair cycle $repairCycle failed." }
+
+        $postRepairHead = Get-HeadSha -Path $worktreePath
+        $repairRecord.outputHeadSha = $postRepairHead
+        if ($postRepairHead -eq $preRepairHead) {
+            throw "Builder repair cycle $repairCycle made no committed progress. Stopping before another validator or model cycle."
+        }
 
         $validationNumber++
         $validation = Invoke-Validation -Path $worktreePath -Number $validationNumber
@@ -330,7 +433,8 @@ Commit a coherent bounded repair, then stop. The orchestrator will rerun the det
     }
 
     if ($validation.exitCode -ne 0 -or $validation.timedOut) {
-        throw "Deterministic validation is still failing after $repairCycle repair cycle(s)."
+        $repairNote = if ($effectiveMaxRepairCycles -lt $MaxRepairCycles) { " Repair capability was reduced before model spend: $($repairCapability.reason)." } else { "" }
+        throw "Deterministic validation is still failing after $repairCycle repair cycle(s).$repairNote"
     }
 
     $status = "success"
