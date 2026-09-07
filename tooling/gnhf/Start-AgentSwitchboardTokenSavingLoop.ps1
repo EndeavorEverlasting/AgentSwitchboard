@@ -50,6 +50,7 @@ if (@($dirty | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }).Count -gt
 }
 
 $runId = "{0}-{1}" -f (Get-Date -Format "yyyyMMdd-HHmmss-fff"), [guid]::NewGuid().ToString("N")
+$runMarker = "<!-- agentswitchboard-token-loop-run:$runId -->"
 $runRoot = Join-Path $InstallRoot "logs\token-saving-loop\$runId"
 [void](New-Item -ItemType Directory -Path $runRoot -Force)
 $planPath = Join-Path $runRoot "SYSTEM_PLAN.md"
@@ -57,7 +58,6 @@ $receiptPath = Join-Path $runRoot "loop-receipt.json"
 $validationCommandSha256 = Get-AgentSwitchboardSha256Text -Text $ValidationCommand
 $validationRecords = [System.Collections.Generic.List[object]]::new()
 $repairRecords = [System.Collections.Generic.List[object]]::new()
-$beforeWorktrees = @(Get-AgentSwitchboardGitWorktreePaths -RepoPath $RepoPath)
 $worktreePath = $null
 $planSha256 = $null
 $status = "running"
@@ -68,6 +68,55 @@ function Get-HeadSha {
     $sha = (& git -C $Path rev-parse HEAD 2>&1 | Select-Object -First 1)
     if ($LASTEXITCODE -ne 0 -or -not $sha) { throw "Unable to resolve HEAD for $Path" }
     return ([string]$sha).Trim()
+}
+
+function Resolve-OwnedGnhfWorktree {
+    param(
+        [Parameter(Mandatory)][string]$BaseRepoPath,
+        [Parameter(Mandatory)][string]$Marker
+    )
+
+    $baseRoot = (& git -C $BaseRepoPath rev-parse --show-toplevel 2>&1 | Select-Object -First 1)
+    if ($LASTEXITCODE -ne 0 -or -not $baseRoot) { throw "Unable to resolve base repository root." }
+    $baseRoot = [IO.Path]::GetFullPath(([string]$baseRoot).Trim())
+
+    $matches = [System.Collections.Generic.List[object]]::new()
+    foreach ($candidate in @(Get-AgentSwitchboardGitWorktreePaths -RepoPath $BaseRepoPath)) {
+        $candidate = [IO.Path]::GetFullPath($candidate)
+        if ($candidate.Equals($baseRoot, [StringComparison]::OrdinalIgnoreCase)) { continue }
+        if (-not (Test-Path -LiteralPath $candidate -PathType Container)) { continue }
+
+        $branch = (& git -C $candidate branch --show-current 2>$null | Select-Object -First 1)
+        if ($LASTEXITCODE -ne 0 -or -not $branch) { continue }
+        $branch = ([string]$branch).Trim()
+        if (-not $branch.StartsWith("gnhf/", [StringComparison]::OrdinalIgnoreCase)) { continue }
+
+        $runsRoot = Join-Path $candidate ".gnhf\runs"
+        if (-not (Test-Path -LiteralPath $runsRoot -PathType Container)) { continue }
+        $matchedRun = $null
+        foreach ($runDirectory in @(Get-ChildItem -LiteralPath $runsRoot -Directory -ErrorAction SilentlyContinue)) {
+            $promptPath = Join-Path $runDirectory.FullName "prompt.md"
+            if (-not (Test-Path -LiteralPath $promptPath -PathType Leaf)) { continue }
+            $savedPrompt = Get-Content -LiteralPath $promptPath -Raw
+            if ($savedPrompt.Contains($Marker)) {
+                $matchedRun = $runDirectory.Name
+                break
+            }
+        }
+        if ($matchedRun) {
+            [void]$matches.Add([pscustomobject]@{
+                path = $candidate
+                branch = $branch
+                gnhfRunId = $matchedRun
+            })
+        }
+    }
+
+    if ($matches.Count -ne 1) {
+        $observed = @($matches | ForEach-Object { "$($_.path) [$($_.branch)/$($_.gnhfRunId)]" }) -join "; "
+        throw "Expected exactly one GNHF worktree carrying this AgentSwitchboard run marker; observed $($matches.Count). Refusing to guess the repair target. Matches: $observed"
+    }
+    return $matches[0]
 }
 
 function Invoke-Validation {
@@ -85,14 +134,43 @@ function Invoke-Validation {
         $process.StandardInput.Close()
         $stdoutTask = $process.StandardOutput.ReadToEndAsync()
         $stderrTask = $process.StandardError.ReadToEndAsync()
-        $timedOut = -not $process.WaitForExit($ValidatorTimeoutSeconds * 1000)
-        if ($timedOut) {
-            try { $process.Kill($true) } catch {}
-            try { $process.WaitForExit(5000) | Out-Null } catch {}
+        $processTimedOut = -not $process.WaitForExit($ValidatorTimeoutSeconds * 1000)
+        $terminationDiagnostic = $null
+        if ($processTimedOut) {
+            try { $process.Kill($true) } catch { $terminationDiagnostic = "Process-tree termination failed: $($_.Exception.Message)" }
+            try {
+                if (-not $process.WaitForExit(5000)) {
+                    $terminationDiagnostic = "Validator process did not exit within the 5-second termination grace period."
+                }
+            }
+            catch {
+                $terminationDiagnostic = "Validator termination wait failed: $($_.Exception.Message)"
+            }
         }
-        $stdout = $stdoutTask.GetAwaiter().GetResult()
-        $stderr = $stderrTask.GetAwaiter().GetResult()
-        $output = (($stdout, $stderr) -join [Environment]::NewLine).Trim()
+
+        $stdoutReady = $false
+        $stderrReady = $false
+        try { $stdoutReady = $stdoutTask.Wait(5000) } catch {}
+        try { $stderrReady = $stderrTask.Wait(5000) } catch {}
+        $drainTimedOut = -not ($stdoutReady -and $stderrReady)
+        $timedOut = $processTimedOut -or $drainTimedOut
+
+        if ($stdoutReady -and $stderrReady) {
+            $stdout = $stdoutTask.GetAwaiter().GetResult()
+            $stderr = $stderrTask.GetAwaiter().GetResult()
+            $output = (($stdout, $stderr) -join [Environment]::NewLine).Trim()
+        }
+        else {
+            $diagnostics = @(
+                "Validator output pipes did not drain within the bounded 5-second grace period."
+                $terminationDiagnostic
+            ) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+            $output = $diagnostics -join [Environment]::NewLine
+        }
+        if ($processTimedOut -and $terminationDiagnostic -and $output -notmatch [regex]::Escape($terminationDiagnostic)) {
+            $output = (($output, $terminationDiagnostic) -join [Environment]::NewLine).Trim()
+        }
+
         $exitCode = if ($timedOut) { -1 } else { $process.ExitCode }
         $logPath = Join-Path $runRoot ("validation-{0:D2}.log" -f $Number)
         Set-Content -LiteralPath $logPath -Value $output -Encoding utf8NoBOM
@@ -100,6 +178,8 @@ function Invoke-Validation {
             number = $Number
             exitCode = $exitCode
             timedOut = $timedOut
+            processTimedOut = $processTimedOut
+            outputDrainTimedOut = $drainTimedOut
             output = $output
             outputSha256 = Get-AgentSwitchboardSha256Text -Text $output
             logPath = $logPath
@@ -148,7 +228,9 @@ try {
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $planPath -PathType Leaf)) {
         throw "Thinker did not produce SYSTEM_PLAN.md."
     }
-    $planText = Get-Content -LiteralPath $planPath -Raw
+    $thinkerPlan = (Get-Content -LiteralPath $planPath -Raw).TrimEnd()
+    $planText = "$thinkerPlan`n`n$runMarker`n"
+    Set-Content -LiteralPath $planPath -Value $planText -Encoding utf8NoBOM -NoNewline
     $planSha256 = Get-AgentSwitchboardSha256Text -Text $planText
 
     $builderName = "token-loop-$($builder.route)-$($runId.Substring(0,17))"
@@ -163,14 +245,8 @@ try {
         -InstallRoot $InstallRoot
     if ($LASTEXITCODE -ne 0) { throw "Initial builder run failed." }
 
-    $afterWorktrees = @(Get-AgentSwitchboardGitWorktreePaths -RepoPath $RepoPath)
-    $beforeSet = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
-    foreach ($path in $beforeWorktrees) { [void]$beforeSet.Add($path) }
-    $newWorktrees = @($afterWorktrees | Where-Object { -not $beforeSet.Contains($_) })
-    if ($newWorktrees.Count -ne 1) {
-        throw "Expected exactly one new GNHF worktree after the initial builder; observed $($newWorktrees.Count). Refusing to guess the repair target."
-    }
-    $worktreePath = $newWorktrees[0]
+    $ownedWorktree = Resolve-OwnedGnhfWorktree -BaseRepoPath $RepoPath -Marker $runMarker
+    $worktreePath = [string]$ownedWorktree.path
 
     $validationNumber = 1
     $validation = Invoke-Validation -Path $worktreePath -Number $validationNumber
@@ -178,6 +254,8 @@ try {
         number = $validation.number
         exitCode = $validation.exitCode
         timedOut = $validation.timedOut
+        processTimedOut = $validation.processTimedOut
+        outputDrainTimedOut = $validation.outputDrainTimedOut
         outputSha256 = $validation.outputSha256
         logPath = $validation.logPath
         headSha = $validation.headSha
@@ -243,6 +321,8 @@ Commit a coherent bounded repair, then stop. The orchestrator will rerun the det
             number = $validation.number
             exitCode = $validation.exitCode
             timedOut = $validation.timedOut
+            processTimedOut = $validation.processTimedOut
+            outputDrainTimedOut = $validation.outputDrainTimedOut
             outputSha256 = $validation.outputSha256
             logPath = $validation.logPath
             headSha = $validation.headSha
