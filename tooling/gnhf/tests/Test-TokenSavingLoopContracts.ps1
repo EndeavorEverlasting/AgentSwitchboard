@@ -48,7 +48,14 @@ Check ($loopText.Contains('New-AgentSwitchboardFailureEnvelope')) "loop/failure-
 Check ($loopText.Contains('The orchestrator will rerun the deterministic validator itself.')) "loop/validator-owned-rerun" "repair agent is asked to own validation authority"
 Check (-not $loopText.Contains('-PushBranch')) "loop/no-push" "token-saving orchestrator enables push"
 Check (-not $loopText.Contains('git merge')) "loop/no-merge" "token-saving orchestrator contains merge behavior"
-Check ($loopText.Contains('newWorktrees.Count -ne 1')) "loop/unambiguous-worktree" "orchestrator can guess among worktrees"
+Check ($loopText.Contains('agentswitchboard-token-loop-run:')) "loop/run-marker" "builder plan lacks a unique AgentSwitchboard ownership marker"
+Check ($loopText.Contains('Resolve-OwnedGnhfWorktree')) "loop/worktree-owner-resolver" "worktree selection is not tied to run-owned evidence"
+Check ($loopText.Contains('.gnhf\runs')) "loop/gnhf-prompt-authority" "worktree ownership does not inspect GNHF run metadata"
+Check ($loopText.Contains('Expected exactly one GNHF worktree carrying this AgentSwitchboard run marker')) "loop/worktree-ambiguity-fails-closed" "ambiguous matching worktrees do not fail closed"
+Check (-not $loopText.Contains('newWorktrees.Count -ne 1')) "loop/no-global-worktree-race" "loop still selects worktrees from an unrelated before/after snapshot"
+Check ($loopText.Contains('$stdoutTask.Wait(5000)')) "loop/bounded-stdout-drain" "validator stdout can drain indefinitely after timeout"
+Check ($loopText.Contains('$stderrTask.Wait(5000)')) "loop/bounded-stderr-drain" "validator stderr can drain indefinitely after timeout"
+Check ($loopText.Contains('outputDrainTimedOut')) "loop/output-drain-evidence" "validator pipe-drain timeout is not preserved as evidence"
 Check ($loopText.Contains('validationCommandSha256')) "loop/validator-command-digest" "validator identity is not recorded"
 
 $emergencyText = Get-Content -LiteralPath $emergencyPath -Raw
@@ -67,7 +74,12 @@ Check ($emergencyText.Contains('No verified free OpenCode model is currently ava
 
 $gnhfText = Get-Content -LiteralPath $gnhfPath -Raw
 Check ($gnhfText.Contains('[switch]$RepairCurrentGnhfBranch')) "repair/guard-switch" "repair mode switch missing"
-Check ($gnhfText.Contains('may run only inside an existing gnhf/* worktree')) "repair/gnhf-branch-gate" "repair mode can mutate arbitrary current branches"
+Check ($gnhfText.Contains('-RepairCurrentGnhfBranch cannot be combined with -PushBranch')) "repair/no-push" "direct repair callers can still enable push"
+Check ($gnhfText.Contains('may run only inside an existing gnhf/* worktree')) "repair/gnhf-branch-gate" "repair mode can mutate a non-gnhf branch"
+Check ($gnhfText.Contains('--git-dir')) "repair/git-dir-proof" "repair mode does not distinguish the primary checkout from a linked worktree"
+Check ($gnhfText.Contains('--git-common-dir')) "repair/common-dir-proof" "repair mode does not prove linked worktree git metadata"
+Check ($gnhfText.Contains('worktree", "list", "--porcelain')) "repair/registration-proof" "repair target is not required to be registered by git worktree"
+Check ($gnhfText.Contains('requires a linked Git worktree')) "repair/primary-checkout-blocked" "primary checkout is not explicitly rejected"
 Check ($gnhfText.Contains('"--current-branch"')) "repair/current-branch" "repair mode does not use GNHF current-branch execution"
 Check ($gnhfText.Contains('"--worktree"')) "repair/default-worktree" "default isolated worktree mode was removed"
 
