@@ -11,10 +11,13 @@ function Check { param([bool]$Condition,[string]$Name,[string]$Message) if ($Con
 $routePath = Join-Path $RootPath "TokenSaving.Route.ps1"
 $loopPath = Join-Path $RootPath "Start-AgentSwitchboardTokenSavingLoop.ps1"
 $cmdPath = Join-Path $RootPath "Start-AgentSwitchboardTokenSavingLoop.cmd"
+$emergencyPath = Join-Path $RootPath "Start-AgentSwitchboardEmergencyFree.ps1"
+$emergencyCmdPath = Join-Path $RootPath "Start-AgentSwitchboardEmergencyFree.cmd"
 $gnhfPath = Join-Path $RootPath "Start-GnhfSprint.ps1"
-foreach ($path in @($routePath,$loopPath,$cmdPath,$gnhfPath)) { Check (Test-Path -LiteralPath $path -PathType Leaf) "required/$([IO.Path]::GetFileName($path))" "file missing" }
+$setupPath = Join-Path $RootPath "Setup-AgentSwitchboard.ps1"
+foreach ($path in @($routePath,$loopPath,$cmdPath,$emergencyPath,$emergencyCmdPath,$gnhfPath,$setupPath)) { Check (Test-Path -LiteralPath $path -PathType Leaf) "required/$([IO.Path]::GetFileName($path))" "file missing" }
 
-foreach ($path in @($routePath,$loopPath,$gnhfPath)) {
+foreach ($path in @($routePath,$loopPath,$emergencyPath,$gnhfPath,$setupPath)) {
     $tokens=$null; $errors=$null
     [void][Management.Automation.Language.Parser]::ParseFile($path,[ref]$tokens,[ref]$errors)
     Check ($errors.Count -eq 0) "parse/$([IO.Path]::GetFileName($path))" (($errors | ForEach-Object Message) -join "; ")
@@ -48,6 +51,20 @@ Check (-not $loopText.Contains('git merge')) "loop/no-merge" "token-saving orche
 Check ($loopText.Contains('newWorktrees.Count -ne 1')) "loop/unambiguous-worktree" "orchestrator can guess among worktrees"
 Check ($loopText.Contains('validationCommandSha256')) "loop/validator-command-digest" "validator identity is not recorded"
 
+$emergencyText = Get-Content -LiteralPath $emergencyPath -Raw
+Check ($emergencyText.Contains('[ValidateRange(1, 2)][int]$MaxInitialIterations = 2')) "emergency/initial-iteration-cap" "emergency initial iterations can exceed 2"
+Check ($emergencyText.Contains('[ValidateRange(0, 1)][int]$MaxRepairCycles = 1')) "emergency/repair-cap" "emergency repair cycles can exceed 1"
+Check ($emergencyText.Contains('[ValidateRange(1000, 50000)][int]$MaxTokensPerBuilderRun = 50000')) "emergency/token-cap" "emergency builder token cap can exceed 50000"
+Check ($emergencyText.Contains('[ValidateRange(500, 3000)][int]$MaxFailureChars = 3000')) "emergency/failure-cap" "emergency failure envelope can exceed 3000 chars"
+Check ($emergencyText.Contains('@($policy.chains.free)')) "emergency/free-policy-chain" "emergency route does not consume the canonical free chain"
+Check ($emergencyText.Contains('$route.costClass -ne "free"')) "emergency/free-cost-gate" "emergency route does not reject non-free routes"
+Check ($emergencyText.Contains('-ThinkerMode Free')) "emergency/free-thinker" "emergency mode does not force the free thinker chain"
+Check ($emergencyText.Contains('-BuilderAgent opencode')) "emergency/opencode-builder" "emergency mode does not force the probed OpenCode builder"
+Check ($emergencyText.Contains('OPENCODE_CONFIG_CONTENT')) "emergency/model-pin" "emergency builder does not pin the selected free model"
+Check ($emergencyText.Contains('AGENT_SWITCHBOARD_FREE_MODE')) "emergency/free-env" "emergency mode does not set the process free-mode guard"
+Check ($emergencyText.Contains('finally {')) "emergency/environment-restore" "emergency environment restoration is not fail-safe"
+Check ($emergencyText.Contains('No verified free OpenCode model is currently available')) "emergency/fail-closed" "emergency mode can silently fall back when free models are unavailable"
+
 $gnhfText = Get-Content -LiteralPath $gnhfPath -Raw
 Check ($gnhfText.Contains('[switch]$RepairCurrentGnhfBranch')) "repair/guard-switch" "repair mode switch missing"
 Check ($gnhfText.Contains('may run only inside an existing gnhf/* worktree')) "repair/gnhf-branch-gate" "repair mode can mutate arbitrary current branches"
@@ -57,6 +74,23 @@ Check ($gnhfText.Contains('"--worktree"')) "repair/default-worktree" "default is
 $cmdText = Get-Content -LiteralPath $cmdPath -Raw
 Check ($cmdText.Contains('Start-AgentSwitchboardTokenSavingLoop.ps1')) "cmd/delegates" "CMD launcher target mismatch"
 Check ($cmdText.Contains('exit /b %_code%')) "cmd/exit-code" "CMD launcher does not preserve exit code"
+$emergencyCmdText = Get-Content -LiteralPath $emergencyCmdPath -Raw
+Check ($emergencyCmdText.Contains('Start-AgentSwitchboardEmergencyFree.ps1')) "emergency-cmd/delegates" "emergency CMD launcher target mismatch"
+Check ($emergencyCmdText.Contains('exit /b %_code%')) "emergency-cmd/exit-code" "emergency CMD launcher does not preserve exit code"
+
+$setupText = Get-Content -LiteralPath $setupPath -Raw
+foreach ($installedFile in @(
+    'TokenSaving.Route.ps1',
+    'Start-AgentSwitchboardTokenSavingLoop.ps1',
+    'Start-AgentSwitchboardTokenSavingLoop.cmd',
+    'Start-AgentSwitchboardEmergencyFree.ps1',
+    'Start-AgentSwitchboardEmergencyFree.cmd',
+    'TOKEN_SAVING_LOOP.md'
+)) {
+    Check ($setupText.Contains('"' + $installedFile + '"')) "setup/copies/$installedFile" "normal setup does not install $installedFile"
+}
+Check ($setupText.Contains('tests\Test-TokenSavingLoopContracts.ps1')) "setup/runs-token-validator" "normal setup does not run the token-saving validator"
+Check ($setupText.Contains('Token-saving loop contract validation failed')) "setup/fails-closed" "normal setup does not fail closed on token-saving contract failure"
 
 Write-Host "TOKEN-SAVING LOOP CONTRACTS" -ForegroundColor Cyan
 $passes | ForEach-Object { Write-Host "[PASS] $_" -ForegroundColor Green }
