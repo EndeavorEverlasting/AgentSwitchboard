@@ -42,14 +42,23 @@ function Invoke-BoundedModelList {
         $process.StandardInput.Close()
         $stdoutTask = $process.StandardOutput.ReadToEndAsync()
         $stderrTask = $process.StandardError.ReadToEndAsync()
-        $timedOut = -not $process.WaitForExit($TimeoutSeconds * 1000)
-        if ($timedOut) {
+        $processTimedOut = -not $process.WaitForExit($TimeoutSeconds * 1000)
+        if ($processTimedOut) {
             try { $process.Kill($true) } catch {}
             try { $process.WaitForExit(5000) | Out-Null } catch {}
         }
+
+        $stdoutReady = $false
+        $stderrReady = $false
+        try { $stdoutReady = $stdoutTask.Wait(5000) } catch {}
+        try { $stderrReady = $stderrTask.Wait(5000) } catch {}
+        if (-not ($stdoutReady -and $stderrReady)) {
+            throw "OpenCode model discovery output did not drain within the bounded 5-second grace period for provider '$Provider'."
+        }
+
         $stdout = $stdoutTask.GetAwaiter().GetResult()
         $stderr = $stderrTask.GetAwaiter().GetResult()
-        if ($timedOut) { throw "OpenCode model discovery timed out for provider '$Provider'." }
+        if ($processTimedOut) { throw "OpenCode model discovery timed out for provider '$Provider'." }
         if ($process.ExitCode -ne 0) {
             throw "OpenCode model discovery failed for provider '$Provider': $($stderr.Trim())"
         }
