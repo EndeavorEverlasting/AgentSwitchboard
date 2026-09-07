@@ -56,7 +56,9 @@ jobs:
             tooling/gnhf/thinker-route.policy.json
             tooling/gnhf/TokenSaving.Route.ps1
             tooling/gnhf/Start-AgentSwitchboardTokenSavingLoop.ps1
+            tooling/gnhf/Start-AgentSwitchboardTokenSavingLoop.cmd
             tooling/gnhf/Start-AgentSwitchboardEmergencyFree.ps1
+            tooling/gnhf/Start-AgentSwitchboardEmergencyFree.cmd
             tooling/gnhf/Start-GnhfSprint.ps1
             Repair-ProviderRoutedGnhf.cmd
           )
