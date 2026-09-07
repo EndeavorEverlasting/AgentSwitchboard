@@ -26,14 +26,35 @@ foreach ($path in @($routePath,$loopPath,$emergencyPath,$gnhfPath,$setupPath)) {
 . $routePath
 $state = [pscustomobject]@{ agents = [pscustomobject]@{
     agy = [pscustomobject]@{ available=$false; evidence="agy blocked" }
-    opencode = [pscustomobject]@{ available=$true; evidence="opencode ready" }
-    hermes = [pscustomobject]@{ available=$true; evidence="hermes ready" }
+    opencode = [pscustomobject]@{ available=$true; evidence="opencode ready"; agentSpec="opencode"; commandPath="C:\tools\opencode.cmd"; integration="native" }
+    hermes = [pscustomobject]@{ available=$true; evidence="hermes ready"; agentSpec="acp:hermes acp"; commandPath="C:\tools\hermes.exe"; integration="acp" }
 } }
 $route = Resolve-AgentSwitchboardBuilderRoute -Requested Auto -State $state
 Check ($route.route -eq "opencode") "route/auto-fallback" "expected opencode when agy is unavailable"
 Check (@($route.skipped).Count -eq 1) "route/skip-evidence" "auto route did not preserve unavailable AGY evidence"
 $explicit = Resolve-AgentSwitchboardBuilderRoute -Requested hermes -State $state
 Check ($explicit.route -eq "hermes") "route/explicit" "explicit builder route changed"
+
+$missingAgents = Resolve-AgentSwitchboardBuilderRoute -Requested Auto -State ([pscustomobject]@{})
+Check ($missingAgents.status -eq "blocked") "route/malformed-missing-agents" "missing agents state did not fail closed"
+Check (@($missingAgents.skipped).Count -eq 3) "route/malformed-missing-agents-evidence" "missing agents state did not preserve every route reason"
+$missingAvailableState = [pscustomobject]@{ agents = [pscustomobject]@{ opencode = [pscustomobject]@{ evidence="incomplete" } } }
+$missingAvailable = Resolve-AgentSwitchboardBuilderRoute -Requested opencode -State $missingAvailableState
+Check ($missingAvailable.status -eq "blocked") "route/malformed-missing-available" "missing available field did not fail closed"
+Check ($missingAvailable.skipped[0].reason -match 'missing available') "route/malformed-missing-available-evidence" "missing available field lacks explicit evidence"
+
+$originalInline = [Environment]::GetEnvironmentVariable("OPENCODE_CONFIG_CONTENT", "Process")
+try {
+    [Environment]::SetEnvironmentVariable("OPENCODE_CONFIG_CONTENT", '{"model":"google/gemini-2.5-flash"}', "Process")
+    $identity = Get-AgentSwitchboardBuilderExecutionIdentity -Route opencode -State $state -Role initial-builder
+    Check ($identity.model -eq "google/gemini-2.5-flash") "identity/opencode-model" "effective OpenCode model was not captured"
+    Check ($identity.providerClass -eq "google") "identity/opencode-provider" "provider class was not derived from effective model"
+    Check ($identity.endpointClass -eq "native-cli") "identity/opencode-endpoint" "OpenCode endpoint class is not attributable"
+    Check ($identity.role -eq "initial-builder") "identity/role" "execution role missing"
+}
+finally {
+    [Environment]::SetEnvironmentVariable("OPENCODE_CONFIG_CONTENT", $originalInline, "Process")
+}
 
 $envelope = New-AgentSwitchboardFailureEnvelope -ValidationNumber 2 -ExitCode 1 -TimedOut $false -Output ("x" * 10000) -WorktreePath "C:\repo-wt" -HeadSha ("a" * 40) -MaxFailureChars 6000
 Check ($envelope.excerpt.Length -eq 6000) "envelope/excerpt-cap" "failure excerpt is not bounded"
@@ -43,7 +64,7 @@ Check ($envelope.outputSha256 -match '^[a-f0-9]{64}$') "envelope/full-output-dig
 $loopText = Get-Content -LiteralPath $loopPath -Raw
 Check (([regex]::Matches($loopText,'-File \$thinkerLauncher')).Count -eq 1) "loop/thinker-once" "thinker launcher is not invoked exactly once"
 Check ($loopText.Contains('while (($validation.exitCode -ne 0 -or $validation.timedOut)')) "loop/bounded-repair-loop" "repair loop missing"
-Check ($loopText.Contains('$repairCycle -lt $MaxRepairCycles')) "loop/repair-cap" "repair loop is unbounded"
+Check ($loopText.Contains('$repairCycle -lt $effectiveMaxRepairCycles')) "loop/effective-repair-cap" "repair loop ignores capability-adjusted cap"
 Check ($loopText.Contains('New-AgentSwitchboardFailureEnvelope')) "loop/failure-envelope" "raw validation failure is not reduced before builder repair"
 Check ($loopText.Contains('The orchestrator will rerun the deterministic validator itself.')) "loop/validator-owned-rerun" "repair agent is asked to own validation authority"
 Check (-not $loopText.Contains('-PushBranch')) "loop/no-push" "token-saving orchestrator enables push"
@@ -57,6 +78,13 @@ Check ($loopText.Contains('$stdoutTask.Wait(5000)')) "loop/bounded-stdout-drain"
 Check ($loopText.Contains('$stderrTask.Wait(5000)')) "loop/bounded-stderr-drain" "validator stderr can drain indefinitely after timeout"
 Check ($loopText.Contains('outputDrainTimedOut')) "loop/output-drain-evidence" "validator pipe-drain timeout is not preserved as evidence"
 Check ($loopText.Contains('validationCommandSha256')) "loop/validator-command-digest" "validator identity is not recorded"
+Check ($loopText.Contains('Thinker produced an empty SYSTEM_PLAN.md. Refusing to spend builder tokens.')) "loop/empty-plan-blocked" "empty thinker plan can reach builder"
+Check ($loopText.Contains('Parameters.ContainsKey("RepairCurrentGnhfBranch")')) "loop/stale-launcher-preflight" "installed repair launcher is not validated before model spend"
+Check ($loopText.Contains('repair disabled before model spend: installed GNHF does not prove --current-branch support')) "loop/repair-runtime-downgrade" "unsupported repair runtime fails only after model spend"
+Check ($loopText.Contains('maxRepairCyclesEffective')) "loop/repair-cap-receipt" "effective repair cap is not recorded"
+Check ($loopText.Contains('initialBuilderExecution')) "loop/initial-execution-identity" "initial builder execution identity is absent from receipt"
+Check ($loopText.Contains('executionIdentity = $repairIdentity')) "loop/repair-execution-identity" "repair execution identity is absent from receipt"
+Check ($loopText.Contains('made no committed progress. Stopping before another validator or model cycle.')) "loop/no-progress-fixed-point" "unchanged repair HEAD can consume another cycle"
 
 $emergencyText = Get-Content -LiteralPath $emergencyPath -Raw
 Check ($emergencyText.Contains('[ValidateRange(1, 2)][int]$MaxInitialIterations = 2')) "emergency/initial-iteration-cap" "emergency initial iterations can exceed 2"
@@ -80,6 +108,8 @@ Check ($gnhfText.Contains('--git-dir')) "repair/git-dir-proof" "repair mode does
 Check ($gnhfText.Contains('--git-common-dir')) "repair/common-dir-proof" "repair mode does not prove linked worktree git metadata"
 Check ($gnhfText.Contains('worktree", "list", "--porcelain')) "repair/registration-proof" "repair target is not required to be registered by git worktree"
 Check ($gnhfText.Contains('requires a linked Git worktree')) "repair/primary-checkout-blocked" "primary checkout is not explicitly rejected"
+Check ($gnhfText.Contains('Get-BoundedGnhfHelp')) "repair/runtime-help-probe" "repair mode does not probe installed GNHF capabilities"
+Check ($gnhfText.Contains('does not advertise --current-branch')) "repair/current-branch-support-gate" "unsupported current-branch runtime is not rejected"
 Check ($gnhfText.Contains('"--current-branch"')) "repair/current-branch" "repair mode does not use GNHF current-branch execution"
 Check ($gnhfText.Contains('"--worktree"')) "repair/default-worktree" "default isolated worktree mode was removed"
 
