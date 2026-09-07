@@ -14,6 +14,36 @@ bounded objective
 
 The thinker never sees ordinary build/test chatter after it emits the plan. Failed validation never causes a new planning conversation. The builder receives only the current repository state plus a bounded failure excerpt and evidence digest.
 
+## Emergency free mode
+
+When premium token headroom is low, use the dedicated emergency launcher instead of ordinary `Auto` routing:
+
+```powershell
+$root = "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet"
+
+& "$root\Start-AgentSwitchboardEmergencyFree.cmd" `
+  -RepoPath "C:\path\to\target-repo" `
+  -ObjectivePath "C:\path\to\bounded-objective.md" `
+  -ValidationCommand 'pwsh -NoLogo -NoProfile -File .\tooling\validate.ps1'
+```
+
+The emergency launcher:
+
+- uses only the canonical free thinker chain;
+- probes OpenCode's current model catalog and selects the first exact model in that free chain that is actually listed;
+- pins that verified free model for the OpenCode builder instead of trusting the operator's default model;
+- allows at most 2 initial builder iterations, 1 repair cycle, 50,000 tokens per builder run, and a 3,000-character failure excerpt;
+- fails closed when no verified free OpenCode model is available rather than silently spending paid-provider tokens;
+- restores the previous `AGENT_SWITCHBOARD_FREE_MODE` and `OPENCODE_CONFIG_CONTENT` process environment after the run.
+
+For an immediate process-level guard before launching any thinker, set:
+
+```powershell
+$env:AGENT_SWITCHBOARD_FREE_MODE = "1"
+```
+
+That setting affects automatic thinker routing only. Use `Start-AgentSwitchboardEmergencyFree.cmd` when the builder must also be pinned to a verified free OpenCode model.
+
 ## Deterministic ownership
 
 - Thinker selection is owned by `thinker-route.policy.json`.
@@ -44,7 +74,7 @@ Each run records a compact receipt beneath:
 
 The receipt stores plan and validator identities by SHA-256, builder routing evidence, worktree identity, validation results, repair prompt paths, and the final status. The validation command itself is not copied into the receipt.
 
-## Example
+## Normal bounded mode
 
 ```powershell
 $root = "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet"
@@ -58,4 +88,4 @@ $root = "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet"
   -MaxRepairCycles 2
 ```
 
-Use `-ThinkerMode Free` to force the thinker onto the free chain already defined by the thinker policy. Use an explicit builder only when the target sprint requires it; otherwise deterministic readiness chooses the first eligible route.
+Use `-ThinkerMode Free` to force only the thinker onto the free chain already defined by the thinker policy. Use an explicit builder only when the target sprint requires it; otherwise deterministic readiness chooses the first eligible route. For low-quota operation, prefer the emergency launcher because it also pins the builder model and lowers the hard bounds.
