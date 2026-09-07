@@ -61,6 +61,68 @@ function Resolve-AgentSpec {
     return [string]$agentRecord.agentSpec
 }
 
+function Get-BoundedGnhfHelp {
+    param(
+        [Parameter(Mandatory)][string]$CommandPath,
+        [Parameter(Mandatory)][string]$WorkingDirectory,
+        [ValidateRange(5, 60)][int]$TimeoutSeconds = 15
+    )
+
+    $psi = [Diagnostics.ProcessStartInfo]::new()
+    $psi.UseShellExecute = $false
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.RedirectStandardInput = $true
+    $psi.CreateNoWindow = $true
+    $psi.WorkingDirectory = $WorkingDirectory
+
+    if ($CommandPath.EndsWith(".ps1", [StringComparison]::OrdinalIgnoreCase)) {
+        $psi.FileName = "pwsh.exe"
+        [void]$psi.ArgumentList.Add("-NoLogo")
+        [void]$psi.ArgumentList.Add("-NoProfile")
+        [void]$psi.ArgumentList.Add("-NonInteractive")
+        [void]$psi.ArgumentList.Add("-File")
+        [void]$psi.ArgumentList.Add($CommandPath)
+    }
+    elseif ($CommandPath.EndsWith(".cmd", [StringComparison]::OrdinalIgnoreCase) -or $CommandPath.EndsWith(".bat", [StringComparison]::OrdinalIgnoreCase)) {
+        $psi.FileName = if ($env:ComSpec) { $env:ComSpec } else { "cmd.exe" }
+        [void]$psi.ArgumentList.Add("/d")
+        [void]$psi.ArgumentList.Add("/s")
+        [void]$psi.ArgumentList.Add("/c")
+        [void]$psi.ArgumentList.Add($CommandPath)
+    }
+    else {
+        $psi.FileName = $CommandPath
+    }
+    [void]$psi.ArgumentList.Add("--help")
+
+    $process = [Diagnostics.Process]::new()
+    $process.StartInfo = $psi
+    try {
+        [void]$process.Start()
+        $process.StandardInput.Close()
+        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+        $stderrTask = $process.StandardError.ReadToEndAsync()
+        $timedOut = -not $process.WaitForExit($TimeoutSeconds * 1000)
+        if ($timedOut) {
+            try { $process.Kill($true) } catch {}
+            try { $process.WaitForExit(5000) | Out-Null } catch {}
+        }
+        $stdoutReady = $false; $stderrReady = $false
+        try { $stdoutReady = $stdoutTask.Wait(5000) } catch {}
+        try { $stderrReady = $stderrTask.Wait(5000) } catch {}
+        if ($timedOut -or -not ($stdoutReady -and $stderrReady)) {
+            throw "GNHF help probe timed out or failed to drain output within bounded grace periods."
+        }
+        $output = (($stdoutTask.GetAwaiter().GetResult(), $stderrTask.GetAwaiter().GetResult()) -join [Environment]::NewLine).Trim()
+        if ($process.ExitCode -ne 0) {
+            throw "GNHF help probe failed with exit code $($process.ExitCode)."
+        }
+        return $output
+    }
+    finally { $process.Dispose() }
+}
+
 $RepoPath = Resolve-GnhfFleetDirectory -Path $RepoPath -Description "target repository"
 $InstallRoot = Get-GnhfFleetAbsolutePath -Path $InstallRoot
 $statePath = Resolve-GnhfFleetFile -Path (Join-Path $InstallRoot "state.json") -Description "fleet state"
@@ -142,6 +204,13 @@ else {
         throw "The configured GNHF executable is unavailable: $configuredGnhfPath. Rerun the installer to repair state."
     }
     $gnhfPath = $gnhfCommand.Source
+}
+
+if ($RepairCurrentGnhfBranch) {
+    $gnhfHelp = Get-BoundedGnhfHelp -CommandPath $gnhfPath -WorkingDirectory $RepoPath
+    if ($gnhfHelp -notmatch '(?m)(^|\s)--current-branch([\s,]|$)') {
+        throw "Installed GNHF does not advertise --current-branch, so repair mode is unavailable. Upgrade/repair GNHF or rerun the token-saving loop with repair cycles disabled."
+    }
 }
 
 $logsRoot = Ensure-GnhfFleetDirectory -Path (Join-Path $InstallRoot "logs")
