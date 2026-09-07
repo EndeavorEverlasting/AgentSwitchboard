@@ -90,12 +90,12 @@ $reasons = [System.Collections.Generic.List[string]]::new()
 foreach ($routeIdValue in @($policy.chains.free)) {
     $routeId = [string]$routeIdValue
     if (-not $routesById.ContainsKey($routeId)) {
-        [void]$reasons.Add("$routeId: policy route missing")
+        [void]$reasons.Add("${routeId}: policy route missing")
         continue
     }
     $route = $routesById[$routeId]
     if ($route.costClass -ne "free" -or $route.runner -ne "opencode-run") {
-        [void]$reasons.Add("$routeId: route is not an OpenCode free route")
+        [void]$reasons.Add("${routeId}: route is not an OpenCode free route")
         continue
     }
     $provider = [string]$route.probeProvider
@@ -108,10 +108,10 @@ foreach ($routeIdValue in @($policy.chains.free)) {
             $selected = $route
             break
         }
-        [void]$reasons.Add("$routeId: exact model not listed")
+        [void]$reasons.Add("${routeId}: exact model not listed")
     }
     catch {
-        [void]$reasons.Add("$routeId: $($_.Exception.Message)")
+        [void]$reasons.Add("${routeId}: $($_.Exception.Message)")
     }
 }
 
