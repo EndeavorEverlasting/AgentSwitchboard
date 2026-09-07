@@ -83,6 +83,12 @@ try {
     $rateReady = Test-AgentSwitchboardDeepSeekRateWindow -SchedulePath $rateTemp -Now $now
     Check ($rateReady.ready) "rate/standard-ready" "verified standard window was not eligible: $($rateReady.reason)"
 
+    # Regression: ConvertFrom-Json DateTime must preserve absolute instant (not AssumeUniversal local wall-clock).
+    $roundTrip = Get-Content -LiteralPath $rateTemp -Raw | ConvertFrom-Json
+    Check ($roundTrip.validUntil -is [DateTime]) "rate/json-datetime-materialized" "fixture validUntil was not materialized as DateTime by ConvertFrom-Json"
+    $rateReadyAgain = Test-AgentSwitchboardDeepSeekRateWindow -SchedulePath $rateTemp -Now $now
+    Check ($rateReadyAgain.ready) "rate/json-datetime-absolute" "ConvertFrom-Json DateTime window lost absolute time and failed eligibility"
+
     $double = Get-Content -LiteralPath $rateTemp -Raw | ConvertFrom-Json
     $double.rateClass = "double-usage"
     $double | ConvertTo-Json | Set-Content -LiteralPath $rateTemp -Encoding utf8NoBOM

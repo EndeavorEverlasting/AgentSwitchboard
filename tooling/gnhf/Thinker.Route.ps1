@@ -103,6 +103,44 @@ function Resolve-AgentSwitchboardThinkerRoute {
     }
 }
 
+function ConvertTo-AgentSwitchboardDateTimeOffset {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]$Value
+    )
+
+    # ConvertFrom-Json materializes ISO timestamps as DateTime (often Kind=Local).
+    # Prefer the typed absolute instant; never stringify + AssumeUniversal, which
+    # reinterprets local wall-clock as UTC and falsely expires valid windows.
+    if ($Value -is [DateTimeOffset]) {
+        return [DateTimeOffset]$Value
+    }
+    if ($Value -is [DateTime]) {
+        $dt = [DateTime]$Value
+        if ($dt.Kind -eq [DateTimeKind]::Unspecified) {
+            return [DateTimeOffset]::new([DateTime]::SpecifyKind($dt, [DateTimeKind]::Local))
+        }
+        return [DateTimeOffset]$dt
+    }
+
+    $parsed = [DateTimeOffset]::MinValue
+    if ([DateTimeOffset]::TryParse(
+            [string]$Value,
+            [Globalization.CultureInfo]::InvariantCulture,
+            [Globalization.DateTimeStyles]::RoundtripKind,
+            [ref]$parsed)) {
+        return $parsed
+    }
+    if ([DateTimeOffset]::TryParse(
+            [string]$Value,
+            [Globalization.CultureInfo]::InvariantCulture,
+            [Globalization.DateTimeStyles]::AssumeUniversal,
+            [ref]$parsed)) {
+        return $parsed
+    }
+    return $null
+}
+
 function Test-AgentSwitchboardDeepSeekRateWindow {
     [CmdletBinding()]
     param(
@@ -153,12 +191,12 @@ function Test-AgentSwitchboardDeepSeekRateWindow {
         return (& $blocked "DeepSeek effective multiplier is not eligible" $schedule)
     }
 
-    $verifiedAt = [DateTimeOffset]::MinValue
-    $validUntil = [DateTimeOffset]::MinValue
-    if (-not [DateTimeOffset]::TryParse([string]$schedule.verifiedAt, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::AssumeUniversal, [ref]$verifiedAt)) {
+    $verifiedAt = ConvertTo-AgentSwitchboardDateTimeOffset -Value $schedule.verifiedAt
+    if ($null -eq $verifiedAt) {
         return (& $blocked "DeepSeek verifiedAt is missing or invalid" $schedule)
     }
-    if (-not [DateTimeOffset]::TryParse([string]$schedule.validUntil, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::AssumeUniversal, [ref]$validUntil)) {
+    $validUntil = ConvertTo-AgentSwitchboardDateTimeOffset -Value $schedule.validUntil
+    if ($null -eq $validUntil) {
         return (& $blocked "DeepSeek validUntil is missing or invalid" $schedule)
     }
     if ($verifiedAt -gt $Now.AddMinutes(5)) {
