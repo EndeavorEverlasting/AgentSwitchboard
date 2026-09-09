@@ -39,8 +39,21 @@ def _resolved_outside_repo(path: pathlib.Path) -> pathlib.Path:
     except ValueError:
         return resolved
     raise OpinionLedgerError(
-        f"state root resolves inside the Git checkout ({resolved}); refusing tracked candidate storage"
+        f"state path resolves inside the Git checkout ({resolved}); refusing tracked candidate storage"
     )
+
+
+def _is_link_like(path: pathlib.Path) -> bool:
+    if path.is_symlink():
+        return True
+    is_junction = getattr(path, "is_junction", None)
+    return bool(is_junction and is_junction())
+
+
+def _validate_ledger_path(path: pathlib.Path) -> None:
+    if _is_link_like(path):
+        raise OpinionLedgerError(f"ledger path must not be a symlink or junction: {path}")
+    _resolved_outside_repo(path)
 
 
 def resolve_state_root(explicit: str | None = None) -> pathlib.Path:
@@ -85,8 +98,10 @@ def _prepare_private_path(state_root: pathlib.Path) -> pathlib.Path:
             pass
 
     path = ledger_path(state_root)
-    if not path.exists():
-        path.touch(exist_ok=False)
+    _validate_ledger_path(path)
+    # exist_ok=True makes concurrent first-record initialization idempotent.
+    path.touch(exist_ok=True)
+    _validate_ledger_path(path)
     if os.name != "nt":
         try:
             path.chmod(0o600)
@@ -99,11 +114,7 @@ def _normalize_tags(tags: Iterable[str]) -> list[str]:
     normalized: list[str] = []
     seen: set[str] = set()
     for raw in tags:
-        value = raw.strip()
-        if not value:
-            continue
-        if len(value) > 80:
-            raise OpinionLedgerError("tag exceeds 80 characters")
+        value = _validate_text(raw, "tag", 80)
         key = value.casefold()
         if key in seen:
             continue
@@ -219,9 +230,11 @@ def validate_entry(entry: object, *, line_number: int | None = None) -> dict:
         raise OpinionLedgerError(prefix + "tags must be an array of strings")
     if len(entry["tags"]) > 20:
         raise OpinionLedgerError(prefix + "at most 20 tags are allowed")
-    normalized_tags = _normalize_tags(entry["tags"])
-    if normalized_tags != entry["tags"]:
-        raise OpinionLedgerError(prefix + "tags must be trimmed and case-insensitively unique")
+    validated_tags = [_validate_text(tag, "tag", 80) for tag in entry["tags"]]
+    if validated_tags != entry["tags"]:
+        raise OpinionLedgerError(prefix + "tags must be trimmed")
+    if len(set(entry["tags"])) != len(entry["tags"]):
+        raise OpinionLedgerError(prefix + "tags must be unique")
     if entry["visibility"] != VISIBILITY or entry["status"] != STATUS:
         raise OpinionLedgerError(prefix + "only local-only candidate entries are accepted")
     if entry["advisory_only"] is not True or entry["execution_authority"] is not False:
@@ -239,6 +252,7 @@ def validate_entry(entry: object, *, line_number: int | None = None) -> dict:
 
 def append_entry(path: pathlib.Path, entry: dict) -> None:
     validate_entry(entry)
+    _validate_ledger_path(path)
     serialized = json.dumps(entry, sort_keys=True, ensure_ascii=False)
     with path.open("a", encoding="utf-8", newline="\n") as handle:
         handle.write(serialized + "\n")
@@ -247,6 +261,7 @@ def append_entry(path: pathlib.Path, entry: dict) -> None:
 
 
 def load_entries(path: pathlib.Path) -> list[dict]:
+    _validate_ledger_path(path)
     if not path.exists():
         return []
     entries: list[dict] = []
@@ -337,6 +352,9 @@ def main(argv: list[str] | None = None) -> int:
             return 0
     except OpinionLedgerError as exc:
         print(f"[opinion-ledger] ERROR: {exc}", file=sys.stderr)
+        return 2
+    except (OSError, UnicodeError) as exc:
+        print(f"[opinion-ledger] ERROR: local state I/O failed: {exc}", file=sys.stderr)
         return 2
 
     print("[opinion-ledger] ERROR: unsupported command", file=sys.stderr)
