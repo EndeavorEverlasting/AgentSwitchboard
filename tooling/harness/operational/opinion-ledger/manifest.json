@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "harnessId": "agentswitchboard.opinion-ledger-tracer.v1",
+  "title": "Opinion ledger tracer",
+  "purpose": "Provide a thin optional record -> search tracer for reusable engineering opinions while keeping candidate content local-only and non-authoritative.",
+  "canonicalOwner": "tooling/harness/operational/opinion-ledger/opinion_ledger.py",
+  "entrypoints": {
+    "runner": "tooling/harness/operational/opinion-ledger/opinion_ledger.py",
+    "policy": "tooling/harness/operational/opinion-ledger/opinion-ledger.policy.json",
+    "schema": "tooling/harness/operational/opinion-ledger/opinion-entry.schema.json",
+    "workflow": "tooling/harness/operational/opinion-ledger/workflows/record-search.workflow.json",
+    "codebaseMap": "tooling/harness/operational/opinion-ledger/codebase-map.json",
+    "artifactRegistry": "tooling/harness/operational/opinion-ledger/artifact-registry.json",
+    "portableContract": "tests/test_opinion_ledger_tracer.py",
+    "skill": ".ai/skills/opinion-ledger-tracer/SKILL.md",
+    "operatorGuide": "docs/harness/opinion-ledger-tracer.md"
+  },
+  "commands": {
+    "stateRoot": "python tooling/harness/operational/opinion-ledger/opinion_ledger.py state-root",
+    "record": "python tooling/harness/operational/opinion-ledger/opinion_ledger.py record --text <TEXT> --scope <SCOPE>",
+    "search": "python tooling/harness/operational/opinion-ledger/opinion_ledger.py search --query <QUERY>"
+  },
+  "generatedEvidence": {
+    "tracked": false,
+    "defaultStorage": "environment-derived local state root",
+    "artifacts": ["opinions.jsonl"]
+  },
+  "safety": {
+    "networkRequired": false,
+    "secretCollectionAllowed": false,
+    "trackedOpinionContentAllowed": false,
+    "automaticPromotionAllowed": false,
+    "executionAuthorityAllowed": false,
+    "remoteSyncAllowed": false,
+    "proofCeiling": "Local deterministic record/search behavior, state-path resolution, fail-closed malformed-state handling, and repository contract/routing validation only. It does not prove opinion correctness, promotion quality, cross-agent sync, provider memory, Drive/GitHub publication, or runtime adoption."
+  }
+}
