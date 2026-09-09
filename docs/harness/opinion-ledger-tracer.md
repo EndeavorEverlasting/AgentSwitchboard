@@ -48,26 +48,28 @@ Default POSIX file:
 
 `${XDG_STATE_HOME:-~/.local/state}/agentswitchboard/opinion-ledger/opinions.jsonl`
 
-Candidate content is generated evidence and is not tracked.
+Candidate content is generated evidence and is not tracked. The ledger itself may not be a symlink or junction, and any state path resolving inside the Git checkout is rejected.
 
 ## Commands
 
-Resolve the path without creating state:
+First resolve the verified AgentSwitchboard repository root through the current harness/repository context. The following commands intentionally use the absolute runner path so they work from an arbitrary current directory.
+
+Resolve the state path without creating state:
 
 ```text
-python tooling/harness/operational/opinion-ledger/opinion_ledger.py state-root
+python "<verified-AgentSwitchboard-root>/tooling/harness/operational/opinion-ledger/opinion_ledger.py" state-root
 ```
 
 Record a candidate:
 
 ```text
-python tooling/harness/operational/opinion-ledger/opinion_ledger.py record --text "Prefer evidence-backed fixed points over first-green stopping." --scope "repository execution" --source-type operator --confidence high --tag evidence
+python "<verified-AgentSwitchboard-root>/tooling/harness/operational/opinion-ledger/opinion_ledger.py" record --text "Prefer evidence-backed fixed points over first-green stopping." --scope "repository execution" --source-type operator --confidence high --tag evidence
 ```
 
 Search candidates:
 
 ```text
-python tooling/harness/operational/opinion-ledger/opinion_ledger.py search --query "fixed points"
+python "<verified-AgentSwitchboard-root>/tooling/harness/operational/opinion-ledger/opinion_ledger.py" search --query "fixed points"
 ```
 
 The search is intentionally literal and dependency-free in v1. SQLite/FTS, semantic/vector search, MCP, remote sync, and Drive integration remain later decisions that require evidence of tracer reuse.
@@ -75,12 +77,17 @@ The search is intentionally literal and dependency-free in v1. SQLite/FTS, seman
 ## Failure behavior
 
 - invalid input fails before a ledger file is created;
+- concurrent first-record initialization is idempotent;
 - malformed JSONL fails closed during search;
-- semantically invalid entries fail closed rather than being skipped;
+- semantically invalid or content-tampered entries fail closed rather than being skipped;
+- symlink/junction ledger paths fail closed;
+- permission, filesystem, decoding, and flush/fsync failures return controlled nonzero errors rather than raw tracebacks;
 - unavailable Windows state authority blocks default-path resolution;
 - no failure authorizes a repository fallback path or remote sync.
 
 ## Validation
+
+From the verified repository root:
 
 ```text
 python -m unittest tests.test_opinion_ledger_tracer -v
@@ -90,4 +97,4 @@ Changes to the operational manifest or router must also pass the existing operat
 
 ## Proof ceiling
 
-Repository tests can prove local record/search behavior, state-path resolution, corrupt-state rejection, routing and contract boundaries. They cannot prove that an opinion is correct, that future agents will apply it wisely, that any provider has persistent memory, or that a candidate deserves promotion.
+Repository tests can prove local record/search behavior, state-path resolution, corrupt/tampered-state rejection, routing and contract boundaries. They cannot prove that an opinion is correct, that future agents will apply it wisely, that any provider has persistent memory, or that a candidate deserves promotion.
