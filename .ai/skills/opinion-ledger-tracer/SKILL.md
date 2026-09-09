@@ -36,28 +36,37 @@ For deterministic isolation, pass `--state-root` or set `AGENTSWITCHBOARD_OPINIO
 
 ## Procedure
 
-1. Read current repository law and the owning source for the subject before recording an opinion as reusable context.
-2. Keep the candidate concise and scoped. Do not record secrets or sensitive personal material.
-3. Record through the canonical runner:
+1. Resolve the verified AgentSwitchboard repository root through the current harness/repository context. Do not assume the current working directory, Desktop, OneDrive, or a remembered clone path.
+2. Read current repository law and the owning source for the subject before recording an opinion as reusable context.
+3. Keep the candidate concise and scoped. Do not record secrets or sensitive personal material.
+4. Invoke the canonical runner by its absolute path so the command is independent of the caller's current directory:
 
 ```text
-python tooling/harness/operational/opinion-ledger/opinion_ledger.py record --text "<opinion>" --scope "<scope>" --source-type operator --confidence medium --tag "<tag>"
+python "<verified-AgentSwitchboard-root>/tooling/harness/operational/opinion-ledger/opinion_ledger.py" record --text "<opinion>" --scope "<scope>" --source-type operator --confidence medium --tag "<tag>"
 ```
 
-4. Search later with:
+5. Search later through the same verified runner path:
 
 ```text
-python tooling/harness/operational/opinion-ledger/opinion_ledger.py search --query "<literal query>"
+python "<verified-AgentSwitchboard-root>/tooling/harness/operational/opinion-ledger/opinion_ledger.py" search --query "<literal query>"
 ```
 
-5. Treat results as candidate context. Re-check current source truth before acting.
-6. If a candidate repeatedly proves useful and should become repository behavior, open a separate reviewed change against the actual canonical owner. Do not mutate canonical doctrine automatically from this tracer.
+6. Treat results as candidate context. Re-check current source truth before acting.
+7. If a candidate repeatedly proves useful and should become repository behavior, open a separate reviewed change against the actual canonical owner. Do not mutate canonical doctrine automatically from this tracer.
+
+## Outputs
+
+- local untracked `opinions.jsonl` under the resolved state root;
+- JSON command output containing the resolved local path and candidate/search result;
+- no tracked opinion content and no remote synchronization.
 
 ## Deterministic validation
 
+Run repository tests from the verified AgentSwitchboard root, then exercise the runner by absolute path:
+
 ```text
 python -m unittest tests.test_opinion_ledger_tracer -v
-python tooling/harness/operational/opinion-ledger/opinion_ledger.py --state-root <temp-path> state-root
+python "<verified-AgentSwitchboard-root>/tooling/harness/operational/opinion-ledger/opinion_ledger.py" --state-root <temp-path-outside-repo> state-root
 ```
 
 Operational-harness and repository-work-ledger validators remain owning regression gates when their surfaces change.
