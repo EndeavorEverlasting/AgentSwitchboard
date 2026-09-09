@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "registryId": "agentswitchboard.opinion-ledger-tracer.artifacts.v1",
+  "artifacts": [
+    {
+      "artifactId": "candidate-opinion-ledger",
+      "fileName": "opinions.jsonl",
+      "tracked": false,
+      "sensitivity": "may-contain-private-operator-context",
+      "owner": "tooling/harness/operational/opinion-ledger/opinion_ledger.py",
+      "proofCeiling": "Candidate record/search evidence only; not repository law or execution authority."
+    }
+  ]
+}
