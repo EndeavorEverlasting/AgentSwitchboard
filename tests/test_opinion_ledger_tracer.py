@@ -1,3 +1,4 @@
+import importlib.util
 import json
 import os
 import pathlib
@@ -11,11 +12,23 @@ RUNNER = ROOT / "tooling" / "harness" / "operational" / "opinion-ledger" / "opin
 MANIFEST = ROOT / "tooling" / "harness" / "operational" / "opinion-ledger" / "manifest.json"
 POLICY = ROOT / "tooling" / "harness" / "operational" / "opinion-ledger" / "opinion-ledger.policy.json"
 SCHEMA = ROOT / "tooling" / "harness" / "operational" / "opinion-ledger" / "opinion-entry.schema.json"
+OPERATIONAL_MANIFEST = ROOT / "tooling" / "harness" / "operational" / "manifest.json"
+WORKFLOW_REGISTRY = ROOT / "tooling" / "harness" / "operational" / "workflow-registry.json"
+STATUS_REPORTER = ROOT / "tooling" / "harness" / "operational" / "Get-OperationalHarnessStatus.py"
 
 
 def invoke(state_root, *args, env=None):
     command = [sys.executable, str(RUNNER), "--state-root", str(state_root), *args]
     return subprocess.run(command, cwd=ROOT, text=True, capture_output=True, env=env)
+
+
+def load_status_reporter():
+    spec = importlib.util.spec_from_file_location("agentswitchboard_operational_status", STATUS_REPORTER)
+    if spec is None or spec.loader is None:
+        raise AssertionError("unable to load operational status reporter")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 class OpinionLedgerTracerTests(unittest.TestCase):
@@ -114,6 +127,30 @@ class OpinionLedgerTracerTests(unittest.TestCase):
         self.assertIs(schema["properties"]["execution_authority"]["const"], False)
         self.assertEqual(schema["properties"]["visibility"]["const"], "local-only")
         self.assertEqual(schema["properties"]["status"]["const"], "candidate")
+
+    def test_operational_router_selects_opinion_tracer(self):
+        operational_manifest = json.loads(OPERATIONAL_MANIFEST.read_text(encoding="utf-8"))
+        workflow_registry = json.loads(WORKFLOW_REGISTRY.read_text(encoding="utf-8"))
+        reporter = load_status_reporter()
+        workflow, specialized = reporter.select_route(
+            "record a reusable engineering opinion for later agents",
+            workflow_registry,
+        )
+        self.assertEqual(workflow, "task-intake")
+        self.assertEqual(specialized, ".ai/skills/opinion-ledger-tracer/SKILL.md")
+        self.assertEqual(
+            operational_manifest["entrypoints"]["opinionLedgerTracerHarness"],
+            "tooling/harness/operational/opinion-ledger/manifest.json",
+        )
+        matching_routes = [
+            item for item in workflow_registry["specializedRouting"]
+            if item["skill"] == ".ai/skills/opinion-ledger-tracer/SKILL.md"
+        ]
+        self.assertEqual(len(matching_routes), 1)
+        self.assertEqual(
+            matching_routes[0]["workflowRoot"],
+            "tooling/harness/operational/opinion-ledger/workflows/",
+        )
 
 
 if __name__ == "__main__":
