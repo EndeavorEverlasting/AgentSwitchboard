@@ -17,15 +17,15 @@ WORKFLOW_REGISTRY = ROOT / "tooling" / "harness" / "operational" / "workflow-reg
 STATUS_REPORTER = ROOT / "tooling" / "harness" / "operational" / "Get-OperationalHarnessStatus.py"
 
 
-def invoke(state_root, *args, env=None):
+def invoke(state_root, *args, env=None, cwd=ROOT):
     command = [sys.executable, str(RUNNER), "--state-root", str(state_root), *args]
-    return subprocess.run(command, cwd=ROOT, text=True, capture_output=True, env=env)
+    return subprocess.run(command, cwd=cwd, text=True, capture_output=True, env=env)
 
 
-def load_status_reporter():
-    spec = importlib.util.spec_from_file_location("agentswitchboard_operational_status", STATUS_REPORTER)
+def load_module(path, name):
+    spec = importlib.util.spec_from_file_location(name, path)
     if spec is None or spec.loader is None:
-        raise AssertionError("unable to load operational status reporter")
+        raise AssertionError(f"unable to load module: {path}")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -34,7 +34,8 @@ def load_status_reporter():
 class OpinionLedgerTracerTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
-        self.state_root = pathlib.Path(self.temp.name) / "state"
+        self.temp_root = pathlib.Path(self.temp.name)
+        self.state_root = self.temp_root / "state"
 
     def tearDown(self):
         self.temp.cleanup()
@@ -79,6 +80,26 @@ class OpinionLedgerTracerTests(unittest.TestCase):
         self.assertEqual(searched.returncode, 0, searched.stderr)
         self.assertEqual(json.loads(searched.stdout)["count"], 1)
 
+    def test_schema_valid_case_variant_tags_remain_loadable(self):
+        runner = load_module(RUNNER, "agentswitchboard_opinion_ledger")
+        entry = runner.build_entry(
+            text="Case variants are structurally distinct tags.",
+            scope="engineering",
+            source_type="operator",
+            source_ref=None,
+            confidence="medium",
+            tags=["Evidence"],
+        )
+        entry["tags"] = ["Evidence", "evidence"]
+        digest_body = dict(entry)
+        digest_body.pop("opinion_id")
+        entry["opinion_id"] = f"opn-{runner._record_digest(digest_body)[:20]}"
+        self.state_root.mkdir(parents=True)
+        (self.state_root / "opinions.jsonl").write_text(json.dumps(entry) + "\n", encoding="utf-8")
+        searched = invoke(self.state_root, "search", "--query", "evidence")
+        self.assertEqual(searched.returncode, 0, searched.stderr)
+        self.assertEqual(json.loads(searched.stdout)["count"], 1)
+
     def test_empty_text_fails_without_creating_state(self):
         result = invoke(self.state_root, "record", "--text", "   ", "--scope", "engineering")
         self.assertEqual(result.returncode, 2)
@@ -118,6 +139,14 @@ class OpinionLedgerTracerTests(unittest.TestCase):
         )
         self.assertFalse(self.state_root.exists())
 
+    def test_runner_is_independent_of_current_working_directory(self):
+        result = invoke(self.state_root, "state-root", cwd=self.temp_root)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            pathlib.Path(json.loads(result.stdout)["state_root"]).resolve(strict=False),
+            self.state_root.resolve(strict=False),
+        )
+
     def test_state_root_inside_checkout_is_rejected(self):
         tracked_candidate = ROOT / ".opinion-ledger-test-state"
         result = invoke(tracked_candidate, "state-root")
@@ -126,7 +155,7 @@ class OpinionLedgerTracerTests(unittest.TestCase):
         self.assertFalse(tracked_candidate.exists())
 
     def test_environment_override_is_supported_without_username_literal(self):
-        override = pathlib.Path(self.temp.name) / "override"
+        override = self.temp_root / "override"
         env = os.environ.copy()
         env["AGENTSWITCHBOARD_OPINION_STATE_ROOT"] = str(override)
         result = subprocess.run(
@@ -141,6 +170,50 @@ class OpinionLedgerTracerTests(unittest.TestCase):
             pathlib.Path(json.loads(result.stdout)["state_root"]).resolve(strict=False),
             override.resolve(strict=False),
         )
+
+    def test_concurrent_first_records_both_succeed(self):
+        commands = [
+            [
+                sys.executable,
+                str(RUNNER),
+                "--state-root", str(self.state_root),
+                "record",
+                "--text", f"Concurrent candidate {index}",
+                "--scope", "concurrency",
+            ]
+            for index in (1, 2)
+        ]
+        processes = [
+            subprocess.Popen(command, cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            for command in commands
+        ]
+        outputs = [process.communicate() for process in processes]
+        for process, (_, stderr) in zip(processes, outputs):
+            self.assertEqual(process.returncode, 0, stderr)
+        lines = (self.state_root / "opinions.jsonl").read_text(encoding="utf-8").splitlines()
+        self.assertEqual(len(lines), 2)
+        self.assertEqual(len({json.loads(line)["opinion_id"] for line in lines}), 2)
+
+    def test_symlink_ledger_is_rejected(self):
+        self.state_root.mkdir(parents=True)
+        target = self.temp_root / "redirected-opinions.jsonl"
+        target.write_text("", encoding="utf-8")
+        ledger = self.state_root / "opinions.jsonl"
+        try:
+            os.symlink(target, ledger)
+        except OSError as exc:
+            self.skipTest(f"symlink creation unavailable on this runner: {exc}")
+        result = invoke(self.state_root, "search", "--query", "anything")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("symlink or junction", result.stderr)
+
+    def test_filesystem_failures_are_controlled(self):
+        self.state_root.mkdir(parents=True)
+        (self.state_root / "opinions.jsonl").mkdir()
+        result = invoke(self.state_root, "search", "--query", "anything")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("local state I/O failed", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
 
     def test_contract_forbids_remote_sync_and_personal_history_ownership(self):
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
@@ -157,16 +230,20 @@ class OpinionLedgerTracerTests(unittest.TestCase):
         self.assertEqual(schema["properties"]["visibility"]["const"], "local-only")
         self.assertEqual(schema["properties"]["status"]["const"], "candidate")
 
-    def test_operational_router_selects_opinion_tracer(self):
+    def test_operational_router_selects_every_advertised_opinion_phrase(self):
         operational_manifest = json.loads(OPERATIONAL_MANIFEST.read_text(encoding="utf-8"))
         workflow_registry = json.loads(WORKFLOW_REGISTRY.read_text(encoding="utf-8"))
-        reporter = load_status_reporter()
-        workflow, specialized = reporter.select_route(
-            "record a reusable engineering opinion for later agents",
-            workflow_registry,
-        )
-        self.assertEqual(workflow, "task-intake")
-        self.assertEqual(specialized, ".ai/skills/opinion-ledger-tracer/SKILL.md")
+        reporter = load_module(STATUS_REPORTER, "agentswitchboard_operational_status")
+        for task in (
+            "opinion ledger",
+            "record opinion",
+            "reusable engineering opinion",
+            "search opinions",
+            "candidate opinion",
+        ):
+            workflow, specialized = reporter.select_route(task, workflow_registry)
+            self.assertEqual(workflow, "task-intake")
+            self.assertEqual(specialized, ".ai/skills/opinion-ledger-tracer/SKILL.md")
         self.assertEqual(
             operational_manifest["entrypoints"]["opinionLedgerTracerHarness"],
             "tooling/harness/operational/opinion-ledger/manifest.json",
