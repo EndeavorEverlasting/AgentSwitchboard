@@ -40,7 +40,7 @@ Canonical terminal action: none; no safe actionable work remains
 - **Scope:** strengthen the AgentSwitchboard ledger with BOUNDED versus UNBOUNDED classification, derive EXECUTE versus DECOMPOSE routes, add a compact highest-priority frontier reader, and enforce anti-rumination semantics with tests and CI
 - **Forbidden:** changing the immutable portable v1 required-field set; forcing the local execution profile onto existing consumer repositories; product behavior changes; Wayfinder implementation changes; implicit hooks; claiming runtime task completion from ledger metadata
 - **Dependencies:** ASQ-001 local ledger implementation merged on main
-- **References:** `docs/governance/repository-work-ledger-contract.md`, `.ai/harness/repository-work-ledger.policy.json`, `.ai/harness/repository-work-ledger-adoption.json`, `scripts/Test-RepositoryWorkLedgerContract.ps1`, `scripts/Get-RepositoryWorkLedgerFrontier.ps1`, `tests/test_repository_work_ledger_contract.py`, `tests/test_repository_work_ledger_frontier.py`
+- **References:** `docs/governance/repository-work-ledger-contract.md`, `.ai/harness/repository-work-ledger.policy.json`, `.ai/harness/repository-work-ledger-adoption.json`, `scripts/Test-RepositoryWorkLedgerContract.ps1`, `tests/test_repository_work_ledger_contract.py`, `tests/test_repository_work_ledger_frontier.py`
 - **Acceptance gate:** the local validator rejects missing/invalid work classes and monolithic UNBOUNDED implementation states; READY UNBOUNDED work must create bounded children; the frontier deterministically selects the highest-priority actionable task and derives EXECUTE or DECOMPOSE; Windows and Ubuntu CI pass
 - **Gate:** none
 - **Last proof:** workflow:31332148720 passed the repository work ledger contract on Windows and Ubuntu; merge:b090637be810b2b25c35a11c299b4f2d9cc90ca3 merged PR #108; artifact:scripts/Get-RepositoryWorkLedgerFrontier.ps1 and artifact:.ai/harness/repository-work-ledger.policy.json are merged on main
@@ -63,3 +63,20 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** workflow:31332609903 passed the repository work ledger contract on Windows and Ubuntu with 18 contract tests and 5 frontier tests; merge:0b5a0c951da5152f5dbd37b1b207ad4adc4b0420 merged PR #110; artifact:.ai/harness/repository-work-ledger-adoption.json artifact:.ai/harness/repository-work-ledger.policy.json artifact:docs/governance/repository-work-ledger-contract.md artifact:scripts/Test-RepositoryWorkLedgerContract.ps1
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-08-09T19:52:00Z
+
+## ASQ-004 — Build optional opinion-ledger tracer
+
+- **Status:** CLAIMED
+- **Priority:** P1
+- **Work class:** BOUNDED
+- **Owner:** chatgpt-opinion-ledger-tracer-20260909
+- **Branch / PR:** feat/opinion-ledger-tracer-20260909 / PR not opened
+- **Scope:** add an optional operational-harness tracer that records and searches local-only candidate engineering opinions with deterministic provenance, advisory-only semantics, environment-derived state storage, scoped validation, and explicit reviewed-promotion boundaries
+- **Forbidden:** personal accomplishment or health content in Git; changing repository-work-ledger semantics; automatic opinion-to-doctrine promotion; opinion-based execution authority; SQLite/FTS/vector storage; MCP server; GitHub or Drive synchronization; credentials or provider calls; unrelated GNHF/runtime changes; stale-PR cleanup
+- **Dependencies:** current main evidence floor `bf834df2a34292428b6f17c959234ce8dec4af03`; existing operational-harness specialization pattern; expert-insight promotion boundary in `docs/architecture/agentic-software-factory.md`
+- **References:** `AGENTS.md`, `HARNESS.md`, `tooling/harness/operational/manifest.json`, `tooling/harness/operational/workflow-registry.json`, `docs/architecture/agentic-software-factory.md`
+- **Acceptance gate:** a standard-library record -> search tracer works against an isolated state root on Windows and Linux; malformed/corrupt state fails closed; recorded entries remain local-only candidate advisory context; the operational router discovers the scoped skill; repository-work-ledger and operational-harness validation show no regression; no personal content or remote-sync authority is added
+- **Gate:** none
+- **Last proof:** commit:bf834df2a34292428b6f17c959234ce8dec4af03 is the refreshed main floor; current source inspection found no existing opinion-ledger owner and confirmed the operational subharness pattern
+- **Next action:** create the scoped opinion-ledger contract, runner, tests, routing registration, and hosted validation on the claimed branch
+- **Updated:** 2026-09-09T04:22:00Z
