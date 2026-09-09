@@ -9,14 +9,18 @@ import hashlib
 import json
 import os
 import pathlib
+import re
 import sys
 from typing import Iterable
 
+SCRIPT = pathlib.Path(__file__).resolve()
+REPO_ROOT = SCRIPT.parents[4]
 SCHEMA_VERSION = "agentswitchboard.opinion-entry.v1"
 SOURCE_TYPES = ("operator", "chat", "repository", "review", "other")
 CONFIDENCE_LEVELS = ("low", "medium", "high")
 VISIBILITY = "local-only"
 STATUS = "candidate"
+OPINION_ID_PATTERN = re.compile(r"^opn-[0-9a-f]{20}$")
 
 
 class OpinionLedgerError(RuntimeError):
@@ -24,16 +28,28 @@ class OpinionLedgerError(RuntimeError):
 
 
 def _utc_now() -> str:
-    return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    return dt.datetime.now(dt.timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
+
+
+def _resolved_outside_repo(path: pathlib.Path) -> pathlib.Path:
+    resolved = path.expanduser().resolve(strict=False)
+    repo_root = REPO_ROOT.resolve(strict=False)
+    try:
+        resolved.relative_to(repo_root)
+    except ValueError:
+        return resolved
+    raise OpinionLedgerError(
+        f"state root resolves inside the Git checkout ({resolved}); refusing tracked candidate storage"
+    )
 
 
 def resolve_state_root(explicit: str | None = None) -> pathlib.Path:
     if explicit:
-        return pathlib.Path(explicit).expanduser()
+        return _resolved_outside_repo(pathlib.Path(explicit))
 
     override = os.environ.get("AGENTSWITCHBOARD_OPINION_STATE_ROOT")
     if override:
-        return pathlib.Path(override).expanduser()
+        return _resolved_outside_repo(pathlib.Path(override))
 
     if os.name == "nt":
         local_app_data = os.environ.get("LOCALAPPDATA")
@@ -41,13 +57,19 @@ def resolve_state_root(explicit: str | None = None) -> pathlib.Path:
             raise OpinionLedgerError(
                 "LOCALAPPDATA is unavailable; refusing to invent a Windows opinion-ledger state path"
             )
-        return pathlib.Path(local_app_data) / "AgentSwitchboard" / "opinion-ledger"
+        return _resolved_outside_repo(
+            pathlib.Path(local_app_data) / "AgentSwitchboard" / "opinion-ledger"
+        )
 
     xdg_state_home = os.environ.get("XDG_STATE_HOME")
     if xdg_state_home:
-        return pathlib.Path(xdg_state_home).expanduser() / "agentswitchboard" / "opinion-ledger"
+        return _resolved_outside_repo(
+            pathlib.Path(xdg_state_home) / "agentswitchboard" / "opinion-ledger"
+        )
 
-    return pathlib.Path.home() / ".local" / "state" / "agentswitchboard" / "opinion-ledger"
+    return _resolved_outside_repo(
+        pathlib.Path.home() / ".local" / "state" / "agentswitchboard" / "opinion-ledger"
+    )
 
 
 def ledger_path(state_root: pathlib.Path) -> pathlib.Path:
@@ -80,6 +102,8 @@ def _normalize_tags(tags: Iterable[str]) -> list[str]:
         value = raw.strip()
         if not value:
             continue
+        if len(value) > 80:
+            raise OpinionLedgerError("tag exceeds 80 characters")
         key = value.casefold()
         if key in seen:
             continue
@@ -91,6 +115,8 @@ def _normalize_tags(tags: Iterable[str]) -> list[str]:
 
 
 def _validate_text(value: str, label: str, maximum: int) -> str:
+    if not isinstance(value, str):
+        raise OpinionLedgerError(f"{label} must be a string")
     normalized = value.strip()
     if not normalized:
         raise OpinionLedgerError(f"{label} must not be empty")
@@ -117,11 +143,12 @@ def build_entry(
         raise OpinionLedgerError(f"unsupported source_type: {source_type}")
     if confidence not in CONFIDENCE_LEVELS:
         raise OpinionLedgerError(f"unsupported confidence: {confidence}")
+    if source_ref is not None and len(source_ref.strip()) > 500:
+        raise OpinionLedgerError("source_ref exceeds 500 characters")
 
-    created_at = _utc_now()
     body = {
         "schema_version": SCHEMA_VERSION,
-        "created_at": created_at,
+        "created_at": _utc_now(),
         "text": _validate_text(text, "text", 4000),
         "scope": _validate_text(scope, "scope", 160),
         "source_type": source_type,
@@ -160,24 +187,53 @@ def validate_entry(entry: object, *, line_number: int | None = None) -> dict:
         "promoted_owner",
     }
     missing = sorted(required.difference(entry))
+    unexpected = sorted(set(entry).difference(required))
     if missing:
         raise OpinionLedgerError(prefix + "missing required field(s): " + ", ".join(missing))
+    if unexpected:
+        raise OpinionLedgerError(prefix + "unexpected field(s): " + ", ".join(unexpected))
     if entry["schema_version"] != SCHEMA_VERSION:
         raise OpinionLedgerError(prefix + "unsupported schema_version")
+    if not isinstance(entry["opinion_id"], str) or not OPINION_ID_PATTERN.fullmatch(entry["opinion_id"]):
+        raise OpinionLedgerError(prefix + "invalid opinion_id")
+    if not isinstance(entry["created_at"], str):
+        raise OpinionLedgerError(prefix + "created_at must be a string")
+    try:
+        created_at = dt.datetime.fromisoformat(entry["created_at"].replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise OpinionLedgerError(prefix + "invalid created_at") from exc
+    if created_at.tzinfo is None:
+        raise OpinionLedgerError(prefix + "created_at must include a timezone")
+    _validate_text(entry["text"], "text", 4000)
+    _validate_text(entry["scope"], "scope", 160)
+    if entry["source_type"] not in SOURCE_TYPES:
+        raise OpinionLedgerError(prefix + "invalid source_type")
+    if entry["source_ref"] is not None:
+        if not isinstance(entry["source_ref"], str):
+            raise OpinionLedgerError(prefix + "source_ref must be a string or null")
+        if len(entry["source_ref"]) > 500:
+            raise OpinionLedgerError(prefix + "source_ref exceeds 500 characters")
+    if entry["confidence"] not in CONFIDENCE_LEVELS:
+        raise OpinionLedgerError(prefix + "invalid confidence")
+    if not isinstance(entry["tags"], list) or any(not isinstance(tag, str) for tag in entry["tags"]):
+        raise OpinionLedgerError(prefix + "tags must be an array of strings")
+    if len(entry["tags"]) > 20:
+        raise OpinionLedgerError(prefix + "at most 20 tags are allowed")
+    normalized_tags = _normalize_tags(entry["tags"])
+    if normalized_tags != entry["tags"]:
+        raise OpinionLedgerError(prefix + "tags must be trimmed and case-insensitively unique")
     if entry["visibility"] != VISIBILITY or entry["status"] != STATUS:
         raise OpinionLedgerError(prefix + "only local-only candidate entries are accepted")
     if entry["advisory_only"] is not True or entry["execution_authority"] is not False:
         raise OpinionLedgerError(prefix + "opinion entries must remain advisory and non-authoritative")
     if entry["promoted_owner"] is not None:
         raise OpinionLedgerError(prefix + "promotion is not owned by the tracer")
-    if entry["source_type"] not in SOURCE_TYPES:
-        raise OpinionLedgerError(prefix + "invalid source_type")
-    if entry["confidence"] not in CONFIDENCE_LEVELS:
-        raise OpinionLedgerError(prefix + "invalid confidence")
-    if not isinstance(entry["tags"], list) or any(not isinstance(tag, str) for tag in entry["tags"]):
-        raise OpinionLedgerError(prefix + "tags must be an array of strings")
-    _validate_text(str(entry["text"]), "text", 4000)
-    _validate_text(str(entry["scope"]), "scope", 160)
+
+    digest_body = dict(entry)
+    observed_id = digest_body.pop("opinion_id")
+    expected_id = f"opn-{_record_digest(digest_body)[:20]}"
+    if observed_id != expected_id:
+        raise OpinionLedgerError(prefix + "opinion_id does not match entry content")
     return entry
 
 
@@ -194,6 +250,7 @@ def load_entries(path: pathlib.Path) -> list[dict]:
     if not path.exists():
         return []
     entries: list[dict] = []
+    seen_ids: set[str] = set()
     with path.open("r", encoding="utf-8") as handle:
         for line_number, raw in enumerate(handle, start=1):
             if not raw.strip():
@@ -202,7 +259,11 @@ def load_entries(path: pathlib.Path) -> list[dict]:
                 parsed = json.loads(raw)
             except json.JSONDecodeError as exc:
                 raise OpinionLedgerError(f"line {line_number}: malformed JSON: {exc.msg}") from exc
-            entries.append(validate_entry(parsed, line_number=line_number))
+            entry = validate_entry(parsed, line_number=line_number)
+            if entry["opinion_id"] in seen_ids:
+                raise OpinionLedgerError(f"line {line_number}: duplicate opinion_id")
+            seen_ids.add(entry["opinion_id"])
+            entries.append(entry)
     return entries
 
 
