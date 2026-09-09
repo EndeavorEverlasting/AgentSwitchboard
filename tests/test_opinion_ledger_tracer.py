@@ -112,7 +112,10 @@ class OpinionLedgerTracerTests(unittest.TestCase):
         result = invoke(self.state_root, "state-root")
         self.assertEqual(result.returncode, 0, result.stderr)
         payload = json.loads(result.stdout)
-        self.assertEqual(pathlib.Path(payload["state_root"]), self.state_root)
+        self.assertEqual(
+            pathlib.Path(payload["state_root"]).resolve(strict=False),
+            self.state_root.resolve(strict=False),
+        )
         self.assertFalse(self.state_root.exists())
 
     def test_state_root_inside_checkout_is_rejected(self):
@@ -134,7 +137,10 @@ class OpinionLedgerTracerTests(unittest.TestCase):
             env=env,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(pathlib.Path(json.loads(result.stdout)["state_root"]), override)
+        self.assertEqual(
+            pathlib.Path(json.loads(result.stdout)["state_root"]).resolve(strict=False),
+            override.resolve(strict=False),
+        )
 
     def test_contract_forbids_remote_sync_and_personal_history_ownership(self):
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
