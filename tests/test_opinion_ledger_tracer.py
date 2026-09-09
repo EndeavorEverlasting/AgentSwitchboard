@@ -92,12 +92,35 @@ class OpinionLedgerTracerTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("malformed JSON", result.stderr)
 
+    def test_tampered_entry_fails_closed(self):
+        recorded = invoke(
+            self.state_root,
+            "record",
+            "--text", "Keep evidence immutable.",
+            "--scope", "engineering",
+        )
+        self.assertEqual(recorded.returncode, 0, recorded.stderr)
+        ledger = self.state_root / "opinions.jsonl"
+        entry = json.loads(ledger.read_text(encoding="utf-8"))
+        entry["text"] = "Tampered after record."
+        ledger.write_text(json.dumps(entry) + "\n", encoding="utf-8")
+        searched = invoke(self.state_root, "search", "--query", "tampered")
+        self.assertEqual(searched.returncode, 2)
+        self.assertIn("opinion_id does not match entry content", searched.stderr)
+
     def test_state_root_command_is_read_only(self):
         result = invoke(self.state_root, "state-root")
         self.assertEqual(result.returncode, 0, result.stderr)
         payload = json.loads(result.stdout)
         self.assertEqual(pathlib.Path(payload["state_root"]), self.state_root)
         self.assertFalse(self.state_root.exists())
+
+    def test_state_root_inside_checkout_is_rejected(self):
+        tracked_candidate = ROOT / ".opinion-ledger-test-state"
+        result = invoke(tracked_candidate, "state-root")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("inside the Git checkout", result.stderr)
+        self.assertFalse(tracked_candidate.exists())
 
     def test_environment_override_is_supported_without_username_literal(self):
         override = pathlib.Path(self.temp.name) / "override"
