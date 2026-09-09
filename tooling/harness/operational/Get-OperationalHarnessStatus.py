@@ -39,6 +39,7 @@ def select_route(task: str, registry: dict) -> tuple[str, str | None]:
     # Specific runtime/domain owners must win before the broad environment route.
     special_rules = (
         (("pi harness", "opinion fusion", "autovalidate"), ".ai/skills/pi-fusion-orchestration/SKILL.md"),
+        (("opinion ledger", "record opinion", "reusable engineering opinion", "search opinions", "candidate opinion"), ".ai/skills/opinion-ledger-tracer/SKILL.md"),
         (("launch mode", "open-or-activate", "new instance", "new-instance"), ".ai/skills/windows-profile-launch-mode-validation/SKILL.md"),
         (("runtime proof", "end to end", "end-to-end", "visible runtime"), ".ai/skills/end-to-end-runtime-validation/SKILL.md"),
         (("android", "termux", "ssh", "tmux", "wsl", "linux", "windows", "environment", "remote host"), ".ai/skills/environment-capability-routing/SKILL.md"),
