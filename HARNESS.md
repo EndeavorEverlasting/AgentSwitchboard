@@ -8,7 +8,7 @@ AgentSwitchboard is a Windows-first control surface for installing, configuring,
 
 - **Operational harness** — repository intake, validation, failure recovery, integration/handoff.
 - **OpenCode / GNHF** — prompt handoff, LSP workstation setup, bounded agent execution.
-- **Windows profiles** — terminal/profile launch modes, technician bootstrap, workstation contracts.
+- **Windows profiles** — terminal/profile launch, technician bootstrap, machine-profile path authority.
 - **Android / Termux** — mobile/SSH/tmux operational profile.
 - **Pi orchestration** — bounded multi-agent/fusion experiments and validation.
 - **App/runtime contracts** — app composition, output context, runtime events, device launchers.
@@ -22,7 +22,6 @@ AgentSwitchboard is a Windows-first control surface for installing, configuring,
 - Harness component inventory: `tooling/harness/operational/harness-components.registry.json`
 - Machine-readable repository contract: `.ai/agent-contract.json`
 - Split context/implementation repositories: `.ai/harness/context-workspace-boundary.contract.json` + `docs/governance/context-workspace-boundary.md` — load only when project intent/context and implementation authority are separated across repositories or workspaces.
-- Path authority: machine-profile registry + detector — Windows develop/run roles.
 
 ## Commands that matter
 
