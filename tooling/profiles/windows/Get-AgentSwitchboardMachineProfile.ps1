@@ -102,6 +102,27 @@ function Test-AgentSwitchboardCheckout {
     catch { return $false }
 }
 
+function Get-CandidateClassification {
+    param([Parameter(Mandatory)][string]$Source)
+    switch -Regex ($Source) {
+        '^(explicit-repo-root|environment-override|verified-machine-binding|canonical-user-local-root)$' {
+            return [pscustomobject]@{ role = 'canonical-development-candidate'; disposition = 'CANONICAL' }
+        }
+        '^legacy-user-local-root$' {
+            return [pscustomobject]@{ role = 'legacy-development-candidate'; disposition = 'NONCANONICAL_PRESERVE' }
+        }
+        '^(redirected-desktop-candidate|onedrive-candidate)$' {
+            return [pscustomobject]@{ role = 'noncanonical-clone-or-backup'; disposition = 'NONCANONICAL_PRESERVE' }
+        }
+        '^probe-existing-checkout$' {
+            return [pscustomobject]@{ role = 'probe-existing-checkout'; disposition = 'UNKNOWN' }
+        }
+        default {
+            return [pscustomobject]@{ role = 'unclassified-candidate'; disposition = 'UNKNOWN' }
+        }
+    }
+}
+
 function Add-Candidate {
     param(
         [Parameter(Mandatory)][AllowEmptyCollection()][System.Collections.Generic.List[object]]$List,
@@ -112,9 +133,12 @@ function Add-Candidate {
     if ([string]::IsNullOrWhiteSpace($Path)) { return }
     $expanded = [Environment]::ExpandEnvironmentVariables($Path)
     if ($List | Where-Object { $_.path -ieq $expanded }) { return }
+    $classification = Get-CandidateClassification -Source $Source
     [void]$List.Add([pscustomobject]@{
         path = $expanded
         source = $Source
+        role = [string]$classification.role
+        disposition = [string]$classification.disposition
         exists = if ($SimulatedExisting) { $true } else { Test-AgentSwitchboardCheckout $expanded }
     })
 }
@@ -179,8 +203,9 @@ if (-not $ProbeFile -and (Test-Path -LiteralPath $bindingPath -PathType Leaf)) {
 }
 
 $canonicalRoot = Join-Path ([string]$facts.userProfile) 'dev\AgentSwitchBoard-Live'
+$legacyRoot = Join-Path ([string]$facts.userProfile) 'dev\AgentSwitchBoard'
 Add-Candidate $candidates $canonicalRoot 'canonical-user-local-root'
-Add-Candidate $candidates (Join-Path ([string]$facts.userProfile) 'dev\AgentSwitchBoard') 'legacy-user-local-root'
+Add-Candidate $candidates $legacyRoot 'legacy-user-local-root'
 if (-not [string]::IsNullOrWhiteSpace([string]$facts.desktopPath)) {
     Add-Candidate $candidates (Join-Path ([string]$facts.desktopPath) 'dev\AgentSwitchBoard-Live') 'redirected-desktop-candidate'
     Add-Candidate $candidates (Join-Path ([string]$facts.desktopPath) 'dev\AgentSwitchBoard') 'redirected-desktop-candidate'
@@ -191,18 +216,81 @@ foreach ($oneDriveRoot in @($facts.oneDriveCommercial, $facts.oneDriveConsumer, 
     }
 }
 
-$existing = $candidates | Where-Object { $_.exists } | Select-Object -First 1
+# Reclassify probe/binding paths by their actual location so Desktop/OneDrive copies stay noncanonical.
+foreach ($candidate in $candidates) {
+    if ($candidate.path -ieq $canonicalRoot) {
+        $candidate.source = if ($candidate.source -eq 'canonical-user-local-root') { $candidate.source } else { $candidate.source }
+        $candidate.role = 'canonical-development-candidate'
+        $candidate.disposition = 'CANONICAL'
+    }
+    elseif ($candidate.path -ieq $legacyRoot) {
+        $candidate.role = 'legacy-development-candidate'
+        $candidate.disposition = 'NONCANONICAL_PRESERVE'
+    }
+    elseif (
+        (-not [string]::IsNullOrWhiteSpace([string]$facts.desktopPath) -and $candidate.path.StartsWith(([string]$facts.desktopPath), [System.StringComparison]::OrdinalIgnoreCase)) -or
+        (-not [string]::IsNullOrWhiteSpace([string]$facts.oneDriveCommercial) -and $candidate.path.StartsWith(([string]$facts.oneDriveCommercial), [System.StringComparison]::OrdinalIgnoreCase)) -or
+        (-not [string]::IsNullOrWhiteSpace([string]$facts.oneDriveConsumer) -and $candidate.path.StartsWith(([string]$facts.oneDriveConsumer), [System.StringComparison]::OrdinalIgnoreCase)) -or
+        (-not [string]::IsNullOrWhiteSpace([string]$facts.oneDrive) -and $candidate.path.StartsWith(([string]$facts.oneDrive), [System.StringComparison]::OrdinalIgnoreCase)) -or
+        ($candidate.path -match '(?i)\\OneDrive(\\|$)')
+    ) {
+        $candidate.role = 'noncanonical-clone-or-backup'
+        $candidate.disposition = 'NONCANONICAL_PRESERVE'
+    }
+}
+
+# Prefer binding/canonical/legacy roots. A binding under Desktop/OneDrive is CONFLICT evidence, not authority.
+$bindingCandidate = $candidates | Where-Object { $_.source -eq 'verified-machine-binding' -and $_.exists } | Select-Object -First 1
+if ($bindingCandidate -and $bindingCandidate.disposition -eq 'NONCANONICAL_PRESERVE') {
+    [void]$reasons.Add("CONFLICT: verified machine binding points at noncanonical path '$($bindingCandidate.path)'; canonical development root remains $canonicalRoot.")
+    $bindingCandidate = $null
+}
+
+$preferredExisting = $candidates |
+    Where-Object {
+        $_.exists -and (
+            ($bindingCandidate -and $_.path -ieq $bindingCandidate.path) -or
+            $_.disposition -eq 'CANONICAL' -or
+            $_.path -ieq $legacyRoot
+        )
+    } |
+    Select-Object -First 1
+$noncanonicalExisting = @(
+    $candidates | Where-Object {
+        $_.exists -and $_.disposition -eq 'NONCANONICAL_PRESERVE'
+    }
+)
+
 $recommendedRepoRoot = if ($RepoRoot) {
     [Environment]::ExpandEnvironmentVariables($RepoRoot)
 }
 elseif (-not [string]::IsNullOrWhiteSpace($environmentOverride)) {
     [Environment]::ExpandEnvironmentVariables($environmentOverride)
 }
-elseif ($existing) {
-    $existing.path
+elseif ($preferredExisting) {
+    $preferredExisting.path
 }
 else {
     $canonicalRoot
+}
+
+$pathRoles = [ordered]@{
+    profileKey = $profileId
+    developmentCheckout = $recommendedRepoRoot
+    productionUsePath = $recommendedRepoRoot
+    worktreeRoot = (Join-Path ([string]$env:LOCALAPPDATA) 'AgentSwitchboard\worktrees')
+    canonicalEntrypoint = 'Pull-And-Run-AgentSwitchboard.cmd'
+    openCodeEntrypoint = 'Bootstrap-OpenCode-SystemWide.cmd'
+    pathRelation = 'same-path'
+    pathRelationNotes = 'For the Windows technician profile, the development checkout is also the operator use path for repository-owned commands. Machine-wide OpenCode under Program Files is a separate installed runtime surface, not a second Git checkout.'
+    stableDefaultDevelopmentCheckout = $canonicalRoot
+    noncanonicalExistingCheckouts = @($noncanonicalExisting | ForEach-Object {
+            [ordered]@{
+                path = $_.path
+                source = $_.source
+                disposition = $_.disposition
+            }
+        })
 }
 
 if ($RepoRoot) {
@@ -211,11 +299,14 @@ if ($RepoRoot) {
 elseif (-not [string]::IsNullOrWhiteSpace($environmentOverride)) {
     [void]$reasons.Add('AGENT_SWITCHBOARD_REPO selected the repository root before checkout discovery.')
 }
-elseif ($existing) {
-    [void]$reasons.Add("A verified existing checkout was selected from '$($existing.source)'.")
+elseif ($preferredExisting) {
+    [void]$reasons.Add("A verified existing checkout was selected from '$($preferredExisting.source)'.")
 }
 else {
-    [void]$reasons.Add('No verified checkout was found; the stable user-local dev root was selected.')
+    [void]$reasons.Add('No verified canonical/legacy checkout was found; the stable user-local dev root was selected.')
+}
+if ($noncanonicalExisting.Count -gt 0) {
+    [void]$reasons.Add('One or more Desktop/OneDrive checkouts were observed and preserved as noncanonical; they do not replace %USERPROFILE%\dev\AgentSwitchBoard-Live.')
 }
 
 $confidence = if ($signals.Count -ge 3) { 'high' } elseif ($signals.Count -ge 1) { 'medium' } else { 'low' }
@@ -248,8 +339,9 @@ $profile = [ordered]@{
         expectedOrigin = $expectedRepository
         candidates = @($candidates)
         recommendedRoot = $recommendedRepoRoot
-        selectionPolicy = 'explicit > environment override > verified existing checkout > stable user-local dev root; OneDrive paths are evidence, not the new-checkout default'
+        selectionPolicy = 'explicit > environment override > verified machine binding/canonical/legacy user-local checkout > stable user-local dev root; Desktop/OneDrive copies are NONCANONICAL_PRESERVE evidence and never silently become the development root'
     }
+    pathRoles = $pathRoles
     reasons = @($reasons)
     proofCeiling = 'Local environment observation and deterministic path recommendation only. This profile does not prove package installation, authentication, provider access, launcher behavior, or live agent success.'
 }
@@ -264,11 +356,17 @@ if ($Mode -eq 'Apply') {
         '@echo off',
         ('set "AGENT_SWITCHBOARD_MACHINE_PROFILE={0}"' -f $profileId),
         ('set "AGENT_SWITCHBOARD_REPO={0}"' -f $recommendedRepoRoot),
+        ('set "AGENT_SWITCHBOARD_DEV_ROOT={0}"' -f $canonicalRoot),
+        ('set "AGENT_SWITCHBOARD_USE_ROOT={0}"' -f $recommendedRepoRoot),
+        ('set "AGENT_SWITCHBOARD_WORKTREE_ROOT={0}"' -f $pathRoles.worktreeRoot),
         ('set "AGENT_SWITCHBOARD_MACHINE_PROFILE_JSON={0}"' -f $jsonPath)
     ) | Set-Content -LiteralPath $cmdPath -Encoding ASCII
     @(
         ('$env:AGENT_SWITCHBOARD_MACHINE_PROFILE = ''{0}''' -f $profileId.Replace("'", "''")),
         ('$env:AGENT_SWITCHBOARD_REPO = ''{0}''' -f $recommendedRepoRoot.Replace("'", "''")),
+        ('$env:AGENT_SWITCHBOARD_DEV_ROOT = ''{0}''' -f $canonicalRoot.Replace("'", "''")),
+        ('$env:AGENT_SWITCHBOARD_USE_ROOT = ''{0}''' -f $recommendedRepoRoot.Replace("'", "''")),
+        ('$env:AGENT_SWITCHBOARD_WORKTREE_ROOT = ''{0}''' -f ([string]$pathRoles.worktreeRoot).Replace("'", "''")),
         ('$env:AGENT_SWITCHBOARD_MACHINE_PROFILE_JSON = ''{0}''' -f $jsonPath.Replace("'", "''"))
     ) | Set-Content -LiteralPath $ps1Path -Encoding UTF8
 }

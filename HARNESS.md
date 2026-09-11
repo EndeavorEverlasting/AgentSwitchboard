@@ -22,6 +22,7 @@ AgentSwitchboard is a Windows-first control surface for installing, configuring,
 - Harness component inventory: `tooling/harness/operational/harness-components.registry.json`
 - Machine-readable repository contract: `.ai/agent-contract.json`
 - Split context/implementation repositories: `.ai/harness/context-workspace-boundary.contract.json` + `docs/governance/context-workspace-boundary.md` — load only when project intent/context and implementation authority are separated across repositories or workspaces.
+- Windows workstation path authority: `tooling/profiles/windows/harness/machine-profile/machine-profile.registry.json` + `tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1` — load when answering where to develop/run AgentSwitchboard on Windows. Canonical technician checkout/use path is `%USERPROFILE%\dev\AgentSwitchBoard-Live`; Desktop/OneDrive copies are noncanonical preserve-only.
 
 ## Commands that matter
 

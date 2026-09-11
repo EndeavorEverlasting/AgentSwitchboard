@@ -37,9 +37,22 @@
     "explicit repo path",
     "AGENT_SWITCHBOARD_REPO",
     "verified machine binding",
-    "verified existing checkout candidate",
+    "verified canonical or legacy user-local checkout",
     "stable user-local dev root"
   ],
+  "pathRoles": {
+    "developmentCheckout": "%USERPROFILE%\\dev\\AgentSwitchBoard-Live",
+    "productionUsePath": "%USERPROFILE%\\dev\\AgentSwitchBoard-Live",
+    "worktreeRoot": "%LOCALAPPDATA%\\AgentSwitchboard\\worktrees",
+    "canonicalEntrypoint": "Pull-And-Run-AgentSwitchboard.cmd",
+    "openCodeEntrypoint": "Bootstrap-OpenCode-SystemWide.cmd",
+    "pathRelation": "same-path",
+    "notes": [
+      "For the Windows technician profile, development and repository-owned production/use commands share the same checkout.",
+      "Desktop and OneDrive copies are NONCANONICAL_PRESERVE evidence, never the default development root.",
+      "Machine-wide OpenCode under Program Files is an installed runtime surface, not a second Git checkout."
+    ]
+  },
   "localEvidenceRoot": "%LOCALAPPDATA%\\AgentSwitchboard\\machine-profile",
   "privacy": "Observed usernames, hostnames, tenant names, and paths are local evidence only and must never be committed.",
   "proofCeiling": "Classification and deterministic path-selection contract only; no package, login, provider, or live-runtime proof."
