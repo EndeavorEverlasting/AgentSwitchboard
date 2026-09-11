@@ -38,7 +38,7 @@ foreach ($relative in $parseTargets) {
     [void][Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
     if ($errors.Count -gt 0) {
         $messages = ($errors | ForEach-Object { $_.Message }) -join '; '
-        throw "PowerShell parse failed for $relative: $messages"
+        throw "PowerShell parse failed for ${relative}: $messages"
     }
 }
 
