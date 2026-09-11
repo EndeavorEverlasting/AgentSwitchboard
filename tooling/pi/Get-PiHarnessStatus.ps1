@@ -86,7 +86,7 @@ $upstreamPath = Join-Path $RootPath 'tooling/pi/harness/upstream-verification.js
 $verification = $null
 try { $verification = Get-Content -LiteralPath $upstreamPath -Raw | ConvertFrom-Json -ErrorAction Stop } catch {}
 $trackedVersion = if ($verification) { [string]$verification.version } else { $null }
-$managedPath = if (-not [string]::IsNullOrWhiteSpace($trackedVersion) -and $env:ProgramFiles) { Join-Path $env:ProgramFiles "AgentSwitchboard\agents\pi\$trackedVersion\pi.exe" } else { $null }
+$managedPath = if (-not [string]::IsNullOrWhiteSpace($trackedVersion) -and -not [string]::IsNullOrWhiteSpace($env:ProgramFiles)) { Join-Path $env:ProgramFiles "AgentSwitchboard\agents\pi\$trackedVersion\pi.exe" } else { $null }
 $managedVersion = Get-BoundedVersion -Path $managedPath
 $managedReady = -not [string]::IsNullOrWhiteSpace($trackedVersion) -and $managedVersion -eq $trackedVersion
 $pathPiCommand = Get-Command pi -ErrorAction SilentlyContinue
@@ -111,9 +111,10 @@ $gaps = @(
 )
 
 $status = if ($missing.Count -gt 0) { 'incomplete' } elseif ($managedReady) { 'runtime-ready-provider-unproved' } else { 'bootstrap-available-runtime-unproved' }
-$piState = if ($managedReady) { 'managed-exact' } elseif (Test-Path -LiteralPath $managedPath -PathType Leaf) { 'managed-version-drift-or-unverified' } elseif ($pathPiCommand) { 'path-present-unmanaged' } else { 'missing' }
+$managedPathExists = -not [string]::IsNullOrWhiteSpace($managedPath) -and (Test-Path -LiteralPath $managedPath -PathType Leaf)
+$piState = if ($managedReady) { 'managed-exact' } elseif ($managedPathExists) { 'managed-version-drift-or-unverified' } elseif ($pathPiCommand) { 'path-present-unmanaged' } else { 'missing' }
 $rootLiteral = ConvertTo-PowerShellSingleQuotedLiteral -Value $RootPath
-$nextRelativePath = if ($missing.Count -gt 0) { 'scripts/Test-PiHarnessCompleteness.ps1' } elseif (-not $managedReady) { 'tooling/pi/Install-AgentSwitchboardPiSystem.ps1' } else { 'tooling/pi/Install-AgentSwitchboardPiSystem.ps1' }
+$nextRelativePath = if ($missing.Count -gt 0) { 'scripts/Test-PiHarnessCompleteness.ps1' } else { 'tooling/pi/Install-AgentSwitchboardPiSystem.ps1' }
 $nextScriptPath = Join-Path $RootPath $nextRelativePath
 $nextScriptLiteral = ConvertTo-PowerShellSingleQuotedLiteral -Value $nextScriptPath
 $nextCommand = if ($missing.Count -gt 0) {
@@ -134,13 +135,7 @@ $result = [ordered]@{
     branch = [string]$branch
     head = [string]$head
     dirty = $dirty
-    pi = [ordered]@{
-        state = $piState
-        trackedVersion = $trackedVersion
-        managedPath = $managedPath
-        managedVersion = $managedVersion
-        pathResolution = $pathPiPath
-    }
+    pi = [ordered]@{ state = $piState; trackedVersion = $trackedVersion; managedPath = $managedPath; managedVersion = $managedVersion; pathResolution = $pathPiPath }
     components = $componentResults
     working = $working
     broken = $broken
