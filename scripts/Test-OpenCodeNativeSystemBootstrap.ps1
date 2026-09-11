@@ -56,6 +56,17 @@ if (@($contract.preflight.packageManagersAssumed).Count -ne 0) {
 if (-not $contract.powershellSafety.implementationMustRunAsWholeScript -or $contract.powershellSafety.interactiveFragmentExecutionAllowed) {
     throw 'Native OpenCode bootstrap PowerShell whole-script safety contract drifted.'
 }
+foreach ($proofFlag in @(
+        'applyRequiresManagedLspReadback',
+        'applyRequiresResolvedLspDebugConfig',
+        'versionComparisonIgnoresLeadingV',
+        'dirtyCheckoutStillAllowsBootstrapOpencode',
+        'activeLspProofRequiresRuntimeObservation'
+    )) {
+    if (-not $contract.proof.$proofFlag) {
+        throw "Native OpenCode bootstrap proof contract drifted: $proofFlag"
+    }
+}
 
 $python = Get-Command python -ErrorAction SilentlyContinue
 if (-not $python) { $python = Get-Command python3 -ErrorAction SilentlyContinue }
