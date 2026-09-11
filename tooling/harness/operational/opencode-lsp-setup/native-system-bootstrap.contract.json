@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "contractId": "agentswitchboard.opencode-native-system-bootstrap.v1",
+  "title": "Native Windows OpenCode system bootstrap",
+  "owner": "tooling/profiles/windows/Install-AgentSwitchboardOpenCode.ps1",
+  "operatorEntrypoints": [
+    "Bootstrap-OpenCode-SystemWide.cmd",
+    "Pull-And-Run-AgentSwitchboard.cmd bootstrap-opencode"
+  ],
+  "intent": "Converge a Windows x64 workstation onto an official machine-wide OpenCode CLI plus admin-managed lsp=true configuration without assuming Chocolatey, Scoop, npm, Node, or another package manager.",
+  "preflight": {
+    "ascertainBeforeMutation": [
+      "Windows host",
+      "PowerShell 7",
+      "64-bit architecture and AMD64 for this first implementation",
+      "administrator elevation for Apply",
+      "Program Files and ProgramData availability",
+      "existing machine-wide OpenCode version",
+      "existing managed OpenCode JSON/JSONC state",
+      "latest official anomalyco/opencode release tag",
+      "exact opencode-windows-x64.zip asset",
+      "authoritative release SHA-256 digest"
+    ],
+    "packageManagersAssumed": [],
+    "userScopedNodeOrNpmRequired": false
+  },
+  "installation": {
+    "source": "https://api.github.com/repos/anomalyco/opencode/releases/latest",
+    "asset": "opencode-windows-x64.zip",
+    "installDirectory": "%ProgramFiles%/OpenCode",
+    "executable": "%ProgramFiles%/OpenCode/opencode.exe",
+    "pathScope": "Machine",
+    "digestAlgorithm": "SHA256",
+    "digestRequired": true,
+    "idempotent": true
+  },
+  "managedConfiguration": {
+    "directory": "%ProgramData%/opencode",
+    "file": "%ProgramData%/opencode/opencode.json",
+    "required": {
+      "lsp": true
+    },
+    "preserveUnrelatedJsonProperties": true,
+    "backupBeforeExistingJsonMutation": true,
+    "jsoncCollisionPolicy": "fail-closed",
+    "modelPersistenceAllowed": false
+  },
+  "powershellSafety": {
+    "implementationMustRunAsWholeScript": true,
+    "interactiveFragmentExecutionAllowed": false,
+    "invokeExpressionAllowed": false,
+    "reason": "PowerShell parses the complete .ps1 before execution, preventing a separately submitted else block or other split control-flow fragment from being treated as a new command."
+  },
+  "proof": {
+    "inspectIsLocalAndNonMutating": true,
+    "applyRequiresDirectVersionReadback": true,
+    "applyRequiresMachinePathReadback": true,
+    "applyRequiresManagedLspReadback": true,
+    "activeLspProofRequiresRuntimeObservation": true
+  },
+  "forbidden": [
+    "credential collection",
+    "provider authentication mutation",
+    "Chocolatey/Scoop/npm/Node assumptions",
+    "user-profile package runtime dependency",
+    "destructive Git",
+    "overwriting malformed or JSONC managed configuration",
+    "claiming lsp=true alone proves an active language server"
+  ]
+}
