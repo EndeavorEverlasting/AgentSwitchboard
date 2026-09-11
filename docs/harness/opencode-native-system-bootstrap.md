@@ -37,7 +37,15 @@ The bootstrap does not persist a model choice, change provider authentication, c
 
 `lsp=true` removes the configuration-level disabled state and allows OpenCode's supported built-in language servers to start when a matching file and that server's prerequisites are present. It **does not prove** that a language server is active.
 
+Apply additionally runs `opencode debug config` from an empty temporary directory and requires the resolved config to show LSP enabled. The probe clears inherited `OPENCODE_CONFIG`, `OPENCODE_CONFIG_CONTENT`, and `OPENCODE_CONFIG_DIR` so inline/path overrides cannot fake managed `%ProgramData%\opencode` proof. That proves OpenCode itself loaded the managed setting; it still does not prove an active language server.
+
 For active proof, launch OpenCode after bootstrap, open a supported source file in the target repository, and observe the OpenCode LSP/runtime diagnostics for that file. PowerShell source remains covered by repository PowerShell validators unless/until the active OpenCode runtime exposes a supported PowerShell language-server path.
+
+After machine-wide Apply succeeds, optional per-launch free-model LSP launchers still come from the existing OpenCode LSP workstation Configure path. That harness now prefers `%ProgramFiles%\OpenCode\opencode.exe` when the native bootstrap installed a healthy machine-wide binary:
+
+```powershell
+pwsh -NoLogo -NoProfile -File tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1 -Mode Configure -RepoPath .
+```
 
 ## Inspect mode
 
@@ -47,7 +55,11 @@ The owner script supports a local, non-mutating inspection:
 pwsh -NoLogo -NoProfile -File tooling/profiles/windows/Install-AgentSwitchboardOpenCode.ps1 -Mode Inspect
 ```
 
-Inspect reports the installed machine-wide version, Machine PATH presence, managed config location, and whether managed `lsp=true` currently reads back. It does not query package managers and does not require network access.
+Inspect reports the installed machine-wide version, Machine PATH presence, managed config location, whether managed `lsp=true` currently reads back, and when the machine-wide binary is present the result of `opencode debug config` for resolved LSP enablement. It does not query package managers and does not require network access.
+
+## Dirty checkout behavior
+
+`Pull-And-Run-AgentSwitchboard.cmd bootstrap-opencode` still prefers a clean fast-forward refresh. When the checkout is dirty, `bootstrap-opencode` warns and applies the local `Install-AgentSwitchboardOpenCode.ps1` from that worktree instead of failing closed on local changes. Machine mutation never rewrites Git state.
 
 ## Validation
 
