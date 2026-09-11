@@ -8,6 +8,7 @@ param(
     [string]$Provider,
     [string]$Model,
     [ValidateRange(30,7200)][int]$TimeoutSeconds = 900,
+    [ValidateRange(1000,24000)][int]$MaximumPromptCharacters = 12000,
     [ValidateRange(1000,24000)][int]$MaximumResultCharacters = 12000,
     [string]$OutputDirectory,
     [string]$RootPath = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))
@@ -15,6 +16,10 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+if ($env:OS -ne 'Windows_NT') { throw 'The managed Pi child adapter is Windows-only in v1.' }
+if ([string]::IsNullOrWhiteSpace($env:ProgramFiles)) { throw 'ProgramFiles is required for the managed Pi child runtime.' }
+
 $RootPath = (Resolve-Path -LiteralPath $RootPath -ErrorAction Stop).Path
 $PromptPath = (Resolve-Path -LiteralPath $PromptPath -ErrorAction Stop).Path
 $RepositoryPath = (Resolve-Path -LiteralPath $RepositoryPath -ErrorAction Stop).Path
@@ -29,14 +34,20 @@ $runtimePath = Join-Path $env:ProgramFiles "AgentSwitchboard\agents\pi\$version\
 if ([string]::IsNullOrWhiteSpace($InvocationId)) { $InvocationId = 'pi-child-' + ([guid]::NewGuid().ToString('N').Substring(0,12)) }
 if ($InvocationId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$') { throw 'InvocationId must be 1-80 characters using letters, numbers, dot, underscore, or dash.' }
 
+$pathTrimCharacters = [char[]]@([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)
+function Normalize-ComparisonPath {
+    param([Parameter(Mandatory)][string]$Path)
+    return [IO.Path]::GetFullPath($Path).TrimEnd($pathTrimCharacters)
+}
+
 $runId = '{0}-{1}' -f ([DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ')), ([guid]::NewGuid().ToString('N').Substring(0,8))
 if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
     $stateBase = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { [IO.Path]::GetTempPath() }
     $OutputDirectory = Join-Path $stateBase "AgentSwitchboard\PiHarness\child-runs\$runId"
 }
 $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
-$repoFull = [IO.Path]::GetFullPath($RepositoryPath).TrimEnd('\','/')
-$outputFull = $OutputDirectory.TrimEnd('\','/')
+$repoFull = Normalize-ComparisonPath -Path $RepositoryPath
+$outputFull = Normalize-ComparisonPath -Path $OutputDirectory
 if ($outputFull.StartsWith($repoFull + [IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase) -or $outputFull -ieq $repoFull) {
     throw 'Child-agent evidence must remain outside the repository/worktree.'
 }
@@ -106,7 +117,7 @@ function Get-GitValue {
 }
 
 $repoRoot = Get-GitValue -Arguments @('rev-parse','--show-toplevel')
-if ([IO.Path]::GetFullPath($repoRoot).TrimEnd('\','/') -ine $repoFull) { throw "RepositoryPath must be the exact Git worktree root. Git reports: $repoRoot" }
+if ((Normalize-ComparisonPath -Path $repoRoot) -ine $repoFull) { throw "RepositoryPath must be the exact Git worktree root. Git reports: $repoRoot" }
 $branchBefore = Get-GitValue -Arguments @('branch','--show-current')
 $headBefore = Get-GitValue -Arguments @('rev-parse','HEAD')
 $statusBefore = (Invoke-Git -Arguments @('status','--porcelain=v1','--untracked-files=normal')).Stdout.Trim()
@@ -114,12 +125,13 @@ $gitDir = Get-GitValue -Arguments @('rev-parse','--path-format=absolute','--git-
 $gitCommonDir = Get-GitValue -Arguments @('rev-parse','--path-format=absolute','--git-common-dir')
 $originHeadProbe = Invoke-Git -Arguments @('symbolic-ref','--quiet','--short','refs/remotes/origin/HEAD') -AllowFailure
 $defaultBranch = if ($originHeadProbe.ExitCode -eq 0 -and -not [string]::IsNullOrWhiteSpace($originHeadProbe.Stdout)) { ($originHeadProbe.Stdout.Trim() -replace '^origin/','') } else { 'main' }
+$isIsolatedLinkedWorktree = (Normalize-ComparisonPath -Path $gitDir) -ine (Normalize-ComparisonPath -Path $gitCommonDir)
 
 if ($WriteMode -eq 'writer') {
     if ([string]::IsNullOrWhiteSpace($branchBefore)) { throw 'Writer child requires an attached branch.' }
     if ($branchBefore -in @('main','master',$defaultBranch)) { throw "Writer child may not run on the default branch: $branchBefore" }
     if (-not [string]::IsNullOrWhiteSpace($statusBefore)) { throw 'Writer child requires a clean worktree before provider invocation.' }
-    if ([IO.Path]::GetFullPath($gitDir).TrimEnd('\','/') -ieq [IO.Path]::GetFullPath($gitCommonDir).TrimEnd('\','/')) {
+    if (-not $isIsolatedLinkedWorktree) {
         throw 'Writer child requires an isolated linked Git worktree; the primary checkout is not accepted as a writer lane.'
     }
 }
@@ -131,6 +143,9 @@ if ($runtimeVersion -ne $version) {
 
 $prompt = Get-Content -LiteralPath $PromptPath -Raw -ErrorAction Stop
 if ([string]::IsNullOrWhiteSpace($prompt)) { throw 'Prompt packet is empty.' }
+if ($prompt.Length -gt $MaximumPromptCharacters) {
+    throw "Prompt packet exceeds the bounded child-context limit of $MaximumPromptCharacters characters. Reduce the packet to the evidence and scope the child actually needs."
+}
 $tools = if ($WriteMode -eq 'writer') { 'read,grep,find,ls,write,edit,bash' } else { 'read,grep,find,ls' }
 $name = ($InvocationId -replace '[^A-Za-z0-9._-]','-')
 $arguments = [System.Collections.Generic.List[string]]::new()
@@ -196,7 +211,7 @@ $result = [ordered]@{
     providerRequested = if ($Provider) { $Provider } else { $null }
     modelRequested = if ($Model) { $Model } else { $null }
     repositoryPath = $RepositoryPath
-    isolatedLinkedWorktree = ([IO.Path]::GetFullPath($gitDir).TrimEnd('\','/') -ine [IO.Path]::GetFullPath($gitCommonDir).TrimEnd('\','/'))
+    isolatedLinkedWorktree = $isIsolatedLinkedWorktree
     defaultBranchObserved = $defaultBranch
     branchBefore = $branchBefore
     headBefore = $headBefore
