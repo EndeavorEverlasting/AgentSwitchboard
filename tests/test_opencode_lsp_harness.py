@@ -107,6 +107,7 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         workflow=json.loads((H/'workflows/failure-recovery.workflow.json').read_text(encoding='utf-8'))
         self.assertIn("$runtimeRecoveryRouterPath = Join-Path $PSScriptRoot 'Recover-OpenCodeRuntime.ps1'",runner)
         self.assertIn("Join-Path $env:LOCALAPPDATA 'AgentSwitchboard\\bin\\opencode.cmd'",runner)
+        self.assertIn("Join-Path $env:ProgramFiles 'OpenCode\\opencode.exe'",runner)
         self.assertIn("elseif ($failureCode -eq 'OPENCODE_NOT_FOUND' -and $repoResolved)",runner)
         block=runner[runner.index("elseif ($failureCode -eq 'OPENCODE_NOT_FOUND'"):runner.index('elseif ($repoResolved)')]
         self.assertIn('$runtimeRecoveryRouterPath',block)

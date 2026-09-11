@@ -34,6 +34,8 @@ $script:machinePathChanged = $false
 $script:managedConfigChanged = $false
 $script:managedConfigBackup = $null
 $script:lspEnabled = $false
+$script:lspResolvedEffective = $null
+$script:lspResolveProbeStatus = 'not-run'
 $script:finalVersion = $null
 
 function Stop-NativeBootstrap {
@@ -50,11 +52,19 @@ function Test-IsElevated {
     return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
+function Normalize-OpenCodeVersion {
+    param([AllowNull()][string]$Version)
+    if ([string]::IsNullOrWhiteSpace($Version)) { return $null }
+    return ([string]$Version).Trim().TrimStart([char[]]@('v', 'V'))
+}
+
 function Invoke-BoundedProcess {
     param(
         [Parameter(Mandatory)][string]$FilePath,
         [string[]]$ArgumentList = @(),
-        [ValidateRange(1, 300)][int]$TimeoutSeconds = 30
+        [ValidateRange(1, 300)][int]$TimeoutSeconds = 30,
+        [string]$WorkingDirectory,
+        [string[]]$ClearEnvironmentVariables = @()
     )
 
     $psi = [Diagnostics.ProcessStartInfo]::new()
@@ -63,8 +73,19 @@ function Invoke-BoundedProcess {
     $psi.RedirectStandardError = $true
     $psi.CreateNoWindow = $true
     $psi.FileName = $FilePath
+    if (-not [string]::IsNullOrWhiteSpace($WorkingDirectory)) {
+        $psi.WorkingDirectory = $WorkingDirectory
+    }
     foreach ($argument in $ArgumentList) {
         [void]$psi.ArgumentList.Add([string]$argument)
+    }
+    # Child processes inherit this process environment by default. Explicitly drop overrides that
+    # would otherwise mask managed ProgramData configuration during proof probes.
+    foreach ($name in $ClearEnvironmentVariables) {
+        if ([string]::IsNullOrWhiteSpace($name)) { continue }
+        if ($psi.EnvironmentVariables.ContainsKey($name)) {
+            [void]$psi.EnvironmentVariables.Remove($name)
+        }
     }
 
     $process = [Diagnostics.Process]::new()
@@ -92,6 +113,50 @@ function Get-OpenCodeVersion {
     $result = Invoke-BoundedProcess -FilePath $Path -ArgumentList @('--version') -TimeoutSeconds 30
     if ($result.TimedOut -or $result.ExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($result.Stdout)) { return $null }
     return [string](($result.Stdout -split "[`r`n]+" | Where-Object { $_ } | Select-Object -First 1).Trim())
+}
+
+function Test-OpenCodeResolvedLspEnabled {
+    param([Parameter(Mandatory)][string]$Executable)
+
+    if (-not (Test-Path -LiteralPath $Executable -PathType Leaf)) {
+        $script:lspResolveProbeStatus = 'unavailable'
+        return $null
+    }
+
+    $probeDir = Join-Path ([IO.Path]::GetTempPath()) ("AgentSwitchboard-opencode-lsp-probe-" + [guid]::NewGuid().ToString('N').Substring(0, 8))
+    try {
+        $null = New-Item -ItemType Directory -Path $probeDir -Force
+        # Resolve config from an empty directory so project overlays cannot mask managed lsp=true.
+        # Also clear inherited OpenCode config env overrides so OPENCODE_CONFIG / CONTENT / DIR cannot
+        # make debug-config report lsp=true without proving %ProgramData%\opencode managed settings.
+        $result = Invoke-BoundedProcess -FilePath $Executable -ArgumentList @('debug', 'config') -TimeoutSeconds 45 -WorkingDirectory $probeDir -ClearEnvironmentVariables @(
+            'OPENCODE_CONFIG',
+            'OPENCODE_CONFIG_CONTENT',
+            'OPENCODE_CONFIG_DIR'
+        )
+        if ($result.TimedOut -or $result.ExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($result.Stdout)) {
+            $script:lspResolveProbeStatus = 'failed'
+            return $null
+        }
+        try {
+            $resolved = $result.Stdout | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+        }
+        catch {
+            $script:lspResolveProbeStatus = 'failed'
+            return $null
+        }
+        if (-not $resolved.ContainsKey('lsp') -or $null -eq $resolved['lsp'] -or $resolved['lsp'] -eq $false) {
+            $script:lspResolveProbeStatus = 'pass'
+            return $false
+        }
+        $script:lspResolveProbeStatus = 'pass'
+        return $true
+    }
+    finally {
+        if (Test-Path -LiteralPath $probeDir) {
+            Remove-Item -LiteralPath $probeDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
 }
 
 function Get-MachinePathEntries {
@@ -155,10 +220,12 @@ function Write-Receipt {
         managedConfigChanged = $script:managedConfigChanged
         managedConfigBackup = $script:managedConfigBackup
         lspEnabled = (Test-LspEnabled)
+        lspResolvedEffective = $script:lspResolvedEffective
+        lspResolveProbeStatus = $script:lspResolveProbeStatus
         finalVersion = $script:finalVersion
         packageManagerAssumed = $false
         userScopedNodeOrNpmRequired = $false
-        proofCeiling = 'Proves native Windows binary placement, machine PATH state, managed lsp=true configuration, and direct version execution. Active language-server behavior still requires opening a supported file in OpenCode and observing runtime LSP evidence.'
+        proofCeiling = 'Proves native Windows binary placement, machine PATH state, managed lsp=true configuration, direct version execution, and when available OpenCode debug-config resolution of lsp. Active language-server behavior still requires opening a supported file in OpenCode and observing runtime LSP evidence.'
     }
     $receipt | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $receiptPath -Encoding utf8NoBOM
 
@@ -173,11 +240,13 @@ function Write-Receipt {
         "- Final version: ``$($script:finalVersion)``",
         "- Machine PATH: ``$(Test-MachinePathContainsInstallDirectory)``",
         "- Managed config: ``$managedJson``",
-        "- LSP enabled: ``$(Test-LspEnabled)``",
+        "- LSP enabled (managed file): ``$(Test-LspEnabled)``",
+        "- LSP resolved effective (debug config): ``$($script:lspResolvedEffective)``",
+        "- LSP resolve probe: ``$($script:lspResolveProbeStatus)``",
         '',
         'This bootstrap does not use Chocolatey, Scoop, npm, or another assumed package manager. Apply mode first verifies Windows, PowerShell, architecture, elevation, existing managed-config safety, official release identity, asset identity, and SHA-256 before mutation.',
         '',
-        'Configuration proof is not active-LSP proof. Open a supported source file and observe OpenCode LSP runtime behavior for that higher proof level.'
+        'Managed-file and resolved-config proof are not active-LSP proof. Open a supported source file and observe OpenCode LSP runtime behavior for that higher proof level.'
     ) | Set-Content -LiteralPath $reportPath -Encoding utf8NoBOM
 
     Write-Host "OPENCODE_NATIVE_BOOTSTRAP_STATUS=$($script:status)"
@@ -186,6 +255,8 @@ function Write-Receipt {
     Write-Host "OPENCODE_NATIVE_BOOTSTRAP_EXECUTABLE=$targetExe"
     Write-Host "OPENCODE_NATIVE_BOOTSTRAP_VERSION=$($script:finalVersion)"
     Write-Host "OPENCODE_NATIVE_BOOTSTRAP_LSP_ENABLED=$(Test-LspEnabled)"
+    Write-Host "OPENCODE_NATIVE_BOOTSTRAP_LSP_RESOLVED=$($script:lspResolvedEffective)"
+    Write-Host "OPENCODE_NATIVE_BOOTSTRAP_LSP_PROBE=$($script:lspResolveProbeStatus)"
 }
 
 try {
@@ -208,6 +279,10 @@ try {
     # Inspect is deliberately local and non-mutating. It does not assume or probe a package manager.
     if ($Mode -eq 'Inspect') {
         $script:finalVersion = $script:existingVersion
+        # Probe whenever the machine-wide binary exists, even if --version readback failed.
+        if (Test-Path -LiteralPath $targetExe -PathType Leaf) {
+            $script:lspResolvedEffective = Test-OpenCodeResolvedLspEnabled -Executable $targetExe
+        }
         $script:status = 'inspect-complete'
         return
     }
@@ -281,11 +356,11 @@ try {
     }
     $stagedExe = $executables[0].FullName
     $stagedVersion = Get-OpenCodeVersion -Path $stagedExe
-    if ([string]::IsNullOrWhiteSpace($stagedVersion) -or $stagedVersion.TrimStart('v') -ne $script:selectedVersion) {
+    if ([string]::IsNullOrWhiteSpace($stagedVersion) -or (Normalize-OpenCodeVersion $stagedVersion) -ne $script:selectedVersion) {
         Stop-NativeBootstrap 'OPENCODE_STAGED_VERSION_MISMATCH' "Staged executable version '$stagedVersion' does not match selected release '$($script:selectedVersion)'."
     }
 
-    if ($script:existingVersion -ne $script:selectedVersion) {
+    if ((Normalize-OpenCodeVersion $script:existingVersion) -ne $script:selectedVersion) {
         $null = New-Item -ItemType Directory -Path $installDirectory -Force
         $incoming = Join-Path $installDirectory 'opencode.exe.new'
         Copy-Item -LiteralPath $stagedExe -Destination $incoming -Force
@@ -340,7 +415,7 @@ try {
     # Refresh this process from authoritative machine + user PATH only after mutation.
     $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
     $script:finalVersion = Get-OpenCodeVersion -Path $targetExe
-    if ([string]::IsNullOrWhiteSpace($script:finalVersion) -or $script:finalVersion.TrimStart('v') -ne $script:selectedVersion) {
+    if ([string]::IsNullOrWhiteSpace($script:finalVersion) -or (Normalize-OpenCodeVersion $script:finalVersion) -ne $script:selectedVersion) {
         Stop-NativeBootstrap 'OPENCODE_FINAL_VERSION_FAILED' 'Machine-wide OpenCode direct version proof failed after installation.'
     }
     if (-not (Test-MachinePathContainsInstallDirectory)) {
@@ -348,6 +423,14 @@ try {
     }
     if (-not (Test-LspEnabled)) {
         Stop-NativeBootstrap 'OPENCODE_MANAGED_LSP_FAILED' 'Managed OpenCode configuration did not read back with lsp=true after Apply.'
+    }
+
+    $script:lspResolvedEffective = Test-OpenCodeResolvedLspEnabled -Executable $targetExe
+    if ($script:lspResolveProbeStatus -ne 'pass') {
+        Stop-NativeBootstrap 'OPENCODE_LSP_RESOLVE_PROBE_FAILED' 'OpenCode debug config could not prove that managed lsp configuration is present in the resolved runtime config.'
+    }
+    if ($script:lspResolvedEffective -ne $true) {
+        Stop-NativeBootstrap 'OPENCODE_LSP_NOT_RESOLVED' 'OpenCode resolved configuration still reports LSP disabled after managed lsp=true was written. Restart any already-running OpenCode process and re-run Apply if a stale process retained old config.'
     }
 
     $script:status = 'success'
@@ -370,6 +453,9 @@ finally {
     }
     $script:lspEnabled = Test-LspEnabled
     if (-not $script:finalVersion) { $script:finalVersion = Get-OpenCodeVersion -Path $targetExe }
+    if ($null -eq $script:lspResolvedEffective -and $script:lspResolveProbeStatus -eq 'not-run' -and $script:finalVersion -and (Test-Path -LiteralPath $targetExe -PathType Leaf)) {
+        $script:lspResolvedEffective = Test-OpenCodeResolvedLspEnabled -Executable $targetExe
+    }
     Write-Receipt
     if (Test-Path -LiteralPath $stageRoot) {
         Remove-Item -LiteralPath $stageRoot -Recurse -Force -ErrorAction SilentlyContinue
