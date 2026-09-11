@@ -155,6 +155,12 @@ function Test-MachinePathContainsBin {
     return $false
 }
 
+function Test-MachinePathBinFirst {
+    $entries = @(Get-MachinePathEntries)
+    if ($entries.Count -eq 0) { return $false }
+    return $entries[0].TrimEnd('\') -ieq $binDirectory.TrimEnd('\')
+}
+
 function Ensure-MachinePathFirst {
     $entries = @(Get-MachinePathEntries)
     $filtered = @($entries | Where-Object { $_.TrimEnd('\') -ine $binDirectory.TrimEnd('\') })
@@ -212,6 +218,7 @@ function Write-BootstrapEvidence {
         binaryInstalled = $script:binaryInstalled
         launcherChanged = $script:launcherChanged
         machinePathContainsBin = (Test-MachinePathContainsBin)
+        machinePathBinFirst = (Test-MachinePathBinFirst)
         machinePathChanged = $script:machinePathChanged
         bashPath = $script:bashPath
         finalVersion = $script:finalVersion
@@ -222,7 +229,7 @@ function Write-BootstrapEvidence {
         configurationMutation = 'none'
         authenticationMutation = 'none'
         projectTrustMutation = 'none'
-        proofCeiling = 'Proves tracked standalone Pi release identity, archive digest, machine-owned runtime placement, ASB launcher state, machine PATH state, Git Bash discovery, and direct version execution. Provider authentication, model response, project trust, and child-agent delivery require separate runtime evidence.'
+        proofCeiling = 'Proves tracked standalone Pi release identity, archive digest, machine-owned runtime placement, ASB launcher state, machine PATH presence and precedence, Git Bash discovery, and direct version execution. Provider authentication, model response, project trust, and child-agent delivery require separate runtime evidence.'
     }
     $receipt | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $receiptPath -Encoding utf8NoBOM
     @(
@@ -233,6 +240,7 @@ function Write-BootstrapEvidence {
         "- Executable: ``$targetExe``",
         "- Launcher: ``$launcherPath``",
         "- Machine PATH contains ASB bin: ``$(Test-MachinePathContainsBin)``",
+        "- Machine PATH starts with ASB bin: ``$(Test-MachinePathBinFirst)``",
         "- Git Bash: ``$($script:bashPath)``",
         "- Final version: ``$($script:finalVersion)``", '',
         'The runtime is system-wide; Pi credentials, subscriptions, settings, trust decisions, sessions, and project resources remain user/project scoped.',
@@ -243,6 +251,7 @@ function Write-BootstrapEvidence {
     Write-Host "PI_SYSTEM_BOOTSTRAP_RECEIPT=$receiptPath"
     Write-Host "PI_SYSTEM_BOOTSTRAP_EXECUTABLE=$targetExe"
     Write-Host "PI_SYSTEM_BOOTSTRAP_VERSION=$($script:finalVersion)"
+    Write-Host "PI_SYSTEM_BOOTSTRAP_PATH_FIRST=$(Test-MachinePathBinFirst)"
     Write-Host "PI_SYSTEM_BOOTSTRAP_BASH=$($script:bashPath)"
 }
 
@@ -267,7 +276,7 @@ try {
     $script:finalVersion = Get-PiVersion -Path $targetExe
 
     if ($Mode -eq 'Inspect') {
-        $script:status = if ($script:finalVersion -eq $version -and (Test-MachinePathContainsBin) -and (Test-Path -LiteralPath $launcherPath -PathType Leaf) -and $script:bashPath) { 'ready' } else { 'inspect-complete' }
+        $script:status = if ($script:finalVersion -eq $version -and (Test-MachinePathBinFirst) -and (Test-Path -LiteralPath $launcherPath -PathType Leaf) -and $script:bashPath) { 'ready' } else { 'inspect-complete' }
         return
     }
 
@@ -348,6 +357,7 @@ try {
     $script:resolvedPiAfter = @(Get-PiCommandPaths)
     if ($script:finalVersion -ne $version) { Stop-PiBootstrap 'PI_FINAL_VERSION_FAILED' 'Direct Pi version proof failed after installation.' }
     if (-not (Test-MachinePathContainsBin)) { Stop-PiBootstrap 'PI_MACHINE_PATH_FAILED' 'AgentSwitchboard bin is not present in Machine PATH after Apply.' }
+    if (-not (Test-MachinePathBinFirst)) { Stop-PiBootstrap 'PI_MACHINE_PATH_PRECEDENCE_FAILED' 'AgentSwitchboard bin is present but is not the first Machine PATH entry after Apply.' }
     if (-not (Test-Path -LiteralPath $launcherPath -PathType Leaf)) { Stop-PiBootstrap 'PI_LAUNCHER_FAILED' 'Canonical Pi launcher was not created.' }
     $launcherVersion = Get-PiVersion -Path $launcherPath
     if ($launcherVersion -ne $version) { Stop-PiBootstrap 'PI_LAUNCHER_VERSION_FAILED' "Canonical Pi launcher resolved version '$launcherVersion' instead of '$version'." }
