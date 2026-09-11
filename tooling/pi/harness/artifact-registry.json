@@ -4,6 +4,12 @@
   "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/PiHarness/runs/<run-id>",
   "tracked": false,
   "artifacts": [
+    {"artifactId": "pi-system-bootstrap-receipt", "fileName": "pi-system-bootstrap.json", "contract": null, "sensitivity": "local-operational", "generation": "Install-AgentSwitchboardPiSystem.ps1", "naming": "one per system-bootstrap run", "proofCeiling": "machine bootstrap observation only"},
+    {"artifactId": "pi-system-bootstrap-report", "fileName": "pi-system-bootstrap.md", "contract": null, "sensitivity": "local-operational", "generation": "Install-AgentSwitchboardPiSystem.ps1", "naming": "one per system-bootstrap run", "proofCeiling": "English rendering of machine bootstrap observation"},
+    {"artifactId": "pi-child-result", "fileName": "child-result.json", "contract": null, "sensitivity": "local-operational", "generation": "Invoke-AgentSwitchboardPiChild.ps1", "naming": "one per child invocation", "proofCeiling": "bounded child process/repository outcome; coordinator validation still required"},
+    {"artifactId": "pi-child-report", "fileName": "child-result.md", "contract": null, "sensitivity": "local-operational", "generation": "Invoke-AgentSwitchboardPiChild.ps1", "naming": "one per child invocation", "proofCeiling": "English rendering of bounded child invocation evidence"},
+    {"artifactId": "pi-child-events", "fileName": "pi-events.jsonl", "contract": null, "sensitivity": "local-sensitive-transcript", "generation": "Invoke-AgentSwitchboardPiChild.ps1", "naming": "one per child invocation", "proofCeiling": "raw Pi event transport only; may contain prompt/model transcript content and must never be tracked"},
+    {"artifactId": "pi-child-stderr", "fileName": "pi-stderr.txt", "contract": null, "sensitivity": "local-sensitive-transcript", "generation": "Invoke-AgentSwitchboardPiChild.ps1", "naming": "one per child invocation", "proofCeiling": "raw child stderr only; may contain provider/runtime details and must never be tracked"},
     {"artifactId": "pi-run-context", "fileName": "pi-run-context.json", "contract": "runContext", "sensitivity": "local-operational", "generation": "task-intake workflow", "naming": "one per run", "proofCeiling": "declared route and limits only"},
     {"artifactId": "pi-architect-opinion", "fileName": "pi-architect-opinion.json", "contract": "roleOutput", "sensitivity": "local-operational", "generation": "opinion-fusion architect lane", "naming": "one per run", "proofCeiling": "one attributed model output only"},
     {"artifactId": "pi-builder-opinion", "fileName": "pi-builder-opinion.json", "contract": "roleOutput", "sensitivity": "local-operational", "generation": "opinion-fusion builder lane", "naming": "one per run", "proofCeiling": "one attributed model output only"},
@@ -13,6 +19,6 @@
     {"artifactId": "pi-final-handoff", "fileName": "pi-final-handoff.json", "contract": "runContext", "sensitivity": "local-operational", "generation": "workflow terminal step", "naming": "one per run", "proofCeiling": "compressed continuation record; receiver must re-inspect current state"}
   ],
   "retention": "operator-controlled local evidence outside the repository",
-  "forbiddenContent": ["credentials", "API keys", "OAuth tokens", "raw prompts", "raw model transcripts", "customer data", "private hostnames", "unredacted local usernames"],
-  "proofCeiling": "Artifact naming, location, generation, and sensitivity contract only."
+  "forbiddenContent": ["credentials", "API keys", "OAuth tokens", "raw prompts in tracked artifacts", "raw model transcripts in tracked artifacts", "customer data", "private hostnames", "unredacted local usernames"],
+  "proofCeiling": "Artifact naming, location, generation, sensitivity, and tracking-exclusion contract only."
 }

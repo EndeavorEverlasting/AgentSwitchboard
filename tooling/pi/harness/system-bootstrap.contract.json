@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "contractId": "agentswitchboard.pi-system-bootstrap.v1",
+  "title": "Native Windows Pi system bootstrap",
+  "owner": "tooling/pi/Install-AgentSwitchboardPiSystem.ps1",
+  "operatorEntrypoints": [
+    "Bootstrap-Pi-SystemWide.cmd",
+    "Pull-And-Run-AgentSwitchboard.cmd bootstrap-pi"
+  ],
+  "intent": "Converge a Windows x64 or ARM64 workstation onto the exact tracked standalone Pi release under AgentSwitchboard machine ownership without requiring npm, Node.js, or a user-local package-manager runtime.",
+  "runtime": {
+    "versionSource": "tooling/pi/harness/upstream-verification.json",
+    "installRoot": "%ProgramFiles%/AgentSwitchboard/agents/pi/<tracked-version>",
+    "launcherRoot": "%ProgramFiles%/AgentSwitchboard/bin",
+    "canonicalLauncher": "%ProgramFiles%/AgentSwitchboard/bin/pi.cmd",
+    "aliasLauncher": "%ProgramFiles%/AgentSwitchboard/bin/asb-pi.cmd",
+    "pathScope": "Machine",
+    "pathPrecedence": "AgentSwitchboard bin is first among Machine PATH entries",
+    "wholeArchiveInstallRequired": true
+  },
+  "preflight": {
+    "ascertainBeforeMutation": [
+      "Windows host",
+      "PowerShell 7",
+      "64-bit architecture",
+      "tracked Pi version/tag consistency",
+      "tracked architecture-specific release asset URL and SHA-256",
+      "administrator elevation for Apply",
+      "Git Bash availability",
+      "existing AgentSwitchboard runtime-manifest ownership",
+      "existing launcher ownership"
+    ],
+    "packageManagersAssumed": [],
+    "nodeRuntimeRequired": false
+  },
+  "safety": {
+    "officialDigestRequired": true,
+    "digestAlgorithm": "SHA256",
+    "unownedInstallDirectoryPolicy": "fail-closed",
+    "unownedLauncherPolicy": "fail-closed",
+    "globalPiConfigurationMutationAllowed": false,
+    "providerAuthenticationMutationAllowed": false,
+    "projectTrustMutationAllowed": false,
+    "projectResourceMutationAllowed": false,
+    "destructiveGitAllowed": false,
+    "wholeScriptPowerShellRequired": true,
+    "interactivePowerShellFragmentExecutionAllowed": false
+  },
+  "windowsShell": {
+    "required": true,
+    "purpose": "Pi's model-facing bash tool on Windows",
+    "discovery": [
+      "%ProgramFiles%/Git/bin/bash.exe",
+      "%ProgramFiles(x86)%/Git/bin/bash.exe",
+      "bash.exe on PATH"
+    ]
+  },
+  "evidence": {
+    "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/PiHarness/system-bootstrap/runs/<run-id>",
+    "tracked": false,
+    "receipt": "pi-system-bootstrap.json",
+    "report": "pi-system-bootstrap.md",
+    "requiredApplyProof": [
+      "tracked archive digest equals downloaded digest",
+      "staged pi.exe reports exact tracked version",
+      "managed runtime manifest binds exact version and digest",
+      "Machine PATH contains AgentSwitchboard bin",
+      "canonical managed launcher reports exact tracked version",
+      "Git Bash is resolved"
+    ]
+  },
+  "scopeBoundary": "Machine-owned runtime and launcher only. Provider credentials/subscriptions, Pi settings, project trust, project packages/extensions, sessions, models, and user preferences remain user/project scoped.",
+  "proofCeiling": "Repository/static/CI proof can establish bootstrap parsing, exact tracked release identity, digest enforcement, ownership guards, and non-mutating Inspect behavior. A physical workstation Apply is required to prove Program Files mutation, Machine PATH convergence, launcher precedence, and usable Pi execution on that workstation."
+}
