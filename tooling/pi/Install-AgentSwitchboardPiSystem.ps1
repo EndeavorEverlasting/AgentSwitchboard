@@ -44,6 +44,8 @@ $script:binaryInstalled = $false
 $script:launcherChanged = $false
 $script:machinePathChanged = $false
 $script:finalVersion = $null
+$script:finalExecutableSha256 = $null
+$script:managedIntegrityValid = $false
 $script:bashPath = $null
 $script:resolvedPiBefore = @()
 $script:resolvedPiAfter = @()
@@ -120,6 +122,12 @@ function Get-PiVersion {
     return $match.Groups[1].Value
 }
 
+function Get-FileSha256 {
+    param([string]$Path)
+    if ([string]::IsNullOrWhiteSpace($Path) -or -not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $null }
+    return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+}
+
 function Get-PiCommandPaths {
     $paths = [System.Collections.Generic.List[string]]::new()
     foreach ($name in @('pi.cmd','pi.exe','pi')) {
@@ -179,6 +187,26 @@ function Get-ArchitectureRecord {
     Stop-PiBootstrap 'PI_WINDOWS_ARCHITECTURE_UNSUPPORTED' "Unsupported Windows architecture: $env:PROCESSOR_ARCHITECTURE"
 }
 
+function Get-ManagedRuntimeIntegrity {
+    if (-not (Test-Path -LiteralPath $targetExe -PathType Leaf) -or -not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
+        return [pscustomobject]@{ Valid = $false; ExecutableSha256 = $null; Manifest = $null }
+    }
+    try {
+        $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -ErrorAction Stop
+        $executableSha256 = Get-FileSha256 -Path $targetExe
+        $valid = (
+            [string]$manifest.version -eq $version -and
+            [string]$manifest.sha256 -ieq $script:expectedSha256 -and
+            -not [string]::IsNullOrWhiteSpace([string]$manifest.executableSha256) -and
+            [string]$manifest.executableSha256 -ieq $executableSha256
+        )
+        return [pscustomobject]@{ Valid = [bool]$valid; ExecutableSha256 = $executableSha256; Manifest = $manifest }
+    }
+    catch {
+        return [pscustomobject]@{ Valid = $false; ExecutableSha256 = (Get-FileSha256 -Path $targetExe); Manifest = $null }
+    }
+}
+
 function Test-OwnedLauncher {
     param([Parameter(Mandatory)][string]$Path)
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $true }
@@ -215,6 +243,8 @@ function Write-BootstrapEvidence {
         assetUrl = $script:assetUrl
         expectedSha256 = $script:expectedSha256
         downloadSha256 = $script:downloadSha256
+        executableSha256 = $script:finalExecutableSha256
+        managedIntegrityValid = $script:managedIntegrityValid
         binaryInstalled = $script:binaryInstalled
         launcherChanged = $script:launcherChanged
         machinePathContainsBin = (Test-MachinePathContainsBin)
@@ -229,7 +259,7 @@ function Write-BootstrapEvidence {
         configurationMutation = 'none'
         authenticationMutation = 'none'
         projectTrustMutation = 'none'
-        proofCeiling = 'Proves tracked standalone Pi release identity, archive digest, machine-owned runtime placement, ASB launcher state, machine PATH presence and precedence, Git Bash discovery, and direct version execution. Provider authentication, model response, project trust, and child-agent delivery require separate runtime evidence.'
+        proofCeiling = 'Proves tracked standalone Pi release identity, archive digest, machine-owned runtime placement, installed executable integrity, ASB launcher state, machine PATH presence and precedence, Git Bash discovery, and direct version execution. Provider authentication, model response, project trust, and child-agent delivery require separate runtime evidence.'
     }
     $receipt | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $receiptPath -Encoding utf8NoBOM
     @(
@@ -238,6 +268,8 @@ function Write-BootstrapEvidence {
         "- Failure: ``$($script:failureCode)``",
         "- Version: ``$version``",
         "- Executable: ``$targetExe``",
+        "- Executable SHA-256: ``$($script:finalExecutableSha256)``",
+        "- Managed integrity valid: ``$($script:managedIntegrityValid)``",
         "- Launcher: ``$launcherPath``",
         "- Machine PATH contains ASB bin: ``$(Test-MachinePathContainsBin)``",
         "- Machine PATH starts with ASB bin: ``$(Test-MachinePathBinFirst)``",
@@ -251,6 +283,7 @@ function Write-BootstrapEvidence {
     Write-Host "PI_SYSTEM_BOOTSTRAP_RECEIPT=$receiptPath"
     Write-Host "PI_SYSTEM_BOOTSTRAP_EXECUTABLE=$targetExe"
     Write-Host "PI_SYSTEM_BOOTSTRAP_VERSION=$($script:finalVersion)"
+    Write-Host "PI_SYSTEM_BOOTSTRAP_INTEGRITY=$($script:managedIntegrityValid)"
     Write-Host "PI_SYSTEM_BOOTSTRAP_PATH_FIRST=$(Test-MachinePathBinFirst)"
     Write-Host "PI_SYSTEM_BOOTSTRAP_BASH=$($script:bashPath)"
 }
@@ -274,9 +307,12 @@ try {
     $script:bashPath = Resolve-BashPath
     $script:resolvedPiBefore = @(Get-PiCommandPaths)
     $script:finalVersion = Get-PiVersion -Path $targetExe
+    $initialIntegrity = Get-ManagedRuntimeIntegrity
+    $script:finalExecutableSha256 = $initialIntegrity.ExecutableSha256
+    $script:managedIntegrityValid = [bool]$initialIntegrity.Valid
 
     if ($Mode -eq 'Inspect') {
-        $script:status = if ($script:finalVersion -eq $version -and (Test-MachinePathBinFirst) -and (Test-Path -LiteralPath $launcherPath -PathType Leaf) -and $script:bashPath) { 'ready' } else { 'inspect-complete' }
+        $script:status = if ($script:finalVersion -eq $version -and $script:managedIntegrityValid -and (Test-MachinePathBinFirst) -and (Test-Path -LiteralPath $launcherPath -PathType Leaf) -and $script:bashPath) { 'ready' } else { 'inspect-complete' }
         return
     }
 
@@ -293,16 +329,7 @@ try {
         }
     }
 
-    $existingManifestMatches = $false
-    if (Test-Path -LiteralPath $manifestPath -PathType Leaf) {
-        try {
-            $existingManifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -ErrorAction Stop
-            $existingManifestMatches = ([string]$existingManifest.version -eq $version -and [string]$existingManifest.sha256 -ieq $script:expectedSha256)
-        }
-        catch { $existingManifestMatches = $false }
-    }
-
-    if ($script:finalVersion -ne $version -or -not $existingManifestMatches) {
+    if ($script:finalVersion -ne $version -or -not $script:managedIntegrityValid) {
         $null = New-Item -ItemType Directory -Path $stageRoot -Force
         $archivePath = Join-Path $stageRoot $script:assetName
         $extractRoot = Join-Path $stageRoot 'extract'
@@ -311,7 +338,7 @@ try {
         }
         catch { Stop-PiBootstrap 'PI_RELEASE_DOWNLOAD_FAILED' "Unable to download tracked Pi release asset within the bounded network window: $($_.Exception.Message)" }
 
-        $actualSha = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
+        $actualSha = Get-FileSha256 -Path $archivePath
         $script:downloadSha256 = $actualSha
         if ($actualSha -ne $script:expectedSha256.ToLowerInvariant()) { Stop-PiBootstrap 'PI_RELEASE_SHA256_MISMATCH' 'Downloaded Pi archive SHA-256 does not match the tracked official release digest.' }
 
@@ -323,6 +350,7 @@ try {
         }
         $stagedVersion = Get-PiVersion -Path $stagedExe
         if ($stagedVersion -ne $version) { Stop-PiBootstrap 'PI_STAGED_VERSION_MISMATCH' "Staged Pi version '$stagedVersion' does not match tracked version '$version'." }
+        $stagedExecutableSha256 = Get-FileSha256 -Path $stagedExe
 
         if (Test-Path -LiteralPath $installRoot) { Remove-Item -LiteralPath $installRoot -Recurse -Force }
         $parent = Split-Path -Parent $installRoot
@@ -334,6 +362,7 @@ try {
             sourceRepository = [string]$verification.sourceRepository
             assetName = $script:assetName
             sha256 = $script:expectedSha256.ToLowerInvariant()
+            executableSha256 = $stagedExecutableSha256
             installedAt = [DateTime]::UtcNow.ToString('o')
         } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $manifestPath -Encoding utf8NoBOM
         $script:binaryInstalled = $true
@@ -354,8 +383,12 @@ try {
     $user = [Environment]::GetEnvironmentVariable('Path','User')
     $env:Path = (@($machine,$user) -join ';')
     $script:finalVersion = Get-PiVersion -Path $targetExe
+    $finalIntegrity = Get-ManagedRuntimeIntegrity
+    $script:finalExecutableSha256 = $finalIntegrity.ExecutableSha256
+    $script:managedIntegrityValid = [bool]$finalIntegrity.Valid
     $script:resolvedPiAfter = @(Get-PiCommandPaths)
     if ($script:finalVersion -ne $version) { Stop-PiBootstrap 'PI_FINAL_VERSION_FAILED' 'Direct Pi version proof failed after installation.' }
+    if (-not $script:managedIntegrityValid) { Stop-PiBootstrap 'PI_MANAGED_BINARY_INTEGRITY_FAILED' 'Installed Pi executable SHA-256 does not match the AgentSwitchboard runtime manifest produced from the verified release archive.' }
     if (-not (Test-MachinePathContainsBin)) { Stop-PiBootstrap 'PI_MACHINE_PATH_FAILED' 'AgentSwitchboard bin is not present in Machine PATH after Apply.' }
     if (-not (Test-MachinePathBinFirst)) { Stop-PiBootstrap 'PI_MACHINE_PATH_PRECEDENCE_FAILED' 'AgentSwitchboard bin is present but is not the first Machine PATH entry after Apply.' }
     if (-not (Test-Path -LiteralPath $launcherPath -PathType Leaf)) { Stop-PiBootstrap 'PI_LAUNCHER_FAILED' 'Canonical Pi launcher was not created.' }
@@ -379,6 +412,11 @@ finally {
     if (-not (Test-Path -LiteralPath $runRoot -PathType Container)) { $null = New-Item -ItemType Directory -Path $runRoot -Force }
     if (-not $script:bashPath) { $script:bashPath = Resolve-BashPath }
     if (-not $script:finalVersion) { $script:finalVersion = Get-PiVersion -Path $targetExe }
+    if (-not $script:finalExecutableSha256) { $script:finalExecutableSha256 = Get-FileSha256 -Path $targetExe }
+    if ($script:expectedSha256) {
+        $finalEvidenceIntegrity = Get-ManagedRuntimeIntegrity
+        $script:managedIntegrityValid = [bool]$finalEvidenceIntegrity.Valid
+    }
     Write-BootstrapEvidence
     if (Test-Path -LiteralPath $stageRoot) { Remove-Item -LiteralPath $stageRoot -Recurse -Force -ErrorAction SilentlyContinue }
 }
