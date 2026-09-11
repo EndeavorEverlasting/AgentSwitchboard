@@ -75,6 +75,12 @@ goto :finish
 set "DIRTY="
 for /f "usebackq delims=" %%I in (`git -C "%REPO_ROOT%" status --porcelain=v1 --untracked-files=normal 2^>nul`) do set "DIRTY=1"
 if defined DIRTY (
+  if /I "%MODE%"=="bootstrap-opencode" (
+    echo [WARN] The checkout contains local changes.
+    echo [WARN] Skipping fetch/pull for bootstrap-opencode and applying the local native OpenCode installer from this worktree.
+    echo [WARN] Machine mutation does not rewrite Git state.
+    goto :run_repo_copy
+  )
   echo [FAIL] The checkout contains local changes.
   echo Nothing was stashed, reset, cleaned, or overwritten.
   echo Resolve or preserve the work, then run this CMD again.

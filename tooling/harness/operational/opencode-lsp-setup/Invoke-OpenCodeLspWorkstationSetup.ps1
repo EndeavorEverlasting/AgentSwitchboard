@@ -178,19 +178,28 @@ try {
     $dirty = $dirtyLines.Count -gt 0
 
     $commands = @()
-    foreach ($name in @('opencode.cmd','opencode.exe','opencode')) {
-        $candidate = Get-Command $name -ErrorAction SilentlyContinue | Select-Object -First 1
-        if ($candidate) { $commands += $candidate }
+    $machineWideExe = if ($env:ProgramFiles) { Join-Path $env:ProgramFiles 'OpenCode\opencode.exe' } else { $null }
+    if ($machineWideExe -and (Test-Path -LiteralPath $machineWideExe -PathType Leaf)) {
+        $machineVersion = Invoke-BoundedProcess -FilePath $machineWideExe -ArgumentList @('--version') -ProcessTimeoutSeconds $ProbeTimeoutSeconds
+        if (-not $machineVersion.TimedOut -and $machineVersion.ExitCode -eq 0 -and -not [string]::IsNullOrWhiteSpace($machineVersion.Stdout)) {
+            $openCode = (Resolve-Path -LiteralPath $machineWideExe -ErrorAction Stop).Path
+        }
     }
-    $canonicalShim = if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA 'AgentSwitchboard\bin\opencode.cmd' } else { $null }
-    if ($commands.Count -gt 0) {
-        $openCode = [string]$commands[0].Source
-    }
-    elseif ($canonicalShim -and (Test-Path -LiteralPath $canonicalShim -PathType Leaf)) {
-        $openCode = (Resolve-Path -LiteralPath $canonicalShim -ErrorAction Stop).Path
-    }
-    else {
-        Stop-Setup 'OPENCODE_NOT_FOUND' 'No OpenCode command is available on PATH and the canonical AgentSwitchboard OpenCode shim is missing.'
+    if (-not $openCode) {
+        foreach ($name in @('opencode.cmd','opencode.exe','opencode')) {
+            $candidate = Get-Command $name -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($candidate) { $commands += $candidate }
+        }
+        $canonicalShim = if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA 'AgentSwitchboard\bin\opencode.cmd' } else { $null }
+        if ($commands.Count -gt 0) {
+            $openCode = [string]$commands[0].Source
+        }
+        elseif ($canonicalShim -and (Test-Path -LiteralPath $canonicalShim -PathType Leaf)) {
+            $openCode = (Resolve-Path -LiteralPath $canonicalShim -ErrorAction Stop).Path
+        }
+        else {
+            Stop-Setup 'OPENCODE_NOT_FOUND' 'No OpenCode command is available on PATH and the canonical AgentSwitchboard OpenCode shim is missing.'
+        }
     }
 
     $versionResult = Invoke-BoundedProcess -FilePath $openCode -ArgumentList @('--version') -ProcessTimeoutSeconds $ProbeTimeoutSeconds

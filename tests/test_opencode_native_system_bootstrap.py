@@ -104,6 +104,18 @@ class OpenCodeNativeSystemBootstrapTests(unittest.TestCase):
         self.assertIn("$script:finalVersion = Get-OpenCodeVersion -Path $targetExe", text)
         self.assertIn("OPENCODE_MACHINE_PATH_FAILED", text)
         self.assertIn("OPENCODE_MANAGED_LSP_FAILED", text)
+        self.assertIn("Normalize-OpenCodeVersion", text)
+        self.assertIn("debug', 'config'", text)
+        self.assertIn("OPENCODE_LSP_NOT_RESOLVED", text)
+
+    def test_bootstrap_opencode_tolerates_dirty_checkout_without_git_rewrite(self):
+        dispatch = DISPATCH.read_text(encoding="utf-8")
+        self.assertIn("Skipping fetch/pull for bootstrap-opencode", dispatch)
+        self.assertIn('if /I "%MODE%"=="bootstrap-opencode"', dispatch)
+        self.assertIn("Machine mutation does not rewrite Git state", dispatch)
+        # Non-bootstrap modes must still fail closed on dirty trees.
+        self.assertIn("The checkout contains local changes.", dispatch)
+        self.assertIn("set \"RESULT=13\"", dispatch)
 
 
 if __name__ == "__main__":
