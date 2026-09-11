@@ -91,6 +91,15 @@ class PiSystemBootstrapTests(unittest.TestCase):
         self.assertIn("Get-PiVersion -Path $launcherPath", text)
         self.assertIn("$extension -in @('.cmd','.bat')", text)
 
+    def test_machine_path_contract_proves_precedence_not_only_presence(self):
+        text = BOOTSTRAP.read_text(encoding="utf-8-sig")
+        contract = json.loads((HARNESS / "system-bootstrap.contract.json").read_text(encoding="utf-8-sig"))
+        self.assertIn("function Test-MachinePathBinFirst", text)
+        self.assertIn("PI_MACHINE_PATH_PRECEDENCE_FAILED", text)
+        self.assertIn("machinePathBinFirst = (Test-MachinePathBinFirst)", text)
+        self.assertIn("Machine PATH begins with AgentSwitchboard bin", contract["evidence"]["requiredApplyProof"])
+        self.assertIn("first", contract["runtime"]["pathPrecedence"].lower())
+
     def test_system_bootstrap_is_reachable_through_existing_dispatcher(self):
         setup = SETUP.read_text(encoding="utf-8-sig")
         dispatch = DISPATCH.read_text(encoding="utf-8-sig")
@@ -125,6 +134,15 @@ class PiSystemBootstrapTests(unittest.TestCase):
             "PI_CHILD_READ_ONLY_MUTATION",
         ):
             self.assertIn(token, text)
+
+    def test_child_adapter_has_explicit_windows_path_and_prompt_bounds(self):
+        text = CHILD.read_text(encoding="utf-8-sig")
+        self.assertIn("The managed Pi child adapter is Windows-only in v1.", text)
+        self.assertIn("MaximumPromptCharacters = 12000", text)
+        self.assertIn("Prompt packet exceeds the bounded child-context limit", text)
+        self.assertIn("function Normalize-ComparisonPath", text)
+        self.assertIn("[char[]]@([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)", text)
+        self.assertNotIn(".TrimEnd('\\','/')", text)
 
     def test_writer_child_fails_closed_without_isolated_clean_nondefault_worktree(self):
         text = CHILD.read_text(encoding="utf-8-sig")
