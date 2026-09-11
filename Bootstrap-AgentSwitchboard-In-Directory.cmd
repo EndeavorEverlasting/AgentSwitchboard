@@ -5,8 +5,8 @@ title AgentSwitchboard Directory Bootstrap
 set "WORKSPACE_ROOT=%~1"
 set "REPO_LEAF=%~2"
 if not defined REPO_LEAF set "REPO_LEAF=AgentSwitchBoard-Live"
-set "BOOTSTRAP_REF=241329b9f9ef785ad457832b3d312830b248795b"
-set "EXPECTED_BOOTSTRAP_BLOB=ceaf48a5dd1c72d99a88c1e9c97cb56a4cb437f2"
+set "BOOTSTRAP_REF=eb88c730ae22b0b342209f1e10aa08b10eeb2a9f"
+set "EXPECTED_BOOTSTRAP_BLOB=173543cd3a25e4e0e5ae4e77c48f5d33729193ca"
 
 if not defined WORKSPACE_ROOT (
   echo [FAIL] A workspace directory is required.
