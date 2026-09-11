@@ -64,11 +64,11 @@
       "tracked archive digest equals downloaded digest",
       "staged pi.exe reports exact tracked version",
       "managed runtime manifest binds exact version and digest",
-      "Machine PATH contains AgentSwitchboard bin",
+      "Machine PATH begins with AgentSwitchboard bin",
       "canonical managed launcher reports exact tracked version",
       "Git Bash is resolved"
     ]
   },
   "scopeBoundary": "Machine-owned runtime and launcher only. Provider credentials/subscriptions, Pi settings, project trust, project packages/extensions, sessions, models, and user preferences remain user/project scoped.",
-  "proofCeiling": "Repository/static/CI proof can establish bootstrap parsing, exact tracked release identity, digest enforcement, ownership guards, and non-mutating Inspect behavior. A physical workstation Apply is required to prove Program Files mutation, Machine PATH convergence, launcher precedence, and usable Pi execution on that workstation."
+  "proofCeiling": "Repository/static/CI proof can establish bootstrap parsing, exact tracked release identity, digest enforcement, ownership guards, and non-mutating Inspect behavior. A physical workstation Apply is required to prove Program Files mutation, Machine PATH convergence and precedence, launcher precedence, and usable Pi execution on that workstation."
 }
