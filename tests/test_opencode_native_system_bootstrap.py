@@ -121,6 +121,10 @@ class OpenCodeNativeSystemBootstrapTests(unittest.TestCase):
         self.assertIn("OPENCODE_LSP_NOT_RESOLVED", text)
         # Object-form lsp (for example {}) must count as enabled, not only boolean true.
         self.assertIn("$resolved['lsp'] -eq $false", text)
+        # Inherited inline/path overrides must not fake managed ProgramData lsp proof.
+        self.assertIn("ClearEnvironmentVariables", text)
+        self.assertIn("OPENCODE_CONFIG_CONTENT", text)
+        self.assertIn("OPENCODE_CONFIG_DIR", text)
 
     def test_bootstrap_opencode_tolerates_dirty_checkout_without_git_rewrite(self):
         dispatch = DISPATCH.read_text(encoding="utf-8")

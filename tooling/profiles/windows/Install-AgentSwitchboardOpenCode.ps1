@@ -63,7 +63,8 @@ function Invoke-BoundedProcess {
         [Parameter(Mandatory)][string]$FilePath,
         [string[]]$ArgumentList = @(),
         [ValidateRange(1, 300)][int]$TimeoutSeconds = 30,
-        [string]$WorkingDirectory
+        [string]$WorkingDirectory,
+        [string[]]$ClearEnvironmentVariables = @()
     )
 
     $psi = [Diagnostics.ProcessStartInfo]::new()
@@ -77,6 +78,14 @@ function Invoke-BoundedProcess {
     }
     foreach ($argument in $ArgumentList) {
         [void]$psi.ArgumentList.Add([string]$argument)
+    }
+    # Child processes inherit this process environment by default. Explicitly drop overrides that
+    # would otherwise mask managed ProgramData configuration during proof probes.
+    foreach ($name in $ClearEnvironmentVariables) {
+        if ([string]::IsNullOrWhiteSpace($name)) { continue }
+        if ($psi.EnvironmentVariables.ContainsKey($name)) {
+            [void]$psi.EnvironmentVariables.Remove($name)
+        }
     }
 
     $process = [Diagnostics.Process]::new()
@@ -118,7 +127,13 @@ function Test-OpenCodeResolvedLspEnabled {
     try {
         $null = New-Item -ItemType Directory -Path $probeDir -Force
         # Resolve config from an empty directory so project overlays cannot mask managed lsp=true.
-        $result = Invoke-BoundedProcess -FilePath $Executable -ArgumentList @('debug', 'config') -TimeoutSeconds 45 -WorkingDirectory $probeDir
+        # Also clear inherited OpenCode config env overrides so OPENCODE_CONFIG / CONTENT / DIR cannot
+        # make debug-config report lsp=true without proving %ProgramData%\opencode managed settings.
+        $result = Invoke-BoundedProcess -FilePath $Executable -ArgumentList @('debug', 'config') -TimeoutSeconds 45 -WorkingDirectory $probeDir -ClearEnvironmentVariables @(
+            'OPENCODE_CONFIG',
+            'OPENCODE_CONFIG_CONTENT',
+            'OPENCODE_CONFIG_DIR'
+        )
         if ($result.TimedOut -or $result.ExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($result.Stdout)) {
             $script:lspResolveProbeStatus = 'failed'
             return $null
@@ -264,7 +279,8 @@ try {
     # Inspect is deliberately local and non-mutating. It does not assume or probe a package manager.
     if ($Mode -eq 'Inspect') {
         $script:finalVersion = $script:existingVersion
-        if ($script:existingVersion -and (Test-Path -LiteralPath $targetExe -PathType Leaf)) {
+        # Probe whenever the machine-wide binary exists, even if --version readback failed.
+        if (Test-Path -LiteralPath $targetExe -PathType Leaf) {
             $script:lspResolvedEffective = Test-OpenCodeResolvedLspEnabled -Executable $targetExe
         }
         $script:status = 'inspect-complete'

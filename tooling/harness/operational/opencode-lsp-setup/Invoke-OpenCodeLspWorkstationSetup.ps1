@@ -180,9 +180,15 @@ try {
     $commands = @()
     $machineWideExe = if ($env:ProgramFiles) { Join-Path $env:ProgramFiles 'OpenCode\opencode.exe' } else { $null }
     if ($machineWideExe -and (Test-Path -LiteralPath $machineWideExe -PathType Leaf)) {
-        $machineVersion = Invoke-BoundedProcess -FilePath $machineWideExe -ArgumentList @('--version') -ProcessTimeoutSeconds $ProbeTimeoutSeconds
-        if (-not $machineVersion.TimedOut -and $machineVersion.ExitCode -eq 0 -and -not [string]::IsNullOrWhiteSpace($machineVersion.Stdout)) {
-            $openCode = (Resolve-Path -LiteralPath $machineWideExe -ErrorAction Stop).Path
+        try {
+            $machineVersion = Invoke-BoundedProcess -FilePath $machineWideExe -ArgumentList @('--version') -ProcessTimeoutSeconds $ProbeTimeoutSeconds
+            if (-not $machineVersion.TimedOut -and $machineVersion.ExitCode -eq 0 -and -not [string]::IsNullOrWhiteSpace($machineVersion.Stdout)) {
+                $openCode = (Resolve-Path -LiteralPath $machineWideExe -ErrorAction Stop).Path
+            }
+        }
+        catch {
+            # Prefer machine-wide OpenCode only when it can actually start; otherwise fall back to PATH/shim.
+            $openCode = $null
         }
     }
     if (-not $openCode) {
