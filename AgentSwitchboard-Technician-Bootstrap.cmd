@@ -4,7 +4,7 @@ title AgentSwitchboard Technician Bootstrap
 
 set "BRANCH=main"
 set "EXPECTED_PARENT_SHA256=a0d603585bb66dfa9fa4c3af2179415321d667b0c8548c960d8012278968881b"
-set "PROFILE_REF=4eb21c50692568abb187923b96e2801a68215198"
+set "PROFILE_REF=a01630ff5bc19580b702cb75f2294ef61312115f"
 set "DEFAULT_REPO=%USERPROFILE%\dev\AgentSwitchBoard-Live"
 set "STATE_DIR=%LOCALAPPDATA%\AgentSwitchBoard\state"
 set "STATE_FILE=%STATE_DIR%\repo-path.txt"
