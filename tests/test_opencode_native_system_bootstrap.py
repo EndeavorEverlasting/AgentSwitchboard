@@ -24,6 +24,12 @@ class OpenCodeNativeSystemBootstrapTests(unittest.TestCase):
         self.assertFalse(contract["preflight"]["userScopedNodeOrNpmRequired"])
         self.assertTrue(contract["powershellSafety"]["implementationMustRunAsWholeScript"])
         self.assertFalse(contract["powershellSafety"]["interactiveFragmentExecutionAllowed"])
+        proof = contract["proof"]
+        self.assertTrue(proof["applyRequiresManagedLspReadback"])
+        self.assertTrue(proof["applyRequiresResolvedLspDebugConfig"])
+        self.assertTrue(proof["versionComparisonIgnoresLeadingV"])
+        self.assertTrue(proof["dirtyCheckoutStillAllowsBootstrapOpencode"])
+        self.assertTrue(proof["activeLspProofRequiresRuntimeObservation"])
 
     def test_bootstrap_ascertains_prerequisites_before_mutation(self):
         text = BOOTSTRAP.read_text(encoding="utf-8")
@@ -93,9 +99,14 @@ class OpenCodeNativeSystemBootstrapTests(unittest.TestCase):
         text = BOOTSTRAP.read_text(encoding="utf-8")
         doc = DOC.read_text(encoding="utf-8").lower()
         self.assertIn("active language-server behavior", text.lower())
+        self.assertIn("OPENCODE_NATIVE_BOOTSTRAP_LSP_ENABLED=", text)
+        self.assertIn("OPENCODE_NATIVE_BOOTSTRAP_LSP_RESOLVED=", text)
+        self.assertIn("OPENCODE_NATIVE_BOOTSTRAP_LSP_PROBE=", text)
         self.assertIn("lsp=true", doc)
         self.assertIn("does not prove", doc)
         self.assertIn("supported source file", doc)
+        self.assertIn("opencode debug config", doc)
+        self.assertIn("dirty checkout", doc)
 
     def test_apply_requires_sha_and_direct_readback(self):
         text = BOOTSTRAP.read_text(encoding="utf-8")
@@ -104,6 +115,25 @@ class OpenCodeNativeSystemBootstrapTests(unittest.TestCase):
         self.assertIn("$script:finalVersion = Get-OpenCodeVersion -Path $targetExe", text)
         self.assertIn("OPENCODE_MACHINE_PATH_FAILED", text)
         self.assertIn("OPENCODE_MANAGED_LSP_FAILED", text)
+        self.assertIn("Normalize-OpenCodeVersion", text)
+        self.assertIn("debug', 'config'", text)
+        self.assertIn("OPENCODE_LSP_RESOLVE_PROBE_FAILED", text)
+        self.assertIn("OPENCODE_LSP_NOT_RESOLVED", text)
+        # Object-form lsp (for example {}) must count as enabled, not only boolean true.
+        self.assertIn("$resolved['lsp'] -eq $false", text)
+        # Inherited inline/path overrides must not fake managed ProgramData lsp proof.
+        self.assertIn("ClearEnvironmentVariables", text)
+        self.assertIn("OPENCODE_CONFIG_CONTENT", text)
+        self.assertIn("OPENCODE_CONFIG_DIR", text)
+
+    def test_bootstrap_opencode_tolerates_dirty_checkout_without_git_rewrite(self):
+        dispatch = DISPATCH.read_text(encoding="utf-8")
+        self.assertIn("Skipping fetch/pull for bootstrap-opencode", dispatch)
+        self.assertIn('if /I "%MODE%"=="bootstrap-opencode"', dispatch)
+        self.assertIn("Machine mutation does not rewrite Git state", dispatch)
+        # Non-bootstrap modes must still fail closed on dirty trees.
+        self.assertIn("The checkout contains local changes.", dispatch)
+        self.assertIn("set \"RESULT=13\"", dispatch)
 
 
 if __name__ == "__main__":
