@@ -4,7 +4,6 @@ on:
   pull_request:
     paths:
       - "Start-AgentSwitchboard-Android.sh"
-      - ".pi/**"
       - "tooling/profiles/android/**"
       - "docs/workstation/android-on-the-move-runtime.md"
       - ".ai/harness/device-profile-registry.json"
