@@ -26,9 +26,16 @@
     "preCommitHook": "tooling/harness/operational/hooks/Invoke-OperationalHarnessPreCommit.ps1",
     "prePushHook": "tooling/harness/operational/hooks/Invoke-OperationalHarnessPrePush.ps1",
     "promptHandoffHarness": "tooling/harness/operational/opencode-prompt-handoff/manifest.json",
-    "openCodeLspSetupHarness": "tooling/harness/operational/opencode-lsp-setup/manifest.json"
+    "openCodeLspSetupHarness": "tooling/harness/operational/opencode-lsp-setup/manifest.json",
+    "canonicalPathContract": "tooling/harness/operational/canonical-path.contract.json",
+    "canonicalPathWorkflow": "tooling/harness/operational/workflows/canonical-path-proof.workflow.json",
+    "canonicalPathReceiptSchema": "tooling/harness/operational/schemas/canonical-path-proof.schema.json",
+    "canonicalPathSkill": ".ai/skills/canonical-path-proof/SKILL.md",
+    "canonicalPathValidator": "scripts/Test-CanonicalPathHarness.ps1",
+    "canonicalMachineProfileOwner": "tooling/profiles/windows/harness/machine-profile/machine-profile.registry.json"
   },
   "workflowOrder": ["task-intake","pre-commit-validation","failure-recovery","handoff"],
+  "actionPreconditions": ["canonical-path-proof"],
   "generatedEvidence": {
     "tracked": false,
     "defaultRoot": "operating-system temporary directory/AgentSwitchboard/operational-harness/<run-id>",
@@ -46,6 +53,6 @@
     "secretCollectionAllowed": false,
     "destructiveGitAllowed": false,
     "governanceMutationOwned": false,
-    "proofCeiling": "Tracked operational-harness structure, workflow routing, validator registration, read-only repository status, generated local reports, and offline/static validation only."
+    "proofCeiling": "Tracked operational-harness structure, workflow routing, canonical-path seam, validator registration, read-only repository status, generated local reports, and offline/static validation only."
   }
 }

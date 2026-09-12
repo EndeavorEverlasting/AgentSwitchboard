@@ -1,10 +1,12 @@
 {
   "schemaVersion": 1,
   "registryId": "agentswitchboard.operational-validators.v1",
-  "selectionRule": "Run owning validators first. Add foundation validators for shared contract/catalog changes. Runtime or deployment validators require separate authority.",
+  "selectionRule": "Run owning validators first. Canonical path proof is a default action precondition for local repo-backed execution. Add foundation validators for shared contract/catalog changes. Runtime or deployment validators require separate authority.",
   "validators": [
     {"id": "operational-python", "command": "python3 tests/test_operational_harness.py", "platforms": ["linux", "windows", "macos"], "tier": "owning", "mutatesTarget": false, "proof": "operational harness completeness and cross-reference contract"},
     {"id": "operational-powershell", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1", "platforms": ["windows", "linux"], "tier": "owning", "mutatesTarget": false, "proof": "PowerShell-side completeness, JSON, path, hook parse, and safety contract"},
+    {"id": "canonical-path-python", "command": "python3 tests/test_canonical_path_harness.py", "platforms": ["linux", "windows", "macos"], "tier": "owning", "mutatesTarget": false, "proof": "canonical path owner reuse, default precondition, four-state proof separation, path-sprawl safety, and tracked seam completeness"},
+    {"id": "canonical-path-powershell", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-CanonicalPathHarness.ps1", "platforms": ["windows", "linux"], "tier": "owning", "mutatesTarget": false, "proof": "PowerShell/JSON/tracked-surface validation for the canonical path seam"},
     {"id": "opencode-prompt-handoff", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-OpenCodePromptHandoffHarness.ps1", "platforms": ["windows", "linux"], "tier": "domain", "mutatesTarget": false, "proof": "prompt materialization, same-artifact preflight/execution contract, registration, hook safety, and delegated launcher compatibility"},
     {"id": "opencode-prompt-handoff-portable", "command": "python3 tests/test_opencode_prompt_handoff_harness.py", "platforms": ["linux", "windows", "macos"], "tier": "domain", "mutatesTarget": false, "proof": "portable prompt-handoff harness completeness and anti-regression contract"},
     {"id": "diff-check", "command": "git diff --check", "platforms": ["linux", "windows", "macos"], "tier": "owning", "mutatesTarget": false, "proof": "Git whitespace/error hygiene"},
