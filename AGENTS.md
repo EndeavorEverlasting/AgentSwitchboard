@@ -34,7 +34,7 @@ If stale remote state, placeholders, or unknown ownership prevent that declarati
 
 ## Universal operating law
 
-- Repository knowledge is compiled state. Search canonical law, architecture/specs, manifests/registries, skills, validators/tests, plans/reports, implementation helpers, and relevant history before inventing or searching outward.
+- Repository knowledge is compiled state. Search canonical law, architecture/specs, manifests/registries, skills, validators/tests, plans/reports, implementation helpers, and relevant history before inventing or searching outward. External research or a new abstraction requires an explicit unresolved gap.
 - Keep judgment in skills; deterministic behavior belongs in code, schemas, registries, validators, workflows, and artifacts.
 - Preserve unrelated dirty work; destructive Git is not a cleanup shortcut.
 - Protect credentials, personal/customer data, private hostnames/source, large dumps, and machine-local evidence.
