@@ -1,0 +1,24 @@
+{
+  "schema": "agentswitchboard.firstmate-workflow.v1",
+  "id": "pre-commit-validation",
+  "trigger": "Owned harness or crew changes are ready to commit.",
+  "inputs": [
+    "current branch/worktree",
+    "declared base ref",
+    "owned diff"
+  ],
+  "steps": [
+    "Run the focused owning tests.",
+    "Run shell syntax checks for touched shell entrypoints.",
+    "Run the repository operational harness foundation test.",
+    "Run git diff --check against the declared base.",
+    "Do not weaken a failing validator; repair within owned scope or route to failure-recovery."
+  ],
+  "outputs": [
+    "validation receipt",
+    "clean diff-hygiene result",
+    "commit-ready state"
+  ],
+  "failure_handling": "Preserve output and return to failure-recovery with the exact failing validator and responsible owner.",
+  "proof_ceiling": "workflow-state evidence only unless the owning runtime/validator produces stronger proof"
+}

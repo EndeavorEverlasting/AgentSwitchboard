@@ -1,0 +1,36 @@
+{
+  "schema": "agentswitchboard.firstmate-artifact-registry.v1",
+  "naming": "firstmate-<artifact-role>[-<timestamp>].<ext>",
+  "default_root": "OS temporary directory/agentswitchboard/firstmate-harness",
+  "artifacts": [
+    {
+      "id": "operator-report",
+      "filename": "firstmate-harness-report.md",
+      "generator": "python3 tooling/firstmate/harness/operational/Build-FirstMateHarnessReport.py",
+      "contains": "role boundaries, component state, commands, blockers, proof ceiling, and next action",
+      "proof_ceiling": "repository harness state only"
+    },
+    {
+      "id": "route-decision",
+      "filename": "firstmate-route.json",
+      "generator": "python3 tooling/firstmate/harness/operational/Select-FirstMateWorkflow.py --output <path>",
+      "contains": "deterministic route, runtime backend, execution gate, owner, dependency, and next command",
+      "proof_ceiling": "routing decision only; not execution proof"
+    },
+    {
+      "id": "windows-wsl-runtime-proof",
+      "filename": "firstmate-floor.txt",
+      "generator": "pwsh -NoLogo -NoProfile -File Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 -ExpectedHead <exact-sha>",
+      "contains": "explicit WSL distribution inventory/capability probe, selected distribution identity, Windows source repository identity, WSLENV path transport, WSL-owned standalone exact-head clone identity, owning harness contract result, read-only First Mate floor output, route artifact, operator report, bootstrap stdout, and isolated WSL stderr diagnostics",
+      "proof_ceiling": "physical Windows-to-WSL floor only; not live crew completion proof"
+    }
+  ],
+  "forbidden_evidence": [
+    "credentials",
+    "device codes",
+    "tokens",
+    "passwords",
+    "private SSH keys",
+    "unbounded model transcripts"
+  ]
+}

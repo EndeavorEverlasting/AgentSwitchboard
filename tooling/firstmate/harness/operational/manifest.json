@@ -1,0 +1,55 @@
+{
+  "schema": "agentswitchboard.firstmate-operational-harness.v1",
+  "harness_id": "firstmate-crew-orchestration",
+  "status": "contract-ready-runtime-unproved",
+  "canonical_entrypoint": "Test-AgentSwitchboard-FirstMate-Harness.sh",
+  "integration_contract": "tooling/firstmate/harness/integration-contract.json",
+  "components": {
+    "codebase_map": "tooling/firstmate/harness/operational/codebase-map.json",
+    "workflow_registry": "tooling/firstmate/harness/operational/workflow-registry.json",
+    "artifact_registry": "tooling/firstmate/harness/operational/artifact-registry.json",
+    "validator_registry": "tooling/firstmate/harness/operational/validator-registry.json",
+    "selector": "tooling/firstmate/harness/operational/Select-FirstMateWorkflow.py",
+    "report_builder": "tooling/firstmate/harness/operational/Build-FirstMateHarnessReport.py",
+    "windows_wsl_bridge": "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1",
+    "skill": ".ai/skills/firstmate-crew-orchestration/SKILL.md",
+    "operator_guide": "docs/harness/firstmate-operational-harness.md",
+    "operator_status": "docs/reports/firstmate-operational-harness-status.md",
+    "pre_commit_hook": "tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPreCommit.sh",
+    "pre_push_hook": "tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPrePush.sh",
+    "completeness_test": "tests/test_firstmate_operational_harness.py",
+    "windows_wsl_bridge_test": "tests/test_firstmate_windows_wsl_bridge.py"
+  },
+  "roles": {
+    "agentswitchboard": "control-plane",
+    "firstmate": "crew-chief",
+    "tmux": "reference-session-backend",
+    "herdr": "experimental-session-backend",
+    "coding_agents": "workers"
+  },
+  "routing": {
+    "single_writer_default": "direct-asb",
+    "parallel_linux_wsl_after_floor": "firstmate-local-only",
+    "reference_session_backend": "tmux",
+    "android": "separate-device-profile-lane",
+    "native_windows_firstmate": "unverified",
+    "windows_to_wsl_bridge": "tracked; explicit-distro LF-normalized empty-stream-safe standalone-clone physical reproof required",
+    "wsl_distribution_policy": "enumerate installed distributions; skip known utility distros unless explicitly requested; require bash+git capability; invoke all runtime commands with --distribution",
+    "wsl_command_transport": "normalize PowerShell command payloads from CRLF or CR to LF before bash -lc",
+    "native_stream_policy": "empty stdout/stderr is valid native process output; normalization and diagnostic helpers must accept empty strings before inspection",
+    "herdr_selection_enabled": false
+  },
+  "collision_boundaries": [
+    "Do not edit AGENTS.md or governance policy in this harness lane.",
+    "Do not absorb the separate Android/Herdr migration lane.",
+    "Do not mutate First Mate upstream or install dependencies from this harness.",
+    "One active writer per branch; First Mate workers require isolated branches/worktrees.",
+    "Do not treat Android readiness as a dependency for productive laptop/WSL crew work.",
+    "Do not parse WSL stderr as machine-readable stdout or depend on wslpath for Windows temporary-path transport.",
+    "Do not run Linux Git inside a Windows-created linked worktree; create a WSL-owned standalone exact-head clone from the clean committed source repository.",
+    "Do not execute the runtime through an implicit WSL default distribution; select and record an explicit bash+git-capable distribution first.",
+    "Do not pass raw Windows/PowerShell multiline command text to bash -lc; normalize CRLF and CR to LF at the bridge boundary.",
+    "Do not reject empty native stdout/stderr at PowerShell parameter binding; stream helpers must accept empty strings and decide semantics inside the function body."
+  ],
+  "proof_ceiling": "Tracked harness structure, deterministic route selection, report generation, hosted validators, explicit WSL distribution selection, LF-normalized PowerShell-to-bash command transport, empty-native-stream-safe bridge helpers, and Windows-to-WSL standalone-clone bridge contract. Physical-laptop bridge execution, live First Mate crew dispatch, and Herdr runtime remain unproved."
+}
