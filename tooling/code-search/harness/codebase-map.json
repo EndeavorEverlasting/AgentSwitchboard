@@ -1,0 +1,42 @@
+{
+  "schema": "agentswitchboard.code-search-codebase-map.v1",
+  "harnessId": "code-search-indexing",
+  "purpose": "Give agents a low-resource, deterministic path to repository code search without assuming one provider is installed, free, private, or indexed.",
+  "entrypoints": {
+    "manifest": "tooling/code-search/harness/manifest.json",
+    "providers": "tooling/code-search/harness/provider-registry.json",
+    "workflows": "tooling/code-search/harness/workflow-registry.json",
+    "selector": "tooling/code-search/Select-CodeSearchProvider.py",
+    "search": "tooling/code-search/Search-Codebase.py",
+    "status": "tooling/code-search/Get-CodeSearchHarnessStatus.py",
+    "validator": "scripts/Test-CodeSearchHarnessCompleteness.ps1",
+    "tests": "tests/test_code_search_harness.py",
+    "skill": ".ai/skills/code-search-indexing/SKILL.md"
+  },
+  "directories": [
+    {"path": "tooling/code-search/harness", "purpose": "Provider, workflow, artifact, validation, fixture, and schema authority."},
+    {"path": "tooling/code-search", "purpose": "Read-only provider selection, readiness reporting, and query execution wrappers."},
+    {"path": ".ai/skills/code-search-indexing", "purpose": "Scoped procedure for agents choosing and using code search."},
+    {"path": "docs/harness", "purpose": "Human operator guidance."},
+    {"path": "docs/reports", "purpose": "Tracked English repository readiness status."},
+    {"path": "tests", "purpose": "Dependency-free harness contracts."}
+  ],
+  "commands": [
+    {"name": "status", "command": "python tooling/code-search/Get-CodeSearchHarnessStatus.py --no-write", "effect": "read-only"},
+    {"name": "selector fixture", "command": "python tooling/code-search/Select-CodeSearchProvider.py --capabilities tooling/code-search/harness/fixtures/github-ready.json", "effect": "read-only"},
+    {"name": "query dry run", "command": "python tooling/code-search/Search-Codebase.py --provider github-api-code-search --repo EndeavorEverlasting/AgentSwitchboard --query manifest --dry-run", "effect": "read-only"},
+    {"name": "contracts", "command": "python tests/test_code_search_harness.py", "effect": "read-only"},
+    {"name": "completeness", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-CodeSearchHarnessCompleteness.ps1", "effect": "read-only"},
+    {"name": "diff hygiene", "command": "git diff --check", "effect": "read-only"}
+  ],
+  "knownTraps": [
+    "gh search code uses GitHub's legacy API-backed code search and is not the newer web Blackbird engine.",
+    "A GitHub-hosted repository is not automatically proven searchable; probe actual search readiness.",
+    "An empty result is not proof that an index is complete or fresh.",
+    "Sourcegraph Code Search is not a permanent free private-code default in current official documentation; require plan and endpoint verification.",
+    "Sourcegraph is an external code-processing boundary unless self-hosted; never select it for private code without explicit approval.",
+    "Zoekt local indexing consumes local CPU, disk, and memory; low resource use is a measurement question, not an assumption.",
+    "Zoekt Termux support is unverified by this harness; do not advertise it from generic Go portability alone.",
+    "Never print Sourcegraph tokens or use src search -get-curl because that can expose an access token."
+  ]
+}

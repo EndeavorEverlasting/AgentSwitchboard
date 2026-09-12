@@ -1,0 +1,9 @@
+{
+  "id": "code-search-query-execution",
+  "trigger": "Provider selection has passed and a bounded search should run.",
+  "inputs": ["selected provider", "query", "repository scope", "result limit", "local evidence root"],
+  "steps": ["construct provider command without shell interpolation", "run bounded child process", "capture stdout stderr exit and duration", "write local untracked query-result artifact", "return concise paths and match metadata"],
+  "outputs": ["bounded search results", "query-result artifact", "exit identity"],
+  "failureHandling": ["provider nonzero exit routes to failure recovery", "do not fall through to a different external provider without a fresh selection decision"],
+  "proofCeiling": "one observed query execution; not complete/fresh index proof"
+}
