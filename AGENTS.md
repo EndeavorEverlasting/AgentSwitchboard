@@ -4,7 +4,7 @@
 
 ## Agent operating principles
 
-- **Evidence before action.** Current repository/runtime evidence outranks memory, stale handoffs, filenames, and timestamps.
+- **Evidence before action.** Current repository/runtime evidence outranks memory, stale handoffs, and filenames.
 - **Floor before furniture.** Establish identity, authority, dependencies, scope, governing contracts, and proof ceiling before convenience work or mutation.
 - **Bounded sprints with declared scope.** Every writing sprint declares mission, owned/forbidden scope, artifacts, validation, and proof ceiling before mutation.
 - **One writer per branch.** Parallel writers require isolated branches/worktrees, disjoint ownership, and one convergence owner.
