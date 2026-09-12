@@ -28,13 +28,20 @@ class OpenCodeNativeSystemBootstrapTests(unittest.TestCase):
         self.assertFalse(contract["preflight"]["userScopedNodeOrNpmRequired"])
         self.assertTrue(contract["powershellSafety"]["implementationMustRunAsWholeScript"])
         self.assertFalse(contract["powershellSafety"]["interactiveFragmentExecutionAllowed"])
+        lifecycle = contract["lifecycle"]
+        self.assertTrue(lifecycle["applyUsesPerResourceWriteAheadIntent"])
+        self.assertTrue(lifecycle["reapplyRejectsOwnedStateDrift"])
+        self.assertTrue(lifecycle["removeCheckpointsEachResourceRollback"])
+        self.assertTrue(lifecycle["interruptedRemoveIsResumable"])
         proof = contract["proof"]
         self.assertTrue(proof["inspectReportsOwnershipAndRemoveReadiness"])
         self.assertTrue(proof["applyRequiresManagedLspReadback"])
         self.assertTrue(proof["applyRequiresResolvedLspDebugConfig"])
         self.assertTrue(proof["applyRequiresImmediateRemoveReadiness"])
+        self.assertTrue(proof["applyRejectsPreviouslyOwnedDrift"])
         self.assertTrue(proof["removeRequiresPreflightDriftCheckBeforeRollback"])
         self.assertTrue(proof["removeRequiresRollbackVerification"])
+        self.assertTrue(proof["removePersistsPerResourceRollbackCompletion"])
         self.assertTrue(proof["versionComparisonIgnoresLeadingV"])
         self.assertTrue(proof["dirtyCheckoutStillAllowsBootstrapOpencode"])
         self.assertTrue(proof["activeLspProofRequiresRuntimeObservation"])
@@ -94,6 +101,14 @@ class OpenCodeNativeSystemBootstrapTests(unittest.TestCase):
         self.assertIn("restore-managedconfigfromstate", lower)
         self.assertIn("$config.remove('lsp')", lower)
         self.assertNotIn("remove-item -literalpath $manageddirectory -recurse", lower)
+
+    def test_remove_without_state_treats_jsonc_as_present_and_unowned(self):
+        text = BOOTSTRAP.read_text(encoding="utf-8-sig")
+        start = text.index("function Invoke-OpenCodeRemove")
+        gate = text.index("OPENCODE_REMOVE_OWNERSHIP_UNPROVEN", start)
+        preflight = text[start:gate]
+        self.assertIn("Test-Path -LiteralPath $managedJsonc -PathType Leaf", preflight)
+        self.assertIn("Test-Path -LiteralPath $managedJson -PathType Leaf", preflight)
 
     def test_native_bootstrap_is_reachable_and_unbootstrap_is_direct(self):
         setup = SETUP.read_text(encoding="utf-8-sig")
