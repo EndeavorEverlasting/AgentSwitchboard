@@ -1,7 +1,9 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$script:PathTrimCharacters = [char[]]@([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)
+# Machine PATH values are Windows contract data even when validators execute on Linux.
+# Normalize both slash characters explicitly rather than inheriting the validator host's separator semantics.
+$script:PathTrimCharacters = [char[]]@([char]92, [char]47)
 
 function Assert-ASBAdapterId {
     param([Parameter(Mandatory)][string]$AdapterId)
