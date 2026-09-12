@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "mapId": "agentswitchboard.opinion-ledger-tracer.map.v1",
+  "mission": "Keep reusable agent-relevant judgments searchable without confusing them with work queues, personal history, or repository authority.",
+  "owners": {
+    "candidateStorage": "tooling/harness/operational/opinion-ledger/opinion_ledger.py",
+    "policy": "tooling/harness/operational/opinion-ledger/opinion-ledger.policy.json",
+    "schema": "tooling/harness/operational/opinion-ledger/opinion-entry.schema.json",
+    "unfinishedWork": ".ai/WORK_QUEUE.md",
+    "repositoryLaw": "AGENTS.md"
+  },
+  "entrypoints": ["state-root", "record", "search"],
+  "boundaries": [
+    "candidate opinion content is local-only and untracked",
+    "repository work state remains in .ai/WORK_QUEUE.md",
+    "personal accomplishment and sensitive health history are out of scope",
+    "candidate opinions never authorize execution or override current repository evidence",
+    "promotion is a separate reviewed mutation of the real canonical owner"
+  ],
+  "futureNotOwned": [
+    "SQLite/FTS5",
+    "MCP server",
+    "GitHub synchronization",
+    "Google Drive synchronization",
+    "vector search",
+    "standalone product extraction"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "policyId": "agentswitchboard.opinion-ledger-tracer.v1",
+  "purpose": "Capture reusable engineering opinions as local-only candidate context without turning opinions into repository law, execution authority, personal history, or a second work queue.",
+  "authority": {
+    "repositoryLaw": "AGENTS.md",
+    "unfinishedWork": ".ai/WORK_QUEUE.md",
+    "operationalHarness": "tooling/harness/operational/manifest.json",
+    "candidateOpinionOwner": "tooling/harness/operational/opinion-ledger/opinion_ledger.py"
+  },
+  "boundaries": {
+    "rawChatIsEvidenceNotAuthority": true,
+    "opinionsAreAdvisoryOnly": true,
+    "opinionsMayAuthorizeExecution": false,
+    "automaticPromotionAllowed": false,
+    "personalAccomplishmentHistoryOwned": false,
+    "healthOrSensitivePersonalHistoryOwned": false,
+    "remoteSyncOwned": false,
+    "githubSyncOwned": false,
+    "driveSyncOwned": false,
+    "mcpOwned": false,
+    "sqliteOwned": false,
+    "vectorSearchOwned": false
+  },
+  "promotion": {
+    "candidateState": "candidate",
+    "requiredReview": true,
+    "rule": "A candidate opinion becomes repository authority only through a separately reviewed change to the actual canonical doctrine, skill, ADR/spec, validator, policy, or implementation owner.",
+    "automaticRepoWrite": false
+  },
+  "storage": {
+    "visibility": "local-only",
+    "format": "JSON Lines",
+    "windowsDefault": "%LOCALAPPDATA%/AgentSwitchboard/opinion-ledger/opinions.jsonl",
+    "posixDefault": "${XDG_STATE_HOME:-~/.local/state}/agentswitchboard/opinion-ledger/opinions.jsonl",
+    "stateRootOverrideEnvironment": "AGENTSWITCHBOARD_OPINION_STATE_ROOT",
+    "trackedContentAllowed": false
+  },
+  "proofCeiling": "Local deterministic record/search behavior, state-path resolution, fail-closed malformed-state handling, and repository contract/routing validation only. It does not prove opinion correctness, promotion quality, cross-agent sync, provider memory, Drive/GitHub publication, or runtime adoption."
+}
