@@ -130,7 +130,48 @@ Immediately before bootstrap dispatch, the helper verifies that the claimed sour
 
 ## Runtime proof
 
-After Configure, run the generated CMD, open a `.py` or `.yml` file, and observe OpenCode server/diagnostic behavior. Configuration proof is not LSP runtime proof.
+Configuration proof is not LSP runtime proof. `lsp=true` and the immutable overlay prove configuration; active language-server diagnostics require opening a supported file and observing runtime behavior. `LSPs will activate as files are read.`
+
+PowerShell failure is expected: the current built-in list has no PowerShell LSP, so `.ps1/.psm1` remains validated by repository validators, not by LSP.
+
+A strict LSP runtime smoke test must:
+
+1. Run from the canonical checkout (verified `repository root`/`branch and HEAD` already proven by the runner).
+2. Read/open a supported source file (`.py` for Pyright, `.yml` for yaml-ls) exactly once solely to trigger server activation.
+3. Use only the LSP tool (no grep/ripgrep/text search/file search/AST search/manual inspection fallback) for:
+   - hover
+   - go-to-definition
+   - find-references
+4. Fail closed with the exact server/prerequisite error when the Python language server does not activate.
+
+Required runtime evidence fields (verbatim):
+
+- repository root
+- branch and HEAD
+- file opened to trigger LSP
+- active LSP/server after opening (empty/`No LSP server available`/`No results found for ...` when not active)
+- hover result
+- definition target
+- reference count and paths
+- exact errors (tool/server verbatim)
+- non-LSP semantic fallback used: MUST be `No`
+- final verdict: `LSP_RUNTIME_SMOKE_TEST: PASS` or `LSP_RUNTIME_SMOKE_TEST: FAIL — <reason>`
+
+Example classification:
+
+```text
+OpenCode experimental LSP tool exposed: PASS
+lsp=true configuration resolved: PASS
+permission.lsp=allow: PASS
+correct canonical checkout selected: PASS/FAIL
+supported source file opened/read: PASS/NOT PROVEN
+Python language server activated: PASS/NOT PROVEN
+hover: PASS/FAIL
+go-to-definition: PASS/FAIL
+find-references: PASS/FAIL
+```
+
+After Configure, run the generated CMD, open a `.py` or `.yml` file, and observe OpenCode server/diagnostic behavior. Existing hosted/Windows CI can prove cwd-independent bootstrap routing, checkout verification, immutable installer provenance, etc., but cannot promote configuration evidence to runtime LSP proof without this file-open observation.
 
 ## Troubleshooting
 

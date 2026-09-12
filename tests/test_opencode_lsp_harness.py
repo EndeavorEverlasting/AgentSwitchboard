@@ -166,5 +166,18 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         ci=(ROOT/'.github/workflows/opencode-lsp-harness.yml').read_text(encoding='utf-8')
         for token in ('SKILLS.md','TRIGGERS.md','workflow-registry.json','tests.test_opencode_lsp_harness','tests.test_opencode_runtime_recovery','Test-OpenCodeLspHarness.ps1','Test-AgentDocumentationContract.ps1','git diff --check','Windows CMD entrypoint','shell: cmd','run: Test-OpenCodeLspHarness.cmd'):
             self.assertIn(token,ci)
+    def test_runtime_proof_is_strict_and_separates_configuration_from_activation(self):
+        doc=(ROOT/'docs/harness/opencode-lsp-workstation-setup.md').read_text(encoding='utf-8')
+        lower=doc.lower()
+        for token in ('configuration proof is not lsp runtime proof','lsps will activate as files are read','powershell failure is expected','repository root','branch and head','file opened to trigger lsp','active lsp/server after opening','hover result','definition target','reference count and paths','exact errors','non-lsp semantic fallback used: must be `no`'):
+            self.assertIn(token,lower,token)
+        self.assertIn('LSP_RUNTIME_SMOKE_TEST: PASS',doc)
+        self.assertIn('LSP_RUNTIME_SMOKE_TEST: FAIL',doc)
+        for token in ('correct canonical checkout selected:','supported source file opened/read:','python language server activated:'):
+            self.assertIn(token.lower(),lower)
+        manifest=json.loads((H/'manifest.json').read_text(encoding='utf-8'))
+        ceiling=str(manifest['safety']['proofCeiling']).lower()
+        for token in ('opening a supported file','observing runtime behavior','active lsp diagnostics'):
+            self.assertIn(token,ceiling,token)
 
 if __name__ == '__main__': unittest.main()

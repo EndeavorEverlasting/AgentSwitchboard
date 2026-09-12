@@ -120,6 +120,13 @@ $preCommit = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/harness/oper
 foreach ($token in @('--diff-filter=ACMRD','git -C $RootPath diff --quiet -- $path')) { if (-not $preCommit.Contains($token)) { [void]$failures.Add("precommit-contract:$token") } }
 $prePush = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPrePush.ps1') -Raw
 foreach ($token in @('[Parameter(Mandatory=$true)][string]$BaseRef','rev-parse --verify')) { if (-not $prePush.Contains($token)) { [void]$failures.Add("prepush-contract:$token") } }
+$runtimeDoc = Get-Content -LiteralPath (Join-Path $RootPath 'docs/harness/opencode-lsp-workstation-setup.md') -Raw
+$runtimeDocLower = $runtimeDoc.ToLowerInvariant()
+foreach ($token in @('configuration proof is not lsp runtime proof','lsps will activate as files are read','powershell failure is expected','repository root','branch and head','file opened to trigger lsp','active lsp/server after opening','hover result','definition target','reference count and paths','exact errors','non-lsp semantic fallback used: must be `no`','lsp_runtime_smoke_test: pass','lsp_runtime_smoke_test: fail','correct canonical checkout selected:','supported source file opened/read:','python language server activated:')) { if (-not $runtimeDocLower.Contains($token)) { [void]$failures.Add("runtime-proof-doc-missing:$token") } }
+$operatorReport = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/operator-report.template.md') -Raw
+if (-not $operatorReport.Contains('proofCeiling')) { [void]$failures.Add('operator-report-missing-proof-ceiling') }
+$manifestProofCeiling = ([string]$manifest.safety.proofCeiling).ToLowerInvariant()
+foreach ($token in @('opening a supported file','observing runtime behavior','active lsp diagnostics')) { if (-not $manifestProofCeiling.Contains($token)) { [void]$failures.Add("manifest-proof-ceiling-missing:$token") } }
 if ($failures.Count -gt 0) { Write-Host 'OPENCODE LSP HARNESS: FAIL' -ForegroundColor Red; $failures | ForEach-Object { Write-Host "- $_" -ForegroundColor Red }; exit 1 }
 Write-Host "OPENCODE LSP HARNESS: PASS ($($required.Count) required files)" -ForegroundColor Green
 exit 0
