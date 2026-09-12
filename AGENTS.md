@@ -97,4 +97,4 @@ A task is complete only when:
 
 ## Compatibility and preserved authority
 
-The detailed appendix preserves prior unique operating rules. If this compact root and that appendix appear to conflict, apply the stricter safe interpretation and repair routing rather than silently weakening either source.
+Scoped or triggered guidance may strengthen but never weaken root invariants. If a conflict remains, stop, preserve evidence, name it, and escalate to the repository owner before proceeding.
