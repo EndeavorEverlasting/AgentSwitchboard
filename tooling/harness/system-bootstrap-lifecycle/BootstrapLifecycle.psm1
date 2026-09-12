@@ -12,6 +12,13 @@ function Assert-ASBAdapterId {
     }
 }
 
+function Assert-ASBInstallId {
+    param([Parameter(Mandatory)][string]$InstallId)
+    if ($InstallId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$' -or $InstallId.Contains('..')) {
+        throw 'Invalid AgentSwitchboard lifecycle install id. History identifiers may contain only letters, numbers, dot, underscore, and dash, may not contain dot-dot segments, and may not contain path separators.'
+    }
+}
+
 function Get-ASBLifecycleRoot {
     [CmdletBinding()]
     param(
@@ -76,9 +83,7 @@ function Archive-ASBLifecycleState {
         [Parameter(Mandatory)][System.Collections.IDictionary]$State
     )
     $installId = [string]$State['installId']
-    if ([string]::IsNullOrWhiteSpace($installId)) {
-        $installId = 'unknown-' + [guid]::NewGuid().ToString('N').Substring(0,8)
-    }
+    Assert-ASBInstallId -InstallId $installId
     $historyRoot = Join-Path $LifecycleRoot 'history'
     $null = New-Item -ItemType Directory -Path $historyRoot -Force
     $historyPath = Join-Path $historyRoot ("$installId.json")
