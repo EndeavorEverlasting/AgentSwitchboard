@@ -27,8 +27,11 @@ Before every writing sprint, state:
 - repo and branch;
 - lane and mission;
 - owned scope and forbidden scope;
+- dependencies/collisions and safe parallel work when applicable;
+- canonical owner, source of truth, and interfaces when work spans surfaces;
 - expected artifacts and validation commands;
-- proof ceiling.
+- proof ceiling;
+- commit, push, and PR expectation.
 
 If remote state or ownership is uncertain, perform read-only intake first. Preserve existing work and keep mutation inside owned scope.
 
