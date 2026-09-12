@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentswitchboard.local/schemas/child-agent-request.v1.json",
+  "title": "child-agent-request.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["invocationId", "lineage", "authority", "budgets", "evidenceRoot", "repositoryPath", "branch", "head", "promptPath", "writeMode"],
+  "properties": {
+    "invocationId": { "type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" },
+    "lineage": { "type": "array", "items": { "type": "string" } },
+    "authority": { "type": "string", "enum": ["parent", "ASB", "adapter"] },
+    "budgets": { "type": "object", "required": ["timeoutSeconds", "maxTokens"], "properties": { "timeoutSeconds": { "type": "integer", "minimum": 1, "maximum": 600 }, "maxTokens": { "type": "integer", "minimum": 100, "maximum": 100000 } }, "additionalProperties": false },
+    "evidenceRoot": { "type": "string", "minLength": 1 },
+    "repositoryPath": { "type": "string", "minLength": 1 },
+    "branch": { "type": "string", "minLength": 1 },
+    "head": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "promptPath": { "type": "string", "minLength": 1 },
+    "writeMode": { "type": "string", "enum": ["read-only", "writer-isolated"] }
+  }
+}
