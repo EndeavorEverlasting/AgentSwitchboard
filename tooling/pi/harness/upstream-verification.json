@@ -1,14 +1,15 @@
 {
   "schema": "agentswitchboard.pi-upstream-verification.v1",
-  "verifiedAt": "2026-09-03",
+  "verifiedAt": "2026-09-11",
   "package": "@earendil-works/pi-coding-agent",
-  "version": "0.84.4",
-  "versionTag": "v0.84.4",
+  "version": "0.85.1",
+  "versionTag": "v0.85.1",
   "sourceRepository": "earendil-works/pi",
   "sourceUrl": "https://github.com/earendil-works/pi",
-  "packageManifestUrl": "https://github.com/earendil-works/pi/blob/v0.84.4/packages/coding-agent/package.json",
-  "documentationUrl": "https://github.com/earendil-works/pi/blob/v0.84.4/packages/coding-agent/docs/index.md",
-  "windowsDocumentationUrl": "https://github.com/earendil-works/pi/blob/v0.84.4/packages/coding-agent/docs/windows.md",
+  "packageManifestUrl": "https://github.com/earendil-works/pi/blob/v0.85.1/packages/coding-agent/package.json",
+  "documentationUrl": "https://github.com/earendil-works/pi/blob/v0.85.1/packages/coding-agent/README.md",
+  "windowsDocumentationUrl": "https://github.com/earendil-works/pi/blob/v0.85.1/packages/coding-agent/docs/windows.md",
+  "rpcDocumentationUrl": "https://github.com/earendil-works/pi/blob/v0.85.1/packages/coding-agent/docs/rpc.md",
   "supportedOperatingSystems": [
     "Windows",
     "Linux",
@@ -18,7 +19,7 @@
   "nodeEngine": ">=22.19.0",
   "executable": "pi",
   "versionProbe": "pi --version",
-  "installCommand": "npm install -g --ignore-scripts @earendil-works/pi-coding-agent@0.84.4",
+  "installCommand": "npm install -g --ignore-scripts @earendil-works/pi-coding-agent@0.85.1",
   "rollbackCommand": "npm uninstall -g @earendil-works/pi-coding-agent",
   "expectedFiles": [
     "package.json",
@@ -28,6 +29,41 @@
   "expectedExecutableMapping": {
     "command": "pi",
     "packageRelativePath": "dist/bundle/cli.js"
+  },
+  "nativeRelease": {
+    "preferredWindowsDistribution": "standalone-release",
+    "releaseApiUrl": "https://api.github.com/repos/earendil-works/pi/releases/tags/v0.85.1",
+    "releasePageUrl": "https://github.com/earendil-works/pi/releases/tag/v0.85.1",
+    "buildDefinition": "scripts/build-binaries.sh@v0.85.1",
+    "archiveLayout": "Windows ZIP contains root-level pi.exe plus package.json, docs, assets, native helpers, and runtime dependencies.",
+    "windows": {
+      "x64": {
+        "assetName": "pi-windows-x64.zip",
+        "downloadUrl": "https://github.com/earendil-works/pi/releases/download/v0.85.1/pi-windows-x64.zip",
+        "sha256": "002fa95b90d521245b9985d8f168caebc237ad56e7e30b319807dee1b2e17e1c"
+      },
+      "arm64": {
+        "assetName": "pi-windows-arm64.zip",
+        "downloadUrl": "https://github.com/earendil-works/pi/releases/download/v0.85.1/pi-windows-arm64.zip",
+        "sha256": "b25e96fe64c9f41f75a924c0d36f395abb98d6c6fec0b78aaa0b86926f938bb4"
+      }
+    },
+    "systemBootstrap": {
+      "owner": "tooling/pi/Install-AgentSwitchboardPiSystem.ps1",
+      "installRoot": "%ProgramFiles%/AgentSwitchboard/agents/pi/0.85.1",
+      "launcherRoot": "%ProgramFiles%/AgentSwitchboard/bin",
+      "packageManagerRequired": false,
+      "nodeRuntimeRequired": false,
+      "configurationMutationAllowed": false,
+      "authenticationMutationAllowed": false,
+      "projectTrustMutationAllowed": false
+    }
+  },
+  "programmaticModes": {
+    "json": true,
+    "rpc": true,
+    "rpcFraming": "strict LF-delimited JSONL",
+    "childInvocationOwner": "tooling/pi/harness/child-agent-invocation.contract.json"
   },
   "shellRequirement": "bash",
   "windowsShellDiscovery": [
@@ -42,23 +78,32 @@
     "deprecatedMessage": "please use @earendil-works/pi-coding-agent instead going forward"
   },
   "verificationCommands": [
-    "npm view @earendil-works/pi-coding-agent version engines --json",
-    "npm view @mariozechner/pi-coding-agent version deprecated --json"
+    "npm view @earendil-works/pi-coding-agent version engines repository bin --json",
+    "npm view @mariozechner/pi-coding-agent version deprecated --json",
+    "GET https://api.github.com/repos/earendil-works/pi/releases/tags/v0.85.1"
   ],
   "officialEvidence": [
     {
-      "claim": "package identity, version, Node engine, executable mapping, and published file surfaces",
-      "source": "packages/coding-agent/package.json@v0.84.4"
+      "claim": "package identity, version, Node engine, executable mapping, and published package surfaces",
+      "source": "packages/coding-agent/package.json@v0.85.1"
     },
     {
-      "claim": "npm install and uninstall commands plus Linux/macOS installation support",
-      "source": "packages/coding-agent/docs/index.md@v0.84.4"
+      "claim": "standalone Windows x64 and ARM64 release assets plus official SHA-256 digests",
+      "source": "GitHub release v0.85.1"
+    },
+    {
+      "claim": "standalone Windows archives contain a compiled root-level pi.exe and required adjacent runtime resources",
+      "source": "scripts/build-binaries.sh@v0.85.1"
     },
     {
       "claim": "Windows support and Bash discovery order",
-      "source": "packages/coding-agent/docs/windows.md@v0.84.4"
+      "source": "packages/coding-agent/docs/windows.md@v0.85.1"
+    },
+    {
+      "claim": "headless process integration through JSON and RPC modes with strict LF-delimited JSONL framing for RPC",
+      "source": "packages/coding-agent/docs/rpc.md@v0.85.1"
     }
   ],
   "configurationScope": "project-local",
-  "proofCeiling": "Official v0.84.4 source records package identity, source URL, supported desktop operating systems, expected package files and executable mapping, Node floor, install command, and rollback path. A workstation must still resolve live npm metadata, local Node/npm/Git/bash paths and versions, and installed Pi identity before installation or runtime claims."
+  "proofCeiling": "Official v0.85.1 records package identity, desktop support, the standalone Windows release assets and digests, build layout, Bash requirement, npm compatibility route, and JSON/RPC process-integration modes. Repository proof does not establish a physical workstation install, provider authentication, model response, project trust, or child-agent delivery."
 }

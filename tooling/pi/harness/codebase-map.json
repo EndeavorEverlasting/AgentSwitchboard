@@ -2,11 +2,16 @@
   "schema": "agentswitchboard.pi-codebase-map.v1",
   "harnessId": "agentswitchboard.pi-operational-harness.v1",
   "repository": "EndeavorEverlasting/AgentSwitchboard",
-  "purpose": "Map the smallest repository surfaces a Pi-backed agent needs for workstation prerequisite proof, intake, bounded orchestration, validation, artifact production, and handoff.",
+  "purpose": "Map the smallest repository surfaces a Pi-backed agent needs for system bootstrap, workstation compatibility proof, bounded child invocation, workflow intake, validation, artifact production, and handoff.",
   "entrypoints": {
     "governance": "AGENTS.md",
     "rootMap": "CODEBASE_MAP.md",
     "manifest": ".ai/harness/manifest.json",
+    "systemBootstrap": "tooling/pi/Install-AgentSwitchboardPiSystem.ps1",
+    "systemBootstrapCmd": "Bootstrap-Pi-SystemWide.cmd",
+    "systemBootstrapContract": "tooling/pi/harness/system-bootstrap.contract.json",
+    "childInvocation": "tooling/pi/Invoke-AgentSwitchboardPiChild.ps1",
+    "childInvocationContract": "tooling/pi/harness/child-agent-invocation.contract.json",
     "workstationPrereqs": "tooling/pi/Test-PiWorkstationPrereqs.ps1",
     "workstationPrereqContracts": "tests/Test-PiWorkstationPrereqsContracts.ps1",
     "upstreamVerification": "tooling/pi/harness/upstream-verification.json",
@@ -16,12 +21,14 @@
     "skill": ".ai/skills/pi-fusion-orchestration/SKILL.md",
     "status": "tooling/pi/Get-PiHarnessStatus.ps1",
     "validator": "scripts/Test-PiHarnessCompleteness.ps1",
-    "operatorGuide": "docs/harness/pi-operational-harness.md"
+    "operatorGuide": "docs/harness/pi-operational-harness.md",
+    "systemAndChildGuide": "docs/harness/pi-system-bootstrap-and-child-agents.md"
   },
   "directories": [
     {"path": ".ai/harness", "purpose": "Canonical manifests, schemas, workflows, registries, fixtures, and proof policy."},
     {"path": ".ai/skills", "purpose": "Scoped agent procedures; no product behavior belongs only in prose."},
-    {"path": "tooling/pi/harness", "purpose": "Pi adapter maps, upstream verification, workflows, schemas, and artifact contracts."},
+    {"path": "tooling/pi", "purpose": "Pi runtime bootstrap, child invocation, workstation probes, and runtime status."},
+    {"path": "tooling/pi/harness", "purpose": "Pi adapter maps, upstream verification, system/child contracts, workflows, schemas, and artifact contracts."},
     {"path": "tooling/pi/hooks", "purpose": "Opt-in local validation hooks; never installed implicitly."},
     {"path": "scripts", "purpose": "Repository-level deterministic validators and read-only probes."},
     {"path": "tests", "purpose": "Dependency-free structural and executable behavioral contracts."},
@@ -29,24 +36,29 @@
     {"path": ".github/workflows", "purpose": "Cross-platform CI proof gates."}
   ],
   "commands": [
-    {"name": "Pi workstation prerequisites", "command": "pwsh -NoLogo -NoProfile -File tooling/pi/Test-PiWorkstationPrereqs.ps1", "effect": "read-only", "proof": "local Node/npm/Git/bash/Pi identity plus live npm upstream drift gate"},
+    {"name": "Pi system inspect", "command": "pwsh -NoLogo -NoProfile -File tooling/pi/Install-AgentSwitchboardPiSystem.ps1 -Mode Inspect -RootPath .", "effect": "read-only", "proof": "managed runtime, launcher/PATH presence, exact version, and Git Bash discovery"},
+    {"name": "Pi system bootstrap", "command": "Bootstrap-Pi-SystemWide.cmd", "effect": "machine mutation", "proof": "tracked release digest, Program Files runtime, managed launcher, Machine PATH, direct exact-version proof"},
+    {"name": "Pi child invocation", "command": "pwsh -NoLogo -NoProfile -File tooling/pi/Invoke-AgentSwitchboardPiChild.ps1 -PromptPath <packet> -RepositoryPath <worktree> -Role <role> -WriteMode <read-only|writer>", "effect": "bounded provider/runtime execution; writer only in isolated worktree", "proof": "child runtime identity, repository guard, process outcome, agent_end, bounded result envelope"},
+    {"name": "Pi npm compatibility prerequisites", "command": "pwsh -NoLogo -NoProfile -File tooling/pi/Test-PiWorkstationPrereqs.ps1", "effect": "read-only", "proof": "local Node/npm/Git/bash/Pi identity plus live npm compatibility/upstream drift gate"},
     {"name": "Pi workstation prerequisite contracts", "command": "pwsh -NoLogo -NoProfile -File tests/Test-PiWorkstationPrereqsContracts.ps1", "effect": "temporary local test evidence only", "proof": "structured missing-record failure, bounded path evidence, and Windows project shellPath precedence"},
-    {"name": "Pi harness status", "command": "pwsh -NoLogo -NoProfile -File tooling/pi/Get-PiHarnessStatus.ps1", "effect": "read-only", "proof": "repository contract readiness only"},
+    {"name": "Pi harness status", "command": "pwsh -NoLogo -NoProfile -File tooling/pi/Get-PiHarnessStatus.ps1", "effect": "read-only", "proof": "repository contract plus managed system-runtime presence"},
     {"name": "Pi completeness", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-PiHarnessCompleteness.ps1", "effect": "read-only", "proof": "tracked component and contract consistency"},
-    {"name": "Pi dependency-free contracts", "command": "python tests/test_pi_harness_contracts.py", "effect": "read-only", "proof": "JSON and workflow semantics"},
+    {"name": "Pi dependency-free contracts", "command": "python tests/test_pi_harness_contracts.py", "effect": "read-only", "proof": "JSON, bootstrap, child-invocation, and workflow semantics"},
     {"name": "Aggregate harness", "command": "Test-AppHarness.cmd", "effect": "read-only", "proof": "registered offline repository harness only"},
     {"name": "Diff hygiene", "command": "git diff --check", "effect": "read-only", "proof": "whitespace and patch hygiene"}
   ],
   "knownTraps": [
     "Do not infer Pi installation, provider readiness, privacy, or model delivery from configuration files.",
-    "Do not install when live npm metadata differs from the tracked Pi upstream verification record; refresh and review the pin first.",
-    "Record bounded npm/Pi command-path evidence with total and omitted counts because Windows user-level shims may precede Program Files installations.",
-    "Honor a reviewed project-local Pi shellPath before Windows Git defaults or PATH fallbacks.",
-    "Do not execute third-party extension snippets until the pinned upstream API and permissions are reviewed.",
-    "Enforce one writer per branch; architect, builder, validator, and adjudicator roles must not share write authority.",
-    "Do not fuse unattributed outputs or hide unresolved divergence.",
-    "Do not run autovalidation without attempt, wall-clock, token, cancellation, and no-progress bounds.",
-    "Do not store prompts, raw model output, credentials, or local endpoint evidence in tracked artifacts."
+    "Windows system bootstrap uses the exact tracked standalone release archive and digest; do not substitute a user-global npm Pi or arbitrary PATH executable.",
+    "Machine ownership stops at the Pi runtime, AgentSwitchboard launchers, and Machine PATH entry. Provider authentication, Pi settings, project trust, sessions, and model preferences remain user/project scoped.",
+    "The npm workstation preflight is a compatibility/adoption probe; it is not the Windows system-bootstrap dependency floor.",
+    "Record bounded npm/Pi command-path evidence because Windows user-level shims may coexist with the managed Program Files runtime.",
+    "Honor a reviewed project-local Pi shellPath before Windows Git defaults or PATH fallbacks for interactive project use.",
+    "Do not configure every agent pair directly. Parents delegate bounded packets through the AgentSwitchboard child-invocation seam.",
+    "Read-only child agents may fan out; writer children require clean isolated worktrees, non-default branches, and one writer per mutation surface.",
+    "Raw Pi JSON event streams can contain prompt/model transcript data and must remain outside tracked repository authority.",
+    "Do not promote one-shot JSON child invocation to persistent RPC until LF framing, cancellation, session isolation, and result-envelope behavior have executable tests.",
+    "Do not run autovalidation without attempt, wall-clock, token, cancellation, and no-progress bounds."
   ],
-  "proofCeiling": "Repository map, upstream prerequisite record, workstation preflight contract, and deterministic offline contracts only; no Pi installation, provider, model, extension, network privacy, or code-delivery proof."
+  "proofCeiling": "Repository contracts and CI can prove exact tracked release identity, system-bootstrap implementation, bounded child-invocation guards, and deterministic workflow semantics. Physical machine installation, provider authentication, model response, child-agent quality, actual parallel fan-out, fusion/autovalidation delivery, and deployment require separate runtime evidence."
 }

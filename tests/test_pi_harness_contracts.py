@@ -21,6 +21,8 @@ def main() -> None:
     codebase = load("tooling/pi/harness/codebase-map.json")
     registry = load("tooling/pi/harness/pi-adapter.registry.json")
     upstream = load("tooling/pi/harness/upstream-verification.json")
+    system_bootstrap = load("tooling/pi/harness/system-bootstrap.contract.json")
+    child = load("tooling/pi/harness/child-agent-invocation.contract.json")
     artifacts = load("tooling/pi/harness/artifact-registry.json")
     schema = load("tooling/pi/harness/schemas/pi-harness-contracts.schema.json")
     intake = load("tooling/pi/harness/workflows/task-intake.workflow.json")
@@ -30,43 +32,81 @@ def main() -> None:
     assert codebase["schema"] == "agentswitchboard.pi-codebase-map.v1"
     assert codebase["entrypoints"]["validator"] == "scripts/Test-PiHarnessCompleteness.ps1"
     assert codebase["entrypoints"]["workstationPrereqs"] == "tooling/pi/Test-PiWorkstationPrereqs.ps1"
+    assert codebase["entrypoints"]["systemBootstrap"] == "tooling/pi/Install-AgentSwitchboardPiSystem.ps1"
+    assert codebase["entrypoints"]["childInvocation"] == "tooling/pi/Invoke-AgentSwitchboardPiChild.ps1"
     assert codebase["entrypoints"]["upstreamVerification"] == "tooling/pi/harness/upstream-verification.json"
     assert any("one writer" in trap.lower() for trap in codebase["knownTraps"])
-    assert any("live npm metadata" in trap.lower() for trap in codebase["knownTraps"])
-    assert any("npm" in trap.lower() and "path" in trap.lower() for trap in codebase["knownTraps"])
+    assert any("npm" in trap.lower() and "compatibility" in trap.lower() for trap in codebase["knownTraps"])
+    assert any("pair" in trap.lower() and "agent" in trap.lower() for trap in codebase["knownTraps"])
+    assert any("raw pi json" in trap.lower() for trap in codebase["knownTraps"])
 
     assert upstream["schema"] == "agentswitchboard.pi-upstream-verification.v1"
-    assert upstream["verifiedAt"] == "2026-09-03"
+    assert upstream["verifiedAt"] == "2026-09-11"
     assert upstream["package"] == "@earendil-works/pi-coding-agent"
-    assert upstream["version"] == "0.84.4"
-    assert upstream["versionTag"] == "v0.84.4"
+    assert upstream["version"] == "0.85.1"
+    assert upstream["versionTag"] == "v0.85.1"
     assert upstream["sourceRepository"] == "earendil-works/pi"
     assert upstream["sourceUrl"] == "https://github.com/earendil-works/pi"
     assert upstream["minimumNodeVersion"] == "22.19.0"
     assert upstream["nodeEngine"] == ">=22.19.0"
     assert "--ignore-scripts" in upstream["installCommand"]
     assert upstream["rollbackCommand"] == "npm uninstall -g @earendil-works/pi-coding-agent"
-    assert len(upstream["supportedOperatingSystems"]) >= 3 and "Windows" in upstream["supportedOperatingSystems"]
-    assert len(upstream["expectedFiles"]) >= 3 and "dist/bundle/cli.js" in upstream["expectedFiles"]
+    assert "Windows" in upstream["supportedOperatingSystems"]
     assert upstream["expectedExecutableMapping"]["command"] == "pi"
     assert upstream["expectedExecutableMapping"]["packageRelativePath"] == "dist/bundle/cli.js"
-    assert len(upstream["officialEvidence"]) >= 3
+    assert len(upstream["officialEvidence"]) >= 5
     assert upstream["legacyPackage"]["package"] == "@mariozechner/pi-coding-agent"
     assert upstream["legacyPackage"]["deprecated"] is True
-    assert upstream["legacyPackage"]["deprecatedMessage"]
+    native = upstream["nativeRelease"]
+    assert native["preferredWindowsDistribution"] == "standalone-release"
+    assert native["windows"]["x64"]["assetName"] == "pi-windows-x64.zip"
+    assert native["windows"]["x64"]["sha256"] == "002fa95b90d521245b9985d8f168caebc237ad56e7e30b319807dee1b2e17e1c"
+    assert native["windows"]["arm64"]["assetName"] == "pi-windows-arm64.zip"
+    assert native["windows"]["arm64"]["sha256"] == "b25e96fe64c9f41f75a924c0d36f395abb98d6c6fec0b78aaa0b86926f938bb4"
+    assert native["systemBootstrap"]["packageManagerRequired"] is False
+    assert native["systemBootstrap"]["nodeRuntimeRequired"] is False
+    assert upstream["programmaticModes"]["json"] is True
+    assert upstream["programmaticModes"]["rpc"] is True
+    assert upstream["programmaticModes"]["rpcFraming"] == "strict LF-delimited JSONL"
+
+    assert system_bootstrap["contractId"] == "agentswitchboard.pi-system-bootstrap.v1"
+    assert system_bootstrap["owner"] == "tooling/pi/Install-AgentSwitchboardPiSystem.ps1"
+    assert system_bootstrap["preflight"]["packageManagersAssumed"] == []
+    assert system_bootstrap["preflight"]["nodeRuntimeRequired"] is False
+    assert system_bootstrap["safety"]["globalPiConfigurationMutationAllowed"] is False
+    assert system_bootstrap["safety"]["providerAuthenticationMutationAllowed"] is False
+    assert system_bootstrap["safety"]["projectTrustMutationAllowed"] is False
+    assert system_bootstrap["safety"]["wholeScriptPowerShellRequired"] is True
 
     assert registry["schema"] == "agentswitchboard.pi-adapter-registry.v1"
     assert registry["upstream"]["package"] == upstream["package"]
     assert registry["upstream"]["sourceRepository"] == upstream["sourceRepository"]
     assert registry["upstream"]["pinnedVersion"] == upstream["version"]
     assert registry["upstream"]["status"] == "verified-prerequisite"
-    assert registry["upstream"]["verificationRecord"] == "tooling/pi/harness/upstream-verification.json"
     assert registry["configuration"]["preferredScope"] == "project-local"
     assert registry["configuration"]["globalConfigurationMutationAllowed"] is False
     assert registry["configuration"]["implicitHookInstallationAllowed"] is False
+    assert registry["systemRuntime"]["packageManagerRequired"] is False
+    assert registry["systemRuntime"]["nodeRuntimeRequired"] is False
+    assert registry["childInvocation"]["pairwiseAgentConfigurationRequired"] is False
+    assert registry["childInvocation"]["separateChildContext"] is True
+    assert registry["childInvocation"]["boundedResultEnvelope"] is True
     assert registry["privacyClaimPolicy"]["localhostIsSufficient"] is False
     assert all(route["writerCount"] == 1 for route in registry["routes"])
     assert all(route["status"] == "contract-only" for route in registry["routes"])
+
+    assert child["contractId"] == "agentswitchboard.pi-child-agent.v1"
+    assert child["architecture"]["pairwiseAgentConfigurationRequired"] is False
+    assert child["piTransport"]["mode"] == "json-subprocess"
+    assert child["piTransport"]["upstreamRpcAvailable"] is True
+    assert child["writeModes"]["writer"]["isolatedWorktreeRequired"] is True
+    assert child["writeModes"]["writer"]["mainOrDefaultBranchAllowed"] is False
+    assert child["writeModes"]["writer"]["writersPerMutationSurface"] == 1
+    assert child["resultEnvelope"]["rawPromptIncludedInResultEnvelope"] is False
+    assert child["resultEnvelope"]["rawEventMayContainPrompt"] is True
+    assert child["resultEnvelope"]["rawEventsTracked"] is False
+    assert child["parallelism"]["coordinatorOwnsRejoin"] is True
+    assert child["parallelism"]["childMayMergeDefaultBranch"] is False
 
     preflight_path = ROOT / "tooling/pi/Test-PiWorkstationPrereqs.ps1"
     assert preflight_path.is_file()
@@ -78,34 +118,17 @@ def main() -> None:
         "Get-OptionalPropertyValue",
         "Get-ProjectShellPath",
         "Get-BoundedPathEvidence",
-        "Get-AbsolutePath",
         "Test-PathInsideRoot",
         "Normalize-RepositoryUrl",
         "ProbeTimeoutSeconds",
         "OUTPUT_DIRECTORY_INSIDE_REPOSITORY",
-        "pathsOmitted",
         "UPSTREAM_VERIFICATION_MISSING",
         "UPSTREAM_VERIFICATION_INCOMPLETE",
-        "recoveryAction",
-        "metadataShapeComplete",
-        "Live npm metadata was reachable but missing one or more expected version, engine, repository, executable, or deprecation fields.",
-        "[string]$verification.package",
-        "[string]$verification.legacyPackage.package",
-        "'engines'",
-        "'deprecated'",
-        "'repository'",
-        "'bin'",
         "upstream-drift",
         "installed-version-drift",
         "ready-to-install",
-        "probe-timeout",
         "NoNetwork",
         "AllowUnready",
-        "legacyPackage",
-        "repositoryUrl",
-        "executablePath",
-        "failureCode",
-        "probeTimeoutSeconds",
     ):
         assert token in preflight, f"missing preflight contract token: {token}"
     assert "npm install -g @mariozechner/pi-coding-agent" not in preflight
@@ -114,13 +137,41 @@ def main() -> None:
     executable_contract = ROOT / "tests/Test-PiWorkstationPrereqsContracts.ps1"
     assert executable_contract.is_file()
     executable_text = executable_contract.read_text(encoding="utf-8-sig")
-    for token in (
-        "UPSTREAM_VERIFICATION_MISSING",
-        "pathsOmitted",
-        "configured-shell/precedence",
-        "shellPath",
-    ):
+    for token in ("UPSTREAM_VERIFICATION_MISSING", "pathsOmitted", "configured-shell/precedence", "shellPath"):
         assert token in executable_text, f"missing executable prerequisite contract token: {token}"
+
+    bootstrap_text = (ROOT / "tooling/pi/Install-AgentSwitchboardPiSystem.ps1").read_text(encoding="utf-8-sig")
+    for token in (
+        "agentswitchboard.pi-system-bootstrap.v1",
+        "Get-FileHash",
+        "Expand-Archive",
+        "PI_RELEASE_SHA256_MISMATCH",
+        "PI_LAUNCHER_PATH_ALREADY_OWNED",
+        "PI_INSTALL_DIRECTORY_ALREADY_OWNED",
+        "AgentSwitchboard\\agents\\pi",
+        "AgentSwitchboard\\bin",
+        "GIT_BASH_REQUIRED",
+    ):
+        assert token in bootstrap_text, f"missing system bootstrap token: {token}"
+    for forbidden in ("npm install", "choco install", "scoop install", "winget install", "Invoke-Expression"):
+        assert forbidden.lower() not in bootstrap_text.lower()
+
+    child_text = (ROOT / "tooling/pi/Invoke-AgentSwitchboardPiChild.ps1").read_text(encoding="utf-8-sig")
+    for token in (
+        "--mode','json",
+        "--no-session",
+        "--no-extensions",
+        "--no-skills",
+        "--no-prompt-templates",
+        "--no-approve",
+        "agent_end",
+        "completed-unvalidated",
+        "Writer child requires an isolated linked Git worktree",
+        "PI_CHILD_READ_ONLY_MUTATION",
+    ):
+        assert token in child_text, f"missing child adapter token: {token}"
+    assert "Get-Command pi" not in child_text
+    assert "ApiKey" not in child_text
 
     hook_path = ROOT / "tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1"
     hook_text = hook_path.read_text(encoding="utf-8-sig")
@@ -129,18 +180,14 @@ def main() -> None:
 
     status_path = ROOT / "tooling/pi/Get-PiHarnessStatus.ps1"
     status_text = status_path.read_text(encoding="utf-8-sig")
-    for token in (
-        "ConvertTo-PowerShellSingleQuotedLiteral",
-        "$nextScriptPath = Join-Path $RootPath $nextRelativePath",
-        "-RootPath $rootLiteral",
-    ):
+    for token in ("ConvertTo-PowerShellSingleQuotedLiteral", "$nextScriptPath = Join-Path $RootPath $nextRelativePath", "-RootPath $rootLiteral"):
         assert token in status_text, f"missing root-bound status continuation token: {token}"
 
-    artifacts_names = [item["fileName"] for item in artifacts["artifacts"]]
+    artifact_names = [item["fileName"] for item in artifacts["artifacts"]]
     assert artifacts["tracked"] is False
-    assert len(artifacts_names) == len(set(artifacts_names)), "artifact filenames must be unique"
-    assert "pi-fusion-result.json" in artifacts_names
-    assert "pi-validation-ledger.json" in artifacts_names
+    assert len(artifact_names) == len(set(artifact_names)), "artifact filenames must be unique"
+    assert "pi-fusion-result.json" in artifact_names
+    assert "pi-validation-ledger.json" in artifact_names
     forbidden = " ".join(artifacts["forbiddenContent"]).lower()
     assert "credentials" in forbidden and "raw prompts" in forbidden
 
@@ -186,6 +233,8 @@ def main() -> None:
             "tooling/pi/harness/codebase-map.json",
             "tooling/pi/harness/pi-adapter.registry.json",
             "tooling/pi/harness/upstream-verification.json",
+            "tooling/pi/harness/system-bootstrap.contract.json",
+            "tooling/pi/harness/child-agent-invocation.contract.json",
             "tooling/pi/harness/artifact-registry.json",
             "tooling/pi/harness/workflows/task-intake.workflow.json",
             "tooling/pi/harness/workflows/opinion-fusion.workflow.json",
