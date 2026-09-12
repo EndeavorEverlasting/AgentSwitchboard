@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "registryId": "agentswitchboard.child-agent-artifacts.v1",
+  "artifacts": [
+    { "artifactId": "child-request", "fileName": "child-agent-request.json" },
+    { "artifactId": "child-result", "fileName": "child-agent-result.json" },
+    { "artifactId": "child-error", "fileName": "child-agent-error.json" }
+  ]
+}

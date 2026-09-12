@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentswitchboard.local/schemas/child-agent-result.v1.json",
+  "title": "child-agent-result.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["invocationId", "status", "evidenceRoot", "branchBefore", "headBefore", "branchAfter", "headAfter", "agentEndObserved"],
+  "properties": {
+    "invocationId": { "type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" },
+    "status": { "type": "string", "enum": ["passed", "failed", "timed-out"] },
+    "evidenceRoot": { "type": "string", "minLength": 1 },
+    "branchBefore": { "type": "string" },
+    "headBefore": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "branchAfter": { "type": "string" },
+    "headAfter": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "agentEndObserved": { "type": "boolean" }
+  }
+}

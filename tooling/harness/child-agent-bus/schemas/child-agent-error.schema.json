@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentswitchboard.local/schemas/child-agent-error.v1.json",
+  "title": "child-agent-error.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["invocationId", "code", "message"],
+  "properties": {
+    "invocationId": { "type": "string" },
+    "code": { "type": "string", "enum": ["adapter-absent", "dirty-worktree", "default-branch-write", "budget-exceeded", "missing-agent-end", "base-sha-mismatch"] },
+    "message": { "type": "string" }
+  }
+}

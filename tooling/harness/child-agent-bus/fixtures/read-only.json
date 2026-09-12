@@ -1,0 +1,12 @@
+{
+  "invocationId": "11111111-1111-1111-1111-111111111111",
+  "lineage": ["root"],
+  "authority": "parent",
+  "budgets": { "timeoutSeconds": 30, "maxTokens": 1000 },
+  "evidenceRoot": "%LOCALAPPDATA%/AgentSwitchboard/child-bus/runs/test",
+  "repositoryPath": "C:/Users/test/dev/AgentSwitchBoard-Live",
+  "branch": "feat/test",
+  "head": "0000000000000000000000000000000000000000",
+  "promptPath": "README.md",
+  "writeMode": "read-only"
+}
