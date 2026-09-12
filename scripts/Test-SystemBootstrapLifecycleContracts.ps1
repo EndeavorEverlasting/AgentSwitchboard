@@ -27,9 +27,7 @@ foreach ($relative in @(
     $tokens = $null
     $errors = $null
     [void][Management.Automation.Language.Parser]::ParseFile($path,[ref]$tokens,[ref]$errors)
-    if ($errors.Count -gt 0) {
-        throw "PowerShell parse failed for ${relative}: $(($errors | ForEach-Object Message) -join '; ')"
-    }
+    if ($errors.Count -gt 0) { throw "PowerShell parse failed for ${relative}: $(($errors | ForEach-Object Message) -join '; ')" }
 }
 
 $contract = Get-Content -LiteralPath $contractPath -Raw | ConvertFrom-Json -ErrorAction Stop
@@ -38,6 +36,8 @@ $registry = Get-Content -LiteralPath $registryPath -Raw | ConvertFrom-Json -Erro
 
 if ($contract.contractId -ne 'agentswitchboard.system-bootstrap-lifecycle.v1') { throw 'Unexpected lifecycle contract id.' }
 if (@($contract.operations) -join ',' -ne 'Inspect,Apply,Remove') { throw 'Lifecycle contract must own Inspect/Apply/Remove.' }
+if (-not $contract.stateRules.perResourceApplyIntentRequiredWhereOwnershipCouldBecomeAmbiguous) { throw 'Lifecycle contract must require per-resource write-ahead intent.' }
+if (-not $contract.stateRules.perResourceRollbackCheckpointRequired) { throw 'Lifecycle contract must require per-resource rollback checkpoints.' }
 if ($schema.'$id' -ne 'agentswitchboard.system-bootstrap-state.v1') { throw 'Unexpected lifecycle state schema id.' }
 if ($registry.schema -ne 'agentswitchboard.system-bootstrap-adapter-registry.v1') { throw 'Unexpected lifecycle adapter registry schema.' }
 
@@ -47,7 +47,7 @@ if ($openCode[0].status -ne 'reference-implementation') { throw 'OpenCode must r
 if (@($openCode[0].operations) -join ',' -ne 'Inspect,Apply,Remove') { throw 'OpenCode registry entry does not declare lifecycle parity.' }
 if (-not $openCode[0].removeRequiresOwnershipState -or -not $openCode[0].removePreservesUnrelatedSharedState) { throw 'OpenCode removal ownership contract drifted.' }
 
-Import-Module $modulePath -Force -ErrorAction Stop
+Import-Module $modulePath -Force -DisableNameChecking -ErrorAction Stop
 
 $pathSample = 'C:\Windows;C:\Tools'
 $added = Add-ASBPathEntry -PathValue $pathSample -Entry 'C:\Program Files\OpenCode' -Position Append
@@ -79,25 +79,37 @@ try {
     $historyPath = Archive-ASBLifecycleState -LifecycleRoot $lifecycleRoot -State $readback
     if (-not (Test-Path -LiteralPath $historyPath -PathType Leaf)) { throw 'Lifecycle state archive contract failed.' }
 
+    $malicious = [ordered]@{}
+    foreach ($key in $readback.Keys) { $malicious[$key] = $readback[$key] }
+    $malicious['installId'] = '..\outside'
+    $rejected = $false
+    try { $null = Archive-ASBLifecycleState -LifecycleRoot $lifecycleRoot -State $malicious }
+    catch { $rejected = $_.Exception.Message -match 'Invalid AgentSwitchboard lifecycle install id' }
+    if (-not $rejected) { throw 'Lifecycle history accepted a path-bearing installId.' }
+    $outsideCandidate = Join-Path $lifecycleRoot 'outside.json'
+    if (Test-Path -LiteralPath $outsideCandidate -PathType Leaf) { throw 'Invalid lifecycle history identifier escaped the history root.' }
+
     $hashFile = Join-Path $tempRoot 'hash.txt'
     $null = New-Item -ItemType Directory -Path (Split-Path -Parent $hashFile) -Force
     Set-Content -LiteralPath $hashFile -Value 'bootstrap-lifecycle' -NoNewline
     $hash = Get-ASBFileSha256 -Path $hashFile
     if ($hash -notmatch '^[0-9a-f]{64}$') { throw 'Lifecycle SHA-256 helper failed.' }
 }
-finally {
-    Remove-Item -LiteralPath $tempRoot -Recurse -Force -ErrorAction SilentlyContinue
-}
+finally { Remove-Item -LiteralPath $tempRoot -Recurse -Force -ErrorAction SilentlyContinue }
 
 $ownerText = Get-Content -LiteralPath $openCodeOwner -Raw
 foreach ($token in @(
     "[ValidateSet('Inspect','Apply','Remove')]",
     'Get-ASBLifecycleStatePath',
+    'Recover-InterruptedApplyState',
+    'Get-ApplyDriftBlockers',
+    'OPENCODE_APPLY_OWNED_STATE_DRIFT',
     'OPENCODE_REMOVE_OWNERSHIP_UNPROVEN',
     'OPENCODE_REMOVE_DRIFT_DETECTED',
     'OPENCODE_REMOVE_BINARY_RESTORE_FAILED',
     'OPENCODE_REMOVE_CONFIG_VERIFY_FAILED',
-    'OPENCODE_POST_APPLY_REMOVE_CONTRACT_FAILED'
+    'OPENCODE_POST_APPLY_REMOVE_CONTRACT_FAILED',
+    "['rollbackComplete'] = `$true"
 )) {
     if (-not $ownerText.Contains($token)) { throw "OpenCode lifecycle owner is missing required token: $token" }
 }
