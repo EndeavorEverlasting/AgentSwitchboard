@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -8,6 +9,16 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def load_json(relative: str):
     return json.loads((ROOT / relative).read_text(encoding="utf-8"))
+
+
+def assert_public_coordination_privacy_safe(paths: list[Path]) -> None:
+    text = "\n".join(path.read_text(encoding="utf-8") for path in paths)
+    forbidden_patterns = (
+        r"(?i)[A-Z]:\\Users\\[^\\\r\n\"']+",
+        r"(?i)OneDrive\s*-\s*[^\\/\r\n\"']+",
+    )
+    for pattern in forbidden_patterns:
+        assert re.search(pattern, text) is None, f"private workstation path leaked into public coordination: {pattern}"
 
 
 def main() -> None:
@@ -22,11 +33,16 @@ def main() -> None:
     assert schema["additionalProperties"] is False
     assert startup_schema["additionalProperties"] is False
 
+    public_coordination_paths = [
+        ROOT / "plans/plan-registry.json",
+        ROOT / ".ai/WORK_QUEUE.md",
+    ]
     for entry in registry["plans"]:
         plan_path = ROOT / entry["path"]
         summary_path = ROOT / entry["summaryPath"]
         assert plan_path.is_file(), entry["path"]
         assert summary_path.is_file(), entry["summaryPath"]
+        public_coordination_paths.extend((plan_path, summary_path))
         plan = json.loads(plan_path.read_text(encoding="utf-8"))
         assert plan["planId"] == entry["planId"]
         assert plan["visibility"] == "public"
@@ -34,6 +50,8 @@ def main() -> None:
         assert plan["tasks"]
         assert plan["forbiddenScope"]
         assert plan["proof"]["ceiling"]
+
+    assert_public_coordination_privacy_safe(public_coordination_paths)
 
     readme = (ROOT / "plans/README.md").read_text(encoding="utf-8")
     assert "plan" in readme.lower() and "pull request" in readme.lower()
