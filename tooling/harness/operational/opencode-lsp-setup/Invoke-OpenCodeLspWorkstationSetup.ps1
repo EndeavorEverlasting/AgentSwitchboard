@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [ValidateSet('Inspect','Configure','Verify')][string]$Mode = 'Inspect',
     [string]$RepoPath,
@@ -256,7 +256,7 @@ try {
         'param()',
         'Set-StrictMode -Version Latest',
         '$ErrorActionPreference = ''Stop''',
-        ('if ([string]::IsNullOrWhiteSpace($env:OPENCODE_CONFIG)) { $env:OPENCODE_CONFIG = {0} }' -f $overlayLiteral),
+        ('if ([string]::IsNullOrWhiteSpace($env:OPENCODE_CONFIG)) {{ $env:OPENCODE_CONFIG = {0} }}' -f $overlayLiteral),
         '$effective = @{}',
         'if (-not [string]::IsNullOrWhiteSpace($env:OPENCODE_CONFIG_CONTENT)) {',
         '    try { $incoming = $env:OPENCODE_CONFIG_CONTENT | ConvertFrom-Json -AsHashtable }',
