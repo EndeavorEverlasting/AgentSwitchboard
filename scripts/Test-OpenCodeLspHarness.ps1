@@ -127,6 +127,28 @@ $operatorReport = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/harness
 if (-not $operatorReport.Contains('proofCeiling')) { [void]$failures.Add('operator-report-missing-proof-ceiling') }
 $manifestProofCeiling = ([string]$manifest.safety.proofCeiling).ToLowerInvariant()
 foreach ($token in @('opening a supported file','observing runtime behavior','active lsp diagnostics')) { if (-not $manifestProofCeiling.Contains($token)) { [void]$failures.Add("manifest-proof-ceiling-missing:$token") } }
+$runtimeSmokeSchemaPath = Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json'
+if (-not (Test-Path -LiteralPath $runtimeSmokeSchemaPath -PathType Leaf)) { [void]$failures.Add('missing:tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json') }
+else {
+ try { $runtimeSmokeSchema = Get-Content -LiteralPath $runtimeSmokeSchemaPath -Raw | ConvertFrom-Json } catch { [void]$failures.Add('invalid-json:opencode-lsp-runtime-smoke-receipt.schema.json') }
+ if ([string]$runtimeSmokeSchema.title -ne 'OpenCode LSP runtime smoke receipt') { [void]$failures.Add('runtime-smoke-schema-title-mismatch') }
+ foreach ($field in @('repositoryRoot','branch','head','fileOpenedToTriggerLsp','activeLspServerAfterOpening','hoverResult','definitionTarget','referenceCount','referencePaths','exactErrors','nonLspSemanticFallbackUsed','verdict','pyrightVersion','nodeVersion','opencodeVersion','proofCeiling')) { if ($field -notin $runtimeSmokeSchema.required) { [void]$failures.Add("runtime-smoke-schema-missing-required:$field") } }
+ if ([string]$runtimeSmokeSchema.properties.verdict.pattern -ne '^LSP_RUNTIME_SMOKE_TEST: (PASS|FAIL — .+)$') { [void]$failures.Add('runtime-smoke-schema-verdict-pattern-mismatch') }
+ if ([string]$runtimeSmokeSchema.properties.nonLspSemanticFallbackUsed.const -ne 'No') { [void]$failures.Add('runtime-smoke-schema-fallback-const-mismatch') }
+}
+$runtimeSmokeTemplatePath = Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md'
+if (-not (Test-Path -LiteralPath $runtimeSmokeTemplatePath -PathType Leaf)) { [void]$failures.Add('missing:tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md') }
+else {
+ $runtimeSmokeTemplate = Get-Content -LiteralPath $runtimeSmokeTemplatePath -Raw
+ $runtimeSmokeLower = $runtimeSmokeTemplate.ToLowerInvariant()
+ foreach ($token in @('repository root','branch','head','file opened to trigger lsp','active lsp/server after opening','hover result','definition target','reference count','reference paths','exact errors','non-lsp semantic fallback used','verdict','pyright version','node version','opencode version')) { if (-not $runtimeSmokeLower.Contains($token)) { [void]$failures.Add("runtime-smoke-template-missing:$token") } }
+}
+foreach ($artifactId in @('runtime-smoke-json','runtime-smoke-report')) { if ($artifactId -notin $artifactIds) { [void]$failures.Add("runtime-smoke-artifact-missing:$artifactId") } }
+if ([string]$manifest.entrypoints.runtimeSmokeReceiptSchema -ne 'tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json') { [void]$failures.Add('manifest-runtime-smoke-schema-entrypoint-missing') }
+if ([string]$manifest.entrypoints.runtimeSmokeReportTemplate -ne 'tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md') { [void]$failures.Add('manifest-runtime-smoke-template-entrypoint-missing') }
+if (-not $runtimeDoc.Contains('opencode-lsp-runtime-smoke.json')) { [void]$failures.Add('runtime-doc-missing-recorded-receipt-json') }
+if (-not $runtimeDoc.Contains('opencode-lsp-runtime-smoke.md')) { [void]$failures.Add('runtime-doc-missing-recorded-receipt-md') }
+if (-not $runtimeDoc.Contains('schemas/opencode-lsp-runtime-smoke-receipt.schema.json')) { [void]$failures.Add('runtime-doc-missing-schema-ref') }
 if ($failures.Count -gt 0) { Write-Host 'OPENCODE LSP HARNESS: FAIL' -ForegroundColor Red; $failures | ForEach-Object { Write-Host "- $_" -ForegroundColor Red }; exit 1 }
 Write-Host "OPENCODE LSP HARNESS: PASS ($($required.Count) required files)" -ForegroundColor Green
 exit 0

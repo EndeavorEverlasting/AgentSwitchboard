@@ -179,5 +179,25 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         ceiling=str(manifest['safety']['proofCeiling']).lower()
         for token in ('opening a supported file','observing runtime behavior','active lsp diagnostics'):
             self.assertIn(token,ceiling,token)
+        self.assertIn('opencode-lsp-runtime-smoke.json',doc)
+        self.assertIn('opencode-lsp-runtime-smoke.md',doc)
+        self.assertIn('schemas/opencode-lsp-runtime-smoke-receipt.schema.json',doc)
+    def test_runtime_smoke_receipt_is_recorded_and_forbids_fallback(self):
+        schema=json.loads((H/'schemas/opencode-lsp-runtime-smoke-receipt.schema.json').read_text(encoding='utf-8'))
+        self.assertEqual('OpenCode LSP runtime smoke receipt',schema['title'])
+        self.assertEqual('agentswitchboard.opencode-lsp-runtime-smoke-receipt.v1',schema['required'][0] if False else schema['properties']['schema']['const'])
+        for field in ('repositoryRoot','branch','head','fileOpenedToTriggerLsp','activeLspServerAfterOpening','hoverResult','definitionTarget','referenceCount','referencePaths','exactErrors','nonLspSemanticFallbackUsed','verdict','pyrightVersion','nodeVersion','opencodeVersion','proofCeiling'):
+            self.assertIn(field,schema['required'],field)
+        self.assertEqual('No',schema['properties']['nonLspSemanticFallbackUsed']['const'])
+        self.assertEqual('^LSP_RUNTIME_SMOKE_TEST: (PASS|FAIL — .+)$',schema['properties']['verdict']['pattern'])
+        self.assertIn('Runtime activation requires opening a supported .py or .yml file',schema['properties']['proofCeiling']['const'])
+        template=(H/'operator-report.runtime-smoke.template.md').read_text(encoding='utf-8'); lower=template.lower()
+        for token in ('repository root','branch','head','file opened to trigger lsp','active lsp/server after opening','hover result','definition target','reference count','reference paths','exact errors','non-lsp semantic fallback used','verdict','pyright version','node version','opencode version'):
+            self.assertIn(token,lower,token)
+        artifacts=json.loads((H/'artifact-registry.json').read_text(encoding='utf-8')); ids={x['artifactId'] for x in artifacts['artifacts']}
+        self.assertTrue({'runtime-smoke-json','runtime-smoke-report'} <= ids)
+        manifest=json.loads((H/'manifest.json').read_text(encoding='utf-8'))
+        self.assertEqual('tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json',manifest['entrypoints']['runtimeSmokeReceiptSchema'])
+        self.assertEqual('tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md',manifest['entrypoints']['runtimeSmokeReportTemplate'])
 
 if __name__ == '__main__': unittest.main()

@@ -173,6 +173,8 @@ find-references: PASS/FAIL
 
 After Configure, run the generated CMD, open a `.py` or `.yml` file, and observe OpenCode server/diagnostic behavior. Existing hosted/Windows CI can prove cwd-independent bootstrap routing, checkout verification, immutable installer provenance, etc., but cannot promote configuration evidence to runtime LSP proof without this file-open observation.
 
+Recorded runtime receipt: After the strict smoke, write `%LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/runs/<run-id>/opencode-lsp-runtime-smoke.json` (machine-readable per `tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json`) and `opencode-lsp-runtime-smoke.md` (human per `tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md`). Do not persist raw stderr or env. `nonLspSemanticFallbackUsed` is always `No`.
+
 ## Troubleshooting
 
 - starting PowerShell in the wrong repo or an arbitrary directory: use the location-free bootstrap above; do not ask the operator to find an AgentSwitchboard worktree first.
