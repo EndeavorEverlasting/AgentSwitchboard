@@ -90,28 +90,17 @@ def ledger_path(state_root: pathlib.Path) -> pathlib.Path:
     return state_root / "opinions.jsonl"
 
 
-def _lock_path(path: pathlib.Path) -> pathlib.Path:
-    return path.with_name(path.name + ".lock")
-
-
 @contextmanager
 def _exclusive_ledger_lock(path: pathlib.Path) -> Iterator[None]:
-    """Serialize ledger access across processes on Windows and POSIX hosts."""
+    """Serialize access using the canonical ledger file, without a sidecar artifact."""
 
-    lock_path = _lock_path(path)
-    _validate_ledger_path(lock_path)
-    lock_path.parent.mkdir(parents=True, exist_ok=True)
-    with lock_path.open("a+b") as handle:
-        _validate_ledger_path(lock_path)
+    _validate_ledger_path(path)
+    with path.open("a+b") as handle:
+        _validate_ledger_path(path)
+        handle.seek(0)
         if os.name == "nt":
             import msvcrt
 
-            handle.seek(0, os.SEEK_END)
-            if handle.tell() == 0:
-                handle.write(b"\0")
-                handle.flush()
-                os.fsync(handle.fileno())
-            handle.seek(0)
             msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
             try:
                 yield
