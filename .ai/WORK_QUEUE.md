@@ -77,9 +77,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **References:** `plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json`, `plans/active/ASB-2026-09-agent-bootstrap-child-bus.md`, `plans/plan-registry.json`, `.ai/WORK_QUEUE.md`, `docs/governance/repository-work-ledger-contract.md`, `scripts/Test-PublicPlanContracts.ps1`, `scripts/Test-RepositoryWorkLedgerContract.ps1`
 - **Acceptance gate:** coordination floor commit `38fd434ed7496413a33e1143d9cbb381849d81de` remains contained on current main; plan/ledger encode current waves/dependencies/collision/proof ceilings and current PR states; tracked public coordination is free of private absolute Windows user paths and tenant-labelled sync paths; plan/ledger/privacy validators pass
 - **Gate:** none
-- **Last proof:** commit:38fd434ed7496413a33e1143d9cbb381849d81de coordination-floor integration from provider floor 54cce3b824a982e26595efa8ed5060e555411693; merge:1f20499d5771456c9ce88da67eced345899928fa PR #151; merge:3b47a9129730bc8fc3c988f8cbc6ec2fbfa515d8 PR #149; reconciliation-floor:main@d5a1bb4ee46135060e4fbfed467665d2c84f5412
+- **Last proof:** commit:38fd434ed7496413a33e1143d9cbb381849d81de coordination-floor integration from provider floor 54cce3b824a982e26595efa8ed5060e555411693; merge:1f20499d5771456c9ce88da67eced345899928fa PR #151; merge:3b47a9129730bc8fc3c988f8cbc6ec2fbfa515d8 PR #149; merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53 child bus v1; reconciliation-floor:main@85ecf77bd1eb94d296ce015aee72dd783dd63b53
 - **Next action:** none; no safe actionable work remains for the coordination-floor item itself
-- **Updated:** 2026-09-12T22:39:32Z
+- **Updated:** 2026-09-12T22:56:50Z
 
 ## ASQ-005 — OpenCode fresh-TUI LSP runtime certification
 
@@ -95,8 +95,8 @@ Canonical terminal action: none; no safe actionable work remains
 - **Acceptance gate:** fresh TUI launched from the current canonical checkout with `OPENCODE_EXPERIMENTAL_LSP_TOOL=true`, `tests/test_technician_live_cert_surface.py` opened, strict hover/definition/references captured with `nonLspSemanticFallbackUsed No`; compare with headless e3f423df; validate the local receipt
 - **Gate:** none
 - **Last proof:** artifact:tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json artifact:tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md; headless runtime receipt e3f423df remains a FAIL ceiling, not a TUI result
-- **Next action:** resolve the current canonical checkout through `AGENT_SWITCHBOARD_REPO` or the machine-profile default, launch a fresh OpenCode TUI with `OPENCODE_EXPERIMENTAL_LSP_TOOL=true`, open `tests/test_technician_live_cert_surface.py`, and capture hover/definition/references verbatim with no semantic fallback
-- **Updated:** 2026-09-12T22:39:32Z
+- **Next action:** resolve the current canonical checkout through `AGENT_SWITCHBOARD_REPO` or machine-profile authority, launch a fresh OpenCode TUI with `OPENCODE_EXPERIMENTAL_LSP_TOOL=true`, open `tests/test_technician_live_cert_surface.py`, and capture hover/definition/references verbatim with no semantic fallback
+- **Updated:** 2026-09-12T22:56:50Z
 
 ## ASQ-006 — Pi reversible system bootstrap lifecycle
 
@@ -113,24 +113,24 @@ Canonical terminal action: none; no safe actionable work remains
 - **Gate:** none
 - **Last proof:** merge:1f20499d5771456c9ce88da67eced345899928fa placed Pi bootstrap on main, but current lifecycle registry still contains only the OpenCode reference adapter, so Pi lifecycle parity is not yet proven
 - **Next action:** implement Pi lifecycle parity from current main in an isolated worktree and validate against the shared lifecycle contract
-- **Updated:** 2026-09-12T22:39:32Z
+- **Updated:** 2026-09-12T22:56:50Z
 
 ## ASQ-007 — Shared ASB child bus v1 contract spine
 
-- **Status:** READY
+- **Status:** DONE
 - **Priority:** P1
 - **Work class:** BOUNDED
 - **Owner:** Panel 04 shared child-bus lane
 - **Branch / PR:** main
-- **Scope:** create provider-neutral `tooling/harness/child-agent-bus/` with request/result/error schemas, adapter registry, artifact registry, fixtures, validator, generic dispatcher, docs, CI and canonical capability/trigger routing
+- **Scope:** provider-neutral `tooling/harness/child-agent-bus/` with request/result/error schemas, adapter registry, artifact registry, fixture validation and generic `Invoke-AgentSwitchboardChild` front door
 - **Forbidden:** Pi/OpenCode CLI invocation details, provider calls, credentials, actual child runtime, Pi fusion product logic, direct pairwise agent config, system-bootstrap lifecycle mutation, default-branch child writers
 - **Dependencies:** ASQ-004
-- **References:** `AGENTS.md`, `CODEBASE_MAP.md`, `.ai/harness/manifest.json`, `docs/governance/harness-doctrine.md`, `tooling/pi/harness/child-agent-invocation.contract.json`
-- **Acceptance gate:** provider-neutral closed schemas define invocation lineage/authority/budgets/evidence root; generic dispatcher fails closed when adapter absent; common fixture matrix covers read-only, isolated writer, dirty/default branch/base-SHA mismatch, budget exhaustion, timeout and missing terminal event
+- **References:** `tooling/harness/child-agent-bus/`, `scripts/Test-ChildAgentBus.ps1`, `merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53`
+- **Acceptance gate:** provider-neutral request/result/error schemas and dispatcher are integrated; absent adapters fail closed; child-bus contract validation is on current main
 - **Gate:** none
-- **Last proof:** current main contains the merged Pi-private child contract, but `tooling/harness/child-agent-bus/` is absent; the common bus remains unimplemented
-- **Next action:** create an isolated current-main worktree for `feat/child-agent-bus-v1-20260912` and implement the shared bus contracts with deterministic fixtures
-- **Updated:** 2026-09-12T22:39:32Z
+- **Last proof:** merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53 merged child bus v1 onto main; artifact:tooling/harness/child-agent-bus/ artifact:scripts/Test-ChildAgentBus.ps1
+- **Next action:** none; no safe actionable work remains for the shared-spine task itself
+- **Updated:** 2026-09-12T22:56:50Z
 
 ## ASQ-008 — Pi child adapter conformance
 
@@ -144,27 +144,27 @@ Canonical terminal action: none; no safe actionable work remains
 - **Dependencies:** ASQ-006, ASQ-007
 - **References:** `tooling/pi/Invoke-AgentSwitchboardPiChild.ps1`, `tooling/pi/harness/child-agent-invocation.contract.json`, `tooling/pi/harness/`, `tooling/harness/child-agent-bus/`
 - **Acceptance gate:** Pi conforms to the shared bus, resolves only the ASB-managed runtime, preserves read-only/isolation guards, requires terminal `agent_end`, and obeys common budgets/evidence uniqueness
-- **Gate:** ASQ-006 and ASQ-007 are not yet DONE — Pi lifecycle and shared bus must be ancestors of main
-- **Last proof:** merge:1f20499d5771456c9ce88da67eced345899928fa supplies the current private Pi child seam only
-- **Next action:** after ASQ-006/007 complete, map the merged Pi-private fields to the common bus in an isolated lane
-- **Updated:** 2026-09-12T22:39:32Z
+- **Gate:** ASQ-006 is not yet DONE — Pi lifecycle parity must be on main; ASQ-007 is satisfied by merge 85ecf77bd1eb94d296ce015aee72dd783dd63b53
+- **Last proof:** merge:1f20499d5771456c9ce88da67eced345899928fa supplies the current private Pi child seam; merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53 supplies the common bus
+- **Next action:** after ASQ-006 completes, map the merged Pi-private fields to the common bus in an isolated lane
+- **Updated:** 2026-09-12T22:56:50Z
 
 ## ASQ-009 — OpenCode child adapter parity
 
-- **Status:** BLOCKED
+- **Status:** READY
 - **Priority:** P1
 - **Work class:** BOUNDED
 - **Owner:** Panel 06 OpenCode adapter lane
 - **Branch / PR:** main
-- **Scope:** add OpenCode as the second shared-bus adapter using the managed OpenCode runtime and the same common conformance fixtures
+- **Scope:** add OpenCode as the second shared-bus adapter using the managed OpenCode runtime and the same common conformance contract
 - **Forbidden:** OpenCode LSP harness redesign, Pi adapter, common schema semantic changes unless a provider-neutral defect is proven, pairwise agent config, global config mutation, provider fallback
 - **Dependencies:** ASQ-007
-- **References:** `tooling/harness/child-agent-bus/`, `tooling/profiles/windows/Install-AgentSwitchboardOpenCode.ps1`
-- **Acceptance gate:** OpenCode consumes the same request and produces the same result/error envelopes as Pi; exact managed runtime identity; no arbitrary PATH fallback
-- **Gate:** ASQ-007 is not yet DONE — shared bus must be on main
-- **Last proof:** none
-- **Next action:** after ASQ-007 completes, implement OpenCode adapter parity against the shared conformance suite
-- **Updated:** 2026-09-12T22:39:32Z
+- **References:** `tooling/harness/child-agent-bus/`, `tooling/profiles/windows/Install-AgentSwitchboardOpenCode.ps1`, `merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53`
+- **Acceptance gate:** OpenCode consumes the same request and produces the same result/error envelopes as the common bus; exact managed runtime identity; no arbitrary PATH fallback
+- **Gate:** none — ASQ-007 is DONE on current main
+- **Last proof:** merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53 satisfies the shared-bus dependency; adapter registry still has no OpenCode adapter
+- **Next action:** implement OpenCode adapter parity from current main against the shared bus contract
+- **Updated:** 2026-09-12T22:56:50Z
 
 ## ASQ-010 — Heterogeneous read-only pilot (Pi + OpenCode)
 
@@ -179,9 +179,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **References:** `tooling/harness/child-agent-bus/`, `tooling/pi/harness/`
 - **Acceptance gate:** Pi architect + OpenCode validator dispatched through ASB, terminal completion required, repository unchanged, coordinator rejoin records consensus/divergence
 - **Gate:** ASQ-008 and ASQ-009 are not yet DONE — both adapters must conform
-- **Last proof:** none
+- **Last proof:** common bus dependency is integrated at 85ecf77bd1eb94d296ce015aee72dd783dd63b53; adapter runtime proof remains absent
 - **Next action:** after both adapters complete, build two independent read-only packets through the common ASB front door
-- **Updated:** 2026-09-12T22:39:32Z
+- **Updated:** 2026-09-12T22:56:50Z
 
 ## ASQ-011 — Mediated nested delegation v1 (maxDepth 2)
 
@@ -198,7 +198,7 @@ Canonical terminal action: none; no safe actionable work remains
 - **Gate:** ASQ-010 is not yet DONE — heterogeneous pilot must PASS
 - **Last proof:** none
 - **Next action:** after the pilot passes, implement nested lineage/budget inheritance with deterministic fixtures
-- **Updated:** 2026-09-12T22:39:32Z
+- **Updated:** 2026-09-12T22:56:50Z
 
 ## ASQ-012 — Nested runtime certification (depth-2 chain)
 
@@ -215,7 +215,7 @@ Canonical terminal action: none; no safe actionable work remains
 - **Gate:** ASQ-011 is not yet DONE — nested delegation contract must be on main
 - **Last proof:** none
 - **Next action:** after ASQ-011 completes, submit one bounded read-only depth-2 request through ASB
-- **Updated:** 2026-09-12T22:39:32Z
+- **Updated:** 2026-09-12T22:56:50Z
 
 ## ASQ-013 — PR/path authority cleanup and final convergence
 
@@ -227,9 +227,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **Scope:** reconcile merged PR #151 behavior into the reversible lifecycle/shared-bus successors, reconcile merged PR #149 path authority with the current operator workflow without history rewrite, prove PR #115 superseded before closing it, then close the September plan/work ledger to terminal states
 - **Forbidden:** closing unrelated PRs, deleting preserved worktrees without proof, force operations, rewriting merged history, deleting preserved noncanonical checkouts, new feature implementation, lowering proof gates
 - **Dependencies:** ASQ-005, ASQ-006, ASQ-007, ASQ-008, ASQ-009, ASQ-010, ASQ-011, ASQ-012
-- **References:** `plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json`, `.ai/WORK_QUEUE.md`, `merge:1f20499d5771456c9ce88da67eced345899928fa`, `merge:3b47a9129730bc8fc3c988f8cbc6ec2fbfa515d8`, `PR #115`, `tooling/harness/system-bootstrap-lifecycle/`
+- **References:** `plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json`, `.ai/WORK_QUEUE.md`, `merge:1f20499d5771456c9ce88da67eced345899928fa`, `merge:3b47a9129730bc8fc3c988f8cbc6ec2fbfa515d8`, `merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53`, `PR #115`, `tooling/harness/system-bootstrap-lifecycle/`
 - **Acceptance gate:** Pi lifecycle + shared-bus successors cover the intended merged #151 behavior; #149 path-authority behavior is reconciled without destructive path changes; #115 old LSP owner is closed only after current-main containment proof; September plan/ledger terminal states have ancestor checks
-- **Gate:** ASQ-005 through ASQ-012 are not all DONE — implementation/runtime successors remain
-- **Last proof:** merge:1f20499d5771456c9ce88da67eced345899928fa PR #151; merge:3b47a9129730bc8fc3c988f8cbc6ec2fbfa515d8 PR #149; PR #115 remains open at 39fd59df15857127ace8814ef03eabbd7b4d53c7
-- **Next action:** after ASQ-005 through ASQ-012 are dispositioned, prove successor containment and PR #115 supersession, then close the September coordination program
-- **Updated:** 2026-09-12T22:39:32Z
+- **Gate:** ASQ-005, ASQ-006, ASQ-008, ASQ-009, ASQ-010, ASQ-011, and ASQ-012 are not all DONE — implementation/runtime successors remain; ASQ-007 is already DONE
+- **Last proof:** merge:1f20499d5771456c9ce88da67eced345899928fa PR #151; merge:3b47a9129730bc8fc3c988f8cbc6ec2fbfa515d8 PR #149; merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53 child bus v1; PR #115 remains open at 39fd59df15857127ace8814ef03eabbd7b4d53c7
+- **Next action:** after the remaining dependencies are dispositioned, prove successor containment and PR #115 supersession, then close the September coordination program
+- **Updated:** 2026-09-12T22:56:50Z
