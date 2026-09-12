@@ -44,7 +44,7 @@ class SystemBootstrapLifecycleTests(unittest.TestCase):
             "Move-Item -LiteralPath $temporary -Destination $StatePath -Force",
         ):
             self.assertIn(token, text)
-        self.assertIn("[char[]]@([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar)", text)
+        self.assertIn("[char[]]@([char]92, [char]47)", text)
         self.assertNotIn("Invoke-Expression", text)
 
     def test_opencode_implements_reversible_lifecycle(self):
