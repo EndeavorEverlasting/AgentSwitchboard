@@ -4,10 +4,22 @@
   "upstream": {
     "package": "@earendil-works/pi-coding-agent",
     "sourceRepository": "earendil-works/pi",
-    "pinnedVersion": "0.84.4",
+    "pinnedVersion": "0.85.1",
     "status": "verified-prerequisite",
     "verificationRecord": "tooling/pi/harness/upstream-verification.json",
-    "rule": "Run the repository workstation prerequisite preflight and require live npm metadata to match the tracked verification record before installation or extension execution."
+    "rule": "Use the exact tracked standalone release for the Windows system runtime. The npm workstation preflight remains a compatibility/adoption probe and may not override the tracked native release identity."
+  },
+  "systemRuntime": {
+    "status": "implemented-runtime-unproved",
+    "bootstrap": "tooling/pi/Install-AgentSwitchboardPiSystem.ps1",
+    "bootstrapContract": "tooling/pi/harness/system-bootstrap.contract.json",
+    "operatorEntrypoint": "Bootstrap-Pi-SystemWide.cmd",
+    "installRoot": "%ProgramFiles%/AgentSwitchboard/agents/pi/<tracked-version>",
+    "launcherRoot": "%ProgramFiles%/AgentSwitchboard/bin",
+    "packageManagerRequired": false,
+    "nodeRuntimeRequired": false,
+    "machineConfigurationOwned": ["runtime archive", "AgentSwitchboard Pi launchers", "Machine PATH entry"],
+    "userConfigurationOwned": ["provider authentication", "Pi settings", "trust decisions", "sessions", "model preference", "project resources"]
   },
   "configuration": {
     "preferredScope": "project-local",
@@ -15,6 +27,18 @@
     "allowedTrackedPaths": [".pi/extensions", ".pi/skills", ".pi/prompts", ".pi/themes"],
     "globalConfigurationMutationAllowed": false,
     "implicitHookInstallationAllowed": false
+  },
+  "childInvocation": {
+    "status": "implemented-runtime-unproved",
+    "adapter": "tooling/pi/Invoke-AgentSwitchboardPiChild.ps1",
+    "contract": "tooling/pi/harness/child-agent-invocation.contract.json",
+    "transport": "json-subprocess",
+    "persistentRpc": "deferred-until-dedicated-framing-cancellation-session-tests",
+    "pairwiseAgentConfigurationRequired": false,
+    "separateChildContext": true,
+    "boundedResultEnvelope": true,
+    "rawEvidenceTracked": false,
+    "coordinatorValidationRequired": true
   },
   "routes": [
     {
@@ -40,12 +64,12 @@
     }
   ],
   "requiredRuntimeEvidence": [
-    "pi executable path and version",
+    "Pi executable path and exact version",
     "resolved provider and exact model identity",
     "endpoint class and binding",
-    "extension source and integrity",
-    "outbound-network and telemetry observation",
+    "child transport and invocation identity",
     "repository branch and designated writer",
+    "isolated worktree for every writer child",
     "attempt, time, token, and cancellation bounds",
     "artifact root outside tracked authority"
   ],
@@ -57,8 +81,9 @@
   "generatedEvidence": {
     "tracked": false,
     "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/PiHarness/runs/<run-id>",
-    "containsRawPrompt": false,
-    "containsRawModelOutput": false
+    "containsRawPromptByDefault": false,
+    "rawChildEventStreamsMayContainPromptOrTranscript": true,
+    "rawChildEventStreamsTracked": false
   },
-  "proofCeiling": "Verified upstream prerequisite identity and routing contract only; no package installation, extension compatibility, provider availability, endpoint privacy, model response, or repository mutation proof."
+  "proofCeiling": "Verified upstream identity plus implemented machine bootstrap and bounded child-process adapters. Until physical workstation/provider runs are captured, no workstation install, provider availability, endpoint privacy, model response, child-agent quality, fusion/autovalidation execution, or repository delivery is proven."
 }

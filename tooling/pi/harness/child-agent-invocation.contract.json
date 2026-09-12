@@ -1,0 +1,73 @@
+{
+  "schema": "agentswitchboard.child-agent-invocation-contract.v1",
+  "contractId": "agentswitchboard.pi-child-agent.v1",
+  "owner": "tooling/pi/Invoke-AgentSwitchboardPiChild.ps1",
+  "purpose": "Provide one bounded AgentSwitchboard-mediated child-agent seam so parent agents do not require pairwise native configuration for every other agent.",
+  "architecture": {
+    "parentResponsibility": "Select a bounded role and supply an explicit packet; do not share the parent's entire conversation by default.",
+    "switchboardResponsibility": "Resolve the managed child runtime, enforce repository/write bounds, launch the child, capture local evidence, and return a bounded result envelope.",
+    "childResponsibility": "Execute only the supplied role packet inside the designated repository/worktree and return evidence; completion claims remain hypotheses until coordinator validation.",
+    "continuumBoundary": "Continuum remains the higher-level workflow/prompt-packet owner. AgentSwitchboard owns executable resolution and child-process launch semantics.",
+    "pairwiseAgentConfigurationRequired": false
+  },
+  "piTransport": {
+    "version": 1,
+    "mode": "json-subprocess",
+    "reason": "A bounded one-shot subprocess is easier to validate and isolate than a persistent RPC session while still providing separate child context and JSON events.",
+    "upstreamRpcAvailable": true,
+    "rpcUpgradeGate": "Promote to persistent RPC only after framing, cancellation, session isolation, and result-envelope contracts have dedicated executable tests.",
+    "rpcFraming": "strict LF-delimited JSONL"
+  },
+  "request": {
+    "required": ["invocationId","role","repositoryPath","promptPath","writeMode","timeoutSeconds"],
+    "recommended": ["parentAgent","baseSha","ownedScope","forbiddenScope","expectedArtifacts","acceptanceGates","provider","model","tokenBudget"],
+    "promptPacketRule": "Prompt files should contain only the context necessary for the delegated role plus exact scope, proof, and return requirements."
+  },
+  "writeModes": {
+    "read-only": {
+      "tools": ["read","grep","find","ls"],
+      "branchMutationAllowed": false,
+      "isolatedWorktreeRequired": false
+    },
+    "writer": {
+      "tools": ["read","grep","find","ls","write","edit","bash"],
+      "branchMutationAllowed": true,
+      "isolatedWorktreeRequired": true,
+      "mainOrDefaultBranchAllowed": false,
+      "writersPerMutationSurface": 1
+    }
+  },
+  "launch": {
+    "runtime": "%ProgramFiles%/AgentSwitchboard/agents/pi/<tracked-version>/pi.exe",
+    "arguments": ["--mode","json","--no-session","--no-extensions","--no-skills","--no-prompt-templates","--no-approve","--tools","<role-tool-list>","--name","<bounded-session-name>","<prompt-text>"],
+    "workingDirectory": "the exact requested repository/worktree",
+    "credentialRule": "Provider credentials are inherited from the operator environment or Pi credential store; AgentSwitchboard never accepts, persists, or logs provider secrets in the request packet.",
+    "projectTrustRule": "Child invocation forces the untrusted project-resource path and disables project extensions/skills/templates; AGENTS/context governance may still load according to Pi's documented context-file behavior."
+  },
+  "resultEnvelope": {
+    "schema": "agentswitchboard.child-agent-result.v1",
+    "tracked": false,
+    "defaultRoot": "%LOCALAPPDATA%/AgentSwitchboard/PiHarness/child-runs/<run-id>",
+    "required": ["invocationId","status","role","writeMode","runtimePath","runtimeVersion","repositoryPath","branchBefore","headBefore","branchAfter","headAfter","exitCode","timedOut","agentEndObserved","boundedFinalText","rawEventPath","stderrPath"],
+    "boundedFinalTextCharacters": 12000,
+    "rawPromptIncludedInResultEnvelope": false,
+    "rawEventMayContainPrompt": true,
+    "rawEventsTracked": false,
+    "rawEventSensitivity": "local-operational; may contain prompt/model transcript and must remain outside tracked repository authority"
+  },
+  "failurePolicy": {
+    "timeout": "terminate the child process tree and return timed-out without retrying automatically",
+    "missingRuntime": "route to Pi system bootstrap; never fall back to an arbitrary user-level pi executable",
+    "writerOnDefaultBranch": "fail closed before provider invocation",
+    "dirtyWriterWorktree": "fail closed before provider invocation",
+    "missingAgentEnd": "treat process exit as unproven even when exit code is zero",
+    "providerOrModelFailure": "return failure evidence to the coordinator; do not silently change provider/model"
+  },
+  "parallelism": {
+    "readOnlyChildrenMayFanOut": true,
+    "writersMayFanOutOnlyAcrossNonOverlappingMutationSurfaces": true,
+    "coordinatorOwnsRejoin": true,
+    "childMayMergeDefaultBranch": false
+  },
+  "proofCeiling": "This contract and adapter can prove bounded child-process invocation mechanics and repository/write guards. Until a live provider/model run is observed, it does not prove provider authentication, model quality, successful delegated work, parallel child execution, or repository delivery."
+}

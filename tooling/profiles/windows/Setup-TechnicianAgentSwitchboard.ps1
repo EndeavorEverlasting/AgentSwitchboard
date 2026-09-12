@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('shell', 'agy', 'opencode', 'setup', 'hermes', 'bootstrap-opencode')]
+    [ValidateSet('shell', 'agy', 'opencode', 'setup', 'hermes', 'bootstrap-opencode', 'bootstrap-pi')]
     [string]$Mode = 'shell',
 
     [Parameter(Mandatory)]
@@ -26,6 +26,16 @@ if ($Mode -eq 'bootstrap-opencode') {
     }
 
     & $nativeBootstrapPath -Mode Apply
+    exit $LASTEXITCODE
+}
+
+if ($Mode -eq 'bootstrap-pi') {
+    $piBootstrapPath = Join-Path $RepoRoot 'tooling\pi\Install-AgentSwitchboardPiSystem.ps1'
+    if (-not (Test-Path -LiteralPath $piBootstrapPath -PathType Leaf)) {
+        throw "Canonical system-wide Pi bootstrap is missing: $piBootstrapPath"
+    }
+
+    & $piBootstrapPath -Mode Apply -RootPath $RepoRoot
     exit $LASTEXITCODE
 }
 

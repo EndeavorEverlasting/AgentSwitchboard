@@ -1,40 +1,54 @@
 # Pi Operational Harness
 
-AgentSwitchboard treats Pi as an execution adapter beneath repository governance, workflow selection, evidence policy, and branch ownership. The harness owns a read-only workstation prerequisite gate, but it does not install Pi and does not assume that a local endpoint, extension, provider, or model is safe or available.
+AgentSwitchboard treats Pi as an execution adapter beneath repository governance, workflow selection, evidence policy, branch ownership, and now a machine-owned Windows bootstrap. The system bootstrap owns only the Pi runtime, AgentSwitchboard launchers, and Machine PATH entry; provider authentication, Pi settings, project trust, sessions, model preferences, and project resources remain user/project scoped.
 
 ## What is working
 
-- A fresh agent can start at `AGENTS.md`, `CODEBASE_MAP.md`, and `.ai/harness/manifest.json`, then follow the Pi-specific codebase map.
-- `tooling/pi/Test-PiWorkstationPrereqs.ps1` is the canonical request -> workstation evidence -> install-decision gate.
-- The tracked upstream prerequisite record pins `@earendil-works/pi-coding-agent@0.84.4`, source repository `earendil-works/pi`, and Node.js `>=22.19.0`, verified on 2026-09-03.
-- The preflight resolves PowerShell, Node, npm, Git, bash, and any existing Pi command. Command-path evidence is capped at eight paths per tool, records the total and omitted count, and represents empty resolution explicitly. External version probes and live npm metadata probes are bounded by `ProbeTimeoutSeconds` (default 15s) via `Invoke-BoundedProbe` with `timedOut`/`failureCode` reporting, and generated evidence is rejected if the `OutputDirectory` resolves inside the repository (`OUTPUT_DIRECTORY_INSIDE_REPOSITORY`).
-- On Windows, Bash discovery honors a reviewed project-local `.pi/settings.json` `shellPath` before Git-for-Windows defaults and PATH fallbacks.
-- In normal mode the preflight resolves live npm metadata for the current package and the deprecated `@mariozechner/pi-coding-agent` package. Installation is not eligible if live metadata differs from the tracked verification record; reachable metadata with missing expected fields is classified as drift rather than network unavailability. All external probes run through bounded `ProbeTimeoutSeconds` process execution with captured `timedOut`/`probeState`/`failureCode` classification, and structured `repositoryUrl`/`executablePath` drift is enforced.
-- A missing or unreadable tracked upstream-verification record produces a structured `blocked-prerequisite` report with an error code and recovery action instead of throwing before evidence exists.
-- CI may use explicit `-NoNetwork -NoWrite -AllowUnready` report-only mode to prove parser/contract behavior without pretending a hosted runner is an installable Pi workstation. Missing/invalid tracked verification remains a hard failure even in report-only mode.
+- `Bootstrap-Pi-SystemWide.cmd` is the canonical Windows operator front door for the ASB-managed standalone Pi runtime.
+- `tooling/pi/Install-AgentSwitchboardPiSystem.ps1` installs the exact tracked standalone Windows release archive under `%ProgramFiles%\AgentSwitchboard\agents\pi\<version>` and exposes it through `%ProgramFiles%\AgentSwitchboard\bin\pi.cmd`.
+- The tracked upstream record pins `@earendil-works/pi-coding-agent@0.85.1`, upstream tag `v0.85.1`, the official Windows x64/ARM64 asset names, and their official SHA-256 digests, verified on 2026-09-11.
+- The system bootstrap does not require npm or Node.js. It verifies the tracked digest, staged version, whole archive layout, Git Bash, runtime ownership, launcher ownership, Machine PATH, and final exact-version launch.
+- `tooling/pi/Invoke-AgentSwitchboardPiChild.ps1` is the first common child-agent execution seam. It gives child agents separate processes/contexts and bounded packets/results instead of requiring pairwise agent configuration.
+- Read-only child roles receive only `read,grep,find,ls`. Writer children receive the bounded write tool set only on clean isolated linked worktrees, on non-default branches, with one writer per mutation surface.
+- A child transport success remains `completed-unvalidated` until the coordinator independently verifies task-specific artifacts, diffs, tests, commits, and integration state.
+- `tooling/pi/Test-PiWorkstationPrereqs.ps1` remains the canonical **npm compatibility/adoption** preflight. It is read-only and is no longer the dependency floor for Windows standalone system bootstrap.
+- The compatibility preflight resolves PowerShell, Node, npm, Git, bash, and any existing Pi command. Command-path evidence is bounded and external probes are limited by `ProbeTimeoutSeconds` (default 15 seconds).
+- Generated compatibility evidence is rejected if `OutputDirectory` resolves inside the repository (`OUTPUT_DIRECTORY_INSIDE_REPOSITORY`).
+- On Windows, Bash discovery for project/runtime use honors a reviewed project-local `.pi/settings.json` `shellPath` before Git-for-Windows defaults and PATH fallbacks.
+- In normal compatibility mode, live npm metadata is compared against the current `@earendil-works/pi-coding-agent@0.85.1` metadata and the deprecated legacy package record. Reachable incomplete metadata is drift, not network success.
+- CI can use `-NoNetwork -NoWrite -AllowUnready` to prove the compatibility parser/contracts without pretending a hosted runner is an operator workstation.
 - Task intake selects exactly one route: single-agent, opinion fusion, autovalidate, or blocked.
 - Opinion fusion separates architect, builder, adjudicator, and designated-writer responsibilities.
 - Autovalidation freezes architect-owned acceptance gates before builder mutation.
 - Every multi-agent route requires one writer per branch, attributed execution identity, explicit limits, local-only artifacts, and a proof ceiling.
-- A repository-owned validator proves the component set is present, tracked, parseable, centrally registered, bound to the current Pi upstream identity, and free of known unverified install/API shortcuts.
-- Executable prerequisite contracts prove structured missing-record failure, bounded path evidence, and configured Windows Bash precedence where Windows Bash is available.
-- The opt-in pre-commit script runs focused contracts and rejects generated Pi runtime evidence from staged changes.
-- Windows and Linux CI run the focused PowerShell and dependency-free Python contracts.
+- The broader single-agent/fusion/autovalidate routes remain `contract-only`; the new system and child adapters are primitives beneath those routes, not proof that multi-agent delivery is already field-certified.
 
-## What remains blocked
+## Machine runtime versus user state
 
-- Repository validation does not install or invoke Pi as an agent.
-- The tracked package/version prerequisite identity is verified, but extension API compatibility remains unproven until extensions are separately reviewed against the installed exact version.
-- No local or hosted provider is configured by this harness.
-- No endpoint is classified private merely because it resolves to `localhost`.
-- No fusion quality, model independence, autovalidation effectiveness, provider response, or committed delivery is claimed.
-- No global Pi configuration, implicit Git hook, authentication, merge, deployment, or live-target mutation is allowed by this harness.
+The split is deliberate:
+
+| Scope | Owner |
+|---|---|
+| Pi standalone runtime archive | AgentSwitchboard / machine |
+| `pi.cmd` and `asb-pi.cmd` launchers | AgentSwitchboard / machine |
+| AgentSwitchboard Machine PATH entry | AgentSwitchboard / machine |
+| Provider login/API/subscription state | user |
+| Pi settings and model preference | user/project |
+| Project trust decisions | user/project |
+| Sessions, extensions, packages, skills | user/project |
+
+The system bootstrap does not mutate provider credentials, global Pi settings, project trust, sessions, models, extensions, packages, or Git history.
 
 ## Repository surfaces
 
 | Surface | Path |
 |---|---|
-| Workstation prerequisite preflight | `tooling/pi/Test-PiWorkstationPrereqs.ps1` |
+| System bootstrap CMD | `Bootstrap-Pi-SystemWide.cmd` |
+| System bootstrap owner | `tooling/pi/Install-AgentSwitchboardPiSystem.ps1` |
+| System bootstrap contract | `tooling/pi/harness/system-bootstrap.contract.json` |
+| Child-agent adapter | `tooling/pi/Invoke-AgentSwitchboardPiChild.ps1` |
+| Child-agent contract | `tooling/pi/harness/child-agent-invocation.contract.json` |
+| npm compatibility preflight | `tooling/pi/Test-PiWorkstationPrereqs.ps1` |
 | Upstream verification | `tooling/pi/harness/upstream-verification.json` |
 | Pi codebase map | `tooling/pi/harness/codebase-map.json` |
 | Adapter registry | `tooling/pi/harness/pi-adapter.registry.json` |
@@ -46,86 +60,96 @@ AgentSwitchboard treats Pi as an execution adapter beneath repository governance
 | Scoped skill | `.ai/skills/pi-fusion-orchestration/SKILL.md` |
 | Status report | `tooling/pi/Get-PiHarnessStatus.ps1` |
 | Completeness validator | `scripts/Test-PiHarnessCompleteness.ps1` |
-| Executable prerequisite contracts | `tests/Test-PiWorkstationPrereqsContracts.ps1` |
+| Executable compatibility contracts | `tests/Test-PiWorkstationPrereqsContracts.ps1` |
 | Dependency-free structural contracts | `tests/test_pi_harness_contracts.py` |
+| System/bootstrap contracts | `tests/test_pi_system_bootstrap.py` |
+| System/child guide | `docs/harness/pi-system-bootstrap-and-child-agents.md` |
 | Optional hook | `tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1` |
 | CI | `.github/workflows/pi-harness-contract.yml` |
 
-## Workstation prerequisite gate
+## System-wide bootstrap
 
-Run the normal operator preflight before any Pi installation decision:
+From an elevated Windows shell:
+
+```cmd
+Bootstrap-Pi-SystemWide.cmd
+```
+
+The bootstrap ascertains Windows/PowerShell/architecture/elevation, the tracked architecture-specific release identity, SHA-256, existing ASB runtime ownership, launcher ownership, and Git Bash before mutation. It downloads only the tracked release asset and installs the complete archive rather than copying only `pi.exe`.
+
+Non-mutating inspection:
+
+```powershell
+pwsh -NoLogo -NoProfile -File tooling/pi/Install-AgentSwitchboardPiSystem.ps1 -Mode Inspect -RootPath .
+```
+
+System evidence stays outside the repository under `%LOCALAPPDATA%\AgentSwitchboard\PiHarness\system-bootstrap\runs\...`.
+
+## npm compatibility/adoption preflight
+
+The older workstation preflight remains useful when inspecting npm/package compatibility or a non-system Pi installation:
 
 ```powershell
 pwsh -NoLogo -NoProfile -File tooling/pi/Test-PiWorkstationPrereqs.ps1
 ```
 
-The gate is read-only. It checks:
+It checks the tracked upstream record, Node/npm/Git/bash/Pi paths, live npm metadata, legacy-package deprecation, and exact equality to the tracked npm-compatible version metadata. `-AllowUnready` changes process exit behavior only; it never makes an unready state installable. `-NoNetwork` never proves current upstream state.
 
-1. the tracked upstream-verification record exists and parses;
-2. PowerShell identity;
-3. Node version against the tracked minimum;
-4. npm version and bounded command-path resolution evidence;
-5. Git availability;
-6. reviewed project `shellPath`, then Git Bash on Windows or bash on non-Windows systems;
-7. existing Pi executable path/version when present;
-8. live `@earendil-works/pi-coding-agent` version and Node engine;
-9. live legacy-package deprecation metadata;
-10. exact equality between live upstream metadata and the tracked verification record.
+This preflight does **not** gate the Windows standalone `Bootstrap-Pi-SystemWide.cmd` path. The standalone runtime is intentionally package-manager independent.
 
-Terminal decisions are:
+## Agents working within agents
 
-- `ready-to-install` — local prerequisites pass, Pi is absent, and live npm metadata matches the tracked pin;
-- `already-installed` — local prerequisites pass and installed Pi exactly matches the tracked pin;
-- `blocked-prerequisite` — a tracked prerequisite record is missing/invalid or Node/npm/Git/bash is missing or unverifiable;
-- `upstream-drift` — live package/version/engine/deprecation metadata differs from the tracked record or is reachable but structurally incomplete;
-- `upstream-unavailable` — current npm metadata cannot be reached or parsed;
-- `installed-version-drift` — Pi exists but does not match the tracked version;
-- `offline-upstream-unverified` — network verification was explicitly skipped.
+The first supported pattern is **not** agent A configured directly to agent B, C, D, and E. Instead every parent uses one AgentSwitchboard request/result contract. The parent creates a bounded packet; ASB selects the exact managed child runtime, applies repository/write guards, launches the child with a separate context, captures local evidence, and returns a bounded result envelope to the coordinator.
 
-`-AllowUnready` changes process exit behavior only for ordinary workstation/report readiness states. It never promotes an unready status to installable and does not suppress a missing/invalid tracked-verification failure. `-NoNetwork` never proves the current upstream state.
+Pi v1 child execution uses one-shot JSON mode. Persistent RPC is known upstream capability, but it remains a separate transport upgrade until strict LF-delimited JSONL framing, cancellation, session isolation, correlation, and crash-recovery behavior have dedicated executable tests.
 
-Generated prerequisite evidence is local-only under the system temporary directory by default and must not be committed. The reporter defaults to the OS temporary directory but any explicit `OutputDirectory` that resolves inside the repository is rejected with `OUTPUT_DIRECTORY_INSIDE_REPOSITORY` before any JSON/markdown is written.
+Example read-only child:
+
+```powershell
+pwsh -NoLogo -NoProfile -File tooling/pi/Invoke-AgentSwitchboardPiChild.ps1 `
+  -PromptPath .\packet.txt `
+  -RepositoryPath C:\path\to\repo `
+  -Role architect `
+  -WriteMode read-only
+```
+
+Raw JSON child events can include prompt/model transcript content and therefore remain local-only outside the repository. The bounded `child-result.json` is also local operational evidence.
 
 ## Workflow selection
 
 Use **single-agent** for one bounded implementation lane where a second opinion adds little value.
 
-Use **opinion-fusion** when two genuinely independent perspectives materially reduce architecture or routing risk. Both receive the same hashed minimized input. Their outputs remain separate and attributed. The adjudicator must preserve consensus, divergence, unresolved risks, rejected alternatives, and provenance before a designated writer begins.
+Use **opinion-fusion** when genuinely independent perspectives materially reduce architecture/routing risk. Outputs stay separate and attributed; adjudication preserves consensus, divergence, unresolved risks, rejected alternatives, and provenance before a designated writer begins.
 
-Use **autovalidate** when deterministic acceptance criteria can be written independently before implementation. The architect owns the frozen gate; the builder owns scoped implementation; the validator owns execution evidence. Stop after five attempts, 45 minutes, two no-progress attempts, cancellation, changed assumptions, or contradictory evidence—whichever occurs first.
+Use **autovalidate** when deterministic acceptance criteria can be written independently before implementation. The architect owns the frozen gate, the builder owns scoped implementation, and the validator owns execution evidence. Stop at the configured attempt/time/no-progress/token/cancellation boundaries.
 
-Use **blocked** when repository state, authority, live upstream identity, provider/model identity, privacy evidence, limits, artifact location, or branch ownership is missing.
+Use **blocked** when repository state, authority, provider/model identity, privacy evidence, limits, artifact location, or branch ownership is missing.
 
 ## Validation
 
 ```powershell
+python -m unittest tests.test_pi_system_bootstrap -v
+python tests/test_pi_harness_contracts.py
 pwsh -NoLogo -NoProfile -File tooling/pi/Test-PiWorkstationPrereqs.ps1 -NoNetwork -NoWrite -AllowUnready
 pwsh -NoLogo -NoProfile -File tests/Test-PiWorkstationPrereqsContracts.ps1
 pwsh -NoLogo -NoProfile -File scripts/Test-PiHarnessCompleteness.ps1
-python tests/test_pi_harness_contracts.py
-pwsh -NoLogo -NoProfile -File tooling/pi/Get-PiHarnessStatus.ps1
+pwsh -NoLogo -NoProfile -File tooling/pi/Get-PiHarnessStatus.ps1 -NoWrite
 Test-AppHarness.cmd
 git diff --check
 ```
 
-The preflight report-only invocation proves the tracked/offline command path without making a live registry or workstation-readiness claim. The executable prerequisite contracts exercise failure/report behavior and evidence bounds. The next two checks prove the broader Pi harness structure. The status report renders what is working, broken, and missing. The aggregate harness verifies the wider registered repository composition.
-
-## Hook policy
-
-The repository tracks `tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1`, but never installs it implicitly. An operator may invoke it directly or deliberately wire it into a local hook after reviewing the script. It runs focused contracts, staged diff hygiene, and generated-evidence exclusion.
+The Windows CI lane also parses the touched PowerShell and runs non-mutating system inspection. CI deliberately does not perform machine `Apply`, provider login, or a paid/model-backed child run.
 
 ## Artifact policy
 
-Runtime and prerequisite artifacts belong outside the repository under an operator-controlled local root such as:
+System bootstrap, compatibility, child-agent, and workflow runtime artifacts belong outside the repository under operator-local paths such as:
 
 ```text
-%LOCALAPPDATA%\AgentSwitchboard\PiHarness\runs\<run-id>\
+%LOCALAPPDATA%\AgentSwitchboard\PiHarness\...\<run-id>\
 ```
 
-or the system temporary Pi harness directory used by the prerequisite reporter.
-
-Do not track credentials, raw prompts, raw model transcripts, customer data, private hostnames, local usernames, provider state, endpoint observations, or generated run evidence.
+Do not track credentials, raw prompts, raw model transcripts, customer data, private hostnames, local usernames, provider state, endpoint observations, or generated run evidence. Raw Pi child JSON event streams are especially sensitive because they may echo prompt/model transcript content.
 
 ## Proof ceiling
 
-This harness proves repository structure, the tracked Pi upstream prerequisite identity, workstation-preflight contract shape and deterministic failure behavior, bounded local path evidence, route contracts, schema and registry shape, one-writer enforcement, bounded workflow semantics, focused validators, hook availability, CI wiring, and English operator guidance. A successful live workstation preflight additionally proves only the observed local prerequisites and current npm metadata at that run. It does not install Pi, prove extension compatibility, authenticate a provider, prove endpoint privacy, prove a model response, prove fusion/autovalidation success, deliver repository changes, deploy, or establish operator acceptance.
+This harness proves repository structure, tracked Pi upstream identity, exact standalone Windows asset/digest records, system bootstrap and launcher implementation, machine/user ownership boundaries, compatibility-preflight behavior, child-process isolation/write guards, route contracts, one-writer semantics, deterministic validators, and CI wiring. It does not prove a physical workstation installation until `Bootstrap-Pi-SystemWide.cmd` runs there; it does not authenticate a provider, prove endpoint privacy, prove a model response, prove child-agent quality, prove actual parallel fan-out, prove fusion/autovalidation success, deliver repository changes, deploy, or establish operator acceptance.
