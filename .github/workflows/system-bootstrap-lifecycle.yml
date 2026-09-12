@@ -1,0 +1,53 @@
+name: System bootstrap lifecycle contract
+
+on:
+  push:
+    paths:
+      - 'tooling/harness/system-bootstrap-lifecycle/**'
+      - 'tooling/profiles/windows/Install-AgentSwitchboard*.ps1'
+      - 'tooling/pi/Install-AgentSwitchboardPiSystem.ps1'
+      - 'Bootstrap-*-SystemWide.cmd'
+      - 'Unbootstrap-*-SystemWide.cmd'
+      - 'scripts/Test-SystemBootstrapLifecycleContracts.ps1'
+      - 'tests/test_system_bootstrap_lifecycle.py'
+      - 'docs/harness/system-bootstrap-lifecycle.md'
+      - '.github/workflows/system-bootstrap-lifecycle.yml'
+  pull_request:
+    paths:
+      - 'tooling/harness/system-bootstrap-lifecycle/**'
+      - 'tooling/profiles/windows/Install-AgentSwitchboard*.ps1'
+      - 'tooling/pi/Install-AgentSwitchboardPiSystem.ps1'
+      - 'Bootstrap-*-SystemWide.cmd'
+      - 'Unbootstrap-*-SystemWide.cmd'
+      - 'scripts/Test-SystemBootstrapLifecycleContracts.ps1'
+      - 'tests/test_system_bootstrap_lifecycle.py'
+      - 'docs/harness/system-bootstrap-lifecycle.md'
+      - '.github/workflows/system-bootstrap-lifecycle.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  lifecycle-contract:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Dependency-free lifecycle contracts
+        run: python -m unittest tests.test_system_bootstrap_lifecycle -v
+      - name: Shared reversible-bootstrap validator
+        shell: pwsh
+        run: ./scripts/Test-SystemBootstrapLifecycleContracts.ps1 -RootPath .
+      - name: OpenCode reference adapter contracts
+        run: python -m unittest tests.test_opencode_native_system_bootstrap -v
+      - name: Agent documentation contract
+        shell: pwsh
+        run: ./scripts/Test-AgentDocumentationContract.ps1
+      - name: Diff whitespace
+        shell: bash
+        run: git diff --check

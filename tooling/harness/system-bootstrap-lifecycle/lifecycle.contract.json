@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "contractId": "agentswitchboard.system-bootstrap-lifecycle.v1",
+  "title": "AgentSwitchboard reversible system bootstrap lifecycle",
+  "canonicalMachineStateRoot": "%ProgramData%/AgentSwitchboard/bootstrap-lifecycle/<adapter-id>",
+  "canonicalLocalEvidenceRoot": "%LOCALAPPDATA%/AgentSwitchboard/<adapter>/runs/<run-id>",
+  "operations": ["Inspect", "Apply", "Remove"],
+  "states": [
+    "absent",
+    "applying",
+    "installed",
+    "removing",
+    "removed",
+    "drifted"
+  ],
+  "requirements": {
+    "inspect": [
+      "must be non-mutating",
+      "must distinguish ASB-owned state from merely-present external state",
+      "must report whether Remove is currently safe from recorded ownership plus observed drift"
+    ],
+    "apply": [
+      "must ascertain prerequisites before owned machine mutation",
+      "must persist original before-state before the first reversible machine mutation",
+      "must update durable state as each mutation becomes ASB-owned",
+      "must preserve an original pre-ASB baseline across idempotent Apply or upgrade",
+      "must verify final state before marking lifecycle status installed"
+    ],
+    "remove": [
+      "must require durable ownership evidence before reversing a present resource",
+      "must validate every owned resource for drift before the first destructive rollback mutation",
+      "must reverse only deltas explicitly recorded as ASB-owned",
+      "must restore preexisting resources from verified backups or property-level snapshots",
+      "must preserve unrelated configuration, files, PATH entries, credentials, and user state",
+      "must fail closed when a current owned surface no longer matches the recorded post-Apply state",
+      "must verify rollback before marking lifecycle status removed",
+      "must be idempotent after a completed Remove"
+    ]
+  },
+  "resourceRules": {
+    "dedicatedFile": {
+      "install": "record existed-before, before hash, changed-by-ASB, after hash, and backup path when replacement occurs",
+      "remove": "delete only a file created by ASB or restore a verified preexisting backup; current file hash must match recorded ASB post-state before mutation"
+    },
+    "dedicatedDirectory": {
+      "install": "record whether directory preexisted",
+      "remove": "remove the directory only when ASB created it and it is empty after owned files are removed"
+    },
+    "machinePathEntry": {
+      "install": "record whether the exact normalized entry preexisted and whether ASB added it",
+      "remove": "remove only exact entries recorded as addedByAsb; never normalize away unrelated entries"
+    },
+    "sharedJsonConfig": {
+      "install": "record property presence/value before ASB mutation and which exact properties ASB changed",
+      "remove": "three-way/property-level rollback only; preserve unrelated properties and fail closed if an ASB-owned property drifted after Apply"
+    },
+    "sharedMachineRoot": {
+      "install": "every adapter owns an adapter-specific subdirectory; shared roots are never recursively deleted by an adapter",
+      "remove": "adapter may remove its own empty subdirectory only; shared AgentSwitchboard roots remain"
+    }
+  },
+  "stateRules": {
+    "schema": "agentswitchboard.system-bootstrap-state.v1",
+    "adapterIdRequired": true,
+    "installIdRequired": true,
+    "atomicStateWritesRequired": true,
+    "historyBeforeNewLifecycleAfterRemoved": true,
+    "stateMayContainSecrets": false,
+    "machineStateMustNotDependOnUserProfile": true
+  },
+  "failureRules": {
+    "ownershipUnknownWithPresentTarget": "fail-closed",
+    "ownedResourceDrift": "fail-closed-before-rollback",
+    "missingBackupForPreexistingOwnedFile": "fail-closed",
+    "invalidSharedConfig": "fail-closed",
+    "partialApplyOrRemove": "preserve durable intermediate state for recovery; never pretend absent/removed"
+  },
+  "forbidden": [
+    "blind recursive deletion outside an adapter-owned canonical root",
+    "deleting a resource solely because its path resembles an ASB-managed path",
+    "removing PATH entries that predated ASB ownership",
+    "restoring an entire shared config file over unrelated later edits",
+    "deleting provider credentials, user settings, sessions, project state, or caches unless a separate explicit contract owns them",
+    "claiming uninstall success without rollback verification",
+    "using a user-local receipt as the sole authority for machine-wide deletion"
+  ],
+  "proofCeiling": "This contract defines reversible ownership and rollback semantics. Each adapter must still prove its own resource-specific Apply/Remove behavior and physical machine execution."
+}
