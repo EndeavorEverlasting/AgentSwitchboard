@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentswitchboard.local/schemas/exact-grounding-packet-v1.json",
+  "title": "AgentSwitchboard exact grounding packet v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["packetSchema", "source", "action", "criticalFields", "fieldSources"],
+  "properties": {
+    "packetSchema": {"const": "agentswitchboard.exact-grounding-packet/v1"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "schemaId", "version"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "schemaId": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1}
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "requiredArguments", "allowedArguments", "argumentConstraints"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "requiredArguments": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "allowedArguments": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "argumentConstraints": {"type": "object"}
+      }
+    },
+    "criticalFields": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "fieldSources": {"type": "object", "additionalProperties": {"type": "string"}}
+  }
+}

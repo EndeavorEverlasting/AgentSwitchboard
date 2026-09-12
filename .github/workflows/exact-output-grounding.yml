@@ -1,0 +1,64 @@
+name: Exact output grounding
+
+on:
+  pull_request:
+    paths:
+      - "tooling/harness/operational/exact-grounding/**"
+      - ".ai/skills/exact-output-grounding/**"
+      - "docs/harness/exact-output-grounding.md"
+      - "tests/test_exact_grounding_gate.py"
+      - "tooling/harness/operational/manifest.json"
+      - "tooling/harness/operational/codebase-map.json"
+      - "tooling/harness/operational/validator-registry.json"
+      - ".github/workflows/exact-output-grounding.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  grounding-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate exact grounding boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tests/test_exact_grounding_gate.py
+          python3 tests/test_operational_harness.py
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git diff --check "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"
+          else
+            git diff --check HEAD^ HEAD
+          fi
+          test -z "$(git status --short)"
+
+  grounding-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate exact grounding boundary
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & python tests/test_exact_grounding_gate.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & python tests/test_operational_harness.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ('${{ github.event_name }}' -eq 'pull_request') {
+            & git diff --check '${{ github.event.pull_request.base.sha }}' '${{ github.event.pull_request.head.sha }}'
+          } else {
+            & git diff --check HEAD^ HEAD
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $dirty = (& git status --short) -join "`n"
+          if ($dirty) { Write-Error "workflow dirtied checkout:`n$dirty"; exit 1 }
