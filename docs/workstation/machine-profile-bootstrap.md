@@ -20,11 +20,34 @@ Repository selection is deterministic:
 
 1. explicit repo path;
 2. `AGENT_SWITCHBOARD_REPO`, including a selected root that has not been cloned yet;
-3. verified machine binding;
-4. verified existing checkout candidate whose origin can be confirmed;
+3. verified machine binding when it points at a non-OneDrive/Desktop path;
+4. verified existing checkout only when it is the canonical or legacy user-local root;
 5. `%USERPROFILE%\dev\AgentSwitchBoard-Live`.
 
-OneDrive and redirected known folders are evidence used to understand the machine. They are not the default location for a new checkout. This prevents different corporate naming and redirection conventions from silently changing the canonical repository root.
+## Path roles (Windows technician profile)
+
+| Role | Canonical location |
+| --- | --- |
+| Development checkout | `%USERPROFILE%\dev\AgentSwitchBoard-Live` |
+| Production / use path | same checkout for repository-owned commands |
+| Worktree root | `%LOCALAPPDATA%\AgentSwitchboard\worktrees` |
+| Canonical entrypoint | `Pull-And-Run-AgentSwitchboard.cmd` |
+| OpenCode bootstrap entrypoint | `Bootstrap-OpenCode-SystemWide.cmd` |
+
+Path relation is **same-path**: editing the technician checkout is production-impacting for repository-owned launchers. Machine-wide OpenCode under Program Files is a separate installed runtime surface, not a second Git checkout.
+
+OneDrive and redirected known folders are evidence used to understand the machine. They are **not** the default location for a new checkout, and an existing Desktop/OneDrive clone is classified `NONCANONICAL_PRESERVE`. Do not invent a second mutable checkout under Desktop, OneDrive, or backup folders.
+
+### PowerShell invocation
+
+PowerShell does not execute bare `.cmd` names from the current directory. From the canonical checkout:
+
+```powershell
+Set-Location -LiteralPath "$env:USERPROFILE\dev\AgentSwitchBoard-Live"
+.\Bootstrap-OpenCode-SystemWide.cmd
+```
+
+If that checkout is missing, acquire it first with `AgentSwitchboard-Technician-Bootstrap.cmd`, then rerun the OpenCode bootstrap from the canonical path.
 
 ## Chosen workspace directory
 

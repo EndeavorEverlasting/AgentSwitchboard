@@ -13,10 +13,36 @@ try {
     if ($enterprise.profileId -ne 'enterprise-managed-onedrive') { throw 'Enterprise fixture classification failed.' }
     if ($enterprise.repository.recommendedRoot -ne 'C:\Users\corp_user27\dev\AgentSwitchBoard-Live') { throw 'Enterprise repo-root policy failed.' }
     if (-not $enterprise.pathConventions.desktopRedirected) { throw 'Enterprise redirected Desktop was not detected.' }
+    if ($enterprise.pathRoles.developmentCheckout -ne 'C:\Users\corp_user27\dev\AgentSwitchBoard-Live') { throw 'Enterprise pathRoles.developmentCheckout missing or wrong.' }
+    if ($enterprise.pathRoles.pathRelation -ne 'same-path') { throw 'pathRoles.pathRelation must be same-path for technician Windows profile.' }
+    if ($enterprise.pathRoles.openCodeEntrypoint -ne 'Bootstrap-OpenCode-SystemWide.cmd') { throw 'pathRoles.openCodeEntrypoint drifted.' }
 
     $local = & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $detector -Mode Apply -Emit Json -ProbeFile (Join-Path $fixtureRoot 'local-windows.fixture.json') -OutputRoot (Join-Path $tempRoot 'local') | ConvertFrom-Json
     if ($local.profileId -ne 'local-windows') { throw 'Local fixture classification failed.' }
     if ($local.repository.recommendedRoot -ne 'C:\Users\newuser\dev\AgentSwitchBoard-Live') { throw 'Local repo-root policy failed.' }
+    if ($local.pathRoles.stableDefaultDevelopmentCheckout -ne 'C:\Users\newuser\dev\AgentSwitchBoard-Live') { throw 'Local stable default development checkout drifted.' }
+
+    # OneDrive-only existing checkout must remain NONCANONICAL_PRESERVE and must not become recommendedRoot.
+    $onedriveProbe = Join-Path $tempRoot 'onedrive-only.fixture.json'
+    @{
+        username = 'corp_user27'
+        userProfile = 'C:\Users\corp_user27'
+        computerName = 'CORP-LT-0427'
+        userDomain = 'CORP'
+        azureAdJoined = $true
+        domainJoined = $false
+        tenantName = 'Example Corporation'
+        oneDriveCommercial = 'C:\Users\corp_user27\OneDrive - Example Corporation'
+        oneDriveConsumer = $null
+        oneDrive = 'C:\Users\corp_user27\OneDrive - Example Corporation'
+        desktopPath = 'C:\Users\corp_user27\OneDrive - Example Corporation\Desktop'
+        documentsPath = 'C:\Users\corp_user27\OneDrive - Example Corporation\Documents'
+        existingRepositoryRoot = 'C:\Users\corp_user27\OneDrive - Example Corporation\OG Laptop Backup\Desktop\dev\AgentSwitchBoard'
+        tools = @{ curl = $true; git = $true; powershell = $true; pwsh = $true; winget = $true; wsl = $true }
+    } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $onedriveProbe -Encoding utf8
+    $onedriveOnly = & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $detector -Mode Detect -Emit Json -ProbeFile $onedriveProbe | ConvertFrom-Json
+    if ($onedriveOnly.repository.recommendedRoot -ne 'C:\Users\corp_user27\dev\AgentSwitchBoard-Live') { throw 'OneDrive-only checkout incorrectly became recommendedRoot.' }
+    if (@($onedriveOnly.pathRoles.noncanonicalExistingCheckouts).Count -lt 1) { throw 'OneDrive checkout was not recorded under pathRoles.noncanonicalExistingCheckouts.' }
 
     $env:AGENT_SWITCHBOARD_REPO = 'C:\Selected\Dev\AgentSwitchBoard-Live'
     $override = & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $detector -Mode Detect -Emit Json -ProbeFile (Join-Path $fixtureRoot 'local-windows.fixture.json') | ConvertFrom-Json

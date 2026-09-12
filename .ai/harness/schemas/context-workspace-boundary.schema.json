@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentswitchboard.local/schemas/context-workspace-boundary.schema.json",
+  "title": "AgentSwitchboard Context Workspace Boundary Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractId",
+    "contractVersion",
+    "canonicalRepository",
+    "purpose",
+    "owns",
+    "composesWith",
+    "doesNotOwn",
+    "roles",
+    "rules",
+    "recommendedContextArtifacts",
+    "projectionContract",
+    "consumerRequirements",
+    "proofCeiling"
+  ],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "contractId": {"const": "agentswitchboard.context-workspace-boundary.v1"},
+    "contractVersion": {"const": "1.0.0"},
+    "canonicalRepository": {"const": "EndeavorEverlasting/AgentSwitchboard"},
+    "purpose": {"type": "string", "minLength": 1},
+    "owns": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "composesWith": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repositoryKnowledgeReuse", "progressiveDisclosure", "workState"],
+      "properties": {
+        "repositoryKnowledgeReuse": {"const": ".ai/harness/harness-doctrine.policy.json#knowledgeReuse"},
+        "progressiveDisclosure": {"const": "tooling/harness/context/context.routes.json"},
+        "workState": {"const": ".ai/harness/repository-work-ledger.policy.json"}
+      }
+    },
+    "doesNotOwn": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "roles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contextAuthority", "implementationAuthority"],
+      "properties": {
+        "contextAuthority": {"$ref": "#/$defs/authorityRole"},
+        "implementationAuthority": {"$ref": "#/$defs/authorityRole"}
+      }
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "singleAuthorityPerConcern",
+        "sameRepositoryMayHoldBothRoles",
+        "splitRepositoriesRequireExplicitMapping",
+        "authoredStatusCannotOverrideDerivedImplementationEvidence",
+        "recencyAloneCannotResolveCrossRepositoryConflict",
+        "operatorAndAgentViewsMustProjectFromSameCanonicalGraph",
+        "agentViewMayBeMoreVerboseButNotMoreAuthoritative",
+        "sessionStartHydrationMustBeBoundedAndDeterministicWhenPractical",
+        "sessionStartHydrationCannotOverrideGovernanceOrInjectSecrets",
+        "lessonsRequireProvenanceScopeAndOwner",
+        "lessonsCannotAutoRewriteCanonicalSkillsOrPolicy"
+      ],
+      "properties": {
+        "singleAuthorityPerConcern": {"const": true},
+        "sameRepositoryMayHoldBothRoles": {"type": "boolean"},
+        "splitRepositoriesRequireExplicitMapping": {"const": true},
+        "authoredStatusCannotOverrideDerivedImplementationEvidence": {"const": true},
+        "recencyAloneCannotResolveCrossRepositoryConflict": {"const": true},
+        "operatorAndAgentViewsMustProjectFromSameCanonicalGraph": {"const": true},
+        "agentViewMayBeMoreVerboseButNotMoreAuthoritative": {"const": true},
+        "sessionStartHydrationMustBeBoundedAndDeterministicWhenPractical": {"const": true},
+        "sessionStartHydrationCannotOverrideGovernanceOrInjectSecrets": {"const": true},
+        "lessonsRequireProvenanceScopeAndOwner": {"const": true},
+        "lessonsCannotAutoRewriteCanonicalSkillsOrPolicy": {"const": true}
+      }
+    },
+    "recommendedContextArtifacts": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "projectionContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operatorMode", "agentMode", "sourceRule"],
+      "properties": {
+        "operatorMode": {"type": "string", "minLength": 1},
+        "agentMode": {"type": "string", "minLength": 1},
+        "sourceRule": {"type": "string", "minLength": 1}
+      }
+    },
+    "consumerRequirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "adoptionManifest",
+        "repositoryLocalValidator",
+        "pairedRepositoryIdentity",
+        "authorityMap",
+        "staleReferenceHandling",
+        "consumerOwnsItsTests",
+        "remoteValidatorExecutionForbidden",
+        "localRulesMayStrengthen",
+        "localRulesMayWeaken"
+      ],
+      "properties": {
+        "adoptionManifest": {"const": true},
+        "repositoryLocalValidator": {"const": true},
+        "pairedRepositoryIdentity": {"const": true},
+        "authorityMap": {"const": true},
+        "staleReferenceHandling": {"const": true},
+        "consumerOwnsItsTests": {"const": true},
+        "remoteValidatorExecutionForbidden": {"const": true},
+        "localRulesMayStrengthen": {"const": true},
+        "localRulesMayWeaken": {"const": false}
+      }
+    },
+    "proofCeiling": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "authorityRole": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owns"],
+      "properties": {
+        "owns": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "mustNotClaim": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "mustNotDuplicate": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      },
+      "anyOf": [
+        {"required": ["mustNotClaim"]},
+        {"required": ["mustNotDuplicate"]}
+      ]
+    }
+  }
+}

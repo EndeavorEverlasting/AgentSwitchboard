@@ -9,14 +9,22 @@ if /I "%~1"=="--repo-ready" goto :repo_ready
 
 set "MODE=%~1"
 if not defined MODE set "MODE=shell"
-if /I not "%MODE%"=="shell" if /I not "%MODE%"=="agy" if /I not "%MODE%"=="opencode" if /I not "%MODE%"=="setup" if /I not "%MODE%"=="hermes" if /I not "%MODE%"=="acquire" (
+if /I not "%MODE%"=="shell" if /I not "%MODE%"=="agy" if /I not "%MODE%"=="opencode" if /I not "%MODE%"=="setup" if /I not "%MODE%"=="hermes" if /I not "%MODE%"=="acquire" if /I not "%MODE%"=="bootstrap-opencode" if /I not "%MODE%"=="bootstrap-pi" (
   echo [FAIL] Unsupported mode: %MODE%
-  echo Usage: %~nx0 [shell^|agy^|opencode^|setup^|hermes^|acquire] [repo-path] [git-ref]
+  echo Usage: %~nx0 [shell^|agy^|opencode^|setup^|hermes^|acquire^|bootstrap-opencode^|bootstrap-pi] [repo-path] [git-ref]
   set "RESULT=2"
   goto :finish
 )
 
 set "REPO_ROOT=%~2"
+if not defined REPO_ROOT if defined AGENT_SWITCHBOARD_REPO set "REPO_ROOT=%AGENT_SWITCHBOARD_REPO%"
+if not defined REPO_ROOT if exist "%LOCALAPPDATA%\AgentSwitchboard\machine-profile\machine-profile.env.cmd" (
+  call "%LOCALAPPDATA%\AgentSwitchboard\machine-profile\machine-profile.env.cmd" >nul
+  if defined AGENT_SWITCHBOARD_REPO set "REPO_ROOT=%AGENT_SWITCHBOARD_REPO%"
+)
+if not defined REPO_ROOT if exist "%LOCALAPPDATA%\AgentSwitchBoard\state\repo-path.txt" (
+  set /p REPO_ROOT=<"%LOCALAPPDATA%\AgentSwitchBoard\state\repo-path.txt"
+)
 if not defined REPO_ROOT set "REPO_ROOT=%DEFAULT_REPO%"
 for %%I in ("%REPO_ROOT%") do set "REPO_ROOT=%%~fI"
 
@@ -75,6 +83,18 @@ goto :finish
 set "DIRTY="
 for /f "usebackq delims=" %%I in (`git -C "%REPO_ROOT%" status --porcelain=v1 --untracked-files=normal 2^>nul`) do set "DIRTY=1"
 if defined DIRTY (
+  if /I "%MODE%"=="bootstrap-opencode" (
+    echo [WARN] The checkout contains local changes.
+    echo [WARN] Skipping fetch/pull for bootstrap-opencode and applying the local native OpenCode installer from this worktree.
+    echo [WARN] Machine mutation does not rewrite Git state.
+    goto :run_repo_copy
+  )
+  if /I "%MODE%"=="bootstrap-pi" (
+    echo [WARN] The checkout contains local changes.
+    echo [WARN] Skipping fetch/pull for bootstrap-pi and applying the local system Pi installer from this worktree.
+    echo [WARN] Machine mutation does not rewrite Git state.
+    goto :run_repo_copy
+  )
   echo [FAIL] The checkout contains local changes.
   echo Nothing was stashed, reset, cleaned, or overwritten.
   echo Resolve or preserve the work, then run this CMD again.
@@ -191,7 +211,9 @@ set "RESULT=%ERRORLEVEL%"
 echo.
 if "%RESULT%"=="0" (
   echo [PASS] AgentSwitchboard technician operation completed.
-  if /I not "%MODE%"=="acquire" echo [INFO] Open a new PowerShell window to use: wezterm, tmux, agy, and opencode.
+  if /I "%MODE%"=="bootstrap-opencode" echo [INFO] Native OpenCode is machine-wide and managed LSP configuration has been applied. Open a fresh non-elevated PowerShell for independent PATH proof.
+  if /I "%MODE%"=="bootstrap-pi" echo [INFO] Pi is installed under AgentSwitchboard Program Files ownership. Provider login, settings, and project trust remain user-scoped.
+  if /I not "%MODE%"=="acquire" if /I not "%MODE%"=="bootstrap-opencode" if /I not "%MODE%"=="bootstrap-pi" echo [INFO] Open a new PowerShell window to use: wezterm, tmux, agy, and opencode.
 ) else (
   echo [FAIL] AgentSwitchboard technician operation exited with code %RESULT%.
 )

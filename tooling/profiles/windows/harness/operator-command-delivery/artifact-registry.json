@@ -17,6 +17,12 @@
       "purpose": "Machine-readable command source, exact ref, exact file list, transport checks, child launch evidence, exit code, and proof ceiling."
     },
     {
+      "artifactId": "terminal-paste-boundary-result",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\operator-command-delivery\\runs\\<runId>\\terminal-paste-boundary-result.json",
+      "producer": "scripts/Inspect-OperatorTerminalPasteBoundary.ps1",
+      "purpose": "Read-only captured-input hash/count and shell-encoding evidence that distinguishes observed question/replacement characters from a clean-input presentation-rendering question without persisting raw clipboard text."
+    },
+    {
       "artifactId": "child-executable-launch-result",
       "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\operator-command-delivery\\runs\\<runId>\\child-executable-launch-result.json",
       "producer": "scripts/Test-OperatorChildExecutableLaunch.ps1",
@@ -58,6 +64,22 @@
     "startError",
     "exitCode",
     "timedOut",
+    "proofLevel",
+    "proofCeiling",
+    "evidencePath"
+  ],
+  "requiredTerminalPasteFields": [
+    "schema",
+    "runId",
+    "status",
+    "classification",
+    "captureSource",
+    "utf16CodeUnitCount",
+    "utf8ByteCount",
+    "utf8Sha256",
+    "literalQuestionMarkCount",
+    "replacementCharacterCount",
+    "rawTextPersisted",
     "proofLevel",
     "proofCeiling",
     "evidencePath"

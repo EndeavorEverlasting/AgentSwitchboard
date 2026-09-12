@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "registryId": "agentswitchboard.harness-components.v1",
+  "purpose": "Tracked meta-registry for the repository harness. It points at canonical existing owners and adds completeness/local-adoption proof without creating a competing operational harness.",
+  "authority": {
+    "governance": "AGENTS.md",
+    "orientation": "HARNESS.md",
+    "operationalManifest": "tooling/harness/operational/manifest.json"
+  },
+  "components": {
+    "codebaseMaps": [
+      "CODEBASE_MAP.md",
+      "tooling/harness/operational/codebase-map.json"
+    ],
+    "workflowSpecs": [
+      "tooling/harness/operational/workflow-registry.json",
+      "tooling/harness/operational/workflows/task-intake.workflow.json",
+      "tooling/harness/operational/workflows/pre-commit-validation.workflow.json",
+      "tooling/harness/operational/workflows/failure-recovery.workflow.json",
+      "tooling/harness/operational/workflows/handoff.workflow.json",
+      "tooling/harness/operational/workflows/post-integration-local-adoption.workflow.json"
+    ],
+    "artifactRegistries": [
+      ".ai/harness/artifact-registry.json",
+      "tooling/harness/operational/artifact-registry.json"
+    ],
+    "validators": [
+      "tooling/harness/operational/validator-registry.json",
+      "scripts/Test-OperationalHarness.ps1",
+      "tests/test_operational_harness.py",
+      "scripts/Test-HarnessInfrastructureCompleteness.ps1",
+      "tests/test_harness_infrastructure_completeness.py"
+    ],
+    "hooks": [
+      "tooling/harness/operational/hooks/Invoke-OperationalHarnessPreCommit.ps1",
+      "tooling/harness/operational/hooks/Invoke-OperationalHarnessPrePush.ps1"
+    ],
+    "skills": [
+      ".ai/skills/operational-harness-routing/SKILL.md",
+      ".ai/skills/post-integration-local-adoption/SKILL.md"
+    ],
+    "operatorReports": [
+      "docs/harness/operational-harness.md",
+      "docs/harness/operational-harness-current-state.md",
+      "tooling/harness/operational/templates/operator-report.template.md"
+    ],
+    "discoveryAndAutomation": [
+      "AGENTS.md",
+      "HARNESS.md",
+      "tooling/harness/operational/manifest.json",
+      "tooling/harness/operational/harness-components.registry.json",
+      ".github/workflows/operational-harness.yml",
+      ".github/workflows/harness-infrastructure-completeness.yml"
+    ]
+  },
+  "completeness": {
+    "powerShell": "pwsh -NoLogo -NoProfile -File scripts/Test-HarnessInfrastructureCompleteness.ps1",
+    "python": "python3 tests/test_harness_infrastructure_completeness.py",
+    "diff": "git diff --check",
+    "trackedRequirement": "Every path in components must exist as a regular file and be returned by git ls-files --error-unmatch."
+  },
+  "safety": {
+    "governanceMutationOwned": false,
+    "productMutationOwned": false,
+    "secretCollectionAllowed": false,
+    "destructiveGitAllowed": false,
+    "implicitHookInstallationAllowed": false,
+    "remoteMergeImpliesLocalAvailability": false
+  },
+  "proofCeiling": "Tracked harness composition, discoverability, workflow/skill contracts, opt-in hook source, and repository-level static/hosted validation. It does not prove a physical workstation pulled an integration or executed a newly merged launcher."
+}

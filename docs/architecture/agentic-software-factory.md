@@ -104,6 +104,22 @@ Code performs checks and transformations that should not consume model tokens or
 
 Whenever a reliable program can perform a step, the factory should prefer code over another agent turn. Failure output is sent back to the responsible agent, ideally with the same session identifier so it can repair the work without losing context.
 
+## Knowledge reuse and bottleneck discipline
+
+Repository knowledge is **compiled state**, not disposable prose. A repository that already records a principle, canonical owner, architecture decision, schema, validator, workflow, helper, or failure lesson should not pay model tokens to rediscover it from first principles on every run.
+
+The factory therefore separates **known-state hydration** from **unresolved reasoning**:
+
+1. deterministically or selectively load current repository law, ownership, architecture/ADRs/specs, manifests/registries, skills, validators/tests, plans/reports, helpers, and relevant history;
+2. identify the canonical owner and reusable truth;
+3. state the remaining unresolved gap;
+4. only then spend agent reasoning on design or external prior art;
+5. preserve new durable decisions back into the appropriate repository artifact so later agents inherit them rather than rediscover them.
+
+This is not an instruction to preload the whole repository. Progressive disclosure still applies: search the smallest sufficient surfaces and hydrate repeated known state with deterministic scripts/hooks where practical. The optimization target is useful system throughput, not maximum context size, model-turn count, agent count, or code-generation speed.
+
+The same bottleneck rule applies downstream. Faster code generation is not useful when review, verification, architectural drift, or human comprehension becomes the constraint. The factory should improve the **current constraint** and use the thinnest end-to-end vertical slice that can produce meaningful evidence before expanding horizontally.
+
 ## Workflow contracts
 
 Every production ADW should define:
@@ -137,11 +153,13 @@ The desired direction is **less human involvement in coding execution**, not les
 ## Design rules
 
 - **Design the workflow by hand first.** Execute every node manually until inputs, dependencies, failure states, and evidence are understood.
+- **Search local truth before inventing or searching outward.** Reuse the canonical repository owner and name the unresolved gap before creating another abstraction or external-research lane.
 - **Keep deterministic code separate from agent skills.** Skills explain capabilities and interaction patterns; executable logic belongs in scripts, modules, validators, and services.
 - **Route failures, not prose.** Give agents exact command output, structured errors, and artifact references.
 - **Retain repair context.** Reuse the responsible agent session when a deterministic gate reports a correctable failure.
 - **Isolate before parallelizing.** Every writing agent needs an owned sandbox or worktree and explicit forbidden scope.
 - **Prefer predefined ADWs.** The router selects a reviewed workflow; it does not invent unlimited authority for each ticket.
+- **Prefer vertical tracer slices.** Establish a thin end-to-end proof path before filling complete horizontal layers unless the owning architecture requires otherwise.
 - **Checkpoint before expansion.** Preserve the first coherent tracked change before broad tests, long diagnostics, runtime proof, or larger refactoring.
 - **Evidence before confidence.** Completion requires passing checks, expected artifacts, Git-state proof, and honest reporting of gaps.
 - **Escalate uncertainty.** Security, ambiguous intent, destructive operations, policy exceptions, and repeated failed repairs return to an engineer.
@@ -162,6 +180,16 @@ AgentSwitchboard is the control plane for this factory. It should eventually pro
 
 Application code is the product produced by the factory. The **agentic layer** is the product AgentSwitchboard engineers directly.
 
+## Expert insight ledger boundary
+
+The Google Sheet **`Expert Insight Ledger — Prompt Kit Sources`** is a Drive-authoritative research inbox for expert-derived principles and sprint candidates. It is not AgentSwitchboard source control and it does not override repository law.
+
+The intended promotion path is:
+
+`expert/source evidence -> Drive-authoritative ledger -> repository owner discovery -> reviewed principle/candidate -> canonical AgentSwitchboard doctrine, skill, ADR/spec, validator, or implementation`
+
+The public repository names the ledger by stable human-readable title only. Private Drive IDs, URLs, credentials, and raw private exports remain outside tracked state. Once a principle is promoted into a canonical repository owner, later agents should retrieve that owner rather than repeatedly re-deriving the principle from the spreadsheet or original media.
+
 ## Source influence
 
 This architecture adapts the ideas described by IndyDevDan in the video **“Stop Loop Engineering. Start Agentic Engineering.”** The source emphasizes three actors—engineers, agents, and code—and develops the progression from a basic engineer-agent-review flow through deterministic guardrails, specialized test agents, isolated sandboxes, and factory-level routing.
@@ -177,3 +205,5 @@ Relevant source sections supplied for this design review:
 - `26:39–32:00` — separation of code and skills, manual design first, meta-engineering, and Mermaid mapping.
 
 Reference: <https://www.youtube.com/watch?v=VQy50fuxI34&t=1107s>
+
+A later **user-supplied, not independently source-verified** breakdown attributed to Dex Horthy (HumanLayer) and David Ondrej reinforced several compatible principles: verification becomes the bottleneck as generation accelerates; durable repository ADR/spec knowledge should be locally searchable; deterministic hydration should precede repeated model retrieval; vertical tracer slices reduce expensive late re-steering; and local optimization should follow the system constraint rather than maximize agent activity. Those claims remain provenance-bound in the Drive expert ledger until separately verified where verification matters.

@@ -20,6 +20,10 @@ Pinned contract version: `REPLACE_CONTRACT_VERSION`
 
 Every writing sprint names repository, branch or worktree, PR or sprint, lane, owned and forbidden scope, expected artifacts, validation order, and proof ceiling. Task-specific execution rules override generic closeout inside higher-priority safety and repository law.
 
+## Repository knowledge reuse
+
+**Repository knowledge is compiled state.** Before inventing a new abstraction or searching outward, search the smallest sufficient canonical local surfaces: repository law/owners, architecture/ADRs/specs, manifests/registries/schemas, skills, validators/tests, plans/reports, helpers, and relevant history. Reuse or strengthen the existing owner. External research or a new local identity requires an explicit unresolved gap; recency alone does not override repository authority.
+
 ## Public coordination
 
 Material cross-session work belongs under `plans/`. Plans record ownership, dependencies, collision boundaries, tasks, artifacts, validation, proof, and handoff. They do not grant authentication, merge, deployment, target mutation, secret access, or destructive-Git authority.
@@ -55,4 +59,4 @@ Linux and Android are separate implementations. Android configuration may differ
 
 ## Delivery contract
 
-Preserve unrelated work, isolate writers, reuse healthy contracts, make bounded tracked changes, validate, commit, push when authorized, and report exact proof and gaps. An action request is invalid when it permits acknowledgment, architecture-only output, a plan, summary, or handoff instead of corresponding mutation and proof.
+Preserve unrelated work, isolate writers, search and reuse canonical repository knowledge before invention or external research, reuse healthy contracts, make bounded tracked changes, validate, commit, push when authorized, and report exact proof and gaps. An action request is invalid when it permits acknowledgment, architecture-only output, a plan, summary, or handoff instead of corresponding mutation and proof.

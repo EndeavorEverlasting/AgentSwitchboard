@@ -4,6 +4,23 @@
   "canonicalSource": "AGENTS.md",
   "requiredSprintFields": ["repository", "branchOrWorktree", "prOrSprint", "lane", "ownedScope", "forbiddenScope", "expectedArtifacts", "validationOrder"],
   "executableLoop": ["request", "evidence-review", "bounded-decision", "repository-or-git-or-github-mutation", "artifacts", "validation", "report", "next-decision"],
+  "knowledgeReuse": {
+    "repositoryKnowledgeIsCompiledState": true,
+    "requireLocalCanonicalSearchBeforeInvention": true,
+    "requireUnresolvedGapBeforeExternalResearch": true,
+    "externalResearchCannotOverrideRepositoryAuthority": true,
+    "preferDeterministicHydrationForRepeatedKnownState": true,
+    "discoveryOrder": [
+      "repository-law-and-ownership",
+      "architecture-adrs-specifications-external-contracts",
+      "manifests-registries-schemas-workflow-maps-context-routes",
+      "skills-validators-tests-plans-reports-generated-evidence",
+      "implementation-helpers-and-relevant-history",
+      "repository-family-shared-doctrine",
+      "approved-external-or-drive-authoritative-gap-evidence"
+    ],
+    "requiredEvidenceFields": ["question", "surfacesSearched", "canonicalOwnerFound", "reusableTruth", "unresolvedGap", "externalSearchNeeded"]
+  },
   "actionCommitment": {
     "verbs": ["install", "set up", "build", "execute", "repair", "configure", "upgrade", "deploy", "merge", "release"],
     "requiresTrackedMutation": true,
@@ -68,6 +85,8 @@
     "evidenceBeforeConfidence": true,
     "preserveBeforeDestructiveCleanup": true,
     "reuseExistingContractsBeforeInvention": true,
+    "searchCanonicalRepositoryKnowledgeBeforeInvention": true,
+    "proveGapBeforeExternalResearch": true,
     "taskSpecificRulesOverrideGenericCloseout": true,
     "noCompletionWithoutProof": true,
     "noPromptPlanOrHandoffSubstitution": true

@@ -105,6 +105,10 @@ $script:initialVersionExitCode = $null
 $script:initialVersionTimedOut = $false
 $script:installAttempted = $false
 $script:installReason = $null
+$script:installerExitCode = $null
+$script:installerStdoutPresent = $false
+$script:installerStderrPresent = $false
+$script:installerNonzeroRuntimeHealthy = $false
 $script:openCodePath = $null
 $script:openCodeVersion = $null
 $script:officialInstallPath = $null
@@ -180,6 +184,10 @@ function Write-RecoveryEvidence {
         initialVersionTimedOut = $script:initialVersionTimedOut
         installAttempted = $script:installAttempted
         installReason = $script:installReason
+        installerExitCode = $script:installerExitCode
+        installerStdoutPresent = $script:installerStdoutPresent
+        installerStderrPresent = $script:installerStderrPresent
+        installerNonzeroRuntimeHealthy = $script:installerNonzeroRuntimeHealthy
         officialInstallPath = $script:officialInstallPath
         postInstallHealthState = $script:postInstallHealthState
         postInstallVersionExitCode = $script:postInstallVersionExitCode
@@ -210,6 +218,10 @@ function Write-RecoveryEvidence {
         "- Initial version exit: ``$($script:initialVersionExitCode)``",
         "- Install attempted: ``$($script:installAttempted)``",
         "- Install reason: ``$($script:installReason)``",
+        "- Installer exit: ``$($script:installerExitCode)``",
+        "- Installer stdout present: ``$($script:installerStdoutPresent)``",
+        "- Installer stderr present: ``$($script:installerStderrPresent)``",
+        "- Installer nonzero but runtime healthy: ``$($script:installerNonzeroRuntimeHealthy)``",
         "- Official install path: ``$($script:officialInstallPath)``",
         "- Post-install health: ``$($script:postInstallHealthState)``",
         "- Post-install version exit: ``$($script:postInstallVersionExitCode)``",
@@ -346,9 +358,12 @@ trap 'rm -f "__INSTALLER_PATH__"' EXIT
 timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s curl --connect-timeout 15 --max-time __INSTALL_TIMEOUT__ -fsSL https://raw.githubusercontent.com/anomalyco/opencode/__INSTALLER_COMMIT__/install -o "__INSTALLER_PATH__"
 grep -Fq 'INSTALL_DIR=$HOME/.opencode/bin' "__INSTALLER_PATH__" || exit 63
 grep -Fq -- '--no-modify-path' "__INSTALLER_PATH__" || exit 64
-timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash "__INSTALLER_PATH__" --no-modify-path
+SHELL=/bin/bash timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash "__INSTALLER_PATH__" --no-modify-path
 '@.Replace('__INSTALL_TIMEOUT__', [string]$InstallTimeoutSeconds).Replace('__INSTALLER_COMMIT__', $installerSourceCommit).Replace('__INSTALLER_PATH__', $installerTempPath)
         $installResult = Invoke-WslBash -Script $installScript -TimeoutSeconds ($InstallTimeoutSeconds + 30)
+        $script:installerExitCode = $installResult.ExitCode
+        $script:installerStdoutPresent = -not [string]::IsNullOrWhiteSpace([string]$installResult.Stdout)
+        $script:installerStderrPresent = -not [string]::IsNullOrWhiteSpace([string]$installResult.Stderr)
         Set-LastResult -Result $installResult
         if (-not [string]::IsNullOrWhiteSpace($installResult.Stdout)) { Write-Host $installResult.Stdout }
         if (-not [string]::IsNullOrWhiteSpace($installResult.Stderr)) { Write-Warning $installResult.Stderr }
@@ -360,9 +375,6 @@ timeout --signal=TERM --kill-after=10s __INSTALL_TIMEOUT__s bash "__INSTALLER_PA
         }
         if ($installResult.ExitCode -eq 63 -or $installResult.ExitCode -eq 64) {
             Stop-Recovery 'OPENCODE_INSTALLER_CONTRACT_DRIFT' 'The pinned official OpenCode installer no longer matches the reviewed install-path or shell-profile-mutation contract.'
-        }
-        if ($installResult.ExitCode -ne 0) {
-            Stop-Recovery 'OPENCODE_INSTALL_FAILED' "The pinned official OpenCode installer returned exit code $($installResult.ExitCode)."
         }
 
         $script:stage = 'post-install-command-discovery'
@@ -420,10 +432,10 @@ exit 47
             Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_TIMEOUT' 'Official OpenCode install-path health discovery exceeded 45 seconds.'
         }
         if ($postDiscovery.ExitCode -eq 45) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_MISSING' 'The pinned official installer returned success but $HOME/.opencode/bin/opencode was missing afterward.'
+            Stop-Recovery 'OPENCODE_POST_INSTALL_MISSING' "After the pinned official installer attempt (exit=$($script:installerExitCode)), `$HOME/.opencode/bin/opencode was missing."
         }
         if ($postDiscovery.ExitCode -eq 46) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_EXECUTABLE' 'The pinned official installer returned success but $HOME/.opencode/bin/opencode was not executable afterward.'
+            Stop-Recovery 'OPENCODE_POST_INSTALL_NOT_EXECUTABLE' "After the pinned official installer attempt (exit=$($script:installerExitCode)), `$HOME/.opencode/bin/opencode was not executable."
         }
         if ($postDiscovery.ExitCode -eq 47) {
             switch ($script:postInstallFailureClass) {
@@ -436,10 +448,14 @@ exit 47
             }
         }
         if ($postDiscovery.ExitCode -ne 0) {
-            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_FAILED' "Official OpenCode install-path health discovery returned unexpected exit code $($postDiscovery.ExitCode)."
+            Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_FAILED' "Official OpenCode install-path health discovery returned unexpected exit code $($postDiscovery.ExitCode) after installer exit $($script:installerExitCode)."
         }
         if ($script:postInstallHealthState -ne 'healthy') {
             Stop-Recovery 'OPENCODE_POST_INSTALL_DISCOVERY_EMPTY' 'Official OpenCode install-path health discovery returned success without a healthy state.'
+        }
+        if ($null -ne $script:installerExitCode -and $script:installerExitCode -ne 0) {
+            $script:installerNonzeroRuntimeHealthy = $true
+            Write-Host "OPENCODE_INSTALLER_NONZERO_RUNTIME_HEALTHY=$($script:installerExitCode)"
         }
         $script:openCodePath = $script:officialInstallPath
         $script:openCodeVersion = Get-KeyedOutputValue -Text $postDiscovery.Stdout -Key 'VERSION'

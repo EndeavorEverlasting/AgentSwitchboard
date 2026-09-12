@@ -293,7 +293,20 @@ try {
         "Setup-AgentSwitchboard.ps1",
         "Setup-AgentSwitchboard.cmd",
         "Test-HermesSetupContracts.ps1",
-        "gnhf-fleet.example.json"
+        "gnhf-fleet.example.json",
+        "Gnhf.Process.ps1",
+        "Thinker.Route.ps1",
+        "Start-AgentSwitchboardThinker.ps1",
+        "Start-AgentSwitchboardThinker.cmd",
+        "thinker-route.policy.json",
+        "deepseek-usage-windows.example.json",
+        "THINKER_ROUTE.md",
+        "TokenSaving.Route.ps1",
+        "Start-AgentSwitchboardTokenSavingLoop.ps1",
+        "Start-AgentSwitchboardTokenSavingLoop.cmd",
+        "Start-AgentSwitchboardEmergencyFree.ps1",
+        "Start-AgentSwitchboardEmergencyFree.cmd",
+        "TOKEN_SAVING_LOOP.md"
     )) {
         Copy-SetupFile -Source (Join-Path $PSScriptRoot $fileName) -Destination (Join-Path $InstallRoot $fileName)
     }
@@ -302,16 +315,22 @@ try {
     $installedPrompts = Join-Path $InstallRoot "prompts"
     New-Item -ItemType Directory -Path $installedPrompts -Force | Out-Null
     Copy-SetupFile -Source $hermesPromptSource -Destination (Join-Path $installedPrompts "hermes-implementation.md")
-    Add-SetupStep -Name "setup-bundle-copy" -Status "passed" -Evidence "Setup launchers, validators, manifest template, and Hermes prompt were installed under $InstallRoot."
+    Add-SetupStep -Name "setup-bundle-copy" -Status "passed" -Evidence "Setup launchers, thinker routing, token-saving controls, validators, manifest template, and Hermes prompt were installed under $InstallRoot."
 
     Write-Section "Validate setup contracts"
     $coreValidator = Join-Path $PSScriptRoot "Test-GnhfFleetContracts.ps1"
     $hermesValidator = Join-Path $PSScriptRoot "Test-HermesSetupContracts.ps1"
+    $thinkerValidator = Join-Path $PSScriptRoot "tests\Test-ThinkerRouteContracts.ps1"
+    $tokenSavingValidator = Join-Path $PSScriptRoot "tests\Test-TokenSavingLoopContracts.ps1"
     & pwsh -NoLogo -NoProfile -File $coreValidator
     if ($LASTEXITCODE -ne 0) { throw "Core fleet contract validation failed with exit code $LASTEXITCODE." }
     & pwsh -NoLogo -NoProfile -File $hermesValidator
     if ($LASTEXITCODE -ne 0) { throw "Hermes setup contract validation failed with exit code $LASTEXITCODE." }
-    Add-SetupStep -Name "contract-validation" -Status "passed" -Evidence "Core and Hermes setup validators passed."
+    & pwsh -NoLogo -NoProfile -File $thinkerValidator
+    if ($LASTEXITCODE -ne 0) { throw "Thinker routing contract validation failed with exit code $LASTEXITCODE." }
+    & pwsh -NoLogo -NoProfile -File $tokenSavingValidator
+    if ($LASTEXITCODE -ne 0) { throw "Token-saving loop contract validation failed with exit code $LASTEXITCODE." }
+    Add-SetupStep -Name "contract-validation" -Status "passed" -Evidence "Core, Hermes, thinker routing, and token-saving loop validators passed."
 
     $summary.agents = $state.agents
     $summary.status = if ($hermesRecord.available) { "success" } else { "partial" }
@@ -344,5 +363,5 @@ if ($summary.status -eq "partial") {
     Write-Warning "Core setup completed, but Hermes is BLOCKED. Review the setup summary and rerun Setup-AgentSwitchboard.cmd after repairing the recorded cause."
 }
 else {
-    Write-Host "AgentSwitchboard and Hermes are ready for authentication and bounded sprint launch." -ForegroundColor Green
+    Write-Host "AgentSwitchboard, deterministic thinker routing, token-saving controls, and Hermes are ready for bounded sprint launch." -ForegroundColor Green
 }

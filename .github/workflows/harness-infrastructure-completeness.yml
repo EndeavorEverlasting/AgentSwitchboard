@@ -1,0 +1,75 @@
+name: Harness infrastructure completeness
+
+on:
+  pull_request:
+    paths:
+      - 'HARNESS.md'
+      - 'CODEBASE_MAP.md'
+      - 'tooling/harness/operational/**'
+      - '.ai/skills/post-integration-local-adoption/**'
+      - 'scripts/Test-HarnessInfrastructureCompleteness.ps1'
+      - 'tests/test_harness_infrastructure_completeness.py'
+      - 'docs/harness/operational-harness-current-state.md'
+      - '.github/workflows/harness-infrastructure-completeness.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'HARNESS.md'
+      - 'CODEBASE_MAP.md'
+      - 'tooling/harness/operational/**'
+      - '.ai/skills/post-integration-local-adoption/**'
+      - 'scripts/Test-HarnessInfrastructureCompleteness.ps1'
+      - 'tests/test_harness_infrastructure_completeness.py'
+      - 'docs/harness/operational-harness-current-state.md'
+      - '.github/workflows/harness-infrastructure-completeness.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  linux-completeness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate tracked harness composition
+        run: python3 tests/test_harness_infrastructure_completeness.py
+      - name: Diff hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git diff --check "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"
+          else
+            git diff --check HEAD^ HEAD
+          fi
+          test -z "$(git status --short)"
+
+  windows-completeness:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate PowerShell and tracked harness composition
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & pwsh -NoLogo -NoProfile -File scripts/Test-HarnessInfrastructureCompleteness.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & python tests/test_harness_infrastructure_completeness.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Diff hygiene
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ('${{ github.event_name }}' -eq 'pull_request') {
+            & git diff --check '${{ github.event.pull_request.base.sha }}' '${{ github.event.pull_request.head.sha }}'
+          } else {
+            & git diff --check HEAD^ HEAD
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ((& git status --short)) { throw 'workflow dirtied checkout' }

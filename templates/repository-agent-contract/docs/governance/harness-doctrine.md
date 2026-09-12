@@ -10,6 +10,10 @@ Use this loop:
 
 `request -> evidence review -> bounded decision -> repo or Git or GitHub mutation -> artifacts -> validation -> report -> next decision`
 
+## Repository knowledge reuse / anti-rediscovery
+
+**Repository knowledge is compiled state.** Search the smallest sufficient canonical local surfaces before invention or external research: repository law/owners, architecture/ADRs/specs, manifests/registries/schemas, workflow/context maps, skills, validators/tests, plans/reports, implementation helpers, and relevant history. Reuse or strengthen the proven owner and record the unresolved gap before creating another abstraction or searching outward. Deterministic hydration is preferred for repeatedly gathered known state. External evidence may fill or challenge an explicit gap but cannot silently override repository authority.
+
 ## Action-commitment rule
 
 Evidence precedes confidence. Preserve existing work before cleanup. Reuse existing contracts before invention. An action claim requires the corresponding mutation, validation, and commit or GitHub evidence; acknowledgment, advice, a plan, summary, or handoff is not a substitute.

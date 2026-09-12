@@ -1,0 +1,96 @@
+name: Auggie readiness
+
+on:
+  pull_request:
+    paths:
+      - 'tooling/gnhf/Test-AuggieReadiness.ps1'
+      - 'tooling/gnhf/fixtures/auggie-*.fixture.ps1'
+      - 'tooling/gnhf/auggie-readiness.contract.json'
+      - 'tests/test_auggie_readiness_contract.py'
+      - 'docs/workstation/auggie-readiness.md'
+      - '.github/workflows/auggie-readiness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate dependency-free Auggie contract
+        run: python -m unittest tests.test_auggie_readiness_contract
+
+      - name: Parse tracked PowerShell readiness surfaces
+        shell: pwsh
+        run: |
+          $paths = @(
+            'tooling/gnhf/Test-AuggieReadiness.ps1',
+            'tooling/gnhf/fixtures/auggie-ready.fixture.ps1',
+            'tooling/gnhf/fixtures/auggie-no-acp.fixture.ps1'
+          )
+          foreach ($path in $paths) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $path), [ref]$tokens, [ref]$errors)
+            if ($errors.Count -gt 0) {
+              $errors | Format-List | Out-String | Write-Error
+              throw "PowerShell parse failed: $path"
+            }
+          }
+
+      - name: Prove ready and blocked fixture classifications
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'auggie-readiness'
+          New-Item -ItemType Directory -Path $out -Force | Out-Null
+
+          $readyArtifact = Join-Path $out 'ready.json'
+          & pwsh -NoLogo -NoProfile -File tooling/gnhf/Test-AuggieReadiness.ps1 `
+            -AuggiePath tooling/gnhf/fixtures/auggie-ready.fixture.ps1 `
+            -OutputPath $readyArtifact `
+            -FailIfNotReady
+          if ($LASTEXITCODE -ne 0) { throw "Ready fixture probe failed: $LASTEXITCODE" }
+          $ready = Get-Content -LiteralPath $readyArtifact -Raw | ConvertFrom-Json
+          if ($ready.status -ne 'ready' -or -not $ready.capabilities.acpServerAdvertised) { throw 'Ready fixture was not classified ready.' }
+          if ($ready.capabilities.acpAgentSpec -ne 'acp:auggie --acp') { throw "Unexpected ACP agent spec: $($ready.capabilities.acpAgentSpec)" }
+          if ($ready.safety.authenticationChecked -ne $false -or $ready.safety.acpServerStarted -ne $false -or $ready.safety.rawHelpPersisted -ne $false) { throw 'Readiness probe exceeded its safety boundary.' }
+
+          $blockedArtifact = Join-Path $out 'blocked.json'
+          & pwsh -NoLogo -NoProfile -File tooling/gnhf/Test-AuggieReadiness.ps1 `
+            -AuggiePath tooling/gnhf/fixtures/auggie-no-acp.fixture.ps1 `
+            -OutputPath $blockedArtifact
+          if ($LASTEXITCODE -ne 0) { throw "Blocked fixture observation unexpectedly failed: $LASTEXITCODE" }
+          $blocked = Get-Content -LiteralPath $blockedArtifact -Raw | ConvertFrom-Json
+          if ($blocked.status -ne 'blocked' -or $blocked.classification -ne 'acp-not-advertised') { throw "Unexpected blocked classification: $($blocked.status) / $($blocked.classification)" }
+          if ($blocked.capabilities.acpServerAdvertised -ne $false -or $blocked.capabilities.acpAgentSpec) { throw 'Blocked fixture incorrectly promoted ACP readiness.' }
+
+      - name: Validate existing GNHF fleet contracts
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File tooling/gnhf/Test-GnhfFleetContracts.ps1
+
+      - name: Verify PR-range diff hygiene
+        shell: pwsh
+        run: |
+          if ('${{ github.event_name }}' -eq 'pull_request') {
+            git diff --check '${{ github.event.pull_request.base.sha }}' '${{ github.event.pull_request.head.sha }}'
+          }
+          else {
+            git diff --check HEAD^ HEAD
+          }
+          if ($LASTEXITCODE -ne 0) { throw "git diff --check failed: $LASTEXITCODE" }
+          $dirty = (& git status --short) -join "`n"
+          if ($dirty) { throw "workflow dirtied checkout:`n$dirty" }
