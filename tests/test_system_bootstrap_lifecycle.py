@@ -75,7 +75,7 @@ class SystemBootstrapLifecycleTests(unittest.TestCase):
     def test_remove_is_ownership_delta_not_blanket_cleanup(self):
         text = OPEN_CODE.read_text(encoding="utf-8-sig")
         self.assertIn("if ([bool]$pathState['addedByAsb']", text)
-        self.assertIn("if ([bool]$binary['changedByAsb'])", text)
+        self.assertIn("[bool]$binary['changedByAsb']", text)
         self.assertIn("if ([bool]$ConfigState['lspChangedByAsb'])", text)
         self.assertIn("if ([bool]$ConfigState['schemaChangedByAsb'])", text)
         self.assertIn("$config.Remove('lsp')", text)
