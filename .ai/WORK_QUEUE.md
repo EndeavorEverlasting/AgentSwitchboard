@@ -1,4 +1,4 @@
-﻿portableContractRef: RepoLedgerInteroperability.v1@429237aa41d8712d71859865c9be407ca23d8580
+portableContractRef: RepoLedgerInteroperability.v1@429237aa41d8712d71859865c9be407ca23d8580
 localProfileRef: agentswitchboard.repository-work-ledger.v1@1.0.0
 localAuthority: AGENTS.md
 
@@ -233,20 +233,3 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** none
 - **Next action:** refresh main and all three PRs, prove containment of successor SHAs, then close as superseded with successor references
 - **Updated:** 2026-09-12T19:55:00Z
-
-## ASQ-014 - Build optional opinion-ledger tracer (experimental)
-
-- **Status:** DONE
-- **Priority:** P2
-- **Work class:** BOUNDED
-- **Owner:** opinion-ledger lane
-- **Branch / PR:** main / #146 merged
-- **Scope:** add operational-harness tracer that records/searches local-only candidate opinions with advisory-only semantics
-- **Forbidden:** personal data, credentials, remote sync, product mutation
-- **Dependencies:** none
-- **References:** `tooling/harness/operational/opinion-ledger/manifest.json`, `tests/test_opinion_ledger_tracer.py`
-- **Acceptance gate:** 15 opinion-ledger tests pass, harness 134 PASS, no personal content
-- **Gate:** none
-- **Last proof:** merge:ce66cbab09c25e598de86e85757c833259602898
-- **Next action:** none; no safe actionable work remains
-- **Updated:** 2026-09-12T22:20:00Z

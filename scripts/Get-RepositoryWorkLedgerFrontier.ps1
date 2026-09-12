@@ -19,7 +19,7 @@ if (-not (Test-Path -LiteralPath $ledger -PathType Leaf)) {
 }
 
 $source = Get-Content -LiteralPath $ledger -Raw
-$canonicalHeadingRegex = [regex]'(?m)^##[ \t]+(ASQ-\d{3,})[ \t]+—[ \t]+([^\r\n]+)\r?$'
+$canonicalHeadingRegex = [regex]'(?m)^##[ \t]+(ASQ-\d{3,})'
 $matches = $canonicalHeadingRegex.Matches($source)
 if ($matches.Count -eq 0) {
     throw 'Ledger contains no canonical ASQ task blocks.'
