@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "opinion-ledger.record-search.v1",
+  "purpose": "Record one candidate engineering opinion locally and retrieve it later without promotion or remote sync.",
+  "steps": [
+    {
+      "id": "resolve-local-state",
+      "action": "derive state root from explicit override, authorized environment override, or OS-native state location",
+      "mutation": false
+    },
+    {
+      "id": "record-candidate",
+      "action": "append one validated local-only advisory candidate",
+      "mutation": true
+    },
+    {
+      "id": "search-candidates",
+      "action": "search literal text across candidate text, scope, and tags",
+      "mutation": false
+    },
+    {
+      "id": "promote-separately",
+      "action": "if a candidate repeatedly proves useful, open a separate reviewed change against the real doctrine/skill/ADR/spec/validator/implementation owner",
+      "mutation": false
+    }
+  ],
+  "forbidden": [
+    "tracked candidate content",
+    "automatic promotion",
+    "execution authorization",
+    "remote synchronization",
+    "personal accomplishment ingestion",
+    "health-history ingestion"
+  ],
+  "failurePolicy": "Malformed or semantically invalid ledger state blocks search; the tracer does not skip corrupt records or invent replacement state."
+}

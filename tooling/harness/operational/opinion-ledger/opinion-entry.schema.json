@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentswitchboard.local/schemas/opinion-entry.v1.schema.json",
+  "title": "AgentSwitchboard opinion candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "opinion_id",
+    "created_at",
+    "text",
+    "scope",
+    "source_type",
+    "source_ref",
+    "confidence",
+    "tags",
+    "visibility",
+    "status",
+    "advisory_only",
+    "execution_authority",
+    "promoted_owner"
+  ],
+  "properties": {
+    "schema_version": {"const": "agentswitchboard.opinion-entry.v1"},
+    "opinion_id": {"type": "string", "pattern": "^opn-[0-9a-f]{20}$"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "text": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "scope": {"type": "string", "minLength": 1, "maxLength": 160},
+    "source_type": {"enum": ["operator", "chat", "repository", "review", "other"]},
+    "source_ref": {"type": ["string", "null"], "maxLength": 500},
+    "confidence": {"enum": ["low", "medium", "high"]},
+    "tags": {
+      "type": "array",
+      "maxItems": 20,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 80}
+    },
+    "visibility": {"const": "local-only"},
+    "status": {"const": "candidate"},
+    "advisory_only": {"const": true},
+    "execution_authority": {"const": false},
+    "promoted_owner": {"type": "null"}
+  }
+}

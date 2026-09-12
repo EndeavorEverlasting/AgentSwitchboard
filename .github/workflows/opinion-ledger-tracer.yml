@@ -1,0 +1,64 @@
+name: Opinion ledger tracer
+
+on:
+  pull_request:
+    paths:
+      - ".ai/WORK_QUEUE.md"
+      - ".ai/skills/opinion-ledger-tracer/**"
+      - "docs/harness/opinion-ledger-tracer.md"
+      - "tooling/harness/operational/manifest.json"
+      - "tooling/harness/operational/workflow-registry.json"
+      - "tooling/harness/operational/opinion-ledger/**"
+      - "tests/test_opinion_ledger_tracer.py"
+      - ".github/workflows/opinion-ledger-tracer.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tracer-contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: false
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate opinion tracer and connected contracts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & python -m unittest tests.test_opinion_ledger_tracer -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & python tests/test_operational_harness.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & pwsh -NoLogo -NoProfile -File scripts/Test-RepositoryWorkLedgerContract.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & python -m unittest tests.test_repository_work_ledger_contract -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Verify PR-range diff hygiene and clean checkout
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ('${{ github.event_name }}' -eq 'pull_request') {
+            & git diff --check '${{ github.event.pull_request.base.sha }}' '${{ github.event.pull_request.head.sha }}'
+          } else {
+            & git diff --check HEAD^ HEAD
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $dirty = (& git status --short) -join "`n"
+          if ($dirty) {
+            Write-Error "workflow dirtied checkout:`n$dirty"
+            exit 1
+          }
