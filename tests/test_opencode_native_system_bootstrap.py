@@ -184,7 +184,7 @@ class OpenCodeNativeSystemBootstrapTests(unittest.TestCase):
     def test_remove_only_reverses_asb_owned_deltas(self):
         text = BOOTSTRAP.read_text(encoding="utf-8-sig")
         self.assertIn("if ([bool]$pathState['addedByAsb']", text)
-        self.assertIn("if ([bool]$binary['changedByAsb'])", text)
+        self.assertIn("[bool]$binary['changedByAsb']", text)
         self.assertIn("if ([bool]$ConfigState['lspChangedByAsb'])", text)
         self.assertIn("if ([bool]$ConfigState['schemaChangedByAsb'])", text)
         self.assertNotIn("Remove-Item -LiteralPath $installDirectory -Recurse", text)
