@@ -4,62 +4,72 @@
 
 ## Mission
 
-Replace chat-only coordination with one current repository-owned program for the September center of gravity: reversible system bootstrap lifecycle (`Inspect / Apply / Remove`), provider-neutral child execution (Pi and OpenCode adapters via a shared bus), fresh-TUI LSP runtime certification, heterogeneous and nested delegation, and stale PR/path convergence.
+Replace chat-only coordination with one repository-owned program for reversible system bootstrap lifecycle (`Inspect / Apply / Remove`), provider-neutral child execution, fresh-TUI LSP runtime certification, heterogeneous/nested delegation, and stale-owner convergence. Public coordination must not carry workstation-specific paths or runtime evidence.
 
-## Provider floor
+## Current provider floor
 
-`main@54cce3b824a982e26595efa8ed5060e555411693` — parent `2f69049` (LSP runtime-smoke contract). Reversible system-bootstrap lifecycle (`Inspect/Apply/Remove`, write-ahead, drift detection, resumable rollback) is already beneath `main` via `81461e7`. `pyright 1.1.414` prerequisite is observed; headless `opencode` still `No results` until fresh TUI.
+The original coordination floor was integrated at `38fd434ed7496413a33e1143d9cbb381849d81de`. This reconciliation refreshed provider truth through `main@d5a1bb4ee46135060e4fbfed467665d2c84f5412`.
+
+Important movement since the original floor:
+
+- reversible system-bootstrap lifecycle remains beneath current `main` via `81461e7`;
+- PR #149 path authority is now merged via `3b47a9129730bc8fc3c988f8cbc6ec2fbfa515d8`;
+- PR #151 Pi bootstrap/private child seam is now merged via `1f20499d5771456c9ce88da67eced345899928fa`;
+- PR #115 remains open and stale pending containment proof;
+- current lifecycle adapter registry still contains only OpenCode, so Pi `Inspect/Apply/Remove` parity remains work;
+- no provider-neutral `tooling/harness/child-agent-bus/` owner exists yet, so the shared bus remains work;
+- OpenCode Python LSP still requires the fresh-TUI runtime observation; headless failure is not promoted to a harness failure.
 
 ## Waves and dependencies
 
-```
-Panel 01 (this plan) — coordination floor — alone first
-  └─ parallel Panel 02 (TUI LSP runtime) + Panel 03 (Pi reversible bootstrap) + Panel 04 (shared child bus spine)
+```text
+Panel 01 coordination floor / reconciliation
+  └─ parallel Panel 02 (TUI LSP runtime) + Panel 03 (Pi lifecycle parity) + Panel 04 (shared child bus spine)
        └─ Panel 05 Pi adapter (needs 03+04)
-            └─ Panel 06 OpenCode adapter (needs 04, prefers 05 as reference) — 1 writer on shared adapter registry
+            └─ Panel 06 OpenCode adapter (needs 04; Pi remains the preferred first conformance reference)
                  └─ Panel 07 heterogeneous read-only pilot (needs 05+06 + physical runtime)
-                      └─ Panel 08 mediated nested delegation v1 (maxDepth 2, maxChildren 3, one writer)
-                           └─ Panel 09 nested runtime certification (depth-2 heterogeneous chain)
-                                └─ Panel 10 PR/path authority cleanup and final convergence (last)
+                      └─ Panel 08 mediated nested delegation v1
+                           └─ Panel 09 nested runtime certification
+                                └─ Panel 10 final convergence
 ```
 
 ## Collision ledger
 
-| Surface | Owner | Disposition |
+| Surface | Owner | Current disposition |
 |---|---|---|
-| `tooling/harness/system-bootstrap-lifecycle/**` | shared lifecycle owner; Panel 03 may add Pi adapter but must not redesign contract | keep |
-| `tooling/harness/child-agent-bus/**` + root `CAPABILITIES.md`/`TRIGGERS.md`/`SKILLS.md`/`CODEBASE_MAP.md` + `.ai/harness/manifest.json` | Panel 04 sole writer, then serialized adapter additions 05/06 | create |
-| `Pull-And-Run-AgentSwitchboard.cmd` `tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1` | Panel 03 only if Pi bootstrap genuinely needs it | otherwise PR #149 waits |
-| `tooling/harness/operational/opencode-lsp-setup/**` + `docs/harness/opencode-lsp-workstation-setup.md` | Panel 02 read-only / runtime evidence | no other panel edits without proven defect |
-| PR #151 `feat(pi): add system bootstrap and child-agent seam` `8d40604e` | mixed bootstrap + private child contract; stale base predates lifecycle | salvage: bootstrap to 03, child contract to 04/05; not whole-PR merge |
-| PR #149 `fix(workstation): enforce canonical Windows checkout path roles` `3138e0b` `CONFLICTING` | proposes blanket OneDrive/Desktop rejection; collides with explicit operator path rule and bootstrap | wait until Panel 10; extract only still-valid explicit-path precedence if proven missing |
-| PR #115 `feat(harness): add OpenCode LSP workstation setup harness` `39fd59df` `CONFLICTING` | stale LSP owner candidate | compare with current `main` LSP proof at 10; close as superseded if contained |
+| `tooling/harness/system-bootstrap-lifecycle/**` | shared lifecycle owner; Panel 03 may add Pi adapter but must not redefine lifecycle semantics | keep |
+| `tooling/harness/child-agent-bus/**` + root capability/trigger/skill discovery | Panel 04 sole shared-spine writer, then serialized adapter additions | create |
+| `Pull-And-Run-AgentSwitchboard.cmd` / technician setup | Panel 03 only when Pi lifecycle parity genuinely requires dispatcher changes | serialize |
+| OpenCode LSP harness/docs | Panel 02 runtime evidence; no tracked edits without a reproducible defect | read-only/runtime |
+| merged PR #151 | current main now contains Pi bootstrap plus Pi-private child seam | refactor bootstrap into lifecycle parity at 03; migrate private child seam behind shared bus at 05 |
+| merged PR #149 | canonical Windows checkout/path authority is now active on main | preserve history; reconcile operator workflow only with evidence at 10 |
+| open PR #115 | stale OpenCode LSP owner candidate | compare with current main and close only after supersession proof at 10 |
 
 ## Safety boundary
 
-No credentials in Git/evidence, no force reset/push, no silent local-path relocation, no direct child merge to `main`, no TUI-success claim from headless evidence, no provider/model fallback without contract authority, no user-local receipt as machine-deletion authority. `service` and `runtime` remain `constrained/unverified` until corresponding runtime panels.
+No credentials in Git/evidence, no force reset/push, no private absolute workstation paths in public plan/ledger artifacts, no direct child merge to `main`, no TUI-success claim from headless evidence, no provider/model fallback without contract authority, and no user-local receipt as machine-deletion authority.
 
-## Tasks (10) — owners and gates
+## Tasks (10)
 
-*   **COORD-01** `in-progress` — establish this floor (this file) — proves refreshed `54cce3b`, plan/ledger encode program, private paths excluded.
-*   **LSP-02** `pending` — fresh-TUI vs headless `20260912T194619Z-e3f423df` (runtime-only, no tracked mutation unless TUI defect).
-*   **PI-BOOT-03** `pending` — `Bootstrap-Pi-SystemWide.cmd` + `Unbootstrap-Pi-SystemWide.cmd` + `tooling/pi/Install-AgentSwitchboardPiSystem.ps1` behind shared lifecycle.
-*   **BUS-04** `pending` — `tooling/harness/child-agent-bus/` `child-agent-request/result/error.v1` + registry + dispatcher + fixtures + validator (generic, no adapter impl).
-*   **PI-ADAPTER-05** `pending` — Pi as first conforming `child-agent-bus` adapter (needs 03+04).
-*   **OC-ADAPTER-06** `pending` — OpenCode parity (needs 04, prefers 05).
-*   **PILOT-07** `pending` — Pi + OpenCode fan-out read-only pilot.
-*   **NESTED-08** `pending` — mediated nested delegation `maxDepth2`.
-*   **NESTED-RT-09** `pending` — depth-2 heterogeneous runtime chain.
-*   **CLEANUP-10** `pending` — reconcile/close `151/115/149` + plan/ledger terminal states.
+- **COORD-01** `completed` — durable coordination floor + current-state/privacy reconciliation.
+- **LSP-02** `pending` — fresh-TUI vs headless runtime proof.
+- **PI-BOOT-03** `pending` — refactor merged Pi bootstrap into shared reversible lifecycle parity and add unbootstrap.
+- **BUS-04** `pending` — provider-neutral child request/result/error contracts, registry, fixtures, validator and dispatcher.
+- **PI-ADAPTER-05** `pending` — migrate the merged Pi-private child seam to the shared bus.
+- **OC-ADAPTER-06** `pending` — OpenCode adapter parity.
+- **PILOT-07** `pending` — Pi + OpenCode read-only heterogeneous pilot.
+- **NESTED-08** `pending` — mediated nested delegation with bounded authority inheritance.
+- **NESTED-RT-09** `pending` — one depth-2 heterogeneous runtime chain.
+- **CLEANUP-10** `pending` — reconcile merged #151/#149 behavior, supersede #115 when proven, then close the September plan/ledger.
 
 ## Validation
 
-`JSON parse/schema` → `Test-PublicPlanContracts.ps1` → `Test-RepositoryWorkLedgerContract.ps1` → `Test-AgentDocumentationContract.ps1` if routing changed → `git diff --check` → clean checkout.
+`public coordination privacy scan` → `Test-PublicPlanContracts.ps1` → `Test-RepositoryWorkLedgerContract.ps1` → `Get-RepositoryWorkLedgerFrontier.ps1 -Json` → `git diff --check` → clean checkout.
 
 ## Proof ceiling
 
-Proves current ownership/dependency/collision state only. Does not prove Pi/OpenCode installation, LSP activation, child-agent execution or provider delivery.
+This coordination layer proves ownership, dependencies, current PR disposition and public-artifact hygiene only. It does not prove Pi lifecycle parity, OpenCode TUI LSP activation, shared child-bus conformance, provider delivery, heterogeneous fan-out, or nested delegation.
 
 ## Handoff
 
-Next: Parallel Group A `Panels 02–04` together only after this floor is integrated. Keep contiguous. See `handoff.nextCommand` in `.plan.json`.
+After this reconciliation is integrated, the actionable frontier remains the independent Group A lanes: **Panel 02 + Panel 03 + Panel 04**. Resolve the current canonical checkout through repository/machine-profile authority rather than embedding a machine-specific path in tracked coordination data.
