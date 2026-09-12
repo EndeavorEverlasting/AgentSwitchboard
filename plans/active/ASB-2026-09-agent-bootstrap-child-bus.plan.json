@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-12T19:50:00Z",
-  "updatedUtc": "2026-09-12T22:39:32Z",
+  "updatedUtc": "2026-09-12T22:56:50Z",
   "mission": "Create the durable September program for reversible agent bootstrap (Inspect/Apply/Remove), provider-neutral child execution (Pi/OpenCode adapters via shared bus), fresh-TUI LSP runtime certification, heterogeneous and nested delegation, and stale-owner convergence without leaking workstation-specific evidence into public coordination artifacts.",
   "owner": {
     "surface": "September agent bootstrap and child bus program",
@@ -24,7 +24,7 @@
   "lane": "public-plan / repository-work-ledger coordination",
   "dependencies": [],
   "safeParallelWork": [
-    "Panel 02 TUI LSP runtime certification (local untracked runtime-smoke evidence only) with Panels 03 Pi reversible bootstrap and 04 shared child bus spine after the coordination floor, provided their declared ownership surfaces remain disjoint",
+    "OpenCode fresh-TUI LSP runtime certification (local untracked runtime-smoke evidence only), Pi reversible bootstrap lifecycle parity, and OpenCode child-adapter parity may proceed independently after this coordination reconciliation, provided their declared ownership surfaces remain disjoint",
     "Child-repository feature work using separate branches and worktrees outside plans/** and .ai/WORK_QUEUE.md"
   ],
   "ownedScope": [
@@ -58,20 +58,21 @@
       "status": "completed",
       "owner": "coordination lane",
       "dependencies": [],
-      "inputs": ["coordination-floor integration commit 38fd434ed7496413a33e1143d9cbb381849d81de", "current main floor d5a1bb4ee46135060e4fbfed467665d2c84f5412", "plans/plan-registry.json", ".ai/WORK_QUEUE.md", "PR #151/#149/#115 provider truth", "scripts/Test-PublicPlanContracts.ps1", "scripts/Test-RepositoryWorkLedgerContract.ps1"],
+      "inputs": ["coordination-floor integration commit 38fd434ed7496413a33e1143d9cbb381849d81de", "current main floor 85ecf77bd1eb94d296ce015aee72dd783dd63b53", "plans/plan-registry.json", ".ai/WORK_QUEUE.md", "PR #151/#149/#115 provider truth", "scripts/Test-PublicPlanContracts.ps1", "scripts/Test-RepositoryWorkLedgerContract.ps1"],
       "outputs": ["plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json", "plans/active/ASB-2026-09-agent-bootstrap-child-bus.md", "plans/plan-registry.json", ".ai/WORK_QUEUE.md"],
       "acceptanceCriteria": [
         "Coordination floor commit 38fd434 is retained as an ancestor of current main and current provider truth is refreshed before reconciliation",
         "Plan and ledger encode the 10-panel September program with waves, dependencies, collision surfaces, proof ceilings, and current PR states",
         "Public coordination files contain no private absolute Windows user path or tenant-labelled OneDrive path",
-        "PR #151 and #149 are recorded as merged current-main inputs, while PR #115 remains a stale open owner pending supersession proof",
+        "PR #151 and #149 are recorded as merged current-main inputs, PR #115 remains a stale open owner pending supersession proof, and the child-bus merge is reflected in the actionable frontier",
         "Plan/ledger/privacy validators pass"
       ],
       "evidence": [
         "commit:38fd434ed7496413a33e1143d9cbb381849d81de",
         "merge:1f20499d5771456c9ce88da67eced345899928fa PR #151",
         "merge:3b47a9129730bc8fc3c988f8cbc6ec2fbfa515d8 PR #149",
-        "main:d5a1bb4ee46135060e4fbfed467665d2c84f5412 reconciliation floor"
+        "merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53 child bus v1",
+        "main:85ecf77bd1eb94d296ce015aee72dd783dd63b53 reconciliation floor"
       ]
     },
     {
@@ -107,17 +108,17 @@
     {
       "taskId": "BUS-04",
       "title": "Shared ASB child bus v1 contract spine",
-      "status": "pending",
+      "status": "completed",
       "owner": "shared child-bus lane",
       "dependencies": ["COORD-01"],
       "inputs": ["AGENTS.md, CODEBASE_MAP.md and capability/trigger conventions", ".ai/harness/manifest.json", "merged tooling/pi/harness/child-agent-invocation.contract.json as noncanonical source material"],
-      "outputs": ["tooling/harness/child-agent-bus/ request/result/error schemas, adapter registry, artifact registry, fixtures, validator, dispatcher, docs and CI", "CAPABILITIES.md/TRIGGERS.md/SKILLS.md routing", "agent.child.dispatch / result.normalize / writer-isolated capabilities"],
+      "outputs": ["tooling/harness/child-agent-bus/ request/result/error schemas, adapter registry, artifact registry, fixtures, validator, dispatcher, docs and CI", "provider-neutral child-bus v1 mainline owner"],
       "acceptanceCriteria": [
-        "Closed provider-neutral child-agent-request.v1, child-agent-result.v1 and child-agent-error.v1 schemas define invocation lineage, authority, budgets and evidence root",
+        "Provider-neutral child-agent request/result/error schemas define invocation lineage, authority, budgets and evidence root",
         "Generic Invoke-AgentSwitchboardChild front door validates the request and fails closed when an adapter is absent",
-        "Common validator and fixture matrix cover read-only, isolated writer, dirty/default-branch/base-SHA mismatch, budget exhaustion, timeout and missing terminal-event cases"
+        "Child-bus contract validation is integrated into current main"
       ],
-      "evidence": []
+      "evidence": ["merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53 Merge child bus v1", "artifact:tooling/harness/child-agent-bus/", "artifact:scripts/Test-ChildAgentBus.ps1"]
     },
     {
       "taskId": "PI-ADAPTER-05",
@@ -131,7 +132,7 @@
         "Pi becomes a conforming implementation of the shared bus instead of retaining a private canonical request/result protocol",
         "Read-only no-mutation and writer isolated-worktree guards remain enforced; terminal agent_end, budgets and evidence uniqueness are preserved"
       ],
-      "evidence": ["merge:1f20499d5771456c9ce88da67eced345899928fa supplies the current Pi-private adapter source"]
+      "evidence": ["merge:1f20499d5771456c9ce88da67eced345899928fa supplies the current Pi-private adapter source", "merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53 supplies the common bus dependency"]
     },
     {
       "taskId": "OC-ADAPTER-06",
@@ -145,7 +146,7 @@
         "OpenCode consumes the same provider-neutral request and produces the same normalized result/error envelopes as Pi",
         "Exact managed runtime identity is used without arbitrary PATH or provider/model fallback"
       ],
-      "evidence": []
+      "evidence": ["dependency satisfied by merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53"]
     },
     {
       "taskId": "PILOT-07",
@@ -200,11 +201,11 @@
         "PR #115 is closed only after current main is proven to contain the required LSP behavior",
         "September plan and work ledger reach terminal states only after all implementation/runtime gates are dispositioned"
       ],
-      "evidence": ["merge:1f20499d5771456c9ce88da67eced345899928fa PR #151", "merge:3b47a9129730bc8fc3c988f8cbc6ec2fbfa515d8 PR #149", "PR #115 remains open at 39fd59df15857127ace8814ef03eabbd7b4d53c7"]
+      "evidence": ["merge:1f20499d5771456c9ce88da67eced345899928fa PR #151", "merge:3b47a9129730bc8fc3c988f8cbc6ec2fbfa515d8 PR #149", "merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53 child bus v1", "PR #115 remains open at 39fd59df15857127ace8814ef03eabbd7b4d53c7"]
     }
   ],
   "validation": [
-    "JSON parse/schema for September plan",
+    "JSON schema validation for registered public plans",
     "python tests/test_public_plan_contracts.py",
     "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
     "pwsh -NoLogo -NoProfile -File scripts/Test-RepositoryWorkLedgerContract.ps1",
@@ -214,15 +215,17 @@
   ],
   "proof": {
     "target": "public-plan coordination + repository-ledger privacy and current-state proof for the September program",
-    "achieved": "Coordination floor 38fd434 is integrated; provider truth was refreshed through main@d5a1bb4; PR #151 and #149 are recorded as merged inputs; PR #115 remains open; current public coordination is required to be workstation-path safe; no runtime proof is promoted by this plan.",
-    "ceiling": "Proves current ownership/dependency/collision and public-coordination hygiene only. It does not prove Pi lifecycle parity, OpenCode TUI LSP activation, shared child-bus conformance, provider delivery, heterogeneous fan-out, or nested delegation."
+    "achieved": "Coordination floor 38fd434 is integrated; provider truth is refreshed through main@85ecf77; PR #151 and #149 are merged inputs; the provider-neutral child bus v1 is now integrated; PR #115 remains open; current public coordination is required to be workstation-path safe; no runtime proof is promoted by this plan.",
+    "ceiling": "Proves current ownership/dependency/collision and public-coordination hygiene only. It does not prove Pi lifecycle parity, OpenCode TUI LSP activation, Pi/OpenCode adapter conformance, provider delivery, heterogeneous fan-out, or nested delegation."
   },
   "handoff": {
-    "nextOwner": "Panel 02 OpenCode fresh-TUI, Panel 03 Pi lifecycle parity, Panel 04 shared child bus (parallel group A after coordination reconciliation)",
+    "nextOwner": "OpenCode fresh-TUI runtime lane, Pi lifecycle parity lane, OpenCode child-adapter parity lane",
     "nextCommand": "$repoRoot = if ($env:AGENT_SWITCHBOARD_REPO) { $env:AGENT_SWITCHBOARD_REPO } else { Join-Path $env:USERPROFILE 'dev\\AgentSwitchBoard-Live' }; Set-Location -LiteralPath $repoRoot; git fetch --all --prune --tags; git switch main; git pull --ff-only origin main; pwsh -NoLogo -NoProfile -File .\\scripts\\Get-RepositoryWorkLedgerFrontier.ps1 -Json",
     "notes": [
-      "Launch Panels 02-04 together only after this coordination reconciliation is integrated; keep their write surfaces disjoint.",
-      "PR #151 and PR #149 are already merged on current main; their behavior is now input to successor/refactor lanes, not unmerged source material.",
+      "The shared child bus is now integrated at 85ecf77; do not relaunch BUS-04.",
+      "OpenCode child-adapter parity is unblocked by the child-bus merge and can proceed independently of Pi lifecycle parity.",
+      "Pi child-adapter conformance still waits for Pi reversible lifecycle parity.",
+      "PR #151 and PR #149 are already merged on current main; their behavior is input to successor/refactor lanes, not unmerged source material.",
       "PR #115 remains an open stale LSP owner pending containment comparison.",
       "Public coordination data must remain workstation-path safe; local runtime receipts remain untracked."
     ]
