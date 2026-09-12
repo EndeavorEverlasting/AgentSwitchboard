@@ -2,6 +2,22 @@
   "schemaVersion": 1,
   "registryId": "agentswitchboard.operational-workflows.v1",
   "defaultWorkflow": "task-intake",
+  "actionPreconditions": [
+    {
+      "preconditionId": "canonical-path-proof",
+      "path": "tooling/harness/operational/workflows/canonical-path-proof.workflow.json",
+      "skill": ".ai/skills/canonical-path-proof/SKILL.md",
+      "defaultRequired": true,
+      "appliesBefore": [
+        "local repository mutation",
+        "local validator/build/generator/launcher/updater/deployment-helper invocation",
+        "local artifact generation depending on repository state",
+        "operator handoff of a repository-owned local command"
+      ],
+      "exemptions": ["provider-only remote read with no local-adoption claim", "static source inspection with no local invocation or local-adoption claim"],
+      "proofRule": "remote main containment, canonical development checkout currency, production/use path currency, and real operator entrypoint observation are independent proof states"
+    }
+  ],
   "workflows": [
     {"workflowId": "task-intake", "path": "tooling/harness/operational/workflows/task-intake.workflow.json", "triggers": ["unfamiliar repository", "new task", "stale handoff", "unknown branch", "unknown harness owner"], "skill": ".ai/skills/operational-harness-routing/SKILL.md"},
     {"workflowId": "pre-commit-validation", "path": "tooling/harness/operational/workflows/pre-commit-validation.workflow.json", "triggers": ["before commit", "before push", "tracked harness change", "validation request"], "skill": ".ai/skills/evidence-validation/SKILL.md"},

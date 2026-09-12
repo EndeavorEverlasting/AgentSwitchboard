@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "workflowId": "task-intake",
   "title": "Pick up a task safely",
-  "purpose": "Recover repository truth, select one owning harness/workflow, and declare a bounded write lane before mutation.",
+  "purpose": "Recover repository truth, select one owning harness/workflow, establish canonical path proof for local repo-backed actions, and declare a bounded write lane before mutation.",
   "inputs": ["task request", "repository path or identifier if known", "current Git/PR evidence if available"],
   "steps": [
     "Resolve repository identity without assuming the current working directory is a checkout.",
@@ -10,10 +10,12 @@
     "Inspect branch, HEAD, dirty state, active PR or stacked-parent relationship, plans, and validator ownership.",
     "Classify the task as operational-harness, environment-capability, device-profile, application/offline-harness, Pi, GNHF, public-plan, documentation, or another explicitly mapped domain.",
     "Select exactly one primary workflow and any required specialized skill.",
-    "Declare repository, branch, lane, owned paths, forbidden paths, artifacts, validators, proof ceiling, and commit/PR expectation.",
-    "Create an isolated branch or worktree when another writer or unrelated work exists."
+    "Apply the workflow registry's canonical-path-proof action precondition before any local repository-backed mutation, validator/build/generator/launcher/updater invocation, local repository-derived artifact generation, or workstation command handoff. A provider-only remote read or static source inspection may be exempt only when it makes no local-adoption claim; record the exemption.",
+    "Resolve development checkout, production/use path, temporary worktree root, and real operator entrypoint through the registered machine/profile owner. Do not let the current working directory or model preference create a new canonical path.",
+    "Declare repository, branch, lane, owned paths, forbidden paths, artifacts, validators, proof ceiling, canonical path proof state, and commit/PR expectation.",
+    "Create an isolated branch or approved worktree when another writer or unrelated work exists; preserve dirty/diverged/noncanonical work instead of replacing it."
   ],
-  "stopConditions": ["repository identity is unresolved", "requested work would mutate governance without a governance lane", "another writer owns the same branch or paths", "required live-target, credential, merge, deployment, or destructive authority is absent"],
-  "outputs": ["selected workflow", "bounded sprint declaration", "validator set", "artifact plan", "exact next executable action"],
-  "proofCeiling": "Read-only intake and deterministic routing only."
+  "stopConditions": ["repository identity is unresolved", "canonical path owner is unresolved for a required local action", "requested work would mutate governance without a governance lane", "another writer owns the same branch or paths", "required live-target, credential, merge, deployment, or destructive authority is absent"],
+  "outputs": ["selected workflow", "bounded sprint declaration", "canonical path proof disposition or recorded exemption", "validator set", "artifact plan", "exact next executable action"],
+  "proofCeiling": "Read-only intake, deterministic routing, and path-proof selection only. It does not prove a local path state until the canonical-path-proof workflow observes it."
 }

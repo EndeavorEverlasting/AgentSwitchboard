@@ -7,38 +7,38 @@ status: canonical
 
 ## Trigger
 
-Use this skill after an integration/merge when the next useful action depends on a local checkout actually containing the merged file, validator, launcher, or artifact. It also applies when a user reports that a newly merged command is missing locally.
+Use this skill after an integration/merge when the next useful action depends on a local workstation actually containing and using the merged file, validator, launcher, or artifact. It also applies when a user reports that a newly merged command is missing locally.
 
 ## Required inputs
 
-- repository location or a safe repository resolver;
+- repository identity;
 - integration SHA;
 - remote name (normally `origin`);
-- canonical validator/launcher path from tracked harness metadata.
+- canonical machine/profile path owner;
+- canonical validator/launcher identity from tracked harness metadata.
 
 ## Procedure
 
-1. Resolve the repository root and refresh with `git fetch --all --prune --tags`.
-2. Resolve the remote default branch from `refs/remotes/origin/HEAD` or a symref/provider query; never assume `main`.
-3. Verify `git merge-base --is-ancestor <integration-sha> <remote-default-head>` succeeds.
-4. Inspect `git status --short`, current branch, tracking branch, and ahead/behind counts.
-5. Clean + default-branch + behind-only: run `git pull --ff-only` and re-read HEAD.
-6. Dirty, diverged, or separately owned checkout: leave it untouched and create/use an isolated worktree at the refreshed remote default head for the proof run.
-7. Verify the chosen checkout contains the integration SHA and the required path is tracked with `git ls-files --error-unmatch -- <path>`.
-8. Run the owning validator. Only after it passes should the newly merged launcher/artifact be executed or opened.
-9. Report the exact checkout path, HEAD, integration containment, validator exit, launcher/artifact used, and remaining runtime proof ceiling.
+1. Load `tooling/harness/operational/canonical-path.contract.json`, `tooling/harness/operational/workflows/canonical-path-proof.workflow.json`, and `.ai/skills/canonical-path-proof/SKILL.md`. This skill specializes that seam; it does not define a second path authority.
+2. Resolve development checkout, production/use path, temporary worktree root, and real operator entrypoint through the registered owner.
+3. Refresh with `git fetch --all --prune --tags`; resolve the remote default branch rather than assuming `main`.
+4. Prove the integration SHA is contained in the refreshed remote default branch.
+5. Inspect the canonical development checkout. Clean + default-branch + behind-only may use `git pull --ff-only`; otherwise preserve the checkout and use the approved isolated worktree root.
+6. Prove the canonical development checkout and production/use path independently, honoring an explicit `same-path` relation when the owner supplies one.
+7. Prove the real entrypoint is tracked/present at the use path, run the owning validator, then invoke the entrypoint only if that proof is requested.
+8. Record all four proof states independently and advance the first still-unproved gate.
 
 ## Expected outputs
 
-- a local checkout proven to contain the integration;
-- an owning validator result from that checkout;
-- launcher/artifact execution evidence when requested;
-- a next action that advances the first still-unproved gate.
+- canonical role bindings;
+- remote/check-out/use-path/entrypoint proof states;
+- validator and entrypoint receipt where actually executed;
+- a next action that advances the first unproved state.
 
 ## Known trap
 
-A GitHub merge, green PR, or remote `main` containment **does not** prove the operator's workstation checkout has pulled that change. Do not issue a newly merged local command as the next command until local adoption is proven or the command itself performs the safe adoption first.
+A GitHub merge, green PR, or remote `main` containment **does not** prove the canonical development checkout has pulled the change. A current checkout does not automatically prove a separate production/use path, and file presence does not prove the real operator entrypoint observed it. Refresh and promote each required state before issuing the dependent command.
 
 ## Forbidden scope
 
-No reset/clean/force, no silent stash, no deletion of unrelated worktrees, no guessed paths, and no claim of workstation/runtime success from remote evidence alone.
+No reset/clean/force, no silent stash, no deletion of unrelated/noncanonical work, no guessed paths, no second mutable canonical clone, and no claim of workstation/runtime success from remote evidence alone.

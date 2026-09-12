@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "canonical-path-proof",
+  "title": "Resolve canonical paths and promote local proof before action",
+  "purpose": "Default precondition for repository-backed local actions. Resolve the machine/profile path owner, refresh remote truth, preserve existing work, and promote remote, development-checkout, production/use-path, and real-entrypoint proof independently.",
+  "triggers": [
+    "before a local repository-backed action",
+    "before invoking a repository-owned validator, build, generator, launcher, updater, or deployment helper",
+    "before handing an operator a repository-owned local command",
+    "newly merged command must run locally",
+    "canonical path, checkout, worktree, production path, or local adoption is in question"
+  ],
+  "inputs": [
+    "requested action and proof target",
+    "canonical-path contract",
+    "selected machine/profile path owner",
+    "required integration SHA or content floor when the action depends on a particular change",
+    "remote name, normally origin"
+  ],
+  "steps": [
+    "Load tooling/harness/operational/canonical-path.contract.json and resolve the selected machine/profile owner; do not choose a directory from model preference.",
+    "Classify whether this action is a provider-only remote read/static inspection exemption. If exempt, record the exact exemption and stop path promotion before making any local-adoption claim.",
+    "Resolve developmentCheckout, productionUsePath, temporaryWorktreeRoot, and realOperatorEntrypoint from the canonical owner. A role may be N/A only when the owner records a role-specific reason.",
+    "Refresh remote truth with git fetch --all --prune --tags and resolve the actual remote default branch; do not assume main.",
+    "If an integration/content SHA is required, prove remote-main-contains-sha with git merge-base --is-ancestor against the refreshed remote default head.",
+    "Inspect the canonical development checkout branch, HEAD, tracking relation, ahead/behind counts, origin, and git status --short before mutation.",
+    "If the canonical development checkout is clean, on the default branch, and behind-only, update it with git pull --ff-only. If dirty, diverged, separately owned, or on unique work, preserve it unchanged and use an approved isolated worktree under temporaryWorktreeRoot for the bounded proof/action.",
+    "Prove canonical-development-checkout-current only from the checkout actually inspected after refresh. A remote SHA is insufficient.",
+    "Prove production-use-path-current separately by resolving and inspecting productionUsePath. When it equals developmentCheckout, record same-path and reuse the observed SHA/content proof; otherwise prove the production/use surface independently or leave this state unproved.",
+    "Resolve the realOperatorEntrypoint from tracked path/profile authority and prove it is tracked/present at the production/use path before invocation. Do not guess a launcher filename.",
+    "Run the owning validator/build/generator/launcher only after its required path states are proven. Mark real-entrypoint-observes-it only after actual bounded invocation/receipt; propagate every nonzero exit.",
+    "Record each proof state as PROVEN, UNPROVEN, or NOT_APPLICABLE with evidence. Never promote one state merely because a lower state passed."
+  ],
+  "forbidden": [
+    "inventing a second mutable clone as the canonical checkout",
+    "treating an arbitrary Desktop, OneDrive, backup, or current-working-directory clone as authority",
+    "claiming remote main containment proves the canonical development checkout is current",
+    "claiming a current development checkout proves a separate production/use path is current",
+    "claiming file presence proves the real operator entrypoint observed the change",
+    "git reset --hard",
+    "git clean",
+    "force push",
+    "silent stash of unrelated work",
+    "deleting noncanonical or dirty work to make the path look clean"
+  ],
+  "outputs": [
+    "resolved canonical role bindings or explicit N/A reasons",
+    "remote default branch and required SHA containment result",
+    "canonical development checkout identity/state",
+    "production/use path identity/state",
+    "real operator entrypoint identity and observed receipt when invoked",
+    "first still-unproved executable gate"
+  ],
+  "proofCeiling": "Only the proof states actually observed during this workflow. Repository/provider proof never silently upgrades workstation, production/use-path, entrypoint, runtime, deployment, provider, or acceptance proof."
+}
