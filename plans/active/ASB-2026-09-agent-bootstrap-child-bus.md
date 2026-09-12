@@ -25,12 +25,12 @@ Important movement since the original floor:
 ```text
 Panel 01 coordination floor / reconciliation
   └─ parallel Panel 02 (TUI LSP runtime) + Panel 03 (Pi lifecycle parity) + Panel 04 (shared child bus spine)
-       └─ Panel 05 Pi adapter (needs 03+04)
-            └─ Panel 06 OpenCode adapter (needs 04; Pi remains the preferred first conformance reference)
-                 └─ Panel 07 heterogeneous read-only pilot (needs 05+06 + physical runtime)
-                      └─ Panel 08 mediated nested delegation v1
-                           └─ Panel 09 nested runtime certification
-                                └─ Panel 10 final convergence
+       ├─ Panel 05 Pi adapter (needs 03+04)
+       └─ Panel 06 OpenCode adapter (needs 04; Pi remains the preferred first conformance reference)
+            └─ Panel 07 heterogeneous read-only pilot (needs 05+06 + physical runtime)
+                 └─ Panel 08 mediated nested delegation v1
+                      └─ Panel 09 nested runtime certification
+                           └─ Panel 10 final convergence
 ```
 
 ## Collision ledger
