@@ -22,6 +22,7 @@ CONFIDENCE_LEVELS = ("low", "medium", "high")
 VISIBILITY = "local-only"
 STATUS = "candidate"
 OPINION_ID_PATTERN = re.compile(r"^opn-[0-9a-f]{20}$")
+LOCK_TIMEOUT_MILLISECONDS = 10_000
 
 
 class OpinionLedgerError(RuntimeError):
@@ -90,31 +91,64 @@ def ledger_path(state_root: pathlib.Path) -> pathlib.Path:
     return state_root / "opinions.jsonl"
 
 
+def _mutex_identity(path: pathlib.Path) -> str:
+    canonical = str(path.resolve(strict=False)).casefold().encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()[:32]
+
+
 @contextmanager
 def _exclusive_ledger_lock(path: pathlib.Path) -> Iterator[None]:
-    """Serialize access using the canonical ledger file, without a sidecar artifact."""
+    """Serialize ledger access without creating a second persistent artifact."""
 
     _validate_ledger_path(path)
+    if os.name == "nt":
+        import ctypes
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.CreateMutexW.argtypes = [ctypes.c_void_p, wintypes.BOOL, wintypes.LPCWSTR]
+        kernel32.CreateMutexW.restype = wintypes.HANDLE
+        kernel32.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+        kernel32.WaitForSingleObject.restype = wintypes.DWORD
+        kernel32.ReleaseMutex.argtypes = [wintypes.HANDLE]
+        kernel32.ReleaseMutex.restype = wintypes.BOOL
+        kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+        kernel32.CloseHandle.restype = wintypes.BOOL
+
+        name = f"Local\\AgentSwitchboardOpinionLedger-{_mutex_identity(path)}"
+        handle = kernel32.CreateMutexW(None, False, name)
+        if not handle:
+            error_code = ctypes.get_last_error()
+            raise OSError(error_code, "unable to create opinion-ledger mutex")
+
+        wait_object_0 = 0x00000000
+        wait_abandoned = 0x00000080
+        wait_timeout = 0x00000102
+        try:
+            wait_result = kernel32.WaitForSingleObject(handle, LOCK_TIMEOUT_MILLISECONDS)
+            if wait_result == wait_timeout:
+                raise OpinionLedgerError("timed out waiting for concurrent opinion-ledger access")
+            if wait_result not in (wait_object_0, wait_abandoned):
+                error_code = ctypes.get_last_error()
+                raise OSError(error_code, f"opinion-ledger mutex wait failed ({wait_result})")
+            try:
+                yield
+            finally:
+                if not kernel32.ReleaseMutex(handle):
+                    error_code = ctypes.get_last_error()
+                    raise OSError(error_code, "unable to release opinion-ledger mutex")
+        finally:
+            kernel32.CloseHandle(handle)
+        return
+
+    import fcntl
+
     with path.open("a+b") as handle:
-        _validate_ledger_path(path)
-        handle.seek(0)
-        if os.name == "nt":
-            import msvcrt
-
-            msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
-            try:
-                yield
-            finally:
-                handle.seek(0)
-                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
-        else:
-            import fcntl
-
-            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
-            try:
-                yield
-            finally:
-                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
 
 
 def _prepare_private_path(state_root: pathlib.Path) -> pathlib.Path:
