@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('Inspect','Apply')][string]$Mode = 'Inspect',
+    [ValidateSet('Inspect','Apply','Remove')][string]$Mode = 'Inspect',
     [ValidateRange(15, 600)][int]$NetworkTimeoutSeconds = 120
 )
 
@@ -8,11 +8,19 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $global:LASTEXITCODE = 0
 
+$adapterId = 'opencode'
+$toolingRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..') -ErrorAction Stop).Path
+$lifecycleModule = Join-Path $toolingRoot 'harness\system-bootstrap-lifecycle\BootstrapLifecycle.psm1'
+if (-not (Test-Path -LiteralPath $lifecycleModule -PathType Leaf)) { throw "AgentSwitchboard bootstrap lifecycle module is missing: $lifecycleModule" }
+Import-Module $lifecycleModule -Force -DisableNameChecking -ErrorAction Stop
+
 $installDirectory = Join-Path $env:ProgramFiles 'OpenCode'
 $targetExe = Join-Path $installDirectory 'opencode.exe'
 $managedDirectory = Join-Path $env:ProgramData 'opencode'
 $managedJson = Join-Path $managedDirectory 'opencode.json'
 $managedJsonc = Join-Path $managedDirectory 'opencode.jsonc'
+$lifecycleRoot = Get-ASBLifecycleRoot -AdapterId $adapterId
+$statePath = Get-ASBLifecycleStatePath -AdapterId $adapterId
 $stateBase = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { [IO.Path]::GetTempPath() }
 $runId = '{0}-{1}' -f ([DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ')), ([guid]::NewGuid().ToString('N').Substring(0, 8))
 $runRoot = Join-Path $stateBase "AgentSwitchboard\opencode-native-bootstrap\runs\$runId"
@@ -37,12 +45,16 @@ $script:lspEnabled = $false
 $script:lspResolvedEffective = $null
 $script:lspResolveProbeStatus = 'not-run'
 $script:finalVersion = $null
+$script:lifecycleState = $null
+$script:lifecycleStatus = 'absent'
+$script:ownership = 'none'
+$script:removeReady = $false
+$script:removeBlockers = @()
+$script:rollbackActions = @()
+$script:recoveryActions = @()
 
 function Stop-NativeBootstrap {
-    param(
-        [Parameter(Mandatory)][string]$Code,
-        [Parameter(Mandatory)][string]$Message
-    )
+    param([Parameter(Mandatory)][string]$Code,[Parameter(Mandatory)][string]$Message)
     throw ([InvalidOperationException]::new("$Code|$Message"))
 }
 
@@ -58,6 +70,9 @@ function Normalize-OpenCodeVersion {
     return ([string]$Version).Trim().TrimStart([char[]]@('v', 'V'))
 }
 
+function ConvertTo-ComparableJson { param($Value) return ($Value | ConvertTo-Json -Depth 100 -Compress) }
+function Test-JsonValueEqual { param($Left,$Right) return (ConvertTo-ComparableJson $Left) -ceq (ConvertTo-ComparableJson $Right) }
+
 function Invoke-BoundedProcess {
     param(
         [Parameter(Mandatory)][string]$FilePath,
@@ -66,39 +81,25 @@ function Invoke-BoundedProcess {
         [string]$WorkingDirectory,
         [string[]]$ClearEnvironmentVariables = @()
     )
-
     $psi = [Diagnostics.ProcessStartInfo]::new()
     $psi.UseShellExecute = $false
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
     $psi.CreateNoWindow = $true
     $psi.FileName = $FilePath
-    if (-not [string]::IsNullOrWhiteSpace($WorkingDirectory)) {
-        $psi.WorkingDirectory = $WorkingDirectory
-    }
-    foreach ($argument in $ArgumentList) {
-        [void]$psi.ArgumentList.Add([string]$argument)
-    }
-    # Child processes inherit this process environment by default. Explicitly drop overrides that
-    # would otherwise mask managed ProgramData configuration during proof probes.
+    if (-not [string]::IsNullOrWhiteSpace($WorkingDirectory)) { $psi.WorkingDirectory = $WorkingDirectory }
+    foreach ($argument in $ArgumentList) { [void]$psi.ArgumentList.Add([string]$argument) }
     foreach ($name in $ClearEnvironmentVariables) {
         if ([string]::IsNullOrWhiteSpace($name)) { continue }
-        if ($psi.EnvironmentVariables.ContainsKey($name)) {
-            [void]$psi.EnvironmentVariables.Remove($name)
-        }
+        if ($psi.EnvironmentVariables.ContainsKey($name)) { [void]$psi.EnvironmentVariables.Remove($name) }
     }
-
     $process = [Diagnostics.Process]::new()
     $process.StartInfo = $psi
     [void]$process.Start()
     $stdoutTask = $process.StandardOutput.ReadToEndAsync()
     $stderrTask = $process.StandardError.ReadToEndAsync()
     $timedOut = -not $process.WaitForExit($TimeoutSeconds * 1000)
-    if ($timedOut) {
-        try { $process.Kill($true) } catch {}
-        try { $process.WaitForExit() } catch {}
-    }
-
+    if ($timedOut) { try { $process.Kill($true) } catch {}; try { $process.WaitForExit() } catch {} }
     return [pscustomobject]@{
         ExitCode = if ($timedOut) { $null } else { $process.ExitCode }
         TimedOut = $timedOut
@@ -117,73 +118,42 @@ function Get-OpenCodeVersion {
 
 function Test-OpenCodeResolvedLspEnabled {
     param([Parameter(Mandatory)][string]$Executable)
-
-    if (-not (Test-Path -LiteralPath $Executable -PathType Leaf)) {
-        $script:lspResolveProbeStatus = 'unavailable'
-        return $null
-    }
-
+    if (-not (Test-Path -LiteralPath $Executable -PathType Leaf)) { $script:lspResolveProbeStatus = 'unavailable'; return $null }
     $probeDir = Join-Path ([IO.Path]::GetTempPath()) ("AgentSwitchboard-opencode-lsp-probe-" + [guid]::NewGuid().ToString('N').Substring(0, 8))
     try {
         $null = New-Item -ItemType Directory -Path $probeDir -Force
-        # Resolve config from an empty directory so project overlays cannot mask managed lsp=true.
-        # Also clear inherited OpenCode config env overrides so OPENCODE_CONFIG / CONTENT / DIR cannot
-        # make debug-config report lsp=true without proving %ProgramData%\opencode managed settings.
-        $result = Invoke-BoundedProcess -FilePath $Executable -ArgumentList @('debug', 'config') -TimeoutSeconds 45 -WorkingDirectory $probeDir -ClearEnvironmentVariables @(
-            'OPENCODE_CONFIG',
-            'OPENCODE_CONFIG_CONTENT',
-            'OPENCODE_CONFIG_DIR'
-        )
-        if ($result.TimedOut -or $result.ExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($result.Stdout)) {
-            $script:lspResolveProbeStatus = 'failed'
-            return $null
-        }
-        try {
-            $resolved = $result.Stdout | ConvertFrom-Json -AsHashtable -ErrorAction Stop
-        }
-        catch {
-            $script:lspResolveProbeStatus = 'failed'
-            return $null
-        }
-        if (-not $resolved.ContainsKey('lsp') -or $null -eq $resolved['lsp'] -or $resolved['lsp'] -eq $false) {
-            $script:lspResolveProbeStatus = 'pass'
-            return $false
-        }
+        $result = Invoke-BoundedProcess -FilePath $Executable -ArgumentList @('debug', 'config') -TimeoutSeconds 45 -WorkingDirectory $probeDir -ClearEnvironmentVariables @('OPENCODE_CONFIG','OPENCODE_CONFIG_CONTENT','OPENCODE_CONFIG_DIR')
+        if ($result.TimedOut -or $result.ExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($result.Stdout)) { $script:lspResolveProbeStatus = 'failed'; return $null }
+        try { $resolved = $result.Stdout | ConvertFrom-Json -AsHashtable -ErrorAction Stop }
+        catch { $script:lspResolveProbeStatus = 'failed'; return $null }
+        if (-not $resolved.ContainsKey('lsp') -or $null -eq $resolved['lsp'] -or $resolved['lsp'] -eq $false) { $script:lspResolveProbeStatus = 'pass'; return $false }
         $script:lspResolveProbeStatus = 'pass'
         return $true
     }
-    finally {
-        if (Test-Path -LiteralPath $probeDir) {
-            Remove-Item -LiteralPath $probeDir -Recurse -Force -ErrorAction SilentlyContinue
-        }
-    }
+    finally { if (Test-Path -LiteralPath $probeDir) { Remove-Item -LiteralPath $probeDir -Recurse -Force -ErrorAction SilentlyContinue } }
 }
 
-function Get-MachinePathEntries {
-    $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
-    return @($machinePath -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-}
-
-function Test-MachinePathContainsInstallDirectory {
-    foreach ($entry in @(Get-MachinePathEntries)) {
-        if ($entry.TrimEnd('\') -ieq $installDirectory.TrimEnd('\')) { return $true }
-    }
-    return $false
-}
+function Get-MachinePathValue { return [Environment]::GetEnvironmentVariable('Path', 'Machine') }
+function Get-MachinePathEntries { return @(ConvertTo-ASBPathEntries -PathValue (Get-MachinePathValue)) }
+function Test-MachinePathContainsInstallDirectory { return Test-ASBPathContainsEntry -PathValue (Get-MachinePathValue) -Entry $installDirectory }
 
 function Read-ManagedConfig {
-    if (Test-Path -LiteralPath $managedJsonc -PathType Leaf) {
-        Stop-NativeBootstrap 'OPENCODE_MANAGED_JSONC_PRESENT' "Managed OpenCode JSONC already exists at $managedJsonc. AgentSwitchboard will not create competing managed configuration."
-    }
-    if (-not (Test-Path -LiteralPath $managedJson -PathType Leaf)) {
-        return [ordered]@{}
-    }
+    if (Test-Path -LiteralPath $managedJsonc -PathType Leaf) { Stop-NativeBootstrap 'OPENCODE_MANAGED_JSONC_PRESENT' "Managed OpenCode JSONC already exists at $managedJsonc. AgentSwitchboard will not create competing managed configuration." }
+    if (-not (Test-Path -LiteralPath $managedJson -PathType Leaf)) { return [ordered]@{} }
+    try { return (Get-Content -LiteralPath $managedJson -Raw -ErrorAction Stop | ConvertFrom-Json -AsHashtable -ErrorAction Stop) }
+    catch { Stop-NativeBootstrap 'OPENCODE_MANAGED_CONFIG_INVALID' "Existing managed OpenCode configuration is not valid JSON: $managedJson" }
+}
+
+function Write-ManagedConfig {
+    param([Parameter(Mandatory)][System.Collections.IDictionary]$Config)
+    $null = New-Item -ItemType Directory -Path $managedDirectory -Force
+    $temporary = Join-Path $managedDirectory ("opencode.json.$runId.tmp")
     try {
-        return (Get-Content -LiteralPath $managedJson -Raw -ErrorAction Stop | ConvertFrom-Json -AsHashtable -ErrorAction Stop)
+        [IO.File]::WriteAllText($temporary, ($Config | ConvertTo-Json -Depth 100), [Text.UTF8Encoding]::new($false))
+        $null = Get-Content -LiteralPath $temporary -Raw | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+        Move-Item -LiteralPath $temporary -Destination $managedJson -Force
     }
-    catch {
-        Stop-NativeBootstrap 'OPENCODE_MANAGED_CONFIG_INVALID' "Existing managed OpenCode configuration is not valid JSON: $managedJson"
-    }
+    finally { Remove-Item -LiteralPath $temporary -Force -ErrorAction SilentlyContinue }
 }
 
 function Test-LspEnabled {
@@ -195,60 +165,289 @@ function Test-LspEnabled {
     catch { return $false }
 }
 
+function Get-ManagedConfigBaseline {
+    $config = Read-ManagedConfig
+    return [ordered]@{
+        fileExistedBefore = (Test-Path -LiteralPath $managedJson -PathType Leaf)
+        lspBeforePresent = $config.ContainsKey('lsp')
+        lspBeforeValue = if ($config.ContainsKey('lsp')) { $config['lsp'] } else { $null }
+        schemaBeforePresent = $config.ContainsKey('$schema')
+        schemaBeforeValue = if ($config.ContainsKey('$schema')) { $config['$schema'] } else { $null }
+    }
+}
+
+function New-OpenCodeLifecycleState {
+    $configBaseline = Get-ManagedConfigBaseline
+    $now = [DateTime]::UtcNow.ToString('o')
+    return [ordered]@{
+        schema = 'agentswitchboard.system-bootstrap-state.v1'
+        adapterId = $adapterId
+        lifecycleVersion = 1
+        installId = $runId
+        status = 'applying'
+        createdAt = $now
+        updatedAt = $now
+        removedAt = $null
+        resources = [ordered]@{
+            binary = [ordered]@{
+                path = $targetExe; directory = $installDirectory
+                directoryExistedBefore = (Test-Path -LiteralPath $installDirectory -PathType Container)
+                existedBefore = (Test-Path -LiteralPath $targetExe -PathType Leaf)
+                beforeSha256 = Get-ASBFileSha256 -Path $targetExe
+                backupPath = $null; changedByAsb = $false; afterSha256 = $null
+                applyPending = $false; plannedAfterSha256 = $null; rollbackComplete = $false
+            }
+            machinePath = [ordered]@{
+                entry = $installDirectory; presentBefore = (Test-MachinePathContainsInstallDirectory)
+                addedByAsb = $false; applyPending = $false; rollbackComplete = $false
+            }
+            managedConfig = [ordered]@{
+                jsonPath = $managedJson; jsoncPath = $managedJsonc
+                fileExistedBefore = $configBaseline['fileExistedBefore']
+                lspBeforePresent = $configBaseline['lspBeforePresent']; lspBeforeValue = $configBaseline['lspBeforeValue']; lspChangedByAsb = $false
+                schemaBeforePresent = $configBaseline['schemaBeforePresent']; schemaBeforeValue = $configBaseline['schemaBeforeValue']; schemaChangedByAsb = $false
+                applyPending = $false; rollbackComplete = $false
+            }
+        }
+    }
+}
+
+function Ensure-LifecycleResourceFields {
+    param([Parameter(Mandatory)][System.Collections.IDictionary]$State)
+    $resources = $State['resources']
+    foreach ($name in @('binary','machinePath','managedConfig')) {
+        if (-not $resources.Contains($name)) { Stop-NativeBootstrap 'OPENCODE_LIFECYCLE_STATE_INCOMPLETE' "OpenCode lifecycle state is missing resource '$name'." }
+        if (-not $resources[$name].Contains('rollbackComplete')) { $resources[$name]['rollbackComplete'] = $false }
+        if (-not $resources[$name].Contains('applyPending')) { $resources[$name]['applyPending'] = $false }
+    }
+    if (-not $resources['binary'].Contains('plannedAfterSha256')) { $resources['binary']['plannedAfterSha256'] = $null }
+}
+
+function Assert-LifecycleState {
+    param([Parameter(Mandatory)][System.Collections.IDictionary]$State)
+    if ([string]$State['schema'] -ne 'agentswitchboard.system-bootstrap-state.v1') { Stop-NativeBootstrap 'OPENCODE_LIFECYCLE_STATE_SCHEMA_INVALID' 'OpenCode lifecycle state schema is unsupported.' }
+    if ([string]$State['adapterId'] -ne $adapterId) { Stop-NativeBootstrap 'OPENCODE_LIFECYCLE_STATE_ADAPTER_INVALID' 'OpenCode lifecycle state belongs to another adapter.' }
+    if (-not $State.Contains('resources')) { Stop-NativeBootstrap 'OPENCODE_LIFECYCLE_STATE_INCOMPLETE' 'OpenCode lifecycle state has no resource ownership map.' }
+    Ensure-LifecycleResourceFields -State $State
+}
+
+function Save-LifecycleState {
+    param([Parameter(Mandatory)][System.Collections.IDictionary]$State)
+    $State['updatedAt'] = [DateTime]::UtcNow.ToString('o')
+    Write-ASBLifecycleStateAtomic -StatePath $statePath -State $State
+    $script:lifecycleState = $State
+    $script:lifecycleStatus = [string]$State['status']
+}
+
+function Test-ManagedConfigAtBaseline {
+    param([Parameter(Mandatory)][System.Collections.IDictionary]$ConfigState)
+    if (-not (Test-Path -LiteralPath $managedJson -PathType Leaf)) { return -not [bool]$ConfigState['fileExistedBefore'] }
+    try { $current = Get-Content -LiteralPath $managedJson -Raw | ConvertFrom-Json -AsHashtable -ErrorAction Stop } catch { return $false }
+    if ([bool]$ConfigState['lspChangedByAsb']) {
+        if ([bool]$ConfigState['lspBeforePresent']) { if (-not $current.ContainsKey('lsp') -or -not (Test-JsonValueEqual $current['lsp'] $ConfigState['lspBeforeValue'])) { return $false } }
+        elseif ($current.ContainsKey('lsp')) { return $false }
+    }
+    if ([bool]$ConfigState['schemaChangedByAsb']) {
+        if ([bool]$ConfigState['schemaBeforePresent']) { if (-not $current.ContainsKey('$schema') -or -not (Test-JsonValueEqual $current['$schema'] $ConfigState['schemaBeforeValue'])) { return $false } }
+        elseif ($current.ContainsKey('$schema')) { return $false }
+    }
+    return $true
+}
+
+function Test-ManagedConfigAtAppliedState {
+    param([Parameter(Mandatory)][System.Collections.IDictionary]$ConfigState)
+    if (Test-Path -LiteralPath $managedJsonc -PathType Leaf) { return $false }
+    if (-not (Test-Path -LiteralPath $managedJson -PathType Leaf)) { return $false }
+    try { $current = Get-Content -LiteralPath $managedJson -Raw | ConvertFrom-Json -AsHashtable -ErrorAction Stop } catch { return $false }
+    if ([bool]$ConfigState['lspChangedByAsb'] -and (-not $current.ContainsKey('lsp') -or -not (Test-JsonValueEqual $current['lsp'] $true))) { return $false }
+    if ([bool]$ConfigState['schemaChangedByAsb'] -and (-not $current.ContainsKey('$schema') -or [string]$current['$schema'] -ne 'https://opencode.ai/config.json')) { return $false }
+    return $true
+}
+
+function Recover-InterruptedApplyState {
+    param([Parameter(Mandatory)][System.Collections.IDictionary]$State)
+    $resources = $State['resources']; $binary = $resources['binary']; $pathState = $resources['machinePath']; $configState = $resources['managedConfig']
+    if ([bool]$binary['applyPending']) {
+        $currentSha = Get-ASBFileSha256 -Path $targetExe
+        if (-not [string]::IsNullOrWhiteSpace([string]$binary['plannedAfterSha256']) -and $currentSha -eq [string]$binary['plannedAfterSha256']) {
+            $binary['changedByAsb'] = $true; $binary['afterSha256'] = $currentSha; $binary['applyPending'] = $false; $binary['rollbackComplete'] = $false
+            $script:recoveryActions += 'binary-apply-completed-recovered'; Save-LifecycleState -State $State
+        }
+        elseif ($currentSha -eq [string]$binary['beforeSha256']) { $binary['applyPending'] = $false; $script:recoveryActions += 'binary-apply-not-started-recovered'; Save-LifecycleState -State $State }
+        else { Stop-NativeBootstrap 'OPENCODE_APPLY_INTERRUPTED_BINARY_DRIFT' 'Interrupted Apply found the binary in neither its pre-ASB nor planned ASB state.' }
+    }
+    if ([bool]$pathState['applyPending']) {
+        if (Test-MachinePathContainsInstallDirectory) {
+            if (-not [bool]$pathState['presentBefore']) { $pathState['addedByAsb'] = $true }
+            $pathState['applyPending'] = $false; $pathState['rollbackComplete'] = $false; $script:recoveryActions += 'machine-path-apply-completed-recovered'; Save-LifecycleState -State $State
+        }
+        else { $pathState['applyPending'] = $false; $script:recoveryActions += 'machine-path-apply-not-started-recovered'; Save-LifecycleState -State $State }
+    }
+    if ([bool]$configState['applyPending']) {
+        if (Test-ManagedConfigAtAppliedState -ConfigState $configState) { $configState['applyPending'] = $false; $configState['rollbackComplete'] = $false; $script:recoveryActions += 'managed-config-apply-completed-recovered'; Save-LifecycleState -State $State }
+        elseif (Test-ManagedConfigAtBaseline -ConfigState $configState) { $configState['applyPending'] = $false; $script:recoveryActions += 'managed-config-apply-not-started-recovered'; Save-LifecycleState -State $State }
+        else { Stop-NativeBootstrap 'OPENCODE_APPLY_INTERRUPTED_CONFIG_DRIFT' 'Interrupted Apply found managed configuration in neither its pre-ASB nor planned ASB state.' }
+    }
+}
+
+function Get-RemovalBlockers {
+    param([Parameter(Mandatory)][System.Collections.IDictionary]$State)
+    $blockers = [System.Collections.Generic.List[string]]::new()
+    $resources = $State['resources']; $binary = $resources['binary']; $pathState = $resources['machinePath']; $configState = $resources['managedConfig']
+    $isRemoving = [string]$State['status'] -eq 'removing'
+    if ([bool]$binary['changedByAsb'] -and -not [bool]$binary['rollbackComplete']) {
+        $currentSha = Get-ASBFileSha256 -Path $targetExe
+        $alreadyRolledBack = $isRemoving -and (([bool]$binary['existedBefore'] -and $currentSha -eq [string]$binary['beforeSha256']) -or (-not [bool]$binary['existedBefore'] -and $null -eq $currentSha))
+        if (-not $alreadyRolledBack) {
+            if ($null -eq $currentSha) { [void]$blockers.Add('binary-missing') }
+            elseif ([string]::IsNullOrWhiteSpace([string]$binary['afterSha256']) -or $currentSha -ne [string]$binary['afterSha256']) { [void]$blockers.Add('binary-drift') }
+            if ([bool]$binary['existedBefore']) {
+                $backupPath = [string]$binary['backupPath']
+                if ([string]::IsNullOrWhiteSpace($backupPath) -or -not (Test-Path -LiteralPath $backupPath -PathType Leaf)) { [void]$blockers.Add('binary-backup-missing') }
+                elseif ((Get-ASBFileSha256 -Path $backupPath) -ne [string]$binary['beforeSha256']) { [void]$blockers.Add('binary-backup-drift') }
+            }
+        }
+    }
+    if (([bool]$configState['lspChangedByAsb'] -or [bool]$configState['schemaChangedByAsb']) -and -not [bool]$configState['rollbackComplete']) {
+        $alreadyRolledBack = $isRemoving -and (Test-ManagedConfigAtBaseline -ConfigState $configState)
+        if (-not $alreadyRolledBack) {
+            if (Test-Path -LiteralPath $managedJsonc -PathType Leaf) { [void]$blockers.Add('managed-jsonc-now-present') }
+            elseif (-not (Test-Path -LiteralPath $managedJson -PathType Leaf)) { [void]$blockers.Add('managed-json-missing') }
+            else {
+                try {
+                    $current = Get-Content -LiteralPath $managedJson -Raw | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+                    if ([bool]$configState['lspChangedByAsb'] -and (-not $current.ContainsKey('lsp') -or -not (Test-JsonValueEqual $current['lsp'] $true))) { [void]$blockers.Add('managed-lsp-drift') }
+                    if ([bool]$configState['schemaChangedByAsb'] -and (-not $current.ContainsKey('$schema') -or [string]$current['$schema'] -ne 'https://opencode.ai/config.json')) { [void]$blockers.Add('managed-schema-drift') }
+                }
+                catch { [void]$blockers.Add('managed-json-invalid') }
+            }
+        }
+    }
+    if ([bool]$pathState['addedByAsb'] -and -not [bool]$pathState['rollbackComplete']) { $null = Test-MachinePathContainsInstallDirectory }
+    return @($blockers)
+}
+
+function Get-ApplyDriftBlockers {
+    param([Parameter(Mandatory)][System.Collections.IDictionary]$State)
+    $blockers = [System.Collections.Generic.List[string]]::new()
+    foreach ($item in @(Get-RemovalBlockers -State $State)) { [void]$blockers.Add([string]$item) }
+    $pathState = $State['resources']['machinePath']
+    if ([bool]$pathState['addedByAsb'] -and -not (Test-MachinePathContainsInstallDirectory)) { [void]$blockers.Add('machine-path-missing') }
+    return @($blockers | Select-Object -Unique)
+}
+
+function Restore-ManagedConfigFromState {
+    param([Parameter(Mandatory)][System.Collections.IDictionary]$ConfigState)
+    if (-not [bool]$ConfigState['lspChangedByAsb'] -and -not [bool]$ConfigState['schemaChangedByAsb']) { return }
+    if (Test-ManagedConfigAtBaseline -ConfigState $ConfigState) { return }
+    $config = Get-Content -LiteralPath $managedJson -Raw | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+    if ([bool]$ConfigState['lspChangedByAsb']) { if ([bool]$ConfigState['lspBeforePresent']) { $config['lsp'] = $ConfigState['lspBeforeValue'] } else { [void]$config.Remove('lsp') } }
+    if ([bool]$ConfigState['schemaChangedByAsb']) { if ([bool]$ConfigState['schemaBeforePresent']) { $config['$schema'] = $ConfigState['schemaBeforeValue'] } else { [void]$config.Remove('$schema') } }
+    if (-not [bool]$ConfigState['fileExistedBefore'] -and $config.Count -eq 0) {
+        Remove-Item -LiteralPath $managedJson -Force
+        if (Test-ASBDirectoryEmpty -Path $managedDirectory) { Remove-Item -LiteralPath $managedDirectory -Force }
+    }
+    else { Write-ManagedConfig -Config $config }
+    $script:managedConfigChanged = $true
+    $script:rollbackActions += 'managed-config-restored'
+}
+
+function Invoke-OpenCodeRemove {
+    $state = Read-ASBLifecycleState -StatePath $statePath
+    if ($null -eq $state) {
+        $present = (Test-Path -LiteralPath $targetExe -PathType Leaf) -or (Test-MachinePathContainsInstallDirectory) -or (Test-Path -LiteralPath $managedJson -PathType Leaf) -or (Test-Path -LiteralPath $managedJsonc -PathType Leaf)
+        if ($present) { Stop-NativeBootstrap 'OPENCODE_REMOVE_OWNERSHIP_UNPROVEN' 'OpenCode machine surfaces are present but no durable AgentSwitchboard lifecycle state proves ownership. Remove is intentionally blocked.' }
+        $script:status = 'already-absent'; $script:lifecycleStatus = 'absent'; $script:ownership = 'none'; $script:removeReady = $true
+        return
+    }
+    Assert-LifecycleState -State $state
+    $script:lifecycleState = $state; $script:lifecycleStatus = [string]$state['status']; $script:ownership = 'recorded'
+    if ([string]$state['status'] -eq 'removed') { $script:status = 'already-removed'; $script:removeReady = $true; return }
+    if ([string]$state['status'] -notin @('installed','applying','removing','drifted')) { Stop-NativeBootstrap 'OPENCODE_REMOVE_STATE_INVALID' "OpenCode lifecycle state '$($state['status'])' cannot be removed safely." }
+
+    $blockers = @(Get-RemovalBlockers -State $state)
+    $script:removeBlockers = $blockers; $script:removeReady = $blockers.Count -eq 0
+    if ($blockers.Count -gt 0) {
+        $state['status'] = 'drifted'; Save-LifecycleState -State $state
+        Stop-NativeBootstrap 'OPENCODE_REMOVE_DRIFT_DETECTED' ("Remove blocked before rollback because owned state drifted: " + ($blockers -join ', '))
+    }
+
+    $state['status'] = 'removing'; Save-LifecycleState -State $state
+    $resources = $state['resources']; $configState = $resources['managedConfig']; $pathState = $resources['machinePath']; $binary = $resources['binary']
+
+    if (-not [bool]$configState['rollbackComplete']) {
+        Restore-ManagedConfigFromState -ConfigState $configState
+        if (-not (Test-ManagedConfigAtBaseline -ConfigState $configState)) { Stop-NativeBootstrap 'OPENCODE_REMOVE_CONFIG_VERIFY_FAILED' 'Managed config did not return to its recorded pre-ASB property state.' }
+        $configState['rollbackComplete'] = $true; $script:rollbackActions += 'managed-config-rollback-complete'; Save-LifecycleState -State $state
+    }
+    if (-not [bool]$pathState['rollbackComplete']) {
+        if ([bool]$pathState['addedByAsb'] -and (Test-MachinePathContainsInstallDirectory)) {
+            $removedPath = Remove-ASBPathEntry -PathValue (Get-MachinePathValue) -Entry $installDirectory
+            [Environment]::SetEnvironmentVariable('Path', $removedPath.Value, 'Machine')
+            $script:machinePathChanged = [bool]$removedPath.Changed; $script:rollbackActions += 'machine-path-entry-removed'
+        }
+        if ([bool]$pathState['addedByAsb'] -and (Test-MachinePathContainsInstallDirectory)) { Stop-NativeBootstrap 'OPENCODE_REMOVE_PATH_VERIFY_FAILED' 'ASB-owned OpenCode Machine PATH entry remains after Remove.' }
+        $pathState['rollbackComplete'] = $true; Save-LifecycleState -State $state
+    }
+    if (-not [bool]$binary['rollbackComplete']) {
+        $currentSha = Get-ASBFileSha256 -Path $targetExe
+        $alreadyRestored = ([bool]$binary['existedBefore'] -and $currentSha -eq [string]$binary['beforeSha256']) -or (-not [bool]$binary['existedBefore'] -and $null -eq $currentSha)
+        if (-not $alreadyRestored -and [bool]$binary['changedByAsb']) {
+            if ([bool]$binary['existedBefore']) {
+                $backupPath = [string]$binary['backupPath']; $incoming = Join-Path $installDirectory 'opencode.exe.restore'
+                Copy-Item -LiteralPath $backupPath -Destination $incoming -Force
+                Move-Item -LiteralPath $incoming -Destination $targetExe -Force
+                if ((Get-ASBFileSha256 -Path $targetExe) -ne [string]$binary['beforeSha256']) { Stop-NativeBootstrap 'OPENCODE_REMOVE_BINARY_RESTORE_FAILED' 'Pre-ASB OpenCode binary did not restore to its recorded SHA-256.' }
+                $script:rollbackActions += 'binary-restored'
+            }
+            else {
+                Remove-Item -LiteralPath $targetExe -Force
+                if (Test-Path -LiteralPath $targetExe -PathType Leaf) { Stop-NativeBootstrap 'OPENCODE_REMOVE_BINARY_DELETE_FAILED' 'ASB-created OpenCode binary still exists after Remove.' }
+                $script:rollbackActions += 'binary-removed'
+                if (-not [bool]$binary['directoryExistedBefore'] -and (Test-ASBDirectoryEmpty -Path $installDirectory)) { Remove-Item -LiteralPath $installDirectory -Force; $script:rollbackActions += 'empty-install-directory-removed' }
+            }
+        }
+        $binary['rollbackComplete'] = $true; Save-LifecycleState -State $state
+    }
+
+    $backupPathToDelete = [string]$binary['backupPath']
+    if (-not [string]::IsNullOrWhiteSpace($backupPathToDelete) -and (Test-Path -LiteralPath $backupPathToDelete -PathType Leaf)) {
+        Remove-Item -LiteralPath $backupPathToDelete -Force
+        $backupParent = Split-Path -Parent $backupPathToDelete
+        if (Test-ASBDirectoryEmpty -Path $backupParent) { Remove-Item -LiteralPath $backupParent -Force }
+        $binary['backupPath'] = $null; Save-LifecycleState -State $state
+    }
+    $state['status'] = 'removed'; $state['removedAt'] = [DateTime]::UtcNow.ToString('o'); Save-LifecycleState -State $state
+    $script:status = 'removed'; $script:removeReady = $true
+}
+
 function Write-Receipt {
     $receipt = [ordered]@{
-        schema = 'agentswitchboard.opencode-native-system-bootstrap.v1'
-        runId = $runId
-        mode = $Mode
-        status = $script:status
-        failureCode = $script:failureCode
-        failureMessage = $script:failureMessage
-        windows = ($env:OS -eq 'Windows_NT')
-        powershellVersion = [string]$PSVersionTable.PSVersion
-        elevated = $script:isElevated
-        architecture = $script:architecture
-        installDirectory = $installDirectory
-        executable = $targetExe
-        existingVersion = $script:existingVersion
-        selectedVersion = $script:selectedVersion
-        selectedAsset = $script:selectedAsset
-        downloadSha256 = $script:downloadSha256
-        binaryInstalled = $script:binaryInstalled
-        machinePathContainsInstallDirectory = (Test-MachinePathContainsInstallDirectory)
-        machinePathChanged = $script:machinePathChanged
-        managedConfig = $managedJson
-        managedConfigChanged = $script:managedConfigChanged
-        managedConfigBackup = $script:managedConfigBackup
-        lspEnabled = (Test-LspEnabled)
-        lspResolvedEffective = $script:lspResolvedEffective
-        lspResolveProbeStatus = $script:lspResolveProbeStatus
-        finalVersion = $script:finalVersion
-        packageManagerAssumed = $false
-        userScopedNodeOrNpmRequired = $false
-        proofCeiling = 'Proves native Windows binary placement, machine PATH state, managed lsp=true configuration, direct version execution, and when available OpenCode debug-config resolution of lsp. Active language-server behavior still requires opening a supported file in OpenCode and observing runtime LSP evidence.'
+        schema = 'agentswitchboard.opencode-native-system-bootstrap.v2'; runId = $runId; mode = $Mode; status = $script:status
+        failureCode = $script:failureCode; failureMessage = $script:failureMessage; windows = ($env:OS -eq 'Windows_NT')
+        powershellVersion = [string]$PSVersionTable.PSVersion; elevated = $script:isElevated; architecture = $script:architecture
+        installDirectory = $installDirectory; executable = $targetExe; existingVersion = $script:existingVersion; selectedVersion = $script:selectedVersion
+        selectedAsset = $script:selectedAsset; downloadSha256 = $script:downloadSha256; binaryInstalled = $script:binaryInstalled
+        machinePathContainsInstallDirectory = (Test-MachinePathContainsInstallDirectory); machinePathChanged = $script:machinePathChanged
+        managedConfig = $managedJson; managedConfigChanged = $script:managedConfigChanged; managedConfigBackup = $script:managedConfigBackup
+        lspEnabled = (Test-LspEnabled); lspResolvedEffective = $script:lspResolvedEffective; lspResolveProbeStatus = $script:lspResolveProbeStatus
+        finalVersion = $script:finalVersion; lifecycleStatePath = $statePath; lifecycleStatus = $script:lifecycleStatus; ownership = $script:ownership
+        removeReady = $script:removeReady; removeBlockers = @($script:removeBlockers); rollbackActions = @($script:rollbackActions); recoveryActions = @($script:recoveryActions)
+        packageManagerAssumed = $false; userScopedNodeOrNpmRequired = $false
+        proofCeiling = 'Proves the observed OpenCode machine state plus durable AgentSwitchboard ownership/rollback state. Apply proves binary/PATH/managed-config convergence; Remove proves only ASB-recorded deltas were reversed. Active language-server behavior still requires opening a supported file in OpenCode.'
     }
-    $receipt | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $receiptPath -Encoding utf8NoBOM
-
+    $receipt | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $receiptPath -Encoding utf8NoBOM
     @(
-        '# OpenCode native system bootstrap',
-        '',
-        "- Status: ``$($script:status)``",
-        "- Failure: ``$($script:failureCode)``",
-        "- Executable: ``$targetExe``",
-        "- Existing version: ``$($script:existingVersion)``",
-        "- Selected version: ``$($script:selectedVersion)``",
-        "- Final version: ``$($script:finalVersion)``",
-        "- Machine PATH: ``$(Test-MachinePathContainsInstallDirectory)``",
-        "- Managed config: ``$managedJson``",
-        "- LSP enabled (managed file): ``$(Test-LspEnabled)``",
-        "- LSP resolved effective (debug config): ``$($script:lspResolvedEffective)``",
-        "- LSP resolve probe: ``$($script:lspResolveProbeStatus)``",
-        '',
-        'This bootstrap does not use Chocolatey, Scoop, npm, or another assumed package manager. Apply mode first verifies Windows, PowerShell, architecture, elevation, existing managed-config safety, official release identity, asset identity, and SHA-256 before mutation.',
-        '',
-        'Managed-file and resolved-config proof are not active-LSP proof. Open a supported source file and observe OpenCode LSP runtime behavior for that higher proof level.'
+        '# OpenCode native system bootstrap lifecycle','',"- Mode: ``$Mode``","- Status: ``$($script:status)``","- Failure: ``$($script:failureCode)``",
+        "- Lifecycle state: ``$statePath``","- Lifecycle status: ``$($script:lifecycleStatus)``","- Ownership: ``$($script:ownership)``",
+        "- Remove ready: ``$($script:removeReady)``","- Remove blockers: ``$($script:removeBlockers -join ', ')``","- Rollback actions: ``$($script:rollbackActions -join ', ')``",
+        "- Recovery actions: ``$($script:recoveryActions -join ', ')``","- Executable: ``$targetExe``","- Existing version: ``$($script:existingVersion)``",
+        "- Selected version: ``$($script:selectedVersion)``","- Final version: ``$($script:finalVersion)``","- Machine PATH: ``$(Test-MachinePathContainsInstallDirectory)``",
+        "- Managed config: ``$managedJson``","- LSP enabled (managed file): ``$(Test-LspEnabled)``","- LSP resolved effective (debug config): ``$($script:lspResolvedEffective)``",
+        "- LSP resolve probe: ``$($script:lspResolveProbeStatus)``",'',
+        'Machine ownership is journaled under ProgramData. User credentials, sessions, project state, and unrelated configuration are not owned by this lifecycle.',
+        'Remove is resumable and fail-closed: each successful rollback resource is checkpointed before continuing.'
     ) | Set-Content -LiteralPath $reportPath -Encoding utf8NoBOM
-
     Write-Host "OPENCODE_NATIVE_BOOTSTRAP_STATUS=$($script:status)"
     Write-Host "OPENCODE_NATIVE_BOOTSTRAP_FAILURE_CODE=$($script:failureCode)"
     Write-Host "OPENCODE_NATIVE_BOOTSTRAP_RECEIPT=$receiptPath"
@@ -257,213 +456,144 @@ function Write-Receipt {
     Write-Host "OPENCODE_NATIVE_BOOTSTRAP_LSP_ENABLED=$(Test-LspEnabled)"
     Write-Host "OPENCODE_NATIVE_BOOTSTRAP_LSP_RESOLVED=$($script:lspResolvedEffective)"
     Write-Host "OPENCODE_NATIVE_BOOTSTRAP_LSP_PROBE=$($script:lspResolveProbeStatus)"
+    Write-Host "OPENCODE_NATIVE_BOOTSTRAP_LIFECYCLE_STATE=$statePath"
+    Write-Host "OPENCODE_NATIVE_BOOTSTRAP_REMOVE_READY=$($script:removeReady)"
 }
 
 try {
     $null = New-Item -ItemType Directory -Path $runRoot -Force
+    if ($env:OS -ne 'Windows_NT') { Stop-NativeBootstrap 'WINDOWS_REQUIRED' 'The native system-wide OpenCode bootstrap is Windows-only.' }
+    if ($PSVersionTable.PSVersion.Major -lt 7) { Stop-NativeBootstrap 'POWERSHELL7_REQUIRED' 'PowerShell 7 is required.' }
+    if ([string]::IsNullOrWhiteSpace($env:ProgramFiles) -or [string]::IsNullOrWhiteSpace($env:ProgramData)) { Stop-NativeBootstrap 'WINDOWS_SYSTEM_PATHS_REQUIRED' 'ProgramFiles and ProgramData must be available.' }
 
-    if ($env:OS -ne 'Windows_NT') {
-        Stop-NativeBootstrap 'WINDOWS_REQUIRED' 'The native system-wide OpenCode bootstrap is Windows-only.'
-    }
-    if ($PSVersionTable.PSVersion.Major -lt 7) {
-        Stop-NativeBootstrap 'POWERSHELL7_REQUIRED' 'PowerShell 7 is required.'
-    }
-    if ([string]::IsNullOrWhiteSpace($env:ProgramFiles) -or [string]::IsNullOrWhiteSpace($env:ProgramData)) {
-        Stop-NativeBootstrap 'WINDOWS_SYSTEM_PATHS_REQUIRED' 'ProgramFiles and ProgramData must be available.'
-    }
+    $script:isElevated = Test-IsElevated; $script:existingVersion = Get-OpenCodeVersion -Path $targetExe; $script:lspEnabled = Test-LspEnabled
+    $script:lifecycleState = Read-ASBLifecycleState -StatePath $statePath
+    if ($script:lifecycleState) { Assert-LifecycleState -State $script:lifecycleState; $script:lifecycleStatus = [string]$script:lifecycleState['status']; $script:ownership = 'recorded' }
 
-    $script:isElevated = Test-IsElevated
-    $script:existingVersion = Get-OpenCodeVersion -Path $targetExe
-    $script:lspEnabled = Test-LspEnabled
-
-    # Inspect is deliberately local and non-mutating. It does not assume or probe a package manager.
     if ($Mode -eq 'Inspect') {
         $script:finalVersion = $script:existingVersion
-        # Probe whenever the machine-wide binary exists, even if --version readback failed.
-        if (Test-Path -LiteralPath $targetExe -PathType Leaf) {
-            $script:lspResolvedEffective = Test-OpenCodeResolvedLspEnabled -Executable $targetExe
+        if (Test-Path -LiteralPath $targetExe -PathType Leaf) { $script:lspResolvedEffective = Test-OpenCodeResolvedLspEnabled -Executable $targetExe }
+        if ($script:lifecycleState -and [string]$script:lifecycleState['status'] -in @('installed','removing','drifted','applying')) {
+            $script:removeBlockers = @(Get-RemovalBlockers -State $script:lifecycleState); $script:removeReady = $script:removeBlockers.Count -eq 0
+            if (-not $script:removeReady -and [string]$script:lifecycleState['status'] -eq 'installed') { $script:lifecycleStatus = 'drifted-observed' }
         }
-        $script:status = 'inspect-complete'
-        return
+        elseif ($script:lifecycleState -and [string]$script:lifecycleState['status'] -eq 'removed') { $script:removeReady = $true }
+        $script:status = 'inspect-complete'; return
     }
 
-    if (-not [Environment]::Is64BitOperatingSystem -or $env:PROCESSOR_ARCHITECTURE -notin @('AMD64','ARM64')) {
-        Stop-NativeBootstrap 'SUPPORTED_WINDOWS_ARCHITECTURE_REQUIRED' "Unsupported Windows architecture: $env:PROCESSOR_ARCHITECTURE"
-    }
-    if ($env:PROCESSOR_ARCHITECTURE -ne 'AMD64') {
-        Stop-NativeBootstrap 'WINDOWS_X64_REQUIRED' 'This first native bootstrap contract currently supports Windows x64 only.'
-    }
-    if (-not $script:isElevated) {
-        Stop-NativeBootstrap 'ADMINISTRATOR_REQUIRED' 'Apply mode requires an elevated PowerShell session because Program Files, ProgramData, and Machine PATH are machine-wide surfaces.'
-    }
+    if (-not $script:isElevated) { Stop-NativeBootstrap 'ADMINISTRATOR_REQUIRED' "$Mode mode requires an elevated PowerShell session because Program Files, ProgramData, and Machine PATH are machine-wide surfaces." }
+    if ($Mode -eq 'Remove') { Invoke-OpenCodeRemove; $script:finalVersion = Get-OpenCodeVersion -Path $targetExe; return }
 
-    # Ascertain managed-config safety before any binary or PATH mutation.
+    if (-not [Environment]::Is64BitOperatingSystem -or $env:PROCESSOR_ARCHITECTURE -notin @('AMD64','ARM64')) { Stop-NativeBootstrap 'SUPPORTED_WINDOWS_ARCHITECTURE_REQUIRED' "Unsupported Windows architecture: $env:PROCESSOR_ARCHITECTURE" }
+    if ($env:PROCESSOR_ARCHITECTURE -ne 'AMD64') { Stop-NativeBootstrap 'WINDOWS_X64_REQUIRED' 'This first native bootstrap contract currently supports Windows x64 only.' }
+
     $managed = Read-ManagedConfig
-
-    $headers = @{
-        'User-Agent' = 'AgentSwitchboard-OpenCode-Bootstrap'
-        'Accept' = 'application/vnd.github+json'
-    }
-    try {
-        $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/anomalyco/opencode/releases/latest' -Headers $headers -TimeoutSec $NetworkTimeoutSeconds -ErrorAction Stop
-    }
-    catch {
-        Stop-NativeBootstrap 'OPENCODE_RELEASE_DISCOVERY_FAILED' 'Unable to resolve the latest official anomalyco/opencode release within the bounded network window.'
-    }
-
+    $headers = @{ 'User-Agent' = 'AgentSwitchboard-OpenCode-Bootstrap'; 'Accept' = 'application/vnd.github+json' }
+    try { $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/anomalyco/opencode/releases/latest' -Headers $headers -TimeoutSec $NetworkTimeoutSeconds -ErrorAction Stop }
+    catch { Stop-NativeBootstrap 'OPENCODE_RELEASE_DISCOVERY_FAILED' 'Unable to resolve the latest official anomalyco/opencode release within the bounded network window.' }
     $tag = [string]$release.tag_name
-    if ($tag -notmatch '^v?(?<version>\d+\.\d+\.\d+)$') {
-        Stop-NativeBootstrap 'OPENCODE_RELEASE_TAG_INVALID' "Latest official release tag is not a semantic version: $tag"
-    }
+    if ($tag -notmatch '^v?(?<version>\d+\.\d+\.\d+)$') { Stop-NativeBootstrap 'OPENCODE_RELEASE_TAG_INVALID' "Latest official release tag is not a semantic version: $tag" }
     $script:selectedVersion = $Matches['version']
-
     $assets = @($release.assets | Where-Object { [string]$_.name -eq 'opencode-windows-x64.zip' })
-    if ($assets.Count -ne 1) {
-        Stop-NativeBootstrap 'OPENCODE_WINDOWS_X64_ASSET_AMBIGUOUS' "Expected exactly one opencode-windows-x64.zip asset; found $($assets.Count)."
-    }
-    $asset = $assets[0]
-    $script:selectedAsset = [string]$asset.name
-    $assetUrl = [string]$asset.browser_download_url
-    $assetDigest = [string]$asset.digest
-    if ([string]::IsNullOrWhiteSpace($assetUrl)) {
-        Stop-NativeBootstrap 'OPENCODE_ASSET_URL_MISSING' 'The selected official release asset has no download URL.'
-    }
-    if ($assetDigest -notmatch '^sha256:(?<sha>[0-9a-fA-F]{64})$') {
-        Stop-NativeBootstrap 'OPENCODE_ASSET_SHA256_MISSING' 'The selected official release asset did not expose an authoritative SHA-256 digest. No installation was performed.'
-    }
+    if ($assets.Count -ne 1) { Stop-NativeBootstrap 'OPENCODE_WINDOWS_X64_ASSET_AMBIGUOUS' "Expected exactly one opencode-windows-x64.zip asset; found $($assets.Count)." }
+    $asset = $assets[0]; $script:selectedAsset = [string]$asset.name; $assetUrl = [string]$asset.browser_download_url; $assetDigest = [string]$asset.digest
+    if ([string]::IsNullOrWhiteSpace($assetUrl)) { Stop-NativeBootstrap 'OPENCODE_ASSET_URL_MISSING' 'The selected official release asset has no download URL.' }
+    if ($assetDigest -notmatch '^sha256:(?<sha>[0-9a-fA-F]{64})$') { Stop-NativeBootstrap 'OPENCODE_ASSET_SHA256_MISSING' 'The selected official release asset did not expose an authoritative SHA-256 digest. No installation was performed.' }
     $expectedSha256 = $Matches['sha'].ToLowerInvariant()
 
     $null = New-Item -ItemType Directory -Path $stageRoot -Force
-    $archivePath = Join-Path $stageRoot 'opencode-windows-x64.zip'
-    $extractRoot = Join-Path $stageRoot 'extract'
-    try {
-        Invoke-WebRequest -Uri $assetUrl -OutFile $archivePath -Headers $headers -TimeoutSec $NetworkTimeoutSeconds -ErrorAction Stop
-    }
-    catch {
-        Stop-NativeBootstrap 'OPENCODE_ASSET_DOWNLOAD_FAILED' 'The official Windows x64 OpenCode archive could not be downloaded within the bounded network window.'
-    }
-
-    $actualSha256 = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
-    $script:downloadSha256 = $actualSha256
-    if ($actualSha256 -ne $expectedSha256) {
-        Stop-NativeBootstrap 'OPENCODE_ASSET_SHA256_MISMATCH' 'Downloaded OpenCode archive SHA-256 did not match the official release digest.'
-    }
-
+    $archivePath = Join-Path $stageRoot 'opencode-windows-x64.zip'; $extractRoot = Join-Path $stageRoot 'extract'
+    try { Invoke-WebRequest -Uri $assetUrl -OutFile $archivePath -Headers $headers -TimeoutSec $NetworkTimeoutSeconds -ErrorAction Stop }
+    catch { Stop-NativeBootstrap 'OPENCODE_ASSET_DOWNLOAD_FAILED' 'The official Windows x64 OpenCode archive could not be downloaded within the bounded network window.' }
+    $actualSha256 = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant(); $script:downloadSha256 = $actualSha256
+    if ($actualSha256 -ne $expectedSha256) { Stop-NativeBootstrap 'OPENCODE_ASSET_SHA256_MISMATCH' 'Downloaded OpenCode archive SHA-256 did not match the official release digest.' }
     Expand-Archive -LiteralPath $archivePath -DestinationPath $extractRoot -Force
     $executables = @(Get-ChildItem -LiteralPath $extractRoot -Filter 'opencode.exe' -File -Recurse)
-    if ($executables.Count -ne 1) {
-        Stop-NativeBootstrap 'OPENCODE_ARCHIVE_LAYOUT_UNEXPECTED' "Expected exactly one opencode.exe in the official archive; found $($executables.Count)."
-    }
-    $stagedExe = $executables[0].FullName
-    $stagedVersion = Get-OpenCodeVersion -Path $stagedExe
-    if ([string]::IsNullOrWhiteSpace($stagedVersion) -or (Normalize-OpenCodeVersion $stagedVersion) -ne $script:selectedVersion) {
-        Stop-NativeBootstrap 'OPENCODE_STAGED_VERSION_MISMATCH' "Staged executable version '$stagedVersion' does not match selected release '$($script:selectedVersion)'."
-    }
+    if ($executables.Count -ne 1) { Stop-NativeBootstrap 'OPENCODE_ARCHIVE_LAYOUT_UNEXPECTED' "Expected exactly one opencode.exe in the official archive; found $($executables.Count)." }
+    $stagedExe = $executables[0].FullName; $stagedVersion = Get-OpenCodeVersion -Path $stagedExe
+    if ([string]::IsNullOrWhiteSpace($stagedVersion) -or (Normalize-OpenCodeVersion $stagedVersion) -ne $script:selectedVersion) { Stop-NativeBootstrap 'OPENCODE_STAGED_VERSION_MISMATCH' "Staged executable version '$stagedVersion' does not match selected release '$($script:selectedVersion)'." }
+    $stagedExeSha256 = Get-ASBFileSha256 -Path $stagedExe
 
+    $state = $script:lifecycleState
+    if ($state -and [string]$state['status'] -eq 'removed') { [void](Archive-ASBLifecycleState -LifecycleRoot $lifecycleRoot -State $state); $state = $null }
+    if ($state -and [string]$state['status'] -eq 'removing') { Stop-NativeBootstrap 'OPENCODE_LIFECYCLE_REMOVE_INCOMPLETE' 'A prior Remove was interrupted. Resume Remove before applying again.' }
+    if ($state -and [string]$state['status'] -eq 'drifted') { Stop-NativeBootstrap 'OPENCODE_APPLY_OWNED_STATE_DRIFT' 'Owned OpenCode lifecycle state is drifted. Apply will not silently re-baseline it.' }
+    if ($state -and [string]$state['status'] -eq 'installed') {
+        $applyDrift = @(Get-ApplyDriftBlockers -State $state)
+        if ($applyDrift.Count -gt 0) { $state['status'] = 'drifted'; Save-LifecycleState -State $state; Stop-NativeBootstrap 'OPENCODE_APPLY_OWNED_STATE_DRIFT' ("Apply blocked because previously owned state drifted: " + ($applyDrift -join ', ')) }
+    }
+    if ($null -eq $state) { $state = New-OpenCodeLifecycleState; Save-LifecycleState -State $state }
+    else { Assert-LifecycleState -State $state; if ([string]$state['status'] -eq 'applying') { Recover-InterruptedApplyState -State $state }; $state['status'] = 'applying'; Save-LifecycleState -State $state }
+
+    $binaryState = $state['resources']['binary']
     if ((Normalize-OpenCodeVersion $script:existingVersion) -ne $script:selectedVersion) {
+        if ([bool]$binaryState['existedBefore'] -and [string]::IsNullOrWhiteSpace([string]$binaryState['backupPath'])) {
+            $backupRoot = Join-Path $lifecycleRoot ("backups\" + [string]$state['installId']); $null = New-Item -ItemType Directory -Path $backupRoot -Force
+            $backupPath = Join-Path $backupRoot 'opencode.exe.before'; Copy-Item -LiteralPath $targetExe -Destination $backupPath -Force
+            if ((Get-ASBFileSha256 -Path $backupPath) -ne [string]$binaryState['beforeSha256']) { Stop-NativeBootstrap 'OPENCODE_LIFECYCLE_BACKUP_VERIFY_FAILED' 'Pre-ASB OpenCode binary backup failed SHA-256 verification.' }
+            $binaryState['backupPath'] = $backupPath; Save-LifecycleState -State $state
+        }
+        $binaryState['applyPending'] = $true; $binaryState['plannedAfterSha256'] = $stagedExeSha256; $binaryState['rollbackComplete'] = $false; Save-LifecycleState -State $state
         $null = New-Item -ItemType Directory -Path $installDirectory -Force
-        $incoming = Join-Path $installDirectory 'opencode.exe.new'
-        Copy-Item -LiteralPath $stagedExe -Destination $incoming -Force
-        try {
-            Move-Item -LiteralPath $incoming -Destination $targetExe -Force
-        }
-        catch {
-            Remove-Item -LiteralPath $incoming -Force -ErrorAction SilentlyContinue
-            Stop-NativeBootstrap 'OPENCODE_BINARY_REPLACE_FAILED' 'Unable to replace the machine-wide OpenCode binary. Close any process locking the target and retry.'
-        }
-        $script:binaryInstalled = $true
+        $incoming = Join-Path $installDirectory 'opencode.exe.new'; Copy-Item -LiteralPath $stagedExe -Destination $incoming -Force
+        try { Move-Item -LiteralPath $incoming -Destination $targetExe -Force }
+        catch { Remove-Item -LiteralPath $incoming -Force -ErrorAction SilentlyContinue; Stop-NativeBootstrap 'OPENCODE_BINARY_REPLACE_FAILED' 'Unable to replace the machine-wide OpenCode binary. Close any process locking the target and retry.' }
+        $script:binaryInstalled = $true; $binaryState['changedByAsb'] = $true; $binaryState['afterSha256'] = Get-ASBFileSha256 -Path $targetExe
+        if ($binaryState['afterSha256'] -ne $stagedExeSha256) { Stop-NativeBootstrap 'OPENCODE_BINARY_POSTWRITE_HASH_FAILED' 'Installed OpenCode binary did not match staged SHA-256.' }
+        $binaryState['applyPending'] = $false; Save-LifecycleState -State $state
     }
 
+    $pathState = $state['resources']['machinePath']
     if (-not (Test-MachinePathContainsInstallDirectory)) {
-        $entries = @(Get-MachinePathEntries)
-        [Environment]::SetEnvironmentVariable('Path', (($entries + $installDirectory) -join ';'), 'Machine')
-        $script:machinePathChanged = $true
+        $pathState['applyPending'] = $true; $pathState['rollbackComplete'] = $false; Save-LifecycleState -State $state
+        $pathMutation = Add-ASBPathEntry -PathValue (Get-MachinePathValue) -Entry $installDirectory -Position Append
+        [Environment]::SetEnvironmentVariable('Path', $pathMutation.Value, 'Machine'); $script:machinePathChanged = [bool]$pathMutation.Changed
+        if ($pathMutation.Changed) { $pathState['addedByAsb'] = $true }
+        $pathState['applyPending'] = $false; Save-LifecycleState -State $state
     }
 
-    $managedChanged = $false
-    if (-not $managed.ContainsKey('$schema')) {
-        $managed['$schema'] = 'https://opencode.ai/config.json'
-        $managedChanged = $true
-    }
-    if (-not $managed.ContainsKey('lsp') -or $managed['lsp'] -ne $true) {
-        $managed['lsp'] = $true
-        $managedChanged = $true
-    }
+    $configState = $state['resources']['managedConfig']; $managedChanged = $false
+    if (-not $managed.ContainsKey('$schema')) { $managed['$schema'] = 'https://opencode.ai/config.json'; $managedChanged = $true; $configState['schemaChangedByAsb'] = $true }
+    if (-not $managed.ContainsKey('lsp') -or $managed['lsp'] -ne $true) { $managed['lsp'] = $true; $managedChanged = $true; $configState['lspChangedByAsb'] = $true }
     if ($managedChanged) {
-        $null = New-Item -ItemType Directory -Path $managedDirectory -Force
-        if (Test-Path -LiteralPath $managedJson -PathType Leaf) {
-            $backupPath = Join-Path $runRoot 'opencode.managed.before.json'
-            Copy-Item -LiteralPath $managedJson -Destination $backupPath -Force
-            $script:managedConfigBackup = $backupPath
-        }
-        $tempConfig = Join-Path $managedDirectory "opencode.json.$runId.tmp"
-        $managedJsonText = $managed | ConvertTo-Json -Depth 100
-        [IO.File]::WriteAllText($tempConfig, $managedJsonText, [Text.UTF8Encoding]::new($false))
-        try {
-            $readback = Get-Content -LiteralPath $tempConfig -Raw | ConvertFrom-Json -AsHashtable -ErrorAction Stop
-            if (-not $readback.ContainsKey('lsp') -or $readback['lsp'] -ne $true) {
-                Stop-NativeBootstrap 'OPENCODE_MANAGED_CONFIG_READBACK_FAILED' 'Staged managed configuration did not read back with lsp=true.'
-            }
-            Move-Item -LiteralPath $tempConfig -Destination $managedJson -Force
-        }
-        finally {
-            Remove-Item -LiteralPath $tempConfig -Force -ErrorAction SilentlyContinue
-        }
-        $script:managedConfigChanged = $true
+        if (Test-Path -LiteralPath $managedJson -PathType Leaf) { $backupPath = Join-Path $runRoot 'opencode.managed.before.json'; Copy-Item -LiteralPath $managedJson -Destination $backupPath -Force; $script:managedConfigBackup = $backupPath }
+        $configState['applyPending'] = $true; $configState['rollbackComplete'] = $false; Save-LifecycleState -State $state
+        Write-ManagedConfig -Config $managed
+        $readback = Get-Content -LiteralPath $managedJson -Raw | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+        if (-not $readback.ContainsKey('lsp') -or $readback['lsp'] -ne $true) { Stop-NativeBootstrap 'OPENCODE_MANAGED_CONFIG_READBACK_FAILED' 'Managed configuration did not read back with lsp=true.' }
+        $configState['applyPending'] = $false; $script:managedConfigChanged = $true; Save-LifecycleState -State $state
     }
 
-    # Refresh this process from authoritative machine + user PATH only after mutation.
     $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
     $script:finalVersion = Get-OpenCodeVersion -Path $targetExe
-    if ([string]::IsNullOrWhiteSpace($script:finalVersion) -or (Normalize-OpenCodeVersion $script:finalVersion) -ne $script:selectedVersion) {
-        Stop-NativeBootstrap 'OPENCODE_FINAL_VERSION_FAILED' 'Machine-wide OpenCode direct version proof failed after installation.'
-    }
-    if (-not (Test-MachinePathContainsInstallDirectory)) {
-        Stop-NativeBootstrap 'OPENCODE_MACHINE_PATH_FAILED' 'Machine PATH does not contain the OpenCode installation directory after Apply.'
-    }
-    if (-not (Test-LspEnabled)) {
-        Stop-NativeBootstrap 'OPENCODE_MANAGED_LSP_FAILED' 'Managed OpenCode configuration did not read back with lsp=true after Apply.'
-    }
-
+    if ([string]::IsNullOrWhiteSpace($script:finalVersion) -or (Normalize-OpenCodeVersion $script:finalVersion) -ne $script:selectedVersion) { Stop-NativeBootstrap 'OPENCODE_FINAL_VERSION_FAILED' 'Machine-wide OpenCode direct version proof failed after installation.' }
+    if (-not (Test-MachinePathContainsInstallDirectory)) { Stop-NativeBootstrap 'OPENCODE_MACHINE_PATH_FAILED' 'Machine PATH does not contain the OpenCode installation directory after Apply.' }
+    if (-not (Test-LspEnabled)) { Stop-NativeBootstrap 'OPENCODE_MANAGED_LSP_FAILED' 'Managed OpenCode configuration did not read back with lsp=true after Apply.' }
     $script:lspResolvedEffective = Test-OpenCodeResolvedLspEnabled -Executable $targetExe
-    if ($script:lspResolveProbeStatus -ne 'pass') {
-        Stop-NativeBootstrap 'OPENCODE_LSP_RESOLVE_PROBE_FAILED' 'OpenCode debug config could not prove that managed lsp configuration is present in the resolved runtime config.'
-    }
-    if ($script:lspResolvedEffective -ne $true) {
-        Stop-NativeBootstrap 'OPENCODE_LSP_NOT_RESOLVED' 'OpenCode resolved configuration still reports LSP disabled after managed lsp=true was written. Restart any already-running OpenCode process and re-run Apply if a stale process retained old config.'
-    }
+    if ($script:lspResolveProbeStatus -ne 'pass') { Stop-NativeBootstrap 'OPENCODE_LSP_RESOLVE_PROBE_FAILED' 'OpenCode debug config could not prove that managed lsp configuration is present in the resolved runtime config.' }
+    if ($script:lspResolvedEffective -ne $true) { Stop-NativeBootstrap 'OPENCODE_LSP_NOT_RESOLVED' 'OpenCode resolved configuration still reports LSP disabled after managed lsp=true was written. Restart any already-running OpenCode process and re-run Apply if a stale process retained old config.' }
 
-    $script:status = 'success'
+    $state['status'] = 'installed'; Save-LifecycleState -State $state
+    $script:removeBlockers = @(Get-RemovalBlockers -State $state); $script:removeReady = $script:removeBlockers.Count -eq 0
+    if (-not $script:removeReady) { Stop-NativeBootstrap 'OPENCODE_POST_APPLY_REMOVE_CONTRACT_FAILED' ("Apply succeeded but immediate reversible-state proof failed: " + ($script:removeBlockers -join ', ')) }
+    $script:ownership = 'recorded'; $script:status = 'success'
 }
 catch {
     $raw = [string]$_.Exception.Message
-    if ($raw -match '^([A-Z0-9_]+)\|(.*)$') {
-        $script:failureCode = $Matches[1]
-        $script:failureMessage = $Matches[2]
-    }
-    else {
-        $script:failureCode = 'OPENCODE_NATIVE_BOOTSTRAP_UNEXPECTED_FAILURE'
-        $script:failureMessage = $raw
-    }
+    if ($raw -match '^([A-Z0-9_]+)\|(.*)$') { $script:failureCode = $Matches[1]; $script:failureMessage = $Matches[2] }
+    else { $script:failureCode = 'OPENCODE_NATIVE_BOOTSTRAP_UNEXPECTED_FAILURE'; $script:failureMessage = $raw }
     $script:status = 'failed'
 }
 finally {
-    if (-not (Test-Path -LiteralPath $runRoot -PathType Container)) {
-        $null = New-Item -ItemType Directory -Path $runRoot -Force
-    }
+    if (-not (Test-Path -LiteralPath $runRoot -PathType Container)) { $null = New-Item -ItemType Directory -Path $runRoot -Force }
     $script:lspEnabled = Test-LspEnabled
     if (-not $script:finalVersion) { $script:finalVersion = Get-OpenCodeVersion -Path $targetExe }
-    if ($null -eq $script:lspResolvedEffective -and $script:lspResolveProbeStatus -eq 'not-run' -and $script:finalVersion -and (Test-Path -LiteralPath $targetExe -PathType Leaf)) {
-        $script:lspResolvedEffective = Test-OpenCodeResolvedLspEnabled -Executable $targetExe
-    }
+    if ($null -eq $script:lspResolvedEffective -and $script:lspResolveProbeStatus -eq 'not-run' -and $script:finalVersion -and (Test-Path -LiteralPath $targetExe -PathType Leaf)) { $script:lspResolvedEffective = Test-OpenCodeResolvedLspEnabled -Executable $targetExe }
+    if ($null -eq $script:lifecycleState) { try { $script:lifecycleState = Read-ASBLifecycleState -StatePath $statePath } catch {} }
+    if ($script:lifecycleState) { $script:lifecycleStatus = [string]$script:lifecycleState['status']; $script:ownership = 'recorded' }
     Write-Receipt
-    if (Test-Path -LiteralPath $stageRoot) {
-        Remove-Item -LiteralPath $stageRoot -Recurse -Force -ErrorAction SilentlyContinue
-    }
+    if (Test-Path -LiteralPath $stageRoot) { Remove-Item -LiteralPath $stageRoot -Recurse -Force -ErrorAction SilentlyContinue }
 }
 
-if ($script:status -eq 'failed') {
-    Write-Error "$($script:failureCode): $($script:failureMessage)"
-    exit 1
-}
+if ($script:status -eq 'failed') { Write-Error "$($script:failureCode): $($script:failureMessage)"; exit 1 }
 exit 0

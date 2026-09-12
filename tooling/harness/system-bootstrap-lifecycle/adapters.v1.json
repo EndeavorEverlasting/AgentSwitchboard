@@ -1,0 +1,36 @@
+{
+  "schema": "agentswitchboard.system-bootstrap-adapter-registry.v1",
+  "registryId": "agentswitchboard.system-bootstrap-lifecycle-adapters.v1",
+  "lifecycleContract": "tooling/harness/system-bootstrap-lifecycle/lifecycle.contract.json",
+  "sharedModule": "tooling/harness/system-bootstrap-lifecycle/BootstrapLifecycle.psm1",
+  "adapters": [
+    {
+      "adapterId": "opencode",
+      "status": "reference-implementation",
+      "owner": "tooling/profiles/windows/Install-AgentSwitchboardOpenCode.ps1",
+      "adapterContract": "tooling/harness/operational/opencode-lsp-setup/native-system-bootstrap.contract.json",
+      "bootstrapEntrypoint": "Bootstrap-OpenCode-SystemWide.cmd",
+      "unbootstrapEntrypoint": "Unbootstrap-OpenCode-SystemWide.cmd",
+      "operations": ["Inspect", "Apply", "Remove"],
+      "machineStateRoot": "%ProgramData%/AgentSwitchboard/bootstrap-lifecycle/opencode",
+      "dedicatedRuntimeRoot": "%ProgramFiles%/OpenCode",
+      "sharedMachineSurfaces": [
+        "%ProgramData%/opencode/opencode.json",
+        "Machine PATH"
+      ],
+      "userStateOwned": false,
+      "credentialStateOwned": false,
+      "removeRequiresOwnershipState": true,
+      "removePreservesUnrelatedSharedState": true,
+      "proof": [
+        "tests/test_opencode_native_system_bootstrap.py",
+        "tests/test_system_bootstrap_lifecycle.py",
+        "scripts/Test-OpenCodeNativeSystemBootstrap.ps1",
+        "scripts/Test-SystemBootstrapLifecycleContracts.ps1"
+      ]
+    }
+  ],
+  "adoptionRule": "New system bootstrap adapters must register here and satisfy Inspect/Apply/Remove lifecycle parity before being considered complete.",
+  "parallelDevelopmentRule": "Adapter-specific implementation may proceed independently, but shared lifecycle semantics, state root rules, and validator expectations are owned here and must not be reimplemented incompatibly per adapter.",
+  "proofCeiling": "Registry membership proves declared lifecycle surfaces only; adapter validators and physical runtime evidence prove behavior."
+}

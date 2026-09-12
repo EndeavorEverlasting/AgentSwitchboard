@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "contractId": "agentswitchboard.system-bootstrap-lifecycle.v1",
+  "title": "AgentSwitchboard reversible system bootstrap lifecycle",
+  "canonicalMachineStateRoot": "%ProgramData%/AgentSwitchboard/bootstrap-lifecycle/<adapter-id>",
+  "canonicalLocalEvidenceRoot": "%LOCALAPPDATA%/AgentSwitchboard/<adapter>/runs/<run-id>",
+  "operations": ["Inspect", "Apply", "Remove"],
+  "states": [
+    "absent",
+    "applying",
+    "installed",
+    "removing",
+    "removed",
+    "drifted"
+  ],
+  "requirements": {
+    "inspect": [
+      "must be non-mutating",
+      "must distinguish ASB-owned state from merely-present external state",
+      "must report whether Remove is currently safe from recorded ownership plus observed drift"
+    ],
+    "apply": [
+      "must ascertain prerequisites before owned machine mutation",
+      "must persist original before-state before the first reversible machine mutation",
+      "must persist per-resource write-ahead intent before a reversible resource mutation when a crash between mutation and ownership journaling would otherwise make ownership ambiguous",
+      "must recover an interrupted pending mutation only when the observed resource matches either its recorded baseline or exact planned ASB state; a third state is drift",
+      "must update durable state as each mutation becomes ASB-owned",
+      "must preserve an original pre-ASB baseline across idempotent Apply or upgrade",
+      "must refuse to silently re-baseline a previously ASB-owned resource that drifted after a completed Apply",
+      "must verify final state before marking lifecycle status installed"
+    ],
+    "remove": [
+      "must require durable ownership evidence before reversing a present resource",
+      "must validate every incomplete owned rollback resource for drift before destructive rollback mutation",
+      "must reverse only deltas explicitly recorded as ASB-owned",
+      "must restore preexisting resources from verified backups or property-level snapshots",
+      "must persist rollbackComplete for each resource immediately after that resource is verified at its pre-ASB state",
+      "must resume an interrupted removing lifecycle from durable per-resource rollback checkpoints rather than restarting completed rollback work",
+      "must preserve unrelated configuration, files, PATH entries, credentials, and user state",
+      "must fail closed when a current incomplete owned surface matches neither its recorded post-Apply state nor an already-verified rollback state",
+      "must verify rollback before marking lifecycle status removed",
+      "must be idempotent after a completed Remove"
+    ]
+  },
+  "resourceRules": {
+    "dedicatedFile": {
+      "install": "record existed-before, before hash, changed-by-ASB, planned after hash when mutating, after hash, and backup path when replacement occurs",
+      "remove": "delete only a file created by ASB or restore a verified preexisting backup; current file hash must match recorded ASB post-state before first rollback mutation; checkpoint verified rollback before continuing"
+    },
+    "dedicatedDirectory": {
+      "install": "record whether directory preexisted",
+      "remove": "remove the directory only when ASB created it and it is empty after owned files are removed"
+    },
+    "machinePathEntry": {
+      "install": "record whether the exact normalized entry preexisted, write-ahead mutation intent, and whether ASB added it",
+      "remove": "remove only exact entries recorded as addedByAsb; never normalize away unrelated entries; checkpoint absence after rollback"
+    },
+    "sharedJsonConfig": {
+      "install": "record property presence/value before ASB mutation, write-ahead mutation intent, and which exact properties ASB changed",
+      "remove": "three-way/property-level rollback only; preserve unrelated properties, fail closed if an ASB-owned property drifted after Apply, and checkpoint verified baseline restoration"
+    },
+    "sharedMachineRoot": {
+      "install": "every adapter owns an adapter-specific subdirectory; shared roots are never recursively deleted by an adapter",
+      "remove": "adapter may remove its own empty subdirectory only; shared AgentSwitchboard roots remain"
+    }
+  },
+  "stateRules": {
+    "schema": "agentswitchboard.system-bootstrap-state.v1",
+    "adapterIdRequired": true,
+    "installIdRequired": true,
+    "atomicStateWritesRequired": true,
+    "perResourceApplyIntentRequiredWhereOwnershipCouldBecomeAmbiguous": true,
+    "perResourceRollbackCheckpointRequired": true,
+    "historyBeforeNewLifecycleAfterRemoved": true,
+    "stateMayContainSecrets": false,
+    "machineStateMustNotDependOnUserProfile": true
+  },
+  "failureRules": {
+    "ownershipUnknownWithPresentTarget": "fail-closed",
+    "ownedResourceDrift": "fail-closed-before-rollback-or-rebaseline",
+    "interruptedApplyThirdState": "fail-closed",
+    "missingBackupForPreexistingOwnedFile": "fail-closed",
+    "invalidSharedConfig": "fail-closed",
+    "partialApplyOrRemove": "preserve durable intermediate and per-resource checkpoint state for recovery; never pretend absent/installed/removed"
+  },
+  "forbidden": [
+    "blind recursive deletion outside an adapter-owned canonical root",
+    "deleting a resource solely because its path resembles an ASB-managed path",
+    "removing PATH entries that predated ASB ownership",
+    "restoring an entire shared config file over unrelated later edits",
+    "silently re-baselining an ASB-owned resource after outside drift",
+    "restarting already checkpointed rollback work after an interrupted Remove",
+    "deleting provider credentials, user settings, sessions, project state, or caches unless a separate explicit contract owns them",
+    "claiming uninstall success without rollback verification",
+    "using a user-local receipt as the sole authority for machine-wide deletion"
+  ],
+  "proofCeiling": "This contract defines reversible ownership, write-ahead recovery, drift, and rollback checkpoint semantics. Each adapter must still prove its own resource-specific Apply/Remove behavior and physical machine execution."
+}

@@ -21,4 +21,9 @@ rem Invoke one repository-owned script path through the canonical dispatcher.
 rem Do not paste implementation fragments into an interactive PowerShell REPL.
 call "%ROOT%Pull-And-Run-AgentSwitchboard.cmd" bootstrap-opencode "%ROOT%." "%GIT_REF%"
 set "RESULT=%ERRORLEVEL%"
+
+if "%RESULT%"=="0" (
+  echo [INFO] Reversal path: %ROOT%Unbootstrap-OpenCode-SystemWide.cmd
+)
+
 endlocal & exit /b %RESULT%
