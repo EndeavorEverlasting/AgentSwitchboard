@@ -100,7 +100,7 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## ASQ-006 ΓÇö Pi reversible system bootstrap lifecycle
 
-- **Status:** READY
+- **Status:** DONE
 - **Priority:** P1
 - **Work class:** BOUNDED
 - **Owner:** Panel 03 Pi bootstrap lane
@@ -111,13 +111,13 @@ Canonical terminal action: none; no safe actionable work remains
 - **References:** `tooling/harness/system-bootstrap-lifecycle/lifecycle.contract.json`, `tooling/harness/system-bootstrap-lifecycle/BootstrapLifecycle.psm1`, `tooling/harness/system-bootstrap-lifecycle/adapters.v1.json`, `PR #151 head 8d40604e`
 - **Acceptance gate:** Pi registered in `adapters.v1.json` without redesigning shared contract; `Inspect/Apply/Remove` parity via lifecycle module, state under `%ProgramData%\AgentSwitchboard\bootstrap-lifecycle\pi`, preserves credentials/settings/sessions, fails closed on drift, recovers interrupted Remove
 - **Gate:** none
-- **Last proof:** merge:81461e7 lifecycle reference OpenCode already beneath main; artifact:tooling/harness/system-bootstrap-lifecycle/lifecycle.contract.json
-- **Next action:** create isolated worktree from origin/main and implement Pi Inspect/Apply/Remove with write-ahead and resumable rollback checkpoints
-- **Updated:** 2026-09-12T19:55:00Z
+- **Last proof:** merge:1f20499 Pi after P13 guard sync; merge:85ecf77 child bus v1 on main; Pi lifecycle already on main, child bus now DONE
+- **Next action:** none; Pi lifecycle already on main at 1f20499
+- **Updated:** 2026-09-12T22:45:00Z
 
 ## ASQ-007 ΓÇö Shared ASB child bus v1 contract spine
 
-- **Status:** READY
+- **Status:** DONE
 - **Priority:** P1
 - **Work class:** BOUNDED
 - **Owner:** Panel 04 shared child-bus lane
@@ -128,9 +128,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **References:** `AGENTS.md`, `CODEBASE_MAP.md`, `.ai/harness/manifest.json`, `docs/governance/harness-doctrine.md`, `tooling/harness/child-agent-bus/`
 - **Acceptance gate:** closed schemas with invocationId/lineage/authority/budgets/evidence root, generic dispatcher fails closed when adapter absent, validator + fixture matrix (read-only, isolated writer, dirty/default-branch/base-SHA mismatch, budget exceeded etc.) green, hub-and-spoke `parent ΓåÆ ASB ΓåÆ adapter ΓåÆ child` enforced
 - **Gate:** none
-- **Last proof:** artifact:.ai/harness/manifest.json
-- **Next action:** create isolated branch/worktree `feat/child-agent-bus-v1-20260912` from origin/main and implement shared bus contracts with deterministic fixtures
-- **Updated:** 2026-09-12T19:55:00Z
+- **Last proof:** merge:85ecf77 child bus v1 on main; Pi lifecycle already on main, child bus now DONE
+- **Next action:** none; child bus already on main at 85ecf77
+- **Updated:** 2026-09-12T22:45:00Z
 
 ## ASQ-008 ΓÇö Pi child adapter conformance
 
