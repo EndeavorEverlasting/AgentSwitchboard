@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 import datetime as dt
 import hashlib
 import json
@@ -11,7 +12,7 @@ import os
 import pathlib
 import re
 import sys
-from typing import Iterable
+from typing import Iterable, Iterator
 
 SCRIPT = pathlib.Path(__file__).resolve()
 REPO_ROOT = SCRIPT.parents[4]
@@ -87,6 +88,44 @@ def resolve_state_root(explicit: str | None = None) -> pathlib.Path:
 
 def ledger_path(state_root: pathlib.Path) -> pathlib.Path:
     return state_root / "opinions.jsonl"
+
+
+def _lock_path(path: pathlib.Path) -> pathlib.Path:
+    return path.with_name(path.name + ".lock")
+
+
+@contextmanager
+def _exclusive_ledger_lock(path: pathlib.Path) -> Iterator[None]:
+    """Serialize ledger access across processes on Windows and POSIX hosts."""
+
+    lock_path = _lock_path(path)
+    _validate_ledger_path(lock_path)
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+b") as handle:
+        _validate_ledger_path(lock_path)
+        if os.name == "nt":
+            import msvcrt
+
+            handle.seek(0, os.SEEK_END)
+            if handle.tell() == 0:
+                handle.write(b"\0")
+                handle.flush()
+                os.fsync(handle.fileno())
+            handle.seek(0)
+            msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
+            try:
+                yield
+            finally:
+                handle.seek(0)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
 
 
 def _prepare_private_path(state_root: pathlib.Path) -> pathlib.Path:
@@ -254,10 +293,12 @@ def append_entry(path: pathlib.Path, entry: dict) -> None:
     validate_entry(entry)
     _validate_ledger_path(path)
     serialized = json.dumps(entry, sort_keys=True, ensure_ascii=False)
-    with path.open("a", encoding="utf-8", newline="\n") as handle:
-        handle.write(serialized + "\n")
-        handle.flush()
-        os.fsync(handle.fileno())
+    with _exclusive_ledger_lock(path):
+        _validate_ledger_path(path)
+        with path.open("a", encoding="utf-8", newline="\n") as handle:
+            handle.write(serialized + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
 
 
 def load_entries(path: pathlib.Path) -> list[dict]:
@@ -266,19 +307,21 @@ def load_entries(path: pathlib.Path) -> list[dict]:
         return []
     entries: list[dict] = []
     seen_ids: set[str] = set()
-    with path.open("r", encoding="utf-8") as handle:
-        for line_number, raw in enumerate(handle, start=1):
-            if not raw.strip():
-                continue
-            try:
-                parsed = json.loads(raw)
-            except json.JSONDecodeError as exc:
-                raise OpinionLedgerError(f"line {line_number}: malformed JSON: {exc.msg}") from exc
-            entry = validate_entry(parsed, line_number=line_number)
-            if entry["opinion_id"] in seen_ids:
-                raise OpinionLedgerError(f"line {line_number}: duplicate opinion_id")
-            seen_ids.add(entry["opinion_id"])
-            entries.append(entry)
+    with _exclusive_ledger_lock(path):
+        _validate_ledger_path(path)
+        with path.open("r", encoding="utf-8") as handle:
+            for line_number, raw in enumerate(handle, start=1):
+                if not raw.strip():
+                    continue
+                try:
+                    parsed = json.loads(raw)
+                except json.JSONDecodeError as exc:
+                    raise OpinionLedgerError(f"line {line_number}: malformed JSON: {exc.msg}") from exc
+                entry = validate_entry(parsed, line_number=line_number)
+                if entry["opinion_id"] in seen_ids:
+                    raise OpinionLedgerError(f"line {line_number}: duplicate opinion_id")
+                seen_ids.add(entry["opinion_id"])
+                entries.append(entry)
     return entries
 
 
