@@ -26,13 +26,28 @@
     "preCommitHook": "tooling/harness/operational/hooks/Invoke-OperationalHarnessPreCommit.ps1",
     "prePushHook": "tooling/harness/operational/hooks/Invoke-OperationalHarnessPrePush.ps1",
     "promptHandoffHarness": "tooling/harness/operational/opencode-prompt-handoff/manifest.json",
-    "openCodeLspSetupHarness": "tooling/harness/operational/opencode-lsp-setup/manifest.json"
+    "openCodeLspSetupHarness": "tooling/harness/operational/opencode-lsp-setup/manifest.json",
+    "exactGroundingHarness": "tooling/harness/operational/exact-grounding/manifest.json",
+    "exactGroundingRuntime": "tooling/harness/operational/exact-grounding/exact_grounding.py",
+    "exactGroundingPacketSchema": "tooling/harness/operational/exact-grounding/schemas/grounding-packet.schema.json",
+    "exactGroundingSkill": ".ai/skills/exact-output-grounding/SKILL.md",
+    "exactGroundingGuide": "docs/harness/exact-output-grounding.md"
   },
-  "workflowOrder": ["task-intake","pre-commit-validation","failure-recovery","handoff"],
+  "workflowOrder": [
+    "task-intake",
+    "pre-commit-validation",
+    "failure-recovery",
+    "handoff"
+  ],
   "generatedEvidence": {
     "tracked": false,
     "defaultRoot": "operating-system temporary directory/AgentSwitchboard/operational-harness/<run-id>",
-    "artifacts": ["operational-harness-status.json","operational-harness-report.md","operational-harness-validation-ledger.json","operational-harness-handoff.json"]
+    "artifacts": [
+      "operational-harness-status.json",
+      "operational-harness-report.md",
+      "operational-harness-validation-ledger.json",
+      "operational-harness-handoff.json"
+    ]
   },
   "hooks": {
     "implicitInstallationAllowed": false,
@@ -46,6 +61,6 @@
     "secretCollectionAllowed": false,
     "destructiveGitAllowed": false,
     "governanceMutationOwned": false,
-    "proofCeiling": "Tracked operational-harness structure, workflow routing, validator registration, read-only repository status, generated local reports, and offline/static validation only."
+    "proofCeiling": "Tracked operational-harness structure, workflow routing, validator registration, read-only repository status, generated local reports, offline/static validation, and the synthetic exact-output grounding execution seam only."
   }
 }

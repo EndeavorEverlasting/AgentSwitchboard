@@ -3,17 +3,154 @@
   "registryId": "agentswitchboard.operational-validators.v1",
   "selectionRule": "Run owning validators first. Add foundation validators for shared contract/catalog changes. Runtime or deployment validators require separate authority.",
   "validators": [
-    {"id": "operational-python", "command": "python3 tests/test_operational_harness.py", "platforms": ["linux", "windows", "macos"], "tier": "owning", "mutatesTarget": false, "proof": "operational harness completeness and cross-reference contract"},
-    {"id": "operational-powershell", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1", "platforms": ["windows", "linux"], "tier": "owning", "mutatesTarget": false, "proof": "PowerShell-side completeness, JSON, path, hook parse, and safety contract"},
-    {"id": "opencode-prompt-handoff", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-OpenCodePromptHandoffHarness.ps1", "platforms": ["windows", "linux"], "tier": "domain", "mutatesTarget": false, "proof": "prompt materialization, same-artifact preflight/execution contract, registration, hook safety, and delegated launcher compatibility"},
-    {"id": "opencode-prompt-handoff-portable", "command": "python3 tests/test_opencode_prompt_handoff_harness.py", "platforms": ["linux", "windows", "macos"], "tier": "domain", "mutatesTarget": false, "proof": "portable prompt-handoff harness completeness and anti-regression contract"},
-    {"id": "diff-check", "command": "git diff --check", "platforms": ["linux", "windows", "macos"], "tier": "owning", "mutatesTarget": false, "proof": "Git whitespace/error hygiene"},
-    {"id": "harness-doctrine", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-HarnessDoctrineContract.ps1", "platforms": ["windows", "linux"], "tier": "foundation", "mutatesTarget": false, "proof": "existing harness doctrine contract only"},
-    {"id": "repository-family", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-RepositoryFamilyHarness.ps1", "platforms": ["windows", "linux"], "tier": "foundation", "mutatesTarget": false, "proof": "existing repository-family harness contract only"},
-    {"id": "agent-documentation", "command": "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1", "platforms": ["windows", "linux"], "tier": "foundation", "mutatesTarget": false, "proof": "existing agent documentation contract only"},
-    {"id": "device-profile", "command": "python3 tests/test_device_profile_launcher_contract.py", "platforms": ["linux", "windows", "macos"], "tier": "domain", "mutatesTarget": false, "proof": "device profile contract only"},
-    {"id": "public-plan", "command": "python3 tests/test_public_plan_contracts.py", "platforms": ["linux", "windows", "macos"], "tier": "domain", "mutatesTarget": false, "proof": "public plan contract only"},
-    {"id": "runtime-event", "command": "python3 tests/test_runtime_event_contract.py", "platforms": ["linux", "windows", "macos"], "tier": "domain", "mutatesTarget": false, "proof": "runtime event static/synthetic contract only"},
-    {"id": "aggregate-offline-app-harness", "command": "Test-AppHarness.cmd", "platforms": ["windows"], "tier": "aggregate", "mutatesTarget": false, "proof": "registered offline app harness validation only"}
+    {
+      "id": "operational-python",
+      "command": "python3 tests/test_operational_harness.py",
+      "platforms": [
+        "linux",
+        "windows",
+        "macos"
+      ],
+      "tier": "owning",
+      "mutatesTarget": false,
+      "proof": "operational harness completeness and cross-reference contract"
+    },
+    {
+      "id": "operational-powershell",
+      "command": "pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1",
+      "platforms": [
+        "windows",
+        "linux"
+      ],
+      "tier": "owning",
+      "mutatesTarget": false,
+      "proof": "PowerShell-side completeness, JSON, path, hook parse, and safety contract"
+    },
+    {
+      "id": "exact-output-grounding",
+      "command": "python3 tests/test_exact_grounding_gate.py",
+      "platforms": [
+        "linux",
+        "windows",
+        "macos"
+      ],
+      "tier": "domain",
+      "mutatesTarget": false,
+      "proof": "fail-closed exact-field grounding, source identity/provenance checks, zero-entropy block fixtures, and synthetic single-execution seam"
+    },
+    {
+      "id": "opencode-prompt-handoff",
+      "command": "pwsh -NoLogo -NoProfile -File scripts/Test-OpenCodePromptHandoffHarness.ps1",
+      "platforms": [
+        "windows",
+        "linux"
+      ],
+      "tier": "domain",
+      "mutatesTarget": false,
+      "proof": "prompt materialization, same-artifact preflight/execution contract, registration, hook safety, and delegated launcher compatibility"
+    },
+    {
+      "id": "opencode-prompt-handoff-portable",
+      "command": "python3 tests/test_opencode_prompt_handoff_harness.py",
+      "platforms": [
+        "linux",
+        "windows",
+        "macos"
+      ],
+      "tier": "domain",
+      "mutatesTarget": false,
+      "proof": "portable prompt-handoff harness completeness and anti-regression contract"
+    },
+    {
+      "id": "diff-check",
+      "command": "git diff --check",
+      "platforms": [
+        "linux",
+        "windows",
+        "macos"
+      ],
+      "tier": "owning",
+      "mutatesTarget": false,
+      "proof": "Git whitespace/error hygiene"
+    },
+    {
+      "id": "harness-doctrine",
+      "command": "pwsh -NoLogo -NoProfile -File scripts/Test-HarnessDoctrineContract.ps1",
+      "platforms": [
+        "windows",
+        "linux"
+      ],
+      "tier": "foundation",
+      "mutatesTarget": false,
+      "proof": "existing harness doctrine contract only"
+    },
+    {
+      "id": "repository-family",
+      "command": "pwsh -NoLogo -NoProfile -File scripts/Test-RepositoryFamilyHarness.ps1",
+      "platforms": [
+        "windows",
+        "linux"
+      ],
+      "tier": "foundation",
+      "mutatesTarget": false,
+      "proof": "existing repository-family harness contract only"
+    },
+    {
+      "id": "agent-documentation",
+      "command": "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1",
+      "platforms": [
+        "windows",
+        "linux"
+      ],
+      "tier": "foundation",
+      "mutatesTarget": false,
+      "proof": "existing agent documentation contract only"
+    },
+    {
+      "id": "device-profile",
+      "command": "python3 tests/test_device_profile_launcher_contract.py",
+      "platforms": [
+        "linux",
+        "windows",
+        "macos"
+      ],
+      "tier": "domain",
+      "mutatesTarget": false,
+      "proof": "device profile contract only"
+    },
+    {
+      "id": "public-plan",
+      "command": "python3 tests/test_public_plan_contracts.py",
+      "platforms": [
+        "linux",
+        "windows",
+        "macos"
+      ],
+      "tier": "domain",
+      "mutatesTarget": false,
+      "proof": "public plan contract only"
+    },
+    {
+      "id": "runtime-event",
+      "command": "python3 tests/test_runtime_event_contract.py",
+      "platforms": [
+        "linux",
+        "windows",
+        "macos"
+      ],
+      "tier": "domain",
+      "mutatesTarget": false,
+      "proof": "runtime event static/synthetic contract only"
+    },
+    {
+      "id": "aggregate-offline-app-harness",
+      "command": "Test-AppHarness.cmd",
+      "platforms": [
+        "windows"
+      ],
+      "tier": "aggregate",
+      "mutatesTarget": false,
+      "proof": "registered offline app harness validation only"
+    }
   ]
 }
