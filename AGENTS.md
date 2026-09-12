@@ -42,7 +42,7 @@ If stale remote state, placeholders, or unknown ownership prevent that declarati
 - Static/synthetic evidence never proves runtime, live-target, provider, deployment, or user-visible success.
 - A task or launch pack grants bounded work only; it does not grant secrets, destructive Git, merge, deployment, live-target mutation, provider access, or higher proof.
 - When safe authorized work remains, continue through mutation, validation, evidence, commit, push, and requested PR work. Stop only at a real authority, capability, safety, ownership, or dependency blocker.
-- Merge/release/deployment/live-target authority must be explicit and current; recheck exact heads and gates just in time.
+- Merge/release/deployment/live-target authority must be explicit and current; recheck heads and gates just in time.
 
 ## Progressive disclosure reading order
 
