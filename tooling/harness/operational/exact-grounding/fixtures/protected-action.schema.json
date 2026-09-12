@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "fixture://agentswitchboard/protected-action/v1",
+  "x-source-version": "2026-08-22.1",
+  "title": "Synthetic protected tool action",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tool", "arguments"],
+  "properties": {
+    "tool": {"const": "fixture.calendar.create"},
+    "arguments": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["calendar_id", "summary"],
+      "properties": {
+        "calendar_id": {"type": "string", "enum": ["primary", "team"]},
+        "summary": {"type": "string", "minLength": 1, "maxLength": 80},
+        "visibility": {"type": "string", "enum": ["default", "private"]},
+        "send_updates": {"type": "boolean"}
+      }
+    }
+  }
+}

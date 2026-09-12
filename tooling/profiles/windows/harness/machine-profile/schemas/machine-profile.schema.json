@@ -3,7 +3,7 @@
   "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/profiles/windows/harness/machine-profile/schemas/machine-profile.schema.json",
   "title": "AgentSwitchboard Windows machine profile",
   "type": "object",
-  "required": ["schema", "detectedAt", "profileId", "confidence", "identity", "pathConventions", "tools", "signals", "repository", "reasons", "proofCeiling"],
+  "required": ["schema", "detectedAt", "profileId", "confidence", "identity", "pathConventions", "tools", "signals", "repository", "pathRoles", "reasons", "proofCeiling"],
   "properties": {
     "schema": { "const": "agentswitchboard.machine-profile.v1" },
     "detectedAt": { "type": "string" },
@@ -14,6 +14,32 @@
     "tools": { "type": "object" },
     "signals": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
     "repository": { "type": "object", "required": ["expectedOrigin", "candidates", "recommendedRoot", "selectionPolicy"] },
+    "pathRoles": {
+      "type": "object",
+      "required": [
+        "profileKey",
+        "developmentCheckout",
+        "productionUsePath",
+        "worktreeRoot",
+        "canonicalEntrypoint",
+        "openCodeEntrypoint",
+        "pathRelation",
+        "stableDefaultDevelopmentCheckout"
+      ],
+      "properties": {
+        "profileKey": { "type": "string" },
+        "developmentCheckout": { "type": "string" },
+        "productionUsePath": { "type": "string" },
+        "worktreeRoot": { "type": "string" },
+        "canonicalEntrypoint": { "type": "string" },
+        "openCodeEntrypoint": { "type": "string" },
+        "pathRelation": { "type": "string" },
+        "pathRelationNotes": { "type": "string" },
+        "stableDefaultDevelopmentCheckout": { "type": "string" },
+        "noncanonicalExistingCheckouts": { "type": "array" }
+      },
+      "additionalProperties": false
+    },
     "reasons": { "type": "array", "items": { "type": "string" } },
     "proofCeiling": { "type": "string" }
   },

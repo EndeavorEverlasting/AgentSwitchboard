@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "harnessId": "agentswitchboard.exact-output-grounding.v1",
+  "owner": "tooling/harness/operational",
+  "entrypoint": "tooling/harness/operational/exact-grounding/exact_grounding.py",
+  "packetSchema": "tooling/harness/operational/exact-grounding/schemas/grounding-packet.schema.json",
+  "fixtureAuthority": "tooling/harness/operational/exact-grounding/fixtures/protected-action.schema.json",
+  "authoritativeSourceKinds": ["json-schema-2020-12"],
+  "gateStatuses": ["GROUNDED_PASS", "UNSOURCED_BLOCK", "CONTRADICTION_BLOCK", "SCHEMA_MISMATCH", "GROUNDING_FAILURE"],
+  "executionAuthority": "host-runtime-only-after-GROUNDED_PASS",
+  "staleSourcePolicy": "re-read source path and compare sha256, schema id, version, tool identity, and allowed argument surface; mismatch is GROUNDING_FAILURE",
+  "proofCeiling": "Deterministic JSON-Schema-derived exact-field grounding, provenance/source-identity validation, and synthetic executor gating. It does not prove semantic truth outside encoded constraints or integration into every provider/tool adapter."
+}

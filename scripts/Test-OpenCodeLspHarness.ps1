@@ -82,7 +82,7 @@ foreach ($token in @('preferredpath','expectedbranch','expectedhead','canonicalo
 foreach ($forbidden in @('git reset','git clean','git stash','push --force','remove-item')) { if ($resolverLower.Contains($forbidden)) { [void]$failures.Add("resolver-forbidden-token:$forbidden") } }
 $runner = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1') -Raw
 $runnerLower = $runner.ToLowerInvariant()
-foreach ($token in @('opencode_config_content','opencode/nemotron-3-ultra-free','opencode_v2_lsp_unavailable','configurationdirectory','configuration_directory_already_owned','launcher_mismatch','canonicaloriginpattern','modelprovider','localappdata','lsp=$true','free trial','wrong_repository','recover-agentswitchboardcheckout.ps1','recover-opencoderuntime.ps1','-preferredpath','git_identity_output_empty','$originlines = @(invoke-gitlines','$origin = ([string]$originlines[0]).trim()','$headlines = @(invoke-gitlines','$head = ([string]$headlines[0]).trim()','agentswitchboard\bin\opencode.cmd',"elseif (`$failurecode -eq 'opencode_not_found' -and `$reporesolved)",'probetimeoutseconds = 30','invoke-boundedprocess',"stop-setup 'opencode_version_timeout'", "stop-setup 'model_query_timeout'", "@('models', `$modelprovider)")) { if (-not $runnerLower.Contains($token)) { [void]$failures.Add("runner-contract:$token") } }
+foreach ($token in @('opencode_config_content','opencode/nemotron-3-ultra-free','opencode_v2_lsp_unavailable','configurationdirectory','configuration_directory_already_owned','launcher_mismatch','canonicaloriginpattern','modelprovider','localappdata','lsp=$true','free trial','wrong_repository','recover-agentswitchboardcheckout.ps1','recover-opencoderuntime.ps1','-preferredpath','git_identity_output_empty','$originlines = @(invoke-gitlines','$origin = ([string]$originlines[0]).trim()','$headlines = @(invoke-gitlines','$head = ([string]$headlines[0]).trim()','agentswitchboard\bin\opencode.cmd',"elseif (`$failurecode -eq 'opencode_not_found' -and `$reporesolved)",'probetimeoutseconds = 30','invoke-boundedprocess',"stop-setup 'opencode_version_timeout'", "stop-setup 'model_query_timeout'", "@('models', `$modelprovider)",'programfiles','opencode\opencode.exe')) { if (-not $runnerLower.Contains($token)) { [void]$failures.Add("runner-contract:$token") } }
 foreach ($ambiguous in @("([string](Invoke-GitLines @('remote','get-url','origin'))[0])","([string](Invoke-GitLines @('rev-parse','HEAD'))[0])","@(& `$openCode --version 2>&1)","@(& `$openCode models `$modelProvider 2>&1)")) { if ($runner.Contains($ambiguous)) { [void]$failures.Add("runner-ambiguous-or-unbounded-call:$ambiguous") } }
 if ($runner.Contains('Set-Content -LiteralPath $globalConfig')) { [void]$failures.Add('runner-contract:existing-global-config-mutation') }
 foreach ($forbidden in @('git reset','git clean','git stash','push --force','apikey','password=')) { if ($runnerLower.Contains($forbidden)) { [void]$failures.Add("forbidden-token:$forbidden") } }
@@ -120,6 +120,35 @@ $preCommit = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/harness/oper
 foreach ($token in @('--diff-filter=ACMRD','git -C $RootPath diff --quiet -- $path')) { if (-not $preCommit.Contains($token)) { [void]$failures.Add("precommit-contract:$token") } }
 $prePush = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPrePush.ps1') -Raw
 foreach ($token in @('[Parameter(Mandatory=$true)][string]$BaseRef','rev-parse --verify')) { if (-not $prePush.Contains($token)) { [void]$failures.Add("prepush-contract:$token") } }
+$runtimeDoc = Get-Content -LiteralPath (Join-Path $RootPath 'docs/harness/opencode-lsp-workstation-setup.md') -Raw
+$runtimeDocLower = $runtimeDoc.ToLowerInvariant()
+foreach ($token in @('configuration proof is not lsp runtime proof','lsps will activate as files are read','powershell failure is expected','repository root','branch and head','file opened to trigger lsp','active lsp/server after opening','hover result','definition target','reference count and paths','exact errors','non-lsp semantic fallback used: must be `no`','lsp_runtime_smoke_test: pass','lsp_runtime_smoke_test: fail','correct canonical checkout selected:','supported source file opened/read:','python language server activated:')) { if (-not $runtimeDocLower.Contains($token)) { [void]$failures.Add("runtime-proof-doc-missing:$token") } }
+$operatorReport = Get-Content -LiteralPath (Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/operator-report.template.md') -Raw
+if (-not $operatorReport.Contains('proofCeiling')) { [void]$failures.Add('operator-report-missing-proof-ceiling') }
+$manifestProofCeiling = ([string]$manifest.safety.proofCeiling).ToLowerInvariant()
+foreach ($token in @('opening a supported file','observing runtime behavior','active lsp diagnostics')) { if (-not $manifestProofCeiling.Contains($token)) { [void]$failures.Add("manifest-proof-ceiling-missing:$token") } }
+$runtimeSmokeSchemaPath = Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json'
+if (-not (Test-Path -LiteralPath $runtimeSmokeSchemaPath -PathType Leaf)) { [void]$failures.Add('missing:tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json') }
+else {
+ try { $runtimeSmokeSchema = Get-Content -LiteralPath $runtimeSmokeSchemaPath -Raw | ConvertFrom-Json } catch { [void]$failures.Add('invalid-json:opencode-lsp-runtime-smoke-receipt.schema.json') }
+ if ([string]$runtimeSmokeSchema.title -ne 'OpenCode LSP runtime smoke receipt') { [void]$failures.Add('runtime-smoke-schema-title-mismatch') }
+ foreach ($field in @('repositoryRoot','branch','head','fileOpenedToTriggerLsp','activeLspServerAfterOpening','hoverResult','definitionTarget','referenceCount','referencePaths','exactErrors','nonLspSemanticFallbackUsed','verdict','pyrightVersion','nodeVersion','opencodeVersion','proofCeiling')) { if ($field -notin $runtimeSmokeSchema.required) { [void]$failures.Add("runtime-smoke-schema-missing-required:$field") } }
+ if ([string]$runtimeSmokeSchema.properties.verdict.pattern -ne '^LSP_RUNTIME_SMOKE_TEST: (PASS|FAIL — .+)$') { [void]$failures.Add('runtime-smoke-schema-verdict-pattern-mismatch') }
+ if ([string]$runtimeSmokeSchema.properties.nonLspSemanticFallbackUsed.const -ne 'No') { [void]$failures.Add('runtime-smoke-schema-fallback-const-mismatch') }
+}
+$runtimeSmokeTemplatePath = Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md'
+if (-not (Test-Path -LiteralPath $runtimeSmokeTemplatePath -PathType Leaf)) { [void]$failures.Add('missing:tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md') }
+else {
+ $runtimeSmokeTemplate = Get-Content -LiteralPath $runtimeSmokeTemplatePath -Raw
+ $runtimeSmokeLower = $runtimeSmokeTemplate.ToLowerInvariant()
+ foreach ($token in @('repository root','branch','head','file opened to trigger lsp','active lsp/server after opening','hover result','definition target','reference count','reference paths','exact errors','non-lsp semantic fallback used','verdict','pyright version','node version','opencode version')) { if (-not $runtimeSmokeLower.Contains($token)) { [void]$failures.Add("runtime-smoke-template-missing:$token") } }
+}
+foreach ($artifactId in @('runtime-smoke-json','runtime-smoke-report')) { if ($artifactId -notin $artifactIds) { [void]$failures.Add("runtime-smoke-artifact-missing:$artifactId") } }
+if ([string]$manifest.entrypoints.runtimeSmokeReceiptSchema -ne 'tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json') { [void]$failures.Add('manifest-runtime-smoke-schema-entrypoint-missing') }
+if ([string]$manifest.entrypoints.runtimeSmokeReportTemplate -ne 'tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md') { [void]$failures.Add('manifest-runtime-smoke-template-entrypoint-missing') }
+if (-not $runtimeDoc.Contains('opencode-lsp-runtime-smoke.json')) { [void]$failures.Add('runtime-doc-missing-recorded-receipt-json') }
+if (-not $runtimeDoc.Contains('opencode-lsp-runtime-smoke.md')) { [void]$failures.Add('runtime-doc-missing-recorded-receipt-md') }
+if (-not $runtimeDoc.Contains('schemas/opencode-lsp-runtime-smoke-receipt.schema.json')) { [void]$failures.Add('runtime-doc-missing-schema-ref') }
 if ($failures.Count -gt 0) { Write-Host 'OPENCODE LSP HARNESS: FAIL' -ForegroundColor Red; $failures | ForEach-Object { Write-Host "- $_" -ForegroundColor Red }; exit 1 }
 Write-Host "OPENCODE LSP HARNESS: PASS ($($required.Count) required files)" -ForegroundColor Green
 exit 0

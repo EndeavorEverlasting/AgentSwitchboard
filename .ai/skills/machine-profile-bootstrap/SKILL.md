@@ -31,9 +31,10 @@ Use when AgentSwitchboard is being installed, repaired, or relocated on a Window
 
 6. Read `%LOCALAPPDATA%\AgentSwitchboard\machine-profile\machine-profile.json`.
 7. Use `repository.recommendedRoot` unless the operator supplied an explicit path or `AGENT_SWITCHBOARD_REPO`.
-8. Preserve the precedence encoded by the registry: explicit path, environment override, verified machine binding, verified existing checkout, stable `%USERPROFILE%\dev\AgentSwitchBoard-Live` default.
-9. Report `profileId`, confidence, reasons, selected repository root, detected blockers, and the local evidence path.
-10. Continue through repository acquisition, PowerShell 7 gate, WSL repair, workstation setup, and live certification without reordering those gates.
+8. Preserve the precedence encoded by the registry: explicit path, environment override, verified machine binding, verified canonical/legacy user-local checkout, stable `%USERPROFILE%\dev\AgentSwitchBoard-Live` default.
+9. Prefer `pathRoles.developmentCheckout` / `repository.recommendedRoot`. Classify Desktop/OneDrive copies as `NONCANONICAL_PRESERVE` and do not invent a second mutable checkout.
+10. Report `profileId`, confidence, reasons, selected repository root, path roles, detected blockers, and the local evidence path.
+11. Continue through repository acquisition, PowerShell 7 gate, WSL repair, workstation setup, and live certification without reordering those gates.
 
 ## Expected outputs
 

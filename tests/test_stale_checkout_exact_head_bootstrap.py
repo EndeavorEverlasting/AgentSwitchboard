@@ -158,7 +158,8 @@ class StaleCheckoutExactHeadBootstrapTests(unittest.TestCase):
         text = "\n".join(
             path.read_text(encoding="utf-8")
             for path in ROOT.rglob("*")
-            if path.is_file()
+            if ".git" not in path.parts
+            and path.is_file()
             and path != Path(__file__).resolve()
             and (
                 "stale-checkout-exact-head" in path.as_posix()
