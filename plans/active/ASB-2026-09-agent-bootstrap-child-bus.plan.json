@@ -1,0 +1,225 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS",
+  "title": "September agent bootstrap and child bus program",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "active",
+  "priority": "high",
+  "createdUtc": "2026-09-12T19:50:00Z",
+  "updatedUtc": "2026-09-12T19:50:00Z",
+  "mission": "Create the durable September program for reversible agent bootstrap (Inspect/Apply/Remove), provider-neutral child execution (Pi/OpenCode adapters via shared bus), fresh-TUI LSP runtime certification, heterogeneous and nested delegation, and stale PR/path convergence — replacing chat-only coordination with repository-owned ownership, dependency and collision boundaries.",
+  "owner": {
+    "surface": "September agent bootstrap and child bus program",
+    "role": "coordination lane",
+    "agent": "Admin Box 1"
+  },
+  "delivery": {
+    "branch": null,
+    "pullRequest": null,
+    "baseRef": "main",
+    "commitRequired": true
+  },
+  "wave": "0 — coordination floor",
+  "lane": "public-plan / repository-work-ledger coordination",
+  "dependencies": [],
+  "safeParallelWork": [
+    "Panel 02 TUI LSP runtime certification (writes only local untracked runtime-smoke evidence) with Panels 03 Pi reversible bootstrap and 04 shared child bus spine after Panel 01, if ownership lines (tooling/harness/system-bootstrap-lifecycle/**, tooling/harness/child-agent-bus/**, LSP harness) are respected",
+    "Child-repository feature work using separate branches and worktrees outside plans/** and .ai/WORK_QUEUE.md"
+  ],
+  "ownedScope": [
+    "plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json",
+    "plans/active/ASB-2026-09-agent-bootstrap-child-bus.md",
+    "plans/plan-registry.json",
+    ".ai/WORK_QUEUE.md",
+    "PR-disposition metadata (PR #151 Pi mixed bootstrap/child seam, PR #149 path authority, PR #115 stale LSP harness) in plan/ledger"
+  ],
+  "forbiddenScope": [
+    "product/bootstrap implementation (Pi/OpenCode adapters, lifecycle code)",
+    "Pi/OpenCode child-bus adapter code",
+    "OpenCode LSP behavior mutation",
+    "provider credentials or model calls",
+    "destructive Git (reset, clean, force push)",
+    "closing PR #151/#149/#115 before successor ownership is proven and contained on main",
+    "committing private local paths, usernames, tenant details, runtime receipts, or machine evidence"
+  ],
+  "expectedArtifacts": [
+    "plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json",
+    "plans/active/ASB-2026-09-agent-bootstrap-child-bus.md",
+    "plans/plan-registry.json updated",
+    ".ai/WORK_QUEUE.md updated with bounded work items for Panels 02–10",
+    "explicit collision ledger covering PR #151, PR #149, PR #115 and shared files (tooling/harness/system-bootstrap-lifecycle/**, Pull-And-Run-AgentSwitchboard.cmd, OpenCode LSP harness, path-authority surfaces)",
+    "public-plan + repository-work-ledger contract proof"
+  ],
+  "tasks": [
+    {
+      "taskId": "COORD-01",
+      "title": "Establish September coordination floor",
+      "status": "in-progress",
+      "owner": "coordination lane",
+      "dependencies": [],
+      "inputs": ["main@54cce3b", "plans/plan-registry.json", ".ai/WORK_QUEUE.md", "AGENTS.md", "TRIGGERS.md", "PR #151/#149/#115 provider truth", "scripts/Test-PublicPlanContracts.ps1", "scripts/Test-RepositoryWorkLedgerContract.ps1"],
+      "outputs": ["plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json", "plans/active/ASB-2026-09-agent-bootstrap-child-bus.md", "plans/plan-registry.json", ".ai/WORK_QUEUE.md"],
+      "acceptanceCriteria": [
+        "Provider floor refreshed to main@54cce3b (parent 2f69049, LSP runtime-smoke contract intact, 81461e7 lifecycle already beneath main)",
+        "Plan and ledger accurately encode 10-panel September program with waves, dependencies, collision surfaces, and proof ceilings",
+        "Plan registry contains only public-safe data; no Northwell/OneDrive local path committed",
+        "Work ledger no longer claims none; no safe actionable work remains while program is live",
+        "PR #151 source material, #149 waiting path-policy, #115 stale LSP owner dispositions recorded",
+        "Plan/ledger validators pass, git diff --check clean, main fast-forwarded"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "LSP-02",
+      "title": "OpenCode fresh-TUI LSP runtime certification",
+      "status": "pending",
+      "owner": "OpenCode LSP field lane",
+      "dependencies": ["COORD-01"],
+      "inputs": ["Panel 01 integrated main", "docs/harness/opencode-lsp-workstation-setup.md", "tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json", "pyright 1.1.414 prerequisite", "headless receipt 20260912T194619Z-e3f423df"],
+      "outputs": ["local opencode-lsp-runtime-smoke.json/.md beneath %LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/runs/<run-id>/", "TUI/headless differential classification"],
+      "acceptanceCriteria": [
+        "Fresh TUI launched from canonical Live checkout with OPENCODE_EXPERIMENTAL_LSP_TOOL=true, file tests/test_technician_live_cert_surface.py opened, strict hover/def/refs captured with nonLspSemanticFallbackUsed No and verbatim errors",
+        "Runs headless vs TUI comparison yields one of PASS_TUI_HEADLESS_DIFFERENTIAL, FAIL_BOTH_MODES, PARTIAL_TUI_DIFFERENTIAL, BLOCKED_OPERATOR_INTERACTION",
+        "No tracked harness mutation unless TUI exposes reproducible product defect (then bounded defect handoff)"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "PI-BOOT-03",
+      "title": "Pi reversible system bootstrap lifecycle (salvage PR #151 bootstrap portion)",
+      "status": "pending",
+      "owner": "Pi bootstrap lane",
+      "dependencies": ["COORD-01"],
+      "inputs": ["PR #151 head 8d40604e", "tooling/harness/system-bootstrap-lifecycle/", "lifecycle.contract.json", "BootstrapLifecycle.psm1", "tooling/profiles/windows/Install-AgentSwitchboardOpenCode.ps1 as reference"],
+      "outputs": ["Bootstrap-Pi-SystemWide.cmd", "Unbootstrap-Pi-SystemWide.cmd", "tooling/pi/Install-AgentSwitchboardPiSystem.ps1", "Pi lifecycle adapter registration", "Inspect/Apply/Remove parity with write-ahead, drift fail-closed, recovery checkpoints"],
+      "acceptanceCriteria": [
+        "Pi registered in tooling/harness/system-bootstrap-lifecycle/adapters.v1.json without redesigning shared contract",
+        "Inspect/Apply/Remove proven via deterministic lifecycle module, machine state under %ProgramData%\\AgentSwitchboard\\bootstrap-lifecycle\\pi",
+        "Preserves provider credentials, Pi settings, sessions, project trust; requires durable ownership for Remove"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "BUS-04",
+      "title": "Shared ASB child bus v1 contract spine",
+      "status": "pending",
+      "owner": "shared child-bus lane",
+      "dependencies": ["COORD-01"],
+      "inputs": ["AGENTS.md, CODEBASE_MAP.md, capability/trigger conventions", ".ai/harness/manifest.json", "PR #151 child contract as noncanonical source"],
+      "outputs": ["tooling/harness/child-agent-bus/ (request/result/error schemas, adapter registry, artifact registry, fixtures, validator, dispatcher, docs, CI)", "CAPABILITIES.md/TRIGGERS.md/SKILLS.md routing", "agent.child.dispatch / result.normalize / writer-isolated capabilities"],
+      "acceptanceCriteria": [
+        "Closed schemas child-agent-request.v1, child-agent-result.v1, child-agent-error.v1 with invocationId, lineage, authority, budgets, evidence root",
+        "Generic Invoke-AgentSwitchboardChild front door validates and fails closed when adapter absent",
+        "Common validator + fixture matrix (read-only, isolated writer, dirty/default-branch/base-SHA mismatch, budget exceeded, missing terminal event, etc.) green"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "PI-ADAPTER-05",
+      "title": "Pi child adapter conformance",
+      "status": "pending",
+      "owner": "Pi adapter lane",
+      "dependencies": ["PI-BOOT-03", "BUS-04"],
+      "inputs": ["PR #151 Invoke-AgentSwitchboardPiChild.ps1", "common child-bus contracts", "Pi lifecycle registry"],
+      "outputs": ["Pi adapter registered", "Pi launch/event/cancellation translation", "conformance fixture results, read-only and isolated writer paths"],
+      "acceptanceCriteria": [
+        "Pi is first conforming implementation of shared bus, not private protocol; resolves only ASB-managed Pi runtime",
+        "Read-only no-mutation and writer isolated-worktree guards enforced; terminal agent_end required; budgets and evidence uniqueness enforced"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "OC-ADAPTER-06",
+      "title": "OpenCode child adapter parity",
+      "status": "pending",
+      "owner": "OpenCode adapter lane",
+      "dependencies": ["BUS-04"],
+      "inputs": ["shared child-bus contracts", "Pi adapter as reference", "tooling/profiles/windows/Install-AgentSwitchboardOpenCode.ps1", "managed OpenCode runtime identity"],
+      "outputs": ["OpenCode adapter registered", "parity matrix vs Pi conformance fixtures"],
+      "acceptanceCriteria": [
+        "OpenCode consumes same request and produces same result/error envelopes as Pi; exact managed runtime identity, no arbitrary PATH fallback, no global OPENCODE_CONFIG mutation unless permitted"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "PILOT-07",
+      "title": "Heterogeneous read-only pilot (Pi + OpenCode)",
+      "status": "pending",
+      "owner": "runtime pilot lane",
+      "dependencies": ["PI-ADAPTER-05", "OC-ADAPTER-06"],
+      "inputs": ["both adapters merged and physically ready plus provider auth", "common bus dispatcher"],
+      "outputs": ["local untracked pilot request/result/evidence: two child result envelopes, before/after repo identity proving no mutation, coordinator rejoin report"],
+      "acceptanceCriteria": [
+        "Pi architect + OpenCode validator dispatched concurrently via ASB with distinct invocationIds/evidence roots, budgets enforced, terminal completion required, repo unchanged"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "NESTED-08",
+      "title": "Mediated nested delegation v1 (maxDepth 2)",
+      "status": "pending",
+      "owner": "shared child-bus lane",
+      "dependencies": ["PILOT-07"],
+      "inputs": ["child-bus schemas/dispatcher", "heterogeneous pilot evidence", "runtime-event lineage contract"],
+      "outputs": ["nested delegation v1 contract: maxDepth2, maxChildren3, maxConcurrentWriters1, attempts1, no fallback, childMayMerge false, fixtures for scope widening/write escalation/depth exceeded/cancellation cascade"],
+      "acceptanceCriteria": [
+        "Authority only narrows downward; monotonic budget/scope inheritance, cancellation cascade, evidence root reservation, one writer globally"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "NESTED-RT-09",
+      "title": "Nested runtime certification (depth-2 heterogeneous chain)",
+      "status": "pending",
+      "owner": "runtime certification lane",
+      "dependencies": ["NESTED-08"],
+      "inputs": ["nested delegation contract", "Pi/OpenCode adapters", "runtime pilot docs"],
+      "outputs": ["root/child/grandchild request/result lineage, budget inheritance, terminal propagation, repo unchanged, certification report"],
+      "acceptanceCriteria": [
+        "One bounded depth-2 heterogeneous chain (coordinator -> Pi read-only -> OpenCode read-only or reverse) proven with lineage, narrowed scope/budget, independent evidence roots, provider auth without secrets"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "CLEANUP-10",
+      "title": "PR/path authority cleanup and final convergence",
+      "status": "pending",
+      "owner": "convergence lane",
+      "dependencies": ["LSP-02", "PI-BOOT-03", "BUS-04", "PI-ADAPTER-05", "OC-ADAPTER-06", "PILOT-07", "NESTED-08", "NESTED-RT-09"],
+      "inputs": ["PR #151, #115, #149 full diffs/checks", "September public plan", ".ai/WORK_QUEUE.md", "current LSP/main/child-bus registries"],
+      "outputs": ["#151 successor mapping and superseded closure", "#115 containment/superseded closure", "#149 explicit-path precedence reconciliation (only missing behavior) or superseded closure", "September plan/work-ledger terminal states", "main containment proof"],
+      "acceptanceCriteria": [
+        "PR #151 Pi lifecycle and Pi child-adapter successor SHAs proved contained in main before close as superseded",
+        "#115 old LSP harness proved superseded by current main LSP proof",
+        "#149 only genuinely missing explicit operator path wins extracted via bounded current-main patch (otherwise superseded) without silently invalidating operator OneDrive path",
+        "September plan and work ledger closed to terminal states only after all acceptance gates supported"
+      ],
+      "evidence": []
+    }
+  ],
+  "validation": [
+    "JSON parse/schema for new September plan (agentswitchboard.public-plan.v1)",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-RepositoryWorkLedgerContract.ps1",
+    "python repository-ledger/public-plan focused tests if registered",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1 if root routing/docs changed",
+    "git diff --check",
+    "git status --short clean checkout"
+  ],
+  "proof": {
+    "target": "public-plan-coordination + repository-ledger contract proof for September program",
+    "achieved": "September plan and ledger accurately encode 10-panel program with waves, dependencies, collision surfaces, proof ceilings; provider floor refreshed to main@54cce3b; no new product/runtime proof claimed",
+    "ceiling": "Proves current ownership/dependency/collision state only. Does not prove Pi/OpenCode installation, LSP activation, child-agent execution or provider delivery."
+  },
+  "handoff": {
+    "nextOwner": "Panel 02 OpenCode fresh-TUI, Panel 03 Pi bootstrap, Panel 04 child bus (parallel group A after this floor)",
+    "nextCommand": "Set-Location -LiteralPath \"C:\\Users\\pa_rperez26\\OneDrive - Northwell Health\\OG Laptop Backup\\Desktop\\dev\\AgentSwitchBoard-Live\"; git fetch --all --prune --tags; git switch main; git pull --ff-only origin main; pwsh -NoLogo -NoProfile -File .\\scripts\\Get-RepositoryWorkLedgerFrontier.ps1 -Json",
+    "notes": [
+      "Launch Panel 02-04 together only after this coordination floor is integrated; keep group contiguous.",
+      "PR #151 = source material requiring split/salvage, not whole-PR merge authority; PR #149 = waiting path-policy reconciliation; PR #115 = stale LSP owner pending containment comparison.",
+      "Public plan data must remain public-safe: no Northwell/OneDrive operator path in tracked artifacts.",
+      "This plan is the durable September program replacing chat-only coordination."
+    ]
+  }
+}

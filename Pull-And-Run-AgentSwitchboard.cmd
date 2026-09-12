@@ -17,6 +17,14 @@ if /I not "%MODE%"=="shell" if /I not "%MODE%"=="agy" if /I not "%MODE%"=="openc
 )
 
 set "REPO_ROOT=%~2"
+if not defined REPO_ROOT if defined AGENT_SWITCHBOARD_REPO set "REPO_ROOT=%AGENT_SWITCHBOARD_REPO%"
+if not defined REPO_ROOT if exist "%LOCALAPPDATA%\AgentSwitchboard\machine-profile\machine-profile.env.cmd" (
+  call "%LOCALAPPDATA%\AgentSwitchboard\machine-profile\machine-profile.env.cmd" >nul
+  if defined AGENT_SWITCHBOARD_REPO set "REPO_ROOT=%AGENT_SWITCHBOARD_REPO%"
+)
+if not defined REPO_ROOT if exist "%LOCALAPPDATA%\AgentSwitchBoard\state\repo-path.txt" (
+  set /p REPO_ROOT=<"%LOCALAPPDATA%\AgentSwitchBoard\state\repo-path.txt"
+)
 if not defined REPO_ROOT set "REPO_ROOT=%DEFAULT_REPO%"
 for %%I in ("%REPO_ROOT%") do set "REPO_ROOT=%%~fI"
 
