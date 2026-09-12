@@ -1,7 +1,7 @@
-[CmdletBinding()]param([string]$RootPath)
+﻿[CmdletBinding()]param([string]$RootPath)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
-if ([string]::IsNullOrWhiteSpace($RootPath)) { $RootPath = Split-Path -Parent $PSScriptRoot | Split-Path -Parent | Split-Path -Parent }
+if ([string]::IsNullOrWhiteSpace($RootPath)) { $RootPath = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path }
 $bus = Join-Path $RootPath "tooling/harness/child-agent-bus"
 foreach ($f in @("schemas/child-agent-request.schema.json","schemas/child-agent-result.schema.json","schemas/child-agent-error.schema.json","adapter-registry.json","artifact-registry.json","Invoke-AgentSwitchboardChild.ps1")) {
   if (-not (Test-Path -LiteralPath (Join-Path $bus $f))) { throw "Missing $f" }
