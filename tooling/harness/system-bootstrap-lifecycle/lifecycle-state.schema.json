@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentswitchboard.system-bootstrap-state.v1",
+  "title": "AgentSwitchboard system bootstrap lifecycle state",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema",
+    "adapterId",
+    "installId",
+    "status",
+    "createdAt",
+    "updatedAt"
+  ],
+  "properties": {
+    "schema": {"const": "agentswitchboard.system-bootstrap-state.v1"},
+    "adapterId": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"},
+    "installId": {"type": "string", "minLength": 1, "maxLength": 128},
+    "status": {"enum": ["absent", "applying", "installed", "removing", "removed", "drifted"]},
+    "createdAt": {"type": "string"},
+    "updatedAt": {"type": "string"},
+    "removedAt": {"type": ["string", "null"]},
+    "resources": {"type": "object"}
+  }
+}

@@ -23,6 +23,8 @@
     "operationalWorkflowRegistry": "tooling/harness/operational/workflow-registry.json",
     "operatorGuide": "docs/harness/opencode-lsp-workstation-setup.md",
     "operatorReportTemplate": "tooling/harness/operational/opencode-lsp-setup/operator-report.template.md",
+    "runtimeSmokeReceiptSchema": "tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json",
+    "runtimeSmokeReportTemplate": "tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md",
     "preCommitHook": "tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPreCommit.ps1",
     "prePushHook": "tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPrePush.ps1"
   },

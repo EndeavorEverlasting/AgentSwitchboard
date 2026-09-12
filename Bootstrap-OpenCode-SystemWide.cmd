@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 setlocal EnableExtensions EnableDelayedExpansion
 title AgentSwitchboard OpenCode System Bootstrap
 
@@ -119,4 +119,9 @@ echo.
 
 call "%SCRIPT_ROOT%\Pull-And-Run-AgentSwitchboard.cmd" bootstrap-opencode "%SCRIPT_ROOT%" "%GIT_REF%"
 set "RESULT=%ERRORLEVEL%"
+
+if "%RESULT%"=="0" (
+  echo [INFO] Reversal path: %SCRIPT_ROOT%\Unbootstrap-OpenCode-SystemWide.cmd
+)
+
 endlocal & exit /b %RESULT%
