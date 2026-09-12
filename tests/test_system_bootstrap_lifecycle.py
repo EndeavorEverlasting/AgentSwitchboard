@@ -78,12 +78,12 @@ class SystemBootstrapLifecycleTests(unittest.TestCase):
         self.assertNotIn("Remove-Item -LiteralPath $managedDirectory -Recurse", text)
         self.assertNotIn("Remove-Item -LiteralPath $installDirectory -Recurse", text)
 
-    def test_preexisting_binary_has_verified_backup_before_replacement(self):
+    def test_preexisting_binary_has_verified_backup_before_apply_replacement(self):
         text = OPEN_CODE.read_text(encoding="utf-8-sig")
         backup = text.index("Copy-Item -LiteralPath $targetExe -Destination $backupPath -Force")
-        verify = text.index("OPENCODE_LIFECYCLE_BACKUP_VERIFY_FAILED")
-        replace = text.index("Move-Item -LiteralPath $incoming -Destination $targetExe -Force")
-        self.assertLess(backup, replace)
+        verify = text.index("OPENCODE_LIFECYCLE_BACKUP_VERIFY_FAILED", backup)
+        replace = text.index("Move-Item -LiteralPath $incoming -Destination $targetExe -Force", backup)
+        self.assertLess(backup, verify)
         self.assertLess(verify, replace)
         self.assertIn("beforeSha256", text)
         self.assertIn("afterSha256", text)
