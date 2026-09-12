@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "plans/**"
+      - ".ai/WORK_QUEUE.md"
       - ".ai/skills/public-plan-coordination/**"
       - ".ai/agent-contract.json"
       - ".ai/harness/manifest.json"
@@ -28,6 +29,7 @@ on:
       - main
     paths:
       - "plans/**"
+      - ".ai/WORK_QUEUE.md"
       - ".ai/skills/public-plan-coordination/**"
       - "AgentSwitchboard.cmd"
       - "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1"
@@ -35,6 +37,7 @@ on:
       - "scripts/Test-PublicPlanContracts.ps1"
       - "tests/test_public_plan_contracts.py"
       - "templates/repository-agent-contract/**"
+      - ".github/workflows/public-plan-contracts.yml"
 
 jobs:
   linux-contracts:
