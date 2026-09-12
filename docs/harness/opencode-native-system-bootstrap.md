@@ -4,6 +4,30 @@ AgentSwitchboard owns a complete-script Windows path for installing OpenCode mac
 
 OpenCode is the reference adapter for the repository-wide reversible bootstrap lifecycle in `docs/harness/system-bootstrap-lifecycle.md`.
 
+Canonical Windows technician checkout / use path:
+
+```text
+%USERPROFILE%\dev\AgentSwitchBoard-Live
+```
+
+PowerShell does not run bare `.cmd` names from the current directory. From that checkout:
+
+```powershell
+Set-Location -LiteralPath "$env:USERPROFILE\dev\AgentSwitchBoard-Live"
+.\Bootstrap-OpenCode-SystemWide.cmd
+```
+
+From cmd.exe:
+
+```cmd
+cd /d "%USERPROFILE%\dev\AgentSwitchBoard-Live"
+Bootstrap-OpenCode-SystemWide.cmd
+```
+
+If the canonical checkout is missing, acquire it with `AgentSwitchboard-Technician-Bootstrap.cmd` first. Do not invent Desktop, OneDrive, or backup clone paths. `Bootstrap-OpenCode-SystemWide.cmd` refuses to mutate from a noncanonical script location when a different target checkout is required.
+
+The entrypoint routes through `Pull-And-Run-AgentSwitchboard.cmd bootstrap-opencode`, refreshes the selected repository ref through the existing safe dispatcher when the checkout is clean, and executes `tooling/profiles/windows/Install-AgentSwitchboardOpenCode.ps1` as one complete PowerShell script.
+
 ## Operator entrypoints
 
 Apply from an elevated Windows shell:

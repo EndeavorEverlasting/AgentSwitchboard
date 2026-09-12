@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 import unittest
@@ -119,7 +119,10 @@ class OpenCodeNativeSystemBootstrapTests(unittest.TestCase):
         self.assertIn("Install-AgentSwitchboardOpenCode.ps1", setup)
         self.assertIn("& $nativeBootstrapPath -Mode Apply", setup)
         self.assertIn('"bootstrap-opencode"', dispatch)
-        self.assertIn('bootstrap-opencode "%ROOT%." "%GIT_REF%"', entry)
+        self.assertIn('bootstrap-opencode "%SCRIPT_ROOT%" "%GIT_REF%"', entry)
+        self.assertIn(r"%USERPROFILE%\dev\AgentSwitchBoard-Live", entry)
+        self.assertIn(r".\Bootstrap-OpenCode-SystemWide.cmd", entry)
+        self.assertIn("NONCANONICAL", entry)
         self.assertIn("Unbootstrap-OpenCode-SystemWide.cmd", entry)
         self.assertIn("Do not paste implementation fragments into an interactive PowerShell REPL", entry)
         self.assertIn("Install-AgentSwitchboardOpenCode.ps1", unbootstrap)

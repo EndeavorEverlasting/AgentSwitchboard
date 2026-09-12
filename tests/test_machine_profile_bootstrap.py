@@ -32,6 +32,8 @@ class MachineProfileBootstrapContract(unittest.TestCase):
         self.assertEqual('agentswitchboard.machine-profile-codebase-map.v1', codebase_map['schema'])
         self.assertEqual('agentswitchboard.machine-profile.v1', schema['properties']['schema']['const'])
         ids = [item['profileId'] for item in registry['profiles']]
+        self.assertIn('pathRoles', registry)
+        self.assertEqual('%USERPROFILE%\\dev\\AgentSwitchBoard-Live', registry['pathRoles']['developmentCheckout'])
         self.assertEqual([
             'enterprise-managed-onedrive',
             'enterprise-managed-local',
@@ -78,6 +80,9 @@ class MachineProfileBootstrapContract(unittest.TestCase):
         self.assertNotIn('SetEnvironmentVariable(', detector)
         self.assertIn("Join-Path $env:LOCALAPPDATA 'AgentSwitchboard\\machine-profile'", detector)
         self.assertIn("Join-Path ([string]$facts.userProfile) 'dev\\AgentSwitchBoard-Live'", detector)
+        self.assertIn("pathRoles", detector)
+        self.assertIn("NONCANONICAL_PRESERVE", detector)
+        self.assertIn("Bootstrap-OpenCode-SystemWide.cmd", detector)
 
     def test_bootstrap_profiles_before_acquisition_and_pwsh_after(self):
         bootstrap = text(BOOTSTRAP)
@@ -153,6 +158,20 @@ class MachineProfileBootstrapContract(unittest.TestCase):
         self.assertIn('Repository acquisition completed without requiring PowerShell 7', pull)
         self.assertIn('Workstation setup is intentionally deferred.', pull)
 
+
+
+    def test_opencode_bootstrap_front_door_enforces_canonical_path(self):
+        bootstrap = text(os.path.join(ROOT, 'Bootstrap-OpenCode-SystemWide.cmd'))
+        for token in [
+            r'%USERPROFILE%\dev\AgentSwitchBoard-Live',
+            'NONCANONICAL',
+            '.\\Bootstrap-OpenCode-SystemWide.cmd',
+            'PowerShell tip',
+            'AGENT_SWITCHBOARD_REPO',
+            'AgentSwitchboard-Technician-Bootstrap.cmd',
+        ]:
+            self.assertIn(token, bootstrap)
+        self.assertIn('if /I not "%SCRIPT_ROOT%"=="%REPO_ROOT%"', bootstrap)
 
 if __name__ == '__main__':
     unittest.main()
