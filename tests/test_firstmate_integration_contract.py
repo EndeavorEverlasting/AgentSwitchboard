@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Focused FirstMate Linux/WSL integration-contract tests for FM-REFRESH-06."""
+"""Focused FirstMate Linux/WSL integration-contract tests through FM-BRIDGE-10."""
 
 from __future__ import annotations
 
@@ -18,6 +18,7 @@ PIN_PATH = ROOT / "tooling" / "firstmate" / "harness" / "upstream-pin.json"
 CONVERGENCE_PATH = ROOT / "tooling" / "firstmate" / "harness" / "convergence-contract.json"
 PROBE_PATH = ROOT / "tooling" / "firstmate" / "Test-FirstMateInterop.sh"
 DOC_PATH = ROOT / "docs" / "harness" / "firstmate-integration.md"
+OPERATIONAL_DOC = ROOT / "docs" / "harness" / "firstmate-operational-harness.md"
 EXPECTED_SHA = "b182d0f908b78d08c7ccb8dce3775bdca8c5d657"
 STALE_PR96_SHA = "833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409"
 
@@ -65,10 +66,11 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
         ):
             self.assertIs(sprint[key], False, key)
 
-    def test_platform_claim_does_not_overstate_windows_support(self) -> None:
+    def test_platform_claim_is_explicit_ubuntu_bridge_only(self) -> None:
         platform = self.contract["platform_contract"]
         self.assertIn("Linux", platform["upstream_declared_platforms"])
         self.assertEqual(platform["agentswitchboard_target"], "WSL/Ubuntu")
+        self.assertEqual(platform["wsl_distribution"], "Ubuntu")
         self.assertEqual(platform["native_windows"], "unverified and out of scope")
         self.assertEqual(platform["windows_host_role"], "bridge_only")
         self.assertIn("inference", platform["wsl_support_claim"])
@@ -76,15 +78,25 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
         self.assertEqual(self.convergence["runtime"]["nativeWindows"], "out_of_scope")
         self.assertEqual(self.convergence["runtime"]["windowsHostRole"], "bridge_only")
 
-    def test_role_boundaries_and_runtime_floor_are_explicit(self) -> None:
+    def test_role_boundaries_and_bridge_status_are_explicit(self) -> None:
         roles = self.contract["role_boundaries"]
-        self.assertIn("control plane", roles["agentswitchboard"])
-        self.assertIn("crew chief", roles["firstmate"])
+        self.assertIn("not a second live crew orchestrator", roles["agentswitchboard"])
+        self.assertIn("canonical live crew runtime", roles["firstmate"])
         runtime = self.contract["runtime_contract"]
         self.assertEqual(runtime["reference_backend"], "tmux")
         self.assertEqual(runtime["herdr"]["status"], "experimental-unproved")
         self.assertIs(runtime["herdr"]["automatic_selection"], False)
-        self.assertEqual(self.contract["deferred_to_bridge"]["lane"], "FM-BRIDGE-10")
+        bridge = self.contract["windows_bridge"]
+        self.assertEqual("FM-BRIDGE-10", bridge["lane"])
+        self.assertEqual("contract-integrated-runtime-unproved", bridge["status"])
+        self.assertEqual("FirstMate", bridge["runtime_owner_after_bridge"])
+
+    def test_routing_disposition_does_not_recreate_asb_crew_control(self) -> None:
+        routing = self.contract["routing_disposition"]
+        self.assertIsNone(routing["agentswitchboard_skill"])
+        self.assertIsNone(routing["agentswitchboard_capability"])
+        self.assertIsNone(routing["agentswitchboard_trigger"])
+        self.assertIn("FirstMate owns live crew dispatch", routing["reason"])
 
     def test_probe_has_strict_shell_and_no_mutation_commands(self) -> None:
         self.assertIn("set -euo pipefail", self.probe)
@@ -141,7 +153,8 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
         for path in self.contract["required_upstream_paths"]:
             self.assertIn(path, self.verification["inspected_paths"])
 
-    def test_docs_bind_to_contract_and_proof_ceiling(self) -> None:
+    def test_docs_bind_foundation_to_operational_bridge_and_proof_ceiling(self) -> None:
+        self.assertTrue(OPERATIONAL_DOC.is_file())
         self.assertIn(EXPECTED_SHA, self.docs)
         self.assertIn(STALE_PR96_SHA, self.docs)
         self.assertIn("local-only", self.docs)
@@ -150,9 +163,8 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
         self.assertIn("Proof ceiling", self.docs)
         self.assertIn("WSL/Ubuntu", self.docs)
         self.assertIn("bridge only", self.docs.lower())
-        self.assertIn("FM-BRIDGE-10", self.docs)
+        self.assertIn("firstmate-operational-harness.md", self.docs)
         self.assertIn("Herdr promotion is a separate gate", self.docs)
-        self.assertNotIn("firstmate-operational-harness.md", self.docs)
 
     def test_probe_rejects_stale_head_when_clone_is_wrong_commit(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -176,22 +188,12 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
             (repo / "docs").mkdir()
             (repo / "docs" / "configuration.md").write_text("stub\n", encoding="utf-8")
             (repo / ".agents" / "skills" / "project-management").mkdir(parents=True)
-            (repo / ".agents" / "skills" / "project-management" / "SKILL.md").write_text(
-                "stub\n", encoding="utf-8"
-            )
+            (repo / ".agents" / "skills" / "project-management" / "SKILL.md").write_text("stub\n", encoding="utf-8")
             subprocess.run(["git", "-C", str(repo), "add", "."], check=True, capture_output=True)
             subprocess.run(
                 [
-                    "git",
-                    "-C",
-                    str(repo),
-                    "-c",
-                    "user.name=ASB Test",
-                    "-c",
-                    "user.email=asb-test@example.com",
-                    "commit",
-                    "-m",
-                    "stale fixture",
+                    "git", "-C", str(repo), "-c", "user.name=ASB Test",
+                    "-c", "user.email=asb-test@example.com", "commit", "-m", "stale fixture",
                 ],
                 check=True,
                 capture_output=True,
