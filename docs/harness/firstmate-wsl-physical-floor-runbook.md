@@ -6,7 +6,7 @@ Execute the prerequisite-gated Windows→Ubuntu/WSL physical floor on an authori
 
 This runbook proves **one physical bridge floor**, not live FirstMate crew dispatch.
 
-Architecture authority: [`docs/architecture/asb-firstmate-runtime-boundary.md`](../architecture/asb-firstmate-runtime-boundary.md).  
+Architecture authority: [`docs/architecture/asb-firstmate-runtime-boundary.md`](../architecture/asb-firstmate-runtime-boundary.md).
 Bridge contract owner: [`docs/harness/firstmate-operational-harness.md`](firstmate-operational-harness.md).
 
 ## Proof ceiling
