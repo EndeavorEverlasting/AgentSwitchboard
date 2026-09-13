@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-12T19:50:00Z",
-  "updatedUtc": "2026-09-13T17:50:00Z",
+  "updatedUtc": "2026-09-13T17:55:00Z",
   "mission": "Coordinate the September program after accepting FirstMate as the canonical live crew runtime: keep ASB bootstrap/readiness/policy/validation/evidence/planning; narrow the child-agent-bus spine to an interop/policy envelope; freeze ASB Pi/OpenCode adapters, heterogeneous fan-out, and nested bus runtime; proceed with LSP certification, FirstMate interop refresh, GNHF narrowing, Pi bootstrap registry truth, and PR/path convergence.",
   "owner": {
     "surface": "September agent bootstrap and FirstMate runtime boundary",
@@ -19,7 +19,7 @@
     "pullRequest": {
       "number": 164,
       "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/164",
-      "state": "open"
+      "state": "merged"
     },
     "baseRef": "main",
     "commitRequired": true
@@ -316,7 +316,7 @@
       "taskId": "NESTED-08",
       "title": "Mediated nested delegation v1 on ASB bus (handed off)",
       "status": "skipped",
-      "owner": "handed off to FirstMate nesting/secondmates",
+      "owner": "retired as ASB live nested program",
       "dependencies": [
         "ARCH-FM-01"
       ],
@@ -327,18 +327,19 @@
         "HAND-OFF disposition"
       ],
       "acceptanceCriteria": [
-        "ASB nested bus maxDepth implementation does not proceed",
-        "FirstMate secondmates/nesting remain the live owner"
+        "ASB nested live bus/certification remains unimplemented",
+        "FirstMate flat secondmates are not treated as an ASB maxDepth lineage clone",
+        "Any future nested-lineage need is POLICY-INPUT or bridge work only"
       ],
       "evidence": [
-        "ADR disposition HAND-OFF"
+        "ADR clarification: RETIRE ASB live nested program; FirstMate flat crew at b182d0f"
       ]
     },
     {
       "taskId": "NESTED-RT-09",
       "title": "Nested runtime certification on ASB bus (handed off)",
       "status": "skipped",
-      "owner": "handed off to FirstMate runtime certification",
+      "owner": "retired as ASB live nested program",
       "dependencies": [
         "ARCH-FM-01"
       ],
@@ -349,10 +350,12 @@
         "HAND-OFF disposition"
       ],
       "acceptanceCriteria": [
-        "ASB depth-2 child-bus certification does not proceed as an ASB-owned live runtime program"
+        "ASB nested live bus/certification remains unimplemented",
+        "FirstMate flat secondmates are not treated as an ASB maxDepth lineage clone",
+        "Any future nested-lineage need is POLICY-INPUT or bridge work only"
       ],
       "evidence": [
-        "ADR disposition HAND-OFF"
+        "ADR clarification: RETIRE ASB live nested program; FirstMate flat crew at b182d0f"
       ]
     },
     {
@@ -395,7 +398,7 @@
   ],
   "proof": {
     "target": "durable architecture decision + public-plan/ledger sync for FirstMate crew-runtime boundary",
-    "achieved": "Accepted ADR with ownership matrix, subtraction analysis, and KEEP/NARROW/HAND-OFF/RETIRE dispositions; September plan and ASQ ledger updated to freeze Panels 05-09 and proceed LSP/FirstMate-interop/GNHF-narrow/cleanup",
+    "achieved": "Accepted ADR on main via PR #164; clarification that FirstMate secondmates are flat and ASB nested live program is RETIRED rather than claimed implemented by FirstMate",
     "ceiling": "Proves architecture/ownership durability only. Does not prove live FirstMate crew, GNHF redundancy, LSP activation, or child-agent execution."
   },
   "handoff": {
