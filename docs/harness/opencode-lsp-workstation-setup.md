@@ -175,6 +175,24 @@ After Configure, run the generated CMD, open a `.py` or `.yml` file, and observe
 
 Recorded runtime receipt: After the strict smoke, write `%LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/runs/<run-id>/opencode-lsp-runtime-smoke.json` (machine-readable per `tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json`) and `opencode-lsp-runtime-smoke.md` (human per `tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md`). Do not persist raw stderr or env. `nonLspSemanticFallbackUsed` is always `No`.
 
+## ASQ-005 fresh-TUI certification floor
+
+ASQ-005 may run only on Admin Box 1 from the canonical Live checkout:
+
+`%USERPROFILE%\dev\AgentSwitchBoard-Live`
+
+Do not use Desktop, OneDrive, or backup clones as the development root. Preserve noncanonical copies; do not develop there.
+
+Required operator sequence:
+
+1. Fast-forward clean `main` in the Live checkout and confirm the work-ledger frontier still selects ASQ-005.
+2. Set `$env:OPENCODE_EXPERIMENTAL_LSP_TOOL='true'`.
+3. Run `Invoke-OpenCodeLspWorkstationSetup.ps1 -Mode Configure -RepoPath <Live root>` and launch the generated `Open-AgentSwitchboard-OpenCode-Lsp.cmd` for that immutable run.
+4. Open `tests/test_technician_live_cert_surface.py` exactly once, then perform LSP-only hover, go-to-definition, and find-references on `read_text`.
+5. Write the local runtime-smoke JSON/MD receipts under the Configure run directory and re-run `scripts/Test-OpenCodeLspHarness.ps1`.
+
+Cloud/Linux CI can keep the contract green; it cannot substitute for the Admin Box fresh-TUI observation.
+
 ## Troubleshooting
 
 - starting PowerShell in the wrong repo or an arbitrary directory: use the location-free bootstrap above; do not ask the operator to find an AgentSwitchboard worktree first.

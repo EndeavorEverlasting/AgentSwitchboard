@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-12T19:50:00Z",
-  "updatedUtc": "2026-09-13T17:45:00Z",
+  "updatedUtc": "2026-09-13T17:50:00Z",
   "mission": "Coordinate the September program after accepting FirstMate as the canonical live crew runtime: keep ASB bootstrap/readiness/policy/validation/evidence/planning; narrow the child-agent-bus spine to an interop/policy envelope; freeze ASB Pi/OpenCode adapters, heterogeneous fan-out, and nested bus runtime; proceed with LSP certification, FirstMate interop refresh, GNHF narrowing, Pi bootstrap registry truth, and PR/path convergence.",
   "owner": {
     "surface": "September agent bootstrap and FirstMate runtime boundary",
@@ -19,7 +19,7 @@
     "pullRequest": {
       "number": 164,
       "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/164",
-      "state": "draft"
+      "state": "open"
     },
     "baseRef": "main",
     "commitRequired": true
@@ -110,7 +110,9 @@
         "Comparison yields an allowed differential classification",
         "No tracked harness mutation unless TUI exposes a reproducible product defect"
       ],
-      "evidence": []
+      "evidence": [
+        "pr:#163 canonical Live floor routing on main; LIVE_RUNTIME_PROOF:UNPROVEN"
+      ]
     },
     {
       "taskId": "PI-BOOT-03",

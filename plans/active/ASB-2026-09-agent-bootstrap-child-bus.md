@@ -52,7 +52,7 @@ No credentials in Git/evidence, no force reset/push, no silent local-path reloca
 ## Tasks — owners and gates
 
 *   **COORD-01** `completed` — September coordination floor established.
-*   **LSP-02** `pending` — fresh-TUI vs headless LSP runtime certification — **PROCEED**.
+*   **LSP-02** `pending` — fresh-TUI vs headless LSP runtime certification — **PROCEED**. Canonical Live-floor routing repaired on main via PR #163; live TUI observation remains UNPROVEN on Admin Box 1.
 *   **PI-BOOT-03** `completed` — Pi reversible bootstrap on main; follow-up registry truth only.
 *   **BUS-04** `completed` — child-bus spine on main; subsequent work is **NARROW** only.
 *   **ARCH-FM-01** `completed` — accepted FirstMate crew-runtime boundary ADR + plan/ledger sync.

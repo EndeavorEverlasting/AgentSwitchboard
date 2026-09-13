@@ -250,14 +250,47 @@ def validate_entry(entry: object, *, line_number: int | None = None) -> dict:
     return entry
 
 
+def _lock_file(handle) -> None:
+    """Exclusive lock so concurrent first writers cannot lose a JSONL line."""
+    if os.name == "nt":
+        import msvcrt
+
+        handle.seek(0)
+        # LK_LOCK retries until the 1-byte region is available.
+        msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
+    else:
+        import fcntl
+
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+
+
+def _unlock_file(handle) -> None:
+    if os.name == "nt":
+        import msvcrt
+
+        handle.seek(0)
+        msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+    else:
+        import fcntl
+
+        fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
 def append_entry(path: pathlib.Path, entry: dict) -> None:
     validate_entry(entry)
     _validate_ledger_path(path)
     serialized = json.dumps(entry, sort_keys=True, ensure_ascii=False)
-    with path.open("a", encoding="utf-8", newline="\n") as handle:
-        handle.write(serialized + "\n")
-        handle.flush()
-        os.fsync(handle.fileno())
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = path.with_name(path.name + ".lock")
+    with lock_path.open("a+b") as lock_handle:
+        _lock_file(lock_handle)
+        try:
+            with path.open("a", encoding="utf-8", newline="\n") as handle:
+                handle.write(serialized + "\n")
+                handle.flush()
+                os.fsync(handle.fileno())
+        finally:
+            _unlock_file(lock_handle)
 
 
 def load_entries(path: pathlib.Path) -> list[dict]:
