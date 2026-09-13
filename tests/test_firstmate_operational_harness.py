@@ -29,8 +29,24 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
             "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1",
             "tooling/firstmate/Test-FirstMateInterop.sh",
             "docs/harness/firstmate-operational-harness.md",
+            "docs/harness/firstmate-wsl-physical-floor-runbook.md",
         ):
             self.assertTrue((ROOT / path).is_file(), path)
+
+    def test_manifest_binds_physical_floor_runbook(self) -> None:
+        runbook = self.manifest["components"]["physical_floor_runbook"]
+        self.assertEqual(
+            "docs/harness/firstmate-wsl-physical-floor-runbook.md",
+            runbook,
+        )
+        text = (ROOT / runbook).read_text(encoding="utf-8")
+        self.assertIn("FM-WSL-12", text)
+        self.assertIn("-Mode physical-floor", text)
+        self.assertIn("-ExpectedHead", text)
+        self.assertIn("-WslDistribution Ubuntu", text)
+        self.assertIn("FIRSTMATE_WINDOWS_WSL_PHYSICAL_FLOOR", text)
+        self.assertIn("no live firstmate crew dispatch", text.lower())
+        self.assertIn("FM-CREW-13", text)
 
     def test_manifest_is_bridge_only_and_firstmate_owns_runtime(self) -> None:
         self.assertEqual("firstmate-windows-wsl-bridge", self.manifest["harness_id"])
