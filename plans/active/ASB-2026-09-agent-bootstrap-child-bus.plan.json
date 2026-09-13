@@ -7,68 +7,71 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-12T19:50:00Z",
-  "updatedUtc": "2026-09-12T19:50:00Z",
-  "mission": "Create the durable September program for reversible agent bootstrap (Inspect/Apply/Remove), provider-neutral child execution (Pi/OpenCode adapters via shared bus), fresh-TUI LSP runtime certification, heterogeneous and nested delegation, and stale PR/path convergence — replacing chat-only coordination with repository-owned ownership, dependency and collision boundaries.",
+  "updatedUtc": "2026-09-13T17:30:00Z",
+  "mission": "Coordinate the September program after accepting FirstMate as the canonical live crew runtime: keep ASB bootstrap/readiness/policy/validation/evidence/planning; narrow the child-agent-bus spine to an interop/policy envelope; freeze ASB Pi/OpenCode adapters, heterogeneous fan-out, and nested bus runtime; proceed with LSP certification, FirstMate interop refresh, GNHF narrowing, Pi bootstrap registry truth, and PR/path convergence.",
   "owner": {
-    "surface": "September agent bootstrap and child bus program",
-    "role": "coordination lane",
-    "agent": "Admin Box 1"
+    "surface": "September agent bootstrap and FirstMate runtime boundary",
+    "role": "architecture + coordination lane",
+    "agent": "P95"
   },
   "delivery": {
-    "branch": null,
+    "branch": "cursor/p95-firstmate-runtime-boundary-1737",
     "pullRequest": null,
     "baseRef": "main",
     "commitRequired": true
   },
-  "wave": "0 — coordination floor",
-  "lane": "public-plan / repository-work-ledger coordination",
+  "wave": "1 — FirstMate runtime boundary",
+  "lane": "public-plan / architecture-decision / repository-work-ledger coordination",
   "dependencies": [],
   "safeParallelWork": [
-    "Panel 02 TUI LSP runtime certification (writes only local untracked runtime-smoke evidence) with Panels 03 Pi reversible bootstrap and 04 shared child bus spine after Panel 01, if ownership lines (tooling/harness/system-bootstrap-lifecycle/**, tooling/harness/child-agent-bus/**, LSP harness) are respected",
-    "Child-repository feature work using separate branches and worktrees outside plans/** and .ai/WORK_QUEUE.md"
+    "ASQ-005 / Panel 02 fresh-TUI LSP certification (local untracked runtime-smoke only) while ADR sync integrates, if WORK_QUEUE collisions are reconciled",
+    "ASQ-015 FirstMate interop refresh on an isolated branch after ADR lands",
+    "ASQ-016 GNHF NARROW docs/validator encoding on an isolated branch after ADR lands",
+    "Admin Box 1 FirstMate bootstrap / physical WSL floor (operator runtime; separable from frozen child-bus adapters)"
   ],
   "ownedScope": [
+    "docs/architecture/asb-firstmate-runtime-boundary.md",
     "plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json",
     "plans/active/ASB-2026-09-agent-bootstrap-child-bus.md",
     "plans/plan-registry.json",
     ".ai/WORK_QUEUE.md",
-    "PR-disposition metadata (PR #151 Pi mixed bootstrap/child seam, PR #149 path authority, PR #115 stale LSP harness) in plan/ledger"
+    "CODEBASE_MAP.md architecture pointer for the accepted FirstMate boundary ADR"
   ],
   "forbiddenScope": [
-    "product/bootstrap implementation (Pi/OpenCode adapters, lifecycle code)",
-    "Pi/OpenCode child-bus adapter code",
+    "implementing Pi/OpenCode child-bus adapters, heterogeneous fan-out, or nested ASB delegation",
+    "deleting tooling/gnhf or tooling/harness/child-agent-bus",
+    "Prompt Kit to FirstMate integration implementation",
+    "README / product-identity rewrite",
     "OpenCode LSP behavior mutation",
     "provider credentials or model calls",
     "destructive Git (reset, clean, force push)",
-    "closing PR #151/#149/#115 before successor ownership is proven and contained on main",
-    "committing private local paths, usernames, tenant details, runtime receipts, or machine evidence"
+    "closing PR #151/#149/#115/#96 before successor ownership is proven and contained on main",
+    "committing private local paths, usernames, tenant details, runtime receipts, or machine evidence",
+    "claiming live FirstMate crew proof from this architecture sync alone"
   ],
   "expectedArtifacts": [
+    "docs/architecture/asb-firstmate-runtime-boundary.md",
     "plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json",
     "plans/active/ASB-2026-09-agent-bootstrap-child-bus.md",
-    "plans/plan-registry.json updated",
-    ".ai/WORK_QUEUE.md updated with bounded work items for Panels 02–10",
-    "explicit collision ledger covering PR #151, PR #149, PR #115 and shared files (tooling/harness/system-bootstrap-lifecycle/**, Pull-And-Run-AgentSwitchboard.cmd, OpenCode LSP harness, path-authority surfaces)",
+    "plans/plan-registry.json updated if membership/status notes require it",
+    ".ai/WORK_QUEUE.md updated with ASQ-014 DONE and ASQ-008..012 FREEZE plus ASQ-015/016 proceed items",
+    "CODEBASE_MAP.md pointer to the ADR",
     "public-plan + repository-work-ledger contract proof"
   ],
   "tasks": [
     {
       "taskId": "COORD-01",
       "title": "Establish September coordination floor",
-      "status": "in-progress",
+      "status": "completed",
       "owner": "coordination lane",
       "dependencies": [],
-      "inputs": ["main@54cce3b", "plans/plan-registry.json", ".ai/WORK_QUEUE.md", "AGENTS.md", "TRIGGERS.md", "PR #151/#149/#115 provider truth", "scripts/Test-PublicPlanContracts.ps1", "scripts/Test-RepositoryWorkLedgerContract.ps1"],
-      "outputs": ["plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json", "plans/active/ASB-2026-09-agent-bootstrap-child-bus.md", "plans/plan-registry.json", ".ai/WORK_QUEUE.md"],
+      "inputs": ["main@54cce3b historical floor", "plans/plan-registry.json", ".ai/WORK_QUEUE.md"],
+      "outputs": ["plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json", "plans/active/ASB-2026-09-agent-bootstrap-child-bus.md", ".ai/WORK_QUEUE.md ASQ-004"],
       "acceptanceCriteria": [
-        "Provider floor refreshed to main@54cce3b (parent 2f69049, LSP runtime-smoke contract intact, 81461e7 lifecycle already beneath main)",
-        "Plan and ledger accurately encode 10-panel September program with waves, dependencies, collision surfaces, and proof ceilings",
-        "Plan registry contains only public-safe data; no Northwell/OneDrive local path committed",
-        "Work ledger no longer claims none; no safe actionable work remains while program is live",
-        "PR #151 source material, #149 waiting path-policy, #115 stale LSP owner dispositions recorded",
-        "Plan/ledger validators pass, git diff --check clean, main fast-forwarded"
+        "September plan and ledger originally encoded the 10-panel program",
+        "Historical provider floor and collision ledger recorded"
       ],
-      "evidence": []
+      "evidence": ["commit:54cce3b824a982e26595efa8ed5060e555411693", "ASQ-004 DONE"]
     },
     {
       "taskId": "LSP-02",
@@ -76,150 +79,195 @@
       "status": "pending",
       "owner": "OpenCode LSP field lane",
       "dependencies": ["COORD-01"],
-      "inputs": ["Panel 01 integrated main", "docs/harness/opencode-lsp-workstation-setup.md", "tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json", "pyright 1.1.414 prerequisite", "headless receipt 20260912T194619Z-e3f423df"],
-      "outputs": ["local opencode-lsp-runtime-smoke.json/.md beneath %LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/runs/<run-id>/", "TUI/headless differential classification"],
+      "inputs": ["docs/harness/opencode-lsp-workstation-setup.md", "opencode-lsp-runtime-smoke receipt schema", "headless receipt 20260912T194619Z-e3f423df"],
+      "outputs": ["local opencode-lsp-runtime-smoke.json/.md", "TUI/headless differential classification"],
       "acceptanceCriteria": [
-        "Fresh TUI launched from canonical Live checkout with OPENCODE_EXPERIMENTAL_LSP_TOOL=true, file tests/test_technician_live_cert_surface.py opened, strict hover/def/refs captured with nonLspSemanticFallbackUsed No and verbatim errors",
-        "Runs headless vs TUI comparison yields one of PASS_TUI_HEADLESS_DIFFERENTIAL, FAIL_BOTH_MODES, PARTIAL_TUI_DIFFERENTIAL, BLOCKED_OPERATOR_INTERACTION",
-        "No tracked harness mutation unless TUI exposes reproducible product defect (then bounded defect handoff)"
+        "Fresh TUI launched from canonical Live checkout with OPENCODE_EXPERIMENTAL_LSP_TOOL=true and strict hover/def/refs captured",
+        "Comparison yields an allowed differential classification",
+        "No tracked harness mutation unless TUI exposes a reproducible product defect"
       ],
       "evidence": []
     },
     {
       "taskId": "PI-BOOT-03",
-      "title": "Pi reversible system bootstrap lifecycle (salvage PR #151 bootstrap portion)",
-      "status": "pending",
+      "title": "Pi reversible system bootstrap lifecycle",
+      "status": "completed",
       "owner": "Pi bootstrap lane",
       "dependencies": ["COORD-01"],
-      "inputs": ["PR #151 head 8d40604e", "tooling/harness/system-bootstrap-lifecycle/", "lifecycle.contract.json", "BootstrapLifecycle.psm1", "tooling/profiles/windows/Install-AgentSwitchboardOpenCode.ps1 as reference"],
-      "outputs": ["Bootstrap-Pi-SystemWide.cmd", "Unbootstrap-Pi-SystemWide.cmd", "tooling/pi/Install-AgentSwitchboardPiSystem.ps1", "Pi lifecycle adapter registration", "Inspect/Apply/Remove parity with write-ahead, drift fail-closed, recovery checkpoints"],
+      "inputs": ["system-bootstrap-lifecycle", "PR #151 bootstrap portion"],
+      "outputs": ["Pi bootstrap entrypoints on main", "lifecycle module parity"],
       "acceptanceCriteria": [
-        "Pi registered in tooling/harness/system-bootstrap-lifecycle/adapters.v1.json without redesigning shared contract",
-        "Inspect/Apply/Remove proven via deterministic lifecycle module, machine state under %ProgramData%\\AgentSwitchboard\\bootstrap-lifecycle\\pi",
-        "Preserves provider credentials, Pi settings, sessions, project trust; requires durable ownership for Remove"
+        "Pi bootstrap lifecycle integrated on main",
+        "Follow-up registry truth reconcile does not unfreeze child-bus adapters"
       ],
-      "evidence": []
+      "evidence": ["merge:1f20499", "ASQ-006 DONE", "note:adapters.v1.json still OpenCode-only on e76ba4b"]
     },
     {
       "taskId": "BUS-04",
       "title": "Shared ASB child bus v1 contract spine",
-      "status": "pending",
+      "status": "completed",
       "owner": "shared child-bus lane",
       "dependencies": ["COORD-01"],
-      "inputs": ["AGENTS.md, CODEBASE_MAP.md, capability/trigger conventions", ".ai/harness/manifest.json", "PR #151 child contract as noncanonical source"],
-      "outputs": ["tooling/harness/child-agent-bus/ (request/result/error schemas, adapter registry, artifact registry, fixtures, validator, dispatcher, docs, CI)", "CAPABILITIES.md/TRIGGERS.md/SKILLS.md routing", "agent.child.dispatch / result.normalize / writer-isolated capabilities"],
+      "inputs": ["AGENTS.md", "child-agent-bus schemas"],
+      "outputs": ["tooling/harness/child-agent-bus spine", "fail-closed dispatcher"],
       "acceptanceCriteria": [
-        "Closed schemas child-agent-request.v1, child-agent-result.v1, child-agent-error.v1 with invocationId, lineage, authority, budgets, evidence root",
-        "Generic Invoke-AgentSwitchboardChild front door validates and fails closed when adapter absent",
-        "Common validator + fixture matrix (read-only, isolated writer, dirty/default-branch/base-SHA mismatch, budget exceeded, missing terminal event, etc.) green"
+        "Closed schemas and empty adapter registry on main",
+        "Dispatcher fails closed when adapter absent",
+        "Subsequent work is NARROW only per FirstMate ADR"
+      ],
+      "evidence": ["merge:85ecf77", "ASQ-007 DONE", "adapter-registry.json adapters=[]"]
+    },
+    {
+      "taskId": "ARCH-FM-01",
+      "title": "Accept FirstMate canonical crew-runtime boundary ADR",
+      "status": "completed",
+      "owner": "P95 architecture lane",
+      "dependencies": ["BUS-04"],
+      "inputs": ["main@e76ba4b", "FirstMate main@b182d0f", "PR #96 interop contracts", "child-bus and GNHF call stacks", "Scout T1 thesis"],
+      "outputs": ["docs/architecture/asb-firstmate-runtime-boundary.md", "revised September plan", "ledger ASQ-014 and FREEZE of ASQ-008..012"],
+      "acceptanceCriteria": [
+        "Ownership matrix assigns exactly one disposition per responsibility",
+        "Subtraction analysis precedes KEEP/NARROW/HAND-OFF/RETIRE dispositions",
+        "Panels/ASQ 05-09 frozen or handed off; 02/15/16/13 proceed guidance explicit",
+        "No adapter/GNHF deletion implementation in this task"
+      ],
+      "evidence": ["artifact:docs/architecture/asb-firstmate-runtime-boundary.md", "floor:ASB e76ba4b", "floor:FirstMate b182d0f"]
+    },
+    {
+      "taskId": "FM-INTEROP-02",
+      "title": "Refresh FirstMate interop floor to current main and FirstMate b182d0f",
+      "status": "ready",
+      "owner": "FirstMate interop lane",
+      "dependencies": ["ARCH-FM-01"],
+      "inputs": ["PR #96 head 9d8ea0b", "docs/architecture/asb-firstmate-runtime-boundary.md", "FirstMate main@b182d0f"],
+      "outputs": ["refreshed tooling/firstmate harness pin", "rebased interop branch/PR", "contract tests green at new pin"],
+      "acceptanceCriteria": [
+        "Upstream verified_commit refreshed to FirstMate b182d0f or a later audited main SHA",
+        "Windows-to-WSL bridge regressions preserved",
+        "No claim of live crew dispatch without runtime floor evidence"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "GNHF-NARROW-03",
+      "title": "Encode GNHF NARROW ownership boundary",
+      "status": "ready",
+      "owner": "GNHF contract lane",
+      "dependencies": ["ARCH-FM-01"],
+      "inputs": ["tooling/gnhf/README.md", "docs/architecture/asb-firstmate-runtime-boundary.md"],
+      "outputs": ["documented NARROW contract", "validator or explicit README ownership clause"],
+      "acceptanceCriteria": [
+        "GNHF remains Windows bounded single-agent/fleet launcher",
+        "Docs forbid expanding GNHF into multi-crew runtime competing with FirstMate",
+        "No deletion of GNHF launchers in this task"
       ],
       "evidence": []
     },
     {
       "taskId": "PI-ADAPTER-05",
-      "title": "Pi child adapter conformance",
-      "status": "pending",
-      "owner": "Pi adapter lane",
-      "dependencies": ["PI-BOOT-03", "BUS-04"],
-      "inputs": ["PR #151 Invoke-AgentSwitchboardPiChild.ps1", "common child-bus contracts", "Pi lifecycle registry"],
-      "outputs": ["Pi adapter registered", "Pi launch/event/cancellation translation", "conformance fixture results, read-only and isolated writer paths"],
+      "title": "Pi child adapter conformance (frozen)",
+      "status": "skipped",
+      "owner": "frozen — FirstMate owns live child runtime",
+      "dependencies": ["ARCH-FM-01"],
+      "inputs": ["docs/architecture/asb-firstmate-runtime-boundary.md"],
+      "outputs": ["freeze disposition in plan/ledger"],
       "acceptanceCriteria": [
-        "Pi is first conforming implementation of shared bus, not private protocol; resolves only ASB-managed Pi runtime",
-        "Read-only no-mutation and writer isolated-worktree guards enforced; terminal agent_end required; budgets and evidence uniqueness enforced"
+        "No ASB Pi child-bus adapter implementation proceeds under this plan",
+        "Pi system bootstrap and experimental fusion skill remain separately owned"
       ],
-      "evidence": []
+      "evidence": ["ADR disposition FREEZE/HAND-OFF"]
     },
     {
       "taskId": "OC-ADAPTER-06",
-      "title": "OpenCode child adapter parity",
-      "status": "pending",
-      "owner": "OpenCode adapter lane",
-      "dependencies": ["BUS-04"],
-      "inputs": ["shared child-bus contracts", "Pi adapter as reference", "tooling/profiles/windows/Install-AgentSwitchboardOpenCode.ps1", "managed OpenCode runtime identity"],
-      "outputs": ["OpenCode adapter registered", "parity matrix vs Pi conformance fixtures"],
+      "title": "OpenCode child adapter parity (frozen)",
+      "status": "skipped",
+      "owner": "frozen — FirstMate owns live child runtime",
+      "dependencies": ["ARCH-FM-01"],
+      "inputs": ["docs/architecture/asb-firstmate-runtime-boundary.md"],
+      "outputs": ["freeze disposition in plan/ledger"],
       "acceptanceCriteria": [
-        "OpenCode consumes same request and produces same result/error envelopes as Pi; exact managed runtime identity, no arbitrary PATH fallback, no global OPENCODE_CONFIG mutation unless permitted"
+        "No ASB OpenCode child-bus adapter implementation proceeds under this plan"
       ],
-      "evidence": []
+      "evidence": ["ADR disposition FREEZE"]
     },
     {
       "taskId": "PILOT-07",
-      "title": "Heterogeneous read-only pilot (Pi + OpenCode)",
-      "status": "pending",
-      "owner": "runtime pilot lane",
-      "dependencies": ["PI-ADAPTER-05", "OC-ADAPTER-06"],
-      "inputs": ["both adapters merged and physically ready plus provider auth", "common bus dispatcher"],
-      "outputs": ["local untracked pilot request/result/evidence: two child result envelopes, before/after repo identity proving no mutation, coordinator rejoin report"],
+      "title": "Heterogeneous read-only pilot via ASB bus (frozen/repurposed)",
+      "status": "skipped",
+      "owner": "frozen — repurpose through FirstMate crew",
+      "dependencies": ["ARCH-FM-01"],
+      "inputs": ["docs/architecture/asb-firstmate-runtime-boundary.md"],
+      "outputs": ["freeze disposition; future FirstMate crew pilot owner"],
       "acceptanceCriteria": [
-        "Pi architect + OpenCode validator dispatched concurrently via ASB with distinct invocationIds/evidence roots, budgets enforced, terminal completion required, repo unchanged"
+        "No ASB dual-adapter fan-out pilot proceeds on the child-bus spine",
+        "Any heterogeneous crew pilot is routed through FirstMate after FM-INTEROP-02"
       ],
-      "evidence": []
+      "evidence": ["ADR disposition FREEZE/REPURPOSE"]
     },
     {
       "taskId": "NESTED-08",
-      "title": "Mediated nested delegation v1 (maxDepth 2)",
-      "status": "pending",
-      "owner": "shared child-bus lane",
-      "dependencies": ["PILOT-07"],
-      "inputs": ["child-bus schemas/dispatcher", "heterogeneous pilot evidence", "runtime-event lineage contract"],
-      "outputs": ["nested delegation v1 contract: maxDepth2, maxChildren3, maxConcurrentWriters1, attempts1, no fallback, childMayMerge false, fixtures for scope widening/write escalation/depth exceeded/cancellation cascade"],
+      "title": "Mediated nested delegation v1 on ASB bus (handed off)",
+      "status": "skipped",
+      "owner": "handed off to FirstMate nesting/secondmates",
+      "dependencies": ["ARCH-FM-01"],
+      "inputs": ["docs/architecture/asb-firstmate-runtime-boundary.md"],
+      "outputs": ["HAND-OFF disposition"],
       "acceptanceCriteria": [
-        "Authority only narrows downward; monotonic budget/scope inheritance, cancellation cascade, evidence root reservation, one writer globally"
+        "ASB nested bus maxDepth implementation does not proceed",
+        "FirstMate secondmates/nesting remain the live owner"
       ],
-      "evidence": []
+      "evidence": ["ADR disposition HAND-OFF"]
     },
     {
       "taskId": "NESTED-RT-09",
-      "title": "Nested runtime certification (depth-2 heterogeneous chain)",
-      "status": "pending",
-      "owner": "runtime certification lane",
-      "dependencies": ["NESTED-08"],
-      "inputs": ["nested delegation contract", "Pi/OpenCode adapters", "runtime pilot docs"],
-      "outputs": ["root/child/grandchild request/result lineage, budget inheritance, terminal propagation, repo unchanged, certification report"],
+      "title": "Nested runtime certification on ASB bus (handed off)",
+      "status": "skipped",
+      "owner": "handed off to FirstMate runtime certification",
+      "dependencies": ["ARCH-FM-01"],
+      "inputs": ["docs/architecture/asb-firstmate-runtime-boundary.md"],
+      "outputs": ["HAND-OFF disposition"],
       "acceptanceCriteria": [
-        "One bounded depth-2 heterogeneous chain (coordinator -> Pi read-only -> OpenCode read-only or reverse) proven with lineage, narrowed scope/budget, independent evidence roots, provider auth without secrets"
+        "ASB depth-2 child-bus certification does not proceed as an ASB-owned live runtime program"
       ],
-      "evidence": []
+      "evidence": ["ADR disposition HAND-OFF"]
     },
     {
       "taskId": "CLEANUP-10",
       "title": "PR/path authority cleanup and final convergence",
       "status": "pending",
       "owner": "convergence lane",
-      "dependencies": ["LSP-02", "PI-BOOT-03", "BUS-04", "PI-ADAPTER-05", "OC-ADAPTER-06", "PILOT-07", "NESTED-08", "NESTED-RT-09"],
-      "inputs": ["PR #151, #115, #149 full diffs/checks", "September public plan", ".ai/WORK_QUEUE.md", "current LSP/main/child-bus registries"],
-      "outputs": ["#151 successor mapping and superseded closure", "#115 containment/superseded closure", "#149 explicit-path precedence reconciliation (only missing behavior) or superseded closure", "September plan/work-ledger terminal states", "main containment proof"],
+      "dependencies": ["LSP-02", "PI-BOOT-03", "BUS-04", "ARCH-FM-01"],
+      "inputs": ["PR #151", "PR #115", "PR #149", "September plan", ".ai/WORK_QUEUE.md"],
+      "outputs": ["superseded closures with containment proof", "September terminal states when gates allow"],
       "acceptanceCriteria": [
-        "PR #151 Pi lifecycle and Pi child-adapter successor SHAs proved contained in main before close as superseded",
-        "#115 old LSP harness proved superseded by current main LSP proof",
-        "#149 only genuinely missing explicit operator path wins extracted via bounded current-main patch (otherwise superseded) without silently invalidating operator OneDrive path",
-        "September plan and work ledger closed to terminal states only after all acceptance gates supported"
+        "No longer blocked on PI-ADAPTER/OC-ADAPTER/PILOT/NESTED live runtime tasks",
+        "PR #151/#115/#149 dispositioned only with successor containment proof",
+        "Frozen ASQ-008..012 remain skipped rather than silently reopened"
       ],
       "evidence": []
     }
   ],
   "validation": [
-    "JSON parse/schema for new September plan (agentswitchboard.public-plan.v1)",
+    "JSON parse/schema for September plan (agentswitchboard.public-plan.v1)",
     "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
     "pwsh -NoLogo -NoProfile -File scripts/Test-RepositoryWorkLedgerContract.ps1",
-    "python repository-ledger/public-plan focused tests if registered",
-    "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1 if root routing/docs changed",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1 if CODEBASE_MAP/docs routing changed",
     "git diff --check",
     "git status --short clean checkout"
   ],
   "proof": {
-    "target": "public-plan-coordination + repository-ledger contract proof for September program",
-    "achieved": "September plan and ledger accurately encode 10-panel program with waves, dependencies, collision surfaces, proof ceilings; provider floor refreshed to main@54cce3b; no new product/runtime proof claimed",
-    "ceiling": "Proves current ownership/dependency/collision state only. Does not prove Pi/OpenCode installation, LSP activation, child-agent execution or provider delivery."
+    "target": "durable architecture decision + public-plan/ledger sync for FirstMate crew-runtime boundary",
+    "achieved": "Accepted ADR with ownership matrix, subtraction analysis, and KEEP/NARROW/HAND-OFF/RETIRE dispositions; September plan and ASQ ledger updated to freeze Panels 05-09 and proceed LSP/FirstMate-interop/GNHF-narrow/cleanup",
+    "ceiling": "Proves architecture/ownership durability only. Does not prove live FirstMate crew, GNHF redundancy, LSP activation, or child-agent execution."
   },
   "handoff": {
-    "nextOwner": "Panel 02 OpenCode fresh-TUI, Panel 03 Pi bootstrap, Panel 04 child bus (parallel group A after this floor)",
-    "nextCommand": "Set-Location -LiteralPath \"C:\\Users\\pa_rperez26\\OneDrive - Northwell Health\\OG Laptop Backup\\Desktop\\dev\\AgentSwitchBoard-Live\"; git fetch --all --prune --tags; git switch main; git pull --ff-only origin main; pwsh -NoLogo -NoProfile -File .\\scripts\\Get-RepositoryWorkLedgerFrontier.ps1 -Json",
+    "nextOwner": "ASQ-015 FirstMate interop refresh and ASQ-005 LSP certification in parallel",
+    "nextCommand": "git fetch --all --prune --tags; git switch main; git pull --ff-only origin main; pwsh -NoLogo -NoProfile -File .\\scripts\\Get-RepositoryWorkLedgerFrontier.ps1 -Json",
     "notes": [
-      "Launch Panel 02-04 together only after this coordination floor is integrated; keep group contiguous.",
-      "PR #151 = source material requiring split/salvage, not whole-PR merge authority; PR #149 = waiting path-policy reconciliation; PR #115 = stale LSP owner pending containment comparison.",
-      "Public plan data must remain public-safe: no Northwell/OneDrive operator path in tracked artifacts.",
-      "This plan is the durable September program replacing chat-only coordination."
+      "Canonical ADR: docs/architecture/asb-firstmate-runtime-boundary.md",
+      "Do not implement frozen Panels 05-09 / ASQ-008..012 as ASB live runtime.",
+      "Admin Box 1 FirstMate bootstrap remains separable and useful runtime evidence.",
+      "Public plan data must remain public-safe: no private operator paths in tracked artifacts."
     ]
   }
 }

@@ -9,6 +9,8 @@ Load only the smallest surface required by the selected skill, workflow, public 
 - `SKILLS.md`, `CAPABILITIES.md`, and `TRIGGERS.md` — procedure, capability, and deterministic routing catalogs.
 - `.ai/agent-contract.json` — canonical contract version, entrypoints, and proof vocabulary.
 - `plans/plan-registry.json` — public machine-readable coordination index.
+- `docs/architecture/agentic-software-factory.md` — agentic engineering factory orientation.
+- `docs/architecture/asb-firstmate-runtime-boundary.md` — accepted September decision: FirstMate is the canonical live crew runtime; ASB keeps bootstrap/policy/evidence and narrows child-bus/GNHF.
 - `AgentSwitchboard.cmd` — readiness-first startup launcher.
 
 ## Public plans

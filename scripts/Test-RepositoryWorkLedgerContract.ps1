@@ -121,13 +121,15 @@ foreach ($phrase in @(
 
 $canonicalHeadingRegex = [regex]'(?m)^##[ \t]+(ASQ-\d{3,})[ \t]+—[ \t]+([^\r\n]+)\r?$'
 $taskLikeHeadingRegex = [regex]'(?m)^##[ \t]+(ASQ-[^\r\n]+)\r?$'
-$matches = $canonicalHeadingRegex.Matches($source)
+# Do not name this $matches — PowerShell -match overwrites the automatic $matches variable
+# and would truncate the task loop after the first successful -match.
+$headingMatches = $canonicalHeadingRegex.Matches($source)
 foreach ($taskLikeHeading in $taskLikeHeadingRegex.Matches($source)) {
     if (-not $canonicalHeadingRegex.IsMatch($taskLikeHeading.Value)) {
         Add-Error "malformed ASQ heading: '$($taskLikeHeading.Groups[1].Value)' (expected '## ASQ-### — Title')"
     }
 }
-if ($matches.Count -eq 0) { Add-Error 'ledger must contain at least one canonical ASQ task block' }
+if ($headingMatches.Count -eq 0) { Add-Error 'ledger must contain at least one canonical ASQ task block' }
 
 $seen = @{}
 $allowedStatuses = $expectedStatuses
@@ -138,12 +140,12 @@ $unassignedOwners = @('unclaimed', 'none', 'unknown', 'tbd', 'n/a')
 $nonActions = @($expectedTerminalNextAction, 'none', 'tbd', 'status unchanged', 'pr opened', 'tests passed', 'ci green', 'wait', 'wait for review', 'review later', 'merge later', 'test later')
 $actionPattern = '^(?:(?:after|once)\b.+?,\s*)?(?:operator\s+)?(?:run|execute|create|decompose|split|update|repair|resolve|merge|fetch|inspect|open|verify|validate|test|commit|push|rebase|retarget|compare|generate|record|obtain|install|apply|build|launch|deploy|restore|export|import|review|reconcile|invoke|edit|write|move|copy|sync|check)\b'
 
-for ($i = 0; $i -lt $matches.Count; $i++) {
-    $match = $matches[$i]
+for ($i = 0; $i -lt $headingMatches.Count; $i++) {
+    $match = $headingMatches[$i]
     $id = $match.Groups[1].Value
     if ($seen.ContainsKey($id)) { Add-Error "$id duplicate task id" } else { $seen[$id] = $true }
     $start = $match.Index
-    $end = if ($i + 1 -lt $matches.Count) { $matches[$i + 1].Index } else { $source.Length }
+    $end = if ($i + 1 -lt $headingMatches.Count) { $headingMatches[$i + 1].Index } else { $source.Length }
     $block = $source.Substring($start, $end - $start)
     $fields = @{}
     foreach ($fieldMatch in [regex]::Matches($block, '(?m)^- \*\*([^*]+):\*\*[ \t]*([^\r\n]*)\r?$')) {
@@ -205,4 +207,4 @@ if ($errors.Count) {
     Write-ValidationErrors -Messages $errors
     exit 1
 }
-Write-Host "[repository-work-ledger] PASS $LedgerPath ($($matches.Count) tasks) portable=$expectedPortableVersion@$($expectedPortableCommit.Substring(0,12)) local-profile=$expectedLocalProfileId@$expectedLocalProfileVersion frontier=bounded-unbounded stale-ref-probes=PASS"
+Write-Host "[repository-work-ledger] PASS $LedgerPath ($($headingMatches.Count) tasks) portable=$expectedPortableVersion@$($expectedPortableCommit.Substring(0,12)) local-profile=$expectedLocalProfileId@$expectedLocalProfileVersion frontier=bounded-unbounded stale-ref-probes=PASS"
