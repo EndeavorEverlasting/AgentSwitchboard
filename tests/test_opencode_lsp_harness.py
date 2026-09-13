@@ -197,6 +197,9 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
         artifacts=json.loads((H/'artifact-registry.json').read_text(encoding='utf-8')); ids={x['artifactId'] for x in artifacts['artifacts']}
         self.assertTrue({'runtime-smoke-json','runtime-smoke-report'} <= ids)
         manifest=json.loads((H/'manifest.json').read_text(encoding='utf-8'))
+
+        self.assertEqual('tooling/harness/operational/opencode-lsp-setup/asq005-runtime-gates.contract.json',manifest['entrypoints']['asq005RuntimeGatesContract'])
+        self.assertEqual('docs/harness/asq005-fresh-tui-lsp-runtime-gates.md',manifest['entrypoints']['asq005RuntimeGatesDoc'])
         self.assertEqual('tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json',manifest['entrypoints']['runtimeSmokeReceiptSchema'])
         self.assertEqual('tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md',manifest['entrypoints']['runtimeSmokeReportTemplate'])
 

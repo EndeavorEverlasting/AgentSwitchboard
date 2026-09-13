@@ -145,6 +145,10 @@ else {
 }
 foreach ($artifactId in @('runtime-smoke-json','runtime-smoke-report')) { if ($artifactId -notin $artifactIds) { [void]$failures.Add("runtime-smoke-artifact-missing:$artifactId") } }
 if ([string]$manifest.entrypoints.runtimeSmokeReceiptSchema -ne 'tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json') { [void]$failures.Add('manifest-runtime-smoke-schema-entrypoint-missing') }
+if ([string]$manifest.entrypoints.asq005RuntimeGatesContract -ne 'tooling/harness/operational/opencode-lsp-setup/asq005-runtime-gates.contract.json') { [void]$failures.Add('manifest-asq005-runtime-gates-contract-missing') }
+if ([string]$manifest.entrypoints.asq005RuntimeGatesDoc -ne 'docs/harness/asq005-fresh-tui-lsp-runtime-gates.md') { [void]$failures.Add('manifest-asq005-runtime-gates-doc-missing') }
+if (-not (Test-Path -LiteralPath (Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/asq005-runtime-gates.contract.json') -PathType Leaf)) { [void]$failures.Add('missing:asq005-runtime-gates.contract.json') }
+if (-not (Test-Path -LiteralPath (Join-Path $RootPath 'docs/harness/asq005-fresh-tui-lsp-runtime-gates.md') -PathType Leaf)) { [void]$failures.Add('missing:asq005-fresh-tui-lsp-runtime-gates.md') }
 if ([string]$manifest.entrypoints.runtimeSmokeReportTemplate -ne 'tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md') { [void]$failures.Add('manifest-runtime-smoke-template-entrypoint-missing') }
 if (-not $runtimeDoc.Contains('opencode-lsp-runtime-smoke.json')) { [void]$failures.Add('runtime-doc-missing-recorded-receipt-json') }
 if (-not $runtimeDoc.Contains('opencode-lsp-runtime-smoke.md')) { [void]$failures.Add('runtime-doc-missing-recorded-receipt-md') }
