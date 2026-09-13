@@ -12,7 +12,7 @@ FirstMate's upstream README declares macOS and Linux, describes tmux as the refe
 
 Architecture authority: [`docs/architecture/asb-firstmate-runtime-boundary.md`](../architecture/asb-firstmate-runtime-boundary.md). Convergence authority: [`docs/harness/firstmate-asb-convergence.md`](firstmate-asb-convergence.md) plus `tooling/firstmate/harness/convergence-contract.json`.
 
-Windows hosts remain **bridge only**. The tracked bridge and operational proof surfaces are documented in [`firstmate-operational-harness.md`](firstmate-operational-harness.md). They validate/reach the WSL/Ubuntu substrate; FirstMate itself remains the live crew runtime.
+Windows hosts remain **bridge only**. The tracked bridge and operational proof surfaces are documented in [`firstmate-operational-harness.md`](firstmate-operational-harness.md). Physical Admin Box execution follows [`firstmate-wsl-physical-floor-runbook.md`](firstmate-wsl-physical-floor-runbook.md) (`FM-WSL-12`). Those surfaces validate/reach the WSL/Ubuntu substrate; FirstMate itself remains the live crew runtime.
 
 ## Why the first smoke is `local-only`
 
