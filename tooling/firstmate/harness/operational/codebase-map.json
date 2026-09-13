@@ -13,6 +13,7 @@
   "state_owners": {
     "tracked_bridge_contract": "AgentSwitchboard",
     "local_bridge_evidence": "AgentSwitchboard operator runtime; untracked",
+    "temporary_wsl_clone": "AgentSwitchboard bridge; script-owned and auto-cleaned unless explicit failure preservation is requested",
     "firstmate_runtime_state": "FirstMate",
     "crew_dispatch": "FirstMate",
     "crew_lifecycle": "FirstMate",
@@ -24,8 +25,9 @@
     "PowerShell CRLF transported into bash -lc can break set -euo pipefail. Normalize every transported command to LF first.",
     "Native stdout or stderr may be empty. PowerShell helpers must accept empty strings and preserve the process exit code as authority.",
     "Capture stdout and stderr separately. WSL configuration warnings on stderr are diagnostics, not machine-readable stdout.",
-    "Do not depend on wslpath for Windows path transport. Use WSLENV /p for reviewed path variables.",
+    "Do not depend on wslpath for Windows path transport. Use WSLENV /p for reviewed path variables and replace inherited entries for bridge-owned variable names before adding the required mode.",
     "Every WSL process needs a bounded timeout. Timeout exit 124 is a failure, never readiness evidence.",
+    "A unique /tmp AgentSwitchboard clone is script-owned temporary state, not a durable worktree. Clean it after every run by default and preserve it on failure only through the explicit diagnostic switch.",
     "Contract or hosted Windows PASS does not prove the physical Ubuntu/WSL floor.",
     "The prerequisite gate may report apt/gh recovery commands but must not install dependencies or mutate credentials itself.",
     "Do not revive the historical AgentSwitchboard FirstMate route selector or crew-orchestration skill; live dispatch and lifecycle belong to FirstMate."
