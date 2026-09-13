@@ -240,7 +240,7 @@ Canonical terminal action: none; no safe actionable work remains
 - **Priority:** P0
 - **Work class:** BOUNDED
 - **Owner:** P95 architecture lane
-- **Branch / PR:** cursor/p95-firstmate-runtime-boundary-1737
+- **Branch / PR:** cursor/p95-firstmate-runtime-boundary-1737 / #164
 - **Scope:** persist accepted architecture decision that FirstMate is the canonical live crew runtime; ownership matrix; subtraction analysis; KEEP/NARROW/HAND-OFF/RETIRE dispositions; revise September plan and freeze ASQ-008..012
 - **Forbidden:** implementing adapters; deleting GNHF or child-bus; Prompt Kit FirstMate bridge; README rewrite; claiming live FirstMate crew proof
 - **Dependencies:** ASQ-004, ASQ-007
