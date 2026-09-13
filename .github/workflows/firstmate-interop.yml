@@ -8,6 +8,7 @@ on:
       - 'tests/test_firstmate_asb_convergence_contract.py'
       - 'docs/harness/firstmate-integration.md'
       - 'docs/harness/firstmate-asb-convergence.md'
+      - 'docs/architecture/asb-firstmate-runtime-boundary.md'
       - '.github/workflows/firstmate-interop.yml'
   pull_request:
     paths:
@@ -16,6 +17,7 @@ on:
       - 'tests/test_firstmate_asb_convergence_contract.py'
       - 'docs/harness/firstmate-integration.md'
       - 'docs/harness/firstmate-asb-convergence.md'
+      - 'docs/architecture/asb-firstmate-runtime-boundary.md'
       - '.github/workflows/firstmate-interop.yml'
 
 permissions:
@@ -28,6 +30,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'

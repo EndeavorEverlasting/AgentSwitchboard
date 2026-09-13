@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import tempfile
@@ -155,7 +156,15 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
 
     def test_probe_rejects_stale_head_when_clone_is_wrong_commit(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            repo = Path(tmp) / "firstmate"
+            root = Path(tmp)
+            stub_bin = root / "stub-bin"
+            stub_bin.mkdir()
+            for name in ("gh", "tmux"):
+                stub = stub_bin / name
+                stub.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+                stub.chmod(0o755)
+
+            repo = root / "firstmate"
             subprocess.run(["git", "init", str(repo)], check=True, capture_output=True)
             subprocess.run(
                 ["git", "-C", str(repo), "remote", "add", "origin", "https://github.com/kunchenguid/firstmate.git"],
@@ -187,16 +196,20 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
                 check=True,
                 capture_output=True,
             )
+            env = dict(os.environ)
+            env["PATH"] = f"{stub_bin}{os.pathsep}{env.get('PATH', '')}"
             completed = subprocess.run(
                 ["bash", str(PROBE_PATH), "--firstmate", str(repo)],
                 cwd=ROOT,
                 capture_output=True,
                 text=True,
+                env=env,
             )
             self.assertNotEqual(completed.returncode, 0)
             combined = completed.stdout + completed.stderr
             self.assertIn("integration floor was audited at", combined)
             self.assertIn(EXPECTED_SHA, combined)
+            self.assertNotIn("Required tool is unavailable", combined)
 
 
 if __name__ == "__main__":

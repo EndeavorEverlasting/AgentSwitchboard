@@ -40,7 +40,7 @@
   },
   "inferences": [
     "WSL/Ubuntu is the lowest-risk AgentSwitchboard integration host because First Mate declares Linux support while AgentSwitchboard already uses Windows/WSL boundaries.",
-    "A local-only first smoke test minimizes outward mutation while still exercising First Mate project orchestration.",
+    "A future local-only smoke test is the safest first live posture after this foundation: it withholds remote-write authority while still exercising First Mate project orchestration.",
     "Current FirstMate main at the audited commit still treats tmux as the reference session backend and keeps Herdr as a separate experimental backend lane."
   ],
   "unknowns": [

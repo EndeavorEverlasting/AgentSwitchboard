@@ -23,7 +23,7 @@ FirstMate's project-management contract defines these delivery postures:
 - `local-only` — no required remote or PR and no no-mistakes initialization;
 - `no-mistakes-prod-only` — conditional policy, and the default for newly added remote-backed projects when the captain does not specify a posture.
 
-For the first AgentSwitchboard interoperability proof, use `local-only`. That intentionally withholds remote-write authority while we prove repository discovery, toolchain readiness, the FirstMate operating contract, and task isolation boundaries.
+For the first AgentSwitchboard interoperability proof, use `local-only`. That intentionally withholds remote-write authority while we prove repository discovery, toolchain readiness, and the audited FirstMate contract floor. Live FirstMate operating behavior and task-isolation boundaries remain a later local-only smoke after this foundation.
 
 The autonomy posture is also machine-readable: `tooling/firstmate/harness/integration-contract.json` requires `first_safe_sprint.yolo_enabled: false`. Documentation or model preference cannot silently enable `+yolo`.
 
