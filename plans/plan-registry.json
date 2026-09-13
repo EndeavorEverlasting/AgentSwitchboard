@@ -59,6 +59,14 @@
       "priority": "high",
       "dependencies": [],
       "architectureDecision": "docs/architecture/asb-firstmate-runtime-boundary.md"
+    },
+    {
+      "planId": "ASB-2026-09-MULTI-PRODUCT-BOOTSTRAP-CHARTER",
+      "path": "plans/active/ASB-2026-09-multi-product-bootstrap-charter.plan.json",
+      "summaryPath": "plans/active/ASB-2026-09-multi-product-bootstrap-charter.md",
+      "status": "active",
+      "priority": "high",
+      "dependencies": ["ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS"]
     }
   ]
 }

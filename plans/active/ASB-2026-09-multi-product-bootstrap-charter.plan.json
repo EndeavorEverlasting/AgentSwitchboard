@@ -1,0 +1,197 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-09-MULTI-PRODUCT-BOOTSTRAP-CHARTER",
+  "title": "Multi-product bootstrap charter (Pi + FirstMate now; Herdr deferred)",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "active",
+  "priority": "high",
+  "createdUtc": "2026-09-13T17:39:45Z",
+  "updatedUtc": "2026-09-13T17:39:45Z",
+  "mission": "Specialize the September agent-bootstrap program into an explicit multi-product bootstrap matrix: OpenCode + Pi as Windows-native now, FirstMate as WSL/Ubuntu with Windows bridge-only, Herdr deferred from Windows Admin Box native bootstrap — with Pi adapter registration closed honestly (Inspect/Apply only; Remove/Unbootstrap remain gaps) without replacing ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS.",
+  "owner": {
+    "surface": "Multi-product bootstrap charter and product matrix",
+    "role": "charter / sequencing lane",
+    "agent": "Admin Box multi-product charter worker"
+  },
+  "delivery": {
+    "branch": "feat/multi-product-bootstrap-charter-20260913",
+    "pullRequest": null,
+    "baseRef": "main",
+    "commitRequired": true
+  },
+  "wave": "1 — multi-product sequencing under September program",
+  "lane": "public-plan / multi-product bootstrap charter",
+  "dependencies": ["ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS"],
+  "safeParallelWork": [
+    "Sibling FirstMate convergence under tooling/firstmate/** (this plan must not write that tree)",
+    "OpenCode LSP/runtime certification and child-bus adapter work under ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS when ownership lines are respected",
+    "Pi Remove/Unbootstrap implementation on a separate owned branch after this charter lands"
+  ],
+  "ownedScope": [
+    "plans/active/ASB-2026-09-multi-product-bootstrap-charter.plan.json",
+    "plans/active/ASB-2026-09-multi-product-bootstrap-charter.md",
+    "plans/plan-registry.json (append only)",
+    "tooling/harness/multi-product-bootstrap/product-matrix.contract.json",
+    "docs/harness/multi-product-bootstrap-charter.md",
+    "tests/test_multi_product_bootstrap_charter.py",
+    "tooling/harness/system-bootstrap-lifecycle/adapters.v1.json (Pi adapter registration only)"
+  ],
+  "forbiddenScope": [
+    "tooling/firstmate/**",
+    "Herdr/Android/Termux bootstrap implementation",
+    "Rewriting the OpenCode installer",
+    "Inventing Unbootstrap-Pi-SystemWide.cmd or Pi Remove that would lie about lifecycle parity",
+    "Claiming Pi physical Apply is proven in this sprint",
+    "Installing packages, credentials, destructive Git, merge, or live-target mutation",
+    "Replacing or rewriting ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS"
+  ],
+  "expectedArtifacts": [
+    "plans/active/ASB-2026-09-multi-product-bootstrap-charter.plan.json",
+    "plans/active/ASB-2026-09-multi-product-bootstrap-charter.md",
+    "plans/plan-registry.json entry for ASB-2026-09-MULTI-PRODUCT-BOOTSTRAP-CHARTER",
+    "tooling/harness/multi-product-bootstrap/product-matrix.contract.json",
+    "docs/harness/multi-product-bootstrap-charter.md",
+    "tests/test_multi_product_bootstrap_charter.py",
+    "Pi adapter registered in tooling/harness/system-bootstrap-lifecycle/adapters.v1.json with Inspect/Apply only"
+  ],
+  "tasks": [
+    {
+      "taskId": "CHARTER-01",
+      "title": "Publish multi-product bootstrap product matrix",
+      "status": "in-progress",
+      "owner": "charter / sequencing lane",
+      "dependencies": [],
+      "inputs": [
+        "ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS",
+        "user decision floor 2026-09-13",
+        "tooling/harness/system-bootstrap-lifecycle/adapters.v1.json",
+        "tooling/pi/Install-AgentSwitchboardPiSystem.ps1"
+      ],
+      "outputs": [
+        "tooling/harness/multi-product-bootstrap/product-matrix.contract.json",
+        "docs/harness/multi-product-bootstrap-charter.md",
+        "plans/active/ASB-2026-09-multi-product-bootstrap-charter.plan.json",
+        "plans/active/ASB-2026-09-multi-product-bootstrap-charter.md"
+      ],
+      "acceptanceCriteria": [
+        "Matrix declares opencode, pi, firstmate, herdr with status, platform, bootstrapOwner, runtime, proofCeiling, nextAction",
+        "OpenCode and Pi are windows-native; FirstMate is WSL/Ubuntu with Windows bridge-only; Herdr is deferred",
+        "Plan depends on ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS and does not replace it",
+        "Remaining Pi Remove/Unbootstrap and physical-Apply gaps are listed honestly"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "PI-02",
+      "title": "Register Pi lifecycle adapter; keep Apply as field proof",
+      "status": "in-progress",
+      "owner": "charter / Pi adapter registration",
+      "dependencies": ["CHARTER-01"],
+      "inputs": [
+        "Bootstrap-Pi-SystemWide.cmd",
+        "tooling/pi/Install-AgentSwitchboardPiSystem.ps1",
+        "tooling/pi/harness/system-bootstrap.contract.json",
+        "tooling/harness/system-bootstrap-lifecycle/adapters.v1.json"
+      ],
+      "outputs": [
+        "Pi entry in adapters.v1.json",
+        "charter note that Remove/Unbootstrap remain gaps",
+        "explicit non-claim of physical Apply"
+      ],
+      "acceptanceCriteria": [
+        "adapterId pi registered with owner tooling/pi/Install-AgentSwitchboardPiSystem.ps1",
+        "adapterContract tooling/pi/harness/system-bootstrap.contract.json and bootstrapEntrypoint Bootstrap-Pi-SystemWide.cmd",
+        "operations match installer reality: Inspect and Apply only — Remove not claimed",
+        "unbootstrapEntrypoint is null because Unbootstrap-Pi-SystemWide.cmd is missing",
+        "No claim that Pi physical Apply is proven by this sprint"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "FM-03",
+      "title": "FirstMate convergence contract on main + PR #96 rebase path",
+      "status": "pending",
+      "owner": "FirstMate sibling lane (tooling/firstmate/**)",
+      "dependencies": ["CHARTER-01"],
+      "inputs": [
+        "stale PR #96 FirstMate stack",
+        "product-matrix firstmate row",
+        "WSL/Ubuntu runtime decision"
+      ],
+      "outputs": [
+        "FirstMate convergence contract on main (sibling-owned)",
+        "documented rebase/salvage path for PR #96"
+      ],
+      "acceptanceCriteria": [
+        "Matrix continues to record FirstMate runtime as WSL/Ubuntu and Windows as bridge only",
+        "This charter does not mutate tooling/firstmate/**",
+        "Convergence contract landing and PR #96 rebase are sibling-owned next actions"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "HERDR-04",
+      "title": "Explicit Herdr deferral from Windows native bootstrap",
+      "status": "in-progress",
+      "owner": "charter / sequencing lane",
+      "dependencies": ["CHARTER-01"],
+      "inputs": ["user decision floor 2026-09-13", "product-matrix.contract.json"],
+      "outputs": [
+        "herdr status=deferred in product matrix",
+        "charter/docs deferral language"
+      ],
+      "acceptanceCriteria": [
+        "Herdr platform is android-termux / experimental session backend",
+        "No Herdr bootstrap implementation is introduced by this plan",
+        "Deferral is visible in plan, matrix, and docs"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "HOOKS-05",
+      "title": "Extension points via product-matrix + lifecycle adapters",
+      "status": "in-progress",
+      "owner": "charter / sequencing lane",
+      "dependencies": ["CHARTER-01", "PI-02"],
+      "inputs": [
+        "product-matrix.contract.json",
+        "adapters.v1.json",
+        "system-bootstrap-lifecycle adoptionRule"
+      ],
+      "outputs": [
+        "extensionPoints block in product matrix",
+        "docs/harness/multi-product-bootstrap-charter.md HOOKS section",
+        "tests asserting matrix + Pi adapter registration"
+      ],
+      "acceptanceCriteria": [
+        "Future products must enter the matrix before claiming lifecycle completeness",
+        "Lifecycle adapters register only when real entrypoints exist — no lying Remove stubs",
+        "Focused static tests cover matrix parse, product presence, Herdr deferred, FirstMate WSL, Pi+OpenCode windows-native, plan registry, Pi adapter registration"
+      ],
+      "evidence": []
+    }
+  ],
+  "validation": [
+    "JSON parse for product-matrix.contract.json and this plan (agentswitchboard.public-plan.v1)",
+    "python -m unittest tests.test_multi_product_bootstrap_charter",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-SystemBootstrapLifecycleContracts.ps1",
+    "git diff --check"
+  ],
+  "proof": {
+    "target": "multi-product bootstrap charter + product matrix + Pi adapter registration contract proof",
+    "achieved": "Matrix, plan, docs, and tests encode Pi+FirstMate-now / Herdr-deferred sequencing; Pi adapter registered as Inspect/Apply only; Remove/Unbootstrap and physical Apply explicitly not claimed",
+    "ceiling": "Static/contract proof only. Does not prove Pi physical Apply/Remove, FirstMate WSL runtime success, Herdr bootstrap, package install, or live-target mutation."
+  },
+  "handoff": {
+    "nextOwner": "FirstMate sibling (FM-03) and Pi Remove implementer after charter merge",
+    "nextCommand": "python -m unittest tests.test_multi_product_bootstrap_charter; pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1; pwsh -NoLogo -NoProfile -File scripts/Test-SystemBootstrapLifecycleContracts.ps1",
+    "notes": [
+      "Depends on ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS; specialize sequencing, do not replace the September program.",
+      "Pi Remove is intentionally unclaimed: installer ValidateSet is Inspect/Apply only and Unbootstrap-Pi-SystemWide.cmd is absent.",
+      "Do not write tooling/firstmate/** from this lane.",
+      "Herdr remains deferred from Windows Admin Box native bootstrap."
+    ]
+  }
+}
