@@ -77,11 +77,44 @@ class MultiProductBootstrapCharterTests(unittest.TestCase):
             entry["path"],
         )
         self.assertIn("ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS", entry["dependencies"])
+
         task_ids = {task["taskId"] for task in plan["tasks"]}
+        completed_floor = {"CHARTER-01", "PI-02", "FM-03", "HERDR-04", "HOOKS-05"}
+        successor_map = {
+            "FM-REFRESH-06",
+            "PI-FIELD-07",
+            "LSP-RUNTIME-08",
+            "GNHF-NARROW-09",
+            "FM-BRIDGE-10",
+            "PI-REMOVE-11",
+            "FM-WSL-12",
+            "FM-CREW-13",
+            "PI-ROLLBACK-14",
+            "CONVERGE-15",
+        }
+        self.assertTrue(completed_floor.issubset(task_ids))
+        self.assertTrue(successor_map.issubset(task_ids))
+        self.assertEqual(completed_floor | successor_map, task_ids)
+
+    def test_successor_dependency_map_preserves_runtime_gates(self):
+        plan = json.loads(PLAN.read_text(encoding="utf-8-sig"))
+        tasks = {task["taskId"]: task for task in plan["tasks"]}
+        self.assertEqual(["FM-03"], tasks["FM-REFRESH-06"]["dependencies"])
+        self.assertEqual(["PI-02"], tasks["PI-FIELD-07"]["dependencies"])
+        self.assertEqual(["FM-REFRESH-06"], tasks["FM-BRIDGE-10"]["dependencies"])
+        self.assertEqual(["PI-FIELD-07"], tasks["PI-REMOVE-11"]["dependencies"])
+        self.assertEqual(["FM-BRIDGE-10"], tasks["FM-WSL-12"]["dependencies"])
+        self.assertEqual(["FM-WSL-12"], tasks["FM-CREW-13"]["dependencies"])
         self.assertEqual(
-            {"CHARTER-01", "PI-02", "FM-03", "HERDR-04", "HOOKS-05"},
-            task_ids,
+            ["PI-REMOVE-11", "PI-FIELD-07"],
+            tasks["PI-ROLLBACK-14"]["dependencies"],
         )
+        self.assertEqual(
+            {"FM-CREW-13", "PI-ROLLBACK-14", "GNHF-NARROW-09", "LSP-RUNTIME-08"},
+            set(tasks["CONVERGE-15"]["dependencies"]),
+        )
+        self.assertEqual("completed", tasks["HERDR-04"]["status"])
+        self.assertNotIn("herdr", " ".join(t["taskId"].lower() for t in plan["tasks"] if t["status"] in {"ready", "pending", "in-progress"}))
 
     def test_pi_adapter_registered_without_claiming_remove(self):
         adapters = json.loads(ADAPTERS.read_text(encoding="utf-8-sig"))
