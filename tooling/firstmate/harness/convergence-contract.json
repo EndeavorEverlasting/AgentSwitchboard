@@ -2,16 +2,17 @@
   "schemaVersion": 1,
   "contractId": "agentswitchboard.firstmate-asb-convergence.v1",
   "title": "FirstMate and AgentSwitchboard convergence floor",
-  "updatedUtc": "2026-09-13T19:10:00Z",
-  "intent": "Record the durable AgentSwitchboard \u2194 FirstMate ownership, runtime, safety, and stale-PR salvage boundaries on current main without merging the behind-main FirstMate PR stack and without vendoring FirstMate.",
+  "updatedUtc": "2026-09-13T20:00:00Z",
+  "intent": "Record the durable AgentSwitchboard ↔ FirstMate ownership, runtime, safety, and stale-PR salvage boundaries after integrating the Windows-to-WSL bridge contract without merging the behind-main FirstMate PR stack and without vendoring FirstMate.",
   "roles": {
-    "AgentSwitchboard": "control plane / workstation-bootstrap convergence: environment readiness, provider policy, validators, evidence sinks, and escalation \u2014 not a second live crew orchestrator",
+    "AgentSwitchboard": "control plane / workstation-bootstrap convergence: environment readiness, provider policy, validators, evidence sinks, and escalation — not a second live crew orchestrator",
     "FirstMate": "crew chief / canonical live crew runtime: decompose and supervise parallel crew work under AgentSwitchboard policy while preserving isolated repository work",
     "codingAgents": "workers: bounded reasoning, edits, tests, and reports inside assigned branches or worktrees",
     "tmux": "reference session backend: terminal/session substrate only; does not own project decomposition or AgentSwitchboard policy"
   },
   "runtime": {
     "target": "WSL/Ubuntu",
+    "wslDistribution": "Ubuntu",
     "nativeWindows": "out_of_scope",
     "windowsHostRole": "bridge_only",
     "upstreamDeclaredPlatforms": [
@@ -29,7 +30,7 @@
     "auditedAt": "2026-09-13",
     "pinOwner": "tooling/firstmate/harness/upstream-pin.json",
     "rebaseRequiredBeforePr96StackMerge": true,
-    "rebaseNote": "FirstMate PR #96 branch remains salvage evidence only. Foundation surfaces are refreshed on current main; do not merge PR #96 as-is. Rebase or extract remaining Windows bridge surfaces onto current main under FM-BRIDGE-10.",
+    "rebaseNote": "Historical FirstMate PR #96/#98/#99/#100/#101 remain salvage evidence only. FM-REFRESH-06 and FM-BRIDGE-10 rebuild durable foundation/bridge behavior on current main; do not merge the stale stack as-is.",
     "pr96AuditedCommit": "833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409",
     "adrEvidenceCommit": "b182d0f908b78d08c7ccb8dce3775bdca8c5d657",
     "pinRefreshRule": "Current audited pin is FirstMate main at the ADR evidence floor. Historical PR #96 audit commit remains provenance only and must not be treated as current interop proof."
@@ -42,6 +43,17 @@
     "dependencyInstallationByAsbHarness": false,
     "firstmateRepositoryMutation": false,
     "agentswitchboardSharedRegistryMutation": false
+  },
+  "windowsBridge": {
+    "status": "contract-integrated-runtime-unproved",
+    "ownerLane": "FM-BRIDGE-10",
+    "windowsRole": "bridge_only",
+    "distribution": "Ubuntu",
+    "contractEntrypoint": "Test-AgentSwitchboard-FirstMate-Harness.ps1",
+    "physicalFloorEntrypoint": "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1",
+    "lowerBridge": "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1",
+    "runtimeOwnerAfterFloor": "FirstMate",
+    "skillCapabilityTriggerDisposition": "No ASB FirstMate crew skill/capability/trigger is registered. Historical ASB route-selector/crew-skill surfaces are intentionally not revived because FirstMate owns live dispatch and lifecycle."
   },
   "herdr": {
     "status": "deferred",
@@ -60,75 +72,79 @@
     "dependencyOrder": [
       {
         "pr": 96,
-        "role": "foundation",
+        "role": "foundation provenance",
         "branch": "feat/firstmate-interop-wsl-20260808",
-        "summary": "FirstMate interop / WSL bridge foundation and integration contract"
+        "summary": "Foundation source material; durable Linux/WSL foundation rebuilt by FM-REFRESH-06"
       },
       {
         "pr": 98,
-        "role": "depends-on-96",
+        "role": "bridge provenance",
         "branch": "fix/firstmate-laptop-ubuntu-runtime-20260808",
-        "summary": "Canonical Ubuntu WSL distribution, bounded timeouts, unique evidence roots"
+        "summary": "Explicit Ubuntu, bounded WSL, unique evidence roots; salvaged by FM-BRIDGE-10"
       },
       {
         "pr": 101,
-        "role": "depends-on-96",
+        "role": "bridge provenance",
         "branch": "fix/firstmate-wsl-prerequisite-gate-20260808",
-        "summary": "WSL prerequisite gate before physical floor; no dependency install or credential mutation"
+        "summary": "Prerequisite gate before physical floor; salvaged by FM-BRIDGE-10"
       },
       {
         "pr": 99,
-        "role": "depends-on-98",
+        "role": "bridge provenance",
         "branch": "feat/harness-firstmate-windows-portability-20260808",
-        "summary": "Windows-native harness front door and portability regressions (bridge host only)"
+        "summary": "Windows-native contract front door; salvaged by FM-BRIDGE-10"
       },
       {
         "pr": 100,
-        "role": "depends-on-99",
+        "role": "bridge provenance",
         "branch": "feat/harness-firstmate-python-portability-20260808",
-        "summary": "Preserve Python interpreter identity for Windows-hosted harness children"
+        "summary": "Windows Python interpreter-continuity evidence; salvaged as current-interpreter execution in FM-BRIDGE-10"
       }
     ],
-    "integrationRule": "Extract or rebase durable content onto current main. Do not cherry-pick the entire FirstMate PR stack onto this convergence floor without an explicit rebase onto current main."
+    "integrationRule": "Do not merge the stale stack. Treat it as historical failure/evidence input and keep only behavior rebuilt and validated on current main."
   },
   "proofCeiling": {
-    "level": "integrated-interop-contract",
+    "level": "integrated-windows-wsl-bridge-contract",
     "claims": [
-      "Tracked convergence contract, upstream pin, integration contract, and interop probe exist and parse",
-      "Role, runtime, Herdr deferral, and first-safe-sprint invariants are machine-readable",
-      "Current FirstMate pin is bound across pin/convergence/integration owners",
-      "Focused static tests pass without launching FirstMate crew work"
+      "Tracked convergence, pin, integration, and Windows bridge contracts exist and parse",
+      "FirstMate remains the canonical live crew runtime and Windows remains bridge-only",
+      "Hosted validation can exercise the Windows-native contract front door without invoking physical WSL",
+      "The bridge contract enforces explicit Ubuntu, bounded WSL processes, CRLF normalization, empty-stream safety, WSLENV path transport, and a WSL-owned standalone exact-head clone",
+      "The physical-floor wrapper checks git, gh, tmux, python3, and GitHub authentication before bridge execution without installing dependencies or mutating credentials",
+      "Historical AgentSwitchboard FirstMate route-selector and crew-skill runtime ownership is not revived"
     ],
     "doesNotClaim": [
-      "live FirstMate crew dispatch",
-      "physical WSL/Ubuntu runtime floor beyond the Linux probe contract",
+      "physical WSL/Ubuntu runtime floor",
+      "live FirstMate crew dispatch or supervision",
       "native Windows FirstMate execution",
-      "Windows operational bridge / FM-BRIDGE-10",
+      "provider/model delivery",
       "Herdr readiness",
-      "merge of historical PR #96 or dependent stack PRs"
+      "merge of historical PR #96/#98/#99/#100/#101"
     ]
   },
   "operatorNext": {
-    "when": "After FM-REFRESH-06 lands on main, run the read-only probe inside WSL/Ubuntu against the audited FirstMate pin. Windows operational bridge and live crew remain deferred.",
-    "platform": "WSL/Ubuntu",
+    "when": "After FM-BRIDGE-10 integrates, execute the prerequisite-gated physical floor on an authorized Windows Admin Box. A PASS proves only the Windows→Ubuntu/WSL interoperability floor; the local-only FirstMate crew pilot remains a separate successor.",
+    "platform": "Windows bridge host -> WSL/Ubuntu",
     "commands": [
-      "bash tooling/firstmate/Test-FirstMateInterop.sh"
+      "pwsh -NoLogo -NoProfile -File .\\Test-AgentSwitchboard-FirstMate-Harness.ps1 -Mode physical-floor"
     ],
-    "optionalCloneHint": "bash tooling/firstmate/Test-FirstMateInterop.sh --firstmate \"$HOME/path/to/firstmate\"",
-    "note": "Run only inside WSL/Ubuntu. Windows hosts bridge only. The probe must remain read-only: no credential mutation, no dependency installation by the ASB harness, and no live crew dispatch claim from a static pass."
+    "optionalFirstMateHint": "Add -FirstMatePath <path> only when the audited FirstMate checkout is not discoverable inside Ubuntu.",
+    "note": "The prerequisite gate observes required tools and GitHub authentication but never installs packages or logs in on the operator's behalf. Local evidence remains untracked."
   },
   "relatedSurfaces": {
     "docs": "docs/harness/firstmate-asb-convergence.md",
     "upstreamPin": "tooling/firstmate/harness/upstream-pin.json",
     "staticTests": "tests/test_firstmate_asb_convergence_contract.py",
     "multiProductCharter": "docs/harness/multi-product-bootstrap-charter.md",
-    "opencodeWindowsBootstrap": "docs/harness/opencode-native-system-bootstrap.md",
-    "piWindowsBootstrap": "docs/harness/pi-system-bootstrap-and-child-agents.md",
     "architectureDecision": "docs/architecture/asb-firstmate-runtime-boundary.md",
     "integrationContract": "tooling/firstmate/harness/integration-contract.json",
     "interopProbe": "tooling/firstmate/Test-FirstMateInterop.sh",
     "integrationDocs": "docs/harness/firstmate-integration.md",
-    "integrationTests": "tests/test_firstmate_integration_contract.py"
+    "operationalManifest": "tooling/firstmate/harness/operational/manifest.json",
+    "operationalDocs": "docs/harness/firstmate-operational-harness.md",
+    "windowsContractEntrypoint": "Test-AgentSwitchboard-FirstMate-Harness.ps1",
+    "physicalFloorEntrypoint": "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1",
+    "lowerWindowsWslBridge": "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1"
   },
   "architectureDecision": {
     "id": "ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME",
