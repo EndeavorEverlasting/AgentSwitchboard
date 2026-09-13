@@ -7,57 +7,60 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-13T17:39:45Z",
-  "updatedUtc": "2026-09-13T18:05:00Z",
-  "mission": "Specialize the September agent-bootstrap program into an explicit multi-product bootstrap matrix: OpenCode + Pi as Windows-native now, FirstMate as WSL/Ubuntu with Windows bridge-only, Herdr deferred from Windows Admin Box native bootstrap \u2014 with Pi adapter registration closed honestly (Inspect/Apply only; Remove/Unbootstrap remain gaps) without replacing ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS.",
+  "updatedUtc": "2026-09-13T18:43:00Z",
+  "mission": "Coordinate the bounded successor program after the multi-product charter and FirstMate crew-runtime ADR integrated: prove Pi on an authorized Windows Admin Box, refresh and certify FirstMate through WSL/Ubuntu without reviving ASB child-bus orchestration, encode the GNHF narrow boundary, continue the separately-owned OpenCode LSP field proof, keep Herdr deferred, and converge stale PR/plan truth only after successor containment is proven.",
   "owner": {
-    "surface": "Multi-product bootstrap charter and product matrix",
-    "role": "charter / sequencing lane",
-    "agent": "Admin Box multi-product charter worker"
+    "surface": "Multi-product bootstrap charter and successor execution map",
+    "role": "public-plan coordination / sequencing",
+    "agent": "multi-product bootstrap coordinator"
   },
   "delivery": {
-    "branch": "feat/multi-product-bootstrap-charter-20260913",
+    "branch": "plan/multi-product-successor-sprints-20260913",
     "pullRequest": null,
     "baseRef": "main",
     "commitRequired": true
   },
-  "wave": "1 \u2014 multi-product sequencing under September program",
-  "lane": "public-plan / multi-product bootstrap charter",
+  "wave": "2 - bounded successor execution after charter integration",
+  "lane": "public-plan / multi-product bootstrap continuation",
   "dependencies": [
     "ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS"
   ],
   "safeParallelWork": [
-    "Sibling FirstMate convergence under tooling/firstmate/** (this plan must not write that tree)",
-    "OpenCode LSP/runtime certification and child-bus adapter work under ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS when ownership lines are respected",
-    "Pi Remove/Unbootstrap implementation on a separate owned branch after this charter lands"
+    "Wave A may run FirstMate interop refresh, Pi Admin Box field proof, GNHF NARROW contract work, and ASQ-005 OpenCode fresh-TUI LSP runtime certification concurrently because their tracked write surfaces are disjoint; runtime-only lanes must not commit local receipts.",
+    "FirstMate foundation owns tooling/firstmate/** foundation surfaces and its focused tests; GNHF owns tooling/gnhf/** plus its focused boundary test; Pi field proof is local runtime evidence only; ASQ-005 owns local OpenCode LSP runtime evidence only unless a reproducible product defect is proven.",
+    "Pi Remove implementation waits for Pi field-state evidence and owns only Pi bootstrap/lifecycle surfaces; FirstMate Windows bridge/operational harness waits for the refreshed FirstMate foundation.",
+    "FirstMate physical WSL proof waits for the refreshed bridge/harness; the first local-only crew pilot waits for that WSL floor.",
+    "Final convergence waits for terminal evidence or explicit blockers from Pi reversibility, FirstMate crew proof, GNHF narrowing, and ASQ-005; it is the sole owner of final plan/ledger/stale-PR disposition."
   ],
   "ownedScope": [
     "plans/active/ASB-2026-09-multi-product-bootstrap-charter.plan.json",
     "plans/active/ASB-2026-09-multi-product-bootstrap-charter.md",
-    "plans/plan-registry.json (append only)",
-    "tooling/harness/multi-product-bootstrap/product-matrix.contract.json",
-    "docs/harness/multi-product-bootstrap-charter.md",
-    "tests/test_multi_product_bootstrap_charter.py",
-    "tooling/harness/system-bootstrap-lifecycle/adapters.v1.json (Pi adapter registration only)"
+    "tooling/harness/multi-product-bootstrap/product-matrix.contract.json when successor status changes require a truthful matrix update",
+    "tests/test_multi_product_bootstrap_charter.py coordination-contract coverage",
+    "successor ownership/dependency/proof map for Pi, FirstMate, GNHF, OpenCode LSP, Herdr deferral, and final convergence"
   ],
   "forbiddenScope": [
-    "Herdr/Android/Termux bootstrap implementation",
-    "Rewriting the OpenCode installer",
-    "Inventing Unbootstrap-Pi-SystemWide.cmd or Pi Remove that would lie about lifecycle parity",
-    "Claiming Pi physical Apply is proven in this sprint",
-    "Installing packages, credentials, destructive Git, merge, or live-target mutation",
-    "Replacing or rewriting ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS",
-    "Merging PR #96 stack without rebase onto current main",
-    "Native Windows FirstMate runtime claims",
-    "Herdr/Android bootstrap implementation in this wave"
+    "credentials, provider tokens, or secret persistence",
+    "Herdr/Android/Termux bootstrap implementation while Herdr remains deferred",
+    "expanding tooling/harness/child-agent-bus into a crew platform or implementing Pi/OpenCode child-bus adapters contrary to ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME",
+    "inventing a Pi Remove or Unbootstrap surface that cannot prove owned-state-safe reversal",
+    "merging stale FirstMate PR #96/#98/#99/#100/#101 as-is or claiming their historical CI proves current main",
+    "native-Windows FirstMate runtime claims; Windows is bridge-only and FirstMate executes in WSL/Ubuntu",
+    "claiming physical Pi Apply/Remove, FirstMate WSL/crew behavior, or OpenCode TUI/LSP behavior from repository/static/CI proof",
+    "closing stale PRs without successor containment proof",
+    "destructive Git, silent stash/reset/clean, force push, or overwrite of separately owned work",
+    "committing local runtime receipts, private workstation paths, usernames, tenant labels, or machine-specific sensitive evidence"
   ],
   "expectedArtifacts": [
-    "plans/active/ASB-2026-09-multi-product-bootstrap-charter.plan.json",
-    "plans/active/ASB-2026-09-multi-product-bootstrap-charter.md",
-    "plans/plan-registry.json entry for ASB-2026-09-MULTI-PRODUCT-BOOTSTRAP-CHARTER",
-    "tooling/harness/multi-product-bootstrap/product-matrix.contract.json",
-    "docs/harness/multi-product-bootstrap-charter.md",
-    "tests/test_multi_product_bootstrap_charter.py",
-    "Pi adapter registered in tooling/harness/system-bootstrap-lifecycle/adapters.v1.json with Inspect/Apply only"
+    "this durable successor sprint map and summary",
+    "Pi local Inspect/Apply receipt and report under %LOCALAPPDATA%/AgentSwitchboard/PiHarness/system-bootstrap/runs/<run-id>/",
+    "refreshed FirstMate upstream pin, WSL interop contract/probe, focused validators, and current-main integration",
+    "GNHF NARROW ownership clause plus focused regression proof with existing launchers preserved",
+    "real Pi Remove mode and Unbootstrap-Pi-SystemWide.cmd only after ownership-safe lifecycle design is implemented and validated",
+    "FirstMate physical WSL/Ubuntu floor evidence and one bounded local-only crew-pilot evidence chain",
+    "Pi physical Remove/restore reversibility evidence after the Remove implementation integrates",
+    "ASQ-005 local OpenCode LSP runtime-smoke receipt owned by Admin Box 1",
+    "final convergence update to plan/ledger/product matrix and stale-PR dispositions with containment evidence"
   ],
   "tasks": [
     {
@@ -68,27 +71,24 @@
       "dependencies": [],
       "inputs": [
         "ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS",
-        "user decision floor 2026-09-13",
-        "tooling/harness/system-bootstrap-lifecycle/adapters.v1.json",
-        "tooling/pi/Install-AgentSwitchboardPiSystem.ps1"
+        "system-bootstrap lifecycle registry"
       ],
       "outputs": [
-        "tooling/harness/multi-product-bootstrap/product-matrix.contract.json",
-        "docs/harness/multi-product-bootstrap-charter.md",
-        "plans/active/ASB-2026-09-multi-product-bootstrap-charter.plan.json",
-        "plans/active/ASB-2026-09-multi-product-bootstrap-charter.md"
+        "product matrix",
+        "charter docs/plan"
       ],
       "acceptanceCriteria": [
-        "Matrix declares opencode, pi, firstmate, herdr with status, platform, bootstrapOwner, runtime, proofCeiling, nextAction",
-        "OpenCode and Pi are windows-native; FirstMate is WSL/Ubuntu with Windows bridge-only; Herdr is deferred",
-        "Plan depends on ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS and does not replace it",
-        "Remaining Pi Remove/Unbootstrap and physical-Apply gaps are listed honestly"
+        "OpenCode, Pi, FirstMate, and Herdr have explicit status/platform/runtime/proof ceilings",
+        "Herdr remains deferred and FirstMate remains WSL/Ubuntu bridge-only on Windows"
       ],
-      "evidence": []
+      "evidence": [
+        "merge:2da80edfc861b1f8ea32305082da029d22ecfc5c",
+        "pr:#165"
+      ]
     },
     {
       "taskId": "PI-02",
-      "title": "Register Pi lifecycle adapter; keep Apply as field proof",
+      "title": "Register Pi lifecycle adapter without claiming Remove",
       "status": "completed",
       "owner": "charter / Pi adapter registration",
       "dependencies": [
@@ -97,84 +97,72 @@
       "inputs": [
         "Bootstrap-Pi-SystemWide.cmd",
         "tooling/pi/Install-AgentSwitchboardPiSystem.ps1",
-        "tooling/pi/harness/system-bootstrap.contract.json",
         "tooling/harness/system-bootstrap-lifecycle/adapters.v1.json"
       ],
       "outputs": [
-        "Pi entry in adapters.v1.json",
-        "charter note that Remove/Unbootstrap remain gaps",
-        "explicit non-claim of physical Apply"
+        "Pi adapter registration with Inspect/Apply only"
       ],
       "acceptanceCriteria": [
-        "adapterId pi registered with owner tooling/pi/Install-AgentSwitchboardPiSystem.ps1",
-        "adapterContract tooling/pi/harness/system-bootstrap.contract.json and bootstrapEntrypoint Bootstrap-Pi-SystemWide.cmd",
-        "operations match installer reality: Inspect and Apply only \u2014 Remove not claimed",
-        "unbootstrapEntrypoint is null because Unbootstrap-Pi-SystemWide.cmd is missing",
-        "No claim that Pi physical Apply is proven by this sprint"
+        "Pi registry operations exactly match implemented installer modes",
+        "Unbootstrap remains absent until real Remove exists"
       ],
       "evidence": [
-        "tooling/harness/system-bootstrap-lifecycle/adapters.v1.json pi entry"
+        "merge:2da80edfc861b1f8ea32305082da029d22ecfc5c"
       ]
     },
     {
       "taskId": "FM-03",
-      "title": "FirstMate convergence contract on main + PR #96 rebase path",
+      "title": "Land FirstMate convergence contract bound to accepted ADR",
       "status": "completed",
-      "owner": "multi-product charter + FirstMate convergence lane",
+      "owner": "FirstMate convergence lane",
       "dependencies": [
         "CHARTER-01"
       ],
       "inputs": [
-        "stale PR #96 FirstMate stack",
-        "product-matrix firstmate row",
-        "WSL/Ubuntu runtime decision"
+        "PR #96 historical evidence",
+        "ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME"
       ],
       "outputs": [
         "tooling/firstmate/harness/convergence-contract.json",
         "tooling/firstmate/harness/upstream-pin.json",
-        "docs/harness/firstmate-asb-convergence.md",
-        "tests/test_firstmate_asb_convergence_contract.py",
-        "documented rebase/salvage path for PR #96 stack"
+        "docs/harness/firstmate-asb-convergence.md"
       ],
       "acceptanceCriteria": [
-        "Matrix records FirstMate runtime as WSL/Ubuntu and Windows as bridge only",
-        "Convergence contract and upstream pin are tracked on this floor",
-        "Static FirstMate convergence tests pass",
-        "PR #96 stack remains unmerged until rebased onto current main"
+        "FirstMate is canonical live crew runtime",
+        "Windows is bridge-only",
+        "stale PR stack cannot merge without rebase and pin refresh"
       ],
       "evidence": [
-        "tooling/firstmate/harness/convergence-contract.json",
-        "tests/test_firstmate_asb_convergence_contract.py",
-        "product-matrix firstmate.status=convergence-contract-on-main"
-      ],
-      "forbiddenScopeNote": "Charter no longer blocks tooling/firstmate/** once convergence contract lands on this floor; full PR #96 stack merge remains blocked until rebase."
+        "merge:2da80edfc861b1f8ea32305082da029d22ecfc5c",
+        "artifact:docs/architecture/asb-firstmate-runtime-boundary.md"
+      ]
     },
     {
       "taskId": "HERDR-04",
-      "title": "Explicit Herdr deferral from Windows native bootstrap",
+      "title": "Keep Herdr explicitly deferred",
       "status": "completed",
       "owner": "charter / sequencing lane",
       "dependencies": [
         "CHARTER-01"
       ],
       "inputs": [
-        "user decision floor 2026-09-13",
-        "product-matrix.contract.json"
+        "product matrix",
+        "FirstMate ADR"
       ],
       "outputs": [
-        "herdr status=deferred in product matrix",
-        "charter/docs deferral language"
+        "Herdr deferred state"
       ],
       "acceptanceCriteria": [
-        "Herdr platform is android-termux / experimental session backend",
-        "No Herdr bootstrap implementation is introduced by this plan",
-        "Deferral is visible in plan, matrix, and docs"
+        "No Windows Admin Box Herdr bootstrap is introduced",
+        "Android/Termux and experimental session-backend work remain outside this wave"
       ],
-      "evidence": []
+      "evidence": [
+        "merge:2da80edfc861b1f8ea32305082da029d22ecfc5c"
+      ]
     },
     {
       "taskId": "HOOKS-05",
-      "title": "Extension points via product-matrix + lifecycle adapters",
+      "title": "Preserve truthful extension points",
       "status": "completed",
       "owner": "charter / sequencing lane",
       "dependencies": [
@@ -182,43 +170,330 @@
         "PI-02"
       ],
       "inputs": [
-        "product-matrix.contract.json",
-        "adapters.v1.json",
-        "system-bootstrap-lifecycle adoptionRule"
+        "product matrix",
+        "lifecycle adapter registry"
       ],
       "outputs": [
-        "extensionPoints block in product matrix",
-        "docs/harness/multi-product-bootstrap-charter.md HOOKS section",
-        "tests asserting matrix + Pi adapter registration"
+        "matrix-first extension rule",
+        "focused static coverage"
       ],
       "acceptanceCriteria": [
-        "Future products must enter the matrix before claiming lifecycle completeness",
-        "Lifecycle adapters register only when real entrypoints exist \u2014 no lying Remove stubs",
-        "Focused static tests cover matrix parse, product presence, Herdr deferred, FirstMate WSL, Pi+OpenCode windows-native, plan registry, Pi adapter registration"
+        "Future products enter the matrix before lifecycle completeness claims",
+        "Lifecycle adapters advertise only real entrypoints and modes"
+      ],
+      "evidence": [
+        "tests:test_multi_product_bootstrap_charter"
+      ]
+    },
+    {
+      "taskId": "FM-REFRESH-06",
+      "title": "Refresh FirstMate Linux/WSL interop foundation on current main",
+      "status": "ready",
+      "owner": "FirstMate interop foundation lane",
+      "dependencies": [
+        "FM-03"
+      ],
+      "inputs": [
+        "current origin/main",
+        "PR #96 foundation surfaces",
+        "tooling/firstmate/harness/convergence-contract.json",
+        "current reviewed FirstMate main"
+      ],
+      "outputs": [
+        "refreshed tooling/firstmate/Test-FirstMateInterop.sh",
+        "current integration contract and upstream pin",
+        "focused Linux/WSL interop tests/docs"
+      ],
+      "acceptanceCriteria": [
+        "Re-resolve current FirstMate main and audit the exact pin before using it",
+        "Salvage/rebase only the foundation needed for WSL interop rather than merging PR #96 wholesale",
+        "Preserve local-only, yolo false, no credential/dependency mutation boundaries",
+        "Focused static/contract validation passes on the refreshed ASB floor",
+        "Validated branch integrates to current main before downstream bridge work begins"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "PI-FIELD-07",
+      "title": "Prove Pi Inspect and authorized Apply on Admin Box",
+      "status": "ready",
+      "owner": "Admin Box Windows operator",
+      "dependencies": [
+        "PI-02"
+      ],
+      "inputs": [
+        "current main Pi installer",
+        "tracked Pi upstream verification",
+        "authorized Windows Admin Box"
+      ],
+      "outputs": [
+        "local pi-system-bootstrap.json/.md Inspect receipt",
+        "Apply receipt when mutation is required and authorized",
+        "post-Apply Inspect readback"
+      ],
+      "acceptanceCriteria": [
+        "Refresh main before execution and require a clean canonical checkout",
+        "Run Inspect first and classify existing managed state without elevation",
+        "Proceed to Apply only when required and with an elevated operator session",
+        "After Apply, rerun Inspect and require tracked version, managed integrity, launcher, PATH precedence, and Git Bash readback",
+        "Do not claim Remove or child-agent/provider behavior"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "LSP-RUNTIME-08",
+      "title": "Complete ASQ-005 fresh-TUI OpenCode LSP runtime proof",
+      "status": "in-progress",
+      "owner": "Admin Box 1 / ASQ-005 runtime owner",
+      "dependencies": [
+        "CHARTER-01"
+      ],
+      "inputs": [
+        "ASQ-005 ledger entry",
+        "main containing 24cce9e canonical Live floor",
+        "headless control 20260912T194619Z-e3f423df"
+      ],
+      "outputs": [
+        "local opencode-lsp-runtime-smoke.json/.md",
+        "TUI/headless differential classification"
+      ],
+      "acceptanceCriteria": [
+        "Run only from refreshed canonical Live checkout",
+        "Use LSP-only hover/definition/references with nonLspSemanticFallbackUsed No",
+        "Do not commit runtime receipts",
+        "Do not mutate tracked harness unless the runtime exposes a reproducible product defect",
+        "Only Admin Box 1 interactive evidence can promote live TUI proof"
+      ],
+      "evidence": [
+        "main:feb9f712 contains ASQ-005 integrated contract floor; live runtime remains UNPROVEN"
+      ]
+    },
+    {
+      "taskId": "GNHF-NARROW-09",
+      "title": "Encode GNHF NARROW ownership boundary",
+      "status": "ready",
+      "owner": "GNHF contract lane",
+      "dependencies": [
+        "FM-03"
+      ],
+      "inputs": [
+        "docs/architecture/asb-firstmate-runtime-boundary.md",
+        "tooling/gnhf/README.md",
+        "tooling/gnhf/Start-GnhfSprint.ps1"
+      ],
+      "outputs": [
+        "explicit GNHF NARROW ownership clause",
+        "focused regression/validator proof"
+      ],
+      "acceptanceCriteria": [
+        "Keep Windows-first bounded single-agent/fleet launchers and readiness contracts",
+        "Forbid presenting GNHF as the FirstMate-competing multi-crew control plane",
+        "Preserve all existing launcher behavior unless a separate defect is proven",
+        "Integrate the validated boundary to current main"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "FM-BRIDGE-10",
+      "title": "Reconcile FirstMate Windows bridge and operational harness",
+      "status": "pending",
+      "owner": "FirstMate bridge/harness lane",
+      "dependencies": [
+        "FM-REFRESH-06"
+      ],
+      "inputs": [
+        "integrated refreshed FirstMate foundation",
+        "historical PR #98/#99/#100/#101 deltas",
+        "accepted FirstMate ADR"
+      ],
+      "outputs": [
+        "explicit-Ubuntu bounded Windows-to-WSL bridge",
+        "Windows-native contract front door that only bridges to WSL",
+        "prerequisite gate and unique evidence roots",
+        "interpreter-continuity-safe operational harness",
+        "canonical FirstMate skill/trigger routing if retained",
+        "cross-platform focused CI"
+      ],
+      "acceptanceCriteria": [
+        "Preserve CRLF normalization, explicit Ubuntu, bounded timeout, standalone WSL-owned clone, empty-stream handling, prerequisite gating, and sys.executable continuity where still applicable",
+        "Do not claim or implement native-Windows FirstMate runtime",
+        "Do not install dependencies or mutate credentials from the ASB harness",
+        "Resolve skill/capability/trigger ownership deterministically; do not add prompt-only application logic",
+        "Integrate only after exact-head validators/CI and current-main reconciliation pass"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "PI-REMOVE-11",
+      "title": "Implement real Pi Remove and Unbootstrap lifecycle",
+      "status": "pending",
+      "owner": "Pi bootstrap lifecycle lane",
+      "dependencies": [
+        "PI-FIELD-07"
+      ],
+      "inputs": [
+        "Pi field-state receipt",
+        "tooling/pi/Install-AgentSwitchboardPiSystem.ps1",
+        "system-bootstrap lifecycle contract",
+        "Pi managed runtime manifest/launcher/PATH ownership rules"
+      ],
+      "outputs": [
+        "Mode Remove in Pi installer",
+        "Unbootstrap-Pi-SystemWide.cmd",
+        "updated Pi lifecycle adapter registration",
+        "focused tests/docs for ownership-safe removal and interrupted-remove recovery"
+      ],
+      "acceptanceCriteria": [
+        "Remove only AgentSwitchboard-owned Pi versioned runtime, managed launchers, and owned PATH state",
+        "Preserve credentials, subscriptions, user settings, project trust, sessions, and unrelated shared state",
+        "Fail closed on missing or drifted ownership evidence",
+        "Provide idempotent Inspect/Apply/Remove state transitions and recovery evidence",
+        "Do not touch Pi child-bus or fusion crew-runtime surfaces"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "FM-WSL-12",
+      "title": "Prove FirstMate physical WSL/Ubuntu interop floor",
+      "status": "pending",
+      "owner": "Windows Admin Box operator / runtime-proof lane",
+      "dependencies": [
+        "FM-BRIDGE-10"
+      ],
+      "inputs": [
+        "integrated current-main FirstMate bridge/harness",
+        "WSL Ubuntu",
+        "current audited FirstMate pin"
+      ],
+      "outputs": [
+        "local prerequisite evidence",
+        "read-only FirstMate interop receipt/report",
+        "exact ASB and FirstMate identity readback"
+      ],
+      "acceptanceCriteria": [
+        "Refresh current main and prove the integrated harness identity before execution",
+        "Run prerequisite gate before clone/test work",
+        "Require git, gh, tmux, Python and required auth/readiness without persisting credentials",
+        "Run the WSL/Ubuntu interop probe read-only",
+        "Do not claim live crew dispatch from this floor alone"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "FM-CREW-13",
+      "title": "Prove one bounded FirstMate local-only crew pilot",
+      "status": "pending",
+      "owner": "FirstMate runtime pilot lane",
+      "dependencies": [
+        "FM-WSL-12"
+      ],
+      "inputs": [
+        "passed physical WSL interop floor",
+        "FirstMate local-only delivery mode",
+        "yolo disabled",
+        "one disposable/isolated bounded test repository or worktree"
+      ],
+      "outputs": [
+        "one correlated local-only crew run evidence chain",
+        "worker/worktree identity",
+        "bounded validation result",
+        "clean delivery disposition"
+      ],
+      "acceptanceCriteria": [
+        "Use FirstMate as the live crew owner; do not route through ASB child-bus adapters",
+        "No remote writes, merge, deployment, credentials mutation, or destructive Git",
+        "Keep the pilot small enough that failure would not endanger operator work",
+        "Require observable worker spawn, isolated worktree, supervision/wake, terminal completion, and validation evidence before claiming crew runtime proof"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "PI-ROLLBACK-14",
+      "title": "Prove Pi physical Remove and restoration",
+      "status": "pending",
+      "owner": "Admin Box Windows operator / runtime-proof lane",
+      "dependencies": [
+        "PI-REMOVE-11",
+        "PI-FIELD-07"
+      ],
+      "inputs": [
+        "integrated Pi Remove implementation",
+        "managed Pi runtime state from field proof"
+      ],
+      "outputs": [
+        "Remove receipt",
+        "post-Remove Inspect receipt",
+        "optional re-Apply + final Inspect receipt restoring desired managed state"
+      ],
+      "acceptanceCriteria": [
+        "Refresh main and verify exact integrated Remove owner before mutation",
+        "Prove Remove deletes only owned runtime/launchers/PATH state and preserves user/project state",
+        "Require post-Remove Inspect to show truthful absent/unmanaged state",
+        "If Pi is expected to remain installed, re-Apply and require final Inspect ready; record each transition separately",
+        "No provider or child-agent proof claim"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "CONVERGE-15",
+      "title": "Converge plans, ledger, matrix, and stale PRs after successor proof",
+      "status": "pending",
+      "owner": "final convergence lane",
+      "dependencies": [
+        "FM-CREW-13",
+        "PI-ROLLBACK-14",
+        "GNHF-NARROW-09",
+        "LSP-RUNTIME-08"
+      ],
+      "inputs": [
+        "terminal successor evidence or named blockers",
+        "current plans/registry",
+        "current .ai/WORK_QUEUE.md",
+        "open stale FirstMate/coordination/LSP/Herdr PRs"
+      ],
+      "outputs": [
+        "truthful terminal or blocked task states",
+        "updated product matrix/plan summaries/ledger continuity index",
+        "containment-backed stale PR dispositions",
+        "final validator and integration proof"
+      ],
+      "acceptanceCriteria": [
+        "Re-fetch main and every overlapping PR immediately before disposition",
+        "Close/supersede a stale PR only when current main contains or intentionally replaces its still-valid owned behavior",
+        "Keep Herdr deferred rather than manufacturing completion",
+        "Keep frozen ASB child-bus adapter/nested work frozen",
+        "Run public-plan, work-ledger, documentation, focused product, and diff-hygiene validators before integration",
+        "Verify resulting default branch contains the convergence commit by ancestry and content"
       ],
       "evidence": []
     }
   ],
   "validation": [
-    "JSON parse for product-matrix.contract.json and this plan (agentswitchboard.public-plan.v1)",
-    "python -m unittest tests.test_multi_product_bootstrap_charter",
+    "python -m unittest tests.test_multi_product_bootstrap_charter tests.test_firstmate_asb_convergence_contract",
+    "python tests/test_public_plan_contracts.py",
     "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
-    "pwsh -NoLogo -NoProfile -File scripts/Test-SystemBootstrapLifecycleContracts.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-RepositoryWorkLedgerContract.ps1 when the ledger changes",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-SystemBootstrapLifecycleContracts.ps1 when Pi lifecycle surfaces change",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1 when skills/triggers/capabilities/docs contracts change",
+    "focused FirstMate/GNHF/OpenCode/Pi validators in their owning successor lanes",
     "git diff --check"
   ],
   "proof": {
-    "target": "multi-product bootstrap charter + product matrix + Pi adapter registration contract proof",
-    "achieved": "Matrix, plan, docs, and tests encode Pi+FirstMate-now / Herdr-deferred sequencing; Pi adapter registered as Inspect/Apply only; Remove/Unbootstrap and physical Apply explicitly not claimed",
-    "ceiling": "Static/contract proof only. Does not prove Pi physical Apply/Remove, FirstMate WSL runtime success, Herdr bootstrap, package install, or live-target mutation."
+    "target": "Durable dependency-ordered successor map from the integrated multi-product charter through physical Pi and FirstMate proof, GNHF ownership narrowing, OpenCode LSP certification, and final convergence.",
+    "achieved": "Charter, product matrix, Pi Inspect/Apply adapter registration, FirstMate convergence contract, accepted FirstMate crew-runtime ADR, and Herdr deferral are integrated. The successor map is factored into disjoint initial lanes with explicit runtime and integration gates.",
+    "ceiling": "Planning and repository/provider evidence only for successor work. It does not prove Pi physical Apply/Remove, FirstMate physical WSL or crew execution, OpenCode TUI/LSP behavior, Herdr readiness, or stale-PR containment until the named successor gates execute."
   },
   "handoff": {
-    "nextOwner": "FirstMate sibling (FM-03) and Pi Remove implementer after charter merge",
-    "nextCommand": "python -m unittest tests.test_multi_product_bootstrap_charter; pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1; pwsh -NoLogo -NoProfile -File scripts/Test-SystemBootstrapLifecycleContracts.ps1",
+    "nextOwner": "Wave A: FirstMate interop foundation lane, Pi Admin Box field-proof owner, GNHF contract lane, and ASQ-005 Admin Box runtime owner",
+    "nextCommand": "git fetch --all --prune --tags; git switch main; git pull --ff-only origin main; git worktree add -b feat/firstmate-interop-refresh-20260913 ../AgentSwitchboard-firstmate-refresh origin/main",
     "notes": [
-      "Depends on ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS; specialize sequencing, do not replace the September program.",
-      "Pi Remove is intentionally unclaimed: installer ValidateSet is Inspect/Apply only and Unbootstrap-Pi-SystemWide.cmd is absent.",
-      "Do not write tooling/firstmate/** from this lane.",
-      "Herdr remains deferred from Windows Admin Box native bootstrap."
+      "One sprint panel goes into one new chat. Launch Wave A panels concurrently only when they operate in separate worktrees/runtime evidence roots.",
+      "The FirstMate foundation lane is the first repository-mutation chat because it is P0 and unlocks all later FirstMate runtime proof.",
+      "Pi field proof and OpenCode LSP proof are operator/runtime lanes; their local receipts remain untracked.",
+      "GNHF NARROW is independent of FirstMate implementation files but must cite the accepted ADR.",
+      "Pi Remove implementation waits for PI-FIELD-07; FirstMate bridge/harness waits for FM-REFRESH-06.",
+      "Herdr stays deferred throughout these waves.",
+      "Final convergence is the only lane authorized to close/supersede stale PRs based on successor containment."
     ]
   }
 }
