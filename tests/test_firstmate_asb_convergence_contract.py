@@ -43,16 +43,14 @@ class FirstMateAsbConvergenceContractTests(unittest.TestCase):
         contract = load_json(CONTRACT)
         pin = load_json(UPSTREAM_PIN)
         self.assertEqual(1, contract["schemaVersion"])
-        self.assertEqual(
-            "agentswitchboard.firstmate-asb-convergence.v1",
-            contract["contractId"],
-        )
+        self.assertEqual("agentswitchboard.firstmate-asb-convergence.v1", contract["contractId"])
         self.assertEqual(1, pin["schemaVersion"])
         self.assertEqual("agentswitchboard.firstmate-upstream-pin.v1", pin["pinId"])
 
     def test_role_boundaries(self) -> None:
         roles = load_json(CONTRACT)["roles"]
         self.assertIn("control plane", roles["AgentSwitchboard"].lower())
+        self.assertIn("not a second live crew orchestrator", roles["AgentSwitchboard"].lower())
         self.assertIn("crew chief", roles["FirstMate"].lower())
         self.assertIn("worker", roles["codingAgents"].lower())
         self.assertIn("session", roles["tmux"].lower())
@@ -61,6 +59,7 @@ class FirstMateAsbConvergenceContractTests(unittest.TestCase):
         runtime = load_json(CONTRACT)["runtime"]
         pin = load_json(UPSTREAM_PIN)
         self.assertEqual("WSL/Ubuntu", runtime["target"])
+        self.assertEqual("Ubuntu", runtime["wslDistribution"])
         self.assertEqual("out_of_scope", runtime["nativeWindows"])
         self.assertEqual("bridge_only", runtime["windowsHostRole"])
         self.assertEqual("tmux", runtime["referenceSessionBackend"])
@@ -71,7 +70,7 @@ class FirstMateAsbConvergenceContractTests(unittest.TestCase):
         self.assertIn("bridge only", docs.lower())
         self.assertIn("out of scope", docs.lower())
 
-    def test_upstream_pin_matches_audited_commit_and_rebase_note(self) -> None:
+    def test_upstream_pin_matches_audited_commit_and_stale_stack_is_provenance(self) -> None:
         contract = load_json(CONTRACT)
         pin = load_json(UPSTREAM_PIN)
         upstream = contract["upstream"]
@@ -86,8 +85,8 @@ class FirstMateAsbConvergenceContractTests(unittest.TestCase):
         self.assertEqual(pin["commit"], EXPECTED_SHA)
         self.assertFalse(pin["vendor"])
         self.assertTrue(pin["rebaseRequiredBeforePr96StackMerge"])
-        self.assertIn("rebase", upstream["rebaseNote"].lower())
         self.assertIn("do not merge", upstream["rebaseNote"].lower())
+        self.assertIn("fm-bridge-10", upstream["rebaseNote"].lower())
 
     def test_first_safe_sprint_local_only_yolo_false_no_cred_or_deps(self) -> None:
         sprint = load_json(CONTRACT)["firstSafeSprint"]
@@ -96,6 +95,17 @@ class FirstMateAsbConvergenceContractTests(unittest.TestCase):
         self.assertIs(sprint["credentialMutation"], False)
         self.assertIs(sprint["dependencyInstallationByAsbHarness"], False)
         self.assertIs(sprint["remoteWrites"], False)
+
+    def test_windows_bridge_is_integrated_but_runtime_unproved(self) -> None:
+        bridge = load_json(CONTRACT)["windowsBridge"]
+        self.assertEqual("contract-integrated-runtime-unproved", bridge["status"])
+        self.assertEqual("FM-BRIDGE-10", bridge["ownerLane"])
+        self.assertEqual("bridge_only", bridge["windowsRole"])
+        self.assertEqual("Ubuntu", bridge["distribution"])
+        self.assertEqual("FirstMate", bridge["runtimeOwnerAfterFloor"])
+        disposition = bridge["skillCapabilityTriggerDisposition"].lower()
+        self.assertIn("no asb firstmate crew skill", disposition)
+        self.assertIn("firstmate owns live dispatch", disposition)
 
     def test_herdr_deferred_and_excluded_from_windows_admin_box(self) -> None:
         herdr = load_json(CONTRACT)["herdr"]
@@ -120,27 +130,41 @@ class FirstMateAsbConvergenceContractTests(unittest.TestCase):
         for pr in (96, 98, 101, 99, 100):
             self.assertIn(f"#{pr}", docs)
         self.assertIn("Do **not** merge", docs)
+        self.assertIn("historical", stack["integrationRule"].lower())
 
-    def test_proof_ceiling_and_operator_next_probe_command(self) -> None:
+    def test_proof_ceiling_and_operator_next_physical_floor(self) -> None:
         contract = load_json(CONTRACT)
         ceiling = contract["proofCeiling"]
-        self.assertEqual("integrated-interop-contract", ceiling["level"])
+        self.assertEqual("integrated-windows-wsl-bridge-contract", ceiling["level"])
         denied = " ".join(ceiling["doesNotClaim"]).lower()
-        self.assertIn("live firstmate crew dispatch", denied)
+        self.assertIn("physical wsl", denied)
+        self.assertIn("live firstmate crew", denied)
         self.assertIn("native windows", denied)
         self.assertIn("herdr", denied)
-        self.assertIn("fm-bridge-10", denied)
         operator_next = contract["operatorNext"]
-        self.assertEqual(["bash tooling/firstmate/Test-FirstMateInterop.sh"], operator_next["commands"])
-        self.assertEqual("WSL/Ubuntu", operator_next["platform"])
-        probe = ROOT / "tooling" / "firstmate" / "Test-FirstMateInterop.sh"
-        self.assertTrue(probe.is_file(), "interop probe must exist on the refreshed floor")
+        self.assertEqual("Windows bridge host -> WSL/Ubuntu", operator_next["platform"])
+        self.assertEqual(
+            ["pwsh -NoLogo -NoProfile -File .\\Test-AgentSwitchboard-FirstMate-Harness.ps1 -Mode physical-floor"],
+            operator_next["commands"],
+        )
+        physical = ROOT / "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1"
+        self.assertTrue(physical.is_file())
         docs = DOCS.read_text(encoding="utf-8-sig")
-        self.assertIn("bash tooling/firstmate/Test-FirstMateInterop.sh", docs)
+        self.assertIn("physical-floor", docs)
         self.assertIn("Proof ceiling", docs)
-        self.assertIn("OpenCode", docs)
-        self.assertIn("Pi", docs)
         self.assertIn(EXPECTED_SHA, docs)
+
+    def test_related_surfaces_include_operational_bridge(self) -> None:
+        surfaces = load_json(CONTRACT)["relatedSurfaces"]
+        for key in (
+            "operationalManifest",
+            "operationalDocs",
+            "windowsContractEntrypoint",
+            "physicalFloorEntrypoint",
+            "lowerWindowsWslBridge",
+        ):
+            self.assertIn(key, surfaces)
+            self.assertTrue((ROOT / surfaces[key]).is_file(), surfaces[key])
 
     def test_no_secrets_or_local_identity_patterns(self) -> None:
         blob = joined_text(CONTRACT, UPSTREAM_PIN, DOCS)
@@ -148,16 +172,16 @@ class FirstMateAsbConvergenceContractTests(unittest.TestCase):
             match = pattern.search(blob)
             self.assertIsNone(match, f"forbidden pattern matched: {pattern.pattern}")
 
+    def test_architecture_decision_binding(self) -> None:
+        contract = load_json(CONTRACT)
+        adr = contract["architectureDecision"]
+        self.assertEqual("ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME", adr["id"])
+        self.assertEqual("docs/architecture/asb-firstmate-runtime-boundary.md", adr["path"])
+        self.assertTrue((ROOT / adr["path"]).is_file())
+        self.assertIn("canonical live crew runtime", adr["binding"].lower())
+        self.assertIn("must not expand the child-agent bus", adr["binding"].lower())
+        self.assertEqual("kunchenguid/firstmate", contract["upstream"]["repository"])
 
-    def test_architecture_decision_binding(self):
-        contract = json.loads(CONTRACT.read_text(encoding='utf-8'))
-        adr = contract['architectureDecision']
-        self.assertEqual('ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME', adr['id'])
-        self.assertEqual('docs/architecture/asb-firstmate-runtime-boundary.md', adr['path'])
-        self.assertTrue((ROOT / adr['path']).is_file())
-        self.assertIn('canonical live crew runtime', adr['binding'].lower())
-        self.assertIn('must not expand the child-agent bus', adr['binding'].lower())
-        self.assertEqual('kunchenguid/firstmate', contract['upstream']['repository'])
 
 if __name__ == "__main__":
     unittest.main()
