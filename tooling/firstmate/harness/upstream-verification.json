@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.1.0",
+  "upstream_repository": "kunchenguid/firstmate",
+  "verified_branch": "main",
+  "verified_commit": "b182d0f908b78d08c7ccb8dce3775bdca8c5d657",
+  "verified_on": "2026-09-13",
+  "pr96_audited_commit": "833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409",
+  "inspected_paths": [
+    "README.md",
+    "AGENTS.md",
+    "docs/configuration.md",
+    ".agents/skills/project-management/SKILL.md",
+    "CONTRIBUTING.md"
+  ],
+  "facts": {
+    "declared_platforms": [
+      "macOS",
+      "Linux"
+    ],
+    "reference_backend": "tmux",
+    "supported_primary_harnesses": [
+      "Claude Code",
+      "Grok",
+      "Pi",
+      "pi-signed",
+      "Oh My Pi (omp)",
+      "Codex",
+      "OpenCode",
+      "Cursor Agent CLI"
+    ],
+    "project_modes": [
+      "no-mistakes",
+      "direct-PR",
+      "local-only",
+      "no-mistakes-prod-only"
+    ],
+    "local_only_remote_required": false,
+    "local_only_skips_no_mistakes_initialization": true,
+    "new_remote_project_default": "no-mistakes-prod-only"
+  },
+  "inferences": [
+    "WSL/Ubuntu is the lowest-risk AgentSwitchboard integration host because First Mate declares Linux support while AgentSwitchboard already uses Windows/WSL boundaries.",
+    "A future local-only smoke test is the safest first live posture after this foundation: it withholds remote-write authority while still exercising First Mate project orchestration.",
+    "Current FirstMate main at the audited commit still treats tmux as the reference session backend and keeps Herdr as a separate experimental backend lane."
+  ],
+  "unknowns": [
+    "Upstream does not explicitly certify WSL in the inspected README.",
+    "Native Windows behavior is not declared by the inspected upstream platform contract.",
+    "Android/Termux support was not established by this evidence harvest."
+  ],
+  "proof_ceiling": "Static upstream repository evidence at the verified commit plus AgentSwitchboard contract/probe binding; no live First Mate crew dispatch, physical WSL runtime floor, or Windows bridge proof is claimed."
+}

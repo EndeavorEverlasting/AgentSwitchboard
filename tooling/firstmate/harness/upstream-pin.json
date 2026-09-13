@@ -3,11 +3,11 @@
   "pinId": "agentswitchboard.firstmate-upstream-pin.v1",
   "repository": "kunchenguid/firstmate",
   "repositoryUrl": "https://github.com/kunchenguid/firstmate",
-  "commit": "833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409",
+  "commit": "b182d0f908b78d08c7ccb8dce3775bdca8c5d657",
   "branch": "main",
-  "auditedAt": "2026-08-08",
-  "auditedFromPr": 96,
-  "auditedAtNote": "Audited commit recorded from FirstMate interoperability PR #96 evidence harvest. Pin metadata only \u2014 this repository does not vendor FirstMate sources.",
+  "auditedAt": "2026-09-13",
+  "auditedFromPr": null,
+  "auditedAtNote": "Refreshed for FM-REFRESH-06 against current FirstMate main. Historical PR #96 audit commit remains recorded as provenance only. Pin metadata only — this repository does not vendor FirstMate sources.",
   "platforms": {
     "upstreamDeclared": [
       "macOS",
@@ -25,5 +25,5 @@
   "pr96AuditedCommit": "833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409",
   "adrEvidenceCommit": "b182d0f908b78d08c7ccb8dce3775bdca8c5d657",
   "architectureDecision": "docs/architecture/asb-firstmate-runtime-boundary.md",
-  "note": "Historical PR #96 audit commit retained; ADR evidence floor is newer. Rebase must re-verify before live interop claims."
+  "note": "Current audited pin matches the ADR evidence floor and current FirstMate main as of 2026-09-13. Historical PR #96 commit 833a9a25… is provenance only and must be rejected by the interop probe."
 }

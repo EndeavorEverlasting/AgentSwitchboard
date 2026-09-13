@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "contractId": "agentswitchboard.firstmate-asb-convergence.v1",
   "title": "FirstMate and AgentSwitchboard convergence floor",
-  "updatedUtc": "2026-09-13T18:20:00Z",
+  "updatedUtc": "2026-09-13T19:10:00Z",
   "intent": "Record the durable AgentSwitchboard \u2194 FirstMate ownership, runtime, safety, and stale-PR salvage boundaries on current main without merging the behind-main FirstMate PR stack and without vendoring FirstMate.",
   "roles": {
     "AgentSwitchboard": "control plane / workstation-bootstrap convergence: environment readiness, provider policy, validators, evidence sinks, and escalation \u2014 not a second live crew orchestrator",
@@ -24,15 +24,15 @@
   "upstream": {
     "repository": "kunchenguid/firstmate",
     "repositoryUrl": "https://github.com/kunchenguid/firstmate",
-    "auditedCommit": "833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409",
-    "auditedFromPr": 96,
-    "auditedAt": "2026-08-08",
+    "auditedCommit": "b182d0f908b78d08c7ccb8dce3775bdca8c5d657",
+    "auditedFromPr": null,
+    "auditedAt": "2026-09-13",
     "pinOwner": "tooling/firstmate/harness/upstream-pin.json",
     "rebaseRequiredBeforePr96StackMerge": true,
-    "rebaseNote": "FirstMate PR #96 branch feat/firstmate-interop-wsl-20260808 is mergeable but far behind current main; rebase the entire stale stack onto current main before any integration merge. Do not merge PR #96 as-is.",
+    "rebaseNote": "FirstMate PR #96 branch remains salvage evidence only. Foundation surfaces are refreshed on current main; do not merge PR #96 as-is. Rebase or extract remaining Windows bridge surfaces onto current main under FM-BRIDGE-10.",
     "pr96AuditedCommit": "833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409",
     "adrEvidenceCommit": "b182d0f908b78d08c7ccb8dce3775bdca8c5d657",
-    "pinRefreshRule": "PR #96 historical audit commit remains recorded for provenance; rebase onto current main must re-verify and may refresh the pin to the ADR evidence floor or newer reviewed FirstMate main before claiming interop proof."
+    "pinRefreshRule": "Current audited pin is FirstMate main at the ADR evidence floor. Historical PR #96 audit commit remains provenance only and must not be treated as current interop proof."
   },
   "firstSafeSprint": {
     "projectDeliveryMode": "local-only",
@@ -92,23 +92,24 @@
     "integrationRule": "Extract or rebase durable content onto current main. Do not cherry-pick the entire FirstMate PR stack onto this convergence floor without an explicit rebase onto current main."
   },
   "proofCeiling": {
-    "level": "contract+docs+static-tests",
+    "level": "integrated-interop-contract",
     "claims": [
-      "Tracked convergence contract and upstream pin exist and parse",
+      "Tracked convergence contract, upstream pin, integration contract, and interop probe exist and parse",
       "Role, runtime, Herdr deferral, and first-safe-sprint invariants are machine-readable",
-      "Stale PR stack dependency order is documented",
-      "Focused static tests pass without launching FirstMate"
+      "Current FirstMate pin is bound across pin/convergence/integration owners",
+      "Focused static tests pass without launching FirstMate crew work"
     ],
     "doesNotClaim": [
       "live FirstMate crew dispatch",
-      "physical WSL/Ubuntu runtime floor",
+      "physical WSL/Ubuntu runtime floor beyond the Linux probe contract",
       "native Windows FirstMate execution",
+      "Windows operational bridge / FM-BRIDGE-10",
       "Herdr readiness",
-      "merge of PR #96 or dependent stack PRs"
+      "merge of historical PR #96 or dependent stack PRs"
     ]
   },
   "operatorNext": {
-    "when": "After the stale FirstMate PR stack is rebased onto current main and tooling/firstmate/Test-FirstMateInterop.sh is present",
+    "when": "After FM-REFRESH-06 lands on main, run the read-only probe inside WSL/Ubuntu against the audited FirstMate pin. Windows operational bridge and live crew remain deferred.",
     "platform": "WSL/Ubuntu",
     "commands": [
       "bash tooling/firstmate/Test-FirstMateInterop.sh"
@@ -123,7 +124,11 @@
     "multiProductCharter": "docs/harness/multi-product-bootstrap-charter.md",
     "opencodeWindowsBootstrap": "docs/harness/opencode-native-system-bootstrap.md",
     "piWindowsBootstrap": "docs/harness/pi-system-bootstrap-and-child-agents.md",
-    "architectureDecision": "docs/architecture/asb-firstmate-runtime-boundary.md"
+    "architectureDecision": "docs/architecture/asb-firstmate-runtime-boundary.md",
+    "integrationContract": "tooling/firstmate/harness/integration-contract.json",
+    "interopProbe": "tooling/firstmate/Test-FirstMateInterop.sh",
+    "integrationDocs": "docs/harness/firstmate-integration.md",
+    "integrationTests": "tests/test_firstmate_integration_contract.py"
   },
   "architectureDecision": {
     "id": "ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME",

@@ -12,7 +12,8 @@ ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "tooling" / "firstmate" / "harness" / "convergence-contract.json"
 UPSTREAM_PIN = ROOT / "tooling" / "firstmate" / "harness" / "upstream-pin.json"
 DOCS = ROOT / "docs" / "harness" / "firstmate-asb-convergence.md"
-EXPECTED_SHA = "833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409"
+EXPECTED_SHA = "b182d0f908b78d08c7ccb8dce3775bdca8c5d657"
+STALE_PR96_SHA = "833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409"
 SECRET_PATTERNS = [
     re.compile(r"ghp_[A-Za-z0-9]{20,}"),
     re.compile(r"github_pat_[A-Za-z0-9_]{20,}"),
@@ -77,12 +78,16 @@ class FirstMateAsbConvergenceContractTests(unittest.TestCase):
         self.assertEqual("kunchenguid/firstmate", upstream["repository"])
         self.assertEqual(EXPECTED_SHA, upstream["auditedCommit"])
         self.assertRegex(upstream["auditedCommit"], r"^[0-9a-f]{40}$")
+        self.assertEqual(STALE_PR96_SHA, upstream["pr96AuditedCommit"])
+        self.assertEqual(STALE_PR96_SHA, pin["pr96AuditedCommit"])
+        self.assertNotEqual(EXPECTED_SHA, STALE_PR96_SHA)
         self.assertTrue(upstream["rebaseRequiredBeforePr96StackMerge"])
         self.assertEqual(pin["repository"], upstream["repository"])
         self.assertEqual(pin["commit"], EXPECTED_SHA)
         self.assertFalse(pin["vendor"])
         self.assertTrue(pin["rebaseRequiredBeforePr96StackMerge"])
         self.assertIn("rebase", upstream["rebaseNote"].lower())
+        self.assertIn("do not merge", upstream["rebaseNote"].lower())
 
     def test_first_safe_sprint_local_only_yolo_false_no_cred_or_deps(self) -> None:
         sprint = load_json(CONTRACT)["firstSafeSprint"]
@@ -119,19 +124,23 @@ class FirstMateAsbConvergenceContractTests(unittest.TestCase):
     def test_proof_ceiling_and_operator_next_probe_command(self) -> None:
         contract = load_json(CONTRACT)
         ceiling = contract["proofCeiling"]
-        self.assertEqual("contract+docs+static-tests", ceiling["level"])
+        self.assertEqual("integrated-interop-contract", ceiling["level"])
         denied = " ".join(ceiling["doesNotClaim"]).lower()
         self.assertIn("live firstmate crew dispatch", denied)
         self.assertIn("native windows", denied)
         self.assertIn("herdr", denied)
+        self.assertIn("fm-bridge-10", denied)
         operator_next = contract["operatorNext"]
         self.assertEqual(["bash tooling/firstmate/Test-FirstMateInterop.sh"], operator_next["commands"])
         self.assertEqual("WSL/Ubuntu", operator_next["platform"])
+        probe = ROOT / "tooling" / "firstmate" / "Test-FirstMateInterop.sh"
+        self.assertTrue(probe.is_file(), "interop probe must exist on the refreshed floor")
         docs = DOCS.read_text(encoding="utf-8-sig")
         self.assertIn("bash tooling/firstmate/Test-FirstMateInterop.sh", docs)
         self.assertIn("Proof ceiling", docs)
         self.assertIn("OpenCode", docs)
         self.assertIn("Pi", docs)
+        self.assertIn(EXPECTED_SHA, docs)
 
     def test_no_secrets_or_local_identity_patterns(self) -> None:
         blob = joined_text(CONTRACT, UPSTREAM_PIN, DOCS)
