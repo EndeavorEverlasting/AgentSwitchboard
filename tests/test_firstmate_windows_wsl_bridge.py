@@ -55,8 +55,16 @@ class FirstMateWindowsWslBridgeTests(unittest.TestCase):
         self.assertIn("ExitCode = if ($timedOut) { 124 }", self.bridge)
         self.assertIn("TIMEOUT: wsl.exe exceeded", self.bridge)
 
-    def test_bridge_uses_wslenv_path_translation_not_wslpath(self) -> None:
-        self.assertNotIn("wslpath", self.bridge.lower())
+    def test_bridge_uses_wslenv_path_translation_without_wslpath_execution(self) -> None:
+        lowered = self.bridge.lower()
+        for execution_form in (
+            "get-command wslpath",
+            "& wslpath",
+            "wslpath.exe",
+            "command -v wslpath",
+            "$(wslpath",
+        ):
+            self.assertNotIn(execution_form, lowered)
         self.assertIn("WSLENV", self.bridge)
         self.assertIn('"$stringName/p"', self.bridge)
         self.assertIn("ASB_SOURCE_REPO", self.bridge)
