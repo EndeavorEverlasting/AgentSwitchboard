@@ -1,0 +1,94 @@
+{
+  "schema": "agentswitchboard.asq005-runtime-gates.v1",
+  "laneId": "ASQ-005",
+  "planTaskId": "LSP-02",
+  "title": "OpenCode fresh-TUI Python LSP runtime certification gates",
+  "proofCeiling": "OBSERVED live TUI semantic LSP only on Admin Box 1; Configure/CI/INTEGRATED floor never promote to PASS",
+  "liveFloorCommit": "24cce9e321a4913dda32f21a2d51a599dd0e4bb4",
+  "headlessBaselineId": "20260912T194619Z-e3f423df",
+  "canonicalCheckout": {
+    "rootExpression": "Join-Path $env:USERPROFILE 'dev\\\\AgentSwitchBoard-Live'",
+    "origin": "https://github.com/EndeavorEverlasting/AgentSwitchboard"
+  },
+  "fixture": {
+    "path": "tests/test_technician_live_cert_surface.py",
+    "symbol": "read_text",
+    "openExactlyOnce": true
+  },
+  "operations": [
+    "hover",
+    "goToDefinition",
+    "findReferences"
+  ],
+  "forbiddenFallbacks": [
+    "grep",
+    "ripgrep",
+    "text search",
+    "AST search",
+    "manual semantic derivation"
+  ],
+  "receipts": {
+    "json": "opencode-lsp-runtime-smoke.json",
+    "md": "opencode-lsp-runtime-smoke.md",
+    "schema": "tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json",
+    "template": "tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md",
+    "tracked": false,
+    "nonLspSemanticFallbackUsed": "No",
+    "passVerdict": "LSP_RUNTIME_SMOKE_TEST: PASS"
+  },
+  "gates": [
+    {
+      "id": "G0",
+      "name": "Canonical repository floor"
+    },
+    {
+      "id": "G1",
+      "name": "Configuration proof",
+      "notSufficientForDone": true
+    },
+    {
+      "id": "G2",
+      "name": "Fresh TUI launch"
+    },
+    {
+      "id": "G3",
+      "name": "LSP activation trigger"
+    },
+    {
+      "id": "G4",
+      "name": "Strict semantic operations"
+    },
+    {
+      "id": "G5",
+      "name": "Differential classification",
+      "allowedClassifications": [
+        "PASS_TUI_HEADLESS_DIFFERENTIAL",
+        "PASS_BOTH_MODES",
+        "FAIL_TUI_ONLY",
+        "FAIL_BOTH_MODES"
+      ]
+    },
+    {
+      "id": "G6",
+      "name": "Canonical runtime artifacts"
+    },
+    {
+      "id": "G7",
+      "name": "Owning harness validation"
+    },
+    {
+      "id": "G8",
+      "name": "ASQ-005 terminal decision"
+    }
+  ],
+  "successorPolicy": {
+    "asq008Asq009": "FREEZE/HAND-OFF under ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME; ASQ-005 completion does not authorize ASB live adapter expansion",
+    "asq010ThroughAsq012": "remain FirstMate-frozen unless explicit ADR supersession",
+    "asq011VsAsq012": "ASQ-011 owns nested-delegation mechanism/contract; ASQ-012 owns depth-2 runtime certification",
+    "asq013": "convergence only after authorized terminal predecessors; receipts do not promote across material head/schema/runtime-owner change"
+  },
+  "docs": [
+    "docs/harness/asq005-fresh-tui-lsp-runtime-gates.md",
+    "docs/harness/opencode-lsp-workstation-setup.md"
+  ]
+}

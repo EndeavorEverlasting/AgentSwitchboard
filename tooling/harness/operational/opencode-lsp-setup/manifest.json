@@ -26,7 +26,9 @@
     "runtimeSmokeReceiptSchema": "tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json",
     "runtimeSmokeReportTemplate": "tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md",
     "preCommitHook": "tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPreCommit.ps1",
-    "prePushHook": "tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPrePush.ps1"
+    "prePushHook": "tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPrePush.ps1",
+    "asq005RuntimeGatesContract": "tooling/harness/operational/opencode-lsp-setup/asq005-runtime-gates.contract.json",
+    "asq005RuntimeGatesDoc": "docs/harness/asq005-fresh-tui-lsp-runtime-gates.md"
   },
   "repositoryRecovery": {
     "operatorInvocationCwdIndependent": true,
@@ -39,7 +41,13 @@
     "bootstrapRemoteContentEndpoint": "https://api.github.com/repos/EndeavorEverlasting/AgentSwitchboard/contents/tooling/harness/operational/opencode-lsp-setup/Invoke-AgentSwitchboardOpenCodeBootstrap.ps1",
     "bootstrapStaging": "ephemeral OS temp directory removed after dispatch",
     "preferredPathIsHintOnly": true,
-    "boundedDiscovery": ["preferred path when explicitly supplied to the internal resolver","current directory as an untrusted candidate","preferred direct children","preferred parent siblings named AgentSwitchBoard*","LOCALAPPDATA AgentSwitchboard checkouts"],
+    "boundedDiscovery": [
+      "preferred path when explicitly supplied to the internal resolver",
+      "current directory as an untrusted candidate",
+      "preferred direct children",
+      "preferred parent siblings named AgentSwitchBoard*",
+      "LOCALAPPDATA AgentSwitchboard checkouts"
+    ],
     "fallback": "%LOCALAPPDATA%/AgentSwitchboard/checkouts/canonical-<head8>",
     "proofRule": "The public operator bootstrap does not require a known local repository path and must work from an arbitrary current directory, including another Git repository. Its initial repository-content fetch is bounded by the documented operator command. Inside the bootstrap, remote Git resolution and exact-head resolver staging are bounded. The canonical remote default branch/head is resolved once, the checkout resolver is staged from that exact SHA, and the same immutable branch/SHA are passed directly as ExpectedBranch/ExpectedHead so checkout recovery never silently selects a second head. The bootstrap capability-detects whether that exact staged resolver supports AllowRemoteBranchAdvance: supported resolvers use ancestry-guarded snapshot mode, while older published resolvers remain strict exact-head and are never passed an unknown parameter. If the remote branch advances after a capable snapshot is selected, bootstrap-only resolver mode may continue only when the selected expected head remains an ancestor of the freshly fetched branch; a rewrite that makes the snapshot unreachable fails closed. The resulting worktree is still created at the original selected SHA. The resolved root is verified by canonical remote identity plus exact selected head and clean status, then Set-Location targets that verified root before bounded runtime dispatch. Only an exact canonical GitHub origin plus the selected branch/head snapshot may become the setup worktree; wrong or similarly named current directories are ignored and preserved.",
     "destructiveCleanupAllowed": false
@@ -50,7 +58,12 @@
     "repairOwner": "tooling/harness/operational/opencode-lsp-setup",
     "distribution": "Ubuntu",
     "defaultInstallTimeoutSeconds": 180,
-    "initialDiscoveryLocations": ["$HOME/.opencode/bin", "$XDG_BIN_DIR", "$HOME/bin", "$HOME/.local/bin"],
+    "initialDiscoveryLocations": [
+      "$HOME/.opencode/bin",
+      "$XDG_BIN_DIR",
+      "$HOME/bin",
+      "$HOME/.local/bin"
+    ],
     "officialInstallerExecutablePath": "$HOME/.opencode/bin/opencode",
     "installerSourceRepository": "anomalyco/opencode",
     "installerSourceCommit": "3a31c4ea801915c0b050df4b3842997ea62b6e93",
