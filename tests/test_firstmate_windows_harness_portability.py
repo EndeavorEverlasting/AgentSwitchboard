@@ -35,11 +35,10 @@ class FirstMateWindowsHarnessPortabilityTests(unittest.TestCase):
         self.assertIn("WINDOWS_ROLE=bridge-only", self.ps1)
         self.assertIn("RUNTIME_OWNER=FirstMate", self.ps1)
 
-    def test_contract_mode_runs_bridge_and_prerequisite_contracts(self) -> None:
+    def test_contract_mode_runs_windows_safe_contracts_only(self) -> None:
         self.assertIn("-ContractOnly", self.ps1)
         self.assertIn("FIRSTMATE_WINDOWS_OPERATIONAL_HARNESS", self.ps1)
         for test_name in (
-            "test_firstmate_integration_contract.py",
             "test_firstmate_asb_convergence_contract.py",
             "test_firstmate_operational_harness.py",
             "test_firstmate_windows_harness_portability.py",
@@ -47,6 +46,8 @@ class FirstMateWindowsHarnessPortabilityTests(unittest.TestCase):
             "test_firstmate_windows_wsl_prerequisite_gate.py",
         ):
             self.assertIn(test_name, self.ps1)
+        self.assertNotIn("'tests/test_firstmate_integration_contract.py'", self.ps1)
+        self.assertIn("belongs to Linux CI", self.ps1)
 
     def test_cmd_wrapper_is_location_independent_and_preserves_exit(self) -> None:
         self.assertIn("%~dp0", self.cmd)
