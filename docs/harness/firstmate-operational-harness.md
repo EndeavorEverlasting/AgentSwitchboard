@@ -54,6 +54,8 @@ pwsh -NoLogo -NoProfile -File .\Test-AgentSwitchboard-FirstMate-Harness.ps1 `
   -WslDistribution Ubuntu
 ```
 
+The optional `.cmd` wrapper calls `pwsh -NoLogo -NoProfile -File` and respects the host PowerShell execution policy; it does not force `ExecutionPolicy Bypass`.
+
 The physical floor delegates in order:
 
 1. `Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1` — observes Ubuntu prerequisites and GitHub CLI authentication without installing or logging in;
@@ -94,15 +96,17 @@ PowerShell helpers accept null and empty stdout/stderr. An empty diagnostic stre
 
 ### WSLENV path transport
 
-Reviewed Windows path variables cross the boundary through `WSLENV` `/p` translation. The bridge does not execute `wslpath`.
+Reviewed Windows path variables cross the boundary through `WSLENV` `/p` translation. Before adding a bridge-owned variable, the bridge removes any inherited `WSLENV` entry for the same variable name so a stale unmodified entry cannot compete with the required `/p` mode. The bridge does not execute `wslpath`.
 
 ### Standalone Linux-owned exact-head clone
 
 The bridge never asks Linux Git to operate on a Windows-created linked-worktree `.git` indirection. It resolves the committed Windows source repository, translates that source path through `WSLENV /p`, creates a standalone clone inside WSL, detaches it at the exact AgentSwitchboard SHA, and verifies the SHA before running validators.
 
+The standalone clone is script-owned temporary state under `/tmp/agentswitchboard-firstmate-*`. It is removed after both successful and failed runs by default, with a guarded prefix check before deletion. Direct lower-bridge diagnostics may opt in to `-PreserveWslWorkspaceOnFailure`; preservation is never the default.
+
 ### Interpreter continuity
 
-The Windows contract front door resolves the active `python.exe`/`python` command and invokes repository Python tests through that exact interpreter. It does not spawn literal `python3` from Windows.
+The Windows contract front door resolves the active `python.exe`/`python` command and invokes repository Python tests through that exact interpreter. It does not spawn literal `python3` from Windows. The Linux/WSL validator registry uses `python3`, matching the prerequisite floor.
 
 ### Prerequisite gate
 
@@ -141,23 +145,19 @@ If the prerequisite gate reports missing tools, follow the emitted Ubuntu packag
 
 Those are explicit operator recovery gates. AgentSwitchboard does not silently install packages, log in, modify credentials, unregister WSL distributions, or claim a repaired environment without re-running the proof.
 
-If the lower bridge fails, preserve the evidence root. Do not print an unconditional success marker after a failed child process.
+If the lower bridge fails, preserve the Windows-side evidence root. Its script-owned WSL clone is cleaned by default so repeated proof attempts do not leak temporary repositories. Use `-PreserveWslWorkspaceOnFailure` only on a direct lower-bridge diagnostic run when the Linux clone itself must be inspected. Do not print an unconditional success marker after a failed child process.
 
 ## Validation
 
 Focused repository validation:
 
 ```bash
-python3 tests/test_firstmate_integration_contract.py
-python3 tests/test_firstmate_asb_convergence_contract.py
-python3 tests/test_firstmate_operational_harness.py
-python3 tests/test_firstmate_windows_harness_portability.py
-python3 tests/test_firstmate_windows_wsl_bridge.py
-python3 tests/test_firstmate_windows_wsl_prerequisite_gate.py
 bash Test-AgentSwitchboard-FirstMate-Harness.sh contract
 ```
 
-Windows CI additionally runs the native PowerShell contract front door. That hosted contract path intentionally returns before requiring a live WSL distro.
+That canonical Linux entrypoint owns the focused integration/convergence/operational/portability/bridge/prerequisite tests, shell syntax, and working/staged diff hygiene. CI calls this entrypoint rather than duplicating its sequencing.
+
+Windows CI runs the native PowerShell contract front door. That hosted contract path intentionally returns before requiring a live WSL distro.
 
 ## Proof ceiling
 
@@ -168,8 +168,8 @@ Repository and hosted CI proof may establish:
 - bounded WSL process behavior;
 - CRLF normalization;
 - empty-stream safety;
-- `WSLENV` path-translation policy;
-- WSL-owned exact-head clone construction contract;
+- deterministic `WSLENV` path-translation policy;
+- WSL-owned exact-head clone construction and cleanup contract;
 - prerequisite-gate ordering and non-mutation rules;
 - Windows current-Python interpreter continuity;
 - local evidence routing;
