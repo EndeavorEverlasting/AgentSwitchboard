@@ -6,25 +6,45 @@ on:
       - 'tooling/firstmate/**'
       - 'tests/test_firstmate_integration_contract.py'
       - 'tests/test_firstmate_asb_convergence_contract.py'
+      - 'tests/test_firstmate_operational_harness.py'
+      - 'tests/test_firstmate_windows_harness_portability.py'
+      - 'tests/test_firstmate_windows_wsl_bridge.py'
+      - 'tests/test_firstmate_windows_wsl_prerequisite_gate.py'
       - 'docs/harness/firstmate-integration.md'
       - 'docs/harness/firstmate-asb-convergence.md'
+      - 'docs/harness/firstmate-operational-harness.md'
       - 'docs/architecture/asb-firstmate-runtime-boundary.md'
+      - 'Test-AgentSwitchboard-FirstMate-Harness.cmd'
+      - 'Test-AgentSwitchboard-FirstMate-Harness.ps1'
+      - 'Test-AgentSwitchboard-FirstMate-Harness.sh'
+      - 'Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1'
+      - 'Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1'
       - '.github/workflows/firstmate-interop.yml'
   pull_request:
     paths:
       - 'tooling/firstmate/**'
       - 'tests/test_firstmate_integration_contract.py'
       - 'tests/test_firstmate_asb_convergence_contract.py'
+      - 'tests/test_firstmate_operational_harness.py'
+      - 'tests/test_firstmate_windows_harness_portability.py'
+      - 'tests/test_firstmate_windows_wsl_bridge.py'
+      - 'tests/test_firstmate_windows_wsl_prerequisite_gate.py'
       - 'docs/harness/firstmate-integration.md'
       - 'docs/harness/firstmate-asb-convergence.md'
+      - 'docs/harness/firstmate-operational-harness.md'
       - 'docs/architecture/asb-firstmate-runtime-boundary.md'
+      - 'Test-AgentSwitchboard-FirstMate-Harness.cmd'
+      - 'Test-AgentSwitchboard-FirstMate-Harness.ps1'
+      - 'Test-AgentSwitchboard-FirstMate-Harness.sh'
+      - 'Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1'
+      - 'Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1'
       - '.github/workflows/firstmate-interop.yml'
 
 permissions:
   contents: read
 
 jobs:
-  contract:
+  linux-contracts:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,14 +60,51 @@ jobs:
           python -m json.tool tooling/firstmate/harness/upstream-verification.json >/dev/null
           python -m json.tool tooling/firstmate/harness/upstream-pin.json >/dev/null
           python -m json.tool tooling/firstmate/harness/convergence-contract.json >/dev/null
+          for file in tooling/firstmate/harness/operational/*.json; do
+            python -m json.tool "$file" >/dev/null
+          done
       - name: Validate First Mate contracts
         run: |
           python tests/test_firstmate_integration_contract.py
           python tests/test_firstmate_asb_convergence_contract.py
+          python tests/test_firstmate_operational_harness.py
+          python tests/test_firstmate_windows_harness_portability.py
+          python tests/test_firstmate_windows_wsl_bridge.py
+          python tests/test_firstmate_windows_wsl_prerequisite_gate.py
       - name: Validate shell surfaces
         run: |
+          bash -n Test-AgentSwitchboard-FirstMate-Harness.sh
           bash -n tooling/firstmate/Test-FirstMateInterop.sh
       - name: Validate branch diff hygiene
+        run: |
+          git fetch --no-tags origin main
+          git diff --check origin/main...HEAD
+
+  windows-bridge-contract:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate bridge static contracts
+        shell: pwsh
+        run: |
+          python tests/test_firstmate_asb_convergence_contract.py
+          python tests/test_firstmate_operational_harness.py
+          python tests/test_firstmate_windows_harness_portability.py
+          python tests/test_firstmate_windows_wsl_bridge.py
+          python tests/test_firstmate_windows_wsl_prerequisite_gate.py
+      - name: Validate Windows-native contract front door
+        shell: pwsh
+        run: |
+          $head = (git rev-parse HEAD).Trim()
+          pwsh -NoLogo -NoProfile -File .\Test-AgentSwitchboard-FirstMate-Harness.ps1 -Mode contract -ExpectedHead $head -WslDistribution Ubuntu
+      - name: Validate branch diff hygiene
+        shell: pwsh
         run: |
           git fetch --no-tags origin main
           git diff --check origin/main...HEAD
