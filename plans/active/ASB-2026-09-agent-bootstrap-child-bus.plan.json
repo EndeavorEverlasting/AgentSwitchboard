@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-12T19:50:00Z",
-  "updatedUtc": "2026-09-12T19:50:00Z",
+  "updatedUtc": "2026-09-13T17:35:00Z",
   "mission": "Create the durable September program for reversible agent bootstrap (Inspect/Apply/Remove), provider-neutral child execution (Pi/OpenCode adapters via shared bus), fresh-TUI LSP runtime certification, heterogeneous and nested delegation, and stale PR/path convergence — replacing chat-only coordination with repository-owned ownership, dependency and collision boundaries.",
   "owner": {
     "surface": "September agent bootstrap and child bus program",
@@ -73,17 +73,33 @@
     {
       "taskId": "LSP-02",
       "title": "OpenCode fresh-TUI LSP runtime certification",
-      "status": "pending",
-      "owner": "OpenCode LSP field lane",
+      "status": "in-progress",
+      "owner": "OpenCode LSP field lane / Admin Box 1",
       "dependencies": ["COORD-01"],
-      "inputs": ["Panel 01 integrated main", "docs/harness/opencode-lsp-workstation-setup.md", "tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json", "pyright 1.1.414 prerequisite", "headless receipt 20260912T194619Z-e3f423df"],
-      "outputs": ["local opencode-lsp-runtime-smoke.json/.md beneath %LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/runs/<run-id>/", "TUI/headless differential classification"],
-      "acceptanceCriteria": [
-        "Fresh TUI launched from canonical Live checkout with OPENCODE_EXPERIMENTAL_LSP_TOOL=true, file tests/test_technician_live_cert_surface.py opened, strict hover/def/refs captured with nonLspSemanticFallbackUsed No and verbatim errors",
-        "Runs headless vs TUI comparison yields one of PASS_TUI_HEADLESS_DIFFERENTIAL, FAIL_BOTH_MODES, PARTIAL_TUI_DIFFERENTIAL, BLOCKED_OPERATOR_INTERACTION",
-        "No tracked harness mutation unless TUI exposes reproducible product defect (then bounded defect handoff)"
+      "inputs": [
+        "ASQ-005 in .ai/WORK_QUEUE.md",
+        "PR #163 cursor/asq-005-canonical-runtime-floor-4761 @ d616acced8cee9ddf68797a909d9057f37408834",
+        "docs/harness/opencode-lsp-workstation-setup.md ASQ-005 floor",
+        "tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json",
+        "headless receipt 20260912T194619Z-e3f423df",
+        "canonical Live checkout %USERPROFILE%\\dev\\AgentSwitchBoard-Live"
       ],
-      "evidence": []
+      "outputs": [
+        "local opencode-lsp-runtime-smoke.json/.md beneath %LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/runs/<run-id>/",
+        "TUI/headless differential classification",
+        "ASQ-005 DONE only after LSP_RUNTIME_SMOKE_TEST: PASS with nonLspSemanticFallbackUsed No"
+      ],
+      "acceptanceCriteria": [
+        "Ledger/docs/CI floor routes operators only through %USERPROFILE%\\dev\\AgentSwitchBoard-Live Configure→generated launcher (PR #163 contract proof; not runtime PASS)",
+        "Fresh TUI launched from that Live checkout with OPENCODE_EXPERIMENTAL_LSP_TOOL=true, tests/test_technician_live_cert_surface.py opened once, strict hover/def/refs on read_text with nonLspSemanticFallbackUsed No and verbatim errors",
+        "Protected control: headless baseline 20260912T194619Z-e3f423df remains the comparison floor; classification one of PASS_TUI_HEADLESS_DIFFERENTIAL, PASS_BOTH_MODES, FAIL_TUI_ONLY, FAIL_BOTH_MODES",
+        "No tracked harness mutation unless TUI exposes reproducible product defect",
+        "Cloud/Linux agents must not claim live TUI PASS; Admin Box 1 is the sole runtime observation owner"
+      ],
+      "evidence": [
+        "PR #163 green CI floor repair (canonical Live next-action, ASQ-008/009 gated on ASQ-005, tests/test_asq005_canonical_runtime_floor.py)",
+        "LIVE_RUNTIME_PROOF: UNPROVEN — requires Admin Box 1 interactive OpenCode TUI"
+      ]
     },
     {
       "taskId": "PI-BOOT-03",

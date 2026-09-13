@@ -42,7 +42,7 @@ No credentials in Git/evidence, no force reset/push, no silent local-path reloca
 ## Tasks (10) — owners and gates
 
 *   **COORD-01** `in-progress` — establish this floor (this file) — proves refreshed `54cce3b`, plan/ledger encode program, private paths excluded.
-*   **LSP-02** `pending` — fresh-TUI vs headless `20260912T194619Z-e3f423df` (runtime-only, no tracked mutation unless TUI defect).
+*   **LSP-02** `in-progress` — ASQ-005 fresh-TUI vs headless `20260912T194619Z-e3f423df`. Ledger/routing floor repaired in PR #163 (`d616acc`); **live TUI observation still UNPROVEN** and owned only by Admin Box 1 on `%USERPROFILE%\dev\AgentSwitchBoard-Live`.
 *   **PI-BOOT-03** `pending` — `Bootstrap-Pi-SystemWide.cmd` + `Unbootstrap-Pi-SystemWide.cmd` + `tooling/pi/Install-AgentSwitchboardPiSystem.ps1` behind shared lifecycle.
 *   **BUS-04** `pending` — `tooling/harness/child-agent-bus/` `child-agent-request/result/error.v1` + registry + dispatcher + fixtures + validator (generic, no adapter impl).
 *   **PI-ADAPTER-05** `pending` — Pi as first conforming `child-agent-bus` adapter (needs 03+04).

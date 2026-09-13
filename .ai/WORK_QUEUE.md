@@ -94,9 +94,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **References:** `docs/harness/opencode-lsp-workstation-setup.md`, `tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json`, `tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md`, `scripts/Test-OpenCodeLspHarness.ps1`
 - **Acceptance gate:** fresh TUI launched from canonical Live checkout with `OPENCODE_EXPERIMENTAL_LSP_TOOL=true`, `tests/test_technician_live_cert_surface.py` opened, strict hover/def/refs captured with `nonLspSemanticFallbackUsed No`; comparison with headless `e3f423df` yields `PASS_TUI_HEADLESS_DIFFERENTIAL` or `FAIL_BOTH_MODES` etc.; receipt validated
 - **Gate:** none
-- **Last proof:** artifact:tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json artifact:tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md ledger-repair:ASQ-005-next-action-canonical-Live-floor
+- **Last proof:** artifact:tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json artifact:docs/harness/opencode-lsp-workstation-setup.md pr:#163 commit:d616acced8cee9ddf68797a909d9057f37408834 ledger-repair:canonical-Live-floor; LIVE_RUNTIME_PROOF:UNPROVEN
 - **Next action:** on Admin Box 1 only: `$repo = Join-Path $env:USERPROFILE 'dev\AgentSwitchBoard-Live'; Set-Location -LiteralPath $repo; git fetch --all --prune --tags; git pull --ff-only origin main; if (git status --porcelain) { throw 'WORKTREE_DIRTY' }; pwsh -NoLogo -NoProfile -File .\scripts\Get-RepositoryWorkLedgerFrontier.ps1 -Json; `$env:OPENCODE_EXPERIMENTAL_LSP_TOOL='true'; pwsh -NoLogo -NoProfile -File .\tooling\harness\operational\opencode-lsp-setup\Invoke-OpenCodeLspWorkstationSetup.ps1 -Mode Configure -RepoPath $repo; launch newest `%LOCALAPPDATA%\AgentSwitchboard\opencode-lsp\runs\*\Open-AgentSwitchboard-OpenCode-Lsp.cmd`; open `tests/test_technician_live_cert_surface.py` once; LSP-only hover/definition/references on `read_text`; write local `opencode-lsp-runtime-smoke.json/.md`; run `scripts\Test-OpenCodeLspHarness.ps1`
-- **Updated:** 2026-09-13T17:10:00Z
+- **Updated:** 2026-09-13T17:35:00Z
 
 ## ASQ-006 — Pi reversible system bootstrap lifecycle
 
