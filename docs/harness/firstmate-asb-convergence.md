@@ -38,7 +38,7 @@ Windows Admin Box hosts the **bridge only**; FirstMate execution remains **WSL/U
 - **Windows hosts are bridge only.** The tracked PowerShell harness validates the Windows side and crosses into explicit Ubuntu; it does not host FirstMate natively.
 - **Native Windows FirstMate is out of scope.** Do not infer support from a Windows-hosted contract PASS.
 - **FirstMate owns dispatch and lifecycle.** AgentSwitchboard does not register a FirstMate crew-routing skill, capability, trigger, wake loop, task state machine, or runtime selector in `FM-BRIDGE-10`.
-- **Herdr is deferred.** FirstMate/Herdr and Android/Termux Herdr remain experimental-unproved and outside the Windows Admin Box bootstrap wave.
+- **Herdr is deferred and not part of Windows Admin Box bootstrap.** FirstMate/Herdr and Android/Termux Herdr remain experimental-unproved and outside this wave.
 
 ## Separate native Windows system bootstraps
 
