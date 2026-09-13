@@ -1,0 +1,44 @@
+{
+  "schema": "agentswitchboard.firstmate-windows-wsl-artifacts.v1",
+  "tracked": false,
+  "default_root": "operating-system temporary directory/AgentSwitchboard/firstmate-windows-wsl/<run-id>",
+  "artifacts": [
+    {
+      "id": "windows-wsl-prerequisite-proof",
+      "filename": "firstmate-wsl-prerequisites.txt",
+      "owner": "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1",
+      "proof": "tool and GitHub-auth readiness only"
+    },
+    {
+      "id": "windows-wsl-prerequisite-stderr",
+      "filename": "firstmate-wsl-prerequisites-stderr.log",
+      "owner": "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1",
+      "proof": "sanitized prerequisite stderr only"
+    },
+    {
+      "id": "windows-wsl-diagnostics",
+      "filename": "wsl-stderr.log",
+      "owner": "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1",
+      "proof": "stage-labelled WSL diagnostics; never a PASS by itself"
+    },
+    {
+      "id": "windows-wsl-bootstrap-stdout",
+      "filename": "wsl-bootstrap-stdout.txt",
+      "owner": "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1",
+      "proof": "WSL-owned standalone clone identity output"
+    },
+    {
+      "id": "windows-wsl-runtime-proof",
+      "filename": "firstmate-floor.txt",
+      "owner": "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1",
+      "proof": "read-only ASB/FirstMate interoperability floor only"
+    }
+  ],
+  "safety": {
+    "repository_tracking_allowed": false,
+    "credentials_allowed": false,
+    "provider_tokens_allowed": false,
+    "raw_gh_auth_output_allowed": false,
+    "machine_local_paths_public_artifact_allowed": false
+  }
+}

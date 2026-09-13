@@ -1,0 +1,41 @@
+{
+  "schema": "agentswitchboard.firstmate-windows-wsl-codebase-map.v1",
+  "owner": "FM-BRIDGE-10",
+  "architecture_decision": "docs/architecture/asb-firstmate-runtime-boundary.md",
+  "entrypoints": {
+    "windows_contract": "Test-AgentSwitchboard-FirstMate-Harness.ps1 -Mode contract",
+    "windows_cmd": "Test-AgentSwitchboard-FirstMate-Harness.cmd",
+    "windows_physical_floor": "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1",
+    "windows_wsl_bridge": "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1",
+    "linux_contract": "bash Test-AgentSwitchboard-FirstMate-Harness.sh contract",
+    "linux_probe": "bash tooling/firstmate/Test-FirstMateInterop.sh"
+  },
+  "state_owners": {
+    "tracked_bridge_contract": "AgentSwitchboard",
+    "local_bridge_evidence": "AgentSwitchboard operator runtime; untracked",
+    "temporary_wsl_clone": "AgentSwitchboard bridge; script-owned and auto-cleaned unless explicit failure preservation is requested",
+    "firstmate_runtime_state": "FirstMate",
+    "crew_dispatch": "FirstMate",
+    "crew_lifecycle": "FirstMate",
+    "session_backend": "FirstMate-selected backend; tmux is the ASB reference floor"
+  },
+  "known_traps": [
+    "A Windows-created linked worktree may be valid to Windows Git but is not a safe Linux Git checkout. Create a WSL-owned standalone exact-head clone.",
+    "Do not inherit the default WSL distribution. Select contract-defined Ubuntu explicitly for every bridge process.",
+    "PowerShell CRLF transported into bash -lc can break set -euo pipefail. Normalize every transported command to LF first.",
+    "Native stdout or stderr may be empty. PowerShell helpers must accept empty strings and preserve the process exit code as authority.",
+    "Capture stdout and stderr separately. WSL configuration warnings on stderr are diagnostics, not machine-readable stdout.",
+    "Do not depend on wslpath for Windows path transport. Use WSLENV /p for reviewed path variables and replace inherited entries for bridge-owned variable names before adding the required mode.",
+    "Every WSL process needs a bounded timeout. Timeout exit 124 is a failure, never readiness evidence.",
+    "A unique /tmp AgentSwitchboard clone is script-owned temporary state, not a durable worktree. Clean it after every run by default and preserve it on failure only through the explicit diagnostic switch.",
+    "Contract or hosted Windows PASS does not prove the physical Ubuntu/WSL floor.",
+    "The prerequisite gate may report apt/gh recovery commands but must not install dependencies or mutate credentials itself.",
+    "Do not revive the historical AgentSwitchboard FirstMate route selector or crew-orchestration skill; live dispatch and lifecycle belong to FirstMate."
+  ],
+  "proof_ladder": [
+    "tracked bridge contract",
+    "hosted Windows/Linux contract validation",
+    "physical WSL/Ubuntu prerequisite + exact-head interoperability floor",
+    "separate bounded FirstMate local-only crew pilot"
+  ]
+}
