@@ -183,19 +183,18 @@ ASQ-005 may run only on Admin Box 1 from the canonical Live checkout:
 
 Do not use Desktop, OneDrive, or backup clones as the development root. Preserve noncanonical copies; do not develop there.
 
-Durable gate contract: `docs/harness/asq005-fresh-tui-lsp-runtime-gates.md` and `tooling/harness/operational/opencode-lsp-setup/asq005-runtime-gates.contract.json` (G0–G8). **Configure/CI proof is G1 only and never counts as ASQ-005 DONE.**
+Durable gate contract: `docs/harness/asq005-fresh-tui-lsp-runtime-gates.md` and `tooling/harness/operational/opencode-lsp-setup/asq005-runtime-gates.contract.json` (G0–G8). **Configure/CI proof is G1 only and never counts as ASQ-005 DONE.** Tracked `liveProofStatus` stays **UNPROVEN** until Admin Box 1 observes live PASS.
 
 Required operator sequence:
 
-1. Fast-forward clean `main` in the Live checkout (G0: root/origin/fetch/ff-only/clean/frontier) and confirm the work-ledger still permits ASQ-005.
-2. Set `$env:OPENCODE_EXPERIMENTAL_LSP_TOOL='true'`.
-3. Run `Invoke-OpenCodeLspWorkstationSetup.ps1 -Mode Configure -RepoPath <Live root>` and launch the generated `Open-AgentSwitchboard-OpenCode-Lsp.cmd` for that immutable run (G1–G2).
-4. Open `tests/test_technician_live_cert_surface.py` exactly once, then perform LSP-only hover, go-to-definition, and find-references on `read_text` (G3–G4). No grep/search/AST/manual fallback.
-5. Classify against headless baseline `20260912T194619Z-e3f423df` (G5).
-6. Write the local runtime-smoke JSON/MD receipts under the Configure run directory (G6) and re-run `scripts/Test-OpenCodeLspHarness.ps1` plus `git diff --check` (G7).
-7. Mark ASQ-005 DONE only when G8 terminal criteria are all true, including `LSP_RUNTIME_SMOKE_TEST: PASS`.
+1. From the Live checkout, run reusable prep `tooling/harness/operational/opencode-lsp-setup/Invoke-Asq005FreshTuiCertificationPrep.ps1` (G0 floor + G1 Configure). It prints `ASQ005_LIVE_PROOF_STATUS=UNPROVEN` and never claims DONE.
+2. Launch the generated `Open-AgentSwitchboard-OpenCode-Lsp.cmd` from the Configure run directory (G2).
+3. Open `tests/test_technician_live_cert_surface.py` exactly once, then perform LSP-only hover, go-to-definition, and find-references on `read_text` (G3–G4). No grep/search/AST/manual fallback.
+4. Classify against headless baseline `20260912T194619Z-e3f423df` (G5).
+5. Write the local runtime-smoke JSON/MD receipts under the Configure run directory (G6) and re-run `scripts/Test-OpenCodeLspHarness.ps1` plus `git diff --check` (G7).
+6. Mark ASQ-005 DONE only when G8 terminal criteria are all true, including `LSP_RUNTIME_SMOKE_TEST: PASS`.
 
-Cloud/Linux CI can keep the contract green; it cannot substitute for the Admin Box fresh-TUI observation.
+Cloud/Linux CI can keep the contract green; it cannot substitute for the Admin Box fresh-TUI observation. On non-Windows hosts the prep entrypoint fail-closes Configure with `WINDOWS_REQUIRED` after honest G0 static checks.
 
 
 ## Troubleshooting

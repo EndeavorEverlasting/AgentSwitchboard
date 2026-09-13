@@ -52,7 +52,7 @@ No credentials in Git/evidence, no force reset/push, no silent local-path reloca
 ## Tasks — owners and gates
 
 *   **COORD-01** `completed` — September coordination floor established.
-*   **LSP-02** `in-progress` — ASQ-005 fresh-TUI vs headless `20260912T194619Z-e3f423df` through durable G0–G8 (`docs/harness/asq005-fresh-tui-lsp-runtime-gates.md`). Floor on main (PR #163 @ `24cce9e`); live TUI still UNPROVEN; Admin Box 1 only on `%USERPROFILE%\dev\AgentSwitchBoard-Live`. ASQ-008/009 remain FirstMate FREEZE/HAND-OFF.
+*   **LSP-02** `in-progress` — ASQ-005 fresh-TUI vs headless `20260912T194619Z-e3f423df` through durable G0–G8 (`docs/harness/asq005-fresh-tui-lsp-runtime-gates.md`). Floor on main (PR #163 @ `24cce9e`); G0–G8 encoding on main (PR #170 @ `1e5c599`); prep entrypoint `Invoke-Asq005FreshTuiCertificationPrep.ps1`; live TUI still UNPROVEN; Admin Box 1 only on `%USERPROFILE%\dev\AgentSwitchBoard-Live`. ASQ-008/009 remain FirstMate FREEZE/HAND-OFF.
 *   **PI-BOOT-03** `completed` — Pi reversible bootstrap on main; follow-up registry truth only.
 *   **BUS-04** `completed` — child-bus spine on main; subsequent work is **NARROW** only.
 *   **ARCH-FM-01** `completed` — accepted FirstMate crew-runtime boundary ADR + plan/ledger sync.
@@ -75,4 +75,4 @@ Proves current ownership/dependency/collision state and the accepted FirstMate b
 
 ## Handoff
 
-Next: **Admin Box 1** runs ASQ-005 / LSP-02 G0–G8 live TUI smoke from canonical Live. Configure/CI is G1 only and never DONE. ASQ-008/009 stay FirstMate FREEZE/HAND-OFF. See `handoff.nextCommand` in `.plan.json`.
+Next: **Admin Box 1** runs `Invoke-Asq005FreshTuiCertificationPrep.ps1` then G2–G8 live TUI smoke from canonical Live. Configure/CI is G1 only and never DONE. ASQ-008/009 stay FirstMate FREEZE/HAND-OFF. See `handoff.nextCommand` in `.plan.json`.

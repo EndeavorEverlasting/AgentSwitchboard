@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-12T19:50:00Z",
-  "updatedUtc": "2026-09-13T17:55:00Z",
+  "updatedUtc": "2026-09-13T21:45:00Z",
   "mission": "Coordinate the September program after accepting FirstMate as the canonical live crew runtime: keep ASB bootstrap/readiness/policy/validation/evidence/planning; narrow the child-agent-bus spine to an interop/policy envelope; freeze ASB Pi/OpenCode adapters, heterogeneous fan-out, and nested bus runtime; proceed with LSP certification, FirstMate interop refresh, GNHF narrowing, Pi bootstrap registry truth, and PR/path convergence.",
   "owner": {
     "surface": "September agent bootstrap and FirstMate runtime boundary",
@@ -105,7 +105,8 @@
         "tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json",
         "headless baseline 20260912T194619Z-e3f423df",
         "canonical Live checkout %USERPROFILE%\\dev\\AgentSwitchBoard-Live",
-        "fixture tests/test_technician_live_cert_surface.py symbol read_text"
+        "fixture tests/test_technician_live_cert_surface.py symbol read_text",
+        "tooling/harness/operational/opencode-lsp-setup/Invoke-Asq005FreshTuiCertificationPrep.ps1"
       ],
       "outputs": [
         "local opencode-lsp-runtime-smoke.json/.md beneath %LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/runs/<run-id>/",
@@ -131,7 +132,9 @@
         "Cloud/Linux runtime sprint: INTEGRATED contract floor only; launcher/TUI/LSP hover-def-refs NOT OBSERVED; no opencode-lsp-runtime-smoke.json/.md",
         "LIVE_RUNTIME_PROOF: UNPROVEN \u2014 Admin Box 1 interactive OpenCode TUI required",
         "Runtime sprint ASQ-005/LSP-02 on Linux Cloud Agent 2026-09-13T18:05Z: stop/safe-start N/A (no Windows OpenCode session); launcher attach NOT RUN; target surface NOT OBSERVED; LSP hover/def/refs on read_text NOT OBSERVED; runtime artifact NONE; protected headless control 20260912T194619Z-e3f423df NOT RE-OBSERVED; proof level INTEGRATED contract floor only",
-        "2026-09-13 cloud agent: durable G0-G8 gate contract encoded; live TUI still UNPROVEN on Linux Cloud Agent (WINDOWS_REQUIRED on Configure)"
+        "2026-09-13 cloud agent: durable G0-G8 gate contract encoded; live TUI still UNPROVEN on Linux Cloud Agent (WINDOWS_REQUIRED on Configure)",
+        "PR #170 squash-merged to main @ 1e5c599a13e84cb3ccfd23ae723cf6c77264d7ed (durable G0-G8 gate encoding)",
+        "2026-09-13 cloud deepen: Invoke-Asq005FreshTuiCertificationPrep.ps1 graduates G0/G1 prep from WORK_QUEUE snippet; harness validates liveProofStatus=UNPROVEN and configureNeverPromotesToDone; live TUI still UNPROVEN"
       ]
     },
     {
@@ -423,7 +426,7 @@
   },
   "handoff": {
     "nextOwner": "Admin Box 1 (ASQ-005 / LSP-02 G0-G8 live TUI); ASQ-015 may proceed in parallel; ASQ-008/009 remain FirstMate FREEZE/HAND-OFF",
-    "nextCommand": "run Admin Box 1 Live-floor fresh-TUI certification through G0-G8: $ErrorActionPreference='Stop'; $repo = Join-Path $env:USERPROFILE 'dev\\AgentSwitchBoard-Live'; Set-Location -LiteralPath $repo; git fetch --all --prune --tags; git pull --ff-only origin main; if (git status --porcelain) { throw 'WORKTREE_NOT_CLEAN' }; if (-not (git merge-base --is-ancestor 24cce9e321a4913dda32f21a2d51a599dd0e4bb4 HEAD; $?)) { throw 'MAIN_MISSING_ASQ005_FLOOR' }; pwsh -NoLogo -NoProfile -File .\\scripts\\Get-RepositoryWorkLedgerFrontier.ps1 -Json; $env:OPENCODE_EXPERIMENTAL_LSP_TOOL='true'; pwsh -NoLogo -NoProfile -File .\\tooling\\harness\\operational\\opencode-lsp-setup\\Invoke-OpenCodeLspWorkstationSetup.ps1 -Mode Configure -RepoPath $repo; $run = Get-ChildItem -LiteralPath \"$env:LOCALAPPDATA\\AgentSwitchboard\\opencode-lsp\\runs\" -Directory | Sort-Object LastWriteTime -Descending | Select-Object -First 1; & (Join-Path $run.FullName 'Open-AgentSwitchboard-OpenCode-Lsp.cmd')",
+    "nextCommand": "run Admin Box 1 Live-floor fresh-TUI certification through G0-G8: $ErrorActionPreference='Stop'; $repo = Join-Path $env:USERPROFILE 'dev\\AgentSwitchBoard-Live'; Set-Location -LiteralPath $repo; pwsh -NoLogo -NoProfile -File .\\tooling\\harness\\operational\\opencode-lsp-setup\\Invoke-Asq005FreshTuiCertificationPrep.ps1; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; # then complete G2-G8 in fresh TUI; Configure/CI never DONE; floor 24cce9e321a4913dda32f21a2d51a599dd0e4bb4 enforced by prep",
     "notes": [
       "ASQ-005 critical path is Admin Box 1 fresh-TUI G0-G8 observation; Configure alone is not DONE.",
       "Durable gates: docs/harness/asq005-fresh-tui-lsp-runtime-gates.md + tooling/harness/operational/opencode-lsp-setup/asq005-runtime-gates.contract.json",
@@ -432,7 +435,8 @@
       "Cloud/Linux cannot substitute; INTEGRATED routing floor is not OBSERVED runtime PASS.",
       "ASQ-008/009 remain FREEZE/HAND-OFF under ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME; do not restart as ASB live adapter lanes after ASQ-005.",
       "If nested work is ever reauthorized: ASQ-011 owns nested-delegation contract/mechanism; ASQ-012 owns depth-2 runtime certification.",
-      "Public plan data must remain public-safe: no private operator host/user/OneDrive path in tracked artifacts."
+      "Public plan data must remain public-safe: no private operator host/user/OneDrive path in tracked artifacts.",
+      "Reusable prep: tooling/harness/operational/opencode-lsp-setup/Invoke-Asq005FreshTuiCertificationPrep.ps1"
     ]
   }
 }

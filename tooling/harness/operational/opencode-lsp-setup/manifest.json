@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 19,
+  "schemaVersion": 20,
   "harnessId": "agentswitchboard.opencode-lsp-workstation-setup.v1",
   "title": "OpenCode LSP workstation setup harness",
   "purpose": "Give low-capability agents and Windows operators one deterministic path to recover a canonical checkout, recover the Windows-facing OpenCode runtime, inspect, configure, verify, and hand off OpenCode LSP enablement without changing product code, governance, secrets, or existing OpenCode configuration.",
@@ -28,7 +28,8 @@
     "preCommitHook": "tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPreCommit.ps1",
     "prePushHook": "tooling/harness/operational/opencode-lsp-setup/hooks/Invoke-OpenCodeLspPrePush.ps1",
     "asq005RuntimeGatesContract": "tooling/harness/operational/opencode-lsp-setup/asq005-runtime-gates.contract.json",
-    "asq005RuntimeGatesDoc": "docs/harness/asq005-fresh-tui-lsp-runtime-gates.md"
+    "asq005RuntimeGatesDoc": "docs/harness/asq005-fresh-tui-lsp-runtime-gates.md",
+    "asq005FreshTuiCertificationPrep": "tooling/harness/operational/opencode-lsp-setup/Invoke-Asq005FreshTuiCertificationPrep.ps1"
   },
   "repositoryRecovery": {
     "operatorInvocationCwdIndependent": true,

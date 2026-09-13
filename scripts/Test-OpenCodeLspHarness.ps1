@@ -147,12 +147,64 @@ foreach ($artifactId in @('runtime-smoke-json','runtime-smoke-report')) { if ($a
 if ([string]$manifest.entrypoints.runtimeSmokeReceiptSchema -ne 'tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json') { [void]$failures.Add('manifest-runtime-smoke-schema-entrypoint-missing') }
 if ([string]$manifest.entrypoints.asq005RuntimeGatesContract -ne 'tooling/harness/operational/opencode-lsp-setup/asq005-runtime-gates.contract.json') { [void]$failures.Add('manifest-asq005-runtime-gates-contract-missing') }
 if ([string]$manifest.entrypoints.asq005RuntimeGatesDoc -ne 'docs/harness/asq005-fresh-tui-lsp-runtime-gates.md') { [void]$failures.Add('manifest-asq005-runtime-gates-doc-missing') }
-if (-not (Test-Path -LiteralPath (Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/asq005-runtime-gates.contract.json') -PathType Leaf)) { [void]$failures.Add('missing:asq005-runtime-gates.contract.json') }
-if (-not (Test-Path -LiteralPath (Join-Path $RootPath 'docs/harness/asq005-fresh-tui-lsp-runtime-gates.md') -PathType Leaf)) { [void]$failures.Add('missing:asq005-fresh-tui-lsp-runtime-gates.md') }
+if ([string]$manifest.entrypoints.asq005FreshTuiCertificationPrep -ne 'tooling/harness/operational/opencode-lsp-setup/Invoke-Asq005FreshTuiCertificationPrep.ps1') { [void]$failures.Add('manifest-asq005-prep-entrypoint-missing') }
+$asq005ContractPath = Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/asq005-runtime-gates.contract.json'
+$asq005DocPath = Join-Path $RootPath 'docs/harness/asq005-fresh-tui-lsp-runtime-gates.md'
+$asq005PrepPath = Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/Invoke-Asq005FreshTuiCertificationPrep.ps1'
+if (-not (Test-Path -LiteralPath $asq005ContractPath -PathType Leaf)) { [void]$failures.Add('missing:asq005-runtime-gates.contract.json') }
+if (-not (Test-Path -LiteralPath $asq005DocPath -PathType Leaf)) { [void]$failures.Add('missing:asq005-fresh-tui-lsp-runtime-gates.md') }
+if (-not (Test-Path -LiteralPath $asq005PrepPath -PathType Leaf)) { [void]$failures.Add('missing:Invoke-Asq005FreshTuiCertificationPrep.ps1') }
+else {
+ $prepTokens=$null; $prepErrors=$null; [void][Management.Automation.Language.Parser]::ParseFile($asq005PrepPath,[ref]$prepTokens,[ref]$prepErrors)
+ if ($prepErrors.Count -gt 0) { [void]$failures.Add("powershell-parse:Invoke-Asq005FreshTuiCertificationPrep.ps1:$($prepErrors[0].Message)") }
+ $prepRaw = Get-Content -LiteralPath $asq005PrepPath -Raw
+ foreach ($token in @('ASQ005_LIVE_PROOF_STATUS','UNPROVEN','ASQ005_CONFIGURE_IS_NOT_DONE','WINDOWS_REQUIRED','never ASQ-005 DONE','24cce9e321a4913dda32f21a2d51a599dd0e4bb4','test_technician_live_cert_surface.py','read_text','LSP_RUNTIME_SMOKE_TEST: PASS','Get-NormalizedOrigin','NOT_ON_MAIN')) {
+  if (-not $prepRaw.Contains($token)) { [void]$failures.Add("asq005-prep-missing:$token") }
+ }
+}
+if (Test-Path -LiteralPath $asq005ContractPath -PathType Leaf) {
+ try { $asq005Contract = Get-Content -LiteralPath $asq005ContractPath -Raw | ConvertFrom-Json } catch { [void]$failures.Add('invalid-json:asq005-runtime-gates.contract.json'); $asq005Contract = $null }
+ if ($null -ne $asq005Contract) {
+  if ([string]$asq005Contract.schema -ne 'agentswitchboard.asq005-runtime-gates.v1') { [void]$failures.Add('asq005-contract-schema-mismatch') }
+  if ([string]$asq005Contract.liveProofStatus -ne 'UNPROVEN') { [void]$failures.Add('asq005-contract-live-proof-not-unproven') }
+  if (-not [bool]$asq005Contract.configureNeverPromotesToDone) { [void]$failures.Add('asq005-contract-configure-may-promote-done') }
+  if ([string]$asq005Contract.runtimeOwner -ne 'Admin Box 1') { [void]$failures.Add('asq005-contract-runtime-owner-mismatch') }
+  if ([string]$asq005Contract.headlessBaselineId -ne '20260912T194619Z-e3f423df') { [void]$failures.Add('asq005-contract-baseline-mismatch') }
+  if ([string]$asq005Contract.liveFloorCommit -ne '24cce9e321a4913dda32f21a2d51a599dd0e4bb4') { [void]$failures.Add('asq005-contract-floor-mismatch') }
+  if ([string]$asq005Contract.fixture.path -ne 'tests/test_technician_live_cert_surface.py') { [void]$failures.Add('asq005-contract-fixture-mismatch') }
+  if ([string]$asq005Contract.fixture.symbol -ne 'read_text') { [void]$failures.Add('asq005-contract-symbol-mismatch') }
+  if ([string]$asq005Contract.receipts.passVerdict -ne 'LSP_RUNTIME_SMOKE_TEST: PASS') { [void]$failures.Add('asq005-contract-pass-verdict-mismatch') }
+  if ([string]$asq005Contract.receipts.nonLspSemanticFallbackUsed -ne 'No') { [void]$failures.Add('asq005-contract-fallback-mismatch') }
+  if ([bool]$asq005Contract.receipts.tracked) { [void]$failures.Add('asq005-contract-receipts-must-be-untracked') }
+  if ([string]$asq005Contract.prepEntrypoint -ne 'tooling/harness/operational/opencode-lsp-setup/Invoke-Asq005FreshTuiCertificationPrep.ps1') { [void]$failures.Add('asq005-contract-prep-entrypoint-mismatch') }
+  $gateIds = @($asq005Contract.gates | ForEach-Object { [string]$_.id })
+  $expectedGateIds = @('G0','G1','G2','G3','G4','G5','G6','G7','G8')
+  if (($gateIds -join ',') -ne ($expectedGateIds -join ',')) { [void]$failures.Add('asq005-contract-gate-ids-mismatch') }
+  $doneRequires = @($asq005Contract.doneRequiresGateIds | ForEach-Object { [string]$_ })
+  if (($doneRequires -join ',') -ne ($expectedGateIds -join ',')) { [void]$failures.Add('asq005-contract-done-requires-mismatch') }
+  $g1 = @($asq005Contract.gates | Where-Object { [string]$_.id -eq 'G1' })[0]
+  if ($null -eq $g1 -or -not [bool]$g1.notSufficientForDone) { [void]$failures.Add('asq005-contract-g1-not-sufficient-missing') }
+  $g8 = @($asq005Contract.gates | Where-Object { [string]$_.id -eq 'G8' })[0]
+  if ($null -eq $g8 -or -not [bool]$g8.doneRequiresLivePassVerdict) { [void]$failures.Add('asq005-contract-g8-live-pass-required-missing') }
+  $g5 = @($asq005Contract.gates | Where-Object { [string]$_.id -eq 'G5' })[0]
+  $allowed = @($g5.allowedClassifications | ForEach-Object { [string]$_ })
+  foreach ($cls in @('PASS_TUI_HEADLESS_DIFFERENTIAL','PASS_BOTH_MODES','FAIL_TUI_ONLY','FAIL_BOTH_MODES')) {
+   if ($cls -notin $allowed) { [void]$failures.Add("asq005-contract-g5-missing:$cls") }
+  }
+ }
+}
+if (Test-Path -LiteralPath $asq005DocPath -PathType Leaf) {
+ $asq005Doc = Get-Content -LiteralPath $asq005DocPath -Raw
+ foreach ($token in @('G0','G8','never counts as ASQ-005 DONE','LSP_RUNTIME_SMOKE_TEST: PASS','Invoke-Asq005FreshTuiCertificationPrep.ps1','LIVE_RUNTIME_PROOF','UNPROVEN','FREEZE')) {
+  if (-not $asq005Doc.Contains($token)) { [void]$failures.Add("asq005-doc-missing:$token") }
+ }
+}
 if ([string]$manifest.entrypoints.runtimeSmokeReportTemplate -ne 'tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md') { [void]$failures.Add('manifest-runtime-smoke-template-entrypoint-missing') }
 if (-not $runtimeDoc.Contains('opencode-lsp-runtime-smoke.json')) { [void]$failures.Add('runtime-doc-missing-recorded-receipt-json') }
 if (-not $runtimeDoc.Contains('opencode-lsp-runtime-smoke.md')) { [void]$failures.Add('runtime-doc-missing-recorded-receipt-md') }
 if (-not $runtimeDoc.Contains('schemas/opencode-lsp-runtime-smoke-receipt.schema.json')) { [void]$failures.Add('runtime-doc-missing-schema-ref') }
+if (-not $runtimeDoc.Contains('Invoke-Asq005FreshTuiCertificationPrep.ps1')) { [void]$failures.Add('runtime-doc-missing-asq005-prep') }
+if (-not $runtimeDoc.Contains('Configure/CI proof is G1 only and never counts as ASQ-005 DONE')) { [void]$failures.Add('runtime-doc-missing-configure-not-done') }
 if ($failures.Count -gt 0) { Write-Host 'OPENCODE LSP HARNESS: FAIL' -ForegroundColor Red; $failures | ForEach-Object { Write-Host "- $_" -ForegroundColor Red }; exit 1 }
 Write-Host "OPENCODE LSP HARNESS: PASS ($($required.Count) required files)" -ForegroundColor Green
 exit 0

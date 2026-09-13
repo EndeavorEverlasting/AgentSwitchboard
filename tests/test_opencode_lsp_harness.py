@@ -200,7 +200,13 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
 
         self.assertEqual('tooling/harness/operational/opencode-lsp-setup/asq005-runtime-gates.contract.json',manifest['entrypoints']['asq005RuntimeGatesContract'])
         self.assertEqual('docs/harness/asq005-fresh-tui-lsp-runtime-gates.md',manifest['entrypoints']['asq005RuntimeGatesDoc'])
+        self.assertEqual('tooling/harness/operational/opencode-lsp-setup/Invoke-Asq005FreshTuiCertificationPrep.ps1',manifest['entrypoints']['asq005FreshTuiCertificationPrep'])
         self.assertEqual('tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json',manifest['entrypoints']['runtimeSmokeReceiptSchema'])
         self.assertEqual('tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md',manifest['entrypoints']['runtimeSmokeReportTemplate'])
-
+        contract=json.loads((H/'asq005-runtime-gates.contract.json').read_text(encoding='utf-8'))
+        self.assertEqual('UNPROVEN',contract['liveProofStatus'])
+        self.assertTrue(contract['configureNeverPromotesToDone'])
+        prep=(H/'Invoke-Asq005FreshTuiCertificationPrep.ps1').read_text(encoding='utf-8')
+        for token in ('ASQ005_LIVE_PROOF_STATUS','WINDOWS_REQUIRED','never ASQ-005 DONE','LSP_RUNTIME_SMOKE_TEST: PASS'):
+            self.assertIn(token,prep,token)
 if __name__ == '__main__': unittest.main()

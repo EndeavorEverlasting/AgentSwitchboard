@@ -57,9 +57,7 @@ class Asq005CanonicalRuntimeFloorTests(unittest.TestCase):
         self.assertTrue(lowered.startswith("- **next action:** run "))
         self.assertIn("AgentSwitchBoard-Live", next_action)
         self.assertIn("USERPROFILE", next_action)
-        self.assertIn("Invoke-OpenCodeLspWorkstationSetup.ps1", next_action)
-        self.assertIn("Configure", next_action)
-        self.assertIn("OPENCODE_EXPERIMENTAL_LSP_TOOL", next_action)
+        self.assertIn("Invoke-Asq005FreshTuiCertificationPrep.ps1", next_action)
         self.assertIn("Open-AgentSwitchboard-OpenCode-Lsp.cmd", next_action)
         self.assertIn("test_technician_live_cert_surface.py", next_action)
         self.assertIn("read_text", next_action)
@@ -70,6 +68,8 @@ class Asq005CanonicalRuntimeFloorTests(unittest.TestCase):
         self.assertIn("LIVE_RUNTIME_PROOF:UNPROVEN", block)
         self.assertIn("asq005-fresh-tui-lsp-runtime-gates.md", block)
         self.assertIn("Configure-only proof is insufficient", block)
+        self.assertIn("1e5c599", block)
+        self.assertIn("pr:#170", block.lower())
 
     def test_adapter_lanes_are_frozen_by_firstmate_boundary(self) -> None:
         text = WORK_QUEUE.read_text(encoding="utf-8")
@@ -88,7 +88,7 @@ class Asq005CanonicalRuntimeFloorTests(unittest.TestCase):
         doc = RUNTIME_DOC.read_text(encoding="utf-8")
         self.assertIn("ASQ-005 fresh-TUI certification floor", doc)
         self.assertIn(r"%USERPROFILE%\dev\AgentSwitchBoard-Live", doc)
-        self.assertIn("Invoke-OpenCodeLspWorkstationSetup.ps1", doc)
+        self.assertIn("Invoke-Asq005FreshTuiCertificationPrep.ps1", doc)
         self.assertIn("asq005-fresh-tui-lsp-runtime-gates.md", doc)
         self.assertIn("G1 only", doc)
         self.assertIn("20260912T194619Z-e3f423df", doc)
@@ -99,6 +99,15 @@ class Asq005CanonicalRuntimeFloorTests(unittest.TestCase):
     def test_g0_g8_gate_contract_and_doc(self) -> None:
         self.assertTrue(GATES_DOC.is_file(), GATES_DOC)
         self.assertTrue(GATES_CONTRACT.is_file(), GATES_CONTRACT)
+        prep = (
+            ROOT
+            / "tooling"
+            / "harness"
+            / "operational"
+            / "opencode-lsp-setup"
+            / "Invoke-Asq005FreshTuiCertificationPrep.ps1"
+        )
+        self.assertTrue(prep.is_file(), prep)
         doc = GATES_DOC.read_text(encoding="utf-8")
         for gate_id in _GATE_IDS:
             self.assertIn(gate_id, doc)
@@ -106,14 +115,33 @@ class Asq005CanonicalRuntimeFloorTests(unittest.TestCase):
         self.assertIn("LSP_RUNTIME_SMOKE_TEST: PASS", doc)
         self.assertIn("FREEZE", doc)
         self.assertIn("never counts as ASQ-005 DONE", doc)
+        self.assertIn("Invoke-Asq005FreshTuiCertificationPrep.ps1", doc)
+        self.assertIn("LIVE_RUNTIME_PROOF", doc)
+        self.assertIn("UNPROVEN", doc)
         contract = json.loads(GATES_CONTRACT.read_text(encoding="utf-8"))
         self.assertEqual(contract["schema"], "agentswitchboard.asq005-runtime-gates.v1")
+        self.assertEqual(contract["liveProofStatus"], "UNPROVEN")
+        self.assertTrue(contract["configureNeverPromotesToDone"])
+        self.assertEqual(contract["runtimeOwner"], "Admin Box 1")
         self.assertEqual(contract["headlessBaselineId"], "20260912T194619Z-e3f423df")
         self.assertEqual(contract["fixture"]["path"], "tests/test_technician_live_cert_surface.py")
         self.assertEqual(contract["fixture"]["symbol"], "read_text")
         self.assertEqual([g["id"] for g in contract["gates"]], list(_GATE_IDS))
+        self.assertEqual(contract["doneRequiresGateIds"], list(_GATE_IDS))
+        self.assertEqual(
+            contract["prepEntrypoint"],
+            "tooling/harness/operational/opencode-lsp-setup/Invoke-Asq005FreshTuiCertificationPrep.ps1",
+        )
         g1 = next(g for g in contract["gates"] if g["id"] == "G1")
         self.assertTrue(g1.get("notSufficientForDone"))
+        g8 = next(g for g in contract["gates"] if g["id"] == "G8")
+        self.assertTrue(g8.get("doneRequiresLivePassVerdict"))
+        prep_text = prep.read_text(encoding="utf-8")
+        self.assertIn("Get-NormalizedOrigin", prep_text)
+        self.assertIn("NOT_ON_MAIN", prep_text)
+        self.assertIn("ASQ005_LIVE_PROOF_STATUS", prep_text)
+        self.assertIn("WINDOWS_REQUIRED", prep_text)
+        self.assertIn("never ASQ-005 DONE", prep_text)
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(
             manifest["entrypoints"]["asq005RuntimeGatesContract"],
@@ -122,6 +150,10 @@ class Asq005CanonicalRuntimeFloorTests(unittest.TestCase):
         self.assertEqual(
             manifest["entrypoints"]["asq005RuntimeGatesDoc"],
             "docs/harness/asq005-fresh-tui-lsp-runtime-gates.md",
+        )
+        self.assertEqual(
+            manifest["entrypoints"]["asq005FreshTuiCertificationPrep"],
+            "tooling/harness/operational/opencode-lsp-setup/Invoke-Asq005FreshTuiCertificationPrep.ps1",
         )
 
     def test_september_plan_handoff_uses_canonical_live_only(self) -> None:
@@ -133,10 +165,7 @@ class Asq005CanonicalRuntimeFloorTests(unittest.TestCase):
             self.assertNotIn(forbidden, lowered, next_command)
         self.assertIn("AgentSwitchBoard-Live", next_command)
         self.assertIn("USERPROFILE", next_command)
-        self.assertIn("Invoke-OpenCodeLspWorkstationSetup.ps1", next_command)
-        self.assertIn("Configure", next_command)
-        self.assertIn("OPENCODE_EXPERIMENTAL_LSP_TOOL", next_command)
-        self.assertIn("Open-AgentSwitchboard-OpenCode-Lsp.cmd", next_command)
+        self.assertIn("Invoke-Asq005FreshTuiCertificationPrep.ps1", next_command)
         self.assertIn("24cce9e321a4913dda32f21a2d51a599dd0e4bb4", next_command)
         self.assertIn("Admin Box 1", handoff["nextOwner"])
         self.assertTrue(any("FREEZE" in n for n in handoff.get("notes") or []))
@@ -145,11 +174,13 @@ class Asq005CanonicalRuntimeFloorTests(unittest.TestCase):
         criteria = " ".join(lsp02.get("acceptanceCriteria") or [])
         self.assertIn("UNPROVEN", evidence)
         self.assertIn("24cce9e", evidence)
+        self.assertIn("1e5c599", evidence)
         self.assertIn("G0", criteria)
         self.assertIn("G8", criteria)
         self.assertIn("test_technician_live_cert_surface.py", criteria)
         self.assertIn("read_text", criteria)
         self.assertIn("never promote", criteria.lower())
+        self.assertIn("Invoke-Asq005FreshTuiCertificationPrep.ps1", " ".join(lsp02.get("inputs") or []))
 
 
 if __name__ == "__main__":
