@@ -91,27 +91,37 @@
     {
       "taskId": "LSP-02",
       "title": "OpenCode fresh-TUI LSP runtime certification",
-      "status": "pending",
-      "owner": "OpenCode LSP field lane",
+      "status": "in-progress",
+      "owner": "Admin Box 1",
       "dependencies": [
         "COORD-01"
       ],
       "inputs": [
-        "docs/harness/opencode-lsp-workstation-setup.md",
-        "opencode-lsp-runtime-smoke receipt schema",
-        "headless receipt 20260912T194619Z-e3f423df"
+        "ASQ-005 in .ai/WORK_QUEUE.md",
+        "main@24cce9e321a4913dda32f21a2d51a599dd0e4bb4 (squash merge of PR #163)",
+        "docs/harness/opencode-lsp-workstation-setup.md ASQ-005 floor",
+        "tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json",
+        "headless receipt 20260912T194619Z-e3f423df",
+        "canonical Live checkout %USERPROFILE%\\dev\\AgentSwitchBoard-Live"
       ],
       "outputs": [
-        "local opencode-lsp-runtime-smoke.json/.md",
-        "TUI/headless differential classification"
+        "local opencode-lsp-runtime-smoke.json/.md beneath %LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/runs/<run-id>/",
+        "TUI/headless differential classification",
+        "ASQ-005 DONE only after LSP_RUNTIME_SMOKE_TEST: PASS with nonLspSemanticFallbackUsed No"
       ],
       "acceptanceCriteria": [
-        "Fresh TUI launched from canonical Live checkout with OPENCODE_EXPERIMENTAL_LSP_TOOL=true and strict hover/def/refs captured",
-        "Comparison yields an allowed differential classification",
-        "No tracked harness mutation unless TUI exposes a reproducible product defect"
+        "Ledger/docs/CI floor routes operators only through %USERPROFILE%\\dev\\AgentSwitchBoard-Live Configure\u2192generated launcher (PR #163 contract proof; not runtime PASS)",
+        "Fresh TUI launched from that Live checkout with OPENCODE_EXPERIMENTAL_LSP_TOOL=true, tests/test_technician_live_cert_surface.py opened once, strict hover/def/refs on read_text with nonLspSemanticFallbackUsed No and verbatim errors",
+        "Protected control: headless baseline 20260912T194619Z-e3f423df remains the comparison floor; classification one of PASS_TUI_HEADLESS_DIFFERENTIAL, PASS_BOTH_MODES, FAIL_TUI_ONLY, FAIL_BOTH_MODES",
+        "No tracked harness mutation unless TUI exposes reproducible product defect",
+        "Cloud/Linux agents must not claim live TUI PASS; Admin Box 1 is the sole runtime observation owner",
+        "Public plan handoff.nextCommand must use Join-Path $env:USERPROFILE 'dev\\AgentSwitchBoard-Live' only \u2014 never private OneDrive/Desktop backup paths"
       ],
       "evidence": [
-        "pr:#163 canonical Live floor routing on main; LIVE_RUNTIME_PROOF:UNPROVEN"
+        "PR #163 squash-merged to main @ 24cce9e321a4913dda32f21a2d51a599dd0e4bb4 (canonical Live floor, ASQ-008/009 gated on ASQ-005)",
+        "Cloud/Linux runtime sprint: INTEGRATED contract floor only; launcher/TUI/LSP hover-def-refs NOT OBSERVED; no opencode-lsp-runtime-smoke.json/.md",
+        "LIVE_RUNTIME_PROOF: UNPROVEN \u2014 Admin Box 1 interactive OpenCode TUI required",
+        "Runtime sprint ASQ-005/LSP-02 on Linux Cloud Agent 2026-09-13T18:05Z: stop/safe-start N/A (no Windows OpenCode session); launcher attach NOT RUN; target surface NOT OBSERVED; LSP hover/def/refs on read_text NOT OBSERVED; runtime artifact NONE; protected headless control 20260912T194619Z-e3f423df NOT RE-OBSERVED; proof level INTEGRATED contract floor only"
       ]
     },
     {
@@ -399,12 +409,17 @@
   "proof": {
     "target": "durable architecture decision + public-plan/ledger sync for FirstMate crew-runtime boundary",
     "achieved": "Accepted ADR on main via PR #164; clarification that FirstMate secondmates are flat and ASB nested live program is RETIRED rather than claimed implemented by FirstMate",
-    "ceiling": "Proves architecture/ownership durability only. Does not prove live FirstMate crew, GNHF redundancy, LSP activation, or child-agent execution."
+    "ceiling": "Public plan/ledger coordination + INTEGRATED Live routing floor. Does not prove live OpenCode TUI LSP hover/definition/references, FirstMate crew dispatch, or provider delivery."
   },
   "handoff": {
-    "nextOwner": "ASQ-015 FirstMate interop refresh and ASQ-005 LSP certification in parallel",
-    "nextCommand": "git fetch --all --prune --tags; git switch main; git pull --ff-only origin main; pwsh -NoLogo -NoProfile -File .\\scripts\\Get-RepositoryWorkLedgerFrontier.ps1 -Json",
+    "nextOwner": "Admin Box 1 (ASQ-005 / LSP-02 live TUI); parallel ASQ-015 FirstMate interop refresh; ASQ-008/009 blocked until ASQ-005 DONE",
+    "nextCommand": "run Admin Box 1 Live-floor fresh-TUI certification: $ErrorActionPreference = 'Stop'; $repo = Join-Path $env:USERPROFILE 'dev\\AgentSwitchBoard-Live'; Set-Location -LiteralPath $repo; git fetch --all --prune --tags; git checkout main; git pull --ff-only origin main; $head = (git rev-parse HEAD).Trim(); if ($head -ne '24cce9e321a4913dda32f21a2d51a599dd0e4bb4' -and -not (git merge-base --is-ancestor 24cce9e321a4913dda32f21a2d51a599dd0e4bb4 HEAD; $?)) { throw \"MAIN_MISSING_ASQ005_FLOOR|head=$head\" }; if (git status --porcelain) { throw 'WORKTREE_DIRTY' }; pwsh -NoLogo -NoProfile -File .\\scripts\\Get-RepositoryWorkLedgerFrontier.ps1 -Json; python -m unittest tests.test_asq005_canonical_runtime_floor tests.test_opencode_lsp_harness -q; $env:OPENCODE_EXPERIMENTAL_LSP_TOOL = 'true'; pwsh -NoLogo -NoProfile -File .\\tooling\\harness\\operational\\opencode-lsp-setup\\Invoke-OpenCodeLspWorkstationSetup.ps1 -Mode Configure -RepoPath $repo; $run = Get-ChildItem -LiteralPath \"$env:LOCALAPPDATA\\AgentSwitchboard\\opencode-lsp\\runs\" -Directory | Sort-Object LastWriteTime -Descending | Select-Object -First 1; & (Join-Path $run.FullName 'Open-AgentSwitchboard-OpenCode-Lsp.cmd')",
     "notes": [
+      "Critical path is Admin Box 1 fresh-TUI LSP observation for ASQ-005/LSP-02; Pi bootstrap and child-bus spine already DONE on main.",
+      "After Configure launcher: open tests/test_technician_live_cert_surface.py once; LSP-only hover/definition/references on read_text; write opencode-lsp-runtime-smoke.json/.md under the run directory; then scripts/Test-OpenCodeLspHarness.ps1 -RootPath $repo.",
+      "Cloud/Linux cannot substitute; INTEGRATED routing floor is not OBSERVED runtime PASS.",
+      "Public plan data must remain public-safe: no private operator host/user/OneDrive path in tracked artifacts.",
+      "ASQ-008/009 stay blocked until ASQ-005 DONE with nonLspSemanticFallbackUsed No and LSP_RUNTIME_SMOKE_TEST: PASS.",
       "Canonical ADR: docs/architecture/asb-firstmate-runtime-boundary.md",
       "Do not implement frozen Panels 05-09 / ASQ-008..012 as ASB live runtime.",
       "Admin Box 1 FirstMate bootstrap remains separable and useful runtime evidence.",
