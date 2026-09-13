@@ -39,13 +39,15 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("NEXT_ACTION=sudo apt-get update && sudo apt-get install -y", self.physical)
         self.assertIn("NEXT_ACTION=gh auth login --hostname github.com --git-protocol https --web", self.physical)
         for executable_form in (
-            "& sudo",
             "Start-Process sudo",
-            "& gh auth login",
             "Start-Process gh",
             "Invoke-Expression $nextAction",
+            "Invoke-Command $nextAction",
+            "-FileName sudo",
+            "-FileName gh",
         ):
             self.assertNotIn(executable_form, self.physical)
+        self.assertIn("Write-Host \"NEXT_ACTION=$($nextAction.Groups[1].Value.Trim())\"", self.physical)
         self.assertIs(self.integration["windows_bridge"]["dependency_installation"], False)
         self.assertIs(self.integration["windows_bridge"]["credential_mutation"], False)
 
