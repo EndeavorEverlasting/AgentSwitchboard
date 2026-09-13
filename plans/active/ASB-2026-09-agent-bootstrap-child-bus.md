@@ -61,8 +61,8 @@ No credentials in Git/evidence, no force reset/push, no silent local-path reloca
 *   **PI-ADAPTER-05** `skipped` — **FREEZE**; Pi live child runtime hands off to FirstMate harnesses.
 *   **OC-ADAPTER-06** `skipped` — **FREEZE**.
 *   **PILOT-07** `skipped` — **FREEZE / REPURPOSE** through FirstMate crew, not ASB bus adapters.
-*   **NESTED-08** `skipped` — **HAND-OFF** to FirstMate nesting/secondmates.
-*   **NESTED-RT-09** `skipped` — **HAND-OFF**.
+*   **NESTED-08** `skipped` — **RETIRE** as ASB live nested bus (FirstMate secondmates are flat; lineage schemas stay POLICY-INPUT only).
+*   **NESTED-RT-09** `skipped` — **RETIRE** as ASB live nested certification.
 *   **CLEANUP-10** `pending` — PR/path authority cleanup with narrowed dependencies (no longer blocked on 05–09).
 
 ## Validation

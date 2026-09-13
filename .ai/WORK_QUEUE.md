@@ -188,16 +188,16 @@ Canonical terminal action: none; no safe actionable work remains
 - **Status:** BLOCKED
 - **Priority:** P2
 - **Work class:** BOUNDED
-- **Owner:** handed off to FirstMate nesting/secondmates
+- **Owner:** retired as ASB live nested bus; FirstMate flat crew/secondmates cover parallelism
 - **Branch / PR:** main
-- **Scope:** historically: ASB child→ASB→grandchild nested bus. HAND-OFF live nested delegation to FirstMate; freeze ASB nested bus implementation.
+- **Scope:** historically: ASB child→ASB→grandchild nested bus. RETIRE ASB nested live program. FirstMate secondmates are flat direct reports and do not implement ASB maxDepth lineage; any future lineage guarantee is POLICY-INPUT/bridge only.
 - **Forbidden:** implementing ASB nested bus runtime; direct Pi↔OpenCode subprocess; unlimited recursion; multiple concurrent writers; child merge/push; automatic retries; silent fallback; persistent RPC
 - **Dependencies:** ASQ-014
 - **References:** `docs/architecture/asb-firstmate-runtime-boundary.md`
 - **Acceptance gate:** ASB nested bus remains unimplemented; FirstMate owns nesting/secondmates unless a superseding ADR proves an ASB-only guarantee
-- **Gate:** HAND-OFF/FREEZE — do not implement Panel 08 on the ASB child-bus spine
-- **Last proof:** artifact:docs/architecture/asb-firstmate-runtime-boundary.md disposition HAND-OFF
-- **Next action:** none; no safe actionable work remains under handed-off scope
+- **Gate:** RETIRE/FREEZE — do not implement Panel 08 on the ASB child-bus spine; do not treat FirstMate as an ASB nested-bus clone
+- **Last proof:** artifact:docs/architecture/asb-firstmate-runtime-boundary.md disposition RETIRE (ASB live) + POLICY-INPUT residue; FirstMate flat secondmates at b182d0f
+- **Next action:** none; no safe actionable work remains under retired ASB nested-bus scope
 - **Updated:** 2026-09-13T17:30:00Z
 
 ## ASQ-012 — Nested runtime certification (depth-2 chain)
@@ -205,16 +205,16 @@ Canonical terminal action: none; no safe actionable work remains
 - **Status:** BLOCKED
 - **Priority:** P2
 - **Work class:** BOUNDED
-- **Owner:** handed off to FirstMate runtime certification
+- **Owner:** retired as ASB live nested certification; route crew runtime proofs through FirstMate after ASQ-015
 - **Branch / PR:** main
-- **Scope:** historically: ASB depth-2 heterogeneous child-bus certification. HAND-OFF to FirstMate runtime certification after interop floor; freeze ASB-owned nested bus certification program.
+- **Scope:** historically: ASB depth-2 heterogeneous child-bus certification. RETIRE ASB-owned nested bus certification program. Future depth/parallelism proofs use FirstMate flat crew after interop floor.
 - **Forbidden:** ASB depth-2 child-bus certification implementation; writer children via ASB bus; direct cross-agent subprocess; automatic retries/fallback; persistent RPC; repository mutation; secrets
 - **Dependencies:** ASQ-014
 - **References:** `docs/architecture/asb-firstmate-runtime-boundary.md`
 - **Acceptance gate:** ASB nested runtime certification program remains frozen; any depth-2 crew proof uses FirstMate after ASQ-015
-- **Gate:** HAND-OFF/FREEZE — do not implement Panel 09 as ASB-owned live runtime
-- **Last proof:** artifact:docs/architecture/asb-firstmate-runtime-boundary.md disposition HAND-OFF
-- **Next action:** none; no safe actionable work remains under handed-off scope
+- **Gate:** RETIRE/FREEZE — do not implement Panel 09 as ASB-owned live nested bus certification
+- **Last proof:** artifact:docs/architecture/asb-firstmate-runtime-boundary.md disposition RETIRE (ASB live nested certification)
+- **Next action:** none; no safe actionable work remains under retired ASB nested-bus scope
 - **Updated:** 2026-09-13T17:30:00Z
 
 ## ASQ-013 — PR/path authority cleanup and final convergence
@@ -240,14 +240,14 @@ Canonical terminal action: none; no safe actionable work remains
 - **Priority:** P0
 - **Work class:** BOUNDED
 - **Owner:** P95 architecture lane
-- **Branch / PR:** cursor/p95-firstmate-runtime-boundary-1737 / #164
+- **Branch / PR:** main / #164 merged
 - **Scope:** persist accepted architecture decision that FirstMate is the canonical live crew runtime; ownership matrix; subtraction analysis; KEEP/NARROW/HAND-OFF/RETIRE dispositions; revise September plan and freeze ASQ-008..012
 - **Forbidden:** implementing adapters; deleting GNHF or child-bus; Prompt Kit FirstMate bridge; README rewrite; claiming live FirstMate crew proof
 - **Dependencies:** ASQ-004, ASQ-007
 - **References:** `docs/architecture/asb-firstmate-runtime-boundary.md`, `plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json`, `plans/active/ASB-2026-09-agent-bootstrap-child-bus.md`, https://github.com/kunchenguid/firstmate, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/96
 - **Acceptance gate:** ADR committed with matrix/subtraction/dispositions; September plan tasks updated; ledger FREEZE/PROCEED states recorded; public-plan and work-ledger validators pass
 - **Gate:** none
-- **Last proof:** commit:bab56af01358f604de0e77515f67ef3e0695f203 artifact:docs/architecture/asb-firstmate-runtime-boundary.md artifact:plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json
+- **Last proof:** merge:3a1aa4fb4c700af251a7e94cbbcccf3cb5fb0016 artifact:docs/architecture/asb-firstmate-runtime-boundary.md artifact:plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-13T17:30:00Z
 
