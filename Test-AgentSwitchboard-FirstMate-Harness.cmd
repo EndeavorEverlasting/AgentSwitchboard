@@ -9,6 +9,6 @@ if errorlevel 1 (
   exit /b 1
 )
 
-pwsh.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%ENTRY%" %*
+pwsh.exe -NoLogo -NoProfile -File "%ENTRY%" %*
 set "EXITCODE=%ERRORLEVEL%"
 exit /b %EXITCODE%
