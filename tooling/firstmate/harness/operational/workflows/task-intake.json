@@ -1,0 +1,27 @@
+{
+  "schema": "agentswitchboard.firstmate-workflow.v1",
+  "id": "task-intake",
+  "trigger": "A fresh task arrives or the correct direct/crew/runtime route is uncertain.",
+  "inputs": [
+    "task outcome and acceptance criteria",
+    "repository and branch ownership",
+    "parallel writer count",
+    "platform",
+    "First Mate floor state"
+  ],
+  "steps": [
+    "Read AGENTS.md, CODEBASE_MAP.md, HARNESS.md, and the First Mate operational manifest.",
+    "Inspect active branch/PR ownership before mutation; preserve other writers.",
+    "Run Select-FirstMateWorkflow.py with observed inputs.",
+    "Use direct AgentSwitchboard for one-writer work or unsupported platforms.",
+    "Use First Mate local-only only for parallel Linux/WSL work after the floor passes.",
+    "Keep tmux as the reference session backend; a Herdr request remains blocked while manifest selection is disabled."
+  ],
+  "outputs": [
+    "route-decision artifact",
+    "named owner and dependency",
+    "exact next command"
+  ],
+  "failure_handling": "If repository ownership, First Mate readiness, or runtime support is unresolved, return blocked with the owning lane and do not invent compatibility.",
+  "proof_ceiling": "workflow-state evidence only unless the owning runtime/validator produces stronger proof"
+}

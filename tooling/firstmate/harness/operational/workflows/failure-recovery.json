@@ -1,0 +1,26 @@
+{
+  "schema": "agentswitchboard.firstmate-workflow.v1",
+  "id": "failure-recovery",
+  "trigger": "A validator, First Mate worker, tmux session, or experimental runtime gate fails.",
+  "inputs": [
+    "failing command",
+    "exit code",
+    "bounded error output",
+    "responsible lane",
+    "last known good artifact"
+  ],
+  "steps": [
+    "Classify failure as harness, First Mate, worker/project, session backend, or external dependency.",
+    "Do not switch to Herdr merely because tmux or a worker failed; runtime promotion has separate gates.",
+    "Preserve successful disjoint worker branches/worktrees.",
+    "Repair only the owning lane and rerun the focused gate.",
+    "Escalate after repeated no-progress or when the defect lies in forbidden/governance/product scope."
+  ],
+  "outputs": [
+    "failure classification",
+    "repair result or explicit blocker",
+    "updated next command"
+  ],
+  "failure_handling": "Stop at the first real authority, capability, or ownership boundary and name it.",
+  "proof_ceiling": "workflow-state evidence only unless the owning runtime/validator produces stronger proof"
+}

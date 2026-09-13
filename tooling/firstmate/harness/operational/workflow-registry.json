@@ -1,0 +1,36 @@
+{
+  "schema": "agentswitchboard.firstmate-workflow-registry.v1",
+  "workflows": [
+    {
+      "id": "task-intake",
+      "spec": "tooling/firstmate/harness/operational/workflows/task-intake.json",
+      "trigger": "new task or uncertain route",
+      "owner": "AgentSwitchboard"
+    },
+    {
+      "id": "crew-local-only",
+      "spec": "tooling/firstmate/harness/operational/workflows/crew-local-only.json",
+      "trigger": "parallel Linux/WSL task after First Mate floor passes",
+      "owner": "First Mate under AgentSwitchboard policy"
+    },
+    {
+      "id": "pre-commit-validation",
+      "spec": "tooling/firstmate/harness/operational/workflows/pre-commit-validation.json",
+      "trigger": "owned changes are ready to commit",
+      "owner": "current branch writer"
+    },
+    {
+      "id": "failure-recovery",
+      "spec": "tooling/firstmate/harness/operational/workflows/failure-recovery.json",
+      "trigger": "validator, worker, or runtime gate fails",
+      "owner": "failing lane owner"
+    },
+    {
+      "id": "handoff",
+      "spec": "tooling/firstmate/harness/operational/workflows/handoff.json",
+      "trigger": "gate complete or a real dependency blocks continuation",
+      "owner": "current harness agent"
+    }
+  ],
+  "selection_command": "python3 tooling/firstmate/harness/operational/Select-FirstMateWorkflow.py"
+}
