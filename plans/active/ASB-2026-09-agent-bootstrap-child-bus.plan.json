@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-12T19:50:00Z",
-  "updatedUtc": "2026-09-13T21:45:00Z",
+  "updatedUtc": "2026-09-13T21:55:00Z",
   "mission": "Coordinate the September program after accepting FirstMate as the canonical live crew runtime: keep ASB bootstrap/readiness/policy/validation/evidence/planning; narrow the child-agent-bus spine to an interop/policy envelope; freeze ASB Pi/OpenCode adapters, heterogeneous fan-out, and nested bus runtime; proceed with LSP certification, FirstMate interop refresh, GNHF narrowing, Pi bootstrap registry truth, and PR/path convergence.",
   "owner": {
     "surface": "September agent bootstrap and FirstMate runtime boundary",
@@ -134,7 +134,8 @@
         "Runtime sprint ASQ-005/LSP-02 on Linux Cloud Agent 2026-09-13T18:05Z: stop/safe-start N/A (no Windows OpenCode session); launcher attach NOT RUN; target surface NOT OBSERVED; LSP hover/def/refs on read_text NOT OBSERVED; runtime artifact NONE; protected headless control 20260912T194619Z-e3f423df NOT RE-OBSERVED; proof level INTEGRATED contract floor only",
         "2026-09-13 cloud agent: durable G0-G8 gate contract encoded; live TUI still UNPROVEN on Linux Cloud Agent (WINDOWS_REQUIRED on Configure)",
         "PR #170 squash-merged to main @ 1e5c599a13e84cb3ccfd23ae723cf6c77264d7ed (durable G0-G8 gate encoding)",
-        "2026-09-13 cloud deepen: Invoke-Asq005FreshTuiCertificationPrep.ps1 graduates G0/G1 prep from WORK_QUEUE snippet; harness validates liveProofStatus=UNPROVEN and configureNeverPromotesToDone; live TUI still UNPROVEN"
+        "2026-09-13 cloud deepen: Invoke-Asq005FreshTuiCertificationPrep.ps1 graduates G0/G1 prep from WORK_QUEUE snippet; harness validates liveProofStatus=UNPROVEN and configureNeverPromotesToDone; live TUI still UNPROVEN",
+        "PR #173 merged to main @ 3c31d2c440e805533946cbfaa95aa733cfffbacb (G0-G8 harness deepen + Invoke-Asq005FreshTuiCertificationPrep.ps1); live TUI still UNPROVEN"
       ]
     },
     {
