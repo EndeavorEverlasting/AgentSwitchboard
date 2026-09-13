@@ -57,7 +57,8 @@
       "summaryPath": "plans/active/ASB-2026-09-agent-bootstrap-child-bus.md",
       "status": "active",
       "priority": "high",
-      "dependencies": []
+      "dependencies": [],
+      "architectureDecision": "docs/architecture/asb-firstmate-runtime-boundary.md"
     }
   ]
 }

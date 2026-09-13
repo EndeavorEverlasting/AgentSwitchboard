@@ -57,6 +57,7 @@ class RepositoryWorkLedgerFrontierTests(unittest.TestCase):
         self.assertEqual(payload['status'], 'ready')
         self.assertEqual(payload['actionableCount'], 2)
         self.assertEqual(payload['selected']['id'], 'ASQ-902')
+        self.assertEqual(payload['selected']['title'], 'unbounded urgent')
         self.assertEqual(payload['selected']['route'], 'DECOMPOSE')
 
     def test_frontier_routes_bounded_work_to_execute(self):

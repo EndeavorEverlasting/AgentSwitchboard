@@ -19,9 +19,10 @@ if (-not (Test-Path -LiteralPath $ledger -PathType Leaf)) {
 }
 
 $source = Get-Content -LiteralPath $ledger -Raw
-$canonicalHeadingRegex = [regex]'(?m)^##[ \t]+(ASQ-\d{3,})'
-$matches = $canonicalHeadingRegex.Matches($source)
-if ($matches.Count -eq 0) {
+$canonicalHeadingRegex = [regex]'(?m)^##[ \t]+(ASQ-\d{3,})[ \t]+—[ \t]+([^\r\n]+)\r?$'
+# Do not name this $matches — PowerShell -match overwrites the automatic $matches variable.
+$headingMatches = $canonicalHeadingRegex.Matches($source)
+if ($headingMatches.Count -eq 0) {
     throw 'Ledger contains no canonical ASQ task blocks.'
 }
 
@@ -29,12 +30,12 @@ $priorityRank = @{ P0 = 0; P1 = 1; P2 = 2; P3 = 3 }
 $tasks = [System.Collections.Generic.List[object]]::new()
 $required = @('Status', 'Priority', 'Work class', 'Branch / PR', 'Scope', 'References', 'Acceptance gate', 'Gate', 'Next action')
 
-for ($i = 0; $i -lt $matches.Count; $i++) {
-    $match = $matches[$i]
+for ($i = 0; $i -lt $headingMatches.Count; $i++) {
+    $match = $headingMatches[$i]
     $id = $match.Groups[1].Value
     $title = $match.Groups[2].Value.Trim()
     $start = $match.Index
-    $end = if ($i + 1 -lt $matches.Count) { $matches[$i + 1].Index } else { $source.Length }
+    $end = if ($i + 1 -lt $headingMatches.Count) { $headingMatches[$i + 1].Index } else { $source.Length }
     $block = $source.Substring($start, $end - $start)
     $fields = @{}
 

@@ -43,14 +43,19 @@ class Asq005CanonicalRuntimeFloorTests(unittest.TestCase):
         self.assertIn("test_technician_live_cert_surface.py", next_action)
         self.assertIn("read_text", next_action)
 
-    def test_adapter_lanes_wait_for_asq005(self) -> None:
+    def test_adapter_lanes_are_frozen_by_firstmate_boundary(self) -> None:
+        """ASQ-008/009 no longer wait on ASQ-005 adapter expansion; FirstMate ADR freezes them."""
         text = WORK_QUEUE.read_text(encoding="utf-8")
         asq8 = _section(text, "## ASQ-008")
         asq9 = _section(text, "## ASQ-009")
-        self.assertRegex(asq8, r"- \*\*Dependencies:\*\* ASQ-005, ASQ-006, ASQ-007")
-        self.assertRegex(asq9, r"- \*\*Dependencies:\*\* ASQ-005, ASQ-007")
-        self.assertIn("ASQ-005 not yet DONE", asq8)
-        self.assertIn("ASQ-005 not yet DONE", asq9)
+        self.assertIn("ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME", asq8)
+        self.assertIn("ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME", asq9)
+        self.assertRegex(asq8, r"- \*\*Dependencies:\*\* ASQ-014")
+        self.assertRegex(asq9, r"- \*\*Dependencies:\*\* ASQ-014")
+        self.assertIn("FREEZE", asq8)
+        self.assertIn("FREEZE", asq9)
+        self.assertIn("FirstMate", asq8)
+        self.assertIn("FirstMate", asq9)
 
     def test_runtime_doc_names_canonical_live_floor(self) -> None:
         doc = RUNTIME_DOC.read_text(encoding="utf-8")

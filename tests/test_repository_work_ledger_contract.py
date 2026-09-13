@@ -54,8 +54,54 @@ class RepositoryWorkLedgerContractTests(unittest.TestCase):
         result = run_validator()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('[repository-work-ledger] PASS', result.stdout)
+        self.assertRegex(result.stdout, r'PASS .* \(\d{2,} tasks\)')
+        self.assertNotIn('(1 tasks)', result.stdout)
         self.assertIn('portable=RepoLedgerInteroperability.v1@429237aa41d8', result.stdout)
         self.assertIn('local-profile=agentswitchboard.repository-work-ledger.v1@1.0.0', result.stdout)
+
+    def test_match_side_effects_do_not_truncate_task_loop(self):
+        """Regression: PowerShell -match must not clobber the heading match collection mid-loop."""
+        first = '\n'.join([
+            '## ASQ-901 — First done task',
+            '',
+            '- **Status:** DONE',
+            '- **Priority:** P1',
+            '- **Work class:** BOUNDED',
+            '- **Owner:** agent-a',
+            '- **Branch / PR:** none',
+            '- **Scope:** first',
+            '- **Forbidden:** none',
+            '- **Dependencies:** none',
+            '- **References:** `AGENTS.md`',
+            '- **Acceptance gate:** proof',
+            '- **Gate:** none',
+            '- **Last proof:** commit:abcdef1',
+            '- **Next action:** none; no safe actionable work remains',
+            '- **Updated:** 2026-09-13',
+            '',
+        ])
+        second = '\n'.join([
+            '## ASQ-902 — Second done task must still validate',
+            '',
+            '- **Status:** DONE',
+            '- **Priority:** P1',
+            '- **Work class:** BOUNDED',
+            '- **Owner:** agent-b',
+            '- **Branch / PR:** none',
+            '- **Scope:** second',
+            '- **Forbidden:** none',
+            '- **Dependencies:** none',
+            '- **References:** `AGENTS.md`',
+            '- **Acceptance gate:** proof',
+            '- **Gate:** none',
+            '- **Last proof:** commit:abcdef2',
+            '- **Next action:** merge later',
+            '- **Updated:** 2026-09-13',
+            '',
+        ])
+        result = self.run_temp(HEADER + first + second)
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('ASQ-902 DONE requires canonical terminal Next action', result.stderr)
 
     def test_portable_contract_pin_is_exact_and_blacksmith_owned(self):
         policy = json.loads(POLICY.read_text(encoding='utf-8'))
