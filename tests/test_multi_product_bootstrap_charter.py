@@ -44,6 +44,14 @@ class MultiProductBootstrapCharterTests(unittest.TestCase):
         self.assertIn("WSL", firstmate["runtime"])
         self.assertIn("bridge", firstmate["platform"].lower())
         self.assertIn("herdr", matrix["decisionFloor"]["deferred"])
+        self.assertEqual("convergence-contract-on-main", firstmate["status"])
+        self.assertEqual(
+            "tooling/firstmate/harness/convergence-contract.json",
+            firstmate["bootstrapOwner"],
+        )
+        self.assertTrue(
+            (ROOT / "tooling/firstmate/harness/convergence-contract.json").is_file()
+        )
 
     def test_pi_and_opencode_windows_native(self):
         matrix = json.loads(MATRIX.read_text(encoding="utf-8-sig"))

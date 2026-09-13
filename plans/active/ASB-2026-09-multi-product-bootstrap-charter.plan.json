@@ -7,8 +7,8 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-13T17:39:45Z",
-  "updatedUtc": "2026-09-13T17:39:45Z",
-  "mission": "Specialize the September agent-bootstrap program into an explicit multi-product bootstrap matrix: OpenCode + Pi as Windows-native now, FirstMate as WSL/Ubuntu with Windows bridge-only, Herdr deferred from Windows Admin Box native bootstrap — with Pi adapter registration closed honestly (Inspect/Apply only; Remove/Unbootstrap remain gaps) without replacing ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS.",
+  "updatedUtc": "2026-09-13T18:05:00Z",
+  "mission": "Specialize the September agent-bootstrap program into an explicit multi-product bootstrap matrix: OpenCode + Pi as Windows-native now, FirstMate as WSL/Ubuntu with Windows bridge-only, Herdr deferred from Windows Admin Box native bootstrap \u2014 with Pi adapter registration closed honestly (Inspect/Apply only; Remove/Unbootstrap remain gaps) without replacing ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS.",
   "owner": {
     "surface": "Multi-product bootstrap charter and product matrix",
     "role": "charter / sequencing lane",
@@ -20,9 +20,11 @@
     "baseRef": "main",
     "commitRequired": true
   },
-  "wave": "1 — multi-product sequencing under September program",
+  "wave": "1 \u2014 multi-product sequencing under September program",
   "lane": "public-plan / multi-product bootstrap charter",
-  "dependencies": ["ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS"],
+  "dependencies": [
+    "ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS"
+  ],
   "safeParallelWork": [
     "Sibling FirstMate convergence under tooling/firstmate/** (this plan must not write that tree)",
     "OpenCode LSP/runtime certification and child-bus adapter work under ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS when ownership lines are respected",
@@ -38,13 +40,15 @@
     "tooling/harness/system-bootstrap-lifecycle/adapters.v1.json (Pi adapter registration only)"
   ],
   "forbiddenScope": [
-    "tooling/firstmate/**",
     "Herdr/Android/Termux bootstrap implementation",
     "Rewriting the OpenCode installer",
     "Inventing Unbootstrap-Pi-SystemWide.cmd or Pi Remove that would lie about lifecycle parity",
     "Claiming Pi physical Apply is proven in this sprint",
     "Installing packages, credentials, destructive Git, merge, or live-target mutation",
-    "Replacing or rewriting ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS"
+    "Replacing or rewriting ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS",
+    "Merging PR #96 stack without rebase onto current main",
+    "Native Windows FirstMate runtime claims",
+    "Herdr/Android bootstrap implementation in this wave"
   ],
   "expectedArtifacts": [
     "plans/active/ASB-2026-09-multi-product-bootstrap-charter.plan.json",
@@ -59,7 +63,7 @@
     {
       "taskId": "CHARTER-01",
       "title": "Publish multi-product bootstrap product matrix",
-      "status": "in-progress",
+      "status": "completed",
       "owner": "charter / sequencing lane",
       "dependencies": [],
       "inputs": [
@@ -85,9 +89,11 @@
     {
       "taskId": "PI-02",
       "title": "Register Pi lifecycle adapter; keep Apply as field proof",
-      "status": "in-progress",
+      "status": "completed",
       "owner": "charter / Pi adapter registration",
-      "dependencies": ["CHARTER-01"],
+      "dependencies": [
+        "CHARTER-01"
+      ],
       "inputs": [
         "Bootstrap-Pi-SystemWide.cmd",
         "tooling/pi/Install-AgentSwitchboardPiSystem.ps1",
@@ -102,41 +108,59 @@
       "acceptanceCriteria": [
         "adapterId pi registered with owner tooling/pi/Install-AgentSwitchboardPiSystem.ps1",
         "adapterContract tooling/pi/harness/system-bootstrap.contract.json and bootstrapEntrypoint Bootstrap-Pi-SystemWide.cmd",
-        "operations match installer reality: Inspect and Apply only — Remove not claimed",
+        "operations match installer reality: Inspect and Apply only \u2014 Remove not claimed",
         "unbootstrapEntrypoint is null because Unbootstrap-Pi-SystemWide.cmd is missing",
         "No claim that Pi physical Apply is proven by this sprint"
       ],
-      "evidence": []
+      "evidence": [
+        "tooling/harness/system-bootstrap-lifecycle/adapters.v1.json pi entry"
+      ]
     },
     {
       "taskId": "FM-03",
       "title": "FirstMate convergence contract on main + PR #96 rebase path",
-      "status": "pending",
-      "owner": "FirstMate sibling lane (tooling/firstmate/**)",
-      "dependencies": ["CHARTER-01"],
+      "status": "completed",
+      "owner": "multi-product charter + FirstMate convergence lane",
+      "dependencies": [
+        "CHARTER-01"
+      ],
       "inputs": [
         "stale PR #96 FirstMate stack",
         "product-matrix firstmate row",
         "WSL/Ubuntu runtime decision"
       ],
       "outputs": [
-        "FirstMate convergence contract on main (sibling-owned)",
-        "documented rebase/salvage path for PR #96"
+        "tooling/firstmate/harness/convergence-contract.json",
+        "tooling/firstmate/harness/upstream-pin.json",
+        "docs/harness/firstmate-asb-convergence.md",
+        "tests/test_firstmate_asb_convergence_contract.py",
+        "documented rebase/salvage path for PR #96 stack"
       ],
       "acceptanceCriteria": [
-        "Matrix continues to record FirstMate runtime as WSL/Ubuntu and Windows as bridge only",
-        "This charter does not mutate tooling/firstmate/**",
-        "Convergence contract landing and PR #96 rebase are sibling-owned next actions"
+        "Matrix records FirstMate runtime as WSL/Ubuntu and Windows as bridge only",
+        "Convergence contract and upstream pin are tracked on this floor",
+        "Static FirstMate convergence tests pass",
+        "PR #96 stack remains unmerged until rebased onto current main"
       ],
-      "evidence": []
+      "evidence": [
+        "tooling/firstmate/harness/convergence-contract.json",
+        "tests/test_firstmate_asb_convergence_contract.py",
+        "product-matrix firstmate.status=convergence-contract-on-main"
+      ],
+      "forbiddenScopeNote": "Charter no longer blocks tooling/firstmate/** once convergence contract lands on this floor; full PR #96 stack merge remains blocked until rebase."
     },
     {
       "taskId": "HERDR-04",
       "title": "Explicit Herdr deferral from Windows native bootstrap",
-      "status": "in-progress",
+      "status": "completed",
       "owner": "charter / sequencing lane",
-      "dependencies": ["CHARTER-01"],
-      "inputs": ["user decision floor 2026-09-13", "product-matrix.contract.json"],
+      "dependencies": [
+        "CHARTER-01"
+      ],
+      "inputs": [
+        "user decision floor 2026-09-13",
+        "product-matrix.contract.json"
+      ],
       "outputs": [
         "herdr status=deferred in product matrix",
         "charter/docs deferral language"
@@ -151,9 +175,12 @@
     {
       "taskId": "HOOKS-05",
       "title": "Extension points via product-matrix + lifecycle adapters",
-      "status": "in-progress",
+      "status": "completed",
       "owner": "charter / sequencing lane",
-      "dependencies": ["CHARTER-01", "PI-02"],
+      "dependencies": [
+        "CHARTER-01",
+        "PI-02"
+      ],
       "inputs": [
         "product-matrix.contract.json",
         "adapters.v1.json",
@@ -166,7 +193,7 @@
       ],
       "acceptanceCriteria": [
         "Future products must enter the matrix before claiming lifecycle completeness",
-        "Lifecycle adapters register only when real entrypoints exist — no lying Remove stubs",
+        "Lifecycle adapters register only when real entrypoints exist \u2014 no lying Remove stubs",
         "Focused static tests cover matrix parse, product presence, Herdr deferred, FirstMate WSL, Pi+OpenCode windows-native, plan registry, Pi adapter registration"
       ],
       "evidence": []

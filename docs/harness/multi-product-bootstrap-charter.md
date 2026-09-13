@@ -40,7 +40,7 @@ Honest remaining gaps (do not invent lying stubs):
 
 ## FirstMate
 
-Runtime is **WSL/Ubuntu**. Windows remains a bridge host only. Implementation under `tooling/firstmate/**` is owned by a sibling worker. Charter expectation: land a convergence contract on `main`, then rebase/salvage the stale PR #96 stack onto that contract.
+Runtime is **WSL/Ubuntu**. Windows remains a bridge host only. The durable convergence floor is on this branch as [`tooling/firstmate/harness/convergence-contract.json`](../../tooling/firstmate/harness/convergence-contract.json) with operator docs in [`docs/harness/firstmate-asb-convergence.md`](firstmate-asb-convergence.md). Next integration step: rebase/salvage the stale PR #96 stack onto current `main` against that contract, then run the WSL/Ubuntu read-only interop probe.
 
 ## Herdr
 

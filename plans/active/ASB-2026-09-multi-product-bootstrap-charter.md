@@ -12,7 +12,7 @@ Specialize the September agent-bootstrap program into an explicit multi-product 
 |---|---|---|---|
 | OpenCode | lifecycle-complete-on-main | windows-native | remain lifecycle reference |
 | Pi | inspect-apply-registered-remove-gap | windows-native | register adapter; Remove/Unbootstrap + physical Apply still open |
-| FirstMate | convergence-pending-wsl | WSL/Ubuntu (Windows bridge only) | sibling lands convergence contract; rebase PR #96 |
+| FirstMate | convergence-contract-on-main | WSL/Ubuntu (Windows bridge only) | convergence contract on main; rebase PR #96 stack next |
 | Herdr | deferred | Android/Termux + experimental session backend | stay out of Windows Admin Box native bootstrap |
 
 ## Owned artifacts

@@ -30,12 +30,12 @@
       "nextAction": "Close Remove gap (Mode Remove + Unbootstrap-Pi-SystemWide.cmd) then prove physical Apply on an authorized Windows workstation"
     },
     "firstmate": {
-      "status": "convergence-pending-wsl",
+      "status": "convergence-contract-on-main",
       "platform": "windows-bridge-to-wsl",
-      "bootstrapOwner": "tooling/firstmate/ (sibling worker; not owned by this charter sprint)",
+      "bootstrapOwner": "tooling/firstmate/harness/convergence-contract.json",
       "runtime": "WSL/Ubuntu (Windows Admin Box is bridge only)",
-      "proofCeiling": "charter + convergence contract on main; no native Windows FirstMate bootstrap claimed",
-      "nextAction": "Land FirstMate convergence contract on main; rebase/salvage PR #96 stack onto that contract"
+      "proofCeiling": "charter + convergence contract + static tests on main; no native Windows FirstMate runtime and no live crew dispatch claimed",
+      "nextAction": "Rebase/salvage PR #96→#98/#101→#99→#100 onto current main against tooling/firstmate/harness/convergence-contract.json; then run WSL/Ubuntu read-only interop probe"
     },
     "herdr": {
       "status": "deferred",
@@ -55,7 +55,7 @@
     "Pi: no Unbootstrap-Pi-SystemWide.cmd",
     "Pi: Install-AgentSwitchboardPiSystem.ps1 ValidateSet is Inspect/Apply only — Remove not implemented",
     "Pi: physical workstation Apply not proven by this charter sprint",
-    "FirstMate: still converging from stale PR #96; sibling owns tooling/firstmate/**",
+    "FirstMate: convergence contract is on this floor; stale PR #96 stack still requires rebase before runtime harness merge",
     "Herdr: deferred from Windows native bootstrap"
   ],
   "proofCeiling": "Contract and charter prove sequencing, ownership, and declared product status only. Does not prove physical Apply/Remove, WSL FirstMate runtime, or Herdr bootstrap."
