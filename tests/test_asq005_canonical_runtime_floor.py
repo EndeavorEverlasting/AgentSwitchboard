@@ -70,6 +70,8 @@ class Asq005CanonicalRuntimeFloorTests(unittest.TestCase):
         self.assertIn("Configure-only proof is insufficient", block)
         self.assertIn("1e5c599", block)
         self.assertIn("pr:#170", block.lower())
+        self.assertIn("3c31d2c", block)
+        self.assertIn("pr:#173", block.lower())
 
     def test_adapter_lanes_are_frozen_by_firstmate_boundary(self) -> None:
         text = WORK_QUEUE.read_text(encoding="utf-8")
