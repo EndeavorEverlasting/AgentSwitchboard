@@ -94,9 +94,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **References:** `docs/harness/opencode-lsp-workstation-setup.md`, `tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json`, `tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md`, `scripts/Test-OpenCodeLspHarness.ps1`
 - **Acceptance gate:** fresh TUI launched from canonical Live checkout with `OPENCODE_EXPERIMENTAL_LSP_TOOL=true`, `tests/test_technician_live_cert_surface.py` opened, strict hover/def/refs captured with `nonLspSemanticFallbackUsed No`; comparison with headless `e3f423df` yields `PASS_TUI_HEADLESS_DIFFERENTIAL` or `FAIL_BOTH_MODES` etc.; receipt validated
 - **Gate:** none
-- **Last proof:** artifact:tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json artifact:tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md
-- **Next action:** run fresh TUI smoke: Set-Location "C:\Users\pa_rperez26\OneDrive - Northwell Health\OG Laptop Backup\Desktop\dev\AgentSwitchBoard-Live"; $env:OPENCODE_EXPERIMENTAL_LSP_TOOL="true"; opencode (open tests/test_technician_live_cert_surface.py and capture hover/def/refs verbatim)
-- **Updated:** 2026-09-12T19:55:00Z
+- **Last proof:** artifact:tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json artifact:tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md ledger-repair:ASQ-005-next-action-canonical-Live-floor
+- **Next action:** on Admin Box 1 only: `$repo = Join-Path $env:USERPROFILE 'dev\AgentSwitchBoard-Live'; Set-Location -LiteralPath $repo; git fetch --all --prune --tags; git pull --ff-only origin main; if (git status --porcelain) { throw 'WORKTREE_DIRTY' }; pwsh -NoLogo -NoProfile -File .\scripts\Get-RepositoryWorkLedgerFrontier.ps1 -Json; `$env:OPENCODE_EXPERIMENTAL_LSP_TOOL='true'; pwsh -NoLogo -NoProfile -File .\tooling\harness\operational\opencode-lsp-setup\Invoke-OpenCodeLspWorkstationSetup.ps1 -Mode Configure -RepoPath $repo; launch newest `%LOCALAPPDATA%\AgentSwitchboard\opencode-lsp\runs\*\Open-AgentSwitchboard-OpenCode-Lsp.cmd`; open `tests/test_technician_live_cert_surface.py` once; LSP-only hover/definition/references on `read_text`; write local `opencode-lsp-runtime-smoke.json/.md`; run `scripts\Test-OpenCodeLspHarness.ps1`
+- **Updated:** 2026-09-13T17:10:00Z
 
 ## ASQ-006 ΓÇö Pi reversible system bootstrap lifecycle
 
@@ -141,13 +141,13 @@ Canonical terminal action: none; no safe actionable work remains
 - **Branch / PR:** main
 - **Scope:** migrate Pi child-execution from PR #151 behind shared bus: Pi adapter registered, launch/event/cancellation translation, read-only and isolated writer paths, `pi-fusion-orchestration` skill rewire
 - **Forbidden:** redefining common request/result fields, redefining lifecycle, OpenCode adapter, pairwise PiΓåÆOpenCode calls, persistent RPC, provider fallback, main/default-branch child writer
-- **Dependencies:** ASQ-006, ASQ-007
+- **Dependencies:** ASQ-005, ASQ-006, ASQ-007
 - **References:** `tooling/harness/child-agent-bus/`, `tooling/pi/harness/`, `PR #151 Invoke-AgentSwitchboardPiChild.ps1`
 - **Acceptance gate:** Pi is first conforming implementation of shared bus, resolves only ASB-managed Pi runtime, read-only/isolation guards, terminal `agent_end` required, budgets and evidence uniqueness enforced, generic fixtures green
-- **Gate:** ASQ-006 and ASQ-007 not yet DONE ΓÇö Pi lifecycle and shared bus must be ancestors of main
+- **Gate:** ASQ-005 not yet DONE — fresh-TUI LSP certification must complete before adapter lanes; ASQ-006/ASQ-007 already DONE on main
 - **Last proof:** none
-- **Next action:** verify Panel 03 and 04 are ancestors of main, then map PR #151 private fields to common bus in isolated lane
-- **Updated:** 2026-09-12T19:55:00Z
+- **Next action:** wait for ASQ-005 DONE on refreshed main, then map PR #151 private fields to common bus in an isolated lane
+- **Updated:** 2026-09-13T17:10:00Z
 
 ## ASQ-009 ΓÇö OpenCode child adapter parity
 
@@ -158,13 +158,13 @@ Canonical terminal action: none; no safe actionable work remains
 - **Branch / PR:** main
 - **Scope:** add OpenCode as second bus adapter with parity to Pi: managed runtime resolution via ASB state, launch/event translation, same conformance fixtures, registry entry
 - **Forbidden:** OpenCode LSP harness redesign, Pi adapter, common schema semantic changes unless defect proved, pairwise Pi/OpenCode config, global OPENCODE_CONFIG mutation, provider fallback
-- **Dependencies:** ASQ-007
+- **Dependencies:** ASQ-005, ASQ-007
 - **References:** `tooling/harness/child-agent-bus/`, `tooling/profiles/windows/Install-AgentSwitchboardOpenCode.ps1`
 - **Acceptance gate:** OpenCode consumes same request and produces same result/error envelopes as Pi; exact managed runtime, no PATH fallback, conformance matrix green
-- **Gate:** ASQ-007 not yet DONE ΓÇö shared bus must be on main
+- **Gate:** ASQ-005 not yet DONE — fresh-TUI LSP certification must complete before OpenCode adapter parity; ASQ-007 already DONE on main
 - **Last proof:** none
-- **Next action:** verify child bus is ancestor of main, then implement OpenCode adapter reusing managed runtime identity
-- **Updated:** 2026-09-12T19:55:00Z
+- **Next action:** wait for ASQ-005 DONE on refreshed main, then implement OpenCode adapter reusing managed runtime identity
+- **Updated:** 2026-09-13T17:10:00Z
 
 ## ASQ-010 ΓÇö Heterogeneous read-only pilot (Pi + OpenCode)
 
