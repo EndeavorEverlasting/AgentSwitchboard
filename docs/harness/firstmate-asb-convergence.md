@@ -6,12 +6,16 @@ Machine-readable authority:
 
 - `tooling/firstmate/harness/convergence-contract.json`
 - `tooling/firstmate/harness/upstream-pin.json`
+- `tooling/firstmate/harness/integration-contract.json`
+- `tooling/firstmate/Test-FirstMateInterop.sh`
+
+Focused integration docs: [`docs/harness/firstmate-integration.md`](firstmate-integration.md).
 
 ## Architecture decision binding
 
 Accepted ADR [`docs/architecture/asb-firstmate-runtime-boundary.md`](../architecture/asb-firstmate-runtime-boundary.md) (`ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME`) makes FirstMate the **canonical live crew runtime**. AgentSwitchboard keeps workstation/bootstrap convergence, readiness, policy, validation, and evidence sinks. Do **not** grow the child-agent bus into a second crew orchestration platform.
 
-Windows Admin Box hosts the **bridge only**; FirstMate execution remains **WSL/Ubuntu**. The historical PR #96 audit commit is provenance; rebase must re-verify against the ADR evidence floor (or newer reviewed FirstMate main) before live interop claims.
+Windows Admin Box hosts the **bridge only**; FirstMate execution remains **WSL/Ubuntu**. The historical PR #96 audit commit (`833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409`) is provenance only. Current audited pin is FirstMate `main@b182d0f908b78d08c7ccb8dce3775bdca8c5d657` (ADR evidence floor). Windows operational bridge salvage remains deferred to `FM-BRIDGE-10`.
 
 ## Roles
 
@@ -40,14 +44,15 @@ FirstMate is not a Windows native system-bootstrap product. Keep these lanes sep
 ## Upstream pin
 
 - Repository: [`kunchenguid/firstmate`](https://github.com/kunchenguid/firstmate)
-- Audited commit (from PR #96): `833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409`
+- Current audited commit: `b182d0f908b78d08c7ccb8dce3775bdca8c5d657`
+- Historical PR #96 audit commit (provenance only): `833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409`
 - Pin file: `tooling/firstmate/harness/upstream-pin.json` (metadata only; no vendor tree)
 
 Upstream declares macOS and Linux. WSL is an AgentSwitchboard integration inference from Linux support, not an upstream WSL certification claim.
 
 ## First safe sprint
 
-Until live WSL evidence exists after rebase:
+Until physical WSL crew evidence exists:
 
 - delivery mode: `local-only`
 - `yoloEnabled`: `false`
@@ -57,19 +62,19 @@ Until live WSL evidence exists after rebase:
 
 ## Stale PR stack (do not merge as-is)
 
-PR #96 (`feat/firstmate-interop-wsl-20260808`) is mergeable but far behind current `main`. Do **not** merge it without rebase. Dependency order for salvage:
+PR #96 (`feat/firstmate-interop-wsl-20260808`) remains salvage evidence. Do **not** merge it as-is. Foundation surfaces are refreshed on current main under `FM-REFRESH-06`. Remaining dependency order for later salvage:
 
-1. **#96** — FirstMate interop / WSL foundation
-2. **#98** — Ubuntu runtime hardening (depends on #96)
-3. **#101** — WSL prerequisite gate (depends on #96; re-stack when integrating)
-4. **#99** — Windows-native harness portability (depends on #98; bridge host only)
-5. **#100** — Python interpreter continuity (depends on #99)
+1. **#96** — foundation (superseded by refreshed mainline surfaces once integrated)
+2. **#98** — Ubuntu runtime hardening → `FM-BRIDGE-10`
+3. **#101** — WSL prerequisite gate → `FM-BRIDGE-10`
+4. **#99** — Windows-native harness portability → `FM-BRIDGE-10`
+5. **#100** — Python interpreter continuity → `FM-BRIDGE-10`
 
-Rebase the stack onto current `main` before integration. Prefer extracting durable contracts onto main (this floor) over cherry-picking the entire stack.
+Prefer extracting durable contracts onto main over cherry-picking the entire stack.
 
-## Operator next (after rebase)
+## Operator next
 
-When `tooling/firstmate/Test-FirstMateInterop.sh` is present on a rebased branch, run this **inside WSL/Ubuntu**:
+Run this **inside WSL/Ubuntu** against a clean FirstMate clone at the audited pin:
 
 ```bash
 bash tooling/firstmate/Test-FirstMateInterop.sh
@@ -81,8 +86,8 @@ If the FirstMate clone is outside default probe locations:
 bash tooling/firstmate/Test-FirstMateInterop.sh --firstmate "$HOME/path/to/firstmate"
 ```
 
-That future probe must stay read-only: no credential mutation, no dependency install by the ASB harness, and no live FirstMate crew dispatch claim from a static or contract pass.
+That probe must stay read-only: no credential mutation, no dependency install by the ASB harness, and no live FirstMate crew dispatch claim from a static or contract pass. Windows operational bridge work is owned by `FM-BRIDGE-10`.
 
 ## Proof ceiling
 
-This convergence floor proves contract + docs + static tests only. It does **not** prove live FirstMate crew dispatch, physical WSL runtime success, native Windows FirstMate execution, Herdr readiness, or merge of PR #96 / #98 / #101 / #99 / #100.
+This floor proves the integrated interop contract, exact upstream pin, and focused static tests. It does **not** prove live FirstMate crew dispatch, physical WSL crew success, native Windows FirstMate execution, Herdr readiness, Windows operational bridge behavior, or merge of historical PR #96 / #98 / #101 / #99 / #100.
