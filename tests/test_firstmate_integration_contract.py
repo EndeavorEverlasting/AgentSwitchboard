@@ -127,6 +127,7 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
     def test_probe_contract_parsing_is_fail_closed(self) -> None:
         self.assertIn("required_upstream_paths must be a non-empty list", self.probe)
         self.assertIn("PurePosixPath", self.probe)
+        self.assertIn("must not contain control characters", self.probe)
         self.assertIn("first_safe_sprint.yolo_enabled must be explicitly false", self.probe)
         self.assertIn("must match upstream-pin.json commit", self.probe)
         self.assertNotIn("mapfile -t REQUIRED_PATHS < <(", self.probe)

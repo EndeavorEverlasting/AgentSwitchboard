@@ -113,6 +113,8 @@ if not isinstance(paths, list) or not paths:
 for item in paths:
     if not isinstance(item, str) or not item.strip():
         raise SystemExit("required_upstream_paths entries must be non-empty strings")
+    if any(ch in item for ch in ("\n", "\r", "\0")):
+        raise SystemExit("required_upstream_paths entries must not contain control characters")
     parsed = PurePosixPath(item)
     if parsed.is_absolute() or ".." in parsed.parts:
         raise SystemExit(f"required_upstream_paths entry must be relative and traversal-free: {item}")
