@@ -3,7 +3,7 @@
   "validators": [
     {
       "id": "firstmate-integration-contract",
-      "command": "python tests/test_firstmate_integration_contract.py",
+      "command": "python3 tests/test_firstmate_integration_contract.py",
       "platform": "linux-wsl-or-ci"
     },
     {
