@@ -1,0 +1,62 @@
+{
+  "schema": "agentswitchboard.multi-product-bootstrap-matrix.v1",
+  "contractId": "agentswitchboard.multi-product-bootstrap-matrix.v1",
+  "title": "Multi-product system bootstrap matrix",
+  "updatedUtc": "2026-09-13T17:39:45Z",
+  "owner": "plans/active/ASB-2026-09-multi-product-bootstrap-charter.plan.json",
+  "dependsOnPlan": "ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS",
+  "decisionFloor": {
+    "activeNow": ["opencode", "pi", "firstmate"],
+    "deferred": ["herdr"],
+    "windowsRole": "native bootstrap host for OpenCode and Pi; bridge-only for FirstMate",
+    "firstMateRuntime": "WSL/Ubuntu",
+    "herdrRuntime": "Android/Termux (experimental session backend) — out of Windows Admin Box native bootstrap"
+  },
+  "products": {
+    "opencode": {
+      "status": "lifecycle-complete-on-main",
+      "platform": "windows-native",
+      "bootstrapOwner": "tooling/profiles/windows/Install-AgentSwitchboardOpenCode.ps1",
+      "runtime": "Windows Program Files / Machine PATH (OpenCode)",
+      "proofCeiling": "static/CI + registered Inspect/Apply/Remove lifecycle; physical workstation Apply remains operator field proof",
+      "nextAction": "Keep as lifecycle reference; continue LSP/runtime certification under ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS"
+    },
+    "pi": {
+      "status": "inspect-apply-registered-remove-gap",
+      "platform": "windows-native",
+      "bootstrapOwner": "tooling/pi/Install-AgentSwitchboardPiSystem.ps1",
+      "runtime": "Windows Program Files AgentSwitchboard-managed Pi standalone",
+      "proofCeiling": "static/CI proves Inspect/Apply surfaces and adapter registration; physical Apply is operator field proof and is NOT claimed by this charter sprint; Remove/Unbootstrap not yet implemented",
+      "nextAction": "Close Remove gap (Mode Remove + Unbootstrap-Pi-SystemWide.cmd) then prove physical Apply on an authorized Windows workstation"
+    },
+    "firstmate": {
+      "status": "convergence-contract-on-main",
+      "platform": "windows-bridge-to-wsl",
+      "bootstrapOwner": "tooling/firstmate/harness/convergence-contract.json",
+      "runtime": "WSL/Ubuntu (Windows Admin Box is bridge only)",
+      "proofCeiling": "charter + convergence contract + static tests on main; no native Windows FirstMate runtime and no live crew dispatch claimed",
+      "nextAction": "Rebase/salvage PR #96→#98/#101→#99→#100 onto current main against tooling/firstmate/harness/convergence-contract.json; then run WSL/Ubuntu read-only interop probe"
+    },
+    "herdr": {
+      "status": "deferred",
+      "platform": "android-termux",
+      "bootstrapOwner": "deferred — not Windows Admin Box native bootstrap",
+      "runtime": "Android/Termux + experimental session backend",
+      "proofCeiling": "explicit deferral only; no bootstrap implementation in this program wave",
+      "nextAction": "Remain deferred until Pi + FirstMate sequencing and Windows Admin Box native lanes stabilize"
+    }
+  },
+  "extensionPoints": {
+    "productMatrix": "tooling/harness/multi-product-bootstrap/product-matrix.contract.json",
+    "lifecycleAdapters": "tooling/harness/system-bootstrap-lifecycle/adapters.v1.json",
+    "rule": "Future products register matrix status/platform/runtime first, then add a lifecycle adapter only when Inspect/Apply/Remove parity is real — never invent Remove entrypoints that would lie."
+  },
+  "remainingGaps": [
+    "Pi: no Unbootstrap-Pi-SystemWide.cmd",
+    "Pi: Install-AgentSwitchboardPiSystem.ps1 ValidateSet is Inspect/Apply only — Remove not implemented",
+    "Pi: physical workstation Apply not proven by this charter sprint",
+    "FirstMate: convergence contract is on this floor; stale PR #96 stack still requires rebase before runtime harness merge",
+    "Herdr: deferred from Windows native bootstrap"
+  ],
+  "proofCeiling": "Contract and charter prove sequencing, ownership, and declared product status only. Does not prove physical Apply/Remove, WSL FirstMate runtime, or Herdr bootstrap."
+}

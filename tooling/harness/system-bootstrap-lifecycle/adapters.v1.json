@@ -28,6 +28,35 @@
         "scripts/Test-OpenCodeNativeSystemBootstrap.ps1",
         "scripts/Test-SystemBootstrapLifecycleContracts.ps1"
       ]
+    },
+    {
+      "adapterId": "pi",
+      "status": "partial-inspect-apply",
+      "owner": "tooling/pi/Install-AgentSwitchboardPiSystem.ps1",
+      "adapterContract": "tooling/pi/harness/system-bootstrap.contract.json",
+      "bootstrapEntrypoint": "Bootstrap-Pi-SystemWide.cmd",
+      "unbootstrapEntrypoint": null,
+      "operations": ["Inspect", "Apply"],
+      "machineStateRoot": "%ProgramData%/AgentSwitchboard/bootstrap-lifecycle/pi",
+      "dedicatedRuntimeRoot": "%ProgramFiles%/AgentSwitchboard/agents/pi",
+      "sharedMachineSurfaces": [
+        "%ProgramFiles%/AgentSwitchboard/bin",
+        "Machine PATH"
+      ],
+      "userStateOwned": false,
+      "credentialStateOwned": false,
+      "removeRequiresOwnershipState": true,
+      "removePreservesUnrelatedSharedState": true,
+      "gaps": [
+        "Install-AgentSwitchboardPiSystem.ps1 ValidateSet is Inspect/Apply only — Remove not implemented",
+        "Unbootstrap-Pi-SystemWide.cmd is absent; unbootstrapEntrypoint remains null",
+        "Physical workstation Apply is operator field proof and is not claimed by adapter registration alone"
+      ],
+      "proof": [
+        "tests/test_pi_system_bootstrap.py",
+        "tests/test_multi_product_bootstrap_charter.py",
+        "scripts/Test-SystemBootstrapLifecycleContracts.ps1"
+      ]
     }
   ],
   "adoptionRule": "New system bootstrap adapters must register here and satisfy Inspect/Apply/Remove lifecycle parity before being considered complete.",

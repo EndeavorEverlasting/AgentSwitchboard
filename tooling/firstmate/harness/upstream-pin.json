@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "pinId": "agentswitchboard.firstmate-upstream-pin.v1",
+  "repository": "kunchenguid/firstmate",
+  "repositoryUrl": "https://github.com/kunchenguid/firstmate",
+  "commit": "833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409",
+  "branch": "main",
+  "auditedAt": "2026-08-08",
+  "auditedFromPr": 96,
+  "auditedAtNote": "Audited commit recorded from FirstMate interoperability PR #96 evidence harvest. Pin metadata only \u2014 this repository does not vendor FirstMate sources.",
+  "platforms": {
+    "upstreamDeclared": [
+      "macOS",
+      "Linux"
+    ],
+    "agentswitchboardTarget": "WSL/Ubuntu"
+  },
+  "outOfScope": {
+    "nativeWindows": true,
+    "reason": "Upstream inspected platform contract does not declare native Windows; AgentSwitchboard treats native Windows FirstMate runtime as out of scope. Windows hosts are bridge-only."
+  },
+  "referenceSessionBackend": "tmux",
+  "vendor": false,
+  "rebaseRequiredBeforePr96StackMerge": true,
+  "pr96AuditedCommit": "833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409",
+  "adrEvidenceCommit": "b182d0f908b78d08c7ccb8dce3775bdca8c5d657",
+  "architectureDecision": "docs/architecture/asb-firstmate-runtime-boundary.md",
+  "note": "Historical PR #96 audit commit retained; ADR evidence floor is newer. Rebase must re-verify before live interop claims."
+}

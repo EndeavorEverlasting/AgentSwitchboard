@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "contractId": "agentswitchboard.firstmate-asb-convergence.v1",
+  "title": "FirstMate and AgentSwitchboard convergence floor",
+  "updatedUtc": "2026-09-13T18:20:00Z",
+  "intent": "Record the durable AgentSwitchboard \u2194 FirstMate ownership, runtime, safety, and stale-PR salvage boundaries on current main without merging the behind-main FirstMate PR stack and without vendoring FirstMate.",
+  "roles": {
+    "AgentSwitchboard": "control plane / workstation-bootstrap convergence: environment readiness, provider policy, validators, evidence sinks, and escalation \u2014 not a second live crew orchestrator",
+    "FirstMate": "crew chief / canonical live crew runtime: decompose and supervise parallel crew work under AgentSwitchboard policy while preserving isolated repository work",
+    "codingAgents": "workers: bounded reasoning, edits, tests, and reports inside assigned branches or worktrees",
+    "tmux": "reference session backend: terminal/session substrate only; does not own project decomposition or AgentSwitchboard policy"
+  },
+  "runtime": {
+    "target": "WSL/Ubuntu",
+    "nativeWindows": "out_of_scope",
+    "windowsHostRole": "bridge_only",
+    "upstreamDeclaredPlatforms": [
+      "macOS",
+      "Linux"
+    ],
+    "wslSupportClaim": "AgentSwitchboard integration inference from upstream Linux support; upstream README does not explicitly certify WSL",
+    "referenceSessionBackend": "tmux"
+  },
+  "upstream": {
+    "repository": "kunchenguid/firstmate",
+    "repositoryUrl": "https://github.com/kunchenguid/firstmate",
+    "auditedCommit": "833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409",
+    "auditedFromPr": 96,
+    "auditedAt": "2026-08-08",
+    "pinOwner": "tooling/firstmate/harness/upstream-pin.json",
+    "rebaseRequiredBeforePr96StackMerge": true,
+    "rebaseNote": "FirstMate PR #96 branch feat/firstmate-interop-wsl-20260808 is mergeable but far behind current main; rebase the entire stale stack onto current main before any integration merge. Do not merge PR #96 as-is.",
+    "pr96AuditedCommit": "833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409",
+    "adrEvidenceCommit": "b182d0f908b78d08c7ccb8dce3775bdca8c5d657",
+    "pinRefreshRule": "PR #96 historical audit commit remains recorded for provenance; rebase onto current main must re-verify and may refresh the pin to the ADR evidence floor or newer reviewed FirstMate main before claiming interop proof."
+  },
+  "firstSafeSprint": {
+    "projectDeliveryMode": "local-only",
+    "yoloEnabled": false,
+    "remoteWrites": false,
+    "credentialMutation": false,
+    "dependencyInstallationByAsbHarness": false,
+    "firstmateRepositoryMutation": false,
+    "agentswitchboardSharedRegistryMutation": false
+  },
+  "herdr": {
+    "status": "deferred",
+    "runtimeProof": "experimental-unproved",
+    "automaticSelection": false,
+    "windowsAdminBoxBootstrap": false,
+    "covers": [
+      "FirstMate session Herdr lane",
+      "Android/Termux Herdr lane"
+    ],
+    "note": "Herdr is deferred and experimental-unproved. It is not part of Windows Admin Box native bootstrap now."
+  },
+  "stalePrStack": {
+    "doNotMergeAsIs": true,
+    "rebaseOnto": "current origin/main",
+    "dependencyOrder": [
+      {
+        "pr": 96,
+        "role": "foundation",
+        "branch": "feat/firstmate-interop-wsl-20260808",
+        "summary": "FirstMate interop / WSL bridge foundation and integration contract"
+      },
+      {
+        "pr": 98,
+        "role": "depends-on-96",
+        "branch": "fix/firstmate-laptop-ubuntu-runtime-20260808",
+        "summary": "Canonical Ubuntu WSL distribution, bounded timeouts, unique evidence roots"
+      },
+      {
+        "pr": 101,
+        "role": "depends-on-96",
+        "branch": "fix/firstmate-wsl-prerequisite-gate-20260808",
+        "summary": "WSL prerequisite gate before physical floor; no dependency install or credential mutation"
+      },
+      {
+        "pr": 99,
+        "role": "depends-on-98",
+        "branch": "feat/harness-firstmate-windows-portability-20260808",
+        "summary": "Windows-native harness front door and portability regressions (bridge host only)"
+      },
+      {
+        "pr": 100,
+        "role": "depends-on-99",
+        "branch": "feat/harness-firstmate-python-portability-20260808",
+        "summary": "Preserve Python interpreter identity for Windows-hosted harness children"
+      }
+    ],
+    "integrationRule": "Extract or rebase durable content onto current main. Do not cherry-pick the entire FirstMate PR stack onto this convergence floor without an explicit rebase onto current main."
+  },
+  "proofCeiling": {
+    "level": "contract+docs+static-tests",
+    "claims": [
+      "Tracked convergence contract and upstream pin exist and parse",
+      "Role, runtime, Herdr deferral, and first-safe-sprint invariants are machine-readable",
+      "Stale PR stack dependency order is documented",
+      "Focused static tests pass without launching FirstMate"
+    ],
+    "doesNotClaim": [
+      "live FirstMate crew dispatch",
+      "physical WSL/Ubuntu runtime floor",
+      "native Windows FirstMate execution",
+      "Herdr readiness",
+      "merge of PR #96 or dependent stack PRs"
+    ]
+  },
+  "operatorNext": {
+    "when": "After the stale FirstMate PR stack is rebased onto current main and tooling/firstmate/Test-FirstMateInterop.sh is present",
+    "platform": "WSL/Ubuntu",
+    "commands": [
+      "bash tooling/firstmate/Test-FirstMateInterop.sh"
+    ],
+    "optionalCloneHint": "bash tooling/firstmate/Test-FirstMateInterop.sh --firstmate \"$HOME/path/to/firstmate\"",
+    "note": "Run only inside WSL/Ubuntu. Windows hosts bridge only. The probe must remain read-only: no credential mutation, no dependency installation by the ASB harness, and no live crew dispatch claim from a static pass."
+  },
+  "relatedSurfaces": {
+    "docs": "docs/harness/firstmate-asb-convergence.md",
+    "upstreamPin": "tooling/firstmate/harness/upstream-pin.json",
+    "staticTests": "tests/test_firstmate_asb_convergence_contract.py",
+    "multiProductCharter": "docs/harness/multi-product-bootstrap-charter.md",
+    "opencodeWindowsBootstrap": "docs/harness/opencode-native-system-bootstrap.md",
+    "piWindowsBootstrap": "docs/harness/pi-system-bootstrap-and-child-agents.md",
+    "architectureDecision": "docs/architecture/asb-firstmate-runtime-boundary.md"
+  },
+  "architectureDecision": {
+    "id": "ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME",
+    "path": "docs/architecture/asb-firstmate-runtime-boundary.md",
+    "status": "accepted",
+    "binding": "FirstMate is the canonical live crew runtime; AgentSwitchboard owns workstation/bootstrap convergence, readiness, policy, validation, and evidence sinks and must not expand the child-agent bus into a second crew orchestration platform."
+  }
+}
