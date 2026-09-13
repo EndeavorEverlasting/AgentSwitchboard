@@ -74,7 +74,11 @@ class FirstMateWindowsWslBridgeTests(unittest.TestCase):
         self.assertIn("Replace any inherited mode for variables this bridge owns", self.bridge)
         self.assertIn("$entryName -ine $stringName", self.bridge)
         self.assertIn("([string]$_ -split '/', 2)[0]", self.bridge)
-        self.assertIn("ASB_SOURCE_REPO/p", self.bridge)
+        self.assertIn('$wslEnvEntries += "$stringName/p"', self.bridge)
+        self.assertLess(
+            self.bridge.index("$entryName -ine $stringName"),
+            self.bridge.index('$wslEnvEntries += "$stringName/p"'),
+        )
 
     def test_bridge_creates_wsl_owned_standalone_exact_head_clone(self) -> None:
         self.assertIn("rev-parse --path-format=absolute --git-common-dir", self.bridge)
