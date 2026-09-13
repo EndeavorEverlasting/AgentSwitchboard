@@ -13,6 +13,8 @@ on:
       - 'tests/test_opencode_installer_exit_grounding.py'
       - 'tests/test_opencode_cwd_independent_bootstrap.py'
       - 'tests/test_opencode_release_pinned_retry.py'
+      - 'tests/test_asq005_canonical_runtime_floor.py'
+      - '.ai/WORK_QUEUE.md'
       - 'Test-OpenCodeLspHarness.cmd'
       - '.ai/skills/opencode-lsp-workstation-setup/**'
       - 'docs/harness/opencode-lsp-workstation-setup.md'
@@ -30,6 +32,8 @@ on:
       - 'tests/test_opencode_installer_exit_grounding.py'
       - 'tests/test_opencode_cwd_independent_bootstrap.py'
       - 'tests/test_opencode_release_pinned_retry.py'
+      - 'tests/test_asq005_canonical_runtime_floor.py'
+      - '.ai/WORK_QUEUE.md'
       - 'Test-OpenCodeLspHarness.cmd'
       - '.ai/skills/opencode-lsp-workstation-setup/**'
       - 'docs/harness/opencode-lsp-workstation-setup.md'
@@ -46,7 +50,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Dependency-free contracts
-        run: python -m unittest tests.test_opencode_lsp_harness tests.test_opencode_runtime_recovery tests.test_opencode_installer_exit_grounding tests.test_opencode_cwd_independent_bootstrap tests.test_opencode_release_pinned_retry -v
+        run: python -m unittest tests.test_opencode_lsp_harness tests.test_opencode_runtime_recovery tests.test_opencode_installer_exit_grounding tests.test_opencode_cwd_independent_bootstrap tests.test_opencode_release_pinned_retry tests.test_asq005_canonical_runtime_floor -v
       - name: Release-pinned retry PowerShell parse
         shell: pwsh
         run: |
