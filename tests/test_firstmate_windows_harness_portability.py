@@ -55,6 +55,11 @@ class FirstMateWindowsHarnessPortabilityTests(unittest.TestCase):
         self.assertIn("%ERRORLEVEL%", self.cmd)
         self.assertIn("exit /b %EXITCODE%", self.cmd)
 
+    def test_cmd_wrapper_respects_host_execution_policy(self) -> None:
+        self.assertNotIn("ExecutionPolicy", self.cmd)
+        self.assertNotIn("Bypass", self.cmd)
+        self.assertIn('pwsh.exe -NoLogo -NoProfile -File "%ENTRY%" %*', self.cmd)
+
 
 if __name__ == "__main__":
     unittest.main()
