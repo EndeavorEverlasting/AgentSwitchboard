@@ -1,0 +1,41 @@
+{
+  "schema": "agentswitchboard.firstmate-windows-wsl-validators.v1",
+  "validators": [
+    {
+      "id": "firstmate-integration-contract",
+      "command": "python tests/test_firstmate_integration_contract.py",
+      "platform": "linux-wsl-or-ci"
+    },
+    {
+      "id": "firstmate-convergence-contract",
+      "command": "python tests/test_firstmate_asb_convergence_contract.py",
+      "platform": "cross-platform-ci"
+    },
+    {
+      "id": "firstmate-operational-harness-contract",
+      "command": "python tests/test_firstmate_operational_harness.py",
+      "platform": "cross-platform-ci"
+    },
+    {
+      "id": "firstmate-windows-harness-portability",
+      "command": "python tests/test_firstmate_windows_harness_portability.py",
+      "platform": "cross-platform-ci"
+    },
+    {
+      "id": "firstmate-windows-wsl-bridge-contract",
+      "command": "python tests/test_firstmate_windows_wsl_bridge.py",
+      "platform": "cross-platform-ci"
+    },
+    {
+      "id": "firstmate-windows-wsl-prerequisite-gate",
+      "command": "python tests/test_firstmate_windows_wsl_prerequisite_gate.py",
+      "platform": "cross-platform-ci"
+    },
+    {
+      "id": "firstmate-windows-contract-front-door",
+      "command": "pwsh -NoLogo -NoProfile -File .\\Test-AgentSwitchboard-FirstMate-Harness.ps1 -Mode contract",
+      "platform": "windows"
+    }
+  ],
+  "proof_ceiling": "These validators prove tracked contracts and hosted platform behavior only; no validator entry is a substitute for physical WSL or live crew runtime evidence."
+}
