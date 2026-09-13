@@ -52,5 +52,5 @@
     "Evidence roots are unique per attempt and remain local/untracked.",
     "No AgentSwitchboard child-bus adapter, dispatch selector, wake loop, supervisor, or FirstMate crew-control skill is introduced by this harness."
   ],
-  "proof_ceiling": "Tracked bridge/harness structure, explicit-Ubuntu and bounded-process contracts, local evidence routing, Windows-native contract front door, prerequisite-gate behavior, and hosted Windows/Linux validation only. Physical WSL/Ubuntu execution and productive FirstMate crew runtime remain unproved until FM-WSL-12 and FM-CREW-13."
+  "proof_ceiling": "Tracked bridge/harness structure, explicit-Ubuntu and bounded-process contracts, local evidence routing, Windows-native contract front door, prerequisite-gate behavior, and hosted Windows/Linux validation only. Physical WSL/Ubuntu execution and live/productive FirstMate crew runtime remain unproved until FM-WSL-12 and FM-CREW-13."
 }
