@@ -12,7 +12,8 @@ param(
     [ValidateRange(10, 600)]
     [int]$WslTimeoutSeconds = 120,
 
-    [switch]$ContractOnly
+    [switch]$ContractOnly,
+    [switch]$PreserveWslWorkspaceOnFailure
 )
 
 Set-StrictMode -Version Latest
@@ -93,6 +94,12 @@ function Invoke-WslProcess {
 
     foreach ($name in $Environment.Keys) {
         $stringName = [string]$name
+        # Replace any inherited mode for variables this bridge owns. Keeping both
+        # ASB_SOURCE_REPO and ASB_SOURCE_REPO/p makes WSL translation ambiguous.
+        $wslEnvEntries = @($wslEnvEntries | Where-Object {
+            $entryName = (([string]$_ -split '/', 2)[0])
+            $entryName -ine $stringName
+        })
         $psi.Environment[$stringName] = [string]$Environment[$name]
         if ($PathEnvironmentNames -contains $stringName) {
             $wslEnvEntries += "$stringName/p"
@@ -119,7 +126,7 @@ function Invoke-WslProcess {
             $process.WaitForExit()
         }
         catch {
-            # Timeout remains authoritative; cleanup failure is diagnostic only.
+            # Timeout remains authoritative; process cleanup failure is diagnostic only.
         }
     }
 
@@ -135,6 +142,57 @@ function Invoke-WslProcess {
         Stderr = $stderr
         TimedOut = $timedOut
     }
+}
+
+function Complete-WslWorkspace {
+    param(
+        [Parameter(Mandatory = $true)][string]$Distribution,
+        [Parameter(Mandatory = $true)][string]$Workspace,
+        [Parameter(Mandatory = $true)][int]$TimeoutSeconds,
+        [Parameter(Mandatory = $true)][string]$DiagnosticsPath,
+        [Parameter(Mandatory = $true)][bool]$PrimaryFailure,
+        [switch]$PreserveOnFailure
+    )
+
+    if ($Workspace -notmatch '^/tmp/agentswitchboard-firstmate-[0-9a-fA-F-]+$') {
+        $message = "Refusing cleanup of unexpected WSL workspace path: $Workspace"
+        if ($PrimaryFailure) {
+            Write-Warning $message
+            return
+        }
+        throw $message
+    }
+
+    if ($PrimaryFailure -and $PreserveOnFailure) {
+        Write-Host "WSL_WORKSPACE_PRESERVED=$Workspace"
+        return
+    }
+
+    $cleanupCommand = @'
+set -euo pipefail
+: "${ASB_WSL_WORKSPACE:?ASB_WSL_WORKSPACE is required}"
+case "$ASB_WSL_WORKSPACE" in
+  /tmp/agentswitchboard-firstmate-*) ;;
+  *) printf '[FAIL] Refusing unexpected cleanup target: %s\n' "$ASB_WSL_WORKSPACE" >&2; exit 74 ;;
+esac
+rm -rf -- "$ASB_WSL_WORKSPACE"
+printf 'CLEANED=%s\n' "$ASB_WSL_WORKSPACE"
+'@
+    $cleanup = Invoke-WslProcess `
+        -Distribution $Distribution `
+        -Command $cleanupCommand `
+        -TimeoutSeconds $TimeoutSeconds `
+        -Environment @{ ASB_WSL_WORKSPACE = $Workspace }
+    Add-WslDiagnostic -Path $DiagnosticsPath -Stage 'workspace-cleanup' -Text $cleanup.Stderr
+    if ($cleanup.ExitCode -ne 0) {
+        $message = "Unable to clean script-owned WSL workspace '$Workspace'. See $DiagnosticsPath"
+        if ($PrimaryFailure) {
+            Write-Warning $message
+            return
+        }
+        throw $message
+    }
+    Write-Host "WSL_WORKSPACE_CLEANED=$Workspace"
 }
 
 foreach ($required in @($IntegrationContractPath, $ManifestPath, $ArtifactRegistryPath, $ValidatorRegistryPath)) {
@@ -227,9 +285,10 @@ Set-Content -LiteralPath $WslDiagnosticsPath -Value @(
     "WSL_DISTRIBUTION=$WslDistribution"
     "WSL_TIMEOUT_SECONDS=$WslTimeoutSeconds"
     "WSL_WORKSPACE=$wslWorkspace"
-    'NOTE=Windows paths cross into WSL only through WSLENV /p; wslpath is not used.'
+    'NOTE=Windows paths cross into WSL only through WSLENV /p; wslpath is not executed.'
     'NOTE=stdout and stderr remain separate; empty native streams are valid.'
     'NOTE=The Linux runtime uses a WSL-owned standalone clone, never the Windows linked-worktree .git indirection.'
+    'NOTE=The script-owned WSL clone is cleaned after each run unless failure preservation is explicitly requested.'
 )
 
 $preflight = Invoke-WslProcess `
@@ -276,9 +335,11 @@ $bootstrap = Invoke-WslProcess `
 Add-WslDiagnostic -Path $WslDiagnosticsPath -Stage 'bootstrap' -Text $bootstrap.Stderr
 Set-Content -LiteralPath $BootstrapStdoutPath -Value $bootstrap.Stdout.TrimEnd()
 if ($bootstrap.ExitCode -ne 0) {
+    Complete-WslWorkspace -Distribution $WslDistribution -Workspace $wslWorkspace -TimeoutSeconds $WslTimeoutSeconds -DiagnosticsPath $WslDiagnosticsPath -PrimaryFailure $true -PreserveOnFailure:$PreserveWslWorkspaceOnFailure
     throw "WSL could not create the standalone exact-head AgentSwitchboard clone. See $WslDiagnosticsPath and $BootstrapStdoutPath"
 }
 if ($bootstrap.Stdout -notmatch [regex]::Escape("WSL_DISTRO_NAME=$WslDistribution") -or $bootstrap.Stdout -notmatch [regex]::Escape("HEAD=$actualHead")) {
+    Complete-WslWorkspace -Distribution $WslDistribution -Workspace $wslWorkspace -TimeoutSeconds $WslTimeoutSeconds -DiagnosticsPath $WslDiagnosticsPath -PrimaryFailure $true -PreserveOnFailure:$PreserveWslWorkspaceOnFailure
     throw "WSL standalone clone did not prove explicit Ubuntu and exact AgentSwitchboard HEAD. See $BootstrapStdoutPath"
 }
 
@@ -291,6 +352,7 @@ $contract = Invoke-WslProcess `
 Add-WslDiagnostic -Path $WslDiagnosticsPath -Stage 'contract' -Text $contract.Stderr
 if ($contract.ExitCode -ne 0) {
     Set-Content -LiteralPath (Join-Path $EvidenceRoot 'contract-stdout.txt') -Value $contract.Stdout.TrimEnd()
+    Complete-WslWorkspace -Distribution $WslDistribution -Workspace $wslWorkspace -TimeoutSeconds $WslTimeoutSeconds -DiagnosticsPath $WslDiagnosticsPath -PrimaryFailure $true -PreserveOnFailure:$PreserveWslWorkspaceOnFailure
     throw "Owning FirstMate harness contract failed inside the WSL-owned clone. Evidence: $EvidenceRoot"
 }
 
@@ -321,10 +383,11 @@ Set-Content -LiteralPath $ProbePath -Value @(
     "WSL_STDERR=$WslDiagnosticsPath"
 )
 if ($probe.ExitCode -ne 0) {
-    Write-Host "WSL_WORKSPACE_PRESERVED=$wslWorkspace"
+    Complete-WslWorkspace -Distribution $WslDistribution -Workspace $wslWorkspace -TimeoutSeconds $WslTimeoutSeconds -DiagnosticsPath $WslDiagnosticsPath -PrimaryFailure $true -PreserveOnFailure:$PreserveWslWorkspaceOnFailure
     throw "FirstMate read-only interoperability floor failed. Evidence: $ProbePath"
 }
 
+Complete-WslWorkspace -Distribution $WslDistribution -Workspace $wslWorkspace -TimeoutSeconds $WslTimeoutSeconds -DiagnosticsPath $WslDiagnosticsPath -PrimaryFailure $false
 Write-Host $contract.Stdout.TrimEnd()
 Write-Host $probe.Stdout.TrimEnd()
 Write-Host '[PASS] FIRSTMATE_WINDOWS_WSL_RUNTIME_FLOOR'
@@ -332,5 +395,4 @@ Write-Host "HEAD=$actualHead"
 Write-Host "WSL_DISTRIBUTION=$WslDistribution"
 Write-Host "FLOOR_EVIDENCE=$ProbePath"
 Write-Host "WSL_DIAGNOSTICS=$WslDiagnosticsPath"
-Write-Host "WSL_WORKSPACE_PRESERVED=$wslWorkspace"
 Write-Host '[PROOF_CEILING] Physical WSL interoperability floor only; no FirstMate crew task was dispatched or supervised.'
