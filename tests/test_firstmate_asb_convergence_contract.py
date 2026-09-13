@@ -140,5 +140,15 @@ class FirstMateAsbConvergenceContractTests(unittest.TestCase):
             self.assertIsNone(match, f"forbidden pattern matched: {pattern.pattern}")
 
 
+    def test_architecture_decision_binding(self):
+        contract = json.loads(CONTRACT.read_text(encoding='utf-8'))
+        adr = contract['architectureDecision']
+        self.assertEqual('ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME', adr['id'])
+        self.assertEqual('docs/architecture/asb-firstmate-runtime-boundary.md', adr['path'])
+        self.assertTrue((ROOT / adr['path']).is_file())
+        self.assertIn('canonical live crew runtime', adr['binding'].lower())
+        self.assertIn('must not expand the child-agent bus', adr['binding'].lower())
+        self.assertEqual('kunchenguid/firstmate', contract['upstream']['repository'])
+
 if __name__ == "__main__":
     unittest.main()

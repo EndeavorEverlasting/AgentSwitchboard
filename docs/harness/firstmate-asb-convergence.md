@@ -7,6 +7,12 @@ Machine-readable authority:
 - `tooling/firstmate/harness/convergence-contract.json`
 - `tooling/firstmate/harness/upstream-pin.json`
 
+## Architecture decision binding
+
+Accepted ADR [`docs/architecture/asb-firstmate-runtime-boundary.md`](../architecture/asb-firstmate-runtime-boundary.md) (`ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME`) makes FirstMate the **canonical live crew runtime**. AgentSwitchboard keeps workstation/bootstrap convergence, readiness, policy, validation, and evidence sinks. Do **not** grow the child-agent bus into a second crew orchestration platform.
+
+Windows Admin Box hosts the **bridge only**; FirstMate execution remains **WSL/Ubuntu**. The historical PR #96 audit commit is provenance; rebase must re-verify against the ADR evidence floor (or newer reviewed FirstMate main) before live interop claims.
+
 ## Roles
 
 | Role | Owner |

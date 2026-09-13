@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "contractId": "agentswitchboard.firstmate-asb-convergence.v1",
   "title": "FirstMate and AgentSwitchboard convergence floor",
-  "updatedUtc": "2026-09-13T17:45:00Z",
-  "intent": "Record the durable AgentSwitchboard ↔ FirstMate ownership, runtime, safety, and stale-PR salvage boundaries on current main without merging the behind-main FirstMate PR stack and without vendoring FirstMate.",
+  "updatedUtc": "2026-09-13T18:20:00Z",
+  "intent": "Record the durable AgentSwitchboard \u2194 FirstMate ownership, runtime, safety, and stale-PR salvage boundaries on current main without merging the behind-main FirstMate PR stack and without vendoring FirstMate.",
   "roles": {
-    "AgentSwitchboard": "control plane: machine, provider, workflow, policy, validators, evidence, and escalation",
-    "FirstMate": "crew chief: decompose and supervise parallel crew work under AgentSwitchboard policy while preserving isolated repository work",
+    "AgentSwitchboard": "control plane / workstation-bootstrap convergence: environment readiness, provider policy, validators, evidence sinks, and escalation \u2014 not a second live crew orchestrator",
+    "FirstMate": "crew chief / canonical live crew runtime: decompose and supervise parallel crew work under AgentSwitchboard policy while preserving isolated repository work",
     "codingAgents": "workers: bounded reasoning, edits, tests, and reports inside assigned branches or worktrees",
     "tmux": "reference session backend: terminal/session substrate only; does not own project decomposition or AgentSwitchboard policy"
   },
@@ -14,7 +14,10 @@
     "target": "WSL/Ubuntu",
     "nativeWindows": "out_of_scope",
     "windowsHostRole": "bridge_only",
-    "upstreamDeclaredPlatforms": ["macOS", "Linux"],
+    "upstreamDeclaredPlatforms": [
+      "macOS",
+      "Linux"
+    ],
     "wslSupportClaim": "AgentSwitchboard integration inference from upstream Linux support; upstream README does not explicitly certify WSL",
     "referenceSessionBackend": "tmux"
   },
@@ -26,7 +29,10 @@
     "auditedAt": "2026-08-08",
     "pinOwner": "tooling/firstmate/harness/upstream-pin.json",
     "rebaseRequiredBeforePr96StackMerge": true,
-    "rebaseNote": "FirstMate PR #96 branch feat/firstmate-interop-wsl-20260808 is mergeable but far behind current main; rebase the entire stale stack onto current main before any integration merge. Do not merge PR #96 as-is."
+    "rebaseNote": "FirstMate PR #96 branch feat/firstmate-interop-wsl-20260808 is mergeable but far behind current main; rebase the entire stale stack onto current main before any integration merge. Do not merge PR #96 as-is.",
+    "pr96AuditedCommit": "833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409",
+    "adrEvidenceCommit": "b182d0f908b78d08c7ccb8dce3775bdca8c5d657",
+    "pinRefreshRule": "PR #96 historical audit commit remains recorded for provenance; rebase onto current main must re-verify and may refresh the pin to the ADR evidence floor or newer reviewed FirstMate main before claiming interop proof."
   },
   "firstSafeSprint": {
     "projectDeliveryMode": "local-only",
@@ -116,6 +122,13 @@
     "staticTests": "tests/test_firstmate_asb_convergence_contract.py",
     "multiProductCharter": "docs/harness/multi-product-bootstrap-charter.md",
     "opencodeWindowsBootstrap": "docs/harness/opencode-native-system-bootstrap.md",
-    "piWindowsBootstrap": "docs/harness/pi-system-bootstrap-and-child-agents.md"
+    "piWindowsBootstrap": "docs/harness/pi-system-bootstrap-and-child-agents.md",
+    "architectureDecision": "docs/architecture/asb-firstmate-runtime-boundary.md"
+  },
+  "architectureDecision": {
+    "id": "ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME",
+    "path": "docs/architecture/asb-firstmate-runtime-boundary.md",
+    "status": "accepted",
+    "binding": "FirstMate is the canonical live crew runtime; AgentSwitchboard owns workstation/bootstrap convergence, readiness, policy, validation, and evidence sinks and must not expand the child-agent bus into a second crew orchestration platform."
   }
 }
