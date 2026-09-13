@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "pinId": "agentswitchboard.firstmate-upstream-pin.v1",
+  "repository": "kunchenguid/firstmate",
+  "repositoryUrl": "https://github.com/kunchenguid/firstmate",
+  "commit": "833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409",
+  "branch": "main",
+  "auditedAt": "2026-08-08",
+  "auditedFromPr": 96,
+  "auditedAtNote": "Audited commit recorded from FirstMate interoperability PR #96 evidence harvest. Pin metadata only — this repository does not vendor FirstMate sources.",
+  "platforms": {
+    "upstreamDeclared": ["macOS", "Linux"],
+    "agentswitchboardTarget": "WSL/Ubuntu"
+  },
+  "outOfScope": {
+    "nativeWindows": true,
+    "reason": "Upstream inspected platform contract does not declare native Windows; AgentSwitchboard treats native Windows FirstMate runtime as out of scope. Windows hosts are bridge-only."
+  },
+  "referenceSessionBackend": "tmux",
+  "vendor": false,
+  "rebaseRequiredBeforePr96StackMerge": true
+}
