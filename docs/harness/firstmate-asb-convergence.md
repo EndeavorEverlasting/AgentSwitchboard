@@ -1,41 +1,48 @@
 # FirstMate ↔ AgentSwitchboard convergence
 
-This document is the durable Windows Admin Box guidance for FirstMate on current `main`. It extracts ownership and safety invariants from the stale FirstMate PR stack without merging that stack.
+This document is the durable Windows Admin Box guidance for FirstMate on current `main`. It preserves the useful failure contracts from the historical FirstMate PR stack without merging that stale stack wholesale.
 
 Machine-readable authority:
 
 - `tooling/firstmate/harness/convergence-contract.json`
 - `tooling/firstmate/harness/upstream-pin.json`
 - `tooling/firstmate/harness/integration-contract.json`
+- `tooling/firstmate/harness/operational/manifest.json`
 - `tooling/firstmate/Test-FirstMateInterop.sh`
 
-Focused integration docs: [`docs/harness/firstmate-integration.md`](firstmate-integration.md).
+Focused integration docs:
+
+- [`docs/harness/firstmate-integration.md`](firstmate-integration.md)
+- [`docs/harness/firstmate-operational-harness.md`](firstmate-operational-harness.md)
 
 ## Architecture decision binding
 
-Accepted ADR [`docs/architecture/asb-firstmate-runtime-boundary.md`](../architecture/asb-firstmate-runtime-boundary.md) (`ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME`) makes FirstMate the **canonical live crew runtime**. AgentSwitchboard keeps workstation/bootstrap convergence, readiness, policy, validation, and evidence sinks. Do **not** grow the child-agent bus into a second crew orchestration platform.
+Accepted ADR [`docs/architecture/asb-firstmate-runtime-boundary.md`](../architecture/asb-firstmate-runtime-boundary.md) (`ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME`) makes FirstMate the **canonical live crew runtime**. AgentSwitchboard keeps workstation/bootstrap convergence, readiness, policy, validation, evidence sinks, and escalation. Do **not** grow the child-agent bus or the Windows bridge into a second crew orchestration platform.
 
-Windows Admin Box hosts the **bridge only**; FirstMate execution remains **WSL/Ubuntu**. The historical PR #96 audit commit (`833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409`) is provenance only. Current audited pin is FirstMate `main@b182d0f908b78d08c7ccb8dce3775bdca8c5d657` (ADR evidence floor). Windows operational bridge salvage remains deferred to `FM-BRIDGE-10`.
+Windows Admin Box hosts the **bridge only**; FirstMate execution remains **WSL/Ubuntu**. The historical PR #96 audit commit (`833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409`) is provenance only. Current audited pin is FirstMate `main@b182d0f908b78d08c7ccb8dce3775bdca8c5d657`.
+
+`FM-REFRESH-06` rebuilt the Linux/WSL foundation on current main. `FM-BRIDGE-10` rebuilds the durable Windows→WSL bridge lessons from PRs #98/#99/#100/#101 on that refreshed floor. The stale stack remains historical evidence and is not merged as-is.
 
 ## Roles
 
 | Role | Owner |
 |---|---|
-| Control plane | AgentSwitchboard — machine, provider, workflow, policy, validators, evidence, escalation |
-| Crew chief | FirstMate — decompose and supervise parallel crew work under ASB policy |
-| Workers | Coding agents — bounded edits/tests/reports in assigned branches or worktrees |
-| Session backend | tmux — reference substrate only |
+| Workstation/bootstrap convergence, readiness, validation, evidence | AgentSwitchboard |
+| Crew chief / live runtime | FirstMate |
+| Workers | Coding agents managed by FirstMate |
+| Reference session backend | tmux |
 
 ## Windows Admin Box guidance
 
 - **FirstMate runtime is WSL/Ubuntu only.** Prove and operate FirstMate inside Ubuntu on WSL.
-- **Windows hosts are bridge only.** The Windows Admin Box may launch, select, and diagnose the WSL path. It does not host a native Windows FirstMate runtime.
-- **Native Windows FirstMate is out of scope.** Do not claim or implement native Windows FirstMate compatibility from this convergence floor.
-- **Herdr is deferred.** Both the FirstMate session-Herdr lane and Android/Termux Herdr remain experimental-unproved and are not part of Windows Admin Box bootstrap now.
+- **Windows hosts are bridge only.** The tracked PowerShell harness validates the Windows side and crosses into explicit Ubuntu; it does not host FirstMate natively.
+- **Native Windows FirstMate is out of scope.** Do not infer support from a Windows-hosted contract PASS.
+- **FirstMate owns dispatch and lifecycle.** AgentSwitchboard does not register a FirstMate crew-routing skill, capability, trigger, wake loop, task state machine, or runtime selector in `FM-BRIDGE-10`.
+- **Herdr is deferred.** FirstMate/Herdr and Android/Termux Herdr remain experimental-unproved and outside the Windows Admin Box bootstrap wave.
 
-## Separate native Windows system bootstraps (already on main)
+## Separate native Windows system bootstraps
 
-FirstMate is not a Windows native system-bootstrap product. Keep these lanes separate:
+FirstMate is not a Windows-native system-bootstrap product. Keep these lanes separate:
 
 - OpenCode reversible Windows bootstrap: `docs/harness/opencode-native-system-bootstrap.md`
 - Pi Windows system bootstrap: `docs/harness/pi-system-bootstrap-and-child-agents.md`
@@ -45,49 +52,70 @@ FirstMate is not a Windows native system-bootstrap product. Keep these lanes sep
 
 - Repository: [`kunchenguid/firstmate`](https://github.com/kunchenguid/firstmate)
 - Current audited commit: `b182d0f908b78d08c7ccb8dce3775bdca8c5d657`
-- Historical PR #96 audit commit (provenance only): `833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409`
-- Pin file: `tooling/firstmate/harness/upstream-pin.json` (metadata only; no vendor tree)
+- Historical PR #96 audit commit: `833a9a25bcf2ae522d6f93dbbd9911a6d8e7c409`
+- Pin owner: `tooling/firstmate/harness/upstream-pin.json`
 
-Upstream declares macOS and Linux. WSL is an AgentSwitchboard integration inference from Linux support, not an upstream WSL certification claim.
+Upstream declares macOS and Linux. WSL remains an AgentSwitchboard integration inference from Linux support, not an upstream WSL certification claim.
 
 ## First safe sprint
 
-Until physical WSL crew evidence exists:
+Until live crew proof exists:
 
 - delivery mode: `local-only`
 - `yoloEnabled`: `false`
+- no remote writes
 - no credential mutation
 - no dependency installation by the AgentSwitchboard harness
-- no FirstMate upstream mutation and no shared ASB registry mutation from this floor
+- no FirstMate upstream mutation
+- no shared ASB registry mutation from the runtime lane
 
-## Stale PR stack (do not merge as-is)
+## Historical PR stack disposition
 
-PR #96 (`feat/firstmate-interop-wsl-20260808`) remains salvage evidence. Do **not** merge it as-is. Foundation surfaces are refreshed on current main under `FM-REFRESH-06`. Remaining dependency order for later salvage:
+Do **not** merge the old stack wholesale.
 
-1. **#96** — foundation (superseded by refreshed mainline surfaces once integrated)
-2. **#98** — Ubuntu runtime hardening → `FM-BRIDGE-10`
-3. **#101** — WSL prerequisite gate → `FM-BRIDGE-10`
-4. **#99** — Windows-native harness portability → `FM-BRIDGE-10`
-5. **#100** — Python interpreter continuity → `FM-BRIDGE-10`
+1. **#96** — foundation provenance; rebuilt by `FM-REFRESH-06`.
+2. **#98** — explicit Ubuntu, bounded WSL subprocesses, unique evidence roots; rebuilt by `FM-BRIDGE-10`.
+3. **#101** — prerequisite gate; rebuilt by `FM-BRIDGE-10`.
+4. **#99** — Windows-native contract front door; rebuilt by `FM-BRIDGE-10`.
+5. **#100** — Windows interpreter continuity; rebuilt by `FM-BRIDGE-10` using the current Python executable.
 
-Prefer extracting durable contracts onto main over cherry-picking the entire stack.
+Historical green CI remains evidence for why those contracts exist, not proof for the new mainline implementation.
 
-## Operator next
+## Operator next: physical-floor
 
-Run this **inside WSL/Ubuntu** against a clean FirstMate clone at the audited pin:
+After the bridge contract is integrated on current main, use the Windows-native front door from a clean, refreshed AgentSwitchboard checkout:
 
-```bash
-bash tooling/firstmate/Test-FirstMateInterop.sh
+```powershell
+$head = (git rev-parse HEAD).Trim()
+pwsh -NoLogo -NoProfile -File .\Test-AgentSwitchboard-FirstMate-Harness.ps1 `
+  -Mode physical-floor `
+  -ExpectedHead $head `
+  -WslDistribution Ubuntu
 ```
 
-If the FirstMate clone is outside default probe locations:
+The prerequisite wrapper first checks inside Ubuntu for `git`, `gh`, `tmux`, `python3`, and GitHub CLI authentication. It may print exact package/login recovery commands, but AgentSwitchboard does not execute those recovery commands, install dependencies, or mutate credentials itself.
 
-```bash
-bash tooling/firstmate/Test-FirstMateInterop.sh --firstmate "$HOME/path/to/firstmate"
-```
+If prerequisites pass, the lower bridge creates a WSL-owned standalone clone at the exact AgentSwitchboard SHA, runs the tracked bridge contract, then runs the read-only FirstMate interoperability probe. Local receipts remain untracked.
 
-That probe must stay read-only: no credential mutation, no dependency install by the ASB harness, and no live FirstMate crew dispatch claim from a static or contract pass. Windows operational bridge work is owned by `FM-BRIDGE-10`.
+A successful physical-floor run proves the Windows→Ubuntu/WSL interoperability floor only. It does not dispatch a FirstMate worker. The later `FM-CREW-13` local-only pilot owns live crew proof.
 
 ## Proof ceiling
 
-This floor proves the integrated interop contract, exact upstream pin, and focused static tests. It does **not** prove live FirstMate crew dispatch, physical WSL crew success, native Windows FirstMate execution, Herdr readiness, Windows operational bridge behavior, or merge of historical PR #96 / #98 / #101 / #99 / #100.
+This convergence floor may prove:
+
+- current FirstMate pin and ownership contract;
+- Windows bridge-only posture;
+- tracked explicit-Ubuntu bridge mechanics;
+- hosted Windows/Linux bridge validation;
+- prerequisite-gate ordering and non-mutation;
+- preservation of historical Windows→WSL regression contracts;
+- deliberate non-registration of an AgentSwitchboard FirstMate crew-routing skill/capability/trigger.
+
+It does **not** prove:
+
+- the physical Windows→Ubuntu/WSL floor until `FM-WSL-12` runs;
+- live FirstMate crew dispatch/supervision until `FM-CREW-13` runs;
+- native Windows FirstMate execution;
+- provider/model delivery;
+- Herdr readiness;
+- merge of historical PR #96/#98/#99/#100/#101.
