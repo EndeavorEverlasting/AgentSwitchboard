@@ -63,18 +63,8 @@ jobs:
           for file in tooling/firstmate/harness/operational/*.json; do
             python -m json.tool "$file" >/dev/null
           done
-      - name: Validate First Mate contracts
-        run: |
-          python tests/test_firstmate_integration_contract.py
-          python tests/test_firstmate_asb_convergence_contract.py
-          python tests/test_firstmate_operational_harness.py
-          python tests/test_firstmate_windows_harness_portability.py
-          python tests/test_firstmate_windows_wsl_bridge.py
-          python tests/test_firstmate_windows_wsl_prerequisite_gate.py
-      - name: Validate shell surfaces
-        run: |
-          bash -n Test-AgentSwitchboard-FirstMate-Harness.sh
-          bash -n tooling/firstmate/Test-FirstMateInterop.sh
+      - name: Validate canonical Linux harness entrypoint
+        run: bash Test-AgentSwitchboard-FirstMate-Harness.sh contract
       - name: Validate branch diff hygiene
         run: |
           git fetch --no-tags origin main
