@@ -70,6 +70,12 @@ class FirstMateWindowsWslBridgeTests(unittest.TestCase):
         self.assertIn("ASB_SOURCE_REPO", self.bridge)
         self.assertIn("-PathEnvironmentNames @('ASB_SOURCE_REPO')", self.bridge)
 
+    def test_bridge_replaces_inherited_wslenv_mode_for_owned_variables(self) -> None:
+        self.assertIn("Replace any inherited mode for variables this bridge owns", self.bridge)
+        self.assertIn("$entryName -ine $stringName", self.bridge)
+        self.assertIn("([string]$_ -split '/', 2)[0]", self.bridge)
+        self.assertIn("ASB_SOURCE_REPO/p", self.bridge)
+
     def test_bridge_creates_wsl_owned_standalone_exact_head_clone(self) -> None:
         self.assertIn("rev-parse --path-format=absolute --git-common-dir", self.bridge)
         self.assertIn("git clone --quiet --no-hardlinks --no-checkout", self.bridge)
@@ -84,7 +90,18 @@ class FirstMateWindowsWslBridgeTests(unittest.TestCase):
         self.assertIn("wsl-stderr.log", self.bridge)
         self.assertIn("wsl-bootstrap-stdout.txt", self.bridge)
         self.assertIn("stdout and stderr remain separate", self.bridge)
+
+    def test_script_owned_wsl_workspace_is_cleaned_by_default(self) -> None:
+        self.assertIn("function Complete-WslWorkspace", self.bridge)
+        self.assertIn("[switch]$PreserveWslWorkspaceOnFailure", self.bridge)
+        self.assertIn("^/tmp/agentswitchboard-firstmate-[0-9a-fA-F-]+$", self.bridge)
+        self.assertIn('rm -rf -- "$ASB_WSL_WORKSPACE"', self.bridge)
+        self.assertIn("WSL_WORKSPACE_CLEANED", self.bridge)
         self.assertIn("WSL_WORKSPACE_PRESERVED", self.bridge)
+        self.assertIn("-PreserveOnFailure:$PreserveWslWorkspaceOnFailure", self.bridge)
+        success_cleanup = self.bridge.rindex("Complete-WslWorkspace -Distribution")
+        pass_marker = self.bridge.index("FIRSTMATE_WINDOWS_WSL_RUNTIME_FLOOR")
+        self.assertLess(success_cleanup, pass_marker)
 
     def test_bridge_runs_contract_before_read_only_probe(self) -> None:
         contract_index = self.bridge.index("Test-AgentSwitchboard-FirstMate-Harness.sh contract")
