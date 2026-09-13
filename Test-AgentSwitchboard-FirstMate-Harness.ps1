@@ -41,8 +41,11 @@ try {
 
     switch ($Mode) {
         'contract' {
+            # The Linux/WSL integration-contract suite intentionally exercises the Bash
+            # probe and therefore belongs to Linux CI. The Windows front door validates
+            # only platform-neutral/Windows bridge suites so Windows Python never needs
+            # to launch a bare POSIX shell.
             foreach ($test in @(
-                'tests/test_firstmate_integration_contract.py',
                 'tests/test_firstmate_asb_convergence_contract.py',
                 'tests/test_firstmate_operational_harness.py',
                 'tests/test_firstmate_windows_harness_portability.py',
