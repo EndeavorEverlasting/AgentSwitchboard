@@ -74,7 +74,7 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
         self.assertIs(safety["raw_gh_auth_output_allowed"], False)
 
     def test_validator_registry_covers_bridge_and_prerequisite_gate(self) -> None:
-        ids = {item["id"] for item in self.validators["validators"]}
+        by_id = {item["id"]: item for item in self.validators["validators"]}
         for validator_id in (
             "firstmate-integration-contract",
             "firstmate-convergence-contract",
@@ -84,7 +84,15 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
             "firstmate-windows-wsl-prerequisite-gate",
             "firstmate-windows-contract-front-door",
         ):
-            self.assertIn(validator_id, ids)
+            self.assertIn(validator_id, by_id)
+        self.assertEqual(
+            "python3 tests/test_firstmate_integration_contract.py",
+            by_id["firstmate-integration-contract"]["command"],
+        )
+        self.assertEqual(
+            "linux-wsl-or-ci",
+            by_id["firstmate-integration-contract"]["platform"],
+        )
 
     def test_integration_contract_binds_operational_bridge(self) -> None:
         bridge = self.integration["windows_bridge"]
