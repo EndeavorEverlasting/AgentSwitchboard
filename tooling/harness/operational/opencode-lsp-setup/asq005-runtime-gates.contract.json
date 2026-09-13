@@ -4,6 +4,9 @@
   "planTaskId": "LSP-02",
   "title": "OpenCode fresh-TUI Python LSP runtime certification gates",
   "proofCeiling": "OBSERVED live TUI semantic LSP only on Admin Box 1; Configure/CI/INTEGRATED floor never promote to PASS",
+  "liveProofStatus": "UNPROVEN",
+  "runtimeOwner": "Admin Box 1",
+  "configureNeverPromotesToDone": true,
   "liveFloorCommit": "24cce9e321a4913dda32f21a2d51a599dd0e4bb4",
   "headlessBaselineId": "20260912T194619Z-e3f423df",
   "canonicalCheckout": {
@@ -36,6 +39,7 @@
     "nonLspSemanticFallbackUsed": "No",
     "passVerdict": "LSP_RUNTIME_SMOKE_TEST: PASS"
   },
+  "prepEntrypoint": "tooling/harness/operational/opencode-lsp-setup/Invoke-Asq005FreshTuiCertificationPrep.ps1",
   "gates": [
     {
       "id": "G0",
@@ -78,8 +82,20 @@
     },
     {
       "id": "G8",
-      "name": "ASQ-005 terminal decision"
+      "name": "ASQ-005 terminal decision",
+      "doneRequiresLivePassVerdict": true
     }
+  ],
+  "doneRequiresGateIds": [
+    "G0",
+    "G1",
+    "G2",
+    "G3",
+    "G4",
+    "G5",
+    "G6",
+    "G7",
+    "G8"
   ],
   "successorPolicy": {
     "asq008Asq009": "FREEZE/HAND-OFF under ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME; ASQ-005 completion does not authorize ASB live adapter expansion",

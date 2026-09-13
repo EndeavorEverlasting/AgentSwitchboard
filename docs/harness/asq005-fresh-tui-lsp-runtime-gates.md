@@ -51,6 +51,14 @@ A TUI failure does not weaken the gate. A reproducible product/harness defect ma
 - If nested work is ever reauthorized: ASQ-011 owns the bounded nested-delegation mechanism/contract; ASQ-012 owns physical/runtime certification of one heterogeneous depth-2 chain.
 - ASQ-013 converges only after authorized terminal predecessors; old receipts do not promote across material head/schema/runtime-owner change.
 
+## Live proof status
+
+Tracked contract `liveProofStatus` / ledger `LIVE_RUNTIME_PROOF` remains **UNPROVEN** until Admin Box 1 records local runtime-smoke receipts with `LSP_RUNTIME_SMOKE_TEST: PASS`. Cloud/CI/INTEGRATED gate encoding never flips that field to PASS.
+
 ## Operator entry
 
-Use the ASQ-005 **Next action** in `.ai/WORK_QUEUE.md` on Admin Box 1. Universal lane-entry checks (root/origin/fetch/ff-only/clean/frontier) are part of G0.
+On Admin Box 1, run the reusable G0/G1 prep entrypoint (never marks DONE):
+
+`pwsh -NoLogo -NoProfile -File .\tooling\harness\operational\opencode-lsp-setup\Invoke-Asq005FreshTuiCertificationPrep.ps1`
+
+Then complete G2–G8 in the fresh TUI using the printed checklist. Universal lane-entry checks (root/origin/fetch/ff-only/clean/frontier) are part of G0 inside that prep script. The ASQ-005 **Next action** in `.ai/WORK_QUEUE.md` must invoke this entrypoint.
