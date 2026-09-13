@@ -1,0 +1,56 @@
+{
+  "schema": "agentswitchboard.firstmate-windows-wsl-operational-harness.v1",
+  "harness_id": "firstmate-windows-wsl-bridge",
+  "status": "contract-integrated-runtime-unproved",
+  "architecture_decision": "docs/architecture/asb-firstmate-runtime-boundary.md",
+  "integration_contract": "tooling/firstmate/harness/integration-contract.json",
+  "canonical_windows_entrypoint": "Test-AgentSwitchboard-FirstMate-Harness.ps1",
+  "canonical_linux_contract_entrypoint": "Test-AgentSwitchboard-FirstMate-Harness.sh",
+  "components": {
+    "codebase_map": "tooling/firstmate/harness/operational/codebase-map.json",
+    "artifact_registry": "tooling/firstmate/harness/operational/artifact-registry.json",
+    "validator_registry": "tooling/firstmate/harness/operational/validator-registry.json",
+    "windows_wsl_bridge": "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1",
+    "physical_floor": "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1",
+    "windows_entrypoint": "Test-AgentSwitchboard-FirstMate-Harness.ps1",
+    "windows_cmd_entrypoint": "Test-AgentSwitchboard-FirstMate-Harness.cmd",
+    "linux_contract_entrypoint": "Test-AgentSwitchboard-FirstMate-Harness.sh",
+    "interop_probe": "tooling/firstmate/Test-FirstMateInterop.sh",
+    "operator_guide": "docs/harness/firstmate-operational-harness.md",
+    "completeness_test": "tests/test_firstmate_operational_harness.py",
+    "windows_portability_test": "tests/test_firstmate_windows_harness_portability.py",
+    "windows_wsl_bridge_test": "tests/test_firstmate_windows_wsl_bridge.py",
+    "prerequisite_gate_test": "tests/test_firstmate_windows_wsl_prerequisite_gate.py"
+  },
+  "roles": {
+    "agentswitchboard": "Windows/WSL bootstrap convergence, readiness, validation, evidence, and escalation",
+    "firstmate": "canonical live crew runtime after the bridge floor is proven",
+    "tmux": "reference FirstMate session backend",
+    "coding_agents": "FirstMate-managed bounded workers"
+  },
+  "routing": {
+    "windows_host": "bridge_only",
+    "wsl_distribution": "Ubuntu",
+    "reference_session_backend": "tmux",
+    "runtime_dispatch_owner": "FirstMate",
+    "runtime_lifecycle_owner": "FirstMate",
+    "agentswitchboard_skill": null,
+    "agentswitchboard_capability": null,
+    "agentswitchboard_trigger": null,
+    "stale_skill_disposition": "do-not-revive-firstmate-crew-orchestration",
+    "stale_selector_disposition": "do-not-revive-asb-runtime-route-selector",
+    "reason": "The bridge validates the runtime substrate and hands off. It does not select or supervise the FirstMate crew."
+  },
+  "guardrails": [
+    "Native-Windows FirstMate execution is out of scope; Windows is a bridge host only.",
+    "Every WSL call uses explicit Ubuntu and a bounded timeout.",
+    "PowerShell-to-Bash commands are normalized to LF before transport.",
+    "Windows paths cross into WSL only through WSLENV /p; wslpath is not a dependency.",
+    "Linux Git never consumes a Windows linked-worktree .git indirection; the bridge creates a WSL-owned standalone exact-head clone.",
+    "Empty stdout/stderr are valid native-process results and must not fail parameter binding.",
+    "The prerequisite gate observes git, gh, tmux, python3, and GitHub authentication but does not install tools or mutate credentials.",
+    "Evidence roots are unique per attempt and remain local/untracked.",
+    "No AgentSwitchboard child-bus adapter, dispatch selector, wake loop, supervisor, or FirstMate crew-control skill is introduced by this harness."
+  ],
+  "proof_ceiling": "Tracked bridge/harness structure, explicit-Ubuntu and bounded-process contracts, local evidence routing, Windows-native contract front door, prerequisite-gate behavior, and hosted Windows/Linux validation only. Physical WSL/Ubuntu execution and productive FirstMate crew runtime remain unproved until FM-WSL-12 and FM-CREW-13."
+}
