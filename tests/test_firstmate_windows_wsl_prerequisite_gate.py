@@ -38,9 +38,14 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
     def test_gate_reports_recovery_but_does_not_execute_it(self) -> None:
         self.assertIn("NEXT_ACTION=sudo apt-get update && sudo apt-get install -y", self.physical)
         self.assertIn("NEXT_ACTION=gh auth login --hostname github.com --git-protocol https --web", self.physical)
-        self.assertNotIn("& sudo", self.physical)
-        self.assertNotIn("Start-Process sudo", self.physical)
-        self.assertNotIn("gh auth login --hostname github.com --git-protocol https --web'", self.physical)
+        for executable_form in (
+            "& sudo",
+            "Start-Process sudo",
+            "& gh auth login",
+            "Start-Process gh",
+            "Invoke-Expression $nextAction",
+        ):
+            self.assertNotIn(executable_form, self.physical)
         self.assertIs(self.integration["windows_bridge"]["dependency_installation"], False)
         self.assertIs(self.integration["windows_bridge"]["credential_mutation"], False)
 
