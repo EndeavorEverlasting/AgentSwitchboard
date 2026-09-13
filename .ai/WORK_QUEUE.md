@@ -247,7 +247,7 @@ Canonical terminal action: none; no safe actionable work remains
 - **References:** `docs/architecture/asb-firstmate-runtime-boundary.md`, `plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json`, `plans/active/ASB-2026-09-agent-bootstrap-child-bus.md`, https://github.com/kunchenguid/firstmate, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/96
 - **Acceptance gate:** ADR committed with matrix/subtraction/dispositions; September plan tasks updated; ledger FREEZE/PROCEED states recorded; public-plan and work-ledger validators pass
 - **Gate:** none
-- **Last proof:** artifact:docs/architecture/asb-firstmate-runtime-boundary.md artifact:plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json floors:ASB-e76ba4b FirstMate-b182d0f
+- **Last proof:** commit:bab56af01358f604de0e77515f67ef3e0695f203 artifact:docs/architecture/asb-firstmate-runtime-boundary.md artifact:plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-13T17:30:00Z
 
