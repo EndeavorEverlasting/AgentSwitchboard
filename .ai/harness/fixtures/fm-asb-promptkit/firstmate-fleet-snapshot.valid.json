@@ -10,7 +10,7 @@
       "backend": "tmux",
       "paths": {
         "worktree": {
-          "path": "/Users/private/Secret Workspace/example",
+          "path": "/fixture/worktrees/secret-example",
           "present": true
         },
         "report": {
@@ -47,7 +47,7 @@
       "backend": "tmux",
       "paths": {
         "worktree": {
-          "path": "/tmp/decision",
+          "path": "/fixture/worktrees/decision",
           "present": true
         },
         "report": {
@@ -90,11 +90,11 @@
       "backend": "tmux",
       "paths": {
         "worktree": {
-          "path": "/tmp/scout",
+          "path": "/fixture/worktrees/scout",
           "present": true
         },
         "report": {
-          "path": "/tmp/report.md",
+          "path": "/fixture/reports/scout.md",
           "present": true
         }
       },
