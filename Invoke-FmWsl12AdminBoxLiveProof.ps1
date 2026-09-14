@@ -230,7 +230,12 @@ if ($continue.ExitCode -ne 0) {
     )
     Write-Host "RECEIPT_PATH=$receiptPath"
     Write-Host "RESULT=$result"
-    if ($continue.ExitCode -eq 45) {
+    # Prefer child NEXT= (includes -FirstMatePath-specific guidance) over hardcoded
+    # $HOME/firstmate fallbacks so operators do not repair the wrong tree.
+    $preservedNext = Get-OperatorNextFromEvidence -Attempt $continue
+    if (-not [string]::IsNullOrWhiteSpace($preservedNext)) {
+        Write-Host "NEXT=$preservedNext"
+    } elseif ($continue.ExitCode -eq 45) {
         Write-Host 'NEXT=complete gh auth login inside Ubuntu, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
     } elseif ($continue.ExitCode -eq 46) {
         Write-Host 'NEXT=run on Windows Admin Box with wsl.exe and Ubuntu; cloud/Linux hosts cannot prove physical floor'
@@ -241,16 +246,11 @@ if ($continue.ExitCode -ne 0) {
     } elseif ($continue.ExitCode -eq 48) {
         Write-Host 'NEXT=install one primary harness on PATH inside Ubuntu visible to non-interactive bash -lc (claude|grok|pi|pi-signed|omp|codex|opencode|cursor-agent), then rerun'
     } elseif ($continue.ExitCode -eq 49) {
-        Write-Host 'NEXT=commit/stash/move dirty work in $HOME/firstmate, or remove that path so bounded bootstrap can run, then rerun'
+        Write-Host 'NEXT=commit/stash/move dirty work in $HOME/firstmate (or the -FirstMatePath override), or remove $HOME/firstmate so bounded bootstrap can run, then rerun'
     } elseif ($continue.ExitCode -eq 50) {
-        Write-Host 'NEXT=in $HOME/firstmate run: git fetch --all && git checkout b182d0f908b78d08c7ccb8dce3775bdca8c5d657, or remove that path / pass -FirstMatePath to a clean audited checkout, then rerun'
+        Write-Host 'NEXT=in $HOME/firstmate (or -FirstMatePath) run: git fetch --all && git checkout b182d0f908b78d08c7ccb8dce3775bdca8c5d657, or remove that path / pass -FirstMatePath to a clean audited checkout, then rerun'
     } else {
-        $preservedNext = Get-OperatorNextFromEvidence -Attempt $continue
-        if (-not [string]::IsNullOrWhiteSpace($preservedNext)) {
-            Write-Host "NEXT=$preservedNext"
-        } else {
-            Write-Host 'NEXT=inspect evidence for NEXT=/NEXT_ACTION=; repair operator blocker; rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
-        }
+        Write-Host 'NEXT=inspect evidence for NEXT=/NEXT_ACTION=; repair operator blocker; rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
     }
     exit $finalExit
 }

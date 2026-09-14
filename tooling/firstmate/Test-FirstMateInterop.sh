@@ -153,21 +153,40 @@ is_firstmate_clone() {
   [[ "$(normalize_origin "$origin")" == "$EXPECTED_ORIGIN" ]]
 }
 
+is_viable_discovered_firstmate() {
+  local candidate="$1"
+  local dirty head
+  is_firstmate_clone "$candidate" || return 1
+  dirty="$(git -C "$candidate" status --porcelain=v1 2>/dev/null || true)"
+  [[ -z "$dirty" ]] || return 1
+  head="$(git -C "$candidate" rev-parse HEAD 2>/dev/null || true)"
+  [[ "$head" == "$EXPECTED_HEAD" ]]
+}
+
 if [[ -z "$FIRSTMATE_DIR" ]]; then
-  candidates=(
-    "$PWD"
-    "$HOME/firstmate"
-    "$HOME/dev/firstmate"
-    "$HOME/src/firstmate"
-    "$HOME/Projects/firstmate"
-    "$HOME/projects/firstmate"
-  )
-  for candidate in "${candidates[@]}"; do
-    if is_firstmate_clone "$candidate"; then
-      FIRSTMATE_DIR="$candidate"
-      break
-    fi
-  done
+  # Prefer $HOME/firstmate whenever it is already a FirstMate clone (any state).
+  # Bounded bootstrap cannot replace that path; dirty/pin checks must surface it.
+  if is_firstmate_clone "$HOME/firstmate"; then
+    FIRSTMATE_DIR="$HOME/firstmate"
+  else
+    # Alternate auto-discovery must not false-block bounded $HOME/firstmate
+    # bootstrap: skip dirty/off-pin leftovers under ~/dev, ~/Projects, $PWD, etc.
+    candidates=(
+      "$PWD"
+      "$HOME/dev/firstmate"
+      "$HOME/src/firstmate"
+      "$HOME/Projects/firstmate"
+      "$HOME/projects/firstmate"
+    )
+    for candidate in "${candidates[@]}"; do
+      if is_viable_discovered_firstmate "$candidate"; then
+        FIRSTMATE_DIR="$candidate"
+        break
+      elif is_firstmate_clone "$candidate"; then
+        note "Skipping non-viable auto-discovery candidate ${candidate} (dirty or off audited pin); continuing toward bounded \$HOME/firstmate bootstrap"
+      fi
+    done
+  fi
 fi
 
 # Bounded Admin Box helper: clone audited FirstMate to $HOME/firstmate at the
