@@ -10,6 +10,7 @@ Canonical coordination index: `plans/active/ASB-2026-09-multi-product-bootstrap-
 - PR #179 merged (`627e31d`): durable `STATUS=BLOCKED_WINDOWS_WSL_REQUIRED` / exit 46 encoding + ASQ-017 ledger row.
 - PR #181 merged (`1ada034`): Admin Box one-shot `Invoke-FmWsl12AdminBoxLiveProof.ps1`.
 - PR #182 merged (`f108725`): ASQ-017 cites the one-shot; live PASS still UNPROVEN.
+- PR #183 merged (`3babc65`): durable `Invoke-Asq017AdminBoxLiveFloor.ps1` on main; live PASS still UNPROVEN.
 
 ## Successor phases
 
