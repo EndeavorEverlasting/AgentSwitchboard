@@ -9,6 +9,7 @@ PHYSICAL = ROOT / "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1"
 BRIDGE = ROOT / "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1"
 HARNESS = ROOT / "tooling" / "firstmate" / "harness" / "operational"
 INTEGRATION = ROOT / "tooling" / "firstmate" / "harness" / "integration-contract.json"
+RUNBOOK = ROOT / "docs" / "harness" / "firstmate-wsl-physical-floor-runbook.md"
 
 
 class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
@@ -16,6 +17,7 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.physical = PHYSICAL.read_text(encoding="utf-8")
         cls.bridge = BRIDGE.read_text(encoding="utf-8")
+        cls.runbook = RUNBOOK.read_text(encoding="utf-8")
         cls.artifacts = json.loads((HARNESS / "artifact-registry.json").read_text(encoding="utf-8"))
         cls.integration = json.loads(INTEGRATION.read_text(encoding="utf-8"))
 
@@ -35,7 +37,7 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("STATUS=BLOCKED_GITHUB_AUTH", self.physical)
         self.assertIn("STATUS=PASS", self.physical)
 
-    def test_gate_reports_recovery_but_does_not_execute_it(self) -> None:
+    def test_gate_reports_recovery_without_silently_executing_it(self) -> None:
         self.assertIn("NEXT_ACTION=sudo apt-get update && sudo apt-get install -y", self.physical)
         self.assertIn("NEXT_ACTION=gh auth login --hostname github.com --git-protocol https --web", self.physical)
         for executable_form in (
@@ -50,6 +52,26 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("Write-Host \"NEXT_ACTION=$($nextAction.Groups[1].Value.Trim())\"", self.physical)
         self.assertIs(self.integration["windows_bridge"]["dependency_installation"], False)
         self.assertIs(self.integration["windows_bridge"]["credential_mutation"], False)
+
+    def test_fm_wsl_12_execution_owner_has_bounded_package_repair_authority(self) -> None:
+        recovery = self.integration["physical_floor_recovery"]
+        self.assertEqual("FM-WSL-12", recovery["lane"])
+        self.assertIs(recovery["execution_owner_may_install_missing_packages"], True)
+        self.assertIs(recovery["additional_operator_confirmation_required"], False)
+        self.assertEqual("Ubuntu", recovery["distribution"])
+        self.assertEqual("apt-get", recovery["package_manager"])
+        self.assertEqual(["git", "gh", "tmux", "python3"], recovery["package_allowlist"])
+        self.assertIs(recovery["credential_mutation"], False)
+        self.assertIs(recovery["github_authentication_requires_operator"], True)
+        self.assertIn("NEXT_ACTION", recovery["authority_source"])
+        self.assertIn("rerun", recovery["continuation_rule"].lower())
+
+        lower = self.runbook.lower()
+        self.assertIn("without stopping for additional operator permission", lower)
+        self.assertIn("bounded repair is authorized by fm-wsl-12", lower)
+        self.assertIn("sudo apt-get update && sudo apt-get install -y gh", self.runbook)
+        self.assertIn("gh auth login", self.runbook)
+        self.assertIn("do not automate credential entry", lower)
 
     def test_gate_is_bounded_and_uses_unique_evidence(self) -> None:
         self.assertIn("[int]$PrerequisiteTimeoutSeconds = 60", self.physical)
@@ -73,7 +95,7 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertLess(contract_index, wsl_index)
         self.assertIn("FIRSTMATE_WINDOWS_WSL_PREREQUISITE_GATE_CONTRACT", self.physical)
 
-    def test_no_automatic_dependency_or_credential_mutation(self) -> None:
+    def test_harness_still_avoids_unbounded_dependency_or_credential_mutation(self) -> None:
         lowered = self.physical.lower()
         for forbidden in (
             "invoke-webrequest",
