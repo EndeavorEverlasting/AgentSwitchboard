@@ -28,6 +28,9 @@ EVENT_RE = re.compile(r"^evt_[A-Za-z0-9][A-Za-z0-9._-]{7,95}$")
 TASK_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$")
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 SHA40_RE = re.compile(r"^[a-f0-9]{40}$")
+RFC3339_RE = re.compile(
+    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$"
+)
 
 PHASE_BY_FIRSTMATE_STATE = {
     "working": "running",
@@ -71,10 +74,12 @@ def idem_key(*parts: str) -> str:
 
 
 def parse_rfc3339(value: Any, field: str) -> str:
-    if not isinstance(value, str) or not value:
-        raise ContractError(f"{field} must be a non-empty RFC3339 timestamp")
+    """Require the protocol's canonical RFC3339 surface before preserving it verbatim."""
+    if not isinstance(value, str) or not RFC3339_RE.fullmatch(value):
+        raise ContractError(f"{field} must be a canonical RFC3339 timestamp")
+    normalized = value[:-1] + "+00:00" if value.endswith("Z") else value
     try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(normalized)
     except ValueError as exc:
         raise ContractError(f"{field} is not RFC3339: {value!r}") from exc
     if parsed.tzinfo is None:
@@ -88,7 +93,21 @@ def require_pattern(value: str | None, regex: re.Pattern[str], field: str) -> st
     return value
 
 
+def optional_bounded_string(value: Any, field: str, max_length: int) -> str | None:
+    """Normalize absent optional text and fail closed on source/schema type drift."""
+    if value is None or value == "":
+        return None
+    if not isinstance(value, str):
+        raise ContractError(f"{field} must be a string or null")
+    if len(value) > max_length:
+        raise ContractError(f"{field} exceeds {max_length} characters")
+    return value
+
+
 def parse_generation(value: Any) -> int | None:
+    # bool is an int subclass in Python but is not a JSON integer for this contract.
+    if isinstance(value, bool):
+        return None
     if isinstance(value, int) and value >= 0:
         return value
     if isinstance(value, str) and value.isdigit():
@@ -217,6 +236,8 @@ def build_observation(
         require_pattern(causation_id, EVENT_RE, "causation_id")
     if head_sha is not None:
         require_pattern(head_sha, SHA40_RE, "head_sha")
+    if branch is not None and len(branch) > 255:
+        raise ContractError("branch exceeds 255 characters")
 
     task = select_task(snapshot, task_id)
     generated = parse_rfc3339(snapshot.get("generated"), "snapshot.generated")
@@ -231,12 +252,8 @@ def build_observation(
     task_kind = task.get("kind")
     if task_kind not in TASK_KINDS:
         task_kind = "unknown"
-    harness = task.get("harness")
-    if not isinstance(harness, str) or not harness:
-        harness = None
-    backend = task.get("backend")
-    if not isinstance(backend, str) or not backend:
-        backend = None
+    harness = optional_bounded_string(task.get("harness"), "task.harness", 64)
+    backend = optional_bounded_string(task.get("backend"), "task.backend", 64)
 
     message: dict[str, Any] = {
         "schema": OBSERVATION_SCHEMA,

@@ -55,14 +55,18 @@ def idem_key(*parts: str) -> str:
 class ObservationAdapterTests(unittest.TestCase):
     maxDiff = None
 
-    def run_adapter(self, task_id: str, *, snapshot: Path | None = None, extra: list[str] | None = None):
-        args = list(BASE_ARGS)
+    def run_adapter(self, task_id: str, *, snapshot: Path | None = None, args: list[str] | None = None):
+        command = list(BASE_ARGS if args is None else args)
         if snapshot is not None:
-            args[args.index(str(FIXTURE))] = str(snapshot)
-        args.extend(["--task-id", task_id])
-        if extra:
-            args.extend(extra)
-        return subprocess.run(args, text=True, capture_output=True, check=False)
+            command[command.index(str(FIXTURE))] = str(snapshot)
+        command.extend(["--task-id", task_id])
+        return subprocess.run(command, text=True, capture_output=True, check=False)
+
+    def run_with_snapshot_data(self, data: dict, task_id: str = "ship-task"):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "snapshot.json"
+            path.write_text(json.dumps(data), encoding="utf-8")
+            return self.run_adapter(task_id, snapshot=path)
 
     def output_for(self, task_id: str) -> dict:
         result = self.run_adapter(task_id)
@@ -131,10 +135,7 @@ class ObservationAdapterTests(unittest.TestCase):
     def test_unknown_state_maps_to_unknown_without_inventing_runtime_state(self):
         data = json.loads(FIXTURE.read_text(encoding="utf-8"))
         data["tasks"][0]["current_state"]["state"] = "future-firstmate-state"
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "future.json"
-            path.write_text(json.dumps(data), encoding="utf-8")
-            result = self.run_adapter("ship-task", snapshot=path)
+        result = self.run_with_snapshot_data(data)
         self.assertEqual(result.returncode, 0, result.stderr)
         observation = json.loads(result.stdout)
         self.assertEqual(observation["state"]["phase"], "unknown")
@@ -143,12 +144,40 @@ class ObservationAdapterTests(unittest.TestCase):
     def test_rejects_wrong_snapshot_schema(self):
         data = json.loads(FIXTURE.read_text(encoding="utf-8"))
         data["schema"] = "not-firstmate"
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "bad.json"
-            path.write_text(json.dumps(data), encoding="utf-8")
-            result = self.run_adapter("ship-task", snapshot=path)
+        result = self.run_with_snapshot_data(data)
         self.assertEqual(result.returncode, 2)
         self.assertIn("snapshot.schema", result.stderr)
+
+    def test_rejects_noncanonical_rfc3339_timestamp(self):
+        data = json.loads(FIXTURE.read_text(encoding="utf-8"))
+        data["generated"] = "2026-09-14 20:30:00+00:00"
+        result = self.run_with_snapshot_data(data)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("canonical RFC3339", result.stderr)
+
+    def test_boolean_generation_never_serializes_as_boolean(self):
+        data = json.loads(FIXTURE.read_text(encoding="utf-8"))
+        data["tasks"][0]["spawn_gen"] = True
+        result = self.run_with_snapshot_data(data)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        observation = json.loads(result.stdout)
+        self.assertIsNone(observation["source"]["generation"])
+
+    def test_rejects_harness_or_backend_that_exceeds_schema_bound(self):
+        for field in ("harness", "backend"):
+            with self.subTest(field=field):
+                data = json.loads(FIXTURE.read_text(encoding="utf-8"))
+                data["tasks"][0][field] = "x" * 65
+                result = self.run_with_snapshot_data(data)
+                self.assertEqual(result.returncode, 2)
+                self.assertIn(f"task.{field} exceeds 64 characters", result.stderr)
+
+    def test_rejects_branch_that_exceeds_schema_bound(self):
+        args = list(BASE_ARGS)
+        args[args.index("feat/example")] = "b" * 256
+        result = self.run_adapter("ship-task", args=args)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("branch exceeds 255 characters", result.stderr)
 
     def test_rejects_missing_or_duplicate_task(self):
         missing = self.run_adapter("does-not-exist")
@@ -157,18 +186,14 @@ class ObservationAdapterTests(unittest.TestCase):
 
         data = json.loads(FIXTURE.read_text(encoding="utf-8"))
         data["tasks"].append(dict(data["tasks"][0]))
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "duplicate.json"
-            path.write_text(json.dumps(data), encoding="utf-8")
-            duplicate = self.run_adapter("ship-task", snapshot=path)
+        duplicate = self.run_with_snapshot_data(data)
         self.assertEqual(duplicate.returncode, 2)
         self.assertIn("found 2", duplicate.stderr)
 
     def test_rejects_invalid_protocol_identifiers(self):
         args = list(BASE_ARGS)
         args[args.index("corr_example_mission_0001")] = "bad-correlation"
-        args.extend(["--task-id", "ship-task"])
-        result = subprocess.run(args, text=True, capture_output=True, check=False)
+        result = self.run_adapter("ship-task", args=args)
         self.assertEqual(result.returncode, 2)
         self.assertIn("correlation_id", result.stderr)
 
