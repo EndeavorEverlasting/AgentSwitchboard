@@ -251,15 +251,24 @@ if [[ "$ACTUAL_HEAD" != "$EXPECTED_HEAD" ]]; then
   exit 50
 fi
 
+# Distinguish a damaged local object database from a healthy audited commit whose
+# contents contradict AgentSwitchboard's required-path contract. Retrying the same
+# SHA cannot repair a healthy commit that genuinely lacks a required path.
+if ! git -C "$FIRSTMATE_DIR" fsck --no-dangling "$EXPECTED_HEAD" >/dev/null 2>&1; then
+  printf 'STATUS=BLOCKED_FIRSTMATE_PIN\n'
+  printf 'NEXT=repair local FirstMate Git objects in %s (git fetch --all --prune, then verify git fsck %s) and rerun; if integrity remains broken, replace the local checkout without changing the audited pin\n' "$FIRSTMATE_DIR" "$EXPECTED_HEAD"
+  exit 50
+fi
+
 for path in "${REQUIRED_PATHS[@]}"; do
   if ! git -C "$FIRSTMATE_DIR" cat-file -e "$EXPECTED_HEAD:$path" 2>/dev/null; then
     printf 'STATUS=BLOCKED_FIRSTMATE_PIN\n'
-    printf 'NEXT=repair or replace %s with a clean %s checkout at %s containing required audited path %s, then rerun\n' "$FIRSTMATE_DIR" "$EXPECTED_ORIGIN" "$EXPECTED_HEAD" "$path"
+    printf 'NEXT=the healthy audited FirstMate commit %s does not contain required path %s; repair AgentSwitchboard tooling/firstmate/harness/integration-contract.json and tooling/firstmate/harness/upstream-pin.json (or refresh the audited pin) before rerun; do not retry the same SHA checkout\n' "$EXPECTED_HEAD" "$path"
     exit 50
   fi
   if [[ ! -e "$FIRSTMATE_DIR/$path" ]]; then
     printf 'STATUS=BLOCKED_FIRSTMATE_PIN\n'
-    printf 'NEXT=restore required audited path %s in %s from commit %s, then rerun\n' "$path" "$FIRSTMATE_DIR" "$EXPECTED_HEAD"
+    printf 'NEXT=restore required audited path %s in %s from commit %s (git restore --source %s -- %s), then rerun\n' "$path" "$FIRSTMATE_DIR" "$EXPECTED_HEAD" "$EXPECTED_HEAD" "$path"
     exit 50
   fi
 done
