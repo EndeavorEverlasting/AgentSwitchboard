@@ -57,7 +57,7 @@ The harness itself remains fail-closed and non-installing; this runbook grants t
 2. Checkout current `main` (post `FM-BRIDGE-10`, including `Invoke-Asq017AdminBoxLiveFloor.ps1` after #183 merges) and record the exact SHA.
 3. Confirm the WSL distribution named `Ubuntu` exists and is runnable (`wsl.exe -l -v`; `wsl.exe -d Ubuntu --exec true`).
 4. Do not change the default WSL distro to satisfy this floor; the harness must target `Ubuntu` explicitly.
-5. Pre-stage inside Ubuntu before expecting PASS: one primary harness on PATH (`claude`, `grok`, `pi`, `pi-signed`, `omp`, `codex`, `opencode`, or `cursor-agent`) and Ubuntu `gh` auth. If a clean FirstMate clone is missing, `Test-FirstMateInterop.sh` may perform a **bounded** bootstrap clone of `kunchenguid/firstmate` to `$HOME/firstmate` at audited pin `b182d0f908b78d08c7ccb8dce3775bdca8c5d657` (never mutates an existing path or upstream). Optional: pass `-FirstMatePath` through `Invoke-Asq017AdminBoxLiveFloor.ps1` to a clean audited checkout — physical-floor preflight then validates that override (via `WSLENV` `/p`) and **skips** dirty/pin checks on `$HOME/firstmate`. Auto-discovery skips dirty/off-pin leftovers under `~/dev/firstmate`, `~/Projects/firstmate`, `$PWD`, etc., so bounded `$HOME/firstmate` bootstrap can still run; `$HOME/firstmate` itself (any state) remains authoritative when present.
+5. Pre-stage inside Ubuntu before expecting PASS: one primary harness on PATH (`claude`, `grok`, `pi`, `pi-signed`, `omp`, `codex`, `opencode`, or `cursor-agent`) and Ubuntu `gh` auth. If a clean FirstMate clone is missing, `Test-FirstMateInterop.sh` may perform a **bounded** bootstrap clone of `kunchenguid/firstmate` to `$HOME/firstmate` at the audited pin in `tooling/firstmate/harness/upstream-pin.json` (never mutates an existing path or upstream). Optional: pass `-FirstMatePath` through `Invoke-Asq017AdminBoxLiveFloor.ps1` to a clean audited checkout — physical-floor preflight then validates that override (via `WSLENV` `/p`) and **skips** dirty/pin checks on `$HOME/firstmate`. Auto-discovery skips dirty/off-pin leftovers under `~/dev/firstmate`, `~/Projects/firstmate`, `$PWD`, etc., so bounded `$HOME/firstmate` bootstrap can still run; `$HOME/firstmate` itself (any state) remains authoritative when present.
 6. GitHub auth is probed **inside Ubuntu** (`gh auth status`); Windows-only login is not sufficient. Exit 45 remains the operator credential gate.
 7. Keep evidence local/untracked. Do not commit receipts, tokens, or machine-local paths.
 8. Treat bounded missing-package repair inside `Ubuntu` as in-scope for this sprint; do not stop merely because the prerequisite gate reports an allowlisted tool missing. Passwordless `sudo` is required for non-interactive apt repair.
@@ -92,7 +92,8 @@ if ($childExit -eq 49) {
   throw 'BLOCKED_FIRSTMATE_DIRTY — commit/stash/move dirty work in $HOME/firstmate, or remove that path so bounded bootstrap can run, then rerun'
 }
 if ($childExit -eq 50) {
-  throw 'BLOCKED_FIRSTMATE_PIN — in $HOME/firstmate run: git fetch --all && git checkout b182d0f908b78d08c7ccb8dce3775bdca8c5d657, or remove that path / pass -FirstMatePath to a clean audited checkout, then rerun'
+  $pin = (Get-Content -LiteralPath .\tooling\firstmate\harness\upstream-pin.json -Raw | ConvertFrom-Json).commit
+  throw "BLOCKED_FIRSTMATE_PIN — in $HOME/firstmate run: git fetch --all && git checkout $pin, or remove that path / pass -FirstMatePath to a clean audited checkout, then rerun"
 }
 if ($childExit -eq 51) {
   throw 'BLOCKED_WSL_BOOTSTRAP — inspect WSL diagnostics/bootstrap stdout; repair exact-head WSL clone/source-repo access, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
@@ -143,7 +144,8 @@ if ($childExit -eq 49) {
   throw 'BLOCKED_FIRSTMATE_DIRTY — commit/stash/move dirty work in $HOME/firstmate, or remove that path so bounded bootstrap can run, then rerun'
 }
 if ($childExit -eq 50) {
-  throw 'BLOCKED_FIRSTMATE_PIN — checkout audited FirstMate pin b182d0f908b78d08c7ccb8dce3775bdca8c5d657 or pass -FirstMatePath, then rerun'
+  $pin = (Get-Content -LiteralPath .\tooling\firstmate\harness\upstream-pin.json -Raw | ConvertFrom-Json).commit
+  throw "BLOCKED_FIRSTMATE_PIN — checkout audited FirstMate pin $pin (from upstream-pin.json) or pass -FirstMatePath, then rerun"
 }
 if ($childExit -eq 51) {
   throw 'BLOCKED_WSL_BOOTSTRAP — inspect WSL diagnostics/bootstrap stdout; repair exact-head WSL clone/source-repo access, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
@@ -222,7 +224,7 @@ Preserve the console markers and the printed evidence root:
 | Host lacks `wsl.exe`, or `Ubuntu` is missing/unrunnable (`STATUS=BLOCKED_WINDOWS_WSL_REQUIRED`, exit 46 / `FAILURE_CODE=WINDOWS_WSL_REQUIRED`) | Cloud/Linux hosts without `wsl.exe`, and Windows hosts whose contracted distribution cannot run `wsl --distribution Ubuntu --exec true`, fail closed before package repair or interop. This is a LIVE_ATTEMPT_FAIL_CLOSED receipt, not physical PASS. Move to an authorized Windows Admin Box with explicit runnable `Ubuntu`. |
 | Primary harness missing on non-interactive PATH (`STATUS=BLOCKED_PRIMARY_HARNESS`, exit 48) | Install one primary harness (`claude`\|`grok`\|`pi`\|`pi-signed`\|`omp`\|`codex`\|`opencode`\|`cursor-agent`) so `wsl -d Ubuntu --exec bash -lc "command -v <harness>"` succeeds, then rerun. |
 | Dirty `$HOME/firstmate` (`STATUS=BLOCKED_FIRSTMATE_DIRTY`, exit 49) | Commit, stash, or move dirty work under `$HOME/firstmate`, or remove that path so bounded bootstrap can run, then rerun. Or pass `-FirstMatePath` to a different clean audited checkout — preflight then skips `$HOME/firstmate`. |
-| FirstMate pin mismatch / blocked bootstrap (`STATUS=BLOCKED_FIRSTMATE_PIN`, exit 50) | In `$HOME/firstmate` run `git fetch --all && git checkout b182d0f908b78d08c7ccb8dce3775bdca8c5d657`, or remove that path / pass `-FirstMatePath` to a clean audited `kunchenguid/firstmate` checkout, then rerun. When `-FirstMatePath` is set, repair that override path instead of `$HOME/firstmate`. |
+| FirstMate pin mismatch / blocked bootstrap (`STATUS=BLOCKED_FIRSTMATE_PIN`, exit 50) | In `$HOME/firstmate` run `git fetch --all && git checkout <commit from tooling/firstmate/harness/upstream-pin.json>`, or remove that path / pass `-FirstMatePath` to a clean audited `kunchenguid/firstmate` checkout, then rerun. When `-FirstMatePath` is set, repair that override path instead of `$HOME/firstmate`. |
 | Exact-head mismatch | Re-fetch/ff-only `main`, re-resolve HEAD, rerun with the new SHA. |
 | WSL timeout / transport failure | Preserve the Windows evidence root; default cleanup removes the script-owned WSL clone. Re-run after repairing the environment. |
 | Wrong distribution | Do not retarget to the operator default. Repair/install the contract `Ubuntu` distribution in a separately authorized environment/bootstrap lane. |
