@@ -188,6 +188,8 @@ if ($continue.ExitCode -ne 0) {
         'BLOCKED_WINDOWS_WSL_REQUIRED'
     } elseif ($continue.ExitCode -eq 44) {
         'BLOCKED_MISSING_TOOLS'
+    } elseif ($continue.ExitCode -eq 47) {
+        'BLOCKED_SUDO'
     } else {
         'PHYSICAL_FLOOR_CONTINUE_FAILED'
     }
@@ -209,6 +211,8 @@ if ($continue.ExitCode -ne 0) {
         Write-Host 'NEXT=run on Windows Admin Box with wsl.exe and Ubuntu; cloud/Linux hosts cannot prove physical floor'
     } elseif ($continue.ExitCode -eq 44) {
         Write-Host 'NEXT=install allowlisted missing tools via printed NEXT_ACTION, then rerun'
+    } elseif ($continue.ExitCode -eq 47) {
+        Write-Host 'NEXT=enable passwordless sudo for apt-get in Ubuntu (sudo -n apt-get --version must succeed), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
     } else {
         Write-Host 'NEXT=inspect evidence for NEXT=/NEXT_ACTION=; repair operator blocker; rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
     }
