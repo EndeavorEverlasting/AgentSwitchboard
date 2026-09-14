@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-14T18:40:00Z",
-  "updatedUtc": "2026-09-14T19:10:00Z",
+  "updatedUtc": "2026-09-14T19:30:00Z",
   "mission": "Freeze the FirstMate\u2194AgentSwitchboard\u2194PromptKit integration boundary as six v1 schemas plus a quiet context-rollover UX state machine and receipt drafts, without implementing live adapters.",
   "owner": {
     "surface": "cross-product protocol contracts",
@@ -55,7 +55,8 @@
     "child-agent bus adapter expansion",
     "automatic primary-session rollover runtime",
     "secrets, credentials, or machine-local evidence in Git",
-    "merge, deployment, or live-target mutation"
+    "deployment or live-target mutation",
+    "live adapters beyond contract-only freeze (Phase 1 observation remains successor)"
   ],
   "expectedArtifacts": [
     "six schema files under .ai/harness/schemas/fm-asb-promptkit/",
@@ -145,6 +146,34 @@
         "scripts/Test-FmAsbPromptKitProtocolContract.ps1 PASS (90 checks)",
         "scripts/Test-PublicPlanContracts.ps1 PASS"
       ]
+    },
+    {
+      "taskId": "RECONCILE-01",
+      "title": "Reconcile PR #184 with current main and revalidate exact head",
+      "status": "completed",
+      "owner": "repository doctrine lane",
+      "dependencies": [
+        "PROOF-01"
+      ],
+      "inputs": [
+        "origin/main@c3da20fef02160de66d238b1c9b8eb9c6825588e",
+        "prior contract head 16b4d25bee50702cbc1c108e4113f644216fdf54"
+      ],
+      "outputs": [
+        "Merge commit onto current main floor",
+        "Revalidated exact-head contract proof"
+      ],
+      "acceptanceCriteria": [
+        "Branch contains current main as ancestor",
+        "Protocol surface unchanged by reconcile",
+        "Python, PowerShell protocol, and public-plan validators PASS on reconciled head"
+      ],
+      "evidence": [
+        "merge(main) commit on cursor/fm-asb-promptkit-v1-contracts-4c0f",
+        "python tests/test_fm_asb_promptkit_protocol_contract.py PASS",
+        "scripts/Test-FmAsbPromptKitProtocolContract.ps1 PASS (90 checks)",
+        "scripts/Test-PublicPlanContracts.ps1 PASS (176 checks)"
+      ]
     }
   ],
   "validation": [
@@ -155,13 +184,14 @@
   ],
   "proof": {
     "target": "Contract-only FirstMate\u2194ASB\u2194PromptKit protocol and rollover UX freeze",
-    "achieved": "Six schemas, policy, rollover state machine, fixtures/receipts, architecture+UX docs, validators, CI workflow, and public plan registered on PR #184 at 5b6b8fd. Python and PowerShell protocol contracts PASS; public plan contracts PASS.",
+    "achieved": "PR #184 reconciled onto main@c3da20fef02160de66d238b1c9b8eb9c6825588e; contract freeze commits retained; owning validators PASS on reconciled head. Prior green at 16b4d25 remains historical; refreshed exact-head proof supersedes it for integration.",
     "ceiling": "Contract and synthetic fixture proof only. No live observation, routing API, durable inbox delivery, or automatic rollover is claimed."
   },
   "handoff": {
     "nextOwner": "FirstMate observation adapter lane",
     "nextCommand": "gh pr view 184 --repo EndeavorEverlasting/AgentSwitchboard",
     "notes": [
+      "Mainline integration of this contract PR is authorized after exact-head green on the reconciled candidate.",
       "Do not implement live adapters in this plan.",
       "Phase 1 after merge: consume FirstMate task state into asb.agent-observation/v1 without becoming a second watcher."
     ]
