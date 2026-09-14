@@ -169,6 +169,10 @@ Set-Content -LiteralPath $PrerequisiteStderrPath -Value $preflight.Stderr.TrimEn
 if ($preflight.ExitCode -ne 0) {
     Write-Host '===== FIRSTMATE WSL PREREQUISITE FLOOR ====='
     Get-Content -LiteralPath $PrerequisitePath
+    $statusMatch = [regex]::Match($preflight.Stdout, '(?m)^STATUS=(.+)$')
+    if ($statusMatch.Success) {
+        Write-Host "STATUS=$($statusMatch.Groups[1].Value.Trim())"
+    }
     $nextAction = [regex]::Match($preflight.Stdout, '(?m)^NEXT_ACTION=(.+)$')
     if ($nextAction.Success) {
         Write-Host "NEXT_ACTION=$($nextAction.Groups[1].Value.Trim())"
@@ -177,7 +181,11 @@ if ($preflight.ExitCode -ne 0) {
     if ($preflight.ExitCode -eq 124) {
         throw "FirstMate WSL prerequisite probe timed out after $PrerequisiteTimeoutSeconds seconds."
     }
-    throw "FirstMate WSL prerequisite floor blocked before clone/test execution. Exit=$($preflight.ExitCode)"
+    # Preserve structured exit codes so FM-WSL-12 continuation can distinguish
+    # allowlisted package repair (44) from operator GitHub auth (45) without
+    # treating every prerequisite miss as a hard permission stop.
+    Write-Host "FIRSTMATE_WSL_PREREQUISITE_BLOCKED Exit=$($preflight.ExitCode)"
+    exit $preflight.ExitCode
 }
 
 $bridgeArguments = @(

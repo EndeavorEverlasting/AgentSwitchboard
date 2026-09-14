@@ -49,7 +49,7 @@ That repair authority is intentionally bounded:
 
 GitHub authentication is different from package repair. If the gate emits `STATUS=BLOCKED_GITHUB_AUTH`, `gh auth login` remains an operator/user credential gate and must not be automated or have tokens captured in evidence.
 
-The harness itself remains fail-closed and non-installing; this runbook grants the **FM-WSL-12 execution owner** authority to perform the bounded recovery action between attempts and continue the same sprint.
+The harness itself remains fail-closed and non-installing; this runbook grants the **FM-WSL-12 execution owner** authority to perform the bounded recovery action between attempts and continue the same sprint. That bounded repair is authorized by FM-WSL-12. The durable owner for that loop is `Invoke-FirstMatePhysicalFloorContinuation.ps1` / harness `-Mode physical-floor-continue` (Prompt/P08 continuation authority).
 
 ## Preconditions
 
@@ -78,14 +78,26 @@ pwsh -NoLogo -NoProfile -File .\Test-AgentSwitchboard-FirstMate-Harness.ps1 `
   -ExpectedHead $head `
   -WslDistribution Ubuntu
 
-# Physical floor: prerequisite gate + bounded Windows→WSL bridge + read-only interop probe.
+# Preferred FM-WSL-12 / P08 continuation entrypoint:
+# missing allowlisted packages -> install exact NEXT_ACTION -> rerun until PASS
+# or a non-package blocker (for example BLOCKED_GITHUB_AUTH).
 pwsh -NoLogo -NoProfile -File .\Test-AgentSwitchboard-FirstMate-Harness.ps1 `
-  -Mode physical-floor `
+  -Mode physical-floor-continue `
   -ExpectedHead $head `
   -WslDistribution Ubuntu
 ```
 
-If physical-floor mode reports `STATUS=BLOCKED_MISSING_TOOLS`, execute the exact emitted `NEXT_ACTION` inside explicit Ubuntu, then rerun the physical-floor command above. For the currently observed `MISSING_TOOLS=gh` case, the emitted recovery is:
+`physical-floor-continue` is the durable execution-owner loop for Prompt/P08-class continuation authority. It keeps the physical-floor harness itself non-installing, executes only allowlisted `apt-get` `NEXT_ACTION` values inside explicit `Ubuntu`, and still stops for GitHub authentication or other non-package blockers.
+
+Equivalent direct continuation entrypoint:
+
+```powershell
+pwsh -NoLogo -NoProfile -File .\Invoke-FirstMatePhysicalFloorContinuation.ps1 `
+  -ExpectedHead $head `
+  -WslDistribution Ubuntu
+```
+
+If you intentionally want a single non-repairing probe (report-only), use `-Mode physical-floor` instead. When that mode reports `STATUS=BLOCKED_MISSING_TOOLS`, either switch to `physical-floor-continue` or execute the exact emitted `NEXT_ACTION` inside explicit Ubuntu and rerun. For the currently observed `MISSING_TOOLS=gh` case, the emitted recovery is:
 
 ```bash
 sudo apt-get update && sudo apt-get install -y gh
@@ -93,7 +105,7 @@ sudo apt-get update && sudo apt-get install -y gh
 
 The execution owner should continue immediately after successful package repair. A package-manager failure, unavailable sudo authorization, repository/package-source failure, or credential/authentication requirement is a real blocker and should be reported with the existing evidence root.
 
-Optional direct physical wrapper (same floor, same proof ceiling):
+Optional direct physical wrapper without continuation (same floor, same proof ceiling, no package repair loop):
 
 ```powershell
 pwsh -NoLogo -NoProfile -File .\Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1 `
@@ -106,7 +118,7 @@ pwsh -NoLogo -NoProfile -File .\Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps
 Preserve the console markers and the printed evidence root:
 
 - `[PASS] FIRSTMATE_WINDOWS_OPERATIONAL_HARNESS` from contract mode;
-- `[PASS] FIRSTMATE_WINDOWS_WSL_PHYSICAL_FLOOR` from physical mode;
+- `[PASS] FIRSTMATE_WINDOWS_WSL_PHYSICAL_FLOOR` from physical mode, or `[PASS] FIRSTMATE_WINDOWS_WSL_PHYSICAL_FLOOR_CONTINUATION` from continuation mode;
 - `HEAD=<40-char sha>`;
 - `WSL_DISTRIBUTION=Ubuntu` (and/or bridge `WSL_DISTRIBUTION=Ubuntu`);
 - `EVIDENCE_ROOT=...`;
@@ -117,9 +129,9 @@ Preserve the console markers and the printed evidence root:
 
 | Symptom | Execution-owner action |
 |---|---|
-| Missing Ubuntu tools (`git`/`gh`/`tmux`/`python3`) | Execute the exact emitted `NEXT_ACTION` package command inside explicit Ubuntu, then rerun the same exact-head physical floor. This bounded repair is authorized by FM-WSL-12 and does not require another permission round-trip. |
+| Missing Ubuntu tools (`git`/`gh`/`tmux`/`python3`) | Prefer `-Mode physical-floor-continue` / `Invoke-FirstMatePhysicalFloorContinuation.ps1`, which executes the exact emitted `NEXT_ACTION` package command inside explicit Ubuntu and reruns without another permission round-trip. Manual repair remains valid when using report-only `-Mode physical-floor`. |
 | `sudo` / package manager cannot complete | Preserve the evidence root and report the exact package-manager/sudo blocker. Do not broaden to another distro, Windows package manager, or arbitrary package source. |
-| GitHub auth blocked | Operator performs the emitted `gh auth login ...` command. Do not automate credential entry or persist tokens. Then rerun the physical floor. |
+| GitHub auth blocked (`STATUS=BLOCKED_GITHUB_AUTH`, exit 45) | Operator performs the emitted `gh auth login ...` command. Do not automate credential entry or persist tokens. Then rerun the physical floor / continuation entrypoint. |
 | Exact-head mismatch | Re-fetch/ff-only `main`, re-resolve HEAD, rerun with the new SHA. |
 | WSL timeout / transport failure | Preserve the Windows evidence root; default cleanup removes the script-owned WSL clone. Re-run after repairing the environment. |
 | Wrong distribution | Do not retarget to the operator default. Repair/install the contract `Ubuntu` distribution in a separately authorized environment/bootstrap lane. |

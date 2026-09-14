@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('contract', 'physical-floor')]
+    [ValidateSet('contract', 'physical-floor', 'physical-floor-continue')]
     [string]$Mode = 'contract',
 
     [string]$ExpectedHead,
@@ -63,6 +63,10 @@ try {
             & pwsh -NoLogo -NoProfile -File $physical -ExpectedHead $ExpectedHead -WslDistribution $WslDistribution -ContractOnly
             if ($LASTEXITCODE -ne 0) { throw "Physical-floor ContractOnly gate failed with exit code $LASTEXITCODE." }
 
+            $continuation = Join-Path $Root 'Invoke-FirstMatePhysicalFloorContinuation.ps1'
+            & pwsh -NoLogo -NoProfile -File $continuation -ExpectedHead $ExpectedHead -WslDistribution $WslDistribution -ContractOnly
+            if ($LASTEXITCODE -ne 0) { throw "Physical-floor continuation ContractOnly gate failed with exit code $LASTEXITCODE." }
+
             Invoke-NativeChecked -Name 'Working-tree diff hygiene' -Action { & git diff --check }
             Invoke-NativeChecked -Name 'Staged diff hygiene' -Action { & git diff --cached --check }
 
@@ -91,7 +95,38 @@ try {
                 $args += @('-EvidenceRoot', $EvidenceRoot)
             }
             & pwsh @args
-            if ($LASTEXITCODE -ne 0) { throw "FirstMate physical WSL floor failed with exit code $LASTEXITCODE." }
+            # Preserve structured prerequisite exits (44 missing tools / 45 GitHub auth).
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            return
+        }
+
+        'physical-floor-continue' {
+            # FM-WSL-12 / P08 continuation authority: execution owner may run allowlisted
+            # Ubuntu apt-get repair then rerun. The physical-floor harness remains
+            # non-installing; this mode owns the repair→rerun loop and still stops on
+            # BLOCKED_GITHUB_AUTH / non-package blockers.
+            $continuation = Join-Path $Root 'Invoke-FirstMatePhysicalFloorContinuation.ps1'
+            if (-not (Test-Path -LiteralPath $continuation -PathType Leaf)) {
+                throw "Missing FM-WSL-12 continuation entrypoint: $continuation"
+            }
+            $args = @(
+                '-NoLogo', '-NoProfile', '-File', $continuation,
+                '-ExpectedHead', $ExpectedHead,
+                '-WslDistribution', $WslDistribution
+            )
+            if (-not [string]::IsNullOrWhiteSpace($FirstMatePath)) {
+                $args += @('-FirstMatePath', $FirstMatePath)
+            }
+            if (-not [string]::IsNullOrWhiteSpace($SourceRepositoryPath)) {
+                $args += @('-SourceRepositoryPath', $SourceRepositoryPath)
+            }
+            if (-not [string]::IsNullOrWhiteSpace($EvidenceRoot)) {
+                $args += @('-EvidenceRoot', $EvidenceRoot)
+            }
+            & pwsh @args
+            # Preserve 44/45 (and other non-zero) so Admin Box callers can stop only on
+            # genuine credential/non-package blockers after bounded package repair.
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
             return
         }
     }

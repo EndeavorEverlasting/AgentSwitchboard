@@ -65,13 +65,58 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIs(recovery["github_authentication_requires_operator"], True)
         self.assertIn("NEXT_ACTION", recovery["authority_source"])
         self.assertIn("rerun", recovery["continuation_rule"].lower())
+        self.assertEqual(
+            "Invoke-FirstMatePhysicalFloorContinuation.ps1",
+            recovery["continuation_entrypoint"],
+        )
+        self.assertEqual("physical-floor-continue", recovery["harness_mode"])
+        self.assertIs(recovery["harness_remains_non_installing"], True)
+        self.assertEqual(44, recovery["structured_prerequisite_exit_codes"]["missing_tools"])
+        self.assertEqual(45, recovery["structured_prerequisite_exit_codes"]["github_auth"])
+        self.assertIn("P08", recovery["p08_continuation_authority"])
 
         lower = self.runbook.lower()
         self.assertIn("without stopping for additional operator permission", lower)
         self.assertIn("bounded repair is authorized by fm-wsl-12", lower)
+        self.assertIn("physical-floor-continue", self.runbook)
+        self.assertIn("Invoke-FirstMatePhysicalFloorContinuation.ps1", self.runbook)
         self.assertIn("sudo apt-get update && sudo apt-get install -y gh", self.runbook)
         self.assertIn("gh auth login", self.runbook)
         self.assertIn("do not automate credential entry", lower)
+
+    def test_continuation_entrypoint_encodes_allowlist_and_auth_stop(self) -> None:
+        continuation = (
+            ROOT / "Invoke-FirstMatePhysicalFloorContinuation.ps1"
+        ).read_text(encoding="utf-8")
+        harness = (ROOT / "Test-AgentSwitchboard-FirstMate-Harness.ps1").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("Test-AllowlistedAptNextAction", continuation)
+        self.assertIn("sudo apt-get update && sudo apt-get install -y ", continuation)
+        self.assertIn("BLOCKED_MISSING_TOOLS", continuation)
+        self.assertIn("BLOCKED_GITHUB_AUTH", continuation)
+        self.assertIn("exit 45", continuation)
+        self.assertIn("MaxPackageRepairAttempts", continuation)
+        self.assertIn("execution_owner_may_install_missing_packages", continuation)
+        self.assertNotIn("gh auth login --hostname github.com --web", continuation.split("ContractOnly")[0])
+        for forbidden in (
+            "Start-Process sudo",
+            "Invoke-Expression $nextAction",
+            "choco install",
+            "winget install",
+            "set-content ~/.config/gh",
+        ):
+            self.assertNotIn(forbidden.lower(), continuation.lower())
+        self.assertIn("physical-floor-continue", harness)
+        self.assertIn("Invoke-FirstMatePhysicalFloorContinuation.ps1", harness)
+        # Front door must preserve structured exits for Admin Box callers.
+        self.assertIn("if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }", harness)
+
+    def test_physical_floor_preserves_structured_prerequisite_exit_codes(self) -> None:
+        self.assertIn("exit $preflight.ExitCode", self.physical)
+        self.assertIn("FIRSTMATE_WSL_PREREQUISITE_BLOCKED", self.physical)
+        self.assertIn("exit 44", self.physical)
+        self.assertIn("exit 45", self.physical)
 
     def test_gate_is_bounded_and_uses_unique_evidence(self) -> None:
         self.assertIn("[int]$PrerequisiteTimeoutSeconds = 60", self.physical)

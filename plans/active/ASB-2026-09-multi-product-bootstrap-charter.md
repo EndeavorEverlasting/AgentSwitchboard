@@ -34,7 +34,7 @@ Tracked collision ownership: FirstMate foundation owns its scoped `tooling/first
 
 ### Wave C — runtime proof after integrated implementations
 
-7. **FM-WSL-12 — Physical FirstMate WSL/Ubuntu floor.** Depends on FM-BRIDGE-10. Run the prerequisite gate and read-only interop probe on an authorized Windows Admin Box; this proves the bridge/floor, not crew dispatch.
+7. **FM-WSL-12 — Physical FirstMate WSL/Ubuntu floor.** Depends on FM-BRIDGE-10. On an authorized Windows Admin Box, prefer `-Mode physical-floor-continue` so allowlisted missing Ubuntu packages are repaired and the floor is rerun without another permission round-trip; stop for GitHub auth. Proves the bridge/floor, not crew dispatch.
 8. **PI-ROLLBACK-14 — Pi physical Remove/restoration.** Depends on PI-REMOVE-11 + PI-FIELD-07. Prove Remove → Inspect and, when Pi should remain installed, Apply → final Inspect restoration.
 
 ### Wave D — FirstMate crew proof
