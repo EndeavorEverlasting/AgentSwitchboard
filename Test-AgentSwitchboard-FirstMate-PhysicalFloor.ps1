@@ -26,6 +26,7 @@ $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $BridgePath = Join-Path $Root 'Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1'
 $IntegrationContractPath = Join-Path $Root 'tooling\firstmate\harness\integration-contract.json'
 $ArtifactRegistryPath = Join-Path $Root 'tooling\firstmate\harness\operational\artifact-registry.json'
+$UpstreamPinPath = Join-Path $Root 'tooling\firstmate\harness\upstream-pin.json'
 
 function Normalize-NativeText {
     param([AllowNull()][AllowEmptyString()][string]$Text)
@@ -101,7 +102,7 @@ function Invoke-CapturedProcess {
     }
 }
 
-foreach ($required in @($BridgePath, $IntegrationContractPath, $ArtifactRegistryPath)) {
+foreach ($required in @($BridgePath, $IntegrationContractPath, $ArtifactRegistryPath, $UpstreamPinPath)) {
     if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
         throw "Missing FirstMate physical-floor contract surface: $required"
     }
@@ -232,10 +233,10 @@ if [[ -z "$harness" ]]; then
   exit 48
 fi
 # Fail closed before the long bridge when FirstMate is dirty or off the audited pin.
-# Pin must match tooling/firstmate/harness/upstream-pin.json (Test-FirstMateInterop.sh).
+# Pin is loaded from tooling/firstmate/harness/upstream-pin.json (same source as Test-FirstMateInterop.sh).
 # When -FirstMatePath is set, ASB_FIRSTMATE_PATH is injected via WSLENV and $HOME/firstmate
 # is skipped so a dirty default checkout cannot false-block a clean override.
-EXPECTED_FIRSTMATE_HEAD='b182d0f908b78d08c7ccb8dce3775bdca8c5d657'
+EXPECTED_FIRSTMATE_HEAD='__ASB_EXPECTED_FIRSTMATE_HEAD__'
 FIRSTMATE_CHECK_PATH="${ASB_FIRSTMATE_PATH:-}"
 if [[ -n "$FIRSTMATE_CHECK_PATH" ]]; then
   if [[ ! -d "$FIRSTMATE_CHECK_PATH/.git" ]]; then
@@ -279,7 +280,13 @@ for tool in "${required[@]}"; do
 done
 printf 'GITHUB_AUTH=ready\n'
 '@
+$upstreamPin = Get-Content -LiteralPath $UpstreamPinPath -Raw | ConvertFrom-Json
+$expectedFirstMateHead = [string]$upstreamPin.commit
+if ($expectedFirstMateHead -notmatch '^[0-9a-f]{40}$') {
+    throw "upstream-pin.json commit must be a 40-character lowercase hex SHA. Received=$expectedFirstMateHead"
+}
 $normalizedCommand = $preflightCommand.Replace("`r`n", "`n").Replace("`r", "`n")
+$normalizedCommand = $normalizedCommand.Replace('__ASB_EXPECTED_FIRSTMATE_HEAD__', $expectedFirstMateHead)
 
 $preflightEnvironment = @{}
 $preflightPathEnvironmentNames = @()
