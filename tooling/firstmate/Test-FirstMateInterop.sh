@@ -252,10 +252,16 @@ if [[ "$ACTUAL_HEAD" != "$EXPECTED_HEAD" ]]; then
 fi
 
 for path in "${REQUIRED_PATHS[@]}"; do
-  git -C "$FIRSTMATE_DIR" cat-file -e "$EXPECTED_HEAD:$path" 2>/dev/null \
-    || fail "Required audited upstream path is not present in the audited commit: $path"
-  [[ -e "$FIRSTMATE_DIR/$path" ]] \
-    || fail "Required audited upstream path is missing from the worktree: $path"
+  if ! git -C "$FIRSTMATE_DIR" cat-file -e "$EXPECTED_HEAD:$path" 2>/dev/null; then
+    printf 'STATUS=BLOCKED_FIRSTMATE_PIN\n'
+    printf 'NEXT=repair or replace %s with a clean %s checkout at %s containing required audited path %s, then rerun\n' "$FIRSTMATE_DIR" "$EXPECTED_ORIGIN" "$EXPECTED_HEAD" "$path"
+    exit 50
+  fi
+  if [[ ! -e "$FIRSTMATE_DIR/$path" ]]; then
+    printf 'STATUS=BLOCKED_FIRSTMATE_PIN\n'
+    printf 'NEXT=restore required audited path %s in %s from commit %s, then rerun\n' "$path" "$FIRSTMATE_DIR" "$EXPECTED_HEAD"
+    exit 50
+  fi
 done
 
 HARNESS=""
