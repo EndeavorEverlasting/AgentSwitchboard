@@ -158,6 +158,24 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("Invoke-FmWsl12AdminBoxLiveProof.ps1", harness)
         # Front door must preserve structured exits for Admin Box callers.
         self.assertIn("if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }", harness)
+        # Continuation must surface Admin Box-visible blockers as STATUS/NEXT (no throw).
+        self.assertIn("STATUS=BLOCKED_WSL_DISTRIBUTION", continuation)
+        self.assertNotIn(
+            'throw "WSL distribution mismatch. Contract=$canonicalDistribution Requested=$WslDistribution"',
+            continuation,
+        )
+        self.assertIn("STATUS=BLOCKED_HARNESS_START", continuation)
+        self.assertNotIn('throw "Unable to start $FileName."', continuation)
+        self.assertIn("STATUS=BLOCKED_GIT_HEAD", continuation)
+        self.assertNotIn(
+            "throw 'Unable to resolve exact AgentSwitchboard HEAD.'",
+            continuation,
+        )
+        self.assertIn("STATUS=BLOCKED_HEAD_MISMATCH", continuation)
+        self.assertNotIn(
+            'throw "Exact-head mismatch. Expected=$ExpectedHead Actual=$actualHead"',
+            continuation,
+        )
 
     def test_physical_floor_preserves_structured_prerequisite_exit_codes(self) -> None:
         self.assertIn("exit $preflight.ExitCode", self.physical)

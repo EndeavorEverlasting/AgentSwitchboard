@@ -73,7 +73,12 @@ if ([string]::IsNullOrWhiteSpace($canonicalDistribution)) {
     $canonicalDistribution = [string]$integration.platform_contract.wsl_distribution
 }
 if ($WslDistribution -ne $canonicalDistribution) {
-    throw "WSL distribution mismatch. Contract=$canonicalDistribution Requested=$WslDistribution"
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_WSL_DISTRIBUTION'
+    Write-Host "CONTRACT_WSL_DISTRIBUTION=$canonicalDistribution"
+    Write-Host "REQUESTED_WSL_DISTRIBUTION=$WslDistribution"
+    Write-Host 'NEXT=rerun with -WslDistribution matching integration-contract physical_floor_recovery.distribution (or platform_contract.wsl_distribution)'
+    exit 1
 }
 
 $packageManager = [string]$recovery.package_manager
@@ -110,7 +115,13 @@ function Invoke-CapturedProcess {
 
     $process = [System.Diagnostics.Process]::new()
     $process.StartInfo = $psi
-    if (-not $process.Start()) { throw "Unable to start $FileName." }
+    if (-not $process.Start()) {
+        # Keep structured — do not throw (throw collapses to unstructured exit 1).
+        Write-Host 'STATUS=BLOCKED_HARNESS_START'
+        Write-Host "PROCESS_FILE=$FileName"
+        Write-Host "NEXT=ensure $FileName can launch on this host, then rerun; unable to start process"
+        exit 1
+    }
     $stdoutTask = $process.StandardOutput.ReadToEndAsync()
     $stderrTask = $process.StandardError.ReadToEndAsync()
     $completed = $process.WaitForExit($TimeoutSeconds * 1000)
@@ -267,10 +278,21 @@ if ($ContractOnly) {
 }
 
 $actualHeadRaw = & git -C $Root rev-parse HEAD
-if ($LASTEXITCODE -ne 0) { throw 'Unable to resolve exact AgentSwitchboard HEAD.' }
+if ($LASTEXITCODE -ne 0) {
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_GIT_HEAD'
+    Write-Host 'NEXT=repair the AgentSwitchboard checkout so git rev-parse HEAD succeeds, then rerun Invoke-FirstMatePhysicalFloorContinuation.ps1'
+    Write-Host 'Unable to resolve exact AgentSwitchboard HEAD.'
+    exit 1
+}
 $actualHead = ("$actualHeadRaw").Trim()
 if ($actualHead -ne $ExpectedHead.ToLowerInvariant()) {
-    throw "Exact-head mismatch. Expected=$ExpectedHead Actual=$actualHead"
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HEAD_MISMATCH'
+    Write-Host "EXPECTED_HEAD=$ExpectedHead"
+    Write-Host "ACTUAL_HEAD=$actualHead"
+    Write-Host 'NEXT=ff-only refresh main, re-resolve HEAD, and rerun with the recorded SHA'
+    exit 1
 }
 
 $wsl = Get-Command wsl.exe -ErrorAction SilentlyContinue
