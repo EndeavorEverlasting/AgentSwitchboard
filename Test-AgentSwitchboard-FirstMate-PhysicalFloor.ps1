@@ -95,8 +95,9 @@ if (-not ($artifacts.artifacts.id -contains 'windows-wsl-prerequisite-proof')) {
     throw 'Artifact registry does not register windows-wsl-prerequisite-proof.'
 }
 
-$actualHead = (& git -C $Root rev-parse HEAD).Trim()
+$actualHeadRaw = & git -C $Root rev-parse HEAD
 if ($LASTEXITCODE -ne 0) { throw 'Unable to resolve exact AgentSwitchboard HEAD.' }
+$actualHead = ("$actualHeadRaw").Trim()
 if ($actualHead -ne $ExpectedHead.ToLowerInvariant()) {
     throw "Exact-head mismatch. Expected=$ExpectedHead Actual=$actualHead"
 }

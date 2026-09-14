@@ -216,12 +216,17 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("CHILD_EXIT_CODE=", command)
         self.assertIn("$childExit=$LASTEXITCODE", command)
         self.assertIn("throw", command)
+        self.assertIn("Test-Path -LiteralPath", command)
+        self.assertIn("checkout root", command)
         self.assertNotIn("(git rev-parse HEAD).Trim()", command)
         self.assertIn("LIVE_RUNTIME_PROOF:UNPROVEN", block)
         self.assertIn("BLOCKED_WINDOWS_WSL_REQUIRED", block)
         self.assertIn("Invoke-Asq017AdminBoxLiveFloor.ps1", self.runbook)
         self.assertIn("CHILD_EXIT_CODE", self.runbook)
         self.assertIn("throw", self.runbook)
+        self.assertIn("Test-Path -LiteralPath", self.runbook)
+        self.assertIn("b182d0f908b78d08c7ccb8dce3775bdca8c5d657", self.runbook)
+        self.assertIn("inside Ubuntu", self.runbook)
 
         durable = ROOT / "Invoke-Asq017AdminBoxLiveFloor.ps1"
         self.assertTrue(durable.is_file(), durable)

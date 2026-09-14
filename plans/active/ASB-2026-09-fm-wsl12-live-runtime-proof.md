@@ -13,7 +13,7 @@ Canonical coordination index: `plans/active/ASB-2026-09-multi-product-bootstrap-
 
 ## Successor phases
 
-1. **Admin Box live observation (current).** Refresh main; paste the OCD-safe ASQ-017 next action (capture `CHILD_EXIT_CODE`, `throw` instead of interactive `exit`) running `Invoke-FmWsl12AdminBoxLiveProof.ps1` (contract → physical-floor-continue → protected physical-floor). Expected: PASS markers + local receipt/evidence root, or `BLOCKED_GITHUB_AUTH` / real non-package blocker with preserved evidence.
+1. **Admin Box live observation (current).** After #183 merges, refresh main; paste the OCD-safe ASQ-017 next action (checkout-root guard, capture `CHILD_EXIT_CODE`, `throw` instead of interactive `exit`) running durable `Invoke-Asq017AdminBoxLiveFloor.ps1` (ff-only main refresh → `Invoke-FmWsl12AdminBoxLiveProof.ps1`: contract → physical-floor-continue → protected physical-floor). Pre-stage Ubuntu FirstMate @ `b182d0f908b78d08c7ccb8dce3775bdca8c5d657` + one primary harness + Ubuntu `gh` auth. Expected: PASS markers + local receipt/evidence root, or `BLOCKED_GITHUB_AUTH` / real non-package blocker with preserved evidence.
 2. **Credential gate (conditional).** Only if `BLOCKED_GITHUB_AUTH`: operator `gh auth login` then rerun continuation. No token capture in evidence.
 3. **FM-CREW-13 handoff.** Only after physical-floor PASS. Local-only crew pilot; out of this phase's mutation scope.
 

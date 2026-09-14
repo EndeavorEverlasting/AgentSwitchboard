@@ -54,25 +54,30 @@ The harness itself remains fail-closed and non-installing; this runbook grants t
 ## Preconditions
 
 1. Use an authorized Windows Admin Box with PowerShell 7+ (`pwsh`).
-2. Checkout current `main` (post `FM-BRIDGE-10`) and record the exact SHA.
-3. Confirm the WSL distribution named `Ubuntu` exists (`wsl.exe -l -v`).
+2. Checkout current `main` (post `FM-BRIDGE-10`, including `Invoke-Asq017AdminBoxLiveFloor.ps1` after #183 merges) and record the exact SHA.
+3. Confirm the WSL distribution named `Ubuntu` exists and is runnable (`wsl.exe -l -v`; `wsl.exe -d Ubuntu --exec true`).
 4. Do not change the default WSL distro to satisfy this floor; the harness must target `Ubuntu` explicitly.
-5. Keep evidence local/untracked. Do not commit receipts, tokens, or machine-local paths.
-6. Treat bounded missing-package repair inside `Ubuntu` as in-scope for this sprint; do not stop merely because the prerequisite gate reports an allowlisted tool missing.
+5. Pre-stage inside Ubuntu before expecting PASS: a clean `kunchenguid/firstmate` clone at audited pin `b182d0f908b78d08c7ccb8dce3775bdca8c5d657`, plus one primary harness on PATH (`claude`, `grok`, `pi`, `pi-signed`, `omp`, `codex`, `opencode`, or `cursor-agent`). Optional: pass `-FirstMatePath` through the one-shot when discovery fails.
+6. GitHub auth is probed **inside Ubuntu** (`gh auth status`); Windows-only login is not sufficient. Exit 45 remains the operator credential gate.
+7. Keep evidence local/untracked. Do not commit receipts, tokens, or machine-local paths.
+8. Treat bounded missing-package repair inside `Ubuntu` as in-scope for this sprint; do not stop merely because the prerequisite gate reports an allowlisted tool missing. Passwordless `sudo` is required for non-interactive apt repair.
 
 ## Exact commands
 
-From a clean AgentSwitchboard checkout on the Admin Box:
+From the AgentSwitchboard checkout root on the Admin Box (after #183 is on `main`, or from this PR tip):
 
 ```powershell
 $ErrorActionPreference = 'Stop'
 # Preferred ASQ-017 durable owner: ff-only main refresh + FM-WSL-12 one-shot.
 # Keep the interactive parent shell open: capture CHILD_EXIT_CODE and throw (do not exit).
+if (-not (Test-Path -LiteralPath .\Invoke-Asq017AdminBoxLiveFloor.ps1)) {
+  throw 'Run from AgentSwitchboard checkout root (Invoke-Asq017AdminBoxLiveFloor.ps1 missing).'
+}
 pwsh -NoLogo -NoProfile -File .\Invoke-Asq017AdminBoxLiveFloor.ps1
 $childExit = $LASTEXITCODE
 Write-Host "CHILD_EXIT_CODE=$childExit"
 if ($childExit -eq 45) {
-  throw 'BLOCKED_GITHUB_AUTH — complete gh auth login then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+  throw 'BLOCKED_GITHUB_AUTH — complete gh auth login inside Ubuntu then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
 }
 if ($childExit -ne 0) {
   throw "ASQ-017 Admin Box live floor failed with exit $childExit"
@@ -171,7 +176,7 @@ Preserve the console markers and the printed evidence root:
 |---|---|
 | Missing Ubuntu tools (`git`/`gh`/`tmux`/`python3`) | Prefer `-Mode physical-floor-continue` / `Invoke-FirstMatePhysicalFloorContinuation.ps1`, which executes the exact emitted `NEXT_ACTION` package command inside explicit Ubuntu and reruns without another permission round-trip. Manual repair remains valid when using report-only `-Mode physical-floor`. |
 | `sudo` / package manager cannot complete | Preserve the evidence root and report the exact package-manager/sudo blocker. Do not broaden to another distro, Windows package manager, or arbitrary package source. |
-| GitHub auth blocked (`STATUS=BLOCKED_GITHUB_AUTH`, exit 45) | Operator performs the emitted `gh auth login ...` command. Do not automate credential entry or persist tokens. Then rerun the physical floor / continuation entrypoint. |
+| GitHub auth blocked (`STATUS=BLOCKED_GITHUB_AUTH`, exit 45) | Operator performs the emitted `gh auth login ...` command **inside Ubuntu**. Do not automate credential entry or persist tokens. Then rerun the physical floor / continuation entrypoint. |
 | Host lacks `wsl.exe`, or `Ubuntu` is missing/unrunnable (`STATUS=BLOCKED_WINDOWS_WSL_REQUIRED`, exit 46 / `FAILURE_CODE=WINDOWS_WSL_REQUIRED`) | Cloud/Linux hosts without `wsl.exe`, and Windows hosts whose contracted distribution cannot run `wsl --distribution Ubuntu --exec true`, fail closed before package repair or interop. This is a LIVE_ATTEMPT_FAIL_CLOSED receipt, not physical PASS. Move to an authorized Windows Admin Box with explicit runnable `Ubuntu`. |
 | Exact-head mismatch | Re-fetch/ff-only `main`, re-resolve HEAD, rerun with the new SHA. |
 | WSL timeout / transport failure | Preserve the Windows evidence root; default cleanup removes the script-owned WSL clone. Re-run after repairing the environment. |
