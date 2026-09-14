@@ -200,6 +200,9 @@ for ($i = 0; $i -lt $headingMatches.Count; $i++) {
     $proof = $fields['Last proof']
     $next = $fields['Next action']
     $referencesText = if ($fields.ContainsKey('References')) { [string]$fields['References'] } else { '' }
+    $nextDurabilityText = $next
+    $nextFieldMatch = [regex]::Match($block, '(?m)^- \*\*Next action:\*\*[ \t]*(?<value>[^\r\n]*(?:\r?\n(?!- \*\*[^*]+:\*\*)[^\r\n]*)*)')
+    if ($nextFieldMatch.Success) { $nextDurabilityText = $nextFieldMatch.Groups['value'].Value.Trim() }
 
     if ($status -and $status -notin $allowedStatuses) { Add-Error "$id invalid status '$status'" }
     if ($priority -and $priority -notin $allowedPriorities) { Add-Error "$id invalid priority '$priority'" }
@@ -224,7 +227,7 @@ for ($i = 0; $i -lt $headingMatches.Count; $i++) {
         }
     }
 
-    if ($status -in $operatorDurabilityStatuses -and -not [string]::IsNullOrWhiteSpace($next) -and $next.Length -gt $maxInlineNextActionChars) {
+    if ($status -in $operatorDurabilityStatuses -and -not [string]::IsNullOrWhiteSpace($nextDurabilityText) -and $nextDurabilityText.Length -gt $maxInlineNextActionChars) {
         $entrypointReferences = [System.Collections.Generic.List[string]]::new()
         foreach ($reference in [regex]::Matches($referencesText, '`([^`]+)`')) {
             $candidate = $reference.Groups[1].Value
@@ -233,7 +236,7 @@ for ($i = 0; $i -lt $headingMatches.Count; $i++) {
             if ($extension -in $operatorEntrypointExtensions) { [void]$entrypointReferences.Add($candidate) }
         }
         if ($entrypointReferences.Count -eq 0) {
-            Add-Error "$id long Next action ($($next.Length) chars > $maxInlineNextActionChars) must cite a repository executable entrypoint in References"
+            Add-Error "$id long Next action ($($nextDurabilityText.Length) chars > $maxInlineNextActionChars) must cite a repository executable entrypoint in References"
         }
         else {
             $ownedEntrypoints = @($entrypointReferences | Where-Object { Test-TrackedRepositoryFile $_ })
@@ -244,7 +247,7 @@ for ($i = 0; $i -lt $headingMatches.Count; $i++) {
                 $mentionedEntrypoint = $false
                 foreach ($entrypoint in $ownedEntrypoints) {
                     $fileName = [IO.Path]::GetFileName($entrypoint)
-                    if ($next.IndexOf($entrypoint, [StringComparison]::OrdinalIgnoreCase) -ge 0 -or $next.IndexOf($fileName, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
+                    if ($nextDurabilityText.IndexOf($entrypoint, [StringComparison]::OrdinalIgnoreCase) -ge 0 -or $nextDurabilityText.IndexOf($fileName, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
                         $mentionedEntrypoint = $true
                         break
                     }
