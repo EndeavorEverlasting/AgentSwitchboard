@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -10,6 +13,8 @@ BRIDGE = ROOT / "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1"
 HARNESS = ROOT / "tooling" / "firstmate" / "harness" / "operational"
 INTEGRATION = ROOT / "tooling" / "firstmate" / "harness" / "integration-contract.json"
 RUNBOOK = ROOT / "docs" / "harness" / "firstmate-wsl-physical-floor-runbook.md"
+WORK_QUEUE = ROOT / ".ai" / "WORK_QUEUE.md"
+OCD_VALIDATOR = ROOT / "scripts" / "Test-OperatorCommandDeliveryHarnessCompleteness.ps1"
 
 
 class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
@@ -179,6 +184,88 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
             "set-content ~/.config/gh",
         ):
             self.assertNotIn(forbidden, lowered)
+
+    def test_asq017_admin_box_next_action_is_ocd_safe_and_oneshot_bound(self) -> None:
+        """ASQ-017 paste must keep the parent shell open and invoke the Admin Box one-shot."""
+        text = WORK_QUEUE.read_text(encoding="utf-8")
+        start = text.find("## ASQ-017")
+        self.assertGreaterEqual(start, 0, "ASQ-017 missing from work ledger")
+        rest = text[start:]
+        end = rest.find("\n## ", 1)
+        block = rest if end < 0 else rest[:end]
+        next_line = next(
+            (line for line in block.splitlines() if line.startswith("- **Next action:**")),
+            None,
+        )
+        self.assertIsNotNone(next_line, "ASQ-017 Next action missing")
+        assert next_line is not None
+        idx = next_line.find("$ErrorActionPreference")
+        self.assertGreaterEqual(idx, 0, "ASQ-017 Next action missing PowerShell body")
+        command = next_line[idx:].strip().strip("`")
+        self.assertIn("Invoke-FmWsl12AdminBoxLiveProof.ps1", command)
+        self.assertIn("CHILD_EXIT_CODE=", command)
+        self.assertIn("$childExit=$LASTEXITCODE", command)
+        self.assertIn("throw", command)
+        self.assertIn("LIVE_RUNTIME_PROOF:UNPROVEN", block)
+        self.assertIn("BLOCKED_WINDOWS_WSL_REQUIRED", block)
+        self.assertIn("CHILD_EXIT_CODE", self.runbook)
+        self.assertIn("throw", self.runbook)
+        self.assertTrue(OCD_VALIDATOR.is_file(), OCD_VALIDATOR)
+        with tempfile.TemporaryDirectory() as tmp:
+            candidate = Path(tmp) / "asq017-admin-box-next.ps1"
+            candidate.write_text(command.replace("; ", "\n") + "\n", encoding="utf-8")
+            completed = subprocess.run(
+                [
+                    "pwsh",
+                    "-NoLogo",
+                    "-NoProfile",
+                    "-File",
+                    str(OCD_VALIDATOR),
+                    "-CandidatePath",
+                    str(candidate),
+                ],
+                cwd=ROOT,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(
+                0,
+                completed.returncode,
+                f"OCD validator failed:\n{completed.stdout}\n{completed.stderr}",
+            )
+            env = os.environ.copy()
+            env["CANDIDATE"] = str(candidate)
+            ast_probe = subprocess.run(
+                [
+                    "pwsh",
+                    "-NoLogo",
+                    "-NoProfile",
+                    "-Command",
+                    (
+                        "$t = Get-Content -Raw -LiteralPath $env:CANDIDATE; "
+                        "$tok = $null; $err = $null; "
+                        "$ast = [System.Management.Automation.Language.Parser]::ParseInput("
+                        "$t, [ref]$tok, [ref]$err); "
+                        "$ex = @($ast.FindAll({ param($n) "
+                        "$n -is [System.Management.Automation.Language.ExitStatementAst] }, $true)); "
+                        "if ($err.Count -gt 0) { Write-Output ('PARSE_ERRORS=' + $err.Count); exit 2 }; "
+                        "Write-Output ('EXIT_STATEMENT_COUNT=' + $ex.Count); "
+                        "if ($ex.Count -gt 0) { exit 1 }"
+                    ),
+                ],
+                cwd=ROOT,
+                check=False,
+                capture_output=True,
+                text=True,
+                env=env,
+            )
+            self.assertEqual(
+                0,
+                ast_probe.returncode,
+                f"ExitStatementAst probe failed:\n{ast_probe.stdout}\n{ast_probe.stderr}",
+            )
+            self.assertIn("EXIT_STATEMENT_COUNT=0", ast_probe.stdout)
 
 
 if __name__ == "__main__":
