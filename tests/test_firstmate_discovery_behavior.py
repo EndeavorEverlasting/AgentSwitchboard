@@ -141,6 +141,24 @@ class FirstMateDiscoveryBehaviorTests(unittest.TestCase):
             self.assertIn("STATUS=BLOCKED_FIRSTMATE_PIN", combined)
             self.assertNotIn("[PASS] FIRSTMATE_INTEROP", combined)
 
+            # An explicitly selected/authoritative checkout with the same defect must
+            # retain the structured exit-50 API rather than degrading to generic exit 1.
+            direct_env = dict(env)
+            direct_env["FIRSTMATE_DIR"] = str(candidate)
+            direct = subprocess.run(
+                ["bash", str(copied_probe)],
+                cwd=root,
+                env=direct_env,
+                capture_output=True,
+                text=True,
+            )
+            direct_combined = direct.stdout + direct.stderr
+            self.assertEqual(50, direct.returncode, direct_combined)
+            self.assertIn("STATUS=BLOCKED_FIRSTMATE_PIN", direct_combined)
+            self.assertIn("NEXT=repair or replace", direct_combined)
+            self.assertIn(MISSING_REQUIRED, direct_combined)
+            self.assertNotIn("[PASS] FIRSTMATE_INTEROP", direct_combined)
+
 
 if __name__ == "__main__":
     unittest.main()
