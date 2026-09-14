@@ -73,6 +73,19 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIs(recovery["harness_remains_non_installing"], True)
         self.assertEqual(44, recovery["structured_prerequisite_exit_codes"]["missing_tools"])
         self.assertEqual(45, recovery["structured_prerequisite_exit_codes"]["github_auth"])
+        self.assertEqual(46, recovery["structured_prerequisite_exit_codes"]["windows_wsl_required"])
+        self.assertEqual(
+            "BLOCKED_WINDOWS_WSL_REQUIRED",
+            recovery["non_windows_live_attempt"]["status"],
+        )
+        self.assertEqual(
+            "WINDOWS_WSL_REQUIRED",
+            recovery["non_windows_live_attempt"]["failure_code"],
+        )
+        self.assertEqual(
+            "LIVE_ATTEMPT_FAIL_CLOSED",
+            recovery["non_windows_live_attempt"]["proof_level"],
+        )
         self.assertIn("P08", recovery["p08_continuation_authority"])
 
         lower = self.runbook.lower()
@@ -83,6 +96,8 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("sudo apt-get update && sudo apt-get install -y gh", self.runbook)
         self.assertIn("gh auth login", self.runbook)
         self.assertIn("do not automate credential entry", lower)
+        self.assertIn("BLOCKED_WINDOWS_WSL_REQUIRED", self.runbook)
+        self.assertIn("WINDOWS_WSL_REQUIRED", self.runbook)
 
     def test_continuation_entrypoint_encodes_allowlist_and_auth_stop(self) -> None:
         continuation = (
@@ -96,6 +111,9 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("BLOCKED_MISSING_TOOLS", continuation)
         self.assertIn("BLOCKED_GITHUB_AUTH", continuation)
         self.assertIn("exit 45", continuation)
+        self.assertIn("exit 46", continuation)
+        self.assertIn("BLOCKED_WINDOWS_WSL_REQUIRED", continuation)
+        self.assertIn("WINDOWS_WSL_REQUIRED", continuation)
         self.assertIn("MaxPackageRepairAttempts", continuation)
         self.assertIn("execution_owner_may_install_missing_packages", continuation)
         self.assertNotIn("gh auth login --hostname github.com --web", continuation.split("ContractOnly")[0])
@@ -117,6 +135,9 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("FIRSTMATE_WSL_PREREQUISITE_BLOCKED", self.physical)
         self.assertIn("exit 44", self.physical)
         self.assertIn("exit 45", self.physical)
+        self.assertIn("exit 46", self.physical)
+        self.assertIn("BLOCKED_WINDOWS_WSL_REQUIRED", self.physical)
+        self.assertIn("WINDOWS_WSL_REQUIRED", self.physical)
 
     def test_gate_is_bounded_and_uses_unique_evidence(self) -> None:
         self.assertIn("[int]$PrerequisiteTimeoutSeconds = 60", self.physical)
