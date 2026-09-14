@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-14T18:40:00Z",
-  "updatedUtc": "2026-09-14T19:05:00Z",
+  "updatedUtc": "2026-09-14T19:10:00Z",
   "mission": "Freeze the FirstMate\u2194AgentSwitchboard\u2194PromptKit integration boundary as six v1 schemas plus a quiet context-rollover UX state machine and receipt drafts, without implementing live adapters.",
   "owner": {
     "surface": "cross-product protocol contracts",
@@ -16,7 +16,11 @@
   },
   "delivery": {
     "branch": "cursor/fm-asb-promptkit-v1-contracts-4c0f",
-    "pullRequest": null,
+    "pullRequest": {
+      "number": 184,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/184",
+      "state": "open"
+    },
     "baseRef": "main",
     "commitRequired": true
   },
@@ -151,12 +155,12 @@
   ],
   "proof": {
     "target": "Contract-only FirstMate\u2194ASB\u2194PromptKit protocol and rollover UX freeze",
-    "achieved": "Six schemas, policy, rollover state machine, fixtures/receipts, architecture+UX docs, validators, CI workflow, and public plan registered. Python and PowerShell protocol contracts PASS; public plan contracts PASS.",
+    "achieved": "Six schemas, policy, rollover state machine, fixtures/receipts, architecture+UX docs, validators, CI workflow, and public plan registered on PR #184 at 5b6b8fd. Python and PowerShell protocol contracts PASS; public plan contracts PASS.",
     "ceiling": "Contract and synthetic fixture proof only. No live observation, routing API, durable inbox delivery, or automatic rollover is claimed."
   },
   "handoff": {
     "nextOwner": "FirstMate observation adapter lane",
-    "nextCommand": "python3 tests/test_fm_asb_promptkit_protocol_contract.py",
+    "nextCommand": "gh pr view 184 --repo EndeavorEverlasting/AgentSwitchboard",
     "notes": [
       "Do not implement live adapters in this plan.",
       "Phase 1 after merge: consume FirstMate task state into asb.agent-observation/v1 without becoming a second watcher."
