@@ -13,13 +13,13 @@ A repository work ledger is the durable coordination surface for unfinished work
 
 The portable lifecycle was factored from the AxTask shared queue implementation at donor commit `9351c952b057ae4520b1ea0d388e1d8908f4c093`. BlacksmithGuild now owns the cross-repository compatibility contract, versioning boundary, donor provenance, and portable status/task/proof invariants as `RepoLedgerInteroperability.v1`. AxTask remains authoritative for AxTask domain behavior and `AXQ-*` task contents.
 
-AgentSwitchboard owns **only its local compatibility/execution profile**: the `ASQ-*` queue instance, local validator/tests/CI, `Work class`, and deterministic bounded/unbounded frontier. The local profile may strengthen the portable contract but is not a second portable or repository-family authority.
+AgentSwitchboard owns **only its local compatibility/execution profile**: the `ASQ-*` queue instance, local validator/tests/CI, `Work class`, deterministic bounded/unbounded frontier, and local operator-command durability strengthening. The local profile may strengthen the portable contract but is not a second portable or repository-family authority.
 
 ## Ownership boundary
 
 - BlacksmithGuild owns portable ledger vocabulary, required portable fields, continuation/terminal semantics, durable-proof vocabulary, compatibility versioning, and the adoption/provenance boundary.
 - AxTask remains authoritative for AxTask donor behavior, `AXQ-*` task contents, deployment/database domain gates, and AxTask proof promotion.
-- AgentSwitchboard owns this repository's `ASQ-*` task state, local profile ID, `Work class`, frontier routing, validator/tests/CI, product/runtime behavior, and proof promotion.
+- AgentSwitchboard owns this repository's `ASQ-*` task state, local profile ID, `Work class`, frontier routing, operator-command durability, validator/tests/CI, product/runtime behavior, and proof promotion.
 - Consumer repositories own their own ledger instances, task identifiers, domain references, acceptance gates, local validator implementations, CI/hook integration, and runtime truth.
 - A consumer may strengthen portable v1 but may not silently weaken required fields, terminal-state proof, collision handling, or executable-next-action rules while claiming compatibility.
 - A contribution/adoption manifest is compatibility metadata only. It is not runtime proof and does not make BlacksmithGuild or AgentSwitchboard authoritative for consumer product behavior.
@@ -83,13 +83,28 @@ The route is derived from `Work class` plus `Status`; it is not stored as a seco
 
 An `UNBOUNDED` task may only be `READY`, `BLOCKED`, `OPERATOR`, or `DONE`. It must never enter `CLAIMED`, `VERIFY`, `REVIEW`, or `MERGE` as a monolithic implementation item. A `READY` unbounded task must have a next action beginning with `decompose`, `split`, or `create` and explicitly produce bounded child work.
 
+### Operator-command durability strengthening
+
+AgentSwitchboard treats a chat-length operator sequence as an incubation form, not a durable execution owner. For local tasks in `READY`, `CLAIMED`, `VERIFY`, `REVIEW`, `MERGE`, or `OPERATOR`, a `Next action` longer than **320 characters** must delegate the recurring mechanics to an existing tracked repository executable instead of preserving the entire sequence as the primary handoff.
+
+A long `Next action` is valid only when all of these are true:
+
+1. `References` contains a backticked repository-local executable path ending in `.ps1`, `.cmd`, `.bat`, `.sh`, or `.py`.
+2. That path exists and is tracked by Git in this repository.
+3. `Next action` mentions the same referenced path or its filename, proving the durable owner is actually the instructed entrypoint rather than an unrelated reference.
+4. The executable remains subject to its own owning tests, validators, runtime proof ceiling, and safety gates; a ledger citation never promotes runtime proof.
+
+This is deliberately a **local strengthening**. It does not change `RepoLedgerInteroperability.v1`, does not require other consumer repositories to adopt AgentSwitchboard's 320-character threshold or executable extensions, and does not force short one-step diagnostics into wrappers prematurely.
+
+The rule is intended to stop recurring Admin Box/workstation procedures from remaining snippet-only after they have become documented workflow dependencies. ASQ-005 is the reference migration pattern: the multi-step live-cert preparation graduated to `tooling/harness/operational/opencode-lsp-setup/Invoke-Asq005FreshTuiCertificationPrep.ps1`, while the ledger points to that executable and retains only the runtime observation steps that cannot be automated honestly.
+
 Agents should consume the compact frontier instead of repeatedly rereading the full ledger:
 
 `pwsh -NoLogo -NoProfile -File scripts/Get-RepositoryWorkLedgerFrontier.ps1 -Json`
 
 The frontier returns the highest-priority actionable task by default and derives either `EXECUTE` or `DECOMPOSE`. `-All` is for coordination views. For `EXECUTE`, the agent should claim the task and make a tracked mutation or record an exact blocker in the same session. For `DECOMPOSE`, the agent should create bounded child items before further parent-level analysis. This is the anti-rumination boundary: once the route and first action are known, continued free-form analysis is not progress.
 
-This execution profile is an AgentSwitchboard-local strengthening. It is **not** required for `RepoLedgerInteroperability.v1` compatibility and must not be propagated to another repository merely because that repository adopts the portable contract.
+This execution profile, including operator-command durability, is an AgentSwitchboard-local strengthening. It is **not** required for `RepoLedgerInteroperability.v1` compatibility and must not be propagated to another repository merely because that repository adopts the portable contract.
 
 ## Proof and terminal-state rules
 
@@ -112,6 +127,8 @@ For `BLOCKED` or `OPERATOR`, `Gate` must name the exact blocking condition.
 
 For continuation states, `Next action` must be a concrete executable progression. It must begin with an action such as run, execute, create, decompose, split, update, repair, resolve, merge, fetch, inspect, open, verify, validate, test, commit, push, rebase, retarget, compare, generate, record, obtain, install, apply, build, launch, deploy, restore, export, import, review, reconcile, invoke, edit, write, move, copy, sync, or check. Status-only phrases such as `PR opened`, `CI green`, `status unchanged`, `wait`, or `merge later` are invalid next actions.
 
+A long executable/operator next action must also satisfy the local operator-command durability rule above. Length alone does not prove recurrence, but crossing the local threshold is a deterministic escalation signal: either point to the already graduated executable or graduate the recurring mechanics before treating the ledger handoff as durable.
+
 ## Collision and freshness rules
 
 - One writer per branch remains mandatory.
@@ -128,10 +145,10 @@ A portable v1 consumer must provide its own repository-local ledger, determinist
 
 Consumers must not fetch or execute validators from BlacksmithGuild or AgentSwitchboard at validation time. The portable contract is shared; execution remains repository-local.
 
-AgentSwitchboard's local profile, `Work class`, and compact frontier are reference-only for other repositories unless they explicitly choose to adopt those features as their own local extension. Such adoption does not move portable authority out of BlacksmithGuild.
+AgentSwitchboard's local profile, `Work class`, compact frontier, and operator-command durability threshold are reference-only for other repositories unless they explicitly choose to adopt those features as their own local extension. Such adoption does not move portable authority out of BlacksmithGuild.
 
 ## Proof ceiling
 
-The BlacksmithGuild portable contract plus this repository's deterministic validators can prove portable compatibility metadata, ledger structure, status semantics, durable-proof syntax, continuation/terminal-state rules, AgentSwitchboard `Work class` semantics, deterministic frontier routing, and selected local reference existence.
+The BlacksmithGuild portable contract plus this repository's deterministic validators can prove portable compatibility metadata, ledger structure, status semantics, durable-proof syntax, continuation/terminal-state rules, AgentSwitchboard `Work class` semantics, deterministic frontier routing, selected local reference existence, and static operator-command durability including tracked executable ownership.
 
-They cannot prove that referenced implementation is correct, CI actually passed, a PR merged, a provider changed state, an operator performed a protected action, or a runtime behaved as claimed. Those require their owning evidence surfaces.
+They cannot prove that a referenced executable actually succeeds in its target environment, that referenced implementation is correct, CI actually passed, a PR merged, a provider changed state, an operator performed a protected action, or a runtime behaved as claimed. Those require their owning evidence surfaces.
