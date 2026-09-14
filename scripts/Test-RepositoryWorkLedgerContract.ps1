@@ -38,8 +38,9 @@ function Test-TrackedRepositoryFile([string]$Candidate) {
     if ([string]::IsNullOrWhiteSpace($Candidate)) { return $false }
     $resolved = Join-Path $repoRoot $Candidate
     if (-not (Test-Path -LiteralPath $resolved -PathType Leaf)) { return $false }
-    & git -C $repoRoot ls-files --error-unmatch -- $Candidate *> $null
-    return $LASTEXITCODE -eq 0
+    $stageLines = @(& git -C $repoRoot ls-files --stage --error-unmatch -- $Candidate 2>$null)
+    if ($LASTEXITCODE -ne 0 -or $stageLines.Count -ne 1) { return $false }
+    return [string]$stageLines[0] -match '^(?:100644|100755)\s+[0-9a-f]{40,64}\s+\d+\t'
 }
 
 foreach ($path in @($ledger, $policyPathResolved, $adoptionPath, $docPath, $frontierPath)) {
