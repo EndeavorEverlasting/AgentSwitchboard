@@ -114,7 +114,14 @@ function Invoke-WslProcess {
 
     $process = [System.Diagnostics.Process]::new()
     $process.StartInfo = $psi
-    if (-not $process.Start()) { throw 'Unable to start wsl.exe.' }
+    if (-not $process.Start()) {
+        # Keep exit 46 structured — do not throw (throw collapses to unstructured exit 1).
+        Write-Host 'STATUS=BLOCKED_WINDOWS_WSL_REQUIRED'
+        Write-Host 'FAILURE_CODE=WINDOWS_WSL_REQUIRED'
+        Write-Host 'NEXT=run on Windows Admin Box with runnable wsl.exe and Ubuntu; unable to start wsl.exe process'
+        Write-Host '[PROOF_CEILING] Physical WSL floor requires Windows + wsl.exe; contract PASS is not live PASS.'
+        exit 46
+    }
 
     $stdoutTask = $process.StandardOutput.ReadToEndAsync()
     $stderrTask = $process.StandardError.ReadToEndAsync()
@@ -214,7 +221,12 @@ if ([string]::IsNullOrWhiteSpace($WslDistribution)) {
     $WslDistribution = $canonicalWslDistribution
 }
 elseif ($WslDistribution -ne $canonicalWslDistribution) {
-    throw "WSL distribution mismatch. Contract=$canonicalWslDistribution Requested=$WslDistribution"
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_WSL_DISTRIBUTION'
+    Write-Host "CONTRACT_WSL_DISTRIBUTION=$canonicalWslDistribution"
+    Write-Host "REQUESTED_WSL_DISTRIBUTION=$WslDistribution"
+    Write-Host 'NEXT=rerun with -WslDistribution matching integration-contract platform_contract.wsl_distribution'
+    exit 1
 }
 if ($integration.platform_contract.windows_host_role -ne 'bridge_only') {
     throw 'Integration contract must keep Windows host role bridge_only.'
@@ -272,7 +284,11 @@ $SourceRepositoryPath = (Resolve-Path -LiteralPath $SourceRepositoryPath).Path
 $sourceIsWorktree = (& git -C $SourceRepositoryPath rev-parse --is-inside-work-tree).Trim()
 Assert-LastExit -ExitCode $LASTEXITCODE -Operation 'Verify AgentSwitchboard source repository'
 if ($sourceIsWorktree -ne 'true') {
-    throw "Source repository is not a Git working tree: $SourceRepositoryPath"
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_GIT_HEAD'
+    Write-Host "SOURCE_REPOSITORY_PATH=$SourceRepositoryPath"
+    Write-Host 'NEXT=pass -SourceRepositoryPath to a Git working tree that contains the exact AgentSwitchboard HEAD, then rerun'
+    exit 1
 }
 & git -C $SourceRepositoryPath cat-file -e "$actualHead^{commit}"
 Assert-LastExit -ExitCode $LASTEXITCODE -Operation 'Verify exact AgentSwitchboard commit in source repository'
