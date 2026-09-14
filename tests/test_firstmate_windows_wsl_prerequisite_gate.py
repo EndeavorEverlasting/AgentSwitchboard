@@ -172,8 +172,12 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("STATUS=BLOCKED_FIRSTMATE_DIRTY", self.physical)
         self.assertIn("exit 49", self.physical)
         self.assertIn("STATUS=BLOCKED_FIRSTMATE_PIN", self.physical)
+        self.assertIn("upstream-pin.json", self.physical)
+        self.assertIn("__ASB_EXPECTED_FIRSTMATE_HEAD__", self.physical)
+        self.assertIn("$expectedFirstMateHead", self.physical)
+        self.assertIn("$upstreamPin.commit", self.physical)
+        self.assertNotIn("EXPECTED_FIRSTMATE_HEAD='b182d0f908b78d08c7ccb8dce3775bdca8c5d657'", self.physical)
         self.assertIn("exit 50", self.physical)
-        self.assertIn("b182d0f908b78d08c7ccb8dce3775bdca8c5d657", self.physical)
         self.assertIn("PRIMARY_HARNESS=", self.physical)
         codes = self.integration["physical_floor_recovery"]["structured_prerequisite_exit_codes"]
         self.assertEqual(44, codes["missing_tools"])
