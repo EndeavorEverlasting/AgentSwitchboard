@@ -7,6 +7,7 @@ Canonical coordination index: `plans/active/ASB-2026-09-multi-product-bootstrap-
 - PR #177: bounded FM-WSL-12 apt repair authority (`git`/`gh`/`tmux`/`python3`) without extra permission round-trip; GitHub auth remains operator-owned.
 - PR #178: durable continuation owner `Invoke-FirstMatePhysicalFloorContinuation.ps1` / harness `-Mode physical-floor-continue`.
 - Cloud LIVE_ATTEMPT (2026-09-14): contract PASS; physical-floor and physical-floor-continue fail closed without `wsl.exe`; no self-hosted workers; live PASS not claimed.
+- PR #179 merged (`627e31d`): durable `STATUS=BLOCKED_WINDOWS_WSL_REQUIRED` / exit 46 encoding + ASQ-017 ledger row.
 
 ## Successor phases
 
