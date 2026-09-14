@@ -100,7 +100,14 @@
     "harness_remains_non_installing": true,
     "structured_prerequisite_exit_codes": {
       "missing_tools": 44,
-      "github_auth": 45
+      "github_auth": 45,
+      "windows_wsl_required": 46
+    },
+    "non_windows_live_attempt": {
+      "status": "BLOCKED_WINDOWS_WSL_REQUIRED",
+      "failure_code": "WINDOWS_WSL_REQUIRED",
+      "proof_level": "LIVE_ATTEMPT_FAIL_CLOSED",
+      "means": "Cloud/Linux hosts without wsl.exe fail closed before package repair or interop; contract PASS is not physical PASS"
     },
     "p08_continuation_authority": "Prompt/P08-class operators may repair allowlisted environmental prerequisites or invoke this continuation owner and resume; do not hard-stop solely on BLOCKED_MISSING_TOOLS"
   },

@@ -284,3 +284,20 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** none
 - **Next action:** open isolated branch and add NARROW ownership clause plus focused contract check referencing the ADR
 - **Updated:** 2026-09-13T17:30:00Z
+
+## ASQ-017 — FM-WSL-12 physical-floor-continue live runtime proof
+
+- **Status:** READY
+- **Priority:** P0
+- **Work class:** BOUNDED
+- **Owner:** Windows Admin Box operator / runtime-proof lane
+- **Branch / PR:** main (continuation entrypoint integrated via #178); live observation pending Admin Box
+- **Scope:** prove FM-WSL-12 physical WSL/Ubuntu floor through harness `-Mode physical-floor-continue` on an authorized Windows Admin Box with explicit `Ubuntu`; allowlisted missing packages may be repaired and the floor rerun without another permission round-trip; stop for `BLOCKED_GITHUB_AUTH` only as the credential gate; exercise report-only `-Mode physical-floor` as the protected control in the same session when safe
+- **Forbidden:** claiming LIVE PASS from cloud/Linux/contract/CI; automating GitHub credential entry; broadening package allowlist; ASQ-008/009 unfreeze; FirstMate crew dispatch claims (`FM-CREW-13`); committing local receipts/tokens/machine paths
+- **Dependencies:** FM-BRIDGE-10 / PR #177 bounded repair authority; PR #178 continuation entrypoint on main
+- **References:** `docs/harness/firstmate-wsl-physical-floor-runbook.md`, `Invoke-FirstMatePhysicalFloorContinuation.ps1`, `Test-AgentSwitchboard-FirstMate-Harness.ps1`, `plans/active/ASB-2026-09-multi-product-bootstrap-charter.plan.json`, `tooling/firstmate/harness/integration-contract.json`
+- **Acceptance gate:** Admin Box run reaches physical-floor PASS markers with exact-head readback and evidence root, or stops at a real non-package blocker (`BLOCKED_GITHUB_AUTH` / transport / sudo) with preserved evidence; cloud hosts must emit `STATUS=BLOCKED_WINDOWS_WSL_REQUIRED` exit 46 rather than unstructured crash
+- **Gate:** authorized Windows Admin Box with `wsl.exe` + explicit `Ubuntu`; operator `gh auth` when required
+- **Last proof:** cloud LIVE_ATTEMPT@2026-09-14T17:56Z–18:00Z on main@dd303228cf5b35476d0a822fb655728474f1ab4c: Mode=contract PASS; Mode=physical-floor and Mode=physical-floor-continue both emit `STATUS=BLOCKED_WINDOWS_WSL_REQUIRED` / `FAILURE_CODE=WINDOWS_WSL_REQUIRED` / exit 46 (structured LIVE_ATTEMPT_FAIL_CLOSED); protected control physical-floor same gate; zero self-hosted workers; LIVE_RUNTIME_PROOF:UNPROVEN
+- **Next action:** run Admin Box FM-WSL-12 live floor after ff-only main refresh: `$ErrorActionPreference='Stop'; git fetch --all --prune --tags; git switch main; git pull --ff-only origin main; $head=(git rev-parse HEAD).Trim(); pwsh -NoLogo -NoProfile -File .\Test-AgentSwitchboard-FirstMate-Harness.ps1 -Mode contract -ExpectedHead $head -WslDistribution Ubuntu; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; pwsh -NoLogo -NoProfile -File .\Test-AgentSwitchboard-FirstMate-Harness.ps1 -Mode physical-floor-continue -ExpectedHead $head -WslDistribution Ubuntu; if ($LASTEXITCODE -eq 45) { Write-Host 'BLOCKED_GITHUB_AUTH — complete gh auth login then rerun physical-floor-continue'; exit 45 }; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; pwsh -NoLogo -NoProfile -File .\Test-AgentSwitchboard-FirstMate-Harness.ps1 -Mode physical-floor -ExpectedHead $head -WslDistribution Ubuntu
+- **Updated:** 2026-09-14T18:00:00Z

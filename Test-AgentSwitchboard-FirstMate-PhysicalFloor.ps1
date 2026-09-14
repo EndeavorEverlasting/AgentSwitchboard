@@ -109,7 +109,18 @@ if ($ContractOnly) {
     exit 0
 }
 
-$wsl = Get-Command wsl.exe -ErrorAction Stop
+$wsl = Get-Command wsl.exe -ErrorAction SilentlyContinue
+if (-not $wsl) {
+    # Cloud/Linux hosts cannot observe the physical Admin Box floor. Fail closed with a
+    # structured status so LIVE_ATTEMPT evidence is not mistaken for an unstructured crash.
+    Write-Host 'STATUS=BLOCKED_WINDOWS_WSL_REQUIRED'
+    Write-Host 'FAILURE_CODE=WINDOWS_WSL_REQUIRED'
+    Write-Host 'PROOF_LEVEL=LIVE_ATTEMPT_FAIL_CLOSED'
+    Write-Host "HEAD=$actualHead"
+    Write-Host "WSL_DISTRIBUTION=$WslDistribution"
+    Write-Host '[PROOF_CEILING] Physical WSL floor requires a Windows host with wsl.exe and explicit Ubuntu; contract PASS is not live PASS.'
+    exit 46
+}
 $pwsh = Get-Command pwsh -ErrorAction Stop
 
 if ([string]::IsNullOrWhiteSpace($EvidenceRoot)) {

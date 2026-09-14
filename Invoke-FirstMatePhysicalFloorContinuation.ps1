@@ -252,13 +252,23 @@ if ($ContractOnly) {
     exit 0
 }
 
-$wsl = Get-Command wsl.exe -ErrorAction Stop
-$pwsh = Get-Command pwsh -ErrorAction Stop
 $actualHead = (& git -C $Root rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0) { throw 'Unable to resolve exact AgentSwitchboard HEAD.' }
 if ($actualHead -ne $ExpectedHead.ToLowerInvariant()) {
     throw "Exact-head mismatch. Expected=$ExpectedHead Actual=$actualHead"
 }
+
+$wsl = Get-Command wsl.exe -ErrorAction SilentlyContinue
+if (-not $wsl) {
+    Write-Host 'STATUS=BLOCKED_WINDOWS_WSL_REQUIRED'
+    Write-Host 'FAILURE_CODE=WINDOWS_WSL_REQUIRED'
+    Write-Host 'PROOF_LEVEL=LIVE_ATTEMPT_FAIL_CLOSED'
+    Write-Host "HEAD=$actualHead"
+    Write-Host "WSL_DISTRIBUTION=$WslDistribution"
+    Write-Host '[PROOF_CEILING] physical-floor-continue requires Windows+wsl.exe+Ubuntu; package-repair authority does not create that host.'
+    exit 46
+}
+$pwsh = Get-Command pwsh -ErrorAction Stop
 
 if ([string]::IsNullOrWhiteSpace($EvidenceRoot)) {
     $runId = '{0}-{1}-{2}' -f $actualHead.Substring(0, 8), (Get-Date -Format 'yyyyMMdd-HHmmss'), ([guid]::NewGuid().ToString('N').Substring(0, 8))
