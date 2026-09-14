@@ -12,10 +12,12 @@ Canonical coordination index: `plans/active/ASB-2026-09-multi-product-bootstrap-
 - PR #182 merged (`f108725`): ASQ-017 cites the one-shot; live PASS still UNPROVEN.
 - PR #187 merged (`2cb373f`): bounded FirstMate pin bootstrap + `-FirstMatePath` on durable ASQ-017 entrypoint; live PASS still UNPROVEN.
 - PR #183 merged (`3babc65`): durable `Invoke-Asq017AdminBoxLiveFloor.ps1` on main; live PASS still UNPROVEN.
+- PR #196 merged (`c8556dd`): FirstMate dirty/pin early preflight exits 49/50; live PASS still UNPROVEN.
+- PR #198 merged (`7eb9745`): `-FirstMatePath` physical-floor dirty/pin override via `WSLENV`/`ASB_FIRSTMATE_PATH` (skips dirty `$HOME/firstmate`); cloud ContractOnly PASS + live exit 46 retained; live PASS still UNPROVEN.
 
 ## Successor phases
 
-1. **Admin Box live observation (current).** After #183 merges, refresh main; paste the OCD-safe ASQ-017 next action (checkout-root guard, capture `CHILD_EXIT_CODE`, `throw` instead of interactive `exit`) running durable `Invoke-Asq017AdminBoxLiveFloor.ps1` (ff-only main refresh → `Invoke-FmWsl12AdminBoxLiveProof.ps1`: contract → physical-floor-continue → protected physical-floor). Pre-stage Ubuntu FirstMate @ `b182d0f908b78d08c7ccb8dce3775bdca8c5d657` + one primary harness + Ubuntu `gh` auth. Expected: PASS markers + local receipt/evidence root, or `BLOCKED_GITHUB_AUTH` / real non-package blocker with preserved evidence.
+1. **Admin Box live observation (current).** Refresh main @ `7eb9745`+; paste the OCD-safe ASQ-017 next action (checkout-root guard, capture `CHILD_EXIT_CODE`, `throw` instead of interactive `exit`) running durable `Invoke-Asq017AdminBoxLiveFloor.ps1` (ff-only main refresh → `Invoke-FmWsl12AdminBoxLiveProof.ps1`: contract → physical-floor-continue → protected physical-floor). Pre-stage Ubuntu FirstMate @ `b182d0f908b78d08c7ccb8dce3775bdca8c5d657` + one primary harness + Ubuntu `gh` auth. Optional: `-FirstMatePath` to a clean audited checkout when `$HOME/firstmate` is dirty/off-pin. Expected: PASS markers + local receipt/evidence root, or `BLOCKED_GITHUB_AUTH` / real non-package blocker with preserved evidence.
 2. **Credential gate (conditional).** Only if `BLOCKED_GITHUB_AUTH`: operator `gh auth login` then rerun continuation. No token capture in evidence.
 3. **FM-CREW-13 handoff.** Only after physical-floor PASS. Local-only crew pilot; out of this phase's mutation scope.
 
