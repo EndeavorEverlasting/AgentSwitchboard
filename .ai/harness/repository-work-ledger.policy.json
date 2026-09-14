@@ -61,7 +61,7 @@
     "workflow:<run-id>",
     "run:<run-id>",
     "artifact:<durable-reference>",
-    "operator-proof:<durable-reference>"
+    "operator-proof:<durable-external-reference>"
   ],
   "localExecutionProfile": {
     "requiredFields": ["Work class"],
@@ -76,7 +76,16 @@
       "done": "TERMINAL"
     },
     "frontierCommand": "pwsh -NoLogo -NoProfile -File scripts/Get-RepositoryWorkLedgerFrontier.ps1 -Json",
-    "proofCeiling": "local task granularity classification and deterministic frontier routing only"
+    "operatorCommandDurability": {
+      "maxInlineNextActionChars": 320,
+      "appliesToStatuses": ["READY", "CLAIMED", "VERIFY", "REVIEW", "MERGE", "OPERATOR"],
+      "entrypointExtensions": [".ps1", ".cmd", ".bat", ".sh", ".py"],
+      "requireReferenceCitation": true,
+      "requireNextActionMention": true,
+      "portableRequirement": false,
+      "rule": "Next actions longer than the inline threshold must delegate recurring operator mechanics to an existing repository-owned executable entrypoint instead of preserving a chat-length command sequence as the primary handoff."
+    },
+    "proofCeiling": "local task granularity classification, deterministic frontier routing, and static operator-command durability only"
   },
   "consumerRequirements": {
     "repositoryLocalLedger": true,
@@ -88,5 +97,5 @@
     "localRulesMayStrengthen": true,
     "localRulesMayWeaken": false
   },
-  "proofCeiling": "portable contract compatibility plus static local ledger/frontier validation only; no implementation, CI, merge, provider, operator, behavior-observed, or live-runtime proof"
+  "proofCeiling": "portable contract compatibility plus static local ledger/frontier/operator-command validation only; no implementation, CI, merge, provider, operator, behavior-observed, or live-runtime proof"
 }
