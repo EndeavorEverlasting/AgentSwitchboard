@@ -150,7 +150,26 @@ function Invoke-HarnessMode {
         Mode = $Mode
         ExitCode = $process.ExitCode
         EvidenceRoot = $AttemptEvidenceRoot
+        StdoutPath = $stdoutPath
+        StderrPath = $stderrPath
     }
+}
+
+function Get-OperatorNextFromEvidence {
+    param([Parameter(Mandatory = $true)]$Attempt)
+    $blob = ''
+    foreach ($path in @($Attempt.StdoutPath, $Attempt.StderrPath)) {
+        if (-not [string]::IsNullOrWhiteSpace($path) -and (Test-Path -LiteralPath $path -PathType Leaf)) {
+            $blob += "`n" + (Get-Content -LiteralPath $path -Raw)
+        }
+    }
+    $match = [regex]::Match($blob, '(?m)^NEXT=(.+)$')
+    if ($match.Success) { return $match.Groups[1].Value.Trim() }
+    $inline = [regex]::Match($blob, '(?m)(?:^|\s)NEXT=(.+)$')
+    if ($inline.Success) { return $inline.Groups[1].Value.Trim() }
+    $nextAction = [regex]::Match($blob, '(?m)^NEXT_ACTION=(.+)$')
+    if ($nextAction.Success) { return $nextAction.Groups[1].Value.Trim() }
+    return $null
 }
 
 Write-Host '[FM-WSL-12] Admin Box live-proof sequence start'
@@ -190,6 +209,8 @@ if ($continue.ExitCode -ne 0) {
         'BLOCKED_MISSING_TOOLS'
     } elseif ($continue.ExitCode -eq 47) {
         'BLOCKED_SUDO'
+    } elseif ($continue.ExitCode -eq 48) {
+        'BLOCKED_PRIMARY_HARNESS'
     } else {
         'PHYSICAL_FLOOR_CONTINUE_FAILED'
     }
@@ -213,8 +234,15 @@ if ($continue.ExitCode -ne 0) {
         Write-Host 'NEXT=install allowlisted missing tools via printed NEXT_ACTION, then rerun'
     } elseif ($continue.ExitCode -eq 47) {
         Write-Host 'NEXT=enable passwordless sudo for apt-get in Ubuntu (sudo -n apt-get --version must succeed), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+    } elseif ($continue.ExitCode -eq 48) {
+        Write-Host 'NEXT=install one primary harness on PATH inside Ubuntu visible to non-interactive bash -lc (claude|grok|pi|pi-signed|omp|codex|opencode|cursor-agent), then rerun'
     } else {
-        Write-Host 'NEXT=inspect evidence for NEXT=/NEXT_ACTION=; repair operator blocker; rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+        $preservedNext = Get-OperatorNextFromEvidence -Attempt $continue
+        if (-not [string]::IsNullOrWhiteSpace($preservedNext)) {
+            Write-Host "NEXT=$preservedNext"
+        } else {
+            Write-Host 'NEXT=inspect evidence for NEXT=/NEXT_ACTION=; repair operator blocker; rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+        }
     }
     exit $finalExit
 }

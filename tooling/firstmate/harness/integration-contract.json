@@ -103,7 +103,9 @@
     "structured_prerequisite_exit_codes": {
       "missing_tools": 44,
       "github_auth": 45,
-      "windows_wsl_required": 46
+      "windows_wsl_required": 46,
+      "blocked_sudo": 47,
+      "blocked_primary_harness": 48
     },
     "non_windows_live_attempt": {
       "status": "BLOCKED_WINDOWS_WSL_REQUIRED",
