@@ -115,7 +115,12 @@ if ([string]::IsNullOrWhiteSpace($WslDistribution)) {
     $WslDistribution = $canonicalDistribution
 }
 elseif ($WslDistribution -ne $canonicalDistribution) {
-    throw "WSL distribution mismatch. Contract=$canonicalDistribution Requested=$WslDistribution"
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_WSL_DISTRIBUTION'
+    Write-Host "CONTRACT_WSL_DISTRIBUTION=$canonicalDistribution"
+    Write-Host "REQUESTED_WSL_DISTRIBUTION=$WslDistribution"
+    Write-Host 'NEXT=rerun with -WslDistribution matching integration-contract platform_contract.wsl_distribution'
+    exit 1
 }
 if ($integration.platform_contract.windows_host_role -ne 'bridge_only') {
     throw 'Windows host role must remain bridge_only.'
@@ -125,7 +130,12 @@ if (-not ($artifacts.artifacts.id -contains 'windows-wsl-prerequisite-proof')) {
 }
 
 $actualHeadRaw = & git -C $Root rev-parse HEAD
-if ($LASTEXITCODE -ne 0) { throw 'Unable to resolve exact AgentSwitchboard HEAD.' }
+if ($LASTEXITCODE -ne 0) {
+    Write-Host 'STATUS=BLOCKED_GIT_HEAD'
+    Write-Host 'NEXT=repair the AgentSwitchboard checkout so git rev-parse HEAD succeeds, then rerun Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1'
+    Write-Host 'Unable to resolve exact AgentSwitchboard HEAD.'
+    exit 1
+}
 $actualHead = ("$actualHeadRaw").Trim()
 if ($actualHead -ne $ExpectedHead.ToLowerInvariant()) {
     Write-Host 'STATUS=BLOCKED_HEAD_MISMATCH'
@@ -287,7 +297,9 @@ printf 'GITHUB_AUTH=ready\n'
 $upstreamPin = Get-Content -LiteralPath $UpstreamPinPath -Raw | ConvertFrom-Json
 $expectedFirstMateHead = [string]$upstreamPin.commit
 if ($expectedFirstMateHead -notmatch '^[0-9a-f]{40}$') {
-    throw "upstream-pin.json commit must be a 40-character lowercase hex SHA. Received=$expectedFirstMateHead"
+    Write-Host 'STATUS=BLOCKED_FIRSTMATE_PIN'
+    Write-Host "NEXT=repair tooling/firstmate/harness/upstream-pin.json so commit is a 40-character lowercase hex SHA; Received=$expectedFirstMateHead"
+    exit 50
 }
 $normalizedCommand = $preflightCommand.Replace("`r`n", "`n").Replace("`r", "`n")
 $normalizedCommand = $normalizedCommand.Replace('__ASB_EXPECTED_FIRSTMATE_HEAD__', $expectedFirstMateHead)
