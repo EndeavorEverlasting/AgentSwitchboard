@@ -414,6 +414,18 @@ for ($attempt = 1; $attempt -le ($MaxPackageRepairAttempts + 1); $attempt++) {
     $sudoProbeStderr = Join-Path $attemptRoot 'sudo-probe-stderr.txt'
     Set-Content -LiteralPath $sudoProbeStdout -Value $sudoProbe.Stdout
     Set-Content -LiteralPath $sudoProbeStderr -Value $sudoProbe.Stderr
+    if ($sudoProbe.TimedOut -or $sudoProbe.ExitCode -eq 124) {
+        # Keep exit 124 structured — do not remap hangs to BLOCKED_SUDO/47.
+        Write-Host 'STATUS=BLOCKED_PREREQUISITE_TIMEOUT'
+        Write-Host 'FAILURE_CODE=SUDO_PROBE_TIMEOUT'
+        Write-Host 'NEXT=repair hung WSL/sudo probe or increase host capacity, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1; passwordless-sudo probe timed out'
+        Write-Host "SUDO_PROBE_EXIT_CODE=$($sudoProbe.ExitCode)"
+        Write-Host "SUDO_PROBE_TIMED_OUT=$($sudoProbe.TimedOut)"
+        Write-Host "SUDO_PROBE_STDOUT=$sudoProbeStdout"
+        Write-Host "SUDO_PROBE_STDERR=$sudoProbeStderr"
+        Write-Host "EVIDENCE_ROOT=$EvidenceRoot"
+        exit 124
+    }
     if ($sudoProbe.ExitCode -ne 0) {
         Write-Host 'STATUS=BLOCKED_SUDO'
         Write-Host 'FAILURE_CODE=PASSWORDLESS_SUDO_APT_REQUIRED'
@@ -433,6 +445,19 @@ for ($attempt = 1; $attempt -le ($MaxPackageRepairAttempts + 1); $attempt++) {
     $repair = Invoke-CapturedProcess -FileName $wsl.Source -Arguments $repairArgs -TimeoutSeconds 900
     Set-Content -LiteralPath $repairStdout -Value $repair.Stdout
     Set-Content -LiteralPath $repairStderr -Value $repair.Stderr
+    if ($repair.TimedOut -or $repair.ExitCode -eq 124) {
+        # Keep exit 124 structured — do not remap hangs to BLOCKED_MISSING_TOOLS/44.
+        Write-Host 'STATUS=BLOCKED_PREREQUISITE_TIMEOUT'
+        Write-Host 'FAILURE_CODE=BOUNDED_APT_REPAIR_TIMEOUT'
+        Write-Host 'NEXT=repair hung apt/WSL or clear dpkg locks, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1; bounded apt repair timed out'
+        if (-not [string]::IsNullOrWhiteSpace($nextAction)) {
+            Write-Host "NEXT_ACTION=$nextAction"
+        }
+        Write-Host "REPAIR_STDOUT=$repairStdout"
+        Write-Host "REPAIR_STDERR=$repairStderr"
+        Write-Host "EVIDENCE_ROOT=$EvidenceRoot"
+        exit 124
+    }
     if ($repair.ExitCode -ne 0) {
         Write-Host "[BLOCKED] Bounded apt-get repair failed. Exit=$($repair.ExitCode)"
         Write-Host 'STATUS=BLOCKED_MISSING_TOOLS'

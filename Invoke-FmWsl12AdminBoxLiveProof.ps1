@@ -248,6 +248,10 @@ if ($contract.ExitCode -ne 0) {
         'RESULT=CONTRACT_FAILED'
         'LIVE_RUNTIME_PROOF=UNPROVEN'
     )
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host 'RESULT=CONTRACT_FAILED'
+    Write-Host "EVIDENCE_ROOT=$EvidenceRoot"
+    Write-Host 'NEXT=inspect contract evidence under EVIDENCE_ROOT; repair FirstMate harness contract failure, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
     exit $finalExit
 }
 
@@ -287,6 +291,7 @@ if ($continue.ExitCode -ne 0) {
         'RECEIPT_PATH=' + $receiptPath
     )
     Write-Host "RECEIPT_PATH=$receiptPath"
+    Write-Host "STATUS=$result"
     Write-Host "RESULT=$result"
     # Prefer child NEXT= (includes -FirstMatePath-specific guidance) over hardcoded
     # $HOME/firstmate fallbacks so operators do not repair the wrong tree.
@@ -334,7 +339,10 @@ if (-not $SkipProtectedControl) {
             'RECEIPT_PATH=' + $receiptPath
         )
         Write-Host "RECEIPT_PATH=$receiptPath"
+        Write-Host 'STATUS=BLOCKED_PROTECTED_CONTROL'
         Write-Host 'RESULT=PROTECTED_CONTROL_FAILED'
+        Write-Host "EVIDENCE_ROOT=$EvidenceRoot"
+        Write-Host 'NEXT=continuation PASS then protected physical-floor failed; inspect evidence under EVIDENCE_ROOT for regression, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
         exit $finalExit
     }
 } else {

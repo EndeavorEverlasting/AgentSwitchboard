@@ -140,6 +140,17 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("Get-OperatorNextFromText", continuation)
         self.assertIn("sudo -n apt-get --version", continuation)
         self.assertIn("STATUS=BLOCKED_SUDO", continuation)
+        self.assertIn("STATUS=BLOCKED_PREREQUISITE_TIMEOUT", continuation)
+        self.assertIn("FAILURE_CODE=SUDO_PROBE_TIMEOUT", continuation)
+        self.assertIn("FAILURE_CODE=BOUNDED_APT_REPAIR_TIMEOUT", continuation)
+        self.assertLess(
+            continuation.index("FAILURE_CODE=SUDO_PROBE_TIMEOUT"),
+            continuation.index("FAILURE_CODE=PASSWORDLESS_SUDO_APT_REQUIRED"),
+        )
+        self.assertLess(
+            continuation.index("FAILURE_CODE=BOUNDED_APT_REPAIR_TIMEOUT"),
+            continuation.index("FAILURE_CODE=BOUNDED_APT_REPAIR_FAILED"),
+        )
         self.assertIn("sudo-probe-stdout.txt", continuation)
         self.assertIn("SUDO_PROBE_TIMED_OUT=", continuation)
         self.assertIn("exit 47", continuation)
@@ -514,6 +525,10 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertNotIn("throw 'Unable to resolve exact AgentSwitchboard HEAD.'", oneshot)
         self.assertNotIn('throw "ExpectedHead must be a 40-character SHA', oneshot)
         self.assertIn("STATUS=BLOCKED_HARNESS_START", oneshot)
+        self.assertIn("STATUS=BLOCKED_HARNESS_CONTRACT", oneshot)
+        self.assertIn("STATUS=$result", oneshot)
+        self.assertIn("STATUS=BLOCKED_PROTECTED_CONTROL", oneshot)
+        self.assertIn("RESULT=PROTECTED_CONTROL_FAILED", oneshot)
         self.assertNotIn('throw "Unable to start harness mode=', oneshot)
         self.assertIn("STATUS=BLOCKED_FIRSTMATE_PIN", oneshot)
         self.assertNotIn(
@@ -581,6 +596,14 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("Get-Asq017OperatorNextFromText", asq)
         self.assertIn("$preservedNext = Get-Asq017OperatorNextFromText -Text $oneshotBlob", asq)
         self.assertIn("Write-Asq017Blocker", asq)
+        self.assertIn('Write-Host ("STATUS={0}" -f $Result)', asq)
+        blocker_fn = asq.split("function Write-Asq017Blocker", 1)[1].split("\nfunction ", 1)[0]
+        self.assertIn('Write-Host ("STATUS={0}" -f $Result)', blocker_fn)
+        self.assertIn("Write-Asq017Status -Key 'ASQ017_RESULT' -Value $Result", blocker_fn)
+        self.assertLess(
+            blocker_fn.index('Write-Host ("STATUS={0}" -f $Result)'),
+            blocker_fn.index("Write-Asq017Status -Key 'ASQ017_RESULT' -Value $Result"),
+        )
         self.assertIn("Prefer child NEXT=", asq)
         self.assertLess(
             asq.index("$preservedNext = Get-Asq017OperatorNextFromText -Text $oneshotBlob"),
