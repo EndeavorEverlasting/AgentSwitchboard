@@ -160,6 +160,16 @@ if ($childExit -eq 50) {
     Write-Asq017Status -Key 'NEXT' -Value 'in $HOME/firstmate (or -FirstMatePath) run: git fetch --all && git checkout b182d0f908b78d08c7ccb8dce3775bdca8c5d657, or remove that path / pass -FirstMatePath to a clean audited checkout, then rerun'
     exit 50
 }
+if ($childExit -eq 51) {
+    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_WSL_BOOTSTRAP'
+    Write-Asq017Status -Key 'NEXT' -Value 'inspect WSL diagnostics/bootstrap stdout; repair exact-head WSL clone/source-repo access, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+    exit 51
+}
+if ($childExit -eq 52) {
+    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_HARNESS_CONTRACT'
+    Write-Asq017Status -Key 'NEXT' -Value 'inspect evidence root; repair FirstMate harness contract failure inside Ubuntu, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+    exit 52
+}
 if ($childExit -ne 0) {
     Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'FAILED'
     Write-Asq017Status -Key 'NEXT' -Value 'inspect child console for NEXT=/NEXT_ACTION=; repair operator blocker; rerun Invoke-Asq017AdminBoxLiveFloor.ps1'

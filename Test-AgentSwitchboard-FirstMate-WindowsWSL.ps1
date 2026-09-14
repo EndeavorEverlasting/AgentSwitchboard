@@ -297,10 +297,16 @@ $preflight = Invoke-WslProcess `
     -TimeoutSeconds $WslTimeoutSeconds
 Add-WslDiagnostic -Path $WslDiagnosticsPath -Stage 'ubuntu-preflight' -Text $preflight.Stderr
 if ($preflight.ExitCode -ne 0) {
-    throw "Canonical WSL distribution '$WslDistribution' cannot execute the bridge preflight. See $WslDiagnosticsPath"
+    Write-Host 'STATUS=BLOCKED_WINDOWS_WSL_REQUIRED'
+    Write-Host "NEXT=repair Ubuntu WSL so distribution '$WslDistribution' can run bash/git; see $WslDiagnosticsPath; then rerun Invoke-Asq017AdminBoxLiveFloor.ps1"
+    Write-Host "WSL_DIAGNOSTICS=$WslDiagnosticsPath"
+    exit 46
 }
 if ($preflight.Stdout -notmatch [regex]::Escape("WSL_DISTRO_NAME=$WslDistribution") -or $preflight.Stdout -notmatch 'BASH_READY=1') {
-    throw "WSL preflight did not prove explicit '$WslDistribution' and Bash readiness. See $WslDiagnosticsPath"
+    Write-Host 'STATUS=BLOCKED_WINDOWS_WSL_REQUIRED'
+    Write-Host "NEXT=repair Ubuntu WSL so distribution '$WslDistribution' proves Bash readiness; see $WslDiagnosticsPath; then rerun Invoke-Asq017AdminBoxLiveFloor.ps1"
+    Write-Host "WSL_DIAGNOSTICS=$WslDiagnosticsPath"
+    exit 46
 }
 
 $bootstrapCommand = @'
@@ -336,11 +342,18 @@ Add-WslDiagnostic -Path $WslDiagnosticsPath -Stage 'bootstrap' -Text $bootstrap.
 Set-Content -LiteralPath $BootstrapStdoutPath -Value $bootstrap.Stdout.TrimEnd()
 if ($bootstrap.ExitCode -ne 0) {
     Complete-WslWorkspace -Distribution $WslDistribution -Workspace $wslWorkspace -TimeoutSeconds $WslTimeoutSeconds -DiagnosticsPath $WslDiagnosticsPath -PrimaryFailure $true -PreserveOnFailure:$PreserveWslWorkspaceOnFailure
-    throw "WSL could not create the standalone exact-head AgentSwitchboard clone. See $WslDiagnosticsPath and $BootstrapStdoutPath"
+    Write-Host 'STATUS=BLOCKED_WSL_BOOTSTRAP'
+    Write-Host "NEXT=inspect $WslDiagnosticsPath and $BootstrapStdoutPath; repair WSL clone/source-repo access for exact-head bootstrap, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1"
+    Write-Host "WSL_DIAGNOSTICS=$WslDiagnosticsPath"
+    Write-Host "BOOTSTRAP_STDOUT=$BootstrapStdoutPath"
+    exit 51
 }
 if ($bootstrap.Stdout -notmatch [regex]::Escape("WSL_DISTRO_NAME=$WslDistribution") -or $bootstrap.Stdout -notmatch [regex]::Escape("HEAD=$actualHead")) {
     Complete-WslWorkspace -Distribution $WslDistribution -Workspace $wslWorkspace -TimeoutSeconds $WslTimeoutSeconds -DiagnosticsPath $WslDiagnosticsPath -PrimaryFailure $true -PreserveOnFailure:$PreserveWslWorkspaceOnFailure
-    throw "WSL standalone clone did not prove explicit Ubuntu and exact AgentSwitchboard HEAD. See $BootstrapStdoutPath"
+    Write-Host 'STATUS=BLOCKED_WSL_BOOTSTRAP'
+    Write-Host "NEXT=inspect $BootstrapStdoutPath; ensure WSL clone proves explicit Ubuntu and exact AgentSwitchboard HEAD, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1"
+    Write-Host "BOOTSTRAP_STDOUT=$BootstrapStdoutPath"
+    exit 51
 }
 
 $workspaceEnvironment = @{ ASB_WSL_WORKSPACE = $wslWorkspace }
@@ -353,7 +366,10 @@ Add-WslDiagnostic -Path $WslDiagnosticsPath -Stage 'contract' -Text $contract.St
 if ($contract.ExitCode -ne 0) {
     Set-Content -LiteralPath (Join-Path $EvidenceRoot 'contract-stdout.txt') -Value $contract.Stdout.TrimEnd()
     Complete-WslWorkspace -Distribution $WslDistribution -Workspace $wslWorkspace -TimeoutSeconds $WslTimeoutSeconds -DiagnosticsPath $WslDiagnosticsPath -PrimaryFailure $true -PreserveOnFailure:$PreserveWslWorkspaceOnFailure
-    throw "Owning FirstMate harness contract failed inside the WSL-owned clone. Evidence: $EvidenceRoot"
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host "NEXT=inspect evidence at $EvidenceRoot; repair FirstMate harness contract failure inside Ubuntu, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1"
+    Write-Host "EVIDENCE_ROOT=$EvidenceRoot"
+    exit 52
 }
 
 $probeCommand = 'set -euo pipefail; cd "$ASB_WSL_WORKSPACE"; bash tooling/firstmate/Test-FirstMateInterop.sh'

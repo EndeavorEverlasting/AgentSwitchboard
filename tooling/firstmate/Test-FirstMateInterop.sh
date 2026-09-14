@@ -271,9 +271,17 @@ for candidate in claude grok pi pi-signed omp codex opencode cursor-agent; do
     break
   fi
 done
-[[ -n "$HARNESS" ]] || fail "No verified First Mate primary harness is installed in this Linux environment (claude, grok, pi, pi-signed, omp, codex, opencode, or cursor-agent). NEXT=install one primary harness on PATH inside Ubuntu, then rerun."
+if [[ -z "$HARNESS" ]]; then
+  printf 'STATUS=BLOCKED_PRIMARY_HARNESS\n'
+  printf 'NEXT=install one primary harness on PATH inside Ubuntu visible to non-interactive bash -lc (claude|grok|pi|pi-signed|omp|codex|opencode|cursor-agent), then rerun\n'
+  exit 48
+fi
 
-gh auth status --hostname github.com >/dev/null 2>&1 || fail "GitHub CLI is not authenticated for github.com in this Linux environment. NEXT=run gh auth login inside Ubuntu, then rerun."
+if ! gh auth status --hostname github.com >/dev/null 2>&1; then
+  printf 'STATUS=BLOCKED_GITHUB_AUTH\n'
+  printf 'NEXT=run gh auth login inside Ubuntu, then rerun\n'
+  exit 45
+fi
 
 note "First Mate path: $FIRSTMATE_DIR"
 note "First Mate audited HEAD: $ACTUAL_HEAD"
