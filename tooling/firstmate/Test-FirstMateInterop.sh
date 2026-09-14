@@ -153,6 +153,15 @@ is_firstmate_clone() {
   [[ "$(normalize_origin "$origin")" == "$EXPECTED_ORIGIN" ]]
 }
 
+has_required_upstream_paths() {
+  local candidate="$1"
+  local path
+  for path in "${REQUIRED_PATHS[@]}"; do
+    [[ -e "$candidate/$path" ]] || return 1
+  done
+  return 0
+}
+
 is_viable_discovered_firstmate() {
   local candidate="$1"
   local dirty head
@@ -160,17 +169,20 @@ is_viable_discovered_firstmate() {
   dirty="$(git -C "$candidate" status --porcelain=v1 2>/dev/null || true)"
   [[ -z "$dirty" ]] || return 1
   head="$(git -C "$candidate" rev-parse HEAD 2>/dev/null || true)"
-  [[ "$head" == "$EXPECTED_HEAD" ]]
+  [[ "$head" == "$EXPECTED_HEAD" ]] || return 1
+  has_required_upstream_paths "$candidate"
 }
 
 if [[ -z "$FIRSTMATE_DIR" ]]; then
   # Prefer $HOME/firstmate whenever it is already a FirstMate clone (any state).
-  # Bounded bootstrap cannot replace that path; dirty/pin checks must surface it.
+  # Bounded bootstrap cannot replace that path; dirty/pin/path checks must surface it.
   if is_firstmate_clone "$HOME/firstmate"; then
     FIRSTMATE_DIR="$HOME/firstmate"
   else
     # Alternate auto-discovery must not false-block bounded $HOME/firstmate
-    # bootstrap: skip dirty/off-pin leftovers under ~/dev, ~/Projects, $PWD, etc.
+    # bootstrap: skip dirty/off-pin/incomplete leftovers under ~/dev, ~/Projects,
+    # $PWD, etc. A discovered clone is viable only when the audited path contract
+    # is present before selection.
     candidates=(
       "$PWD"
       "$HOME/dev/firstmate"
@@ -183,7 +195,7 @@ if [[ -z "$FIRSTMATE_DIR" ]]; then
         FIRSTMATE_DIR="$candidate"
         break
       elif is_firstmate_clone "$candidate"; then
-        note "Skipping non-viable auto-discovery candidate ${candidate} (dirty or off audited pin); continuing toward bounded \$HOME/firstmate bootstrap"
+        note "Skipping non-viable auto-discovery candidate ${candidate} (dirty, off audited pin, or missing required audited paths); continuing toward bounded \$HOME/firstmate bootstrap"
       fi
     done
   fi
