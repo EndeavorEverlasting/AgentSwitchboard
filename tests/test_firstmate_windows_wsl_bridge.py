@@ -86,7 +86,12 @@ class FirstMateWindowsWslBridgeTests(unittest.TestCase):
         self.assertIn('checkout --quiet --detach "$ASB_EXPECTED_HEAD"', self.bridge)
         self.assertIn("/tmp/agentswitchboard-firstmate-", self.bridge)
         self.assertIn("WSL-owned standalone clone", self.bridge)
-        self.assertIn("Exact-head mismatch", self.bridge)
+        self.assertIn("STATUS=BLOCKED_HEAD_MISMATCH", self.bridge)
+        self.assertIn("NEXT=ff-only refresh main, re-resolve HEAD, and rerun with the recorded SHA", self.bridge)
+        self.assertNotIn('throw "Exact-head mismatch', self.bridge)
+        self.assertIn("STATUS=BLOCKED_WINDOWS_WSL_REQUIRED", self.bridge)
+        self.assertIn("exit 46", self.bridge)
+        self.assertNotIn("throw 'WSL is unavailable", self.bridge)
 
     def test_bridge_preserves_separate_diagnostics_and_unique_evidence(self) -> None:
         self.assertIn("Get-Date -Format 'yyyyMMdd-HHmmss'", self.bridge)
