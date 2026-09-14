@@ -128,6 +128,12 @@ class FirstMateWindowsWslBridgeTests(unittest.TestCase):
         self.assertIn('rm -rf -- "$ASB_WSL_WORKSPACE"', self.bridge)
         self.assertIn("WSL_WORKSPACE_CLEANED", self.bridge)
         self.assertIn("WSL_WORKSPACE_PRESERVED", self.bridge)
+        self.assertIn("STATUS=BLOCKED_WSL_CLEANUP", self.bridge)
+        self.assertNotIn(
+            'throw $message',
+            self.bridge[self.bridge.index("function Complete-WslWorkspace") : self.bridge.index("foreach ($required in")],
+        )
+        self.assertNotIn("function Assert-LastExit", self.bridge)
         self.assertIn("-PreserveOnFailure:$PreserveWslWorkspaceOnFailure", self.bridge)
         success_cleanup = self.bridge.rindex("Complete-WslWorkspace -Distribution")
         pass_marker = self.bridge.index("FIRSTMATE_WINDOWS_WSL_RUNTIME_FLOOR")

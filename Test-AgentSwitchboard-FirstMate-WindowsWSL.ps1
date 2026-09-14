@@ -41,16 +41,6 @@ function ConvertTo-Lf {
     return $Text.Replace("`r`n", "`n").Replace("`r", "`n")
 }
 
-function Assert-LastExit {
-    param(
-        [Parameter(Mandatory = $true)][int]$ExitCode,
-        [Parameter(Mandatory = $true)][string]$Operation
-    )
-    if ($ExitCode -ne 0) {
-        throw "$Operation failed with exit code $ExitCode."
-    }
-}
-
 function Add-WslDiagnostic {
     param(
         [Parameter(Mandatory = $true)][string]$Path,
@@ -167,7 +157,12 @@ function Complete-WslWorkspace {
             Write-Warning $message
             return
         }
-        throw $message
+        # Keep structured — do not throw (throw collapses to unstructured exit 1).
+        Write-Host 'STATUS=BLOCKED_WSL_CLEANUP'
+        Write-Host "WSL_WORKSPACE=$Workspace"
+        Write-Host 'NEXT=inspect evidence; only /tmp/agentswitchboard-firstmate-* workspaces are cleaned by this bridge, then rerun'
+        Write-Host $message
+        exit 1
     }
 
     if ($PrimaryFailure -and $PreserveOnFailure) {
@@ -197,7 +192,13 @@ printf 'CLEANED=%s\n' "$ASB_WSL_WORKSPACE"
             Write-Warning $message
             return
         }
-        throw $message
+        # Keep structured — do not throw (throw collapses to unstructured exit 1).
+        Write-Host 'STATUS=BLOCKED_WSL_CLEANUP'
+        Write-Host "WSL_WORKSPACE=$Workspace"
+        Write-Host "WSL_DIAGNOSTICS=$DiagnosticsPath"
+        Write-Host 'NEXT=inspect WSL diagnostics, remove the script-owned /tmp/agentswitchboard-firstmate-* workspace if safe, then rerun'
+        Write-Host $message
+        exit 1
     }
     Write-Host "WSL_WORKSPACE_CLEANED=$Workspace"
 }
