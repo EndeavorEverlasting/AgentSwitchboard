@@ -96,8 +96,7 @@ A task is complete only when:
 - Destructive cleanup, force-push, or silent scope expansion as a shortcut.
 
 ## Governance enforcement
-
-Run `pwsh -NoLogo -NoProfile -File scripts/Test-AgentGovernanceDoctrine.ps1` after modifying `AGENTS.md` or the governance doctrine. The validator is the focused proof that the root governance contract is tracked and still contains the required operating principles, precedence order, sprint declaration, completion standard, and forbidden behaviors.
+Run `pwsh -NoLogo -NoProfile -File scripts/Test-AgentGovernanceDoctrine.ps1` after governance changes.
 
 ## Compatibility and preserved authority
 
