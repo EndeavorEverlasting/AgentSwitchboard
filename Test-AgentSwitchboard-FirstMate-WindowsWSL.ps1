@@ -386,13 +386,24 @@ Set-Content -LiteralPath $ProbePath -Value @(
     "WSL_STDERR=$WslDiagnosticsPath"
 )
 if ($probe.ExitCode -ne 0) {
+    if (-not [string]::IsNullOrWhiteSpace($probe.Stdout)) { Write-Host $probe.Stdout.TrimEnd() }
     if (-not [string]::IsNullOrWhiteSpace($probe.Stderr)) { Write-Host $probe.Stderr.TrimEnd() }
-    $nextMatch = [regex]::Match($probe.Stderr, '(?m)(?:^|\s)NEXT=(.+)$')
+    $probeBlob = @($probe.Stdout, $probe.Stderr) -join "`n"
+    $statusMatch = [regex]::Match($probeBlob, '(?m)^STATUS=(.+)$')
+    if ($statusMatch.Success) {
+        Write-Host ("STATUS=" + $statusMatch.Groups[1].Value.Trim())
+    }
+    $nextMatch = [regex]::Match($probeBlob, '(?m)^NEXT=(.+)$')
+    if (-not $nextMatch.Success) {
+        $nextMatch = [regex]::Match($probeBlob, '(?m)(?:^|\s)NEXT=(.+)$')
+    }
     if ($nextMatch.Success) {
         Write-Host ("NEXT=" + $nextMatch.Groups[1].Value.Trim())
     }
+    Write-Host "FIRSTMATE_INTEROP_PROBE_FAILED Exit=$($probe.ExitCode) Evidence=$ProbePath"
     Complete-WslWorkspace -Distribution $WslDistribution -Workspace $wslWorkspace -TimeoutSeconds $WslTimeoutSeconds -DiagnosticsPath $WslDiagnosticsPath -PrimaryFailure $true -PreserveOnFailure:$PreserveWslWorkspaceOnFailure
-    throw "FirstMate read-only interoperability floor failed. Evidence: $ProbePath"
+    # Preserve structured interop exits (49/50/...) for ASQ-017 / oneshot callers; do not throw.
+    exit $(if ($probe.ExitCode -ne 0) { $probe.ExitCode } else { 1 })
 }
 
 Complete-WslWorkspace -Distribution $WslDistribution -Workspace $wslWorkspace -TimeoutSeconds $WslTimeoutSeconds -DiagnosticsPath $WslDiagnosticsPath -PrimaryFailure $false

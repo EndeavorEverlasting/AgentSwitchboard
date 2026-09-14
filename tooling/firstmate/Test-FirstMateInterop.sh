@@ -177,13 +177,19 @@ if [[ -z "$FIRSTMATE_DIR" ]]; then
   clone_url="https://github.com/${EXPECTED_ORIGIN}.git"
   note "First Mate clone not found; attempting bounded bootstrap at ${bootstrap_dir} @ ${EXPECTED_HEAD}"
   if [[ -e "$bootstrap_dir" ]]; then
-    fail "First Mate clone not found. Path ${bootstrap_dir} exists but is not a clean audited ${EXPECTED_ORIGIN} checkout. NEXT=repair or remove that path, or re-run with --firstmate PATH / FIRSTMATE_DIR."
+    printf 'STATUS=BLOCKED_FIRSTMATE_PIN\n'
+    printf 'NEXT=repair or remove %s so bounded bootstrap can clone %s@%s, or re-run with --firstmate PATH / FIRSTMATE_DIR\n' "$bootstrap_dir" "$EXPECTED_ORIGIN" "$EXPECTED_HEAD"
+    exit 50
   fi
   if ! git clone --quiet "$clone_url" "$bootstrap_dir"; then
-    fail "Bounded First Mate bootstrap clone failed. NEXT=manually clone ${clone_url} to ${bootstrap_dir} and checkout ${EXPECTED_HEAD}."
+    printf 'STATUS=BLOCKED_FIRSTMATE_PIN\n'
+    printf 'NEXT=manually clone %s to %s and checkout %s, then rerun\n' "$clone_url" "$bootstrap_dir" "$EXPECTED_HEAD"
+    exit 50
   fi
   if ! git -C "$bootstrap_dir" checkout --quiet "$EXPECTED_HEAD"; then
-    fail "Bounded First Mate bootstrap could not checkout pin ${EXPECTED_HEAD}. NEXT=in ${bootstrap_dir} run: git fetch --all && git checkout ${EXPECTED_HEAD}."
+    printf 'STATUS=BLOCKED_FIRSTMATE_PIN\n'
+    printf 'NEXT=in %s run: git fetch --all && git checkout %s, then rerun\n' "$bootstrap_dir" "$EXPECTED_HEAD"
+    exit 50
   fi
   FIRSTMATE_DIR="$bootstrap_dir"
   note "BOOTSTRAPPED_FIRSTMATE=${FIRSTMATE_DIR}@${EXPECTED_HEAD}"
@@ -191,13 +197,25 @@ fi
 
 [[ -n "$FIRSTMATE_DIR" ]] || fail "First Mate clone not found. NEXT=re-run with --firstmate PATH or set FIRSTMATE_DIR."
 FIRSTMATE_DIR="$(cd -- "$FIRSTMATE_DIR" && pwd)"
-is_firstmate_clone "$FIRSTMATE_DIR" || fail "Path is not the audited upstream clone ($EXPECTED_ORIGIN): $FIRSTMATE_DIR. NEXT=point --firstmate at a clean ${EXPECTED_ORIGIN} checkout."
+if ! is_firstmate_clone "$FIRSTMATE_DIR"; then
+  printf 'STATUS=BLOCKED_FIRSTMATE_PIN\n'
+  printf 'NEXT=point --firstmate at a clean %s checkout (audited pin %s), then rerun\n' "$EXPECTED_ORIGIN" "$EXPECTED_HEAD"
+  exit 50
+fi
 
 status="$(git -C "$FIRSTMATE_DIR" status --porcelain=v1)"
-[[ -z "$status" ]] || fail "First Mate clone is dirty; preserve that work before interoperability probing. NEXT=commit/stash/move dirty work in ${FIRSTMATE_DIR}."
+if [[ -n "$status" ]]; then
+  printf 'STATUS=BLOCKED_FIRSTMATE_DIRTY\n'
+  printf 'NEXT=commit/stash/move dirty work in %s, or remove that path so bounded bootstrap can run, then rerun\n' "$FIRSTMATE_DIR"
+  exit 49
+fi
 
 ACTUAL_HEAD="$(git -C "$FIRSTMATE_DIR" rev-parse HEAD)"
-[[ "$ACTUAL_HEAD" == "$EXPECTED_HEAD" ]] || fail "First Mate HEAD is $ACTUAL_HEAD, but this integration floor was audited at $EXPECTED_HEAD. NEXT=in ${FIRSTMATE_DIR} run: git fetch --all && git checkout ${EXPECTED_HEAD}."
+if [[ "$ACTUAL_HEAD" != "$EXPECTED_HEAD" ]]; then
+  printf 'STATUS=BLOCKED_FIRSTMATE_PIN\n'
+  printf 'NEXT=in %s run: git fetch --all && git checkout %s, then rerun\n' "$FIRSTMATE_DIR" "$EXPECTED_HEAD"
+  exit 50
+fi
 
 for path in "${REQUIRED_PATHS[@]}"; do
   [[ -e "$FIRSTMATE_DIR/$path" ]] || fail "Required audited upstream path is missing: $path"

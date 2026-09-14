@@ -211,6 +211,10 @@ if ($continue.ExitCode -ne 0) {
         'BLOCKED_SUDO'
     } elseif ($continue.ExitCode -eq 48) {
         'BLOCKED_PRIMARY_HARNESS'
+    } elseif ($continue.ExitCode -eq 49) {
+        'BLOCKED_FIRSTMATE_DIRTY'
+    } elseif ($continue.ExitCode -eq 50) {
+        'BLOCKED_FIRSTMATE_PIN'
     } else {
         'PHYSICAL_FLOOR_CONTINUE_FAILED'
     }
@@ -236,6 +240,10 @@ if ($continue.ExitCode -ne 0) {
         Write-Host 'NEXT=enable passwordless sudo for apt-get in Ubuntu (sudo -n apt-get --version must succeed), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
     } elseif ($continue.ExitCode -eq 48) {
         Write-Host 'NEXT=install one primary harness on PATH inside Ubuntu visible to non-interactive bash -lc (claude|grok|pi|pi-signed|omp|codex|opencode|cursor-agent), then rerun'
+    } elseif ($continue.ExitCode -eq 49) {
+        Write-Host 'NEXT=commit/stash/move dirty work in $HOME/firstmate, or remove that path so bounded bootstrap can run, then rerun'
+    } elseif ($continue.ExitCode -eq 50) {
+        Write-Host 'NEXT=in $HOME/firstmate run: git fetch --all && git checkout b182d0f908b78d08c7ccb8dce3775bdca8c5d657, or remove that path / pass -FirstMatePath to a clean audited checkout, then rerun'
     } else {
         $preservedNext = Get-OperatorNextFromEvidence -Attempt $continue
         if (-not [string]::IsNullOrWhiteSpace($preservedNext)) {
