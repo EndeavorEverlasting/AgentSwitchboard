@@ -215,6 +215,10 @@ if ($continue.ExitCode -ne 0) {
         'BLOCKED_FIRSTMATE_DIRTY'
     } elseif ($continue.ExitCode -eq 50) {
         'BLOCKED_FIRSTMATE_PIN'
+    } elseif ($continue.ExitCode -eq 51) {
+        'BLOCKED_WSL_BOOTSTRAP'
+    } elseif ($continue.ExitCode -eq 52) {
+        'BLOCKED_HARNESS_CONTRACT'
     } else {
         'PHYSICAL_FLOOR_CONTINUE_FAILED'
     }
@@ -249,6 +253,10 @@ if ($continue.ExitCode -ne 0) {
         Write-Host 'NEXT=commit/stash/move dirty work in $HOME/firstmate (or the -FirstMatePath override), or remove $HOME/firstmate so bounded bootstrap can run, then rerun'
     } elseif ($continue.ExitCode -eq 50) {
         Write-Host 'NEXT=in $HOME/firstmate (or -FirstMatePath) run: git fetch --all && git checkout b182d0f908b78d08c7ccb8dce3775bdca8c5d657, or remove that path / pass -FirstMatePath to a clean audited checkout, then rerun'
+    } elseif ($continue.ExitCode -eq 51) {
+        Write-Host 'NEXT=inspect WSL diagnostics/bootstrap stdout; repair exact-head WSL clone/source-repo access, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+    } elseif ($continue.ExitCode -eq 52) {
+        Write-Host 'NEXT=inspect evidence root; repair FirstMate harness contract failure inside Ubuntu, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
     } else {
         Write-Host 'NEXT=inspect evidence for NEXT=/NEXT_ACTION=; repair operator blocker; rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
     }
