@@ -76,6 +76,9 @@ if (-not (Test-Path -LiteralPath .\Invoke-Asq017AdminBoxLiveFloor.ps1)) {
 pwsh -NoLogo -NoProfile -File .\Invoke-Asq017AdminBoxLiveFloor.ps1
 $childExit = $LASTEXITCODE
 Write-Host "CHILD_EXIT_CODE=$childExit"
+if ($childExit -eq 44) {
+  throw 'BLOCKED_MISSING_TOOLS — install allowlisted missing tools via printed NEXT_ACTION=/NEXT= (or clear apt/dpkg blocker after exhausted bounded repair), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+}
 if ($childExit -eq 45) {
   throw 'BLOCKED_GITHUB_AUTH — complete gh auth login inside Ubuntu then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
 }
@@ -96,7 +99,7 @@ if ($childExit -ne 0) {
 }
 ```
 
-`Invoke-Asq017AdminBoxLiveFloor.ps1` is the durable ASQ-017 Admin Box floor owner. It fail-closes native git refresh (`fetch`/`switch`/`pull`/`rev-parse` with capture-before-Trim), then runs `Invoke-FmWsl12AdminBoxLiveProof.ps1` (contract → `physical-floor-continue` → protected `physical-floor`). The one-shot still stops for GitHub authentication (exit 45), passwordless apt sudo (exit 47), missing primary harness on non-interactive PATH (exit 48), dirty `$HOME/firstmate` (exit 49), and FirstMate pin mismatch / blocked bootstrap (exit 50); probes runnable `Ubuntu` before apt/preflight; and writes a local untracked receipt. Interactive pastes must print `CHILD_EXIT_CODE` and `throw` rather than calling interactive `exit`.
+`Invoke-Asq017AdminBoxLiveFloor.ps1` is the durable ASQ-017 Admin Box floor owner. It fail-closes native git refresh (`fetch`/`switch`/`pull`/`rev-parse` with capture-before-Trim), then runs `Invoke-FmWsl12AdminBoxLiveProof.ps1` (contract → `physical-floor-continue` → protected `physical-floor`). The one-shot still stops for missing allowlisted tools after bounded repair (exit 44), GitHub authentication (exit 45), passwordless apt sudo (exit 47), missing primary harness on non-interactive PATH (exit 48), dirty `$HOME/firstmate` (exit 49), and FirstMate pin mismatch / blocked bootstrap (exit 50); probes runnable `Ubuntu` before apt/preflight; and writes a local untracked receipt. Interactive pastes must print `CHILD_EXIT_CODE` and `throw` rather than calling interactive `exit`.
 
 Equivalent expanded form (same proof ceiling; prefer the durable entrypoint above):
 
@@ -118,6 +121,9 @@ pwsh -NoLogo -NoProfile -File .\Invoke-FmWsl12AdminBoxLiveProof.ps1 `
   -WslDistribution Ubuntu
 $childExit = $LASTEXITCODE
 Write-Host "CHILD_EXIT_CODE=$childExit"
+if ($childExit -eq 44) {
+  throw 'BLOCKED_MISSING_TOOLS — install allowlisted missing tools via printed NEXT_ACTION=/NEXT= (or clear apt/dpkg blocker after exhausted bounded repair), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+}
 if ($childExit -eq 45) {
   throw 'BLOCKED_GITHUB_AUTH — complete gh auth login then rerun Invoke-FmWsl12AdminBoxLiveProof.ps1'
 }
