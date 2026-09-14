@@ -130,6 +130,39 @@ if ([string]::IsNullOrWhiteSpace($EvidenceRoot)) {
 New-Item -ItemType Directory -Force -Path $EvidenceRoot | Out-Null
 $EvidenceRoot = (Resolve-Path -LiteralPath $EvidenceRoot).Path
 
+# wsl.exe present is not enough: the contracted distribution must be registered and runnable.
+# Probe before apt/preflight so a missing Ubuntu yields structured exit 46, not an unstructured WSL process error.
+$distroProbeTimeoutSeconds = [Math]::Max(15, [Math]::Min(30, $PrerequisiteTimeoutSeconds))
+$distroProbe = Invoke-CapturedProcess `
+    -FileName $wsl.Source `
+    -Arguments @('--distribution', $WslDistribution, '--exec', 'true') `
+    -TimeoutSeconds $distroProbeTimeoutSeconds
+$distroProbePath = Join-Path $EvidenceRoot 'firstmate-wsl-distribution-probe.txt'
+Set-Content -LiteralPath $distroProbePath -Value @(
+    "HEAD=$actualHead"
+    "WSL_DISTRIBUTION=$WslDistribution"
+    "PROBE=wsl --distribution $WslDistribution --exec true"
+    "EXIT_CODE=$($distroProbe.ExitCode)"
+    "TIMED_OUT=$($distroProbe.TimedOut)"
+    'STDOUT<<'
+    $distroProbe.Stdout.TrimEnd()
+    'STDOUT>>'
+    'STDERR<<'
+    $distroProbe.Stderr.TrimEnd()
+    'STDERR>>'
+)
+if ($distroProbe.ExitCode -ne 0) {
+    Write-Host 'STATUS=BLOCKED_WINDOWS_WSL_REQUIRED'
+    Write-Host 'FAILURE_CODE=WINDOWS_WSL_REQUIRED'
+    Write-Host 'PROOF_LEVEL=LIVE_ATTEMPT_FAIL_CLOSED'
+    Write-Host "HEAD=$actualHead"
+    Write-Host "WSL_DISTRIBUTION=$WslDistribution"
+    Write-Host "DETAIL=Required WSL distribution is not registered or not runnable"
+    Write-Host "DISTRIBUTION_PROBE_PATH=$distroProbePath"
+    Write-Host '[PROOF_CEILING] Physical WSL floor requires Windows + wsl.exe + explicit runnable Ubuntu; contract PASS is not live PASS.'
+    exit 46
+}
+
 $PrerequisitePath = Join-Path $EvidenceRoot 'firstmate-wsl-prerequisites.txt'
 $PrerequisiteStderrPath = Join-Path $EvidenceRoot 'firstmate-wsl-prerequisites-stderr.log'
 $BridgeStdoutPath = Join-Path $EvidenceRoot 'bridge-stdout.txt'

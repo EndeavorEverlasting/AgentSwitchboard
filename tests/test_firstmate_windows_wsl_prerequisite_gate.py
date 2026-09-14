@@ -149,6 +149,15 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("exit 46", self.physical)
         self.assertIn("BLOCKED_WINDOWS_WSL_REQUIRED", self.physical)
         self.assertIn("WINDOWS_WSL_REQUIRED", self.physical)
+        # Missing/unrunnable Ubuntu must fail closed as exit 46 before apt/preflight.
+        self.assertIn("--distribution", self.physical)
+        self.assertIn("--exec", self.physical)
+        self.assertIn("firstmate-wsl-distribution-probe.txt", self.physical)
+        self.assertIn("Required WSL distribution is not registered or not runnable", self.physical)
+        self.assertLess(
+            self.physical.index("firstmate-wsl-distribution-probe.txt"),
+            self.physical.index("firstmate-wsl-prerequisites.txt"),
+        )
 
     def test_gate_is_bounded_and_uses_unique_evidence(self) -> None:
         self.assertIn("[int]$PrerequisiteTimeoutSeconds = 60", self.physical)
