@@ -218,7 +218,13 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("git fetch failed", command)
         self.assertIn("git switch failed", command)
         self.assertIn("git pull failed", command)
+        self.assertNotIn("(git rev-parse HEAD).Trim()", command)
+        self.assertRegex(
+            command,
+            r"git rev-parse HEAD;\s*if \(\$LASTEXITCODE -ne 0\) \{ throw 'Unable to resolve HEAD' \}",
+        )
         self.assertIn("Unable to resolve HEAD", command)
+        self.assertIn('("$headRaw").Trim()', command)
         self.assertIn("LIVE_RUNTIME_PROOF:UNPROVEN", block)
         self.assertIn("BLOCKED_WINDOWS_WSL_REQUIRED", block)
         self.assertIn("CHILD_EXIT_CODE", self.runbook)

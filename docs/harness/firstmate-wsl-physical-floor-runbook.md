@@ -72,8 +72,10 @@ git switch main
 if ($LASTEXITCODE -ne 0) { throw "git switch failed with exit $LASTEXITCODE" }
 git pull --ff-only origin main
 if ($LASTEXITCODE -ne 0) { throw "git pull failed with exit $LASTEXITCODE" }
-$head = (git rev-parse HEAD).Trim()
-if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($head)) { throw 'Unable to resolve HEAD' }
+$headRaw = git rev-parse HEAD
+if ($LASTEXITCODE -ne 0) { throw 'Unable to resolve HEAD' }
+$head = ("$headRaw").Trim()
+if ([string]::IsNullOrWhiteSpace($head)) { throw 'Unable to resolve HEAD' }
 Write-Host "PHYSICAL_FLOOR_HEAD=$head"
 
 # Preferred FM-WSL-12 Admin Box one-shot (contract → physical-floor-continue → protected control):
