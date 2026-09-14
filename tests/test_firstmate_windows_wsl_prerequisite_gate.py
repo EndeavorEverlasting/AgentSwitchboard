@@ -249,12 +249,22 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertNotIn("(git rev-parse HEAD).Trim()", durable_text)
         self.assertNotIn("$head=(git rev-parse HEAD).Trim()", durable_text)
         self.assertIn("[switch]$ContractOnly", durable_text)
+        self.assertIn("[string]$FirstMatePath", durable_text)
+        self.assertIn("-FirstMatePath", durable_text)
         self.assertIn("LIVE_RUNTIME_PROOF", durable_text)
         self.assertIn("UNPROVEN", durable_text)
         self.assertEqual(
             "Invoke-Asq017AdminBoxLiveFloor.ps1",
             self.integration["physical_floor_recovery"]["asq017_admin_box_live_floor_entrypoint"],
         )
+
+        interop = (ROOT / "tooling" / "firstmate" / "Test-FirstMateInterop.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("BOOTSTRAPPED_FIRSTMATE=", interop)
+        self.assertIn("$HOME/firstmate", interop)
+        self.assertIn("NEXT=install one primary harness", interop)
+        self.assertIn("NEXT=run gh auth login inside Ubuntu", interop)
 
         self.assertTrue(OCD_VALIDATOR.is_file(), OCD_VALIDATOR)
         with tempfile.TemporaryDirectory() as tmp:

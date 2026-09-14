@@ -19,6 +19,7 @@ param(
     [string]$Remote = 'origin',
     [string]$Branch = 'main',
     [string]$WslDistribution = 'Ubuntu',
+    [string]$FirstMatePath,
     [string]$EvidenceRoot,
     [switch]$SkipProtectedControl,
     [switch]$SkipGitRefresh,
@@ -47,7 +48,15 @@ if ($ContractOnly) {
     Write-Asq017Status -Key 'ASQ017_MODE' -Value 'ContractOnly'
     Write-Asq017Status -Key 'ASQ017_ONESHOT' -Value $OneShotPath
     Write-Asq017Status -Key 'ASQ017_GIT_REFRESH' -Value 'skipped'
-    & pwsh -NoLogo -NoProfile -File $OneShotPath -WslDistribution $WslDistribution -ContractOnly
+    $contractArgs = @(
+        '-NoLogo', '-NoProfile', '-File', $OneShotPath,
+        '-WslDistribution', $WslDistribution,
+        '-ContractOnly'
+    )
+    if (-not [string]::IsNullOrWhiteSpace($FirstMatePath)) {
+        $contractArgs += @('-FirstMatePath', $FirstMatePath)
+    }
+    & pwsh @contractArgs
     if ($LASTEXITCODE -ne 0) {
         throw "ASQ-017 ContractOnly one-shot failed with exit $LASTEXITCODE"
     }
@@ -100,6 +109,10 @@ $argumentList = @(
     '-ExpectedHead', $head,
     '-WslDistribution', $WslDistribution
 )
+if (-not [string]::IsNullOrWhiteSpace($FirstMatePath)) {
+    $argumentList += @('-FirstMatePath', $FirstMatePath)
+    Write-Asq017Status -Key 'FIRSTMATE_PATH' -Value $FirstMatePath
+}
 if (-not [string]::IsNullOrWhiteSpace($EvidenceRoot)) {
     $argumentList += @('-EvidenceRoot', $EvidenceRoot)
 }
