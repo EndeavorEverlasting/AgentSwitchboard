@@ -124,6 +124,11 @@ if ($SkipProtectedControl) {
 $childExit = $LASTEXITCODE
 Write-Asq017Status -Key 'CHILD_EXIT_CODE' -Value "$childExit"
 
+if ($childExit -eq 44) {
+    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_MISSING_TOOLS'
+    Write-Asq017Status -Key 'NEXT' -Value 'install allowlisted missing tools via printed NEXT_ACTION=/NEXT= (or clear apt/dpkg blocker after exhausted bounded repair), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+    exit 44
+}
 if ($childExit -eq 45) {
     Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_GITHUB_AUTH'
     Write-Asq017Status -Key 'NEXT' -Value 'complete gh auth login then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'

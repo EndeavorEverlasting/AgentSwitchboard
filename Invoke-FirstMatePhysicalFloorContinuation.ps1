@@ -347,6 +347,12 @@ for ($attempt = 1; $attempt -le ($MaxPackageRepairAttempts + 1); $attempt++) {
 
     if ($packageRepairs -ge $MaxPackageRepairAttempts) {
         Write-Host "[BLOCKED] Exhausted $MaxPackageRepairAttempts bounded package-repair attempt(s)."
+        Write-Host 'STATUS=BLOCKED_MISSING_TOOLS'
+        Write-Host 'FAILURE_CODE=BOUNDED_PACKAGE_REPAIR_EXHAUSTED'
+        Write-Host 'NEXT=inspect NEXT_ACTION=/evidence; install allowlisted missing tools manually if apt repair did not clear them, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+        if (-not [string]::IsNullOrWhiteSpace($nextAction)) {
+            Write-Host "NEXT_ACTION=$nextAction"
+        }
         Write-Host "EVIDENCE_ROOT=$EvidenceRoot"
         exit 44
     }
@@ -387,10 +393,16 @@ for ($attempt = 1; $attempt -le ($MaxPackageRepairAttempts + 1); $attempt++) {
     Set-Content -LiteralPath $repairStderr -Value $repair.Stderr
     if ($repair.ExitCode -ne 0) {
         Write-Host "[BLOCKED] Bounded apt-get repair failed. Exit=$($repair.ExitCode)"
+        Write-Host 'STATUS=BLOCKED_MISSING_TOOLS'
+        Write-Host 'FAILURE_CODE=BOUNDED_APT_REPAIR_FAILED'
+        Write-Host 'NEXT=inspect REPAIR_STDERR; fix apt failure (dpkg lock/network/mirror), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+        if (-not [string]::IsNullOrWhiteSpace($nextAction)) {
+            Write-Host "NEXT_ACTION=$nextAction"
+        }
         Write-Host "REPAIR_STDOUT=$repairStdout"
         Write-Host "REPAIR_STDERR=$repairStderr"
         Write-Host "EVIDENCE_ROOT=$EvidenceRoot"
-        exit $repair.ExitCode
+        exit 44
     }
 
     $packageRepairs++
