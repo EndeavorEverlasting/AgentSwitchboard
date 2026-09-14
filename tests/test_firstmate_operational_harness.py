@@ -47,6 +47,8 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
         self.assertIn("FIRSTMATE_WINDOWS_WSL_PHYSICAL_FLOOR", text)
         self.assertIn("no live firstmate crew dispatch", text.lower())
         self.assertIn("FM-CREW-13", text)
+        self.assertIn("bounded repair is authorized by FM-WSL-12", text)
+        self.assertIn("without stopping for additional operator permission", text)
 
     def test_manifest_is_bridge_only_and_firstmate_owns_runtime(self) -> None:
         self.assertEqual("firstmate-windows-wsl-bridge", self.manifest["harness_id"])
@@ -118,6 +120,17 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
         self.assertIs(bridge["dependency_installation"], False)
         self.assertIs(bridge["credential_mutation"], False)
         self.assertEqual("FirstMate", bridge["runtime_owner_after_bridge"])
+
+        recovery = self.integration["physical_floor_recovery"]
+        self.assertEqual("FM-WSL-12", recovery["lane"])
+        self.assertIs(recovery["execution_owner_may_install_missing_packages"], True)
+        self.assertIs(recovery["additional_operator_confirmation_required"], False)
+        self.assertEqual("Ubuntu", recovery["distribution"])
+        self.assertEqual("apt-get", recovery["package_manager"])
+        self.assertEqual(["git", "gh", "tmux", "python3"], recovery["package_allowlist"])
+        self.assertIs(recovery["credential_mutation"], False)
+        self.assertIs(recovery["github_authentication_requires_operator"], True)
+
         disposition = self.integration["routing_disposition"]
         self.assertIsNone(disposition["agentswitchboard_skill"])
         self.assertIsNone(disposition["agentswitchboard_capability"])
