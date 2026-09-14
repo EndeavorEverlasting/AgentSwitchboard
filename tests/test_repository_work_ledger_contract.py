@@ -209,6 +209,21 @@ class RepositoryWorkLedgerContractTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('must invoke or name the same durable executable cited in References', result.stderr)
 
+    def test_long_next_action_rejects_untracked_existing_entrypoint(self):
+        with tempfile.NamedTemporaryFile('w', suffix='.ps1', delete=False, dir=ROOT, encoding='utf-8') as handle:
+            handle.write("Write-Host 'temporary'\n")
+            relative = pathlib.Path(handle.name).relative_to(ROOT).as_posix()
+        try:
+            long_action = 'run ' + relative + ' and ' + ('continue only after its bounded evidence is preserved; ' * 8)
+            result = self.run_temp(task(
+                References=f'`{relative}`',
+                **{'Next action': long_action},
+            ))
+        finally:
+            (ROOT / relative).unlink(missing_ok=True)
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('must cite an existing tracked repository executable entrypoint', result.stderr)
+
     def test_long_next_action_accepts_tracked_durable_entrypoint(self):
         entrypoint = 'scripts/Get-RepositoryWorkLedgerFrontier.ps1'
         long_action = 'run ' + entrypoint + ' and ' + ('use its bounded output instead of reconstructing the operator sequence; ' * 7)
