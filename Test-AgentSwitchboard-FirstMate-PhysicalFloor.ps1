@@ -203,11 +203,25 @@ if [[ -z "$harness" ]]; then
   printf 'NEXT=install one primary harness on PATH inside Ubuntu visible to: wsl -d Ubuntu --exec bash -lc "command -v <harness>" (claude|grok|pi|pi-signed|omp|codex|opencode|cursor-agent), then rerun\n'
   exit 48
 fi
-if [[ -d "$HOME/firstmate/.git" ]]; then
+# Fail closed before the long bridge when $HOME/firstmate is dirty or off the audited pin.
+# Pin must match tooling/firstmate/harness/upstream-pin.json (Test-FirstMateInterop.sh).
+EXPECTED_FIRSTMATE_HEAD='b182d0f908b78d08c7ccb8dce3775bdca8c5d657'
+if [[ -e "$HOME/firstmate" ]]; then
+  if [[ ! -d "$HOME/firstmate/.git" ]]; then
+    printf 'STATUS=BLOCKED_FIRSTMATE_PIN\n'
+    printf 'NEXT=repair or remove $HOME/firstmate so bounded bootstrap can clone kunchenguid/firstmate@%s, or pass -FirstMatePath to a clean audited checkout, then rerun\n' "$EXPECTED_FIRSTMATE_HEAD"
+    exit 50
+  fi
   if [[ -n "$(git -C "$HOME/firstmate" status --porcelain 2>/dev/null || true)" ]]; then
     printf 'STATUS=BLOCKED_FIRSTMATE_DIRTY\n'
     printf 'NEXT=commit/stash/move dirty work in $HOME/firstmate, or remove that path so bounded bootstrap can run, then rerun\n'
-    exit 1
+    exit 49
+  fi
+  actual_fm_head="$(git -C "$HOME/firstmate" rev-parse HEAD 2>/dev/null || true)"
+  if [[ "$actual_fm_head" != "$EXPECTED_FIRSTMATE_HEAD" ]]; then
+    printf 'STATUS=BLOCKED_FIRSTMATE_PIN\n'
+    printf 'NEXT=in $HOME/firstmate run: git fetch --all && git checkout %s, or remove that path so bounded bootstrap can run, then rerun\n' "$EXPECTED_FIRSTMATE_HEAD"
+    exit 50
   fi
 fi
 printf 'STATUS=PASS\n'

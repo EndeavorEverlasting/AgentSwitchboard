@@ -145,6 +145,16 @@ if ($childExit -eq 48) {
     Write-Asq017Status -Key 'NEXT' -Value 'install one primary harness on PATH inside Ubuntu visible to non-interactive bash -lc (claude|grok|pi|pi-signed|omp|codex|opencode|cursor-agent), then rerun'
     exit 48
 }
+if ($childExit -eq 49) {
+    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_FIRSTMATE_DIRTY'
+    Write-Asq017Status -Key 'NEXT' -Value 'commit/stash/move dirty work in $HOME/firstmate, or remove that path so bounded bootstrap can run, then rerun'
+    exit 49
+}
+if ($childExit -eq 50) {
+    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_FIRSTMATE_PIN'
+    Write-Asq017Status -Key 'NEXT' -Value 'in $HOME/firstmate run: git fetch --all && git checkout b182d0f908b78d08c7ccb8dce3775bdca8c5d657, or remove that path / pass -FirstMatePath to a clean audited checkout, then rerun'
+    exit 50
+}
 if ($childExit -ne 0) {
     Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'FAILED'
     Write-Asq017Status -Key 'NEXT' -Value 'inspect child console for NEXT=/NEXT_ACTION=; repair operator blocker; rerun Invoke-Asq017AdminBoxLiveFloor.ps1'

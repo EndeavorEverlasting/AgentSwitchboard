@@ -153,7 +153,12 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
 
     def test_probe_requires_clean_audited_clone_and_toolchain(self) -> None:
         self.assertIn("status --porcelain=v1", self.probe)
-        self.assertIn('[[ "$ACTUAL_HEAD" == "$EXPECTED_HEAD" ]]', self.probe)
+        # Structured pin/dirty fail-closed (exits 49/50) before long interop path.
+        self.assertIn('if [[ "$ACTUAL_HEAD" != "$EXPECTED_HEAD" ]]; then', self.probe)
+        self.assertIn("STATUS=BLOCKED_FIRSTMATE_PIN", self.probe)
+        self.assertIn("STATUS=BLOCKED_FIRSTMATE_DIRTY", self.probe)
+        self.assertIn("exit 50", self.probe)
+        self.assertIn("exit 49", self.probe)
         for tool in self.contract["runtime_contract"]["required_tools"]:
             self.assertIn(tool, self.probe)
         for path in self.contract["required_upstream_paths"]:
@@ -213,10 +218,11 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
                 text=True,
                 env=env,
             )
-            self.assertNotEqual(completed.returncode, 0)
+            self.assertEqual(completed.returncode, 50)
             combined = completed.stdout + completed.stderr
-            self.assertIn("integration floor was audited at", combined)
+            self.assertIn("STATUS=BLOCKED_FIRSTMATE_PIN", combined)
             self.assertIn(EXPECTED_SHA, combined)
+            self.assertIn("git checkout", combined)
             self.assertNotIn("Required tool is unavailable", combined)
 
 

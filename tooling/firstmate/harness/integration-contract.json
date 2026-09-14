@@ -105,7 +105,9 @@
       "github_auth": 45,
       "windows_wsl_required": 46,
       "blocked_sudo": 47,
-      "blocked_primary_harness": 48
+      "blocked_primary_harness": 48,
+      "blocked_firstmate_dirty": 49,
+      "blocked_firstmate_pin": 50
     },
     "non_windows_live_attempt": {
       "status": "BLOCKED_WINDOWS_WSL_REQUIRED",

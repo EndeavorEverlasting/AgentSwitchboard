@@ -85,12 +85,18 @@ if ($childExit -eq 47) {
 if ($childExit -eq 48) {
   throw 'BLOCKED_PRIMARY_HARNESS — install one primary harness on PATH inside Ubuntu visible to non-interactive bash -lc (claude|grok|pi|pi-signed|omp|codex|opencode|cursor-agent), then rerun'
 }
+if ($childExit -eq 49) {
+  throw 'BLOCKED_FIRSTMATE_DIRTY — commit/stash/move dirty work in $HOME/firstmate, or remove that path so bounded bootstrap can run, then rerun'
+}
+if ($childExit -eq 50) {
+  throw 'BLOCKED_FIRSTMATE_PIN — in $HOME/firstmate run: git fetch --all && git checkout b182d0f908b78d08c7ccb8dce3775bdca8c5d657, or remove that path / pass -FirstMatePath to a clean audited checkout, then rerun'
+}
 if ($childExit -ne 0) {
   throw "ASQ-017 Admin Box live floor failed with exit $childExit"
 }
 ```
 
-`Invoke-Asq017AdminBoxLiveFloor.ps1` is the durable ASQ-017 Admin Box floor owner. It fail-closes native git refresh (`fetch`/`switch`/`pull`/`rev-parse` with capture-before-Trim), then runs `Invoke-FmWsl12AdminBoxLiveProof.ps1` (contract → `physical-floor-continue` → protected `physical-floor`). The one-shot still stops for GitHub authentication (exit 45), passwordless apt sudo (exit 47), and missing primary harness on non-interactive PATH (exit 48); probes runnable `Ubuntu` before apt/preflight; and writes a local untracked receipt. Interactive pastes must print `CHILD_EXIT_CODE` and `throw` rather than calling interactive `exit`.
+`Invoke-Asq017AdminBoxLiveFloor.ps1` is the durable ASQ-017 Admin Box floor owner. It fail-closes native git refresh (`fetch`/`switch`/`pull`/`rev-parse` with capture-before-Trim), then runs `Invoke-FmWsl12AdminBoxLiveProof.ps1` (contract → `physical-floor-continue` → protected `physical-floor`). The one-shot still stops for GitHub authentication (exit 45), passwordless apt sudo (exit 47), missing primary harness on non-interactive PATH (exit 48), dirty `$HOME/firstmate` (exit 49), and FirstMate pin mismatch / blocked bootstrap (exit 50); probes runnable `Ubuntu` before apt/preflight; and writes a local untracked receipt. Interactive pastes must print `CHILD_EXIT_CODE` and `throw` rather than calling interactive `exit`.
 
 Equivalent expanded form (same proof ceiling; prefer the durable entrypoint above):
 
@@ -120,6 +126,12 @@ if ($childExit -eq 47) {
 }
 if ($childExit -eq 48) {
   throw 'BLOCKED_PRIMARY_HARNESS — install one primary harness on PATH inside Ubuntu visible to non-interactive bash -lc, then rerun'
+}
+if ($childExit -eq 49) {
+  throw 'BLOCKED_FIRSTMATE_DIRTY — commit/stash/move dirty work in $HOME/firstmate, or remove that path so bounded bootstrap can run, then rerun'
+}
+if ($childExit -eq 50) {
+  throw 'BLOCKED_FIRSTMATE_PIN — checkout audited FirstMate pin b182d0f908b78d08c7ccb8dce3775bdca8c5d657 or pass -FirstMatePath, then rerun'
 }
 if ($childExit -ne 0) {
   throw "FM-WSL-12 Admin Box live proof failed with exit $childExit"
@@ -191,7 +203,8 @@ Preserve the console markers and the printed evidence root:
 | GitHub auth blocked (`STATUS=BLOCKED_GITHUB_AUTH`, exit 45) | Operator performs the emitted `gh auth login ...` command **inside Ubuntu**. Do not automate credential entry or persist tokens. Then rerun the physical floor / continuation entrypoint. |
 | Host lacks `wsl.exe`, or `Ubuntu` is missing/unrunnable (`STATUS=BLOCKED_WINDOWS_WSL_REQUIRED`, exit 46 / `FAILURE_CODE=WINDOWS_WSL_REQUIRED`) | Cloud/Linux hosts without `wsl.exe`, and Windows hosts whose contracted distribution cannot run `wsl --distribution Ubuntu --exec true`, fail closed before package repair or interop. This is a LIVE_ATTEMPT_FAIL_CLOSED receipt, not physical PASS. Move to an authorized Windows Admin Box with explicit runnable `Ubuntu`. |
 | Primary harness missing on non-interactive PATH (`STATUS=BLOCKED_PRIMARY_HARNESS`, exit 48) | Install one primary harness (`claude`\|`grok`\|`pi`\|`pi-signed`\|`omp`\|`codex`\|`opencode`\|`cursor-agent`) so `wsl -d Ubuntu --exec bash -lc "command -v <harness>"` succeeds, then rerun. |
-| Dirty `$HOME/firstmate` (`STATUS=BLOCKED_FIRSTMATE_DIRTY`) | Commit, stash, or move dirty work under `$HOME/firstmate`, or remove that path so bounded bootstrap can run, then rerun. |
+| Dirty `$HOME/firstmate` (`STATUS=BLOCKED_FIRSTMATE_DIRTY`, exit 49) | Commit, stash, or move dirty work under `$HOME/firstmate`, or remove that path so bounded bootstrap can run, then rerun. |
+| FirstMate pin mismatch / blocked bootstrap (`STATUS=BLOCKED_FIRSTMATE_PIN`, exit 50) | In `$HOME/firstmate` run `git fetch --all && git checkout b182d0f908b78d08c7ccb8dce3775bdca8c5d657`, or remove that path / pass `-FirstMatePath` to a clean audited `kunchenguid/firstmate` checkout, then rerun. |
 | Exact-head mismatch | Re-fetch/ff-only `main`, re-resolve HEAD, rerun with the new SHA. |
 | WSL timeout / transport failure | Preserve the Windows evidence root; default cleanup removes the script-owned WSL clone. Re-run after repairing the environment. |
 | Wrong distribution | Do not retarget to the operator default. Repair/install the contract `Ubuntu` distribution in a separately authorized environment/bootstrap lane. |
