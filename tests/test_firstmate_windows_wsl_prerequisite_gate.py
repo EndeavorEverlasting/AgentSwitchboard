@@ -382,7 +382,7 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("BLOCKED_SUDO", oneshot)
         self.assertIn("BLOCKED_PRIMARY_HARNESS", oneshot)
         self.assertIn("Get-OperatorNextFromEvidence", oneshot)
-        self.assertIn("exit 48", oneshot)
+        self.assertIn("ExitCode -eq 48", oneshot)
         physical = (ROOT / "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1").read_text(encoding="utf-8")
         self.assertIn("Write-Host $bridge.Stderr.TrimEnd()", physical)
         self.assertIn('Write-Host "NEXT=$operatorNext"', physical)
