@@ -140,6 +140,11 @@ if ($childExit -eq 47) {
     Write-Asq017Status -Key 'NEXT' -Value 'enable passwordless sudo for apt-get in Ubuntu (sudo -n apt-get --version must succeed), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
     exit 47
 }
+if ($childExit -eq 48) {
+    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_PRIMARY_HARNESS'
+    Write-Asq017Status -Key 'NEXT' -Value 'install one primary harness on PATH inside Ubuntu visible to non-interactive bash -lc (claude|grok|pi|pi-signed|omp|codex|opencode|cursor-agent), then rerun'
+    exit 48
+}
 if ($childExit -ne 0) {
     Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'FAILED'
     Write-Asq017Status -Key 'NEXT' -Value 'inspect child console for NEXT=/NEXT_ACTION=; repair operator blocker; rerun Invoke-Asq017AdminBoxLiveFloor.ps1'

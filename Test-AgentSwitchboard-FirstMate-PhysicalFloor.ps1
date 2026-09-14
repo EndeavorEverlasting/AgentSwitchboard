@@ -189,7 +189,29 @@ if ! gh auth status --hostname github.com >/dev/null 2>&1; then
   printf 'NEXT_ACTION=gh auth login --hostname github.com --git-protocol https --web\n'
   exit 45
 fi
+# Fail fast before the long bridge/interop path when the operator-staged primary harness
+# is missing from non-interactive PATH (bash -lc), matching Test-FirstMateInterop.sh.
+harness=""
+for candidate in claude grok pi pi-signed omp codex opencode cursor-agent; do
+  if command -v "$candidate" >/dev/null 2>&1; then
+    harness="$candidate"
+    break
+  fi
+done
+if [[ -z "$harness" ]]; then
+  printf 'STATUS=BLOCKED_PRIMARY_HARNESS\n'
+  printf 'NEXT=install one primary harness on PATH inside Ubuntu visible to: wsl -d Ubuntu --exec bash -lc "command -v <harness>" (claude|grok|pi|pi-signed|omp|codex|opencode|cursor-agent), then rerun\n'
+  exit 48
+fi
+if [[ -d "$HOME/firstmate/.git" ]]; then
+  if [[ -n "$(git -C "$HOME/firstmate" status --porcelain 2>/dev/null || true)" ]]; then
+    printf 'STATUS=BLOCKED_FIRSTMATE_DIRTY\n'
+    printf 'NEXT=commit/stash/move dirty work in $HOME/firstmate, or remove that path so bounded bootstrap can run, then rerun\n'
+    exit 1
+  fi
+fi
 printf 'STATUS=PASS\n'
+printf 'PRIMARY_HARNESS=%s\n' "$harness"
 for tool in "${required[@]}"; do
   printf 'TOOL_%s=%s\n' "${tool^^}" "$(command -v "$tool")"
 done
@@ -268,7 +290,8 @@ if ($bridge.ExitCode -ne 0) {
     Write-Host "PREREQUISITE_EVIDENCE=$PrerequisitePath"
     Write-Host "BRIDGE_STDOUT=$BridgeStdoutPath"
     Write-Host "BRIDGE_STDERR=$BridgeStderrPath"
-    throw "FirstMate lower bridge failed. Exit=$($bridge.ExitCode)"
+    Write-Host "FIRSTMATE_LOWER_BRIDGE_FAILED Exit=$($bridge.ExitCode)"
+    exit $(if ($bridge.ExitCode -ne 0) { $bridge.ExitCode } else { 1 })
 }
 
 if (-not [string]::IsNullOrWhiteSpace($bridge.Stdout)) { Write-Host $bridge.Stdout.TrimEnd() }

@@ -108,6 +108,11 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("do not automate credential entry", lower)
         self.assertIn("BLOCKED_WINDOWS_WSL_REQUIRED", self.runbook)
         self.assertIn("WINDOWS_WSL_REQUIRED", self.runbook)
+        self.assertIn("BLOCKED_SUDO", self.runbook)
+        self.assertIn("exit 47", self.runbook)
+        self.assertIn("BLOCKED_PRIMARY_HARNESS", self.runbook)
+        self.assertIn("exit 48", self.runbook)
+        self.assertIn("BLOCKED_FIRSTMATE_DIRTY", self.runbook)
 
     def test_continuation_entrypoint_encodes_allowlist_and_auth_stop(self) -> None:
         continuation = (
@@ -156,6 +161,16 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("exit 46", self.physical)
         self.assertIn("BLOCKED_WINDOWS_WSL_REQUIRED", self.physical)
         self.assertIn("WINDOWS_WSL_REQUIRED", self.physical)
+        self.assertIn("STATUS=BLOCKED_PRIMARY_HARNESS", self.physical)
+        self.assertIn("exit 48", self.physical)
+        self.assertIn("STATUS=BLOCKED_FIRSTMATE_DIRTY", self.physical)
+        self.assertIn("PRIMARY_HARNESS=", self.physical)
+        codes = self.integration["physical_floor_recovery"]["structured_prerequisite_exit_codes"]
+        self.assertEqual(44, codes["missing_tools"])
+        self.assertEqual(45, codes["github_auth"])
+        self.assertEqual(46, codes["windows_wsl_required"])
+        self.assertEqual(47, codes["blocked_sudo"])
+        self.assertEqual(48, codes["blocked_primary_harness"])
         # Missing/unrunnable Ubuntu must fail closed as exit 46 before apt/preflight.
         self.assertIn("--distribution", self.physical)
         self.assertIn("--exec", self.physical)
@@ -164,6 +179,11 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertLess(
             self.physical.index("firstmate-wsl-distribution-probe.txt"),
             self.physical.index("firstmate-wsl-prerequisites.txt"),
+        )
+        # Primary harness / dirty FirstMate preflight must run before STATUS=PASS.
+        self.assertLess(
+            self.physical.index("STATUS=BLOCKED_PRIMARY_HARNESS"),
+            self.physical.index("STATUS=PASS"),
         )
 
     def test_gate_is_bounded_and_uses_unique_evidence(self) -> None:
@@ -179,7 +199,8 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1", self.physical)
         self.assertIn("bridge-stdout.txt", self.physical)
         self.assertIn("bridge-stderr.txt", self.physical)
-        self.assertIn("FirstMate lower bridge failed", self.physical)
+        self.assertIn("FIRSTMATE_LOWER_BRIDGE_FAILED", self.physical)
+        self.assertIn("exit $(if ($bridge.ExitCode -ne 0) { $bridge.ExitCode } else { 1 })", self.physical)
         self.assertIn("FIRSTMATE_WINDOWS_WSL_PHYSICAL_FLOOR", self.physical)
         self.assertIn("Write-Host $bridge.Stderr.TrimEnd()", self.physical)
         self.assertIn('Write-Host "NEXT=$operatorNext"', self.physical)
@@ -225,6 +246,10 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("CHILD_EXIT_CODE=", command)
         self.assertIn("$childExit=$LASTEXITCODE", command)
         self.assertIn("throw", command)
+        self.assertIn("$childExit -eq 45", command)
+        self.assertIn("$childExit -eq 47", command)
+        self.assertIn("$childExit -eq 48", command)
+        self.assertIn("BLOCKED_PRIMARY_HARNESS", command)
         self.assertIn("Test-Path -LiteralPath", command)
         self.assertIn("checkout root", command)
         self.assertNotIn("(git rev-parse HEAD).Trim()", command)
@@ -352,10 +377,17 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("exit 47", continuation)
         self.assertIn("BLOCKED_SUDO", asq)
         self.assertIn("exit 47", asq)
+        self.assertIn("BLOCKED_PRIMARY_HARNESS", asq)
+        self.assertIn("exit 48", asq)
         self.assertIn("BLOCKED_SUDO", oneshot)
+        self.assertIn("BLOCKED_PRIMARY_HARNESS", oneshot)
+        self.assertIn("Get-OperatorNextFromEvidence", oneshot)
+        self.assertIn("exit 48", oneshot)
         physical = (ROOT / "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1").read_text(encoding="utf-8")
         self.assertIn("Write-Host $bridge.Stderr.TrimEnd()", physical)
         self.assertIn('Write-Host "NEXT=$operatorNext"', physical)
+        self.assertIn("STATUS=BLOCKED_PRIMARY_HARNESS", physical)
+        self.assertIn("exit 48", physical)
 
 if __name__ == "__main__":
     unittest.main()
