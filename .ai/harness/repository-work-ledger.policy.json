@@ -61,7 +61,7 @@
     "workflow:<run-id>",
     "run:<run-id>",
     "artifact:<durable-reference>",
-    "operator-proof:<durable-external-reference>"
+    "operator-proof:<durable-reference>"
   ],
   "localExecutionProfile": {
     "requiredFields": ["Work class"],
