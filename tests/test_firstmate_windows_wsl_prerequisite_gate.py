@@ -306,7 +306,8 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("BLOCKED_MISSING_TOOLS", self.runbook)
         self.assertIn("throw", self.runbook)
         self.assertIn("Test-Path -LiteralPath", self.runbook)
-        self.assertIn("b182d0f908b78d08c7ccb8dce3775bdca8c5d657", self.runbook)
+        self.assertIn("upstream-pin.json", self.runbook)
+        self.assertNotIn("git checkout b182d0f908b78d08c7ccb8dce3775bdca8c5d657", self.runbook)
         self.assertIn("inside Ubuntu", self.runbook)
 
         durable = ROOT / "Invoke-Asq017AdminBoxLiveFloor.ps1"
