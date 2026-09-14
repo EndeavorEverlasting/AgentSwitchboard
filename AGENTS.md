@@ -95,6 +95,9 @@ A task is complete only when:
 - Secret or credential exposure.
 - Destructive cleanup, force-push, or silent scope expansion as a shortcut.
 
+## Governance enforcement
+Run `pwsh -NoLogo -NoProfile -File scripts/Test-AgentGovernanceDoctrine.ps1` after governance changes.
+
 ## Compatibility and preserved authority
 
 Scoped or triggered guidance may strengthen but never weaken root invariants. If a conflict remains, stop, preserve evidence, name it, and escalate to the repository owner before proceeding.
