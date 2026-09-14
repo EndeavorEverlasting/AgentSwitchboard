@@ -1,0 +1,305 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/.ai/harness/schemas/fm-asb-promptkit/context-transition.v1.schema.json",
+  "title": "ASB Context Transition v1",
+  "allOf": [
+    {
+      "$ref": "protocol-envelope.v1.schema.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "schema",
+        "transitionId",
+        "state",
+        "target",
+        "reason",
+        "pressure",
+        "semantic",
+        "checkpoint",
+        "transition",
+        "pre",
+        "post",
+        "verification",
+        "error"
+      ],
+      "properties": {
+        "schema": {
+          "const": "asb.context-transition/v1"
+        },
+        "transitionId": {
+          "$ref": "protocol-envelope.v1.schema.json#/$defs/transitionId"
+        },
+        "state": {
+          "enum": [
+            "PROPOSED",
+            "CHECKPOINTING",
+            "READY",
+            "EXECUTING",
+            "COMPLETED",
+            "FAILED"
+          ]
+        },
+        "target": {
+          "type": "object",
+          "required": [
+            "firstMateTaskId",
+            "scope"
+          ],
+          "properties": {
+            "firstMateTaskId": {
+              "$ref": "protocol-envelope.v1.schema.json#/$defs/firstMateTaskId"
+            },
+            "scope": {
+              "enum": [
+                "crew-task",
+                "primary-session"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "reason": {
+          "enum": [
+            "context-pressure",
+            "semantic-divergence",
+            "both",
+            "operator-request"
+          ]
+        },
+        "pressure": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "protocol-envelope.v1.schema.json#/$defs/contextPressure"
+            }
+          ]
+        },
+        "semantic": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "required": [
+                "groundingEpisodeId",
+                "intervention",
+                "reasonCodes"
+              ],
+              "properties": {
+                "groundingEpisodeId": {
+                  "$ref": "protocol-envelope.v1.schema.json#/$defs/groundingEpisodeId"
+                },
+                "intervention": {
+                  "enum": [
+                    "CONTINUE",
+                    "CRITIQUE",
+                    "REGROUND",
+                    "REBOOTSTRAP"
+                  ]
+                },
+                "reasonCodes": {
+                  "type": "array",
+                  "maxItems": 16,
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9._-]{1,79}$"
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "checkpoint": {
+          "type": "object",
+          "required": [
+            "state",
+            "evidenceRefs",
+            "resumePointer"
+          ],
+          "properties": {
+            "state": {
+              "enum": [
+                "not-required",
+                "requested",
+                "complete",
+                "failed"
+              ]
+            },
+            "evidenceRefs": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "$ref": "protocol-envelope.v1.schema.json#/$defs/evidenceRef"
+              }
+            },
+            "resumePointer": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 2000
+            }
+          },
+          "additionalProperties": false
+        },
+        "transition": {
+          "type": "object",
+          "required": [
+            "method",
+            "automatic"
+          ],
+          "properties": {
+            "method": {
+              "enum": [
+                "firstmate-relaunch",
+                "primary-session-restart",
+                "none"
+              ]
+            },
+            "automatic": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "pre": {
+          "type": "object",
+          "required": [
+            "repository",
+            "prompt",
+            "generation"
+          ],
+          "properties": {
+            "repository": {
+              "$ref": "protocol-envelope.v1.schema.json#/$defs/repositoryRef"
+            },
+            "prompt": {
+              "anyOf": [
+                {
+                  "$ref": "protocol-envelope.v1.schema.json#/$defs/promptRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "generation": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "post": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "required": [
+                "repository",
+                "prompt",
+                "generation",
+                "groundingEpisodeId"
+              ],
+              "properties": {
+                "repository": {
+                  "$ref": "protocol-envelope.v1.schema.json#/$defs/repositoryRef"
+                },
+                "prompt": {
+                  "anyOf": [
+                    {
+                      "$ref": "protocol-envelope.v1.schema.json#/$defs/promptRef"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "generation": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "groundingEpisodeId": {
+                  "$ref": "protocol-envelope.v1.schema.json#/$defs/groundingEpisodeId"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "verification": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "required": [
+                "durableStateLoaded",
+                "taskIdentityPreserved",
+                "worktreeIdentityPreserved",
+                "headPreserved"
+              ],
+              "properties": {
+                "durableStateLoaded": {
+                  "type": "boolean"
+                },
+                "taskIdentityPreserved": {
+                  "type": "boolean"
+                },
+                "worktreeIdentityPreserved": {
+                  "type": "boolean"
+                },
+                "headPreserved": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "required": [
+                "code",
+                "message"
+              ],
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "pattern": "^[A-Z][A-Z0-9_]{2,63}$"
+                },
+                "message": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1000
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  ]
+}

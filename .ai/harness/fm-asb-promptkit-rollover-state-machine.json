@@ -1,0 +1,387 @@
+{
+  "schemaVersion": 1,
+  "stateMachineId": "agentswitchboard.context-rollover.v1",
+  "status": "contract-only",
+  "canonicalSource": "docs/harness/context-rollover-ux.md",
+  "coreInvariant": "The old conversation may disappear only after everything required to continue the mission has become durable; the new conversation may mutate only after it proves it recovered the same mission against current truth.",
+  "userVisibleStates": [
+    {
+      "id": "Healthy",
+      "internal": [
+        "HEALTHY"
+      ],
+      "userInterruption": false,
+      "indicator": "Working"
+    },
+    {
+      "id": "Context getting full",
+      "internal": [
+        "CHECKPOINT_PREP"
+      ],
+      "userInterruption": false,
+      "indicator": "Context getting full \u00b7 preparing checkpoint"
+    },
+    {
+      "id": "Checkpointing",
+      "internal": [
+        "CHECKPOINTING"
+      ],
+      "userInterruption": false,
+      "indicator": "Preparing a safe continuation"
+    },
+    {
+      "id": "Ready to continue fresh",
+      "internal": [
+        "ROLLOVER_READY"
+      ],
+      "userInterruption": false,
+      "indicator": "Checkpoint ready"
+    },
+    {
+      "id": "Relaunching",
+      "internal": [
+        "TRANSITION"
+      ],
+      "userInterruption": false,
+      "indicator": "Refreshing agent context"
+    },
+    {
+      "id": "Verified & continuing",
+      "internal": [
+        "NEW_CONTEXT",
+        "VERIFIED"
+      ],
+      "userInterruption": false,
+      "indicator": "Fresh context \u00b7 work preserved \u00b7 continuing"
+    },
+    {
+      "id": "Needs attention",
+      "internal": [
+        "NEEDS_ATTENTION",
+        "FAILED"
+      ],
+      "userInterruption": true,
+      "indicator": "Needs attention \u00b7 rollover paused"
+    }
+  ],
+  "internalStates": [
+    "HEALTHY",
+    "CHECKPOINT_PREP",
+    "CHECKPOINTING",
+    "ROLLOVER_READY",
+    "TRANSITION",
+    "NEW_CONTEXT",
+    "VERIFIED",
+    "NEEDS_ATTENTION",
+    "FAILED"
+  ],
+  "events": [
+    {
+      "id": "pressure.rising.verified",
+      "emits": "context-pressure.observation",
+      "tier": "A"
+    },
+    {
+      "id": "pressure.rising.estimated",
+      "emits": "context-pressure.observation",
+      "tier": "B"
+    },
+    {
+      "id": "semantic.divergence",
+      "emits": "conversation-health.observation"
+    },
+    {
+      "id": "checkpoint.requested",
+      "emits": "checkpoint.requested"
+    },
+    {
+      "id": "checkpoint.progress",
+      "emits": "checkpoint.progress"
+    },
+    {
+      "id": "checkpoint.completed",
+      "emits": "checkpoint.completed"
+    },
+    {
+      "id": "checkpoint.failed",
+      "emits": "checkpoint.failed"
+    },
+    {
+      "id": "rollover.authorized",
+      "emits": "context-transition.ready"
+    },
+    {
+      "id": "rollover.deferred.unverified-pressure",
+      "emits": "context-transition.deferred"
+    },
+    {
+      "id": "relaunch.requested",
+      "emits": "firstmate.relaunch.requested"
+    },
+    {
+      "id": "relaunch.precheck.refused",
+      "emits": "firstmate.relaunch.refused"
+    },
+    {
+      "id": "relaunch.old-stopped",
+      "emits": "firstmate.relaunch.old-stopped"
+    },
+    {
+      "id": "relaunch.new-running",
+      "emits": "firstmate.relaunch.new-running"
+    },
+    {
+      "id": "relaunch.launch-failed-after-stop",
+      "emits": "firstmate.relaunch.launch-failed"
+    },
+    {
+      "id": "relaunch.state-uncertain",
+      "emits": "firstmate.relaunch.state-uncertain"
+    },
+    {
+      "id": "post.verify.passed",
+      "emits": "context-transition.verified"
+    },
+    {
+      "id": "post.verify.failed",
+      "emits": "context-transition.verification-failed"
+    },
+    {
+      "id": "pressure.dropped",
+      "emits": "context-pressure.relieved"
+    },
+    {
+      "id": "operator.decision.required",
+      "emits": "needs-attention"
+    }
+  ],
+  "transitions": [
+    {
+      "from": "HEALTHY",
+      "event": "pressure.rising.verified",
+      "to": "CHECKPOINT_PREP",
+      "automaticEligible": true
+    },
+    {
+      "from": "HEALTHY",
+      "event": "pressure.rising.estimated",
+      "to": "CHECKPOINT_PREP",
+      "automaticEligible": false,
+      "note": "prepare only; never auto-relaunch"
+    },
+    {
+      "from": "HEALTHY",
+      "event": "semantic.divergence",
+      "to": "CHECKPOINT_PREP",
+      "automaticEligible": false,
+      "note": "Prompt Kit may CRITIQUE/REGROUND without restart"
+    },
+    {
+      "from": "CHECKPOINT_PREP",
+      "event": "checkpoint.requested",
+      "to": "CHECKPOINTING"
+    },
+    {
+      "from": "CHECKPOINTING",
+      "event": "checkpoint.completed",
+      "to": "ROLLOVER_READY"
+    },
+    {
+      "from": "CHECKPOINTING",
+      "event": "checkpoint.failed",
+      "to": "NEEDS_ATTENTION",
+      "preserveOldAgent": true
+    },
+    {
+      "from": "ROLLOVER_READY",
+      "event": "pressure.dropped",
+      "to": "HEALTHY"
+    },
+    {
+      "from": "ROLLOVER_READY",
+      "event": "rollover.deferred.unverified-pressure",
+      "to": "HEALTHY",
+      "note": "checkpoint retained; automatic transition disabled"
+    },
+    {
+      "from": "ROLLOVER_READY",
+      "event": "rollover.authorized",
+      "to": "TRANSITION",
+      "requires": [
+        "checkpoint.complete",
+        "verified-or-native-pressure-or-operator",
+        "backend.in{tmux,Herdr}",
+        "scope=crew-task"
+      ]
+    },
+    {
+      "from": "TRANSITION",
+      "event": "relaunch.precheck.refused",
+      "to": "NEEDS_ATTENTION",
+      "preserveOldAgent": true
+    },
+    {
+      "from": "TRANSITION",
+      "event": "relaunch.old-stopped",
+      "to": "TRANSITION",
+      "note": "intermediate"
+    },
+    {
+      "from": "TRANSITION",
+      "event": "relaunch.new-running",
+      "to": "NEW_CONTEXT"
+    },
+    {
+      "from": "TRANSITION",
+      "event": "relaunch.launch-failed-after-stop",
+      "to": "NEEDS_ATTENTION",
+      "preserveWork": true,
+      "agentRunning": false
+    },
+    {
+      "from": "TRANSITION",
+      "event": "relaunch.state-uncertain",
+      "to": "NEEDS_ATTENTION"
+    },
+    {
+      "from": "NEW_CONTEXT",
+      "event": "post.verify.passed",
+      "to": "VERIFIED"
+    },
+    {
+      "from": "NEW_CONTEXT",
+      "event": "post.verify.failed",
+      "to": "NEEDS_ATTENTION"
+    },
+    {
+      "from": "VERIFIED",
+      "event": "pressure.dropped",
+      "to": "HEALTHY",
+      "note": "continuing under fresh grounding episode"
+    },
+    {
+      "from": "NEEDS_ATTENTION",
+      "event": "checkpoint.requested",
+      "to": "CHECKPOINTING"
+    },
+    {
+      "from": "NEEDS_ATTENTION",
+      "event": "rollover.authorized",
+      "to": "TRANSITION"
+    }
+  ],
+  "pressureTiers": {
+    "A_automaticEligible": [
+      "native-provider",
+      "native-harness",
+      "verified-adapter"
+    ],
+    "B_preparationOnly": [
+      "estimated",
+      "unavailable"
+    ]
+  },
+  "backendGates": {
+    "tmux": "automatic-crew-rollover",
+    "Herdr": "automatic-crew-rollover",
+    "Zellij": "checkpoint-only",
+    "cmux": "checkpoint-only",
+    "Orca": "checkpoint-only"
+  },
+  "scopeGates": {
+    "crew-task": "v1-automatic-when-authorized",
+    "primary-session": "checkpoint-and-fresh-session-packet-only"
+  },
+  "harnessGuidance": {
+    "pi": "first-fully-automatic-candidate",
+    "opencode": "automatic-after-verified-pressure",
+    "claude": "automatic-only-when-no-consent-gate",
+    "codex": "checkpoint-first; automatic after safe-state adapter",
+    "grok": "checkpoint-first",
+    "gemini": "checkpoint-first",
+    "omp": "fresh-relaunch-plus-checkpoint",
+    "kimi": "fresh-relaunch-plus-checkpoint",
+    "agy": "fresh-relaunch-plus-checkpoint"
+  },
+  "notificationPolicy": {
+    "silent": [
+      "checkpoint.requested",
+      "checkpoint.completed",
+      "relaunch.new-running",
+      "post.verify.passed"
+    ],
+    "passiveOnReturn": [
+      "afk.context-refreshes-summary"
+    ],
+    "interrupt": [
+      "checkpoint.failed",
+      "relaunch.precheck.refused",
+      "relaunch.launch-failed-after-stop",
+      "relaunch.state-uncertain",
+      "post.verify.failed",
+      "operator.decision.required",
+      "consent-gate"
+    ]
+  },
+  "receiptStack": [
+    {
+      "id": "pressure-observation",
+      "owner": "asb-adapter",
+      "purpose": "why preparation started"
+    },
+    {
+      "id": "checkpoint-receipt",
+      "owner": "asb-and-durable-owners",
+      "purpose": "prove conversation may be discarded"
+    },
+    {
+      "id": "firstmate-relaunch-receipt",
+      "owner": "firstmate",
+      "purpose": "runtime/worktree/process transition proof"
+    },
+    {
+      "id": "post-rollover-verification-receipt",
+      "owner": "asb",
+      "purpose": "prove successor recovered mission"
+    },
+    {
+      "id": "context-transition-aggregate",
+      "owner": "asb",
+      "purpose": "user-facing aggregate referencing the four receipts"
+    }
+  ],
+  "protocolBinding": {
+    "message": "asb.context-transition/v1",
+    "stateMap": {
+      "PROPOSED": [
+        "CHECKPOINT_PREP"
+      ],
+      "CHECKPOINTING": [
+        "CHECKPOINTING"
+      ],
+      "READY": [
+        "ROLLOVER_READY"
+      ],
+      "EXECUTING": [
+        "TRANSITION",
+        "NEW_CONTEXT"
+      ],
+      "COMPLETED": [
+        "VERIFIED"
+      ],
+      "FAILED": [
+        "NEEDS_ATTENTION",
+        "FAILED"
+      ]
+    }
+  },
+  "firstSuccessorTurn": {
+    "mutationAllowed": false,
+    "requiredActions": [
+      "load-checkpoint",
+      "refresh-durable-repository-truth",
+      "reconcile-checkpoint-with-truth",
+      "state-next-bounded-action"
+    ]
+  }
+}

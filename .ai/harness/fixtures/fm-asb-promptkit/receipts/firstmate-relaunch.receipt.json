@@ -1,0 +1,14 @@
+{
+  "receiptType": "firstmate-relaunch",
+  "schema": "asb.context-rollover-receipt/firstmate-relaunch/v1",
+  "taskId": "task-42",
+  "method": "firstmate-relaunch",
+  "oldAgentStopped": true,
+  "newAgentRunning": true,
+  "endpointPreserved": true,
+  "worktreePreserved": true,
+  "dirtyWorkPreserved": true,
+  "generationBefore": 4,
+  "generationAfter": 5,
+  "userSummary": "Refreshing agent context \u00b7 worktree preserved"
+}

@@ -1,0 +1,27 @@
+{
+  "receiptType": "context-transition-aggregate",
+  "schema": "asb.context-rollover-receipt/aggregate/v1",
+  "taskId": "task-42",
+  "correlationId": "corr_repo42_fix_auth_001",
+  "transitionId": "ctx_task42_20260914_001",
+  "result": "PASS",
+  "why": [
+    "Verified context pressure",
+    "Prompt Kit intervention: REBOOTSTRAP"
+  ],
+  "references": [
+    "pressure-observation.receipt.json",
+    "checkpoint.receipt.json",
+    "firstmate-relaunch.receipt.json",
+    "post-verification.receipt.json"
+  ],
+  "userDefaultView": "Fresh context ready \u00b7 continuing",
+  "technicalDetails": {
+    "prompt": "P83",
+    "generation": "4 \u2192 5",
+    "worktree": "unchanged",
+    "head": "unchanged",
+    "checkpoint": "PASS",
+    "verification": "PASS"
+  }
+}

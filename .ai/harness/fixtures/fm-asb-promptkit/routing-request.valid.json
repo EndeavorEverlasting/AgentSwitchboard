@@ -1,0 +1,52 @@
+{
+  "schema": "prompt-kit.routing-request/v1",
+  "eventId": "evt_route_req_20260914_task42_001",
+  "correlationId": "corr_repo42_fix_auth_001",
+  "causationId": "evt_obs_20260914_task42_001",
+  "createdAt": "2026-09-14T18:30:01Z",
+  "producer": {
+    "system": "agentswitchboard",
+    "component": "prompt-router-client",
+    "version": "1.0.0"
+  },
+  "observationEventId": "evt_obs_20260914_task42_001",
+  "task": {
+    "firstMateTaskId": "task-42",
+    "repository": {
+      "fullName": "EndeavorEverlasting/example-repo",
+      "branch": "feat/auth",
+      "headSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "worktreeId": "wt_task-42"
+    }
+  },
+  "mission": {
+    "groundingEpisodeId": "ge_repo42_fix_auth_001",
+    "summary": "Verify the inherited completion claim and advance only from current evidence."
+  },
+  "executionSurface": "regular_ai_prompt",
+  "currentPrompt": null,
+  "evidenceState": {
+    "observed": "VALIDATED",
+    "claimed": "INTEGRATED"
+  },
+  "signals": [
+    "evidence-promotion"
+  ],
+  "correctionEvents": [],
+  "constraints": {
+    "forbiddenScopes": [
+      "main"
+    ],
+    "evidenceRefs": [],
+    "rawTranscriptIncluded": false
+  },
+  "routingPolicy": {
+    "maxCandidates": 3,
+    "crossSurfaceFallbackAllowed": false,
+    "requireCurrentRegistry": true
+  },
+  "idempotency": {
+    "key": "idem_7e63eb070f78705e2f774b216641e3dc39fe09ca2864240590d9215560be35ac",
+    "semanticSha256": "2c483f5f4100e3a06897545a395378dbb0f40e9b4ac42358f8194cc1e3298b0d"
+  }
+}

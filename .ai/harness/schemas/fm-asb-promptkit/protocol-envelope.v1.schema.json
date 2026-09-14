@@ -1,0 +1,315 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/.ai/harness/schemas/fm-asb-promptkit/protocol-envelope.v1.schema.json",
+  "title": "ASB / FirstMate / Prompt Kit Protocol Envelope v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "eventId",
+    "correlationId",
+    "causationId",
+    "createdAt",
+    "producer",
+    "idempotency"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "eventId": {
+      "$ref": "#/$defs/eventId"
+    },
+    "correlationId": {
+      "$ref": "#/$defs/correlationId"
+    },
+    "causationId": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/eventId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "producer": {
+      "type": "object",
+      "required": [
+        "system",
+        "component",
+        "version"
+      ],
+      "properties": {
+        "system": {
+          "enum": [
+            "agentswitchboard",
+            "firstmate",
+            "prompt-kit"
+          ]
+        },
+        "component": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 96
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 96
+        }
+      },
+      "additionalProperties": false
+    },
+    "idempotency": {
+      "type": "object",
+      "required": [
+        "key",
+        "semanticSha256"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "pattern": "^idem_[a-f0-9]{64}$"
+        },
+        "semanticSha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "gitSha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "eventId": {
+      "type": "string",
+      "pattern": "^evt_[A-Za-z0-9][A-Za-z0-9._-]{7,95}$"
+    },
+    "correlationId": {
+      "type": "string",
+      "pattern": "^corr_[A-Za-z0-9][A-Za-z0-9._-]{7,95}$"
+    },
+    "groundingEpisodeId": {
+      "type": "string",
+      "pattern": "^ge_[A-Za-z0-9][A-Za-z0-9._-]{7,95}$"
+    },
+    "transitionId": {
+      "type": "string",
+      "pattern": "^ctx_[A-Za-z0-9][A-Za-z0-9._-]{7,95}$"
+    },
+    "firstMateTaskId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+    },
+    "executionSurface": {
+      "enum": [
+        "regular_ai_prompt",
+        "gnhf_launch_artifact"
+      ]
+    },
+    "promptId": {
+      "type": "string",
+      "pattern": "^P[0-9]{2,3}$"
+    },
+    "promptRef": {
+      "type": "object",
+      "required": [
+        "id",
+        "kitVersion",
+        "registrySha256",
+        "promptSha256",
+        "executionSurface"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/promptId"
+        },
+        "kitVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "registrySha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "promptSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "executionSurface": {
+          "$ref": "#/$defs/executionSurface"
+        }
+      },
+      "additionalProperties": false
+    },
+    "repositoryRef": {
+      "type": "object",
+      "required": [
+        "fullName"
+      ],
+      "properties": {
+        "fullName": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "branch": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 255
+        },
+        "headSha": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/gitSha"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "worktreeId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 160
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidenceRef": {
+      "type": "object",
+      "required": [
+        "kind",
+        "ref",
+        "containsRawUserText",
+        "containsSecrets"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "firstmate-state",
+            "repository",
+            "provider",
+            "runtime-artifact",
+            "validator",
+            "report",
+            "other"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "sha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "containsRawUserText": {
+          "type": "boolean"
+        },
+        "containsSecrets": {
+          "const": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "contextPressure": {
+      "type": "object",
+      "required": [
+        "observationSource",
+        "confidence",
+        "automaticEligible"
+      ],
+      "properties": {
+        "observationSource": {
+          "enum": [
+            "native-provider",
+            "native-harness",
+            "verified-adapter",
+            "estimated",
+            "unavailable"
+          ]
+        },
+        "confidence": {
+          "enum": [
+            "none",
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "contextLimitTokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "contextUsedTokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "utilization": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "automaticEligible": {
+          "type": "boolean"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "observationSource": {
+                "enum": [
+                  "estimated",
+                  "unavailable"
+                ]
+              }
+            },
+            "required": [
+              "observationSource"
+            ]
+          },
+          "then": {
+            "properties": {
+              "automaticEligible": {
+                "const": false
+              }
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    }
+  }
+}

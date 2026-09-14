@@ -1,0 +1,22 @@
+{
+  "receiptType": "needs-attention",
+  "schema": "asb.context-rollover-receipt/needs-attention/v1",
+  "taskId": "task-42",
+  "failureClass": "launch-failed-after-stop",
+  "oldAgentPreserved": false,
+  "relaunchAttempted": true,
+  "preserved": [
+    "worktree",
+    "uncommitted changes",
+    "checkpoint",
+    "task identity",
+    "continuation note"
+  ],
+  "userSummary": "Agent stopped; work is preserved",
+  "userBody": "The previous agent exited successfully. The replacement agent did not start. No agent is currently running.",
+  "actions": [
+    "Retry relaunch",
+    "Open task",
+    "View receipt"
+  ]
+}

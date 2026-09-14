@@ -1,0 +1,229 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/.ai/harness/schemas/fm-asb-promptkit/routing-decision.v1.schema.json",
+  "title": "Prompt Kit Routing Decision v1",
+  "allOf": [
+    {
+      "$ref": "protocol-envelope.v1.schema.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "schema",
+        "routingRequestEventId",
+        "registry",
+        "decision",
+        "classification",
+        "requiredVariables",
+        "proofGate",
+        "nextStep",
+        "confidence"
+      ],
+      "properties": {
+        "schema": {
+          "const": "prompt-kit.routing-decision/v1"
+        },
+        "routingRequestEventId": {
+          "$ref": "protocol-envelope.v1.schema.json#/$defs/eventId"
+        },
+        "registry": {
+          "type": "object",
+          "required": [
+            "schemaVersion",
+            "kitVersion",
+            "registrySha256"
+          ],
+          "properties": {
+            "schemaVersion": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 96
+            },
+            "kitVersion": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "registrySha256": {
+              "$ref": "protocol-envelope.v1.schema.json#/$defs/sha256"
+            }
+          },
+          "additionalProperties": false
+        },
+        "decision": {
+          "type": "object",
+          "required": [
+            "intervention",
+            "routeAction",
+            "primaryPrompt",
+            "alternates",
+            "reasonCodes"
+          ],
+          "properties": {
+            "intervention": {
+              "enum": [
+                "CONTINUE",
+                "CRITIQUE",
+                "REGROUND",
+                "REBOOTSTRAP"
+              ]
+            },
+            "routeAction": {
+              "enum": [
+                "KEEP_CURRENT_PROMPT",
+                "SWITCH_PROMPT",
+                "NO_ROUTE",
+                "BLOCKED"
+              ]
+            },
+            "primaryPrompt": {
+              "anyOf": [
+                {
+                  "$ref": "protocol-envelope.v1.schema.json#/$defs/promptRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "alternates": {
+              "type": "array",
+              "maxItems": 2,
+              "uniqueItems": true,
+              "items": {
+                "$ref": "protocol-envelope.v1.schema.json#/$defs/promptRef"
+              }
+            },
+            "reasonCodes": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 16,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9._-]{1,79}$"
+              }
+            }
+          },
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "routeAction": {
+                    "enum": [
+                      "KEEP_CURRENT_PROMPT",
+                      "SWITCH_PROMPT"
+                    ]
+                  }
+                },
+                "required": [
+                  "routeAction"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "primaryPrompt": {
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "routeAction": {
+                    "enum": [
+                      "NO_ROUTE",
+                      "BLOCKED"
+                    ]
+                  }
+                },
+                "required": [
+                  "routeAction"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "primaryPrompt": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "classification": {
+          "type": "object",
+          "required": [
+            "outcomeClass",
+            "causeCandidates"
+          ],
+          "properties": {
+            "outcomeClass": {
+              "enum": [
+                "routing",
+                "interpretation",
+                "execution",
+                "progression",
+                "durability",
+                "premature-terminal",
+                "evidence-promotion",
+                "regression",
+                "environment",
+                "unknown"
+              ]
+            },
+            "causeCandidates": {
+              "type": "array",
+              "maxItems": 7,
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "grounding",
+                  "intent-fidelity",
+                  "decomposition",
+                  "contract-fidelity",
+                  "action-space",
+                  "recovery",
+                  "unknown"
+                ]
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "requiredVariables": {
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_.-]{0,79}$"
+          }
+        },
+        "proofGate": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "nextStep": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "confidence": {
+          "enum": [
+            "NONE",
+            "LOW",
+            "MEDIUM",
+            "HIGH"
+          ]
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  ]
+}

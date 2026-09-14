@@ -1,0 +1,11 @@
+{
+  "receiptType": "pressure-observation",
+  "schema": "asb.context-rollover-receipt/pressure-observation/v1",
+  "taskId": "task-42",
+  "correlationId": "corr_repo42_fix_auth_001",
+  "observationSource": "verified-adapter",
+  "confidence": "high",
+  "utilization": 0.94,
+  "automaticEligible": true,
+  "userSummary": "Context getting full \u00b7 preparing checkpoint"
+}

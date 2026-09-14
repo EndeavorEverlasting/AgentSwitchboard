@@ -1,0 +1,51 @@
+{
+  "schema": "asb.agent-observation/v1",
+  "eventId": "evt_obs_20260914_task42_001",
+  "correlationId": "corr_repo42_fix_auth_001",
+  "causationId": null,
+  "createdAt": "2026-09-14T18:30:00Z",
+  "producer": {
+    "system": "agentswitchboard",
+    "component": "firstmate-observation-adapter",
+    "version": "1.0.0"
+  },
+  "source": {
+    "system": "firstmate",
+    "taskId": "task-42",
+    "eventKey": "status-seq-18",
+    "eventType": "validation",
+    "taskKind": "ship",
+    "harness": "pi",
+    "backend": "tmux",
+    "generation": 4
+  },
+  "repository": {
+    "fullName": "EndeavorEverlasting/example-repo",
+    "branch": "feat/auth",
+    "headSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "worktreeId": "wt_task-42"
+  },
+  "state": {
+    "phase": "completed",
+    "terminal": true,
+    "statusKey": null
+  },
+  "output": {
+    "format": "json",
+    "rawIncluded": false,
+    "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "artifactRef": "artifact://task-42/validation.json",
+    "recordCount": 14
+  },
+  "evidence": [],
+  "promptContext": {
+    "groundingEpisodeId": "ge_repo42_fix_auth_001",
+    "currentPrompt": null,
+    "currentDispatchEventId": null
+  },
+  "contextPressure": null,
+  "idempotency": {
+    "key": "idem_2ee147e929192599693d79d3b9fabe53a1b11c2d7d659e529ef0bb01547b1c70",
+    "semanticSha256": "7b9af90cc50142f6932c994e6e5523d99971fe345e4b2a0ed7505f5100875ccc"
+  }
+}

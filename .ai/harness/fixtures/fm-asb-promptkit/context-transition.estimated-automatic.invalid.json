@@ -1,0 +1,67 @@
+{
+  "schema": "asb.context-transition/v1",
+  "eventId": "evt_ctx_20260914_task42_bad",
+  "correlationId": "corr_repo42_fix_auth_001",
+  "causationId": "evt_dispatch_20260914_task42_001",
+  "createdAt": "2026-09-14T18:42:00Z",
+  "producer": {
+    "system": "agentswitchboard",
+    "component": "context-transition-coordinator",
+    "version": "1.0.0"
+  },
+  "transitionId": "ctx_task42_20260914_001",
+  "state": "READY",
+  "target": {
+    "firstMateTaskId": "task-42",
+    "scope": "crew-task"
+  },
+  "reason": "both",
+  "pressure": {
+    "observationSource": "estimated",
+    "confidence": "low",
+    "contextLimitTokens": 200000,
+    "contextUsedTokens": 190000,
+    "utilization": 0.95,
+    "automaticEligible": false
+  },
+  "semantic": {
+    "groundingEpisodeId": "ge_repo42_fix_auth_001",
+    "intervention": "REBOOTSTRAP",
+    "reasonCodes": [
+      "context-pressure-high",
+      "repeated-correction"
+    ]
+  },
+  "checkpoint": {
+    "state": "complete",
+    "evidenceRefs": [],
+    "resumePointer": "Load the durable task brief, repository evidence floor, current Prompt Kit route, and exact next proof gate."
+  },
+  "transition": {
+    "method": "firstmate-relaunch",
+    "automatic": true
+  },
+  "pre": {
+    "repository": {
+      "fullName": "EndeavorEverlasting/example-repo",
+      "branch": "feat/auth",
+      "headSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "worktreeId": "wt_task-42"
+    },
+    "prompt": {
+      "id": "P83",
+      "kitVersion": "v42",
+      "registrySha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "promptSha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "executionSurface": "regular_ai_prompt"
+    },
+    "generation": 4
+  },
+  "post": null,
+  "verification": null,
+  "error": null,
+  "idempotency": {
+    "key": "idem_03e021d83694381af775402bb96815004519b17b45422d68bc53a231d43408e5",
+    "semanticSha256": "e47df3c2662709c16a9d557e747d001a970a1ff8b59db1d57e0e025c055edbbd"
+  }
+}

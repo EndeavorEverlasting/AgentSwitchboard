@@ -103,7 +103,7 @@ If FirstMate owns live crew execution, AgentSwitchboard can **stop expanding** w
 | Planned ASB nested-bus / fan-out delivery program (Panels 07–09 as ASB live runtime) | **RETIRE** (as ASB delivery goal) | Retire the September goal of growing child-bus into heterogeneous/nested live orchestration. Do not delete the spine; do not reopen without a superseding ADR. |
 | Runtime-event observation ambitions | **NARROW** | KEEP contract + synthetic fixtures. Do not build ASB live crew observers that duplicate `fm-watch`. Future BRIDGE only for evidence correlation into ASB sinks. |
 | FirstMate interoperability | **KEEP** / proceed | Treat PR #96 lineage as the interop owner to rebase onto refreshed `main` and FirstMate `b182d0f` (pin refresh is mandatory; old `833a9a25…` pin is stale). Admin Box 1 FirstMate bootstrap remains authorized and separable. |
-| Prompt Kit semantic surfaces | **KEEP** (deferred integration) | Remain ASB differentiator; do not build FirstMate bridge until interop floor is current. |
+| Prompt Kit semantic surfaces | **KEEP** (contract bridge defined) | Remain ASB differentiator. Live bridge still waits on interop floor; v1 protocol/UX contracts live in `docs/architecture/fm-asb-promptkit-protocol-v1.md` and `docs/harness/context-rollover-ux.md`. |
 
 ## September Panels / ASQ dispositions
 
@@ -127,7 +127,7 @@ If FirstMate owns live crew execution, AgentSwitchboard can **stop expanding** w
 
 - Do not delete `tooling/gnhf/` or `tooling/harness/child-agent-bus/`.
 - Do not implement Pi/OpenCode child-bus adapters, fan-out, or nested ASB delegation.
-- Do not build Prompt Kit → FirstMate integration yet.
+- Do not build live Prompt Kit → FirstMate adapters yet; contract-only protocol/UX freeze is authorized separately in `docs/architecture/fm-asb-promptkit-protocol-v1.md`.
 - Do not rewrite README / product identity in this change.
 - Do not block Admin Box 1 FirstMate bootstrap on unrelated product work.
 
