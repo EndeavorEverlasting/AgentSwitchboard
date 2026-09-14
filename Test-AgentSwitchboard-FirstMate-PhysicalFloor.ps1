@@ -128,7 +128,11 @@ $actualHeadRaw = & git -C $Root rev-parse HEAD
 if ($LASTEXITCODE -ne 0) { throw 'Unable to resolve exact AgentSwitchboard HEAD.' }
 $actualHead = ("$actualHeadRaw").Trim()
 if ($actualHead -ne $ExpectedHead.ToLowerInvariant()) {
-    throw "Exact-head mismatch. Expected=$ExpectedHead Actual=$actualHead"
+    Write-Host 'STATUS=BLOCKED_HEAD_MISMATCH'
+    Write-Host "EXPECTED_HEAD=$ExpectedHead"
+    Write-Host "ACTUAL_HEAD=$actualHead"
+    Write-Host 'NEXT=ff-only refresh main, re-resolve HEAD, and rerun with the recorded SHA'
+    exit 1
 }
 
 if ($ContractOnly) {
@@ -325,8 +329,16 @@ if ($preflight.ExitCode -ne 0) {
         Write-Host "NEXT_ACTION=$($nextAction.Groups[1].Value.Trim())"
     }
     Write-Host "PREREQUISITE_EVIDENCE=$PrerequisitePath"
+    $nextMatch = [regex]::Match($preflight.Stdout, '(?m)^NEXT=(.+)$')
+    if ($nextMatch.Success) {
+        Write-Host "NEXT=$($nextMatch.Groups[1].Value.Trim())"
+    }
     if ($preflight.ExitCode -eq 124) {
-        throw "FirstMate WSL prerequisite probe timed out after $PrerequisiteTimeoutSeconds seconds."
+        # Keep exit 124 structured — do not throw (throw collapses to unstructured exit 1).
+        Write-Host 'STATUS=BLOCKED_PREREQUISITE_TIMEOUT'
+        Write-Host "NEXT=increase PrerequisiteTimeoutSeconds or repair WSL hang, then rerun; probe timed out after $PrerequisiteTimeoutSeconds seconds"
+        Write-Host "FIRSTMATE_WSL_PREREQUISITE_BLOCKED Exit=124"
+        exit 124
     }
     # Preserve structured exit codes so FM-WSL-12 continuation can distinguish
     # allowlisted package repair (44) from operator GitHub auth (45) without
