@@ -58,6 +58,7 @@ class RepositoryWorkLedgerContractTests(unittest.TestCase):
         self.assertNotIn('(1 tasks)', result.stdout)
         self.assertIn('portable=RepoLedgerInteroperability.v1@429237aa41d8', result.stdout)
         self.assertIn('local-profile=agentswitchboard.repository-work-ledger.v1@1.0.0', result.stdout)
+        self.assertRegex(result.stdout, r'durable-long-handoffs=\d+')
 
     def test_match_side_effects_do_not_truncate_task_loop(self):
         """Regression: PowerShell -match must not clobber the heading match collection mid-loop."""
@@ -114,6 +115,24 @@ class RepositoryWorkLedgerContractTests(unittest.TestCase):
             self.assertRegex(portable['pinnedCommit'], r'^[0-9a-f]{40}$')
         self.assertFalse(policy['localExecutionProfile']['portableRequirement'])
         self.assertFalse(adoption['local']['executionProfile']['portableRequirement'])
+
+    def test_operator_command_durability_is_local_and_pinned(self):
+        policy = json.loads(POLICY.read_text(encoding='utf-8'))
+        adoption = json.loads(ADOPTION.read_text(encoding='utf-8'))
+        durability = policy['localExecutionProfile']['operatorCommandDurability']
+        adopted = adoption['local']['executionProfile']['operatorCommandDurability']
+        self.assertEqual(durability['maxInlineNextActionChars'], 320)
+        self.assertEqual(
+            durability['appliesToStatuses'],
+            ['READY', 'CLAIMED', 'VERIFY', 'REVIEW', 'MERGE', 'OPERATOR'],
+        )
+        self.assertEqual(durability['entrypointExtensions'], ['.ps1', '.cmd', '.bat', '.sh', '.py'])
+        self.assertTrue(durability['requireReferenceCitation'])
+        self.assertTrue(durability['requireNextActionMention'])
+        self.assertFalse(durability['portableRequirement'])
+        self.assertEqual(adopted['maxInlineNextActionChars'], 320)
+        self.assertEqual(adopted['entrypointExtensions'], durability['entrypointExtensions'])
+        self.assertFalse(adopted['portableRequirement'])
 
     def run_temp(self, content):
         with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False, dir=ROOT, encoding='utf-8') as handle:
@@ -172,6 +191,59 @@ class RepositoryWorkLedgerContractTests(unittest.TestCase):
 
     def test_continuation_accepts_concrete_action_verb(self):
         result = self.run_temp(task(Status='VERIFY', Owner='agent-session', **{'Next action': 'run the owning validator and record its artifact receipt'}))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_long_next_action_requires_durable_entrypoint_reference(self):
+        long_action = 'run ' + ('the bounded operator sequence and preserve its evidence before continuing; ' * 8)
+        result = self.run_temp(task(**{'Next action': long_action}))
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('long Next action', result.stderr)
+        self.assertIn('must cite a repository executable entrypoint in References', result.stderr)
+
+    def test_multiline_long_next_action_cannot_bypass_durability_gate(self):
+        content = task(**{'Next action': 'run these commands:'})
+        continuation = '    ' + ('perform the recurring operator sequence and preserve its evidence before continuing; ' * 8)
+        content = content.replace('- **Updated:**', continuation + '\n- **Updated:**', 1)
+        result = self.run_temp(content)
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('long Next action', result.stderr)
+        self.assertIn('must cite a repository executable entrypoint in References', result.stderr)
+
+    def test_long_next_action_requires_same_entrypoint_mention(self):
+        long_action = 'run ' + ('the bounded operator sequence and preserve its evidence before continuing; ' * 8)
+        result = self.run_temp(task(
+            References='`scripts/Get-RepositoryWorkLedgerFrontier.ps1`',
+            **{'Next action': long_action},
+        ))
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('must invoke or name the same durable executable cited in References', result.stderr)
+
+    def test_long_next_action_rejects_untracked_existing_entrypoint(self):
+        with tempfile.NamedTemporaryFile('w', suffix='.ps1', delete=False, dir=ROOT, encoding='utf-8') as handle:
+            handle.write("Write-Host 'temporary'\n")
+            relative = pathlib.Path(handle.name).relative_to(ROOT).as_posix()
+        try:
+            long_action = 'run ' + relative + ' and ' + ('continue only after its bounded evidence is preserved; ' * 8)
+            result = self.run_temp(task(
+                References=f'`{relative}`',
+                **{'Next action': long_action},
+            ))
+        finally:
+            (ROOT / relative).unlink(missing_ok=True)
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('must cite an existing tracked repository executable entrypoint', result.stderr)
+
+    def test_long_next_action_accepts_tracked_durable_entrypoint(self):
+        entrypoint = 'scripts/Get-RepositoryWorkLedgerFrontier.ps1'
+        long_action = 'run ' + entrypoint + ' and ' + ('use its bounded output instead of reconstructing the operator sequence; ' * 7)
+        result = self.run_temp(task(
+            References=f'`{entrypoint}`',
+            **{'Next action': long_action},
+        ))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_short_next_action_does_not_require_wrapper_graduation(self):
+        result = self.run_temp(task(**{'Next action': 'run the focused validator and record its result'}))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_work_class_is_required(self):

@@ -34,6 +34,14 @@ function Test-ExactSequence {
 function Test-ExactCommitPin([string]$Value) {
     return $Value -cmatch '^[0-9a-f]{40}$'
 }
+function Test-TrackedRepositoryFile([string]$Candidate) {
+    if ([string]::IsNullOrWhiteSpace($Candidate)) { return $false }
+    $resolved = Join-Path $repoRoot $Candidate
+    if (-not (Test-Path -LiteralPath $resolved -PathType Leaf)) { return $false }
+    $stageLines = @(& git -C $repoRoot ls-files --stage --error-unmatch -- $Candidate 2>$null)
+    if ($LASTEXITCODE -ne 0 -or $stageLines.Count -ne 1) { return $false }
+    return [string]$stageLines[0] -match '^(?:100644|100755)\s+[0-9a-f]{40,64}\s+\d+\t'
+}
 
 foreach ($path in @($ledger, $policyPathResolved, $adoptionPath, $docPath, $frontierPath)) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { Add-Error "missing required path: $path" }
@@ -62,6 +70,9 @@ $expectedLocalRequiredFields = @('Work class')
 $expectedWorkClasses = @('BOUNDED', 'UNBOUNDED')
 $expectedUnboundedStatuses = @('READY', 'BLOCKED', 'OPERATOR', 'DONE')
 $expectedTerminalNextAction = 'none; no safe actionable work remains'
+$expectedOperatorDurabilityStatuses = @('READY', 'CLAIMED', 'VERIFY', 'REVIEW', 'MERGE', 'OPERATOR')
+$expectedOperatorEntrypointExtensions = @('.ps1', '.cmd', '.bat', '.sh', '.py')
+$expectedMaxInlineNextActionChars = 320
 
 if ($policy.contractId -ne $expectedLocalProfileId) { Add-Error 'unexpected local profile contractId' }
 if ($policy.contractVersion -ne $expectedLocalProfileVersion) { Add-Error 'unexpected local profile contractVersion' }
@@ -89,6 +100,17 @@ if ($policy.localExecutionProfile.derivedRoutes.boundedContinuation -ne 'EXECUTE
 if ($policy.localExecutionProfile.derivedRoutes.unboundedReady -ne 'DECOMPOSE') { Add-Error 'localExecutionProfile unbounded route must be DECOMPOSE' }
 if ($policy.terminalNextAction -ne $expectedTerminalNextAction) { Add-Error 'terminalNextAction does not match immutable v1 contract' }
 
+$operatorDurability = $policy.localExecutionProfile.operatorCommandDurability
+if ($null -eq $operatorDurability) { Add-Error 'missing localExecutionProfile.operatorCommandDurability' }
+else {
+    if ([int]$operatorDurability.maxInlineNextActionChars -ne $expectedMaxInlineNextActionChars) { Add-Error 'operatorCommandDurability maxInlineNextActionChars drifted' }
+    Test-ExactSequence -Actual @($operatorDurability.appliesToStatuses) -Expected $expectedOperatorDurabilityStatuses -Label 'operatorCommandDurability.appliesToStatuses'
+    Test-ExactSequence -Actual @($operatorDurability.entrypointExtensions) -Expected $expectedOperatorEntrypointExtensions -Label 'operatorCommandDurability.entrypointExtensions'
+    if ($operatorDurability.requireReferenceCitation -ne $true) { Add-Error 'operatorCommandDurability must require a References citation' }
+    if ($operatorDurability.requireNextActionMention -ne $true) { Add-Error 'operatorCommandDurability must require Next action to mention the durable entrypoint' }
+    if ($operatorDurability.portableRequirement -ne $false) { Add-Error 'operatorCommandDurability must remain AgentSwitchboard-local' }
+}
+
 if ($adoption.role -ne 'portable-contract-consumer-and-local-execution-profile-owner') { Add-Error 'adoption role must not claim canonical portable authority' }
 if ($adoption.portableContract.repository -ne $expectedPortableRepository) { Add-Error 'adoption portable contract repository must be BlacksmithGuild' }
 if ($adoption.portableContract.id -ne $expectedPortableId) { Add-Error 'adoption portable contract id drifted' }
@@ -102,6 +124,14 @@ if ($adoption.donor.pinnedCommit -ne $policy.donor.pinnedCommit) { Add-Error 'ad
 Test-ExactSequence -Actual @($adoption.donor.sourcePaths) -Expected $expectedDonorPaths -Label 'adoption.donor.sourcePaths'
 if ($adoption.local.frontier -ne 'scripts/Get-RepositoryWorkLedgerFrontier.ps1') { Add-Error 'adoption must register the local frontier reader' }
 if ($adoption.local.executionProfile.portableRequirement -ne $false) { Add-Error 'adoption must mark Work class/frontier as non-portable' }
+$adoptionDurability = $adoption.local.executionProfile.operatorCommandDurability
+if ($null -eq $adoptionDurability) { Add-Error 'adoption must register operator command durability' }
+else {
+    if ([int]$adoptionDurability.maxInlineNextActionChars -ne $expectedMaxInlineNextActionChars) { Add-Error 'adoption operator-command threshold drifted' }
+    Test-ExactSequence -Actual @($adoptionDurability.entrypointExtensions) -Expected $expectedOperatorEntrypointExtensions -Label 'adoption operatorCommandDurability.entrypointExtensions'
+    if ($adoptionDurability.requiresReferenceCitation -ne $true -or $adoptionDurability.requiresNextActionMention -ne $true) { Add-Error 'adoption must preserve operator-command reference and invocation requirements' }
+    if ($adoptionDurability.portableRequirement -ne $false) { Add-Error 'adoption operator-command durability must remain local-only' }
+}
 
 foreach ($badRef in @('main', 'master', 'HEAD', 'v1.0.0', '429237aa41d8')) {
     if (Test-ExactCommitPin $badRef) { Add-Error "symbolic/short portable contract ref unexpectedly accepted: $badRef" }
@@ -139,6 +169,10 @@ $requiredFields = @($expectedRequiredFields + $expectedLocalRequiredFields)
 $unassignedOwners = @('unclaimed', 'none', 'unknown', 'tbd', 'n/a')
 $nonActions = @($expectedTerminalNextAction, 'none', 'tbd', 'status unchanged', 'pr opened', 'tests passed', 'ci green', 'wait', 'wait for review', 'review later', 'merge later', 'test later')
 $actionPattern = '^(?:(?:after|once)\b.+?,\s*)?(?:operator\s+)?(?:run|execute|create|decompose|split|update|repair|resolve|merge|fetch|inspect|open|verify|validate|test|commit|push|rebase|retarget|compare|generate|record|obtain|install|apply|build|launch|deploy|restore|export|import|review|reconcile|invoke|edit|write|move|copy|sync|check)\b'
+$operatorDurabilityStatuses = $expectedOperatorDurabilityStatuses
+$operatorEntrypointExtensions = $expectedOperatorEntrypointExtensions
+$maxInlineNextActionChars = $expectedMaxInlineNextActionChars
+$durableLongHandoffCount = 0
 
 for ($i = 0; $i -lt $headingMatches.Count; $i++) {
     $match = $headingMatches[$i]
@@ -165,6 +199,10 @@ for ($i = 0; $i -lt $headingMatches.Count; $i++) {
     $gate = $fields['Gate']
     $proof = $fields['Last proof']
     $next = $fields['Next action']
+    $referencesText = if ($fields.ContainsKey('References')) { [string]$fields['References'] } else { '' }
+    $nextDurabilityText = $next
+    $nextFieldMatch = [regex]::Match($block, '(?m)^- \*\*Next action:\*\*[ \t]*(?<value>[^\r\n]*(?:\r?\n(?!- \*\*[^*]+:\*\*)[^\r\n]*)*)')
+    if ($nextFieldMatch.Success) { $nextDurabilityText = $nextFieldMatch.Groups['value'].Value.Trim() }
 
     if ($status -and $status -notin $allowedStatuses) { Add-Error "$id invalid status '$status'" }
     if ($priority -and $priority -notin $allowedPriorities) { Add-Error "$id invalid priority '$priority'" }
@@ -188,6 +226,42 @@ for ($i = 0; $i -lt $headingMatches.Count; $i++) {
             Add-Error "$id continuation state requires an executable next action beginning with a concrete action verb"
         }
     }
+
+    if ($status -in $operatorDurabilityStatuses -and -not [string]::IsNullOrWhiteSpace($nextDurabilityText) -and $nextDurabilityText.Length -gt $maxInlineNextActionChars) {
+        $entrypointReferences = [System.Collections.Generic.List[string]]::new()
+        foreach ($reference in [regex]::Matches($referencesText, '`([^`]+)`')) {
+            $candidate = $reference.Groups[1].Value
+            if ($candidate -match '^(https?://|#)') { continue }
+            $extension = [IO.Path]::GetExtension($candidate).ToLowerInvariant()
+            if ($extension -in $operatorEntrypointExtensions) { [void]$entrypointReferences.Add($candidate) }
+        }
+        if ($entrypointReferences.Count -eq 0) {
+            Add-Error "$id long Next action ($($nextDurabilityText.Length) chars > $maxInlineNextActionChars) must cite a repository executable entrypoint in References"
+        }
+        else {
+            $ownedEntrypoints = @($entrypointReferences | Where-Object { Test-TrackedRepositoryFile $_ })
+            if ($ownedEntrypoints.Count -eq 0) {
+                Add-Error "$id long Next action must cite an existing tracked repository executable entrypoint"
+            }
+            else {
+                $mentionedEntrypoint = $false
+                foreach ($entrypoint in $ownedEntrypoints) {
+                    $fileName = [IO.Path]::GetFileName($entrypoint)
+                    if ($nextDurabilityText.IndexOf($entrypoint, [StringComparison]::OrdinalIgnoreCase) -ge 0 -or $nextDurabilityText.IndexOf($fileName, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
+                        $mentionedEntrypoint = $true
+                        break
+                    }
+                }
+                if (-not $mentionedEntrypoint) {
+                    Add-Error "$id long Next action must invoke or name the same durable executable cited in References"
+                }
+                else {
+                    $durableLongHandoffCount++
+                }
+            }
+        }
+    }
+
     if ($status -in @('BLOCKED','OPERATOR') -and ([string]::IsNullOrWhiteSpace($gate) -or $gate -eq 'none')) { Add-Error "$id $status requires an exact Gate" }
     if ($status -eq 'DONE') {
         $durable = $proof -match '\b(?:commit|merge):[0-9a-f]{7,40}\b' -or $proof -match '\b(?:workflow|run):#?\d+\b' -or $proof -match '\bartifact:\S+' -or $proof -match '\boperator-proof:\S+'
@@ -195,7 +269,7 @@ for ($i = 0; $i -lt $headingMatches.Count; $i++) {
         if ($gate -ne 'none') { Add-Error "$id DONE requires Gate: none" }
         if ($next -ne $expectedTerminalNextAction) { Add-Error "$id DONE requires canonical terminal Next action" }
     }
-    foreach ($reference in [regex]::Matches($fields['References'], '`([^`]+)`')) {
+    foreach ($reference in [regex]::Matches($referencesText, '`([^`]+)`')) {
         $candidate = $reference.Groups[1].Value
         if ($candidate -match '^(https?://|#)') { continue }
         if ($candidate -notmatch '[*?]' -and -not (Test-Path -LiteralPath (Join-Path $repoRoot $candidate))) { Add-Error "$id stale local reference: $candidate" }
@@ -207,4 +281,4 @@ if ($errors.Count) {
     Write-ValidationErrors -Messages $errors
     exit 1
 }
-Write-Host "[repository-work-ledger] PASS $LedgerPath ($($headingMatches.Count) tasks) portable=$expectedPortableVersion@$($expectedPortableCommit.Substring(0,12)) local-profile=$expectedLocalProfileId@$expectedLocalProfileVersion frontier=bounded-unbounded stale-ref-probes=PASS"
+Write-Host "[repository-work-ledger] PASS $LedgerPath ($($headingMatches.Count) tasks) portable=$expectedPortableVersion@$($expectedPortableCommit.Substring(0,12)) local-profile=$expectedLocalProfileId@$expectedLocalProfileVersion frontier=bounded-unbounded durable-long-handoffs=$durableLongHandoffCount stale-ref-probes=PASS"
