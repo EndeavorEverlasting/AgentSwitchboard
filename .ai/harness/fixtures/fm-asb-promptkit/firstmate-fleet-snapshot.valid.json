@@ -1,0 +1,123 @@
+{
+  "schema": "fm-fleet-snapshot.v1",
+  "generated": "2026-09-14T20:30:00Z",
+  "tasks": [
+    {
+      "id": "ship-task",
+      "kind": "ship",
+      "harness": "claude",
+      "spawn_gen": "4",
+      "backend": "tmux",
+      "paths": {
+        "worktree": {
+          "path": "/Users/private/Secret Workspace/example",
+          "present": true
+        },
+        "report": {
+          "path": null,
+          "present": false
+        }
+      },
+      "current_state": {
+        "state": "working",
+        "source": "claude-hook",
+        "detail": "SENSITIVE_DETAIL_MUST_NOT_ESCAPE",
+        "raw": "RAW_TRANSCRIPT_MUST_NOT_ESCAPE",
+        "observed_at": "2026-09-14T20:30:00Z",
+        "freshness": "fresh"
+      },
+      "endpoint": {
+        "exists": true,
+        "agent_alive": "not_checked",
+        "status": "unknown"
+      },
+      "hints": {
+        "pending_decision": false,
+        "blocked_event": false,
+        "open_decisions": [],
+        "scout_report_present": false,
+        "last_event_text": "RAW_EVENT_MUST_NOT_ESCAPE"
+      }
+    },
+    {
+      "id": "decision-task",
+      "kind": "ship",
+      "harness": "opencode",
+      "spawn_gen": "5",
+      "backend": "tmux",
+      "paths": {
+        "worktree": {
+          "path": "/tmp/decision",
+          "present": true
+        },
+        "report": {
+          "path": null,
+          "present": false
+        }
+      },
+      "current_state": {
+        "state": "parked",
+        "source": "status-log",
+        "detail": "choose API",
+        "raw": "needs-decision: choose API",
+        "observed_at": "2026-09-14T20:30:00Z",
+        "freshness": "fresh"
+      },
+      "endpoint": {
+        "exists": true,
+        "agent_alive": "not_checked",
+        "status": "unknown"
+      },
+      "hints": {
+        "pending_decision": true,
+        "blocked_event": false,
+        "open_decisions": [
+          {
+            "key": "api",
+            "verb": "needs-decision",
+            "summary": "choose API"
+          }
+        ],
+        "scout_report_present": false,
+        "last_event_text": "needs-decision: choose API"
+      }
+    },
+    {
+      "id": "scout-task",
+      "kind": "scout",
+      "harness": "codex",
+      "spawn_gen": "6",
+      "backend": "tmux",
+      "paths": {
+        "worktree": {
+          "path": "/tmp/scout",
+          "present": true
+        },
+        "report": {
+          "path": "/tmp/report.md",
+          "present": true
+        }
+      },
+      "current_state": {
+        "state": "done",
+        "source": "run-step",
+        "detail": "complete",
+        "raw": "done",
+        "observed_at": "2026-09-14T20:30:00Z",
+        "freshness": "fresh"
+      },
+      "endpoint": {
+        "exists": true,
+        "agent_alive": "not_checked",
+        "status": "unknown"
+      },
+      "hints": {
+        "pending_decision": false,
+        "blocked_event": false,
+        "open_decisions": [],
+        "scout_report_present": true,
+        "last_event_text": "done"
+      }
+    }
+  ]
+}
