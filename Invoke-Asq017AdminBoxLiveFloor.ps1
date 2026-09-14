@@ -53,6 +53,16 @@ function Get-Asq017ExpectedFirstMateHead {
     return $head
 }
 
+function Get-Asq017OperatorNextFromText {
+    param([AllowNull()][AllowEmptyString()][string]$Text)
+    if ([string]::IsNullOrWhiteSpace($Text)) { return $null }
+    $matches = [regex]::Matches($Text, '(?m)^NEXT=(.+)$')
+    if ($matches.Count -gt 0) {
+        return $matches[$matches.Count - 1].Groups[1].Value.Trim()
+    }
+    return $null
+}
+
 function Write-Asq017Status {
     param([Parameter(Mandatory)][string]$Key, [Parameter(Mandatory)][string]$Value)
     Write-Host ('{0}={1}' -f $Key, $Value)
@@ -137,60 +147,75 @@ if ($SkipProtectedControl) {
     $argumentList += '-SkipProtectedControl'
 }
 
-& pwsh @argumentList
-$childExit = $LASTEXITCODE
+$oneshotStdoutPath = Join-Path ([System.IO.Path]::GetTempPath()) ('asq017-oneshot-stdout-' + [guid]::NewGuid().ToString('n') + '.log')
+$oneshotStderrPath = Join-Path ([System.IO.Path]::GetTempPath()) ('asq017-oneshot-stderr-' + [guid]::NewGuid().ToString('n') + '.log')
+$oneshotProcess = Start-Process -FilePath 'pwsh' -ArgumentList $argumentList -NoNewWindow -Wait -PassThru -RedirectStandardOutput $oneshotStdoutPath -RedirectStandardError $oneshotStderrPath
+if (Test-Path -LiteralPath $oneshotStdoutPath -PathType Leaf) {
+    Get-Content -LiteralPath $oneshotStdoutPath | ForEach-Object { Write-Host $_ }
+}
+if (Test-Path -LiteralPath $oneshotStderrPath -PathType Leaf) {
+    Get-Content -LiteralPath $oneshotStderrPath | ForEach-Object { [Console]::Error.WriteLine($_) }
+}
+$childExit = [int]$oneshotProcess.ExitCode
 Write-Asq017Status -Key 'CHILD_EXIT_CODE' -Value "$childExit"
 
+$oneshotBlob = ''
+foreach ($path in @($oneshotStdoutPath, $oneshotStderrPath)) {
+    if (Test-Path -LiteralPath $path -PathType Leaf) {
+        $oneshotBlob += "`n" + (Get-Content -LiteralPath $path -Raw)
+    }
+}
+# Prefer child NEXT= (includes -FirstMatePath-specific guidance) over parent fallbacks.
+$preservedNext = Get-Asq017OperatorNextFromText -Text $oneshotBlob
+
+function Write-Asq017Blocker {
+    param(
+        [Parameter(Mandatory)][string]$Result,
+        [Parameter(Mandatory)][int]$ExitCode,
+        [Parameter(Mandatory)][string]$FallbackNext,
+        [string]$ProofLevel
+    )
+    Write-Asq017Status -Key 'ASQ017_RESULT' -Value $Result
+    if (-not [string]::IsNullOrWhiteSpace($ProofLevel)) {
+        Write-Asq017Status -Key 'PROOF_LEVEL' -Value $ProofLevel
+    }
+    if (-not [string]::IsNullOrWhiteSpace($preservedNext)) {
+        Write-Asq017Status -Key 'NEXT' -Value $preservedNext
+    } else {
+        Write-Asq017Status -Key 'NEXT' -Value $FallbackNext
+    }
+    exit $ExitCode
+}
+
 if ($childExit -eq 44) {
-    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_MISSING_TOOLS'
-    Write-Asq017Status -Key 'NEXT' -Value 'install allowlisted missing tools via printed NEXT_ACTION=/NEXT= (or clear apt/dpkg blocker after exhausted bounded repair), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
-    exit 44
+    Write-Asq017Blocker -Result 'BLOCKED_MISSING_TOOLS' -ExitCode 44 -FallbackNext 'install allowlisted missing tools via printed NEXT_ACTION=/NEXT= (or clear apt/dpkg blocker after exhausted bounded repair), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
 }
 if ($childExit -eq 45) {
-    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_GITHUB_AUTH'
-    Write-Asq017Status -Key 'NEXT' -Value 'complete gh auth login then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
-    exit 45
+    Write-Asq017Blocker -Result 'BLOCKED_GITHUB_AUTH' -ExitCode 45 -FallbackNext 'complete gh auth login then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
 }
 if ($childExit -eq 46) {
-    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_WINDOWS_WSL_REQUIRED'
-    Write-Asq017Status -Key 'PROOF_LEVEL' -Value 'LIVE_ATTEMPT_FAIL_CLOSED'
-    Write-Asq017Status -Key 'NEXT' -Value 'run on Windows Admin Box with wsl.exe and Ubuntu; cloud/Linux hosts cannot prove physical floor'
-    exit 46
+    Write-Asq017Blocker -Result 'BLOCKED_WINDOWS_WSL_REQUIRED' -ExitCode 46 -FallbackNext 'run on Windows Admin Box with wsl.exe and Ubuntu; cloud/Linux hosts cannot prove physical floor' -ProofLevel 'LIVE_ATTEMPT_FAIL_CLOSED'
 }
 if ($childExit -eq 47) {
-    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_SUDO'
-    Write-Asq017Status -Key 'NEXT' -Value 'enable passwordless sudo for apt-get in Ubuntu (sudo -n apt-get --version must succeed), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
-    exit 47
+    Write-Asq017Blocker -Result 'BLOCKED_SUDO' -ExitCode 47 -FallbackNext 'enable passwordless sudo for apt-get in Ubuntu (sudo -n apt-get --version must succeed), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
 }
 if ($childExit -eq 48) {
-    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_PRIMARY_HARNESS'
-    Write-Asq017Status -Key 'NEXT' -Value 'install one primary harness on PATH inside Ubuntu visible to non-interactive bash -lc (claude|grok|pi|pi-signed|omp|codex|opencode|cursor-agent), then rerun'
-    exit 48
+    Write-Asq017Blocker -Result 'BLOCKED_PRIMARY_HARNESS' -ExitCode 48 -FallbackNext 'install one primary harness on PATH inside Ubuntu visible to non-interactive bash -lc (claude|grok|pi|pi-signed|omp|codex|opencode|cursor-agent), then rerun'
 }
 if ($childExit -eq 49) {
-    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_FIRSTMATE_DIRTY'
-    Write-Asq017Status -Key 'NEXT' -Value 'commit/stash/move dirty work in $HOME/firstmate (or the -FirstMatePath override), or remove $HOME/firstmate so bounded bootstrap can run, then rerun'
-    exit 49
+    Write-Asq017Blocker -Result 'BLOCKED_FIRSTMATE_DIRTY' -ExitCode 49 -FallbackNext 'commit/stash/move dirty work in $HOME/firstmate (or the -FirstMatePath override), or remove $HOME/firstmate so bounded bootstrap can run, then rerun'
 }
 if ($childExit -eq 50) {
-    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_FIRSTMATE_PIN'
-    Write-Asq017Status -Key 'NEXT' -Value ('in $HOME/firstmate (or -FirstMatePath) run: git fetch --all && git checkout {0}, or remove that path / pass -FirstMatePath to a clean audited checkout, then rerun' -f $expectedFirstMateHead)
-    exit 50
+    Write-Asq017Blocker -Result 'BLOCKED_FIRSTMATE_PIN' -ExitCode 50 -FallbackNext ('in $HOME/firstmate (or -FirstMatePath) run: git fetch --all && git checkout {0}, or remove that path / pass -FirstMatePath to a clean audited checkout, then rerun' -f $expectedFirstMateHead)
 }
 if ($childExit -eq 51) {
-    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_WSL_BOOTSTRAP'
-    Write-Asq017Status -Key 'NEXT' -Value 'inspect WSL diagnostics/bootstrap stdout; repair exact-head WSL clone/source-repo access, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
-    exit 51
+    Write-Asq017Blocker -Result 'BLOCKED_WSL_BOOTSTRAP' -ExitCode 51 -FallbackNext 'inspect WSL diagnostics/bootstrap stdout; repair exact-head WSL clone/source-repo access, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
 }
 if ($childExit -eq 52) {
-    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_HARNESS_CONTRACT'
-    Write-Asq017Status -Key 'NEXT' -Value 'inspect evidence root; repair FirstMate harness contract failure inside Ubuntu, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
-    exit 52
+    Write-Asq017Blocker -Result 'BLOCKED_HARNESS_CONTRACT' -ExitCode 52 -FallbackNext 'inspect evidence root; repair FirstMate harness contract failure inside Ubuntu, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
 }
 if ($childExit -ne 0) {
-    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'FAILED'
-    Write-Asq017Status -Key 'NEXT' -Value 'inspect child console for NEXT=/NEXT_ACTION=; repair operator blocker; rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
-    exit $childExit
+    Write-Asq017Blocker -Result 'FAILED' -ExitCode $childExit -FallbackNext 'inspect child console for NEXT=/NEXT_ACTION=; repair operator blocker; rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
 }
 
 Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'PHYSICAL_FLOOR_PASS'
