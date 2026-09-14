@@ -66,6 +66,25 @@ From a clean AgentSwitchboard checkout on the Admin Box:
 
 ```powershell
 $ErrorActionPreference = 'Stop'
+# Preferred ASQ-017 durable owner: ff-only main refresh + FM-WSL-12 one-shot.
+# Keep the interactive parent shell open: capture CHILD_EXIT_CODE and throw (do not exit).
+pwsh -NoLogo -NoProfile -File .\Invoke-Asq017AdminBoxLiveFloor.ps1
+$childExit = $LASTEXITCODE
+Write-Host "CHILD_EXIT_CODE=$childExit"
+if ($childExit -eq 45) {
+  throw 'BLOCKED_GITHUB_AUTH — complete gh auth login then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+}
+if ($childExit -ne 0) {
+  throw "ASQ-017 Admin Box live floor failed with exit $childExit"
+}
+```
+
+`Invoke-Asq017AdminBoxLiveFloor.ps1` is the durable ASQ-017 Admin Box floor owner. It fail-closes native git refresh (`fetch`/`switch`/`pull`/`rev-parse` with capture-before-Trim), then runs `Invoke-FmWsl12AdminBoxLiveProof.ps1` (contract → `physical-floor-continue` → protected `physical-floor`). The one-shot still stops for GitHub authentication (exit 45), probes runnable `Ubuntu` before apt/preflight, and writes a local untracked receipt. Interactive pastes must print `CHILD_EXIT_CODE` and `throw` rather than calling interactive `exit`.
+
+Equivalent expanded form (same proof ceiling; prefer the durable entrypoint above):
+
+```powershell
+$ErrorActionPreference = 'Stop'
 git fetch --all --prune --tags
 if ($LASTEXITCODE -ne 0) { throw "git fetch failed with exit $LASTEXITCODE" }
 git switch main
@@ -77,10 +96,6 @@ if ($LASTEXITCODE -ne 0) { throw 'Unable to resolve HEAD' }
 $head = ("$headRaw").Trim()
 if ([string]::IsNullOrWhiteSpace($head)) { throw 'Unable to resolve HEAD' }
 Write-Host "PHYSICAL_FLOOR_HEAD=$head"
-
-# Preferred FM-WSL-12 Admin Box one-shot (contract → physical-floor-continue → protected control):
-# Capture child exit; do not use interactive `exit` (keeps the parent shell open).
-# Fail closed on native git nonzero exits before launching the one-shot.
 pwsh -NoLogo -NoProfile -File .\Invoke-FmWsl12AdminBoxLiveProof.ps1 `
   -ExpectedHead $head `
   -WslDistribution Ubuntu
@@ -93,8 +108,6 @@ if ($childExit -ne 0) {
   throw "FM-WSL-12 Admin Box live proof failed with exit $childExit"
 }
 ```
-
-`Invoke-FmWsl12AdminBoxLiveProof.ps1` is the durable Admin Box live-proof owner for FM-WSL-12. It runs contract, then `physical-floor-continue` (allowlisted apt repair + rerun without another permission round-trip), then report-only `physical-floor` as the protected control. It still stops for GitHub authentication (exit 45) and writes a local untracked receipt under the evidence root. Operator paste commands must print `CHILD_EXIT_CODE` and `throw` on failure rather than calling interactive `exit`.
 
 Equivalent stepped form (same proof ceiling):
 

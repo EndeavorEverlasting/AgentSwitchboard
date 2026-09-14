@@ -194,14 +194,15 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, lowered)
 
-    def test_asq017_admin_box_next_action_is_ocd_safe_and_oneshot_bound(self) -> None:
-        """ASQ-017 paste must keep the parent shell open and invoke the Admin Box one-shot."""
+    def test_asq017_admin_box_next_action_is_ocd_safe_and_durable_entrypoint_bound(self) -> None:
+        """ASQ-017 paste must keep the parent shell open and call the durable floor entrypoint."""
         text = WORK_QUEUE.read_text(encoding="utf-8")
         start = text.find("## ASQ-017")
         self.assertGreaterEqual(start, 0, "ASQ-017 missing from work ledger")
         rest = text[start:]
         end = rest.find("\n## ", 1)
         block = rest if end < 0 else rest[:end]
+        self.assertIn("`Invoke-Asq017AdminBoxLiveFloor.ps1`", block)
         next_line = next(
             (line for line in block.splitlines() if line.startswith("- **Next action:**")),
             None,
@@ -211,24 +212,34 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         idx = next_line.find("$ErrorActionPreference")
         self.assertGreaterEqual(idx, 0, "ASQ-017 Next action missing PowerShell body")
         command = next_line[idx:].strip().strip("`")
-        self.assertIn("Invoke-FmWsl12AdminBoxLiveProof.ps1", command)
+        self.assertIn("Invoke-Asq017AdminBoxLiveFloor.ps1", command)
         self.assertIn("CHILD_EXIT_CODE=", command)
         self.assertIn("$childExit=$LASTEXITCODE", command)
         self.assertIn("throw", command)
-        self.assertIn("git fetch failed", command)
-        self.assertIn("git switch failed", command)
-        self.assertIn("git pull failed", command)
         self.assertNotIn("(git rev-parse HEAD).Trim()", command)
-        self.assertRegex(
-            command,
-            r"git rev-parse HEAD;\s*if \(\$LASTEXITCODE -ne 0\) \{ throw 'Unable to resolve HEAD' \}",
-        )
-        self.assertIn("Unable to resolve HEAD", command)
-        self.assertIn('("$headRaw").Trim()', command)
         self.assertIn("LIVE_RUNTIME_PROOF:UNPROVEN", block)
         self.assertIn("BLOCKED_WINDOWS_WSL_REQUIRED", block)
+        self.assertIn("Invoke-Asq017AdminBoxLiveFloor.ps1", self.runbook)
         self.assertIn("CHILD_EXIT_CODE", self.runbook)
         self.assertIn("throw", self.runbook)
+
+        durable = ROOT / "Invoke-Asq017AdminBoxLiveFloor.ps1"
+        self.assertTrue(durable.is_file(), durable)
+        durable_text = durable.read_text(encoding="utf-8")
+        self.assertIn("Invoke-FmWsl12AdminBoxLiveProof.ps1", durable_text)
+        self.assertIn("$headRaw = git rev-parse HEAD", durable_text)
+        self.assertIn("git fetch failed with exit", durable_text)
+        self.assertIn("git switch failed with exit", durable_text)
+        self.assertIn("git pull failed with exit", durable_text)
+        self.assertIn("Unable to resolve HEAD", durable_text)
+        self.assertIn("[switch]$ContractOnly", durable_text)
+        self.assertIn("LIVE_RUNTIME_PROOF", durable_text)
+        self.assertIn("UNPROVEN", durable_text)
+        self.assertEqual(
+            "Invoke-Asq017AdminBoxLiveFloor.ps1",
+            self.integration["physical_floor_recovery"]["asq017_admin_box_live_floor_entrypoint"],
+        )
+
         self.assertTrue(OCD_VALIDATOR.is_file(), OCD_VALIDATOR)
         with tempfile.TemporaryDirectory() as tmp:
             candidate = Path(tmp) / "asq017-admin-box-next.ps1"
