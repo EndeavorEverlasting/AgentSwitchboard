@@ -1,0 +1,88 @@
+{
+  "schema": "asb.context-transition/v1",
+  "eventId": "evt_ctx_20260914_task42_001",
+  "correlationId": "corr_repo42_fix_auth_001",
+  "causationId": "evt_dispatch_20260914_task42_001",
+  "createdAt": "2026-09-14T18:42:00Z",
+  "producer": {
+    "system": "agentswitchboard",
+    "component": "context-transition-coordinator",
+    "version": "1.0.0"
+  },
+  "transitionId": "ctx_task42_20260914_001",
+  "state": "COMPLETED",
+  "target": {
+    "firstMateTaskId": "task-42",
+    "scope": "crew-task"
+  },
+  "reason": "both",
+  "pressure": {
+    "observationSource": "verified-adapter",
+    "confidence": "high",
+    "contextLimitTokens": 200000,
+    "contextUsedTokens": 188000,
+    "utilization": 0.94,
+    "automaticEligible": true
+  },
+  "semantic": {
+    "groundingEpisodeId": "ge_repo42_fix_auth_001",
+    "intervention": "REBOOTSTRAP",
+    "reasonCodes": [
+      "context-pressure-high",
+      "repeated-correction"
+    ]
+  },
+  "checkpoint": {
+    "state": "complete",
+    "evidenceRefs": [],
+    "resumePointer": "Load the durable task brief, repository evidence floor, current Prompt Kit route, and exact next proof gate."
+  },
+  "transition": {
+    "method": "firstmate-relaunch",
+    "automatic": true
+  },
+  "pre": {
+    "repository": {
+      "fullName": "EndeavorEverlasting/example-repo",
+      "branch": "feat/auth",
+      "headSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "worktreeId": "wt_task-42"
+    },
+    "prompt": {
+      "id": "P83",
+      "kitVersion": "v42",
+      "registrySha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "promptSha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "executionSurface": "regular_ai_prompt"
+    },
+    "generation": 4
+  },
+  "post": {
+    "repository": {
+      "fullName": "EndeavorEverlasting/example-repo",
+      "branch": "feat/auth",
+      "headSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "worktreeId": "wt_task-42"
+    },
+    "prompt": {
+      "id": "P83",
+      "kitVersion": "v42",
+      "registrySha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "promptSha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "executionSurface": "regular_ai_prompt"
+    },
+    "generation": 5,
+    "groundingEpisodeId": "ge_repo42_fix_auth_002"
+  },
+  "verification": {
+    "durableStateLoaded": true,
+    "taskIdentityPreserved": true,
+    "worktreeIdentityPreserved": true,
+    "headPreserved": true
+  },
+  "error": null,
+  "idempotency": {
+    "key": "idem_69c33c7189ee3da21d6a250be301af6099392d06bd4ee6fc92687cd49853e02c",
+    "semanticSha256": "5814f62fb0b3238fb0260d45e3ca22a5395340e1afa3a3564bb381d874783b8b"
+  }
+}

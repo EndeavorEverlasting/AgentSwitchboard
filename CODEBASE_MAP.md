@@ -11,6 +11,8 @@ Load only the smallest surface required by the selected skill, workflow, public 
 - `plans/plan-registry.json` — public machine-readable coordination index.
 - `docs/architecture/agentic-software-factory.md` — agentic engineering factory orientation.
 - `docs/architecture/asb-firstmate-runtime-boundary.md` — accepted September decision: FirstMate is the canonical live crew runtime; ASB keeps bootstrap/policy/evidence and narrows child-bus/GNHF.
+- `docs/architecture/fm-asb-promptkit-protocol-v1.md` — FirstMate↔ASB↔PromptKit v1 message contracts, ownership boundary, and idempotency rules (contract-only).
+- `docs/harness/context-rollover-ux.md` — context-rollover user states, events, receipts, and quiet AFK UX (contract-only).
 - `AgentSwitchboard.cmd` — readiness-first startup launcher.
 
 ## Public plans
@@ -71,6 +73,12 @@ This engine reads supplied output only. It does not launch apps or providers, st
 - `scripts/Test-RuntimeEventContract.ps1` — focused runtime-event-contract validator.
 - `tests/test_runtime_event_contract.py` — dependency-free topology and causality checks.
 - `.github/workflows/runtime-event-contract.yml` — Windows and Linux proof gate.
+- `.ai/harness/fm-asb-promptkit-protocol.policy.json` — FirstMate↔ASB↔PromptKit protocol ownership, idempotency, and semantic rules.
+- `.ai/harness/fm-asb-promptkit-rollover-state-machine.json` — context-rollover states, events, backend/scope gates, and receipt stack.
+- `.ai/harness/schemas/fm-asb-promptkit/` — shared envelope plus observation, routing-request, routing-decision, prompt-dispatch, and context-transition schemas.
+- `.ai/harness/fixtures/fm-asb-promptkit/` — valid/invalid protocol fixtures and user-facing receipt drafts.
+- `scripts/Test-FmAsbPromptKitProtocolContract.ps1` and `tests/test_fm_asb_promptkit_protocol_contract.py` — focused contract validators.
+- `.github/workflows/fm-asb-promptkit-protocol.yml` — Windows and Linux protocol contract gate.
 
 The initial topology is contract-only. It does not prove live emission, observation, handling, successor delivery, or sink recording.
 

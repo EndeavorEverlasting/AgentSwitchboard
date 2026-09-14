@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/.ai/harness/schemas/fm-asb-promptkit/agent-observation.v1.schema.json",
+  "title": "ASB Agent Observation v1",
+  "allOf": [
+    {
+      "$ref": "protocol-envelope.v1.schema.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "schema",
+        "source",
+        "repository",
+        "state",
+        "output",
+        "evidence",
+        "promptContext"
+      ],
+      "properties": {
+        "schema": {
+          "const": "asb.agent-observation/v1"
+        },
+        "source": {
+          "type": "object",
+          "required": [
+            "system",
+            "taskId",
+            "eventKey",
+            "eventType",
+            "taskKind"
+          ],
+          "properties": {
+            "system": {
+              "const": "firstmate"
+            },
+            "taskId": {
+              "$ref": "protocol-envelope.v1.schema.json#/$defs/firstMateTaskId"
+            },
+            "eventKey": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            },
+            "eventType": {
+              "enum": [
+                "task-status",
+                "task-output",
+                "task-terminal",
+                "needs-decision",
+                "validation",
+                "review",
+                "context-pressure",
+                "heartbeat"
+              ]
+            },
+            "taskKind": {
+              "enum": [
+                "ship",
+                "scout",
+                "secondmate",
+                "unknown"
+              ]
+            },
+            "harness": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 64
+            },
+            "backend": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 64
+            },
+            "generation": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "repository": {
+          "$ref": "protocol-envelope.v1.schema.json#/$defs/repositoryRef"
+        },
+        "state": {
+          "type": "object",
+          "required": [
+            "phase",
+            "terminal"
+          ],
+          "properties": {
+            "phase": {
+              "enum": [
+                "queued",
+                "running",
+                "paused",
+                "needs-decision",
+                "blocked",
+                "completed",
+                "failed",
+                "unknown"
+              ]
+            },
+            "terminal": {
+              "type": "boolean"
+            },
+            "statusKey": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 128
+            }
+          },
+          "additionalProperties": false
+        },
+        "output": {
+          "type": "object",
+          "required": [
+            "format",
+            "rawIncluded",
+            "sha256"
+          ],
+          "properties": {
+            "format": {
+              "enum": [
+                "none",
+                "text",
+                "json",
+                "jsonl"
+              ]
+            },
+            "rawIncluded": {
+              "const": false
+            },
+            "sha256": {
+              "anyOf": [
+                {
+                  "$ref": "protocol-envelope.v1.schema.json#/$defs/sha256"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "artifactRef": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 512
+            },
+            "recordCount": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "evidence": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "protocol-envelope.v1.schema.json#/$defs/evidenceRef"
+          }
+        },
+        "promptContext": {
+          "type": "object",
+          "required": [
+            "groundingEpisodeId",
+            "currentPrompt",
+            "currentDispatchEventId"
+          ],
+          "properties": {
+            "groundingEpisodeId": {
+              "$ref": "protocol-envelope.v1.schema.json#/$defs/groundingEpisodeId"
+            },
+            "currentPrompt": {
+              "anyOf": [
+                {
+                  "$ref": "protocol-envelope.v1.schema.json#/$defs/promptRef"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "currentDispatchEventId": {
+              "anyOf": [
+                {
+                  "$ref": "protocol-envelope.v1.schema.json#/$defs/eventId"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "contextPressure": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "protocol-envelope.v1.schema.json#/$defs/contextPressure"
+            }
+          ]
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  ]
+}

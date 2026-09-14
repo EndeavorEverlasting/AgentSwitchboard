@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "policyId": "agentswitchboard.fm-asb-promptkit-protocol.v1",
+  "status": "contract-only",
+  "canonicalSource": "docs/architecture/fm-asb-promptkit-protocol-v1.md",
+  "uxSource": "docs/harness/context-rollover-ux.md",
+  "stateMachine": ".ai/harness/fm-asb-promptkit-rollover-state-machine.json",
+  "schemaDir": ".ai/harness/schemas/fm-asb-promptkit",
+  "schemas": {
+    "protocolEnvelope": "protocol-envelope.v1.schema.json",
+    "agentObservation": "agent-observation.v1.schema.json",
+    "routingRequest": "routing-request.v1.schema.json",
+    "routingDecision": "routing-decision.v1.schema.json",
+    "promptDispatch": "prompt-dispatch.v1.schema.json",
+    "contextTransition": "context-transition.v1.schema.json"
+  },
+  "messageSchemas": {
+    "asb.agent-observation/v1": "agent-observation.v1.schema.json",
+    "prompt-kit.routing-request/v1": "routing-request.v1.schema.json",
+    "prompt-kit.routing-decision/v1": "routing-decision.v1.schema.json",
+    "asb.prompt-dispatch/v1": "prompt-dispatch.v1.schema.json",
+    "asb.context-transition/v1": "context-transition.v1.schema.json"
+  },
+  "ownership": {
+    "firstmate": [
+      "agents",
+      "tasks",
+      "worktrees",
+      "backends",
+      "sessions",
+      "supervision",
+      "durable-message-delivery",
+      "task-lifecycle",
+      "relaunch"
+    ],
+    "promptKit": [
+      "workflow-meaning",
+      "prompt-identity",
+      "prompt-selection",
+      "next-step-graph",
+      "proof-gates",
+      "outcome-classification",
+      "grounding-recovery-policy"
+    ],
+    "agentswitchboard": [
+      "evidence-normalization",
+      "cross-product-translation",
+      "automation-correlation",
+      "context-pressure-observation",
+      "semantic-dispatch-loop"
+    ]
+  },
+  "mustNotOwn": {
+    "firstmate": [
+      "prompt-ontology",
+      "prompt-kit-routing-policy"
+    ],
+    "promptKit": [
+      "tmux-session-control",
+      "agent-lifecycle"
+    ],
+    "agentswitchboard": [
+      "crew-scheduler",
+      "prompt-taxonomy",
+      "direct-terminal-manipulation"
+    ]
+  },
+  "invariant": "Prompt Kit decides what the work means next. AgentSwitchboard correlates evidence and turns that decision into a bounded action request. FirstMate owns delivery, workers, worktrees, lifecycle, supervision, and runtime mechanics.",
+  "correlation": {
+    "missionCorrelationSurvivesPromptChanges": true,
+    "missionCorrelationSurvivesContextRollovers": true,
+    "groundingEpisodeAdvancesOnRegroundOrRebootstrap": true,
+    "causationChain": [
+      "asb.agent-observation/v1",
+      "prompt-kit.routing-request/v1",
+      "prompt-kit.routing-decision/v1",
+      "asb.prompt-dispatch/v1",
+      "asb.agent-observation/v1"
+    ]
+  },
+  "idempotency": {
+    "keyPrefix": "idem_",
+    "algorithm": "sha256",
+    "join": "|",
+    "semanticCanonicalization": "RFC8785-JCS-subset-sorted-keys",
+    "semanticExcludeFields": [
+      "eventId",
+      "createdAt",
+      "idempotency"
+    ],
+    "identities": {
+      "asb.agent-observation/v1": [
+        "schema",
+        "source.taskId",
+        "source.eventKey"
+      ],
+      "prompt-kit.routing-request/v1": [
+        "schema",
+        "observationEventId",
+        "mission.groundingEpisodeId",
+        "executionSurface"
+      ],
+      "prompt-kit.routing-decision/v1": [
+        "schema",
+        "routingRequestEventId",
+        "registry.registrySha256"
+      ],
+      "asb.prompt-dispatch/v1": [
+        "schema",
+        "routingDecisionEventId",
+        "target.firstMateTaskId",
+        "prompt.ref.promptSha256"
+      ],
+      "asb.context-transition/v1": [
+        "schema",
+        "transitionId",
+        "state"
+      ]
+    },
+    "sameKeySameSemantic": "reuse-result-no-side-effect",
+    "sameKeyDifferentSemantic": "IDEMPOTENCY_KEY_REUSE_MISMATCH",
+    "promptDispatchRetryMustReuseDeliveryId": true
+  },
+  "semanticRules": {
+    "routingDecisionPrimaryPrompt": {
+      "KEEP_CURRENT_PROMPT_or_SWITCH_PROMPT": "primaryPrompt != null",
+      "NO_ROUTE_or_BLOCKED": "primaryPrompt == null"
+    },
+    "contextTransition": {
+      "estimatedOrUnavailableForbidsAutomatic": true,
+      "completedRequiresCheckpointCompletePostVerificationNoError": true,
+      "regroundOrRebootstrapCompletedAdvancesGroundingEpisode": true
+    },
+    "rawTranscriptForbidden": true,
+    "rawOutputIncludedForbidden": true,
+    "secretsInEvidenceForbidden": true,
+    "preferredPromptDeliveryMode": "reference",
+    "deliveryPlane": "durable-inbox",
+    "noDirectTerminalManipulation": true
+  },
+  "proof": {
+    "ceiling": "contract",
+    "staticProofCannotClaimRuntime": true,
+    "syntheticFixturesCannotClaimLiveTarget": true,
+    "automaticRolloverNotAuthorizedByThisContractAlone": true
+  },
+  "validator": "scripts/Test-FmAsbPromptKitProtocolContract.ps1",
+  "pythonValidator": "tests/test_fm_asb_promptkit_protocol_contract.py",
+  "fixtures": ".ai/harness/fixtures/fm-asb-promptkit"
+}

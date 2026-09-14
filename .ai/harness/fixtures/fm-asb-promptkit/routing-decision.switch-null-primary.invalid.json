@@ -1,0 +1,46 @@
+{
+  "schema": "prompt-kit.routing-decision/v1",
+  "eventId": "evt_route_dec_20260914_task42_bad",
+  "correlationId": "corr_repo42_fix_auth_001",
+  "causationId": "evt_route_req_20260914_task42_001",
+  "createdAt": "2026-09-14T18:30:02Z",
+  "producer": {
+    "system": "prompt-kit",
+    "component": "routing-engine",
+    "version": "1.0.0"
+  },
+  "routingRequestEventId": "evt_route_req_20260914_task42_001",
+  "registry": {
+    "schemaVersion": "ai-harness-prompt-registry/v1",
+    "kitVersion": "v42",
+    "registrySha256": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "decision": {
+    "intervention": "REGROUND",
+    "routeAction": "SWITCH_PROMPT",
+    "primaryPrompt": null,
+    "alternates": [],
+    "reasonCodes": [
+      "inherited-completion-unverified",
+      "evidence-state-overclaim"
+    ]
+  },
+  "classification": {
+    "outcomeClass": "evidence-promotion",
+    "causeCandidates": [
+      "contract-fidelity"
+    ]
+  },
+  "requiredVariables": [
+    "repo",
+    "branch",
+    "claimed_completion"
+  ],
+  "proofGate": "Independently verify the exact current evidence floor before promoting the completion state.",
+  "nextStep": "Run the verifier against current repository/provider evidence and advance only the proven slice.",
+  "confidence": "HIGH",
+  "idempotency": {
+    "key": "idem_238c2de7baa0aeecb1e8687894e55b245202bd77e2a0e2125dffa6bc80c4e8f3",
+    "semanticSha256": "46cbb35729acd2834e627ce2a464c16338cd09d2b5b684cb4ddacb714a04d6e1"
+  }
+}

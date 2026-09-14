@@ -1,0 +1,199 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-09-FM-ASB-PROMPTKIT-PROTOCOL-V1",
+  "title": "FirstMate\u2194ASB\u2194PromptKit v1 protocol and context-rollover UX",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "active",
+  "priority": "high",
+  "createdUtc": "2026-09-14T18:40:00Z",
+  "updatedUtc": "2026-09-14T19:30:00Z",
+  "mission": "Freeze the FirstMate\u2194AgentSwitchboard\u2194PromptKit integration boundary as six v1 schemas plus a quiet context-rollover UX state machine and receipt drafts, without implementing live adapters.",
+  "owner": {
+    "surface": "cross-product protocol contracts",
+    "role": "repository doctrine lane",
+    "agent": "Cursor Cloud Agent"
+  },
+  "delivery": {
+    "branch": "cursor/fm-asb-promptkit-v1-contracts-4c0f",
+    "pullRequest": {
+      "number": 184,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/184",
+      "state": "open"
+    },
+    "baseRef": "main",
+    "commitRequired": true
+  },
+  "wave": "FirstMate\u2194ASB\u2194PromptKit boundary research",
+  "lane": "protocol contract freeze",
+  "dependencies": [
+    "ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS"
+  ],
+  "safeParallelWork": [
+    "FM-WSL-12 Admin Box physical-floor observation",
+    "App Output Context Engine ranking demotion implementation (separate lane)",
+    "Unrelated Windows profile or OpenCode LSP work"
+  ],
+  "ownedScope": [
+    ".ai/harness/schemas/fm-asb-promptkit/**",
+    ".ai/harness/fm-asb-promptkit-protocol.policy.json",
+    ".ai/harness/fm-asb-promptkit-rollover-state-machine.json",
+    ".ai/harness/fixtures/fm-asb-promptkit/**",
+    "docs/architecture/fm-asb-promptkit-protocol-v1.md",
+    "docs/harness/context-rollover-ux.md",
+    "docs/architecture/asb-firstmate-runtime-boundary.md cross-links only",
+    "scripts/Test-FmAsbPromptKitProtocolContract.ps1",
+    "tests/test_fm_asb_promptkit_protocol_contract.py",
+    ".github/workflows/fm-asb-promptkit-protocol.yml",
+    "CODEBASE_MAP.md protocol entries",
+    "plans/plan-registry.json membership for this plan"
+  ],
+  "forbiddenScope": [
+    "live FirstMate observation/dispatch adapters",
+    "Prompt Kit headless routing API implementation",
+    "App Output Context Engine ranker rewrite",
+    "child-agent bus adapter expansion",
+    "automatic primary-session rollover runtime",
+    "secrets, credentials, or machine-local evidence in Git",
+    "deployment or live-target mutation",
+    "live adapters beyond contract-only freeze (Phase 1 observation remains successor)"
+  ],
+  "expectedArtifacts": [
+    "six schema files under .ai/harness/schemas/fm-asb-promptkit/",
+    "protocol policy and rollover state machine JSON",
+    "valid/invalid fixtures and receipt drafts",
+    "architecture and UX docs",
+    "focused PowerShell and Python validators",
+    "CI workflow",
+    "public plan registration"
+  ],
+  "tasks": [
+    {
+      "taskId": "PROTO-01",
+      "title": "Freeze six v1 protocol schemas and policy",
+      "status": "completed",
+      "owner": "repository doctrine lane",
+      "dependencies": [],
+      "inputs": [
+        "Boundary research canary",
+        "Existing runtime-event and FirstMate ADR patterns"
+      ],
+      "outputs": [
+        "Schemas",
+        "Policy",
+        "Fixtures"
+      ],
+      "acceptanceCriteria": [
+        "Shared envelope plus five messages exist",
+        "Idempotency identities documented and fixture-checked",
+        "Semantic rules reject estimated automatic rollover and null SWITCH_PROMPT"
+      ],
+      "evidence": [
+        "Tracked schemas, policy, fixtures, validators"
+      ]
+    },
+    {
+      "taskId": "UX-01",
+      "title": "Define rollover state machine, events, and receipts",
+      "status": "completed",
+      "owner": "repository doctrine lane",
+      "dependencies": [
+        "PROTO-01"
+      ],
+      "inputs": [
+        "Context-rollover UX canary",
+        "FirstMate relaunch/control-plane boundary"
+      ],
+      "outputs": [
+        "State machine JSON",
+        "UX doc",
+        "Receipt fixtures"
+      ],
+      "acceptanceCriteria": [
+        "Seven user-visible states",
+        "Verified vs estimated pressure tiers",
+        "Checkpoint-fail and launch-fail-after-stop receipts preserve safety language"
+      ],
+      "evidence": [
+        "Tracked state machine, UX doc, receipt fixtures"
+      ]
+    },
+    {
+      "taskId": "PROOF-01",
+      "title": "Validate contract and open PR",
+      "status": "completed",
+      "owner": "repository doctrine lane",
+      "dependencies": [
+        "PROTO-01",
+        "UX-01"
+      ],
+      "inputs": [
+        "Validators",
+        "CI workflow",
+        "CODEBASE_MAP"
+      ],
+      "outputs": [
+        "Contract PASS evidence",
+        "PR"
+      ],
+      "acceptanceCriteria": [
+        "Python and PowerShell validators pass",
+        "Public plan contracts pass",
+        "Checkout remains clean after validation"
+      ],
+      "evidence": [
+        "python3 tests/test_fm_asb_promptkit_protocol_contract.py PASS",
+        "scripts/Test-FmAsbPromptKitProtocolContract.ps1 PASS (90 checks)",
+        "scripts/Test-PublicPlanContracts.ps1 PASS"
+      ]
+    },
+    {
+      "taskId": "RECONCILE-01",
+      "title": "Reconcile PR #184 with current main and revalidate exact head",
+      "status": "completed",
+      "owner": "repository doctrine lane",
+      "dependencies": [
+        "PROOF-01"
+      ],
+      "inputs": [
+        "origin/main@c3da20fef02160de66d238b1c9b8eb9c6825588e",
+        "prior contract head 16b4d25bee50702cbc1c108e4113f644216fdf54"
+      ],
+      "outputs": [
+        "Merge commit onto current main floor",
+        "Revalidated exact-head contract proof"
+      ],
+      "acceptanceCriteria": [
+        "Branch contains current main as ancestor",
+        "Protocol surface unchanged by reconcile",
+        "Python, PowerShell protocol, and public-plan validators PASS on reconciled head"
+      ],
+      "evidence": [
+        "merge(main) commit on cursor/fm-asb-promptkit-v1-contracts-4c0f",
+        "python tests/test_fm_asb_promptkit_protocol_contract.py PASS",
+        "scripts/Test-FmAsbPromptKitProtocolContract.ps1 PASS (90 checks)",
+        "scripts/Test-PublicPlanContracts.ps1 PASS (176 checks)"
+      ]
+    }
+  ],
+  "validation": [
+    "python3 tests/test_fm_asb_promptkit_protocol_contract.py",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-FmAsbPromptKitProtocolContract.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
+    "git diff --check"
+  ],
+  "proof": {
+    "target": "Contract-only FirstMate\u2194ASB\u2194PromptKit protocol and rollover UX freeze",
+    "achieved": "PR #184 reconciled onto main@c3da20fef02160de66d238b1c9b8eb9c6825588e; contract freeze commits retained; owning validators PASS on reconciled head. Prior green at 16b4d25 remains historical; refreshed exact-head proof supersedes it for integration.",
+    "ceiling": "Contract and synthetic fixture proof only. No live observation, routing API, durable inbox delivery, or automatic rollover is claimed."
+  },
+  "handoff": {
+    "nextOwner": "FirstMate observation adapter lane",
+    "nextCommand": "gh pr view 184 --repo EndeavorEverlasting/AgentSwitchboard",
+    "notes": [
+      "Mainline integration of this contract PR is authorized after exact-head green on the reconciled candidate.",
+      "Do not implement live adapters in this plan.",
+      "Phase 1 after merge: consume FirstMate task state into asb.agent-observation/v1 without becoming a second watcher."
+    ]
+  }
+}

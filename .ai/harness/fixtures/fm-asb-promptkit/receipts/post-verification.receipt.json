@@ -1,0 +1,15 @@
+{
+  "receiptType": "post-rollover-verification",
+  "schema": "asb.context-rollover-receipt/post-verification/v1",
+  "taskId": "task-42",
+  "durableStateLoaded": true,
+  "taskIdentityPreserved": true,
+  "worktreeIdentityPreserved": true,
+  "headPreserved": true,
+  "promptIdentityPreserved": true,
+  "nextActionRecovered": true,
+  "groundingEpisodeBefore": "ge_repo42_fix_auth_001",
+  "groundingEpisodeAfter": "ge_repo42_fix_auth_002",
+  "result": "PASS",
+  "userSummary": "Fresh context ready \u00b7 continuing"
+}

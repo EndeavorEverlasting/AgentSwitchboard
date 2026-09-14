@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/.ai/harness/schemas/fm-asb-promptkit/routing-request.v1.schema.json",
+  "title": "Prompt Kit Routing Request v1",
+  "allOf": [
+    {
+      "$ref": "protocol-envelope.v1.schema.json"
+    },
+    {
+      "type": "object",
+      "required": [
+        "schema",
+        "observationEventId",
+        "task",
+        "mission",
+        "executionSurface",
+        "currentPrompt",
+        "evidenceState",
+        "signals",
+        "correctionEvents",
+        "constraints",
+        "routingPolicy"
+      ],
+      "properties": {
+        "schema": {
+          "const": "prompt-kit.routing-request/v1"
+        },
+        "observationEventId": {
+          "$ref": "protocol-envelope.v1.schema.json#/$defs/eventId"
+        },
+        "task": {
+          "type": "object",
+          "required": [
+            "firstMateTaskId",
+            "repository"
+          ],
+          "properties": {
+            "firstMateTaskId": {
+              "$ref": "protocol-envelope.v1.schema.json#/$defs/firstMateTaskId"
+            },
+            "repository": {
+              "$ref": "protocol-envelope.v1.schema.json#/$defs/repositoryRef"
+            }
+          },
+          "additionalProperties": false
+        },
+        "mission": {
+          "type": "object",
+          "required": [
+            "groundingEpisodeId",
+            "summary"
+          ],
+          "properties": {
+            "groundingEpisodeId": {
+              "$ref": "protocol-envelope.v1.schema.json#/$defs/groundingEpisodeId"
+            },
+            "summary": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1200
+            }
+          },
+          "additionalProperties": false
+        },
+        "executionSurface": {
+          "$ref": "protocol-envelope.v1.schema.json#/$defs/executionSurface"
+        },
+        "currentPrompt": {
+          "anyOf": [
+            {
+              "$ref": "protocol-envelope.v1.schema.json#/$defs/promptRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidenceState": {
+          "type": "object",
+          "required": [
+            "observed",
+            "claimed"
+          ],
+          "properties": {
+            "observed": {
+              "enum": [
+                "PLANNED_DESIGNED",
+                "TRACKED",
+                "IMPLEMENTED",
+                "WIRED_REACHABLE",
+                "VALIDATED",
+                "INTEGRATED",
+                "DEPLOYED",
+                "OBSERVED"
+              ]
+            },
+            "claimed": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "PLANNED_DESIGNED",
+                    "TRACKED",
+                    "IMPLEMENTED",
+                    "WIRED_REACHABLE",
+                    "VALIDATED",
+                    "INTEGRATED",
+                    "DEPLOYED",
+                    "OBSERVED"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "signals": {
+          "type": "array",
+          "maxItems": 24,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "routing",
+              "interpretation",
+              "execution",
+              "progression",
+              "durability",
+              "premature-terminal",
+              "evidence-promotion",
+              "regression",
+              "environment",
+              "unknown"
+            ]
+          }
+        },
+        "correctionEvents": {
+          "type": "array",
+          "maxItems": 24,
+          "items": {
+            "type": "object",
+            "required": [
+              "kind",
+              "corrective"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "corrective_repeat_request",
+                  "explicit_correction",
+                  "restate_context",
+                  "restate_constraint",
+                  "reroute_owner",
+                  "reenumerate_work",
+                  "manual_workaround",
+                  "manual_context_transfer",
+                  "restart_conversation",
+                  "abandon"
+                ]
+              },
+              "corrective": {
+                "const": true
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "constraints": {
+          "type": "object",
+          "required": [
+            "forbiddenScopes",
+            "evidenceRefs",
+            "rawTranscriptIncluded"
+          ],
+          "properties": {
+            "forbiddenScopes": {
+              "type": "array",
+              "maxItems": 64,
+              "items": {
+                "type": "string",
+                "maxLength": 240
+              }
+            },
+            "evidenceRefs": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "$ref": "protocol-envelope.v1.schema.json#/$defs/evidenceRef"
+              }
+            },
+            "rawTranscriptIncluded": {
+              "const": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "routingPolicy": {
+          "type": "object",
+          "required": [
+            "maxCandidates",
+            "crossSurfaceFallbackAllowed",
+            "requireCurrentRegistry"
+          ],
+          "properties": {
+            "maxCandidates": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3
+            },
+            "crossSurfaceFallbackAllowed": {
+              "const": false
+            },
+            "requireCurrentRegistry": {
+              "const": true
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  ]
+}

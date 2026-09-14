@@ -1,0 +1,19 @@
+{
+  "receiptType": "checkpoint",
+  "schema": "asb.context-rollover-receipt/checkpoint/v1",
+  "taskId": "task-42",
+  "correlationId": "corr_repo42_fix_auth_001",
+  "groundingEpisodeId": "ge_repo42_fix_auth_001",
+  "repository": "EndeavorEverlasting/example-repo",
+  "branch": "feat/auth",
+  "headSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "dirty": true,
+  "dirtySummary": "3 tracked files",
+  "promptId": "P07",
+  "promptSha256": "3333333333333333333333333333333333333333333333333333333333333333",
+  "evidenceState": "VALIDATED",
+  "nextAction": "repair failing integration check",
+  "resumePointer": "state/auth-refactor/checkpoint.md",
+  "result": "PASS",
+  "userSummary": "Checkpoint ready"
+}

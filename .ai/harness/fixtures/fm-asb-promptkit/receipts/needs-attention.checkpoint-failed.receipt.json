@@ -1,0 +1,18 @@
+{
+  "receiptType": "needs-attention",
+  "schema": "asb.context-rollover-receipt/needs-attention/v1",
+  "taskId": "task-42",
+  "failureClass": "checkpoint-incomplete",
+  "oldAgentPreserved": true,
+  "relaunchAttempted": false,
+  "missing": [
+    "exact repository evidence floor"
+  ],
+  "userSummary": "Needs attention \u00b7 rollover paused",
+  "userBody": "The current conversation is still running. AgentSwitchboard could not prove that the continuation checkpoint is complete. Nothing was relaunched.",
+  "actions": [
+    "Retry checkpoint",
+    "Continue current session",
+    "View missing proof"
+  ]
+}

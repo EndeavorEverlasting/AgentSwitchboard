@@ -1,0 +1,84 @@
+name: FirstMate ASB PromptKit protocol
+
+on:
+  pull_request:
+    paths:
+      - '.ai/harness/fm-asb-promptkit-protocol.policy.json'
+      - '.ai/harness/fm-asb-promptkit-rollover-state-machine.json'
+      - '.ai/harness/schemas/fm-asb-promptkit/**'
+      - '.ai/harness/fixtures/fm-asb-promptkit/**'
+      - 'docs/architecture/fm-asb-promptkit-protocol-v1.md'
+      - 'docs/architecture/asb-firstmate-runtime-boundary.md'
+      - 'docs/harness/context-rollover-ux.md'
+      - 'CODEBASE_MAP.md'
+      - 'scripts/Test-FmAsbPromptKitProtocolContract.ps1'
+      - 'tests/test_fm_asb_promptkit_protocol_contract.py'
+      - 'plans/active/ASB-2026-09-fm-asb-promptkit-protocol-v1.*'
+      - 'plans/plan-registry.json'
+      - '.github/workflows/fm-asb-promptkit-protocol.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Parse PowerShell validator
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+            (Join-Path $PWD 'scripts/Test-FmAsbPromptKitProtocolContract.ps1'),
+            [ref]$tokens,
+            [ref]$parseErrors
+          )
+          if ($parseErrors.Count -gt 0) { throw ($parseErrors -join '; ') }
+
+      - name: Run protocol contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File ./scripts/Test-FmAsbPromptKitProtocolContract.ps1
+
+      - name: Run dependency-free contracts
+        shell: pwsh
+        run: python ./tests/test_fm_asb_promptkit_protocol_contract.py
+
+      - name: Verify checkout remains clean
+        shell: pwsh
+        run: |
+          $dirty = git status --porcelain=v1
+          if ($dirty) { throw "Validator mutated checkout:`n$dirty" }
+
+  linux-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run dependency-free contracts
+        run: python tests/test_fm_asb_promptkit_protocol_contract.py
+
+      - name: Run PowerShell contract
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File ./scripts/Test-FmAsbPromptKitProtocolContract.ps1
+
+      - name: Check validator safety surface
+        shell: bash
+        run: |
+          if grep -Eqi 'Invoke-WebRequest|Invoke-RestMethod|Start-Process|opencode run|git push' scripts/Test-FmAsbPromptKitProtocolContract.ps1; then
+            echo 'Protocol validator contains a forbidden execution surface.' >&2
+            exit 1
+          fi
+
+      - name: Full PR-range hygiene
+        shell: bash
+        run: |
+          git fetch --no-tags origin "${{ github.base_ref }}"
+          git diff --check "origin/${{ github.base_ref }}...HEAD"
