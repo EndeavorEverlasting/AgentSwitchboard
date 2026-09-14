@@ -200,6 +200,15 @@ class RepositoryWorkLedgerContractTests(unittest.TestCase):
         self.assertIn('long Next action', result.stderr)
         self.assertIn('must cite a repository executable entrypoint in References', result.stderr)
 
+    def test_multiline_long_next_action_cannot_bypass_durability_gate(self):
+        content = task(**{'Next action': 'run these commands:'})
+        continuation = '    ' + ('perform the recurring operator sequence and preserve its evidence before continuing; ' * 8)
+        content = content.replace('- **Updated:**', continuation + '\n- **Updated:**', 1)
+        result = self.run_temp(content)
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('long Next action', result.stderr)
+        self.assertIn('must cite a repository executable entrypoint in References', result.stderr)
+
     def test_long_next_action_requires_same_entrypoint_mention(self):
         long_action = 'run ' + ('the bounded operator sequence and preserve its evidence before continuing; ' * 8)
         result = self.run_temp(task(
