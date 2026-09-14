@@ -438,20 +438,20 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("sudo-probe-stdout.txt", continuation)
         self.assertIn("exit 47", continuation)
         self.assertIn("BLOCKED_SUDO", asq)
-        self.assertIn("exit 47", asq)
+        self.assertIn("-ExitCode 47", asq)
         self.assertIn("BLOCKED_PRIMARY_HARNESS", asq)
-        self.assertIn("exit 48", asq)
+        self.assertIn("-ExitCode 48", asq)
         self.assertIn("BLOCKED_FIRSTMATE_DIRTY", asq)
-        self.assertIn("exit 49", asq)
+        self.assertIn("-ExitCode 49", asq)
         self.assertIn("BLOCKED_FIRSTMATE_PIN", asq)
-        self.assertIn("exit 50", asq)
+        self.assertIn("-ExitCode 50", asq)
         self.assertIn("BLOCKED_WSL_BOOTSTRAP", asq)
-        self.assertIn("exit 51", asq)
+        self.assertIn("-ExitCode 51", asq)
         self.assertIn("BLOCKED_HARNESS_CONTRACT", asq)
-        self.assertIn("exit 52", asq)
+        self.assertIn("-ExitCode 52", asq)
         self.assertIn("BLOCKED_MISSING_TOOLS", asq)
         self.assertIn("$childExit -eq 44", asq)
-        self.assertIn("exit 44", asq)
+        self.assertIn("-ExitCode 44", asq)
         self.assertIn("BLOCKED_SUDO", oneshot)
         self.assertIn("BLOCKED_PRIMARY_HARNESS", oneshot)
         self.assertIn("Get-OperatorNextFromEvidence", oneshot)
@@ -466,11 +466,26 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("ExitCode -eq 49", oneshot)
         self.assertIn("ExitCode -eq 50", oneshot)
         self.assertIn("BLOCKED_FIRSTMATE_PIN", oneshot)
+
+        work_queue = (ROOT / ".ai" / "WORK_QUEUE.md").read_text(encoding="utf-8")
+        asq_section = work_queue.split("## ASQ-017", 1)[1].split("\n## ", 1)[0]
+        next_action = asq_section.split("- **Next action:**", 1)[1].split("- **Updated:**", 1)[0]
+        self.assertIn("upstream-pin.json", next_action)
+        self.assertIn("$childExit -eq 50", next_action)
+        self.assertNotIn("git checkout b182d0f908b78d08c7ccb8dce3775bdca8c5d657", next_action)
         # Exit-50 NEXT fallbacks must load pin from upstream-pin.json (same source as PhysicalFloor).
         self.assertIn("upstream-pin.json", asq)
         self.assertIn("$upstreamPin.commit", asq)
         self.assertIn("$expectedFirstMateHead", asq)
         self.assertIn("Get-Asq017ExpectedFirstMateHead", asq)
+        self.assertIn("Get-Asq017OperatorNextFromText", asq)
+        self.assertIn("$preservedNext = Get-Asq017OperatorNextFromText -Text $oneshotBlob", asq)
+        self.assertIn("Write-Asq017Blocker", asq)
+        self.assertIn("Prefer child NEXT=", asq)
+        self.assertLess(
+            asq.index("$preservedNext = Get-Asq017OperatorNextFromText -Text $oneshotBlob"),
+            asq.index("Write-Asq017Blocker"),
+        )
         self.assertIn("Reload pin after ff-only refresh", asq)
         self.assertLess(
             asq.index("git pull --ff-only"),
