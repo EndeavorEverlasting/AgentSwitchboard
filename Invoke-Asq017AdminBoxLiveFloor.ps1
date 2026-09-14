@@ -39,6 +39,16 @@ if (-not (Test-Path -LiteralPath $OneShotPath -PathType Leaf)) {
     throw "Missing FM-WSL-12 Admin Box one-shot: $OneShotPath"
 }
 
+$UpstreamPinPath = Join-Path $Root 'tooling\firstmate\harness\upstream-pin.json'
+if (-not (Test-Path -LiteralPath $UpstreamPinPath -PathType Leaf)) {
+    throw "Missing FirstMate upstream pin: $UpstreamPinPath"
+}
+$upstreamPin = Get-Content -LiteralPath $UpstreamPinPath -Raw | ConvertFrom-Json
+$expectedFirstMateHead = [string]$upstreamPin.commit
+if ($expectedFirstMateHead -notmatch '^[0-9a-f]{40}$') {
+    throw "upstream-pin.json commit must be a 40-character lowercase hex SHA. Received=$expectedFirstMateHead"
+}
+
 function Write-Asq017Status {
     param([Parameter(Mandatory)][string]$Key, [Parameter(Mandatory)][string]$Value)
     Write-Host ('{0}={1}' -f $Key, $Value)
@@ -157,7 +167,7 @@ if ($childExit -eq 49) {
 }
 if ($childExit -eq 50) {
     Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_FIRSTMATE_PIN'
-    Write-Asq017Status -Key 'NEXT' -Value 'in $HOME/firstmate (or -FirstMatePath) run: git fetch --all && git checkout b182d0f908b78d08c7ccb8dce3775bdca8c5d657, or remove that path / pass -FirstMatePath to a clean audited checkout, then rerun'
+    Write-Asq017Status -Key 'NEXT' -Value ('in $HOME/firstmate (or -FirstMatePath) run: git fetch --all && git checkout {0}, or remove that path / pass -FirstMatePath to a clean audited checkout, then rerun' -f $expectedFirstMateHead)
     exit 50
 }
 if ($childExit -eq 51) {
