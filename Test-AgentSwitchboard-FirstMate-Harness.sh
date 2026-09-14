@@ -16,6 +16,7 @@ shift || true
 case "$MODE" in
   contract)
     python3 tests/test_firstmate_integration_contract.py
+    python3 tests/test_firstmate_discovery_behavior.py
     python3 tests/test_firstmate_asb_convergence_contract.py
     python3 tests/test_firstmate_operational_harness.py
     python3 tests/test_firstmate_windows_harness_portability.py

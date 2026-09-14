@@ -157,6 +157,9 @@ has_required_upstream_paths() {
   local candidate="$1"
   local path
   for path in "${REQUIRED_PATHS[@]}"; do
+    # The path must be part of the audited commit itself. A worktree-only ignored
+    # file, directory, or symlink cannot satisfy the contract merely by existing.
+    git -C "$candidate" cat-file -e "$EXPECTED_HEAD:$path" 2>/dev/null || return 1
     [[ -e "$candidate/$path" ]] || return 1
   done
   return 0
@@ -182,7 +185,7 @@ if [[ -z "$FIRSTMATE_DIR" ]]; then
     # Alternate auto-discovery must not false-block bounded $HOME/firstmate
     # bootstrap: skip dirty/off-pin/incomplete leftovers under ~/dev, ~/Projects,
     # $PWD, etc. A discovered clone is viable only when the audited path contract
-    # is present before selection.
+    # is present in both the audited Git tree and the worktree before selection.
     candidates=(
       "$PWD"
       "$HOME/dev/firstmate"
@@ -249,7 +252,10 @@ if [[ "$ACTUAL_HEAD" != "$EXPECTED_HEAD" ]]; then
 fi
 
 for path in "${REQUIRED_PATHS[@]}"; do
-  [[ -e "$FIRSTMATE_DIR/$path" ]] || fail "Required audited upstream path is missing: $path"
+  git -C "$FIRSTMATE_DIR" cat-file -e "$EXPECTED_HEAD:$path" 2>/dev/null \
+    || fail "Required audited upstream path is not present in the audited commit: $path"
+  [[ -e "$FIRSTMATE_DIR/$path" ]] \
+    || fail "Required audited upstream path is missing from the worktree: $path"
 done
 
 HARNESS=""
