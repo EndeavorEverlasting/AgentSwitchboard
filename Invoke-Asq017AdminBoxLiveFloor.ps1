@@ -43,10 +43,14 @@ $UpstreamPinPath = Join-Path $Root 'tooling\firstmate\harness\upstream-pin.json'
 if (-not (Test-Path -LiteralPath $UpstreamPinPath -PathType Leaf)) {
     throw "Missing FirstMate upstream pin: $UpstreamPinPath"
 }
-$upstreamPin = Get-Content -LiteralPath $UpstreamPinPath -Raw | ConvertFrom-Json
-$expectedFirstMateHead = [string]$upstreamPin.commit
-if ($expectedFirstMateHead -notmatch '^[0-9a-f]{40}$') {
-    throw "upstream-pin.json commit must be a 40-character lowercase hex SHA. Received=$expectedFirstMateHead"
+
+function Get-Asq017ExpectedFirstMateHead {
+    $upstreamPin = Get-Content -LiteralPath $UpstreamPinPath -Raw | ConvertFrom-Json
+    $head = [string]$upstreamPin.commit
+    if ($head -notmatch '^[0-9a-f]{40}$') {
+        throw "upstream-pin.json commit must be a 40-character lowercase hex SHA. Received=$head"
+    }
+    return $head
 }
 
 function Write-Asq017Status {
@@ -96,6 +100,9 @@ if (-not $SkipGitRefresh) {
         throw "git pull failed with exit $LASTEXITCODE"
     }
 }
+
+# Reload pin after ff-only refresh so exit-50 NEXT matches tip upstream-pin.json
+$expectedFirstMateHead = Get-Asq017ExpectedFirstMateHead
 
 $headRaw = git rev-parse HEAD
 if ($LASTEXITCODE -ne 0) {

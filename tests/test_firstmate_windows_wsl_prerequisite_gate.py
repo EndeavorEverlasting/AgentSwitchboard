@@ -470,6 +470,16 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("upstream-pin.json", asq)
         self.assertIn("$upstreamPin.commit", asq)
         self.assertIn("$expectedFirstMateHead", asq)
+        self.assertIn("Get-Asq017ExpectedFirstMateHead", asq)
+        self.assertIn("Reload pin after ff-only refresh", asq)
+        self.assertLess(
+            asq.index("git pull --ff-only"),
+            asq.index("$expectedFirstMateHead = Get-Asq017ExpectedFirstMateHead"),
+        )
+        self.assertLess(
+            asq.index("$expectedFirstMateHead = Get-Asq017ExpectedFirstMateHead"),
+            asq.index("$childExit -eq 50"),
+        )
         self.assertNotIn("git checkout b182d0f908b78d08c7ccb8dce3775bdca8c5d657", asq)
         self.assertIn("upstream-pin.json", oneshot)
         self.assertIn("$upstreamPin.commit", oneshot)
