@@ -326,6 +326,13 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("STATUS=BLOCKED_FIRSTMATE_DIRTY", interop)
         self.assertIn("exit 49", interop)
         self.assertIn("$HOME/firstmate", interop)
+        self.assertIn("is_viable_discovered_firstmate", interop)
+        self.assertIn("Skipping non-viable auto-discovery candidate", interop)
+        # $HOME/firstmate preference must run before alternate viable-discovery loop.
+        self.assertLess(
+            interop.index('is_firstmate_clone "$HOME/firstmate"'),
+            interop.index('if is_viable_discovered_firstmate "$candidate"; then'),
+        )
         self.assertIn("NEXT=install one primary harness", interop)
         self.assertIn("NEXT=run gh auth login inside Ubuntu", interop)
 
@@ -415,6 +422,13 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("BLOCKED_SUDO", oneshot)
         self.assertIn("BLOCKED_PRIMARY_HARNESS", oneshot)
         self.assertIn("Get-OperatorNextFromEvidence", oneshot)
+        # Child NEXT= must win over hardcoded $HOME/firstmate fallbacks for 49/50.
+        self.assertIn("$preservedNext = Get-OperatorNextFromEvidence -Attempt $continue", oneshot)
+        self.assertLess(
+            oneshot.index("$preservedNext = Get-OperatorNextFromEvidence -Attempt $continue"),
+            oneshot.index("or the -FirstMatePath override"),
+        )
+        self.assertIn("-FirstMatePath override", oneshot)
         self.assertIn("ExitCode -eq 48", oneshot)
         self.assertIn("ExitCode -eq 49", oneshot)
         self.assertIn("ExitCode -eq 50", oneshot)
