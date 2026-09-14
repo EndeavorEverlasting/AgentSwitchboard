@@ -170,15 +170,34 @@ if [[ -z "$FIRSTMATE_DIR" ]]; then
   done
 fi
 
-[[ -n "$FIRSTMATE_DIR" ]] || fail "First Mate clone not found. Re-run with --firstmate PATH or set FIRSTMATE_DIR."
+# Bounded Admin Box helper: clone audited FirstMate to $HOME/firstmate at the
+# contract pin when discovery misses. Never mutates an existing path or upstream.
+if [[ -z "$FIRSTMATE_DIR" ]]; then
+  bootstrap_dir="$HOME/firstmate"
+  clone_url="https://github.com/${EXPECTED_ORIGIN}.git"
+  note "First Mate clone not found; attempting bounded bootstrap at ${bootstrap_dir} @ ${EXPECTED_HEAD}"
+  if [[ -e "$bootstrap_dir" ]]; then
+    fail "First Mate clone not found. Path ${bootstrap_dir} exists but is not a clean audited ${EXPECTED_ORIGIN} checkout. NEXT=repair or remove that path, or re-run with --firstmate PATH / FIRSTMATE_DIR."
+  fi
+  if ! git clone --quiet "$clone_url" "$bootstrap_dir"; then
+    fail "Bounded First Mate bootstrap clone failed. NEXT=manually clone ${clone_url} to ${bootstrap_dir} and checkout ${EXPECTED_HEAD}."
+  fi
+  if ! git -C "$bootstrap_dir" checkout --quiet "$EXPECTED_HEAD"; then
+    fail "Bounded First Mate bootstrap could not checkout pin ${EXPECTED_HEAD}. NEXT=in ${bootstrap_dir} run: git fetch --all && git checkout ${EXPECTED_HEAD}."
+  fi
+  FIRSTMATE_DIR="$bootstrap_dir"
+  note "BOOTSTRAPPED_FIRSTMATE=${FIRSTMATE_DIR}@${EXPECTED_HEAD}"
+fi
+
+[[ -n "$FIRSTMATE_DIR" ]] || fail "First Mate clone not found. NEXT=re-run with --firstmate PATH or set FIRSTMATE_DIR."
 FIRSTMATE_DIR="$(cd -- "$FIRSTMATE_DIR" && pwd)"
-is_firstmate_clone "$FIRSTMATE_DIR" || fail "Path is not the audited upstream clone ($EXPECTED_ORIGIN): $FIRSTMATE_DIR"
+is_firstmate_clone "$FIRSTMATE_DIR" || fail "Path is not the audited upstream clone ($EXPECTED_ORIGIN): $FIRSTMATE_DIR. NEXT=point --firstmate at a clean ${EXPECTED_ORIGIN} checkout."
 
 status="$(git -C "$FIRSTMATE_DIR" status --porcelain=v1)"
-[[ -z "$status" ]] || fail "First Mate clone is dirty; preserve that work before interoperability probing."
+[[ -z "$status" ]] || fail "First Mate clone is dirty; preserve that work before interoperability probing. NEXT=commit/stash/move dirty work in ${FIRSTMATE_DIR}."
 
 ACTUAL_HEAD="$(git -C "$FIRSTMATE_DIR" rev-parse HEAD)"
-[[ "$ACTUAL_HEAD" == "$EXPECTED_HEAD" ]] || fail "First Mate HEAD is $ACTUAL_HEAD, but this integration floor was audited at $EXPECTED_HEAD. Refresh the evidence contract before claiming compatibility."
+[[ "$ACTUAL_HEAD" == "$EXPECTED_HEAD" ]] || fail "First Mate HEAD is $ACTUAL_HEAD, but this integration floor was audited at $EXPECTED_HEAD. NEXT=in ${FIRSTMATE_DIR} run: git fetch --all && git checkout ${EXPECTED_HEAD}."
 
 for path in "${REQUIRED_PATHS[@]}"; do
   [[ -e "$FIRSTMATE_DIR/$path" ]] || fail "Required audited upstream path is missing: $path"
@@ -191,13 +210,13 @@ for candidate in claude grok pi pi-signed omp codex opencode cursor-agent; do
     break
   fi
 done
-[[ -n "$HARNESS" ]] || fail "No verified First Mate primary harness is installed in this Linux environment (claude, grok, pi, pi-signed, omp, codex, opencode, or cursor-agent)."
+[[ -n "$HARNESS" ]] || fail "No verified First Mate primary harness is installed in this Linux environment (claude, grok, pi, pi-signed, omp, codex, opencode, or cursor-agent). NEXT=install one primary harness on PATH inside Ubuntu, then rerun."
 
-gh auth status --hostname github.com >/dev/null 2>&1 || fail "GitHub CLI is not authenticated for github.com in this Linux environment."
+gh auth status --hostname github.com >/dev/null 2>&1 || fail "GitHub CLI is not authenticated for github.com in this Linux environment. NEXT=run gh auth login inside Ubuntu, then rerun."
 
 note "First Mate path: $FIRSTMATE_DIR"
 note "First Mate audited HEAD: $ACTUAL_HEAD"
 note "Primary harness available: $HARNESS"
 note "tmux: $(tmux -V)"
 printf '[PASS] FIRSTMATE_INTEROP=repository-and-toolchain-floor\n'
-printf '[PROOF_CEILING] No First Mate task was dispatched; no project remote, PR, merge, credentials, or dependencies were mutated. Physical WSL crew proof and Windows bridge remain out of scope for this foundation.\n'
+printf '[PROOF_CEILING] No First Mate task was dispatched; no project remote, PR, merge, credentials, or dependencies were mutated. Bounded local clone of the audited FirstMate pin into $HOME/firstmate is environment setup only. Physical WSL crew proof and Windows bridge remain out of scope for this foundation.\n'

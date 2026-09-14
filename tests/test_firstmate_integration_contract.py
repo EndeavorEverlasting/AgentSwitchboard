@@ -105,7 +105,6 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
             "git commit",
             "gh pr create",
             "gh repo create",
-            "git clone",
             "no-mistakes init",
             "apt install",
             "apt-get install",
@@ -114,6 +113,13 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
         )
         for command in forbidden:
             self.assertNotIn(command, self.probe, command)
+        # Bounded local FirstMate pin bootstrap is allowed environment setup
+        # (clone to $HOME/firstmate at the audited pin only). Upstream mutation
+        # remains forbidden.
+        self.assertIn('bootstrap_dir="$HOME/firstmate"', self.probe)
+        self.assertIn("git clone --quiet", self.probe)
+        self.assertIn("BOOTSTRAPPED_FIRSTMATE=", self.probe)
+        self.assertEqual(self.probe.count("git clone"), 1)
 
     def test_probe_accepts_git_worktree_identity_via_git(self) -> None:
         self.assertIn("rev-parse --is-inside-work-tree", self.probe)
