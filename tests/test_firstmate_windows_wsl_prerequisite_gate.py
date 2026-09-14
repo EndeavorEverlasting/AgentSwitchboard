@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -10,6 +13,8 @@ BRIDGE = ROOT / "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1"
 HARNESS = ROOT / "tooling" / "firstmate" / "harness" / "operational"
 INTEGRATION = ROOT / "tooling" / "firstmate" / "harness" / "integration-contract.json"
 RUNBOOK = ROOT / "docs" / "harness" / "firstmate-wsl-physical-floor-runbook.md"
+WORK_QUEUE = ROOT / ".ai" / "WORK_QUEUE.md"
+OCD_VALIDATOR = ROOT / "scripts" / "Test-OperatorCommandDeliveryHarnessCompleteness.ps1"
 
 
 class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
@@ -144,6 +149,15 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("exit 46", self.physical)
         self.assertIn("BLOCKED_WINDOWS_WSL_REQUIRED", self.physical)
         self.assertIn("WINDOWS_WSL_REQUIRED", self.physical)
+        # Missing/unrunnable Ubuntu must fail closed as exit 46 before apt/preflight.
+        self.assertIn("--distribution", self.physical)
+        self.assertIn("--exec", self.physical)
+        self.assertIn("firstmate-wsl-distribution-probe.txt", self.physical)
+        self.assertIn("Required WSL distribution is not registered or not runnable", self.physical)
+        self.assertLess(
+            self.physical.index("firstmate-wsl-distribution-probe.txt"),
+            self.physical.index("firstmate-wsl-prerequisites.txt"),
+        )
 
     def test_gate_is_bounded_and_uses_unique_evidence(self) -> None:
         self.assertIn("[int]$PrerequisiteTimeoutSeconds = 60", self.physical)
@@ -179,6 +193,125 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
             "set-content ~/.config/gh",
         ):
             self.assertNotIn(forbidden, lowered)
+
+    def test_asq017_admin_box_next_action_is_ocd_safe_and_durable_entrypoint_bound(self) -> None:
+        """ASQ-017 paste must keep the parent shell open and call the durable floor entrypoint."""
+        text = WORK_QUEUE.read_text(encoding="utf-8")
+        start = text.find("## ASQ-017")
+        self.assertGreaterEqual(start, 0, "ASQ-017 missing from work ledger")
+        rest = text[start:]
+        end = rest.find("\n## ", 1)
+        block = rest if end < 0 else rest[:end]
+        self.assertIn("`Invoke-Asq017AdminBoxLiveFloor.ps1`", block)
+        next_line = next(
+            (line for line in block.splitlines() if line.startswith("- **Next action:**")),
+            None,
+        )
+        self.assertIsNotNone(next_line, "ASQ-017 Next action missing")
+        assert next_line is not None
+        idx = next_line.find("$ErrorActionPreference")
+        self.assertGreaterEqual(idx, 0, "ASQ-017 Next action missing PowerShell body")
+        command = next_line[idx:].strip().strip("`")
+        self.assertIn("Invoke-Asq017AdminBoxLiveFloor.ps1", command)
+        self.assertIn("CHILD_EXIT_CODE=", command)
+        self.assertIn("$childExit=$LASTEXITCODE", command)
+        self.assertIn("throw", command)
+        self.assertIn("Test-Path -LiteralPath", command)
+        self.assertIn("checkout root", command)
+        self.assertNotIn("(git rev-parse HEAD).Trim()", command)
+        self.assertIn("LIVE_RUNTIME_PROOF:UNPROVEN", block)
+        self.assertIn("BLOCKED_WINDOWS_WSL_REQUIRED", block)
+        self.assertIn("Invoke-Asq017AdminBoxLiveFloor.ps1", self.runbook)
+        self.assertIn("CHILD_EXIT_CODE", self.runbook)
+        self.assertIn("throw", self.runbook)
+        self.assertIn("Test-Path -LiteralPath", self.runbook)
+        self.assertIn("b182d0f908b78d08c7ccb8dce3775bdca8c5d657", self.runbook)
+        self.assertIn("inside Ubuntu", self.runbook)
+
+        durable = ROOT / "Invoke-Asq017AdminBoxLiveFloor.ps1"
+        self.assertTrue(durable.is_file(), durable)
+        durable_text = durable.read_text(encoding="utf-8")
+        self.assertIn("Invoke-FmWsl12AdminBoxLiveProof.ps1", durable_text)
+        self.assertIn("$headRaw = git rev-parse HEAD", durable_text)
+        self.assertIn("git fetch failed with exit", durable_text)
+        self.assertIn("git switch failed with exit", durable_text)
+        self.assertIn("git pull failed with exit", durable_text)
+        self.assertIn("Unable to resolve HEAD", durable_text)
+        # Capture → native exit check → Trim (never Trim before LASTEXITCODE).
+        head_raw_idx = durable_text.find("$headRaw = git rev-parse HEAD")
+        self.assertGreaterEqual(head_raw_idx, 0)
+        after_head = durable_text[head_raw_idx:]
+        exit_idx = after_head.find("if ($LASTEXITCODE -ne 0)")
+        trim_idx = after_head.find('("$headRaw").Trim()')
+        self.assertGreaterEqual(exit_idx, 0, "HEAD capture missing LASTEXITCODE check")
+        self.assertGreaterEqual(trim_idx, 0, "HEAD capture missing Trim after exit check")
+        self.assertLess(exit_idx, trim_idx, "Trim must follow LASTEXITCODE validation")
+        self.assertNotIn("(git rev-parse HEAD).Trim()", durable_text)
+        self.assertNotIn("$head=(git rev-parse HEAD).Trim()", durable_text)
+        self.assertIn("[switch]$ContractOnly", durable_text)
+        self.assertIn("LIVE_RUNTIME_PROOF", durable_text)
+        self.assertIn("UNPROVEN", durable_text)
+        self.assertEqual(
+            "Invoke-Asq017AdminBoxLiveFloor.ps1",
+            self.integration["physical_floor_recovery"]["asq017_admin_box_live_floor_entrypoint"],
+        )
+
+        self.assertTrue(OCD_VALIDATOR.is_file(), OCD_VALIDATOR)
+        with tempfile.TemporaryDirectory() as tmp:
+            candidate = Path(tmp) / "asq017-admin-box-next.ps1"
+            candidate.write_text(command.replace("; ", "\n") + "\n", encoding="utf-8")
+            completed = subprocess.run(
+                [
+                    "pwsh",
+                    "-NoLogo",
+                    "-NoProfile",
+                    "-File",
+                    str(OCD_VALIDATOR),
+                    "-CandidatePath",
+                    str(candidate),
+                ],
+                cwd=ROOT,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(
+                0,
+                completed.returncode,
+                f"OCD validator failed:\n{completed.stdout}\n{completed.stderr}",
+            )
+            env = os.environ.copy()
+            env["CANDIDATE"] = str(candidate)
+            ast_probe = subprocess.run(
+                [
+                    "pwsh",
+                    "-NoLogo",
+                    "-NoProfile",
+                    "-Command",
+                    (
+                        "$t = Get-Content -Raw -LiteralPath $env:CANDIDATE; "
+                        "$tok = $null; $err = $null; "
+                        "$ast = [System.Management.Automation.Language.Parser]::ParseInput("
+                        "$t, [ref]$tok, [ref]$err); "
+                        "$ex = @($ast.FindAll({ param($n) "
+                        "$n -is [System.Management.Automation.Language.ExitStatementAst] }, $true)); "
+                        "if ($err.Count -gt 0) { Write-Output ('PARSE_ERRORS=' + $err.Count); exit 2 }; "
+                        "Write-Output ('EXIT_STATEMENT_COUNT=' + $ex.Count); "
+                        "if ($ex.Count -gt 0) { exit 1 }"
+                    ),
+                ],
+                cwd=ROOT,
+                check=False,
+                capture_output=True,
+                text=True,
+                env=env,
+            )
+            self.assertEqual(
+                0,
+                ast_probe.returncode,
+                f"ExitStatementAst probe failed:\n{ast_probe.stdout}\n{ast_probe.stderr}",
+            )
+            self.assertIn("EXIT_STATEMENT_COUNT=0", ast_probe.stdout)
 
 
 if __name__ == "__main__":

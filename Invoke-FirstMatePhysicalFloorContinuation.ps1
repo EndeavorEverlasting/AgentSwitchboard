@@ -252,8 +252,9 @@ if ($ContractOnly) {
     exit 0
 }
 
-$actualHead = (& git -C $Root rev-parse HEAD).Trim()
+$actualHeadRaw = & git -C $Root rev-parse HEAD
 if ($LASTEXITCODE -ne 0) { throw 'Unable to resolve exact AgentSwitchboard HEAD.' }
+$actualHead = ("$actualHeadRaw").Trim()
 if ($actualHead -ne $ExpectedHead.ToLowerInvariant()) {
     throw "Exact-head mismatch. Expected=$ExpectedHead Actual=$actualHead"
 }

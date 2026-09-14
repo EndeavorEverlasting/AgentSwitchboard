@@ -97,6 +97,7 @@
     "continuation_rule": "after bounded package repair, rerun the exact-head physical-floor entrypoint and continue until PASS or a non-package blocker is observed",
     "continuation_entrypoint": "Invoke-FirstMatePhysicalFloorContinuation.ps1",
     "admin_box_live_proof_entrypoint": "Invoke-FmWsl12AdminBoxLiveProof.ps1",
+    "asq017_admin_box_live_floor_entrypoint": "Invoke-Asq017AdminBoxLiveFloor.ps1",
     "harness_mode": "physical-floor-continue",
     "harness_remains_non_installing": true,
     "structured_prerequisite_exit_codes": {
@@ -108,7 +109,7 @@
       "status": "BLOCKED_WINDOWS_WSL_REQUIRED",
       "failure_code": "WINDOWS_WSL_REQUIRED",
       "proof_level": "LIVE_ATTEMPT_FAIL_CLOSED",
-      "means": "Cloud/Linux hosts without wsl.exe fail closed before package repair or interop; contract PASS is not physical PASS"
+      "means": "Cloud/Linux hosts without wsl.exe, and Windows hosts whose contracted Ubuntu distribution is missing or unrunnable, fail closed before package repair or interop; contract PASS is not physical PASS"
     },
     "p08_continuation_authority": "Prompt/P08-class operators may repair allowlisted environmental prerequisites or invoke this continuation owner and resume; do not hard-stop solely on BLOCKED_MISSING_TOOLS"
   },

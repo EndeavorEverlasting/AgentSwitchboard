@@ -71,6 +71,10 @@ try {
             & pwsh -NoLogo -NoProfile -File $adminBoxLive -ExpectedHead $ExpectedHead -WslDistribution $WslDistribution -ContractOnly
             if ($LASTEXITCODE -ne 0) { throw "FM-WSL-12 Admin Box live-proof ContractOnly gate failed with exit code $LASTEXITCODE." }
 
+            $asq017LiveFloor = Join-Path $Root 'Invoke-Asq017AdminBoxLiveFloor.ps1'
+            & pwsh -NoLogo -NoProfile -File $asq017LiveFloor -WslDistribution $WslDistribution -ContractOnly
+            if ($LASTEXITCODE -ne 0) { throw "ASQ-017 Admin Box live-floor ContractOnly gate failed with exit code $LASTEXITCODE." }
+
             Invoke-NativeChecked -Name 'Working-tree diff hygiene' -Action { & git diff --check }
             Invoke-NativeChecked -Name 'Staged diff hygiene' -Action { & git diff --cached --check }
 
