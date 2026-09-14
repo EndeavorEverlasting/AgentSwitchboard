@@ -44,12 +44,48 @@ foreach ($entry in @(
 $rootText = if (Test-Path -LiteralPath $rootDocumentPath -PathType Leaf) { Get-Content -LiteralPath $rootDocumentPath -Raw } else { '' }
 $detailText = if (Test-Path -LiteralPath $detailDocumentPath -PathType Leaf) { Get-Content -LiteralPath $detailDocumentPath -Raw } else { '' }
 
-# Root owns only ambient universal law, precedence, and progressive routing.
+# Root owns ambient universal law, precedence, sprint declaration, completion,
+# forbidden behavior, and progressive routing. These tokens intentionally pin
+# the compact governance doctrine operators must see without loading deep detail.
 foreach ($token in @(
     '# Agent Operating Contract',
-    '## Precedence',
+    'root operating authority and single source of truth',
+    '## Agent operating principles',
     'Evidence before action',
-    'This governance contract',
+    'Floor before furniture',
+    'Bounded sprints with declared scope',
+    'One writer per branch',
+    'Reuse before replacing',
+    'No completion without proof',
+    '## Precedence',
+    'Platform, security, legal, and repository-owner instructions.',
+    'This governance contract, triggered governance details, and the nearest nested `AGENTS.md`.',
+    'Task-specific prompts.',
+    'Generic defaults.',
+    '## Mandatory sprint declaration',
+    'repo and branch',
+    'lane and mission',
+    'owned scope and forbidden scope',
+    'expected artifacts and validation commands',
+    'proof ceiling',
+    '## Universal operating law',
+    'Repository knowledge is compiled state.',
+    'Never weaken or skip a valid gate to manufacture a pass.',
+    'Static/synthetic evidence never proves runtime, live-target, provider, deployment, or user-visible success.',
+    '## Completion standard',
+    'changed files are named',
+    'required validation actually ran and results are recorded',
+    'a commit SHA exists for repository mutation',
+    'push or PR state is reported',
+    'one exact next command is given unless no safe actionable work remains',
+    '## Forbidden behaviors',
+    'Acknowledgment without mutation',
+    'Plans without execution',
+    'Summaries without proof',
+    'Completion claims without running checks',
+    'Secret or credential exposure',
+    '## Governance enforcement',
+    'scripts/Test-AgentGovernanceDoctrine.ps1',
     '## Progressive disclosure reading order',
     'HARNESS.md',
     'tooling/harness/context/context.routes.json',
@@ -63,6 +99,32 @@ foreach ($token in @(
     Add-Result -Passed $rootText.Contains($token) -Name "governance/root-route/$token" -FailureMessage 'compact root authority/routing token is missing'
 }
 Add-Result -Passed ([Text.Encoding]::UTF8.GetByteCount($rootText) -le 7000) -Name 'governance/root-context-budget' -FailureMessage 'compact root AGENTS.md exceeds 7000 UTF-8 bytes'
+
+# Prove precedence ordering within the precedence section itself. Scoping the
+# search prevents duplicated explanatory text elsewhere from hiding a bad order.
+$precedenceHeader = '## Precedence'
+$precedenceNextHeader = '## Mandatory sprint declaration'
+$precedenceStart = $rootText.IndexOf($precedenceHeader, [System.StringComparison]::Ordinal)
+$precedenceEnd = $rootText.IndexOf($precedenceNextHeader, [System.StringComparison]::Ordinal)
+$precedenceBoundsValid = $precedenceStart -ge 0 -and $precedenceEnd -gt $precedenceStart
+Add-Result -Passed $precedenceBoundsValid -Name 'governance/precedence-section-bounds' -FailureMessage 'precedence section is missing or malformed'
+$precedenceText = if ($precedenceBoundsValid) {
+    $rootText.Substring($precedenceStart, $precedenceEnd - $precedenceStart)
+} else {
+    ''
+}
+$precedenceTokens = @(
+    'Platform, security, legal, and repository-owner instructions.',
+    'This governance contract, triggered governance details, and the nearest nested `AGENTS.md`.',
+    'Task-specific prompts.',
+    'Generic defaults.'
+)
+$previousIndex = -1
+for ($i = 0; $i -lt $precedenceTokens.Count; $i++) {
+    $index = $precedenceText.IndexOf($precedenceTokens[$i], [System.StringComparison]::Ordinal)
+    Add-Result -Passed ($index -gt $previousIndex) -Name "governance/precedence-order/$($i + 1)" -FailureMessage 'instruction precedence order is missing or incorrect inside the precedence section'
+    if ($index -ge 0) { $previousIndex = $index }
+}
 
 # Detailed pre-factor governance remains normative when triggered. Validate the
 # tracked Git object instead of checkout bytes so CRLF normalization cannot create

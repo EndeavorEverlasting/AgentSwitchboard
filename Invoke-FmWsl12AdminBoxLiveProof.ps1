@@ -60,15 +60,17 @@ if ($WslDistribution -ne $canonicalDistribution) {
 }
 
 if ([string]::IsNullOrWhiteSpace($ExpectedHead)) {
-    $ExpectedHead = (& git -C $Root rev-parse HEAD).Trim()
+    $ExpectedHeadRaw = & git -C $Root rev-parse HEAD
     if ($LASTEXITCODE -ne 0) { throw 'Unable to resolve exact AgentSwitchboard HEAD.' }
+    $ExpectedHead = ("$ExpectedHeadRaw").Trim()
 }
 if ($ExpectedHead -notmatch '^[0-9a-fA-F]{40}$') {
     throw "ExpectedHead must be a 40-character SHA. Received=$ExpectedHead"
 }
 
-$actualHead = (& git -C $Root rev-parse HEAD).Trim()
+$actualHeadRaw = & git -C $Root rev-parse HEAD
 if ($LASTEXITCODE -ne 0) { throw 'Unable to resolve exact AgentSwitchboard HEAD.' }
+$actualHead = ("$actualHeadRaw").Trim()
 if ($actualHead -ne $ExpectedHead.ToLowerInvariant()) {
     throw "Exact-head mismatch. Expected=$ExpectedHead Actual=$actualHead"
 }
