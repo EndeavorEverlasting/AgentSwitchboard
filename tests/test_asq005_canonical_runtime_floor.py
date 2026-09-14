@@ -66,6 +66,8 @@ class Asq005CanonicalRuntimeFloorTests(unittest.TestCase):
         self.assertIn("G0", block)
         self.assertIn("G8", block)
         self.assertIn("LIVE_RUNTIME_PROOF:UNPROVEN", block)
+        self.assertIn("WINDOWS_REQUIRED", block)
+        self.assertIn("LIVE_ATTEMPT", block)
         self.assertIn("asq005-fresh-tui-lsp-runtime-gates.md", block)
         self.assertIn("Configure-only proof is insufficient", block)
         self.assertIn("1e5c599", block)
