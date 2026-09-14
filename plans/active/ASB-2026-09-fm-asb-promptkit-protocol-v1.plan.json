@@ -4,10 +4,10 @@
   "title": "FirstMate\u2194ASB\u2194PromptKit v1 protocol and context-rollover UX",
   "repository": "EndeavorEverlasting/AgentSwitchboard",
   "visibility": "public",
-  "status": "active",
+  "status": "completed",
   "priority": "high",
   "createdUtc": "2026-09-14T18:40:00Z",
-  "updatedUtc": "2026-09-14T19:30:00Z",
+  "updatedUtc": "2026-09-14T19:35:00Z",
   "mission": "Freeze the FirstMate\u2194AgentSwitchboard\u2194PromptKit integration boundary as six v1 schemas plus a quiet context-rollover UX state machine and receipt drafts, without implementing live adapters.",
   "owner": {
     "surface": "cross-product protocol contracts",
@@ -19,10 +19,12 @@
     "pullRequest": {
       "number": 184,
       "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/184",
-      "state": "open"
+      "state": "merged",
+      "mergeCommit": "6c80be9c00ccad45bb0177ad88f2ffdb2e782b46"
     },
     "baseRef": "main",
-    "commitRequired": true
+    "commitRequired": true,
+    "integratedAt": "2026-09-14T19:29:11Z"
   },
   "wave": "FirstMate\u2194ASB\u2194PromptKit boundary research",
   "lane": "protocol contract freeze",
@@ -184,16 +186,16 @@
   ],
   "proof": {
     "target": "Contract-only FirstMate\u2194ASB\u2194PromptKit protocol and rollover UX freeze",
-    "achieved": "PR #184 reconciled onto main@c3da20fef02160de66d238b1c9b8eb9c6825588e; contract freeze commits retained; owning validators PASS on reconciled head. Prior green at 16b4d25 remains historical; refreshed exact-head proof supersedes it for integration.",
+    "achieved": "PR #184 INTEGRATED on main@6c80be9c00ccad45bb0177ad88f2ffdb2e782b46 after reconcile onto main@c3da20f and exact-head revalidation at b582742. Owning validators PASS on main post-merge. Prior green at 16b4d25 is historical only.",
     "ceiling": "Contract and synthetic fixture proof only. No live observation, routing API, durable inbox delivery, or automatic rollover is claimed."
   },
   "handoff": {
     "nextOwner": "FirstMate observation adapter lane",
-    "nextCommand": "gh pr view 184 --repo EndeavorEverlasting/AgentSwitchboard",
+    "nextCommand": "python tests/test_fm_asb_promptkit_protocol_contract.py",
     "notes": [
-      "Mainline integration of this contract PR is authorized after exact-head green on the reconciled candidate.",
-      "Do not implement live adapters in this plan.",
-      "Phase 1 after merge: consume FirstMate task state into asb.agent-observation/v1 without becoming a second watcher."
+      "Contract freeze is INTEGRATED on main; proof ceiling remains contract-only.",
+      "Do not implement live adapters without a new bounded Phase 1 sprint declaration.",
+      "Phase 1 successor: consume FirstMate task state into asb.agent-observation/v1 without becoming a second watcher."
     ]
   }
 }
