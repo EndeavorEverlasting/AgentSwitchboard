@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.3.0",
+  "schema_version": "1.4.0",
   "integration_id": "firstmate-wsl",
   "architecture_decision": "docs/architecture/asb-firstmate-runtime-boundary.md",
   "convergence_contract": "tooling/firstmate/harness/convergence-contract.json",
@@ -79,6 +79,23 @@
     "credential_mutation": false,
     "runtime_owner_after_bridge": "FirstMate"
   },
+  "physical_floor_recovery": {
+    "lane": "FM-WSL-12",
+    "execution_owner_may_install_missing_packages": true,
+    "additional_operator_confirmation_required": false,
+    "distribution": "Ubuntu",
+    "package_manager": "apt-get",
+    "package_allowlist": [
+      "git",
+      "gh",
+      "tmux",
+      "python3"
+    ],
+    "authority_source": "the exact NEXT_ACTION emitted after STATUS=BLOCKED_MISSING_TOOLS",
+    "credential_mutation": false,
+    "github_authentication_requires_operator": true,
+    "continuation_rule": "after bounded package repair, rerun the exact-head physical-floor entrypoint and continue until PASS or a non-package blocker is observed"
+  },
   "routing_disposition": {
     "agentswitchboard_skill": null,
     "agentswitchboard_capability": null,
@@ -91,5 +108,5 @@
     "docs/configuration.md",
     ".agents/skills/project-management/SKILL.md"
   ],
-  "proof_ceiling": "Repository and hosted Windows/Linux validation may prove the Windows-host bridge contract, exact upstream pin, explicit Ubuntu selection, bounded subprocess behavior, prerequisite gating, WSL-owned exact-head clone contract, and read-only interoperability floor. Physical WSL execution, live FirstMate crew dispatch, worker supervision, project delivery, native-Windows FirstMate behavior, provider/model behavior, and Herdr remain separate runtime proof."
+  "proof_ceiling": "Repository and hosted Windows/Linux validation may prove the Windows-host bridge contract, exact upstream pin, explicit Ubuntu selection, bounded subprocess behavior, prerequisite gating, WSL-owned exact-head clone contract, and read-only interoperability floor. FM-WSL-12 may perform bounded allowlisted Ubuntu prerequisite package repair before rerunning the gate, but physical WSL execution, live FirstMate crew dispatch, worker supervision, project delivery, native-Windows FirstMate behavior, provider/model behavior, and Herdr remain separate runtime proof."
 }
