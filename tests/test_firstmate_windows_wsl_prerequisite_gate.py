@@ -126,6 +126,10 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("WINDOWS_WSL_REQUIRED", continuation)
         self.assertIn("MaxPackageRepairAttempts", continuation)
         self.assertIn("execution_owner_may_install_missing_packages", continuation)
+        self.assertIn("Get-OperatorNextFromText", continuation)
+        self.assertIn("sudo -n true", continuation)
+        self.assertIn("STATUS=BLOCKED_SUDO", continuation)
+        self.assertIn("bridge-stderr.txt", continuation)
         self.assertNotIn("gh auth login --hostname github.com --web", continuation.split("ContractOnly")[0])
         for forbidden in (
             "Start-Process sudo",
@@ -174,6 +178,8 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("bridge-stderr.txt", self.physical)
         self.assertIn("FirstMate lower bridge failed", self.physical)
         self.assertIn("FIRSTMATE_WINDOWS_WSL_PHYSICAL_FLOOR", self.physical)
+        self.assertIn("Write-Host $bridge.Stderr.TrimEnd()", self.physical)
+        self.assertIn('Write-Host "NEXT=$operatorNext"', self.physical)
 
     def test_contract_only_does_not_require_live_wsl(self) -> None:
         contract_index = self.physical.index("if ($ContractOnly)")
@@ -323,6 +329,25 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
             )
             self.assertIn("EXIT_STATEMENT_COUNT=0", ast_probe.stdout)
 
+
+
+    def test_admin_box_floor_surfaces_operator_next_on_fail_closed(self) -> None:
+        asq = (ROOT / "Invoke-Asq017AdminBoxLiveFloor.ps1").read_text(encoding="utf-8")
+        self.assertIn("Key 'NEXT'", asq)
+        self.assertIn("cloud/Linux hosts cannot prove physical floor", asq)
+        self.assertIn("inspect child console for NEXT=", asq)
+        oneshot = (ROOT / "Invoke-FmWsl12AdminBoxLiveProof.ps1").read_text(encoding="utf-8")
+        self.assertIn("NEXT=run on Windows Admin Box with wsl.exe and Ubuntu", oneshot)
+        bridge = (ROOT / "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1").read_text(encoding="utf-8")
+        self.assertIn("STDERR<<", bridge)
+        self.assertIn("Write-Host $probe.Stderr.TrimEnd()", bridge)
+        continuation = (ROOT / "Invoke-FirstMatePhysicalFloorContinuation.ps1").read_text(encoding="utf-8")
+        self.assertIn("Get-OperatorNextFromText", continuation)
+        self.assertIn("sudo -n true", continuation)
+        self.assertIn("STATUS=BLOCKED_SUDO", continuation)
+        physical = (ROOT / "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1").read_text(encoding="utf-8")
+        self.assertIn("Write-Host $bridge.Stderr.TrimEnd()", physical)
+        self.assertIn('Write-Host "NEXT=$operatorNext"', physical)
 
 if __name__ == "__main__":
     unittest.main()

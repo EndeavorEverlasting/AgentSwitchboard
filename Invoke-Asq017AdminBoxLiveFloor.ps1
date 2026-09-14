@@ -132,10 +132,12 @@ if ($childExit -eq 45) {
 if ($childExit -eq 46) {
     Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_WINDOWS_WSL_REQUIRED'
     Write-Asq017Status -Key 'PROOF_LEVEL' -Value 'LIVE_ATTEMPT_FAIL_CLOSED'
+    Write-Asq017Status -Key 'NEXT' -Value 'run on Windows Admin Box with wsl.exe and Ubuntu; cloud/Linux hosts cannot prove physical floor'
     exit 46
 }
 if ($childExit -ne 0) {
     Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'FAILED'
+    Write-Asq017Status -Key 'NEXT' -Value 'inspect child console for NEXT=/NEXT_ACTION=; repair operator blocker; rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
     exit $childExit
 }
 

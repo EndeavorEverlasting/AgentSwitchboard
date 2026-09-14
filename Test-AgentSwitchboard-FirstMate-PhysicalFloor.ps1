@@ -252,6 +252,19 @@ Set-Content -LiteralPath $BridgeStderrPath -Value $bridge.Stderr.TrimEnd()
 
 if ($bridge.ExitCode -ne 0) {
     if (-not [string]::IsNullOrWhiteSpace($bridge.Stdout)) { Write-Host $bridge.Stdout.TrimEnd() }
+    if (-not [string]::IsNullOrWhiteSpace($bridge.Stderr)) { Write-Host $bridge.Stderr.TrimEnd() }
+    $bridgeCombined = (($bridge.Stdout, $bridge.Stderr) -join "`n")
+    $operatorNext = $null
+    $nextActionMatch = [regex]::Match($bridgeCombined, '(?m)^NEXT_ACTION=(.+)$')
+    if ($nextActionMatch.Success) {
+        $operatorNext = $nextActionMatch.Groups[1].Value.Trim()
+        Write-Host "NEXT_ACTION=$operatorNext"
+    }
+    $nextMatch = [regex]::Match($bridgeCombined, '(?m)(?:^|\s)NEXT=(.+)$')
+    if ($nextMatch.Success) {
+        $operatorNext = $nextMatch.Groups[1].Value.Trim()
+        Write-Host "NEXT=$operatorNext"
+    }
     Write-Host "PREREQUISITE_EVIDENCE=$PrerequisitePath"
     Write-Host "BRIDGE_STDOUT=$BridgeStdoutPath"
     Write-Host "BRIDGE_STDERR=$BridgeStderrPath"
