@@ -194,6 +194,16 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
             self.physical.index("STATUS=BLOCKED_PRIMARY_HARNESS"),
             self.physical.index("STATUS=PASS"),
         )
+        # -FirstMatePath must drive dirty/pin preflight and skip $HOME/firstmate.
+        self.assertIn("ASB_FIRSTMATE_PATH", self.physical)
+        self.assertIn("FIRSTMATE_CHECK_PATH", self.physical)
+        self.assertIn("PathEnvironmentNames", self.physical)
+        self.assertIn("WSLENV", self.physical)
+        self.assertLess(
+            self.physical.index('FIRSTMATE_CHECK_PATH="${ASB_FIRSTMATE_PATH:-}"'),
+            self.physical.index('elif [[ -e "$HOME/firstmate" ]]; then'),
+        )
+        self.assertIn("pass -FirstMatePath to a clean audited", self.physical)
 
     def test_gate_is_bounded_and_uses_unique_evidence(self) -> None:
         self.assertIn("[int]$PrerequisiteTimeoutSeconds = 60", self.physical)

@@ -37,7 +37,9 @@ function Invoke-CapturedProcess {
     param(
         [Parameter(Mandatory = $true)][string]$FileName,
         [Parameter(Mandatory = $true)][string[]]$Arguments,
-        [Parameter(Mandatory = $true)][int]$TimeoutSeconds
+        [Parameter(Mandatory = $true)][int]$TimeoutSeconds,
+        [hashtable]$Environment = @{},
+        [string[]]$PathEnvironmentNames = @()
     )
 
     $psi = [System.Diagnostics.ProcessStartInfo]::new()
@@ -48,6 +50,32 @@ function Invoke-CapturedProcess {
     $psi.RedirectStandardError = $true
     foreach ($argument in $Arguments) {
         [void]$psi.ArgumentList.Add([string]$argument)
+    }
+
+    # Mirror Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1: reviewed path vars cross
+    # into WSL only through WSLENV /p (no wslpath). Non-path env still needs WSLENV
+    # listing so bash -lc can read the override.
+    $wslEnvEntries = @()
+    $existingWslEnv = $psi.Environment['WSLENV']
+    if (-not [string]::IsNullOrWhiteSpace($existingWslEnv)) {
+        $wslEnvEntries += @($existingWslEnv -split ':' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    }
+    foreach ($name in $Environment.Keys) {
+        $stringName = [string]$name
+        $wslEnvEntries = @($wslEnvEntries | Where-Object {
+            $entryName = (([string]$_ -split '/', 2)[0])
+            $entryName -ine $stringName
+        })
+        $psi.Environment[$stringName] = [string]$Environment[$name]
+        if ($PathEnvironmentNames -contains $stringName) {
+            $wslEnvEntries += "$stringName/p"
+        }
+        else {
+            $wslEnvEntries += $stringName
+        }
+    }
+    if ($wslEnvEntries.Count -gt 0) {
+        $psi.Environment['WSLENV'] = (@($wslEnvEntries | Select-Object -Unique) -join ':')
     }
 
     $process = [System.Diagnostics.Process]::new()
@@ -203,10 +231,30 @@ if [[ -z "$harness" ]]; then
   printf 'NEXT=install one primary harness on PATH inside Ubuntu visible to: wsl -d Ubuntu --exec bash -lc "command -v <harness>" (claude|grok|pi|pi-signed|omp|codex|opencode|cursor-agent), then rerun\n'
   exit 48
 fi
-# Fail closed before the long bridge when $HOME/firstmate is dirty or off the audited pin.
+# Fail closed before the long bridge when FirstMate is dirty or off the audited pin.
 # Pin must match tooling/firstmate/harness/upstream-pin.json (Test-FirstMateInterop.sh).
+# When -FirstMatePath is set, ASB_FIRSTMATE_PATH is injected via WSLENV and $HOME/firstmate
+# is skipped so a dirty default checkout cannot false-block a clean override.
 EXPECTED_FIRSTMATE_HEAD='b182d0f908b78d08c7ccb8dce3775bdca8c5d657'
-if [[ -e "$HOME/firstmate" ]]; then
+FIRSTMATE_CHECK_PATH="${ASB_FIRSTMATE_PATH:-}"
+if [[ -n "$FIRSTMATE_CHECK_PATH" ]]; then
+  if [[ ! -d "$FIRSTMATE_CHECK_PATH/.git" ]]; then
+    printf 'STATUS=BLOCKED_FIRSTMATE_PIN\n'
+    printf 'NEXT=pass -FirstMatePath to a clean audited kunchenguid/firstmate@%s checkout (override path missing or not a git repo: %s), then rerun\n' "$EXPECTED_FIRSTMATE_HEAD" "$FIRSTMATE_CHECK_PATH"
+    exit 50
+  fi
+  if [[ -n "$(git -C "$FIRSTMATE_CHECK_PATH" status --porcelain 2>/dev/null || true)" ]]; then
+    printf 'STATUS=BLOCKED_FIRSTMATE_DIRTY\n'
+    printf 'NEXT=commit/stash/move dirty work in -FirstMatePath (%s), then rerun\n' "$FIRSTMATE_CHECK_PATH"
+    exit 49
+  fi
+  actual_fm_head="$(git -C "$FIRSTMATE_CHECK_PATH" rev-parse HEAD 2>/dev/null || true)"
+  if [[ "$actual_fm_head" != "$EXPECTED_FIRSTMATE_HEAD" ]]; then
+    printf 'STATUS=BLOCKED_FIRSTMATE_PIN\n'
+    printf 'NEXT=in -FirstMatePath (%s) run: git fetch --all && git checkout %s, then rerun\n' "$FIRSTMATE_CHECK_PATH" "$EXPECTED_FIRSTMATE_HEAD"
+    exit 50
+  fi
+elif [[ -e "$HOME/firstmate" ]]; then
   if [[ ! -d "$HOME/firstmate/.git" ]]; then
     printf 'STATUS=BLOCKED_FIRSTMATE_PIN\n'
     printf 'NEXT=repair or remove $HOME/firstmate so bounded bootstrap can clone kunchenguid/firstmate@%s, or pass -FirstMatePath to a clean audited checkout, then rerun\n' "$EXPECTED_FIRSTMATE_HEAD"
@@ -233,10 +281,21 @@ printf 'GITHUB_AUTH=ready\n'
 '@
 $normalizedCommand = $preflightCommand.Replace("`r`n", "`n").Replace("`r", "`n")
 
+$preflightEnvironment = @{}
+$preflightPathEnvironmentNames = @()
+if (-not [string]::IsNullOrWhiteSpace($FirstMatePath)) {
+    $preflightEnvironment['ASB_FIRSTMATE_PATH'] = $FirstMatePath
+    if ($FirstMatePath -match '^[A-Za-z]:[\\/]' -or $FirstMatePath -match '^\\\\') {
+        $preflightPathEnvironmentNames += 'ASB_FIRSTMATE_PATH'
+    }
+}
+
 $preflight = Invoke-CapturedProcess `
     -FileName $wsl.Source `
     -Arguments @('--distribution', $WslDistribution, '--exec', 'bash', '-lc', $normalizedCommand) `
-    -TimeoutSeconds $PrerequisiteTimeoutSeconds
+    -TimeoutSeconds $PrerequisiteTimeoutSeconds `
+    -Environment $preflightEnvironment `
+    -PathEnvironmentNames $preflightPathEnvironmentNames
 
 Set-Content -LiteralPath $PrerequisitePath -Value @(
     "HEAD=$actualHead"
