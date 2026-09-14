@@ -68,6 +68,21 @@ function Write-Asq017Status {
     Write-Host ('{0}={1}' -f $Key, $Value)
 }
 
+function Write-Asq017GitRefreshBlocker {
+    param(
+        [Parameter(Mandatory)][string]$Operation,
+        [Parameter(Mandatory)][int]$GitExitCode
+    )
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_GIT_REFRESH'
+    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_GIT_REFRESH'
+    Write-Asq017Status -Key 'GIT_OPERATION' -Value $Operation
+    Write-Asq017Status -Key 'GIT_EXIT_CODE' -Value "$GitExitCode"
+    Write-Host 'NEXT=commit/stash/move unrelated local changes (or use a clean worktree), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1; use -SkipGitRefresh only when already on the intended tip'
+    Write-Host ("git {0} failed with exit {1}" -f $Operation, $GitExitCode)
+    exit 1
+}
+
 if ($ContractOnly) {
     Write-Asq017Status -Key 'ASQ017_MODE' -Value 'ContractOnly'
     Write-Asq017Status -Key 'ASQ017_ONESHOT' -Value $OneShotPath
@@ -97,17 +112,17 @@ if (-not $SkipGitRefresh) {
 
     git fetch --all --prune --tags
     if ($LASTEXITCODE -ne 0) {
-        throw "git fetch failed with exit $LASTEXITCODE"
+        Write-Asq017GitRefreshBlocker -Operation 'fetch' -GitExitCode $LASTEXITCODE
     }
 
     git switch $Branch
     if ($LASTEXITCODE -ne 0) {
-        throw "git switch failed with exit $LASTEXITCODE"
+        Write-Asq017GitRefreshBlocker -Operation 'switch' -GitExitCode $LASTEXITCODE
     }
 
     git pull --ff-only $Remote $Branch
     if ($LASTEXITCODE -ne 0) {
-        throw "git pull failed with exit $LASTEXITCODE"
+        Write-Asq017GitRefreshBlocker -Operation 'pull' -GitExitCode $LASTEXITCODE
     }
 }
 
@@ -116,14 +131,26 @@ $expectedFirstMateHead = Get-Asq017ExpectedFirstMateHead
 
 $headRaw = git rev-parse HEAD
 if ($LASTEXITCODE -ne 0) {
-    throw 'Unable to resolve HEAD'
+    Write-Host 'STATUS=BLOCKED_GIT_HEAD'
+    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_GIT_HEAD'
+    Write-Host 'NEXT=repair the AgentSwitchboard checkout so git rev-parse HEAD succeeds, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+    Write-Host 'Unable to resolve HEAD'
+    exit 1
 }
 $head = ("$headRaw").Trim()
 if ([string]::IsNullOrWhiteSpace($head)) {
-    throw 'Unable to resolve HEAD'
+    Write-Host 'STATUS=BLOCKED_GIT_HEAD'
+    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_GIT_HEAD'
+    Write-Host 'NEXT=repair the AgentSwitchboard checkout so git rev-parse HEAD returns a non-empty SHA, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+    Write-Host 'Unable to resolve HEAD'
+    exit 1
 }
 if ($head -notmatch '^[0-9a-fA-F]{40}$') {
-    throw "HEAD must be a 40-character SHA. Received=$head"
+    Write-Host 'STATUS=BLOCKED_GIT_HEAD'
+    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_GIT_HEAD'
+    Write-Host 'NEXT=repair the AgentSwitchboard checkout so HEAD is a 40-character SHA, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+    Write-Host ("HEAD must be a 40-character SHA. Received={0}" -f $head)
+    exit 1
 }
 
 Write-Asq017Status -Key 'PHYSICAL_FLOOR_HEAD' -Value $head
