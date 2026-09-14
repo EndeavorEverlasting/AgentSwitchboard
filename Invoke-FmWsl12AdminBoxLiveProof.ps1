@@ -49,7 +49,10 @@ if (-not (Test-Path -LiteralPath $UpstreamPinPath -PathType Leaf)) {
 $upstreamPin = Get-Content -LiteralPath $UpstreamPinPath -Raw | ConvertFrom-Json
 $expectedFirstMateHead = [string]$upstreamPin.commit
 if ($expectedFirstMateHead -notmatch '^[0-9a-f]{40}$') {
-    throw "upstream-pin.json commit must be a 40-character lowercase hex SHA. Received=$expectedFirstMateHead"
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_FIRSTMATE_PIN'
+    Write-Host "NEXT=repair tooling/firstmate/harness/upstream-pin.json so commit is a 40-character lowercase hex SHA; Received=$expectedFirstMateHead"
+    exit 50
 }
 
 $integration = Get-Content -LiteralPath $IntegrationContractPath -Raw | ConvertFrom-Json
@@ -163,10 +166,20 @@ function Invoke-HarnessMode {
 
     $process = [System.Diagnostics.Process]::new()
     $process.StartInfo = $psi
-    if (-not $process.Start()) {
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    try {
+        if (-not $process.Start()) {
+            Write-Host 'STATUS=BLOCKED_HARNESS_START'
+            Write-Host "HARNESS_MODE=$Mode"
+            Write-Host 'NEXT=ensure pwsh can launch Test-AgentSwitchboard-FirstMate-Harness.ps1, then rerun; unable to start harness process'
+            exit 1
+        }
+    }
+    catch {
         Write-Host 'STATUS=BLOCKED_HARNESS_START'
         Write-Host "HARNESS_MODE=$Mode"
-        Write-Host 'NEXT=ensure pwsh can launch Test-AgentSwitchboard-FirstMate-Harness.ps1, then rerun; unable to start harness process'
+        Write-Host 'NEXT=ensure pwsh can launch Test-AgentSwitchboard-FirstMate-Harness.ps1, then rerun; harness process Start threw'
+        Write-Host ("HARNESS_START_ERROR={0}" -f $_.Exception.Message)
         exit 1
     }
     $stdoutTask = $process.StandardOutput.ReadToEndAsync()

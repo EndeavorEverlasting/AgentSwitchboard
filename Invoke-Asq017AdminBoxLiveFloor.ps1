@@ -48,7 +48,11 @@ function Get-Asq017ExpectedFirstMateHead {
     $upstreamPin = Get-Content -LiteralPath $UpstreamPinPath -Raw | ConvertFrom-Json
     $head = [string]$upstreamPin.commit
     if ($head -notmatch '^[0-9a-f]{40}$') {
-        throw "upstream-pin.json commit must be a 40-character lowercase hex SHA. Received=$head"
+        # Keep structured — do not throw (throw collapses to unstructured exit 1).
+        Write-Host 'STATUS=BLOCKED_FIRSTMATE_PIN'
+        Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_FIRSTMATE_PIN'
+        Write-Host "NEXT=repair tooling/firstmate/harness/upstream-pin.json so commit is a 40-character lowercase hex SHA; Received=$head"
+        exit 50
     }
     return $head
 }
@@ -176,7 +180,23 @@ if ($SkipProtectedControl) {
 
 $oneshotStdoutPath = Join-Path ([System.IO.Path]::GetTempPath()) ('asq017-oneshot-stdout-' + [guid]::NewGuid().ToString('n') + '.log')
 $oneshotStderrPath = Join-Path ([System.IO.Path]::GetTempPath()) ('asq017-oneshot-stderr-' + [guid]::NewGuid().ToString('n') + '.log')
-$oneshotProcess = Start-Process -FilePath 'pwsh' -ArgumentList $argumentList -NoNewWindow -Wait -PassThru -RedirectStandardOutput $oneshotStdoutPath -RedirectStandardError $oneshotStderrPath
+# Keep structured — do not throw (throw collapses to unstructured exit 1).
+try {
+    $oneshotProcess = Start-Process -FilePath 'pwsh' -ArgumentList $argumentList -NoNewWindow -Wait -PassThru -RedirectStandardOutput $oneshotStdoutPath -RedirectStandardError $oneshotStderrPath -ErrorAction Stop
+}
+catch {
+    Write-Host 'STATUS=BLOCKED_HARNESS_START'
+    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_HARNESS_START'
+    Write-Host 'NEXT=ensure pwsh can launch Invoke-FmWsl12AdminBoxLiveProof.ps1 on this host, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1; unable to start oneshot process'
+    Write-Host ("HARNESS_START_ERROR={0}" -f $_.Exception.Message)
+    exit 1
+}
+if ($null -eq $oneshotProcess) {
+    Write-Host 'STATUS=BLOCKED_HARNESS_START'
+    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_HARNESS_START'
+    Write-Host 'NEXT=ensure pwsh can launch Invoke-FmWsl12AdminBoxLiveProof.ps1 on this host, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1; oneshot Start-Process returned no process object'
+    exit 1
+}
 if (Test-Path -LiteralPath $oneshotStdoutPath -PathType Leaf) {
     Get-Content -LiteralPath $oneshotStdoutPath | ForEach-Object { Write-Host $_ }
 }
