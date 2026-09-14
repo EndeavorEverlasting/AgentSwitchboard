@@ -69,6 +69,10 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
             "Invoke-FirstMatePhysicalFloorContinuation.ps1",
             recovery["continuation_entrypoint"],
         )
+        self.assertEqual(
+            "Invoke-FmWsl12AdminBoxLiveProof.ps1",
+            recovery["admin_box_live_proof_entrypoint"],
+        )
         self.assertEqual("physical-floor-continue", recovery["harness_mode"])
         self.assertIs(recovery["harness_remains_non_installing"], True)
         self.assertEqual(44, recovery["structured_prerequisite_exit_codes"]["missing_tools"])
@@ -93,6 +97,7 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("bounded repair is authorized by fm-wsl-12", lower)
         self.assertIn("physical-floor-continue", self.runbook)
         self.assertIn("Invoke-FirstMatePhysicalFloorContinuation.ps1", self.runbook)
+        self.assertIn("Invoke-FmWsl12AdminBoxLiveProof.ps1", self.runbook)
         self.assertIn("sudo apt-get update && sudo apt-get install -y gh", self.runbook)
         self.assertIn("gh auth login", self.runbook)
         self.assertIn("do not automate credential entry", lower)
@@ -127,6 +132,7 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
             self.assertNotIn(forbidden.lower(), continuation.lower())
         self.assertIn("physical-floor-continue", harness)
         self.assertIn("Invoke-FirstMatePhysicalFloorContinuation.ps1", harness)
+        self.assertIn("Invoke-FmWsl12AdminBoxLiveProof.ps1", harness)
         # Front door must preserve structured exits for Admin Box callers.
         self.assertIn("if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }", harness)
 

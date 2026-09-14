@@ -72,13 +72,24 @@ git pull --ff-only origin main
 $head = (git rev-parse HEAD).Trim()
 Write-Host "PHYSICAL_FLOOR_HEAD=$head"
 
+# Preferred FM-WSL-12 Admin Box one-shot (contract → physical-floor-continue → protected control):
+pwsh -NoLogo -NoProfile -File .\Invoke-FmWsl12AdminBoxLiveProof.ps1 `
+  -ExpectedHead $head `
+  -WslDistribution Ubuntu
+```
+
+`Invoke-FmWsl12AdminBoxLiveProof.ps1` is the durable Admin Box live-proof owner for FM-WSL-12. It runs contract, then `physical-floor-continue` (allowlisted apt repair + rerun without another permission round-trip), then report-only `physical-floor` as the protected control. It still stops for GitHub authentication (exit 45) and writes a local untracked receipt under the evidence root.
+
+Equivalent stepped form (same proof ceiling):
+
+```powershell
 # Contract front door first (no live WSL requirement beyond ContractOnly surfaces).
 pwsh -NoLogo -NoProfile -File .\Test-AgentSwitchboard-FirstMate-Harness.ps1 `
   -Mode contract `
   -ExpectedHead $head `
   -WslDistribution Ubuntu
 
-# Preferred FM-WSL-12 / P08 continuation entrypoint:
+# FM-WSL-12 / P08 continuation entrypoint:
 # missing allowlisted packages -> install exact NEXT_ACTION -> rerun until PASS
 # or a non-package blocker (for example BLOCKED_GITHUB_AUTH).
 pwsh -NoLogo -NoProfile -File .\Test-AgentSwitchboard-FirstMate-Harness.ps1 `
@@ -87,7 +98,7 @@ pwsh -NoLogo -NoProfile -File .\Test-AgentSwitchboard-FirstMate-Harness.ps1 `
   -WslDistribution Ubuntu
 ```
 
-`physical-floor-continue` is the durable execution-owner loop for Prompt/P08-class continuation authority. It keeps the physical-floor harness itself non-installing, executes only allowlisted `apt-get` `NEXT_ACTION` values inside explicit `Ubuntu`, and still stops for GitHub authentication or other non-package blockers.
+`physical-floor-continue` remains the durable execution-owner loop for Prompt/P08-class continuation authority. It keeps the physical-floor harness itself non-installing, executes only allowlisted `apt-get` `NEXT_ACTION` values inside explicit `Ubuntu`, and still stops for GitHub authentication or other non-package blockers.
 
 Equivalent direct continuation entrypoint:
 
