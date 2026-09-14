@@ -42,6 +42,16 @@ if (-not (Test-Path -LiteralPath $IntegrationContractPath -PathType Leaf)) {
     throw "Missing integration contract: $IntegrationContractPath"
 }
 
+$UpstreamPinPath = Join-Path $Root 'tooling\firstmate\harness\upstream-pin.json'
+if (-not (Test-Path -LiteralPath $UpstreamPinPath -PathType Leaf)) {
+    throw "Missing FirstMate upstream pin: $UpstreamPinPath"
+}
+$upstreamPin = Get-Content -LiteralPath $UpstreamPinPath -Raw | ConvertFrom-Json
+$expectedFirstMateHead = [string]$upstreamPin.commit
+if ($expectedFirstMateHead -notmatch '^[0-9a-f]{40}$') {
+    throw "upstream-pin.json commit must be a 40-character lowercase hex SHA. Received=$expectedFirstMateHead"
+}
+
 $integration = Get-Content -LiteralPath $IntegrationContractPath -Raw | ConvertFrom-Json
 $recovery = $integration.physical_floor_recovery
 if ($null -eq $recovery) {
@@ -252,7 +262,7 @@ if ($continue.ExitCode -ne 0) {
     } elseif ($continue.ExitCode -eq 49) {
         Write-Host 'NEXT=commit/stash/move dirty work in $HOME/firstmate (or the -FirstMatePath override), or remove $HOME/firstmate so bounded bootstrap can run, then rerun'
     } elseif ($continue.ExitCode -eq 50) {
-        Write-Host 'NEXT=in $HOME/firstmate (or -FirstMatePath) run: git fetch --all && git checkout b182d0f908b78d08c7ccb8dce3775bdca8c5d657, or remove that path / pass -FirstMatePath to a clean audited checkout, then rerun'
+        Write-Host ('NEXT=in $HOME/firstmate (or -FirstMatePath) run: git fetch --all && git checkout {0}, or remove that path / pass -FirstMatePath to a clean audited checkout, then rerun' -f $expectedFirstMateHead)
     } elseif ($continue.ExitCode -eq 51) {
         Write-Host 'NEXT=inspect WSL diagnostics/bootstrap stdout; repair exact-head WSL clone/source-repo access, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
     } elseif ($continue.ExitCode -eq 52) {
