@@ -95,6 +95,10 @@ A task is complete only when:
 - Secret or credential exposure.
 - Destructive cleanup, force-push, or silent scope expansion as a shortcut.
 
+## Governance enforcement
+
+Run `pwsh -NoLogo -NoProfile -File scripts/Test-AgentGovernanceDoctrine.ps1` after modifying `AGENTS.md` or the governance doctrine. The validator is the focused proof that the root governance contract is tracked and still contains the required operating principles, precedence order, sprint declaration, completion standard, and forbidden behaviors.
+
 ## Compatibility and preserved authority
 
 Scoped or triggered guidance may strengthen but never weaken root invariants. If a conflict remains, stop, preserve evidence, name it, and escalate to the repository owner before proceeding.
