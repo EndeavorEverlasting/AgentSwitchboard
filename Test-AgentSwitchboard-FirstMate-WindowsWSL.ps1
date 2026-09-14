@@ -232,7 +232,12 @@ if (-not ($validators.validators.id -contains 'firstmate-windows-wsl-bridge-cont
 $actualHead = (& git -C $Root rev-parse HEAD).Trim()
 Assert-LastExit -ExitCode $LASTEXITCODE -Operation 'Resolve exact AgentSwitchboard HEAD'
 if ($actualHead -ne $ExpectedHead.ToLowerInvariant()) {
-    throw "Exact-head mismatch. Expected=$ExpectedHead Actual=$actualHead"
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HEAD_MISMATCH'
+    Write-Host "EXPECTED_HEAD=$ExpectedHead"
+    Write-Host "ACTUAL_HEAD=$actualHead"
+    Write-Host 'NEXT=ff-only refresh main, re-resolve HEAD, and rerun with the recorded SHA'
+    exit 1
 }
 
 if ($ContractOnly) {
@@ -250,7 +255,12 @@ if ($ContractOnly) {
 }
 
 if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) {
-    throw 'WSL is unavailable. This bridge does not install or repair WSL.'
+    # Keep exit 46 structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_WINDOWS_WSL_REQUIRED'
+    Write-Host 'FAILURE_CODE=WINDOWS_WSL_REQUIRED'
+    Write-Host 'NEXT=run on Windows Admin Box with wsl.exe and Ubuntu; this bridge does not install or repair WSL'
+    Write-Host '[PROOF_CEILING] Physical WSL floor requires Windows + wsl.exe; contract PASS is not live PASS.'
+    exit 46
 }
 
 if ([string]::IsNullOrWhiteSpace($SourceRepositoryPath)) {
