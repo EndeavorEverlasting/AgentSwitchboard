@@ -67,13 +67,18 @@ From a clean AgentSwitchboard checkout on the Admin Box:
 ```powershell
 $ErrorActionPreference = 'Stop'
 git fetch --all --prune --tags
+if ($LASTEXITCODE -ne 0) { throw "git fetch failed with exit $LASTEXITCODE" }
 git switch main
+if ($LASTEXITCODE -ne 0) { throw "git switch failed with exit $LASTEXITCODE" }
 git pull --ff-only origin main
+if ($LASTEXITCODE -ne 0) { throw "git pull failed with exit $LASTEXITCODE" }
 $head = (git rev-parse HEAD).Trim()
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($head)) { throw 'Unable to resolve HEAD' }
 Write-Host "PHYSICAL_FLOOR_HEAD=$head"
 
 # Preferred FM-WSL-12 Admin Box one-shot (contract → physical-floor-continue → protected control):
 # Capture child exit; do not use interactive `exit` (keeps the parent shell open).
+# Fail closed on native git nonzero exits before launching the one-shot.
 pwsh -NoLogo -NoProfile -File .\Invoke-FmWsl12AdminBoxLiveProof.ps1 `
   -ExpectedHead $head `
   -WslDistribution Ubuntu
