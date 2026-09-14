@@ -358,14 +358,24 @@ for ($attempt = 1; $attempt -le ($MaxPackageRepairAttempts + 1); $attempt++) {
         throw "Refusing non-allowlisted NEXT_ACTION under FM-WSL-12: $nextAction"
     }
 
-    Write-Host "[FM-WSL-12] probing passwordless sudo before bounded apt repair"
-    $sudoProbeArgs = @('--distribution', $WslDistribution, '--exec', 'bash', '-lc', 'sudo -n true')
+    Write-Host "[FM-WSL-12] probing passwordless sudo for apt-get before bounded apt repair"
+    # Probe the privilege actually used for repair (apt-get), not an unrelated binary.
+    $sudoProbeArgs = @('--distribution', $WslDistribution, '--exec', 'bash', '-lc', 'sudo -n apt-get --version')
     $sudoProbe = Invoke-CapturedProcess -FileName $wsl.Source -Arguments $sudoProbeArgs -TimeoutSeconds 30
+    $sudoProbeStdout = Join-Path $attemptRoot 'sudo-probe-stdout.txt'
+    $sudoProbeStderr = Join-Path $attemptRoot 'sudo-probe-stderr.txt'
+    Set-Content -LiteralPath $sudoProbeStdout -Value $sudoProbe.Stdout
+    Set-Content -LiteralPath $sudoProbeStderr -Value $sudoProbe.Stderr
     if ($sudoProbe.ExitCode -ne 0) {
         Write-Host 'STATUS=BLOCKED_SUDO'
-        Write-Host 'NEXT=enable passwordless sudo for apt in Ubuntu (sudo -n true must succeed), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+        Write-Host 'FAILURE_CODE=PASSWORDLESS_SUDO_APT_REQUIRED'
+        Write-Host 'NEXT=enable passwordless sudo for apt-get in Ubuntu (sudo -n apt-get --version must succeed), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+        Write-Host "SUDO_PROBE_EXIT_CODE=$($sudoProbe.ExitCode)"
+        Write-Host "SUDO_PROBE_TIMED_OUT=$($sudoProbe.TimedOut)"
+        Write-Host "SUDO_PROBE_STDOUT=$sudoProbeStdout"
+        Write-Host "SUDO_PROBE_STDERR=$sudoProbeStderr"
         Write-Host "EVIDENCE_ROOT=$EvidenceRoot"
-        exit 1
+        exit 47
     }
 
     Write-Host "[FM-WSL-12] executing bounded package repair inside $WslDistribution (no extra permission round-trip)"
