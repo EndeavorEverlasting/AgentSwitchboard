@@ -11,8 +11,10 @@ on:
       - 'docs/architecture/asb-firstmate-runtime-boundary.md'
       - 'docs/harness/context-rollover-ux.md'
       - 'CODEBASE_MAP.md'
+      - 'tooling/firstmate/harness/observation/**'
       - 'scripts/Test-FmAsbPromptKitProtocolContract.ps1'
       - 'tests/test_fm_asb_promptkit_protocol_contract.py'
+      - 'tests/test_firstmate_agent_observation_adapter.py'
       - 'plans/active/ASB-2026-09-fm-asb-promptkit-protocol-v1.*'
       - 'plans/plan-registry.json'
       - '.github/workflows/fm-asb-promptkit-protocol.yml'
@@ -49,6 +51,10 @@ jobs:
         shell: pwsh
         run: python ./tests/test_fm_asb_promptkit_protocol_contract.py
 
+      - name: Run FirstMate observation adapter tests
+        shell: pwsh
+        run: python ./tests/test_firstmate_agent_observation_adapter.py
+
       - name: Verify checkout remains clean
         shell: pwsh
         run: |
@@ -64,6 +70,9 @@ jobs:
 
       - name: Run dependency-free contracts
         run: python tests/test_fm_asb_promptkit_protocol_contract.py
+
+      - name: Run FirstMate observation adapter tests
+        run: python tests/test_firstmate_agent_observation_adapter.py
 
       - name: Run PowerShell contract
         shell: pwsh
