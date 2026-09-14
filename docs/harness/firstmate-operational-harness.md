@@ -184,4 +184,4 @@ It does **not** establish:
 - remote writes, PR delivery, merge, or deployment;
 - Herdr readiness.
 
-The next proof owner is `FM-WSL-12`: run the prerequisite-gated physical floor on an authorized Windows Admin Box. Operator checklist: [`docs/harness/firstmate-wsl-physical-floor-runbook.md`](firstmate-wsl-physical-floor-runbook.md). A successful physical floor still remains below the later `FM-CREW-13` local-only crew pilot.
+The next proof owner is `FM-WSL-12`: on an authorized Windows Admin Box, run harness `-Mode physical-floor-continue` (or `Invoke-FirstMatePhysicalFloorContinuation.ps1`) so allowlisted missing packages can be repaired and the floor rerun without another permission round-trip; stop only for GitHub auth or a non-package blocker. Operator checklist: [`docs/harness/firstmate-wsl-physical-floor-runbook.md`](firstmate-wsl-physical-floor-runbook.md). A successful physical floor still remains below the later `FM-CREW-13` local-only crew pilot.

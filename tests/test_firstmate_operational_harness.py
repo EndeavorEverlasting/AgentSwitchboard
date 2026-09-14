@@ -27,6 +27,7 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
             "Test-AgentSwitchboard-FirstMate-Harness.sh",
             "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1",
             "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1",
+            "Invoke-FirstMatePhysicalFloorContinuation.ps1",
             "tooling/firstmate/Test-FirstMateInterop.sh",
             "docs/harness/firstmate-operational-harness.md",
             "docs/harness/firstmate-wsl-physical-floor-runbook.md",

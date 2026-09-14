@@ -372,8 +372,10 @@
       ],
       "acceptanceCriteria": [
         "Refresh current main and prove the integrated harness identity before execution",
+        "Prefer harness -Mode physical-floor-continue / Invoke-FirstMatePhysicalFloorContinuation.ps1 so allowlisted missing packages are repaired inside explicit Ubuntu and the floor is rerun without another permission round-trip",
         "Run prerequisite gate before clone/test work",
         "Require git, gh, tmux, Python and required auth/readiness without persisting credentials",
+        "Stop for BLOCKED_GITHUB_AUTH / credential login; do not treat BLOCKED_MISSING_TOOLS alone as a hard operator stop when FM-WSL-12 repair authority applies",
         "Run the WSL/Ubuntu interop probe read-only",
         "Do not claim live crew dispatch from this floor alone"
       ],

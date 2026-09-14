@@ -12,6 +12,7 @@
     "validator_registry": "tooling/firstmate/harness/operational/validator-registry.json",
     "windows_wsl_bridge": "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1",
     "physical_floor": "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1",
+    "physical_floor_continuation": "Invoke-FirstMatePhysicalFloorContinuation.ps1",
     "windows_entrypoint": "Test-AgentSwitchboard-FirstMate-Harness.ps1",
     "windows_cmd_entrypoint": "Test-AgentSwitchboard-FirstMate-Harness.cmd",
     "linux_contract_entrypoint": "Test-AgentSwitchboard-FirstMate-Harness.sh",

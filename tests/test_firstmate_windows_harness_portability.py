@@ -29,8 +29,13 @@ class FirstMateWindowsHarnessPortabilityTests(unittest.TestCase):
         self.assertIn("Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1", self.ps1)
 
     def test_runtime_mode_delegates_to_physical_floor(self) -> None:
-        self.assertIn("[ValidateSet('contract', 'physical-floor')]", self.ps1)
+        self.assertIn(
+            "[ValidateSet('contract', 'physical-floor', 'physical-floor-continue')]",
+            self.ps1,
+        )
         self.assertIn("'physical-floor'", self.ps1)
+        self.assertIn("'physical-floor-continue'", self.ps1)
+        self.assertIn("Invoke-FirstMatePhysicalFloorContinuation.ps1", self.ps1)
         self.assertIn("-WslDistribution", self.ps1)
         self.assertIn("WINDOWS_ROLE=bridge-only", self.ps1)
         self.assertIn("RUNTIME_OWNER=FirstMate", self.ps1)
