@@ -15,18 +15,20 @@ Canonical coordination index: `plans/active/ASB-2026-09-multi-product-bootstrap-
 - PR #196 merged (`c8556dd`): FirstMate dirty/pin early preflight exits 49/50; live PASS still UNPROVEN.
 - PR #198 merged (`7eb9745`): `-FirstMatePath` physical-floor dirty/pin override via `WSLENV`/`ASB_FIRSTMATE_PATH` (skips dirty `$HOME/firstmate`); cloud ContractOnly PASS + live exit 46 retained; live PASS still UNPROVEN.
 - PR #200 merged (`1bda8e1`): skip dirty/off-pin FirstMate auto-discovery so bounded `$HOME/firstmate` bootstrap can run; child `NEXT=` preferred over hardcoded `$HOME/firstmate` fallbacks; cloud ContractOnly PASS + live exit 46 retained; live PASS still UNPROVEN.
+- PR #202 merged (`83b26e9`): alternate FirstMate auto-discovery now requires the audited pin plus the configured required upstream paths before selection, preventing clean but incomplete alternates from blocking bounded bootstrap; live PASS still UNPROVEN.
+- PR #203 merged (`e6b252b`): required paths must exist in the exact audited Git tree as well as the worktree, and the canonical Linux harness executes a synthetic ignored-file discovery regression; post-merge #202 review findings resolved; live PASS still UNPROVEN.
 
 ## Successor phases
 
-1. **Admin Box live observation (current).** Refresh main @ `1bda8e1`+; paste the OCD-safe ASQ-017 next action (checkout-root guard, capture `CHILD_EXIT_CODE`, `throw` instead of interactive `exit`) running durable `Invoke-Asq017AdminBoxLiveFloor.ps1` (ff-only main refresh → `Invoke-FmWsl12AdminBoxLiveProof.ps1`: contract → physical-floor-continue → protected physical-floor). Pre-stage Ubuntu FirstMate @ `b182d0f908b78d08c7ccb8dce3775bdca8c5d657` + one primary harness + Ubuntu `gh` auth. Optional: `-FirstMatePath` to a clean audited checkout when `$HOME/firstmate` is dirty/off-pin. Expected: PASS markers + local receipt/evidence root, or `BLOCKED_GITHUB_AUTH` / real non-package blocker with preserved evidence.
+1. **Admin Box live observation (current).** Refresh main @ `e6b252b`+; run the durable `Invoke-Asq017AdminBoxLiveFloor.ps1` entrypoint (ff-only main refresh → `Invoke-FmWsl12AdminBoxLiveProof.ps1`: contract → physical-floor-continue → protected physical-floor). Pre-stage Ubuntu FirstMate @ `b182d0f908b78d08c7ccb8dce3775bdca8c5d657` + one primary harness + Ubuntu `gh` auth. Optional: pass `-FirstMatePath` to a clean audited checkout when `$HOME/firstmate` is dirty/off-pin. Alternate auto-discovery now ignores dirty, off-pin, or incomplete checkouts unless their required paths are present in the audited Git tree and worktree. Expected: PASS markers + local receipt/evidence root, or `BLOCKED_GITHUB_AUTH` / real non-package blocker with preserved evidence.
 2. **Credential gate (conditional).** Only if `BLOCKED_GITHUB_AUTH`: operator `gh auth login` then rerun continuation. No token capture in evidence.
 3. **FM-CREW-13 handoff.** Only after physical-floor PASS. Local-only crew pilot; out of this phase's mutation scope.
 
 ## Owned / forbidden
 
-- Owned: Admin Box FM-WSL-12 observation; honest fail-closed encoding for non-Windows hosts.
+- Owned: Admin Box FM-WSL-12 observation; honest fail-closed encoding for non-Windows hosts; bounded repository repairs that remove false prerequisite/discovery blockers without promoting proof.
 - Forbidden: fake live PASS; credential automation; allowlist expansion; crew-dispatch claims; committing machine-local receipts.
 
 ## Proof ceiling
 
-Hosted/contract + structured cloud fail-closed (`WINDOWS_WSL_REQUIRED` / exit 46) are below physical PASS. Physical PASS requires Admin Box observation of the behavior chain, not command ACK alone.
+Hosted/contract + structured cloud fail-closed (`WINDOWS_WSL_REQUIRED` / exit 46) are below physical PASS. Repository discovery hardening through PR #203 proves only selection/path integrity. Physical PASS still requires Admin Box observation of the behavior chain, not command ACK alone.

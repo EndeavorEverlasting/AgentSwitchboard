@@ -164,6 +164,22 @@ class FirstMateIntegrationContractTests(unittest.TestCase):
         for path in self.contract["required_upstream_paths"]:
             self.assertIn(path, self.verification["inspected_paths"])
 
+    def test_auto_discovery_validates_required_paths_before_selection(self) -> None:
+        self.assertIn("has_required_upstream_paths()", self.probe)
+        self.assertIn('for path in "${REQUIRED_PATHS[@]}"; do', self.probe)
+        start = self.probe.index("is_viable_discovered_firstmate()")
+        end = self.probe.index('if [[ -z "$FIRSTMATE_DIR" ]]', start)
+        viability = self.probe[start:end]
+        self.assertIn('[[ "$head" == "$EXPECTED_HEAD" ]] || return 1', viability)
+        self.assertIn('has_required_upstream_paths "$candidate"', viability)
+        self.assertIn("missing required audited paths", self.probe)
+        # $HOME/firstmate remains authoritative even when incomplete so the later
+        # explicit checkout validation can report the owned-path defect instead of
+        # silently replacing an operator checkout.
+        home_preference = 'if is_firstmate_clone "$HOME/firstmate"; then'
+        alternate_loop = 'if is_viable_discovered_firstmate "$candidate"; then'
+        self.assertLess(self.probe.index(home_preference), self.probe.index(alternate_loop))
+
     def test_docs_bind_foundation_to_operational_bridge_and_proof_ceiling(self) -> None:
         self.assertTrue(OPERATIONAL_DOC.is_file())
         self.assertIn(EXPECTED_SHA, self.docs)
