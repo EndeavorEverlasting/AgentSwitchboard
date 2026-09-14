@@ -507,5 +507,53 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("STATUS=BLOCKED_PRIMARY_HARNESS", physical)
         self.assertIn("exit 48", physical)
 
+    def test_asq017_helpers_prefer_last_next_and_read_pin_json(self) -> None:
+        """Behavioral proof for Asq017 helpers (not source-order only)."""
+        asq_path = ROOT / "Invoke-Asq017AdminBoxLiveFloor.ps1"
+        pin_path = ROOT / "tooling" / "firstmate" / "harness" / "upstream-pin.json"
+        self.assertTrue(asq_path.is_file())
+        self.assertTrue(pin_path.is_file())
+        expected_pin = json.loads(pin_path.read_text(encoding="utf-8"))["commit"]
+        completed = subprocess.run(
+            [
+                "pwsh",
+                "-NoLogo",
+                "-NoProfile",
+                "-Command",
+                (
+                    "$ErrorActionPreference = 'Stop'; "
+                    f"$asqPath = '{asq_path.as_posix()}'; "
+                    f"$UpstreamPinPath = '{pin_path.as_posix()}'; "
+                    "$raw = Get-Content -LiteralPath $asqPath -Raw; "
+                    "$nextFn = [regex]::Match($raw, '(?s)function Get-Asq017OperatorNextFromText \\{.*?\\n\\}'); "
+                    "$pinFn = [regex]::Match($raw, '(?s)function Get-Asq017ExpectedFirstMateHead \\{.*?\\n\\}'); "
+                    "if (-not $nextFn.Success -or -not $pinFn.Success) { "
+                    "Write-Output 'EXTRACT_FAIL'; exit 2 }; "
+                    "Invoke-Expression $nextFn.Value; "
+                    "Invoke-Expression $pinFn.Value; "
+                    "$blob = \"STATUS=BLOCKED_FIRSTMATE_PIN`nNEXT=first-guidance`n"
+                    "OTHER=1`nNEXT=child-path-specific-guidance`n\"; "
+                    "$got = Get-Asq017OperatorNextFromText -Text $blob; "
+                    "$pin = Get-Asq017ExpectedFirstMateHead; "
+                    "Write-Output ('NEXT=' + $got); "
+                    "Write-Output ('PIN=' + $pin); "
+                    "if ($got -ne 'child-path-specific-guidance') { exit 3 }; "
+                    "if ($pin -notmatch '^[0-9a-f]{40}$') { exit 4 }"
+                ),
+            ],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(
+            0,
+            completed.returncode,
+            f"Asq017 helper behavioral probe failed:\n{completed.stdout}\n{completed.stderr}",
+        )
+        self.assertIn("NEXT=child-path-specific-guidance", completed.stdout)
+        self.assertIn(f"PIN={expected_pin}", completed.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()
