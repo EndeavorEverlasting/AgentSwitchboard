@@ -232,6 +232,17 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("git switch failed with exit", durable_text)
         self.assertIn("git pull failed with exit", durable_text)
         self.assertIn("Unable to resolve HEAD", durable_text)
+        # Capture → native exit check → Trim (never Trim before LASTEXITCODE).
+        head_raw_idx = durable_text.find("$headRaw = git rev-parse HEAD")
+        self.assertGreaterEqual(head_raw_idx, 0)
+        after_head = durable_text[head_raw_idx:]
+        exit_idx = after_head.find("if ($LASTEXITCODE -ne 0)")
+        trim_idx = after_head.find('("$headRaw").Trim()')
+        self.assertGreaterEqual(exit_idx, 0, "HEAD capture missing LASTEXITCODE check")
+        self.assertGreaterEqual(trim_idx, 0, "HEAD capture missing Trim after exit check")
+        self.assertLess(exit_idx, trim_idx, "Trim must follow LASTEXITCODE validation")
+        self.assertNotIn("(git rev-parse HEAD).Trim()", durable_text)
+        self.assertNotIn("$head=(git rev-parse HEAD).Trim()", durable_text)
         self.assertIn("[switch]$ContractOnly", durable_text)
         self.assertIn("LIVE_RUNTIME_PROOF", durable_text)
         self.assertIn("UNPROVEN", durable_text)
