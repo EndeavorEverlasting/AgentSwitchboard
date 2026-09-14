@@ -81,11 +81,20 @@ function Invoke-CapturedProcess {
 
     $process = [System.Diagnostics.Process]::new()
     $process.StartInfo = $psi
-    if (-not $process.Start()) {
-        # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    try {
+        if (-not $process.Start()) {
+            Write-Host 'STATUS=BLOCKED_HARNESS_START'
+            Write-Host "PROCESS_FILE=$FileName"
+            Write-Host "NEXT=ensure $FileName can launch on this host, then rerun; unable to start process"
+            exit 1
+        }
+    }
+    catch {
         Write-Host 'STATUS=BLOCKED_HARNESS_START'
         Write-Host "PROCESS_FILE=$FileName"
-        Write-Host "NEXT=ensure $FileName can launch on this host, then rerun; unable to start process"
+        Write-Host "NEXT=ensure $FileName can launch on this host, then rerun; process Start threw"
+        Write-Host ("HARNESS_START_ERROR={0}" -f $_.Exception.Message)
         exit 1
     }
     $stdoutTask = $process.StandardOutput.ReadToEndAsync()
@@ -201,6 +210,16 @@ Set-Content -LiteralPath $distroProbePath -Value @(
     $distroProbe.Stderr.TrimEnd()
     'STDERR>>'
 )
+if ($distroProbe.TimedOut -or $distroProbe.ExitCode -eq 124) {
+    # Keep exit 124 structured — do not remap hangs to WINDOWS_WSL_REQUIRED/46.
+    Write-Host 'STATUS=BLOCKED_PREREQUISITE_TIMEOUT'
+    Write-Host 'PROOF_LEVEL=LIVE_ATTEMPT_FAIL_CLOSED'
+    Write-Host "HEAD=$actualHead"
+    Write-Host "WSL_DISTRIBUTION=$WslDistribution"
+    Write-Host "NEXT=increase PrerequisiteTimeoutSeconds or repair hung WSL distribution probe, then rerun; probe timed out after $distroProbeTimeoutSeconds seconds"
+    Write-Host "DISTRIBUTION_PROBE_PATH=$distroProbePath"
+    exit 124
+}
 if ($distroProbe.ExitCode -ne 0) {
     Write-Host 'STATUS=BLOCKED_WINDOWS_WSL_REQUIRED'
     Write-Host 'FAILURE_CODE=WINDOWS_WSL_REQUIRED'

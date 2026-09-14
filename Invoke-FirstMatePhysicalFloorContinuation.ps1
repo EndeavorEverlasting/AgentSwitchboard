@@ -115,11 +115,20 @@ function Invoke-CapturedProcess {
 
     $process = [System.Diagnostics.Process]::new()
     $process.StartInfo = $psi
-    if (-not $process.Start()) {
-        # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    try {
+        if (-not $process.Start()) {
+            Write-Host 'STATUS=BLOCKED_HARNESS_START'
+            Write-Host "PROCESS_FILE=$FileName"
+            Write-Host "NEXT=ensure $FileName can launch on this host, then rerun; unable to start process"
+            exit 1
+        }
+    }
+    catch {
         Write-Host 'STATUS=BLOCKED_HARNESS_START'
         Write-Host "PROCESS_FILE=$FileName"
-        Write-Host "NEXT=ensure $FileName can launch on this host, then rerun; unable to start process"
+        Write-Host "NEXT=ensure $FileName can launch on this host, then rerun; process Start threw"
+        Write-Host ("HARNESS_START_ERROR={0}" -f $_.Exception.Message)
         exit 1
     }
     $stdoutTask = $process.StandardOutput.ReadToEndAsync()

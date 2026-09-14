@@ -104,11 +104,21 @@ function Invoke-WslProcess {
 
     $process = [System.Diagnostics.Process]::new()
     $process.StartInfo = $psi
-    if (-not $process.Start()) {
-        # Keep exit 46 structured — do not throw (throw collapses to unstructured exit 1).
+    # Keep exit 46 structured — do not throw (throw collapses to unstructured exit 1).
+    try {
+        if (-not $process.Start()) {
+            Write-Host 'STATUS=BLOCKED_WINDOWS_WSL_REQUIRED'
+            Write-Host 'FAILURE_CODE=WINDOWS_WSL_REQUIRED'
+            Write-Host 'NEXT=run on Windows Admin Box with runnable wsl.exe and Ubuntu; unable to start wsl.exe process'
+            Write-Host '[PROOF_CEILING] Physical WSL floor requires Windows + wsl.exe; contract PASS is not live PASS.'
+            exit 46
+        }
+    }
+    catch {
         Write-Host 'STATUS=BLOCKED_WINDOWS_WSL_REQUIRED'
         Write-Host 'FAILURE_CODE=WINDOWS_WSL_REQUIRED'
-        Write-Host 'NEXT=run on Windows Admin Box with runnable wsl.exe and Ubuntu; unable to start wsl.exe process'
+        Write-Host 'NEXT=run on Windows Admin Box with runnable wsl.exe and Ubuntu; wsl.exe Start threw'
+        Write-Host ("HARNESS_START_ERROR={0}" -f $_.Exception.Message)
         Write-Host '[PROOF_CEILING] Physical WSL floor requires Windows + wsl.exe; contract PASS is not live PASS.'
         exit 46
     }
@@ -350,8 +360,16 @@ $preflight = Invoke-WslProcess `
     -Command 'set -euo pipefail; printf "WSL_DISTRO_NAME=%s\n" "${WSL_DISTRO_NAME:-}"; command -v bash; command -v git; printf "BASH_READY=1\n"' `
     -TimeoutSeconds $WslTimeoutSeconds
 Add-WslDiagnostic -Path $WslDiagnosticsPath -Stage 'ubuntu-preflight' -Text $preflight.Stderr
+if ($preflight.TimedOut -or $preflight.ExitCode -eq 124) {
+    # Keep exit 124 structured — do not remap hangs to WINDOWS_WSL_REQUIRED/46.
+    Write-Host 'STATUS=BLOCKED_PREREQUISITE_TIMEOUT'
+    Write-Host "NEXT=increase WslTimeoutSeconds or repair hung Ubuntu WSL preflight, then rerun; probe timed out after $WslTimeoutSeconds seconds"
+    Write-Host "WSL_DIAGNOSTICS=$WslDiagnosticsPath"
+    exit 124
+}
 if ($preflight.ExitCode -ne 0) {
     Write-Host 'STATUS=BLOCKED_WINDOWS_WSL_REQUIRED'
+    Write-Host 'FAILURE_CODE=WINDOWS_WSL_REQUIRED'
     Write-Host "NEXT=repair Ubuntu WSL so distribution '$WslDistribution' can run bash/git; see $WslDiagnosticsPath; then rerun Invoke-Asq017AdminBoxLiveFloor.ps1"
     Write-Host "WSL_DIAGNOSTICS=$WslDiagnosticsPath"
     exit 46
