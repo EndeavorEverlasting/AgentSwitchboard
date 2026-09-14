@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-13T17:39:45Z",
-  "updatedUtc": "2026-09-14T17:58:00Z",
+  "updatedUtc": "2026-09-14T18:05:00Z",
   "mission": "Coordinate the bounded successor program after the multi-product charter and FirstMate crew-runtime ADR integrated: prove Pi on an authorized Windows Admin Box, refresh and certify FirstMate through WSL/Ubuntu without reviving ASB child-bus orchestration, encode the GNHF narrow boundary, continue the separately-owned OpenCode LSP field proof, keep Herdr deferred, and converge stale PR/plan truth only after successor containment is proven.",
   "owner": {
     "surface": "Multi-product bootstrap charter and successor execution map",
@@ -380,7 +380,8 @@
         "Do not claim live crew dispatch from this floor alone"
       ],
       "evidence": [
-        "cloud LIVE_ATTEMPT@2026-09-14T17:56Z on main@dd303228cf5b35476d0a822fb655728474f1ab4c: contract Mode=contract PASS; Mode=physical-floor and Mode=physical-floor-continue FAIL_CLOSED WINDOWS_WSL_REQUIRED (no wsl.exe on Linux cloud host; zero self-hosted workers); protected control physical-floor also blocked at same gate; LIVE_RUNTIME_PROOF:UNPROVEN \u2014 Admin Box physical-floor-continue required; stop only for BLOCKED_GITHUB_AUTH after package repair"
+        "cloud LIVE_ATTEMPT@2026-09-14T17:56Z on main@dd303228cf5b35476d0a822fb655728474f1ab4c: contract Mode=contract PASS; Mode=physical-floor and Mode=physical-floor-continue FAIL_CLOSED WINDOWS_WSL_REQUIRED (no wsl.exe on Linux cloud host; zero self-hosted workers); protected control physical-floor also blocked at same gate; LIVE_RUNTIME_PROOF:UNPROVEN \u2014 Admin Box physical-floor-continue required; stop only for BLOCKED_GITHUB_AUTH after package repair",
+        "merge:627e31d16c078b9a0ceb38c2b4cbbeef8fdfc98b pr:#179 INTEGRATED WINDOWS_WSL_REQUIRED exit-46 fail-closed; cloud reconfirm PASS contract / FAIL_CLOSED physical-floor(+continue); LIVE_RUNTIME_PROOF:UNPROVEN pending Admin Box"
       ]
     },
     {
