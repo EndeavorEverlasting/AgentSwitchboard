@@ -92,6 +92,22 @@ class FirstMateWindowsWslBridgeTests(unittest.TestCase):
         self.assertIn("STATUS=BLOCKED_WSL_DISTRIBUTION", self.bridge)
         self.assertNotIn('throw "WSL distribution mismatch', self.bridge)
         self.assertIn("STATUS=BLOCKED_GIT_HEAD", self.bridge)
+        self.assertNotIn(
+            "Assert-LastExit -ExitCode $LASTEXITCODE -Operation 'Resolve exact AgentSwitchboard HEAD'",
+            self.bridge,
+        )
+        self.assertNotIn(
+            "Assert-LastExit -ExitCode $LASTEXITCODE -Operation 'Resolve AgentSwitchboard common Git directory'",
+            self.bridge,
+        )
+        self.assertNotIn(
+            "Assert-LastExit -ExitCode $LASTEXITCODE -Operation 'Verify AgentSwitchboard source repository'",
+            self.bridge,
+        )
+        self.assertNotIn(
+            "Assert-LastExit -ExitCode $LASTEXITCODE -Operation 'Verify exact AgentSwitchboard commit in source repository'",
+            self.bridge,
+        )
         self.assertNotIn('throw "Source repository is not a Git working tree', self.bridge)
         self.assertNotIn("throw 'Unable to start wsl.exe.'", self.bridge)
         self.assertIn("STATUS=BLOCKED_WINDOWS_WSL_REQUIRED", self.bridge)

@@ -285,6 +285,14 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("STATUS=BLOCKED_GIT_HEAD", bridge)
         self.assertNotIn('throw "Source repository is not a Git working tree', bridge)
         self.assertNotIn("throw 'Unable to start wsl.exe.'", bridge)
+        self.assertNotIn(
+            "Assert-LastExit -ExitCode $LASTEXITCODE -Operation 'Resolve exact AgentSwitchboard HEAD'",
+            bridge,
+        )
+        self.assertNotIn(
+            "Assert-LastExit -ExitCode $LASTEXITCODE -Operation 'Verify exact AgentSwitchboard commit in source repository'",
+            bridge,
+        )
         self.assertIn("exit $(if ($bridge.ExitCode -ne 0) { $bridge.ExitCode } else { 1 })", self.physical)
         self.assertIn("FIRSTMATE_WINDOWS_WSL_PHYSICAL_FLOOR", self.physical)
         self.assertIn("Write-Host $bridge.Stderr.TrimEnd()", self.physical)
