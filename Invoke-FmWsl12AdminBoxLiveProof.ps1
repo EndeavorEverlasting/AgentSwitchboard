@@ -82,7 +82,12 @@ $actualHeadRaw = & git -C $Root rev-parse HEAD
 if ($LASTEXITCODE -ne 0) { throw 'Unable to resolve exact AgentSwitchboard HEAD.' }
 $actualHead = ("$actualHeadRaw").Trim()
 if ($actualHead -ne $ExpectedHead.ToLowerInvariant()) {
-    throw "Exact-head mismatch. Expected=$ExpectedHead Actual=$actualHead"
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HEAD_MISMATCH'
+    Write-Host "EXPECTED_HEAD=$ExpectedHead"
+    Write-Host "ACTUAL_HEAD=$actualHead"
+    Write-Host 'NEXT=ff-only refresh main, re-resolve HEAD, and rerun with the recorded SHA'
+    exit 1
 }
 
 if ($ContractOnly) {
@@ -147,7 +152,11 @@ function Invoke-HarnessMode {
     $completed = $process.WaitForExit(3600 * 1000)
     if (-not $completed) {
         try { $process.Kill($true); $process.WaitForExit() } catch {}
-        throw "Harness mode=$Mode timed out after 3600 seconds."
+        # Keep exit 124 structured — do not throw (throw collapses to unstructured exit 1).
+        Write-Host 'STATUS=BLOCKED_HARNESS_TIMEOUT'
+        Write-Host "HARNESS_MODE=$Mode"
+        Write-Host 'NEXT=inspect hung WSL/harness work, increase host capacity or repair the hang, then rerun; harness timed out after 3600 seconds'
+        exit 124
     }
     $stdout = $stdoutTask.GetAwaiter().GetResult()
     $stderr = $stderrTask.GetAwaiter().GetResult()
