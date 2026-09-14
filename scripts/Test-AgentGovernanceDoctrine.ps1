@@ -68,6 +68,10 @@ foreach ($token in @(
     'owned scope and forbidden scope',
     'expected artifacts and validation commands',
     'proof ceiling',
+    '## Universal operating law',
+    'Repository knowledge is compiled state.',
+    'Never weaken or skip a valid gate to manufacture a pass.',
+    'Static/synthetic evidence never proves runtime, live-target, provider, deployment, or user-visible success.',
     '## Completion standard',
     'changed files are named',
     'required validation actually ran and results are recorded',
@@ -96,7 +100,19 @@ foreach ($token in @(
 }
 Add-Result -Passed ([Text.Encoding]::UTF8.GetByteCount($rootText) -le 7000) -Name 'governance/root-context-budget' -FailureMessage 'compact root AGENTS.md exceeds 7000 UTF-8 bytes'
 
-# Prove precedence ordering, not merely token presence.
+# Prove precedence ordering within the precedence section itself. Scoping the
+# search prevents duplicated explanatory text elsewhere from hiding a bad order.
+$precedenceHeader = '## Precedence'
+$precedenceNextHeader = '## Mandatory sprint declaration'
+$precedenceStart = $rootText.IndexOf($precedenceHeader, [System.StringComparison]::Ordinal)
+$precedenceEnd = $rootText.IndexOf($precedenceNextHeader, [System.StringComparison]::Ordinal)
+$precedenceBoundsValid = $precedenceStart -ge 0 -and $precedenceEnd -gt $precedenceStart
+Add-Result -Passed $precedenceBoundsValid -Name 'governance/precedence-section-bounds' -FailureMessage 'precedence section is missing or malformed'
+$precedenceText = if ($precedenceBoundsValid) {
+    $rootText.Substring($precedenceStart, $precedenceEnd - $precedenceStart)
+} else {
+    ''
+}
 $precedenceTokens = @(
     'Platform, security, legal, and repository-owner instructions.',
     'This governance contract, triggered governance details, and the nearest nested `AGENTS.md`.',
@@ -105,8 +121,8 @@ $precedenceTokens = @(
 )
 $previousIndex = -1
 for ($i = 0; $i -lt $precedenceTokens.Count; $i++) {
-    $index = $rootText.IndexOf($precedenceTokens[$i], [System.StringComparison]::Ordinal)
-    Add-Result -Passed ($index -gt $previousIndex) -Name "governance/precedence-order/$($i + 1)" -FailureMessage 'instruction precedence order is missing or incorrect'
+    $index = $precedenceText.IndexOf($precedenceTokens[$i], [System.StringComparison]::Ordinal)
+    Add-Result -Passed ($index -gt $previousIndex) -Name "governance/precedence-order/$($i + 1)" -FailureMessage 'instruction precedence order is missing or incorrect inside the precedence section'
     if ($index -ge 0) { $previousIndex = $index }
 }
 
