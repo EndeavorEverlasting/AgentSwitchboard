@@ -73,12 +73,21 @@ $head = (git rev-parse HEAD).Trim()
 Write-Host "PHYSICAL_FLOOR_HEAD=$head"
 
 # Preferred FM-WSL-12 Admin Box one-shot (contract → physical-floor-continue → protected control):
+# Capture child exit; do not use interactive `exit` (keeps the parent shell open).
 pwsh -NoLogo -NoProfile -File .\Invoke-FmWsl12AdminBoxLiveProof.ps1 `
   -ExpectedHead $head `
   -WslDistribution Ubuntu
+$childExit = $LASTEXITCODE
+Write-Host "CHILD_EXIT_CODE=$childExit"
+if ($childExit -eq 45) {
+  throw 'BLOCKED_GITHUB_AUTH — complete gh auth login then rerun Invoke-FmWsl12AdminBoxLiveProof.ps1'
+}
+if ($childExit -ne 0) {
+  throw "FM-WSL-12 Admin Box live proof failed with exit $childExit"
+}
 ```
 
-`Invoke-FmWsl12AdminBoxLiveProof.ps1` is the durable Admin Box live-proof owner for FM-WSL-12. It runs contract, then `physical-floor-continue` (allowlisted apt repair + rerun without another permission round-trip), then report-only `physical-floor` as the protected control. It still stops for GitHub authentication (exit 45) and writes a local untracked receipt under the evidence root.
+`Invoke-FmWsl12AdminBoxLiveProof.ps1` is the durable Admin Box live-proof owner for FM-WSL-12. It runs contract, then `physical-floor-continue` (allowlisted apt repair + rerun without another permission round-trip), then report-only `physical-floor` as the protected control. It still stops for GitHub authentication (exit 45) and writes a local untracked receipt under the evidence root. Operator paste commands must print `CHILD_EXIT_CODE` and `throw` on failure rather than calling interactive `exit`.
 
 Equivalent stepped form (same proof ceiling):
 
