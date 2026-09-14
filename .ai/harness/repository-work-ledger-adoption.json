@@ -41,6 +41,13 @@
       "requiredField": "Work class",
       "classes": ["BOUNDED", "UNBOUNDED"],
       "routesAreDerived": true,
+      "operatorCommandDurability": {
+        "maxInlineNextActionChars": 320,
+        "entrypointExtensions": [".ps1", ".cmd", ".bat", ".sh", ".py"],
+        "requiresReferenceCitation": true,
+        "requiresNextActionMention": true,
+        "portableRequirement": false
+      },
       "portableRequirement": false
     },
     "ci": ".github/workflows/repository-work-ledger-contract.yml"
@@ -49,9 +56,9 @@
     "AxTask AXQ task contents",
     "AxTask deployment/database domain gates",
     "BlacksmithGuild consumer queue state or runtime behavior",
-    "AgentSwitchboard Work class/frontier as a portable v1 requirement",
+    "AgentSwitchboard Work class/frontier/operator-command durability as a portable v1 requirement",
     "consumer product behavior",
     "runtime proof inferred from ledger prose"
   ],
-  "proofCeiling": "portable contract adoption plus AgentSwitchboard-local work-class and frontier routing validation"
+  "proofCeiling": "portable contract adoption plus AgentSwitchboard-local work-class, frontier-routing, and static operator-command durability validation"
 }
