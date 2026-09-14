@@ -28,11 +28,16 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
             "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1",
             "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1",
             "Invoke-FirstMatePhysicalFloorContinuation.ps1",
+            "Invoke-FmWsl12AdminBoxLiveProof.ps1",
             "tooling/firstmate/Test-FirstMateInterop.sh",
             "docs/harness/firstmate-operational-harness.md",
             "docs/harness/firstmate-wsl-physical-floor-runbook.md",
         ):
             self.assertTrue((ROOT / path).is_file(), path)
+        self.assertEqual(
+            "Invoke-FmWsl12AdminBoxLiveProof.ps1",
+            self.manifest["components"]["admin_box_live_proof"],
+        )
 
     def test_manifest_binds_physical_floor_runbook(self) -> None:
         runbook = self.manifest["components"]["physical_floor_runbook"]
@@ -45,6 +50,7 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
         self.assertIn("-Mode physical-floor", text)
         self.assertIn("-ExpectedHead", text)
         self.assertIn("-WslDistribution Ubuntu", text)
+        self.assertIn("Invoke-FmWsl12AdminBoxLiveProof.ps1", text)
         self.assertIn("FIRSTMATE_WINDOWS_WSL_PHYSICAL_FLOOR", text)
         self.assertIn("no live firstmate crew dispatch", text.lower())
         self.assertIn("FM-CREW-13", text)

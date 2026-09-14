@@ -11,7 +11,7 @@ Canonical coordination index: `plans/active/ASB-2026-09-multi-product-bootstrap-
 
 ## Successor phases
 
-1. **Admin Box live observation (current).** Refresh main; run contract; run `physical-floor-continue`; also run report-only `physical-floor` once as protected control when safe. Expected: PASS markers + evidence root, or `BLOCKED_GITHUB_AUTH` / real non-package blocker with preserved evidence.
+1. **Admin Box live observation (current).** Refresh main; run `Invoke-FmWsl12AdminBoxLiveProof.ps1` (contract → physical-floor-continue → protected physical-floor). Expected: PASS markers + local receipt/evidence root, or `BLOCKED_GITHUB_AUTH` / real non-package blocker with preserved evidence.
 2. **Credential gate (conditional).** Only if `BLOCKED_GITHUB_AUTH`: operator `gh auth login` then rerun continuation. No token capture in evidence.
 3. **FM-CREW-13 handoff.** Only after physical-floor PASS. Local-only crew pilot; out of this phase's mutation scope.
 
