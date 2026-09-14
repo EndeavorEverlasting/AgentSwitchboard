@@ -168,9 +168,9 @@ $requiredFields = @($expectedRequiredFields + $expectedLocalRequiredFields)
 $unassignedOwners = @('unclaimed', 'none', 'unknown', 'tbd', 'n/a')
 $nonActions = @($expectedTerminalNextAction, 'none', 'tbd', 'status unchanged', 'pr opened', 'tests passed', 'ci green', 'wait', 'wait for review', 'review later', 'merge later', 'test later')
 $actionPattern = '^(?:(?:after|once)\b.+?,\s*)?(?:operator\s+)?(?:run|execute|create|decompose|split|update|repair|resolve|merge|fetch|inspect|open|verify|validate|test|commit|push|rebase|retarget|compare|generate|record|obtain|install|apply|build|launch|deploy|restore|export|import|review|reconcile|invoke|edit|write|move|copy|sync|check)\b'
-$operatorDurabilityStatuses = @($operatorDurability.appliesToStatuses | ForEach-Object { [string]$_ })
-$operatorEntrypointExtensions = @($operatorDurability.entrypointExtensions | ForEach-Object { ([string]$_).ToLowerInvariant() })
-$maxInlineNextActionChars = [int]$operatorDurability.maxInlineNextActionChars
+$operatorDurabilityStatuses = $expectedOperatorDurabilityStatuses
+$operatorEntrypointExtensions = $expectedOperatorEntrypointExtensions
+$maxInlineNextActionChars = $expectedMaxInlineNextActionChars
 $durableLongHandoffCount = 0
 
 for ($i = 0; $i -lt $headingMatches.Count; $i++) {
