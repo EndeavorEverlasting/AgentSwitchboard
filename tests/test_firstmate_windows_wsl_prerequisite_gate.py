@@ -244,6 +244,8 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertNotIn("throw 'Unable to resolve exact AgentSwitchboard HEAD.'", self.physical)
         self.assertIn("STATUS=BLOCKED_FIRSTMATE_PIN", self.physical)
         self.assertNotIn('throw "upstream-pin.json commit must be a 40-character lowercase hex SHA', self.physical)
+        self.assertIn("STATUS=BLOCKED_HARNESS_START", self.physical)
+        self.assertNotIn('throw "Unable to start $FileName."', self.physical)
         self.assertIn("NEXT=ff-only refresh main", self.physical)
         self.assertIn("$nextMatch = [regex]::Match($preflight.Stdout", self.physical)
         self.assertIn("(?m)^NEXT=", self.physical)
