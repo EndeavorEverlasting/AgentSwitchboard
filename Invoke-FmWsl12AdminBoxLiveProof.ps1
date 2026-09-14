@@ -66,20 +66,37 @@ if ([string]::IsNullOrWhiteSpace($canonicalDistribution)) {
     $canonicalDistribution = [string]$integration.platform_contract.wsl_distribution
 }
 if ($WslDistribution -ne $canonicalDistribution) {
-    throw "WSL distribution mismatch. Contract=$canonicalDistribution Requested=$WslDistribution"
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_WSL_DISTRIBUTION'
+    Write-Host "CONTRACT_WSL_DISTRIBUTION=$canonicalDistribution"
+    Write-Host "REQUESTED_WSL_DISTRIBUTION=$WslDistribution"
+    Write-Host 'NEXT=rerun with -WslDistribution matching integration-contract physical_floor_recovery.distribution (or platform_contract.wsl_distribution)'
+    exit 1
 }
 
 if ([string]::IsNullOrWhiteSpace($ExpectedHead)) {
     $ExpectedHeadRaw = & git -C $Root rev-parse HEAD
-    if ($LASTEXITCODE -ne 0) { throw 'Unable to resolve exact AgentSwitchboard HEAD.' }
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host 'STATUS=BLOCKED_GIT_HEAD'
+        Write-Host 'NEXT=repair the AgentSwitchboard checkout so git rev-parse HEAD succeeds, then rerun Invoke-FmWsl12AdminBoxLiveProof.ps1'
+        Write-Host 'Unable to resolve exact AgentSwitchboard HEAD.'
+        exit 1
+    }
     $ExpectedHead = ("$ExpectedHeadRaw").Trim()
 }
 if ($ExpectedHead -notmatch '^[0-9a-fA-F]{40}$') {
-    throw "ExpectedHead must be a 40-character SHA. Received=$ExpectedHead"
+    Write-Host 'STATUS=BLOCKED_GIT_HEAD'
+    Write-Host "NEXT=pass -ExpectedHead as a 40-character SHA (or repair checkout HEAD); Received=$ExpectedHead"
+    exit 1
 }
 
 $actualHeadRaw = & git -C $Root rev-parse HEAD
-if ($LASTEXITCODE -ne 0) { throw 'Unable to resolve exact AgentSwitchboard HEAD.' }
+if ($LASTEXITCODE -ne 0) {
+    Write-Host 'STATUS=BLOCKED_GIT_HEAD'
+    Write-Host 'NEXT=repair the AgentSwitchboard checkout so git rev-parse HEAD succeeds, then rerun Invoke-FmWsl12AdminBoxLiveProof.ps1'
+    Write-Host 'Unable to resolve exact AgentSwitchboard HEAD.'
+    exit 1
+}
 $actualHead = ("$actualHeadRaw").Trim()
 if ($actualHead -ne $ExpectedHead.ToLowerInvariant()) {
     # Keep structured — do not throw (throw collapses to unstructured exit 1).
@@ -146,7 +163,12 @@ function Invoke-HarnessMode {
 
     $process = [System.Diagnostics.Process]::new()
     $process.StartInfo = $psi
-    if (-not $process.Start()) { throw "Unable to start harness mode=$Mode." }
+    if (-not $process.Start()) {
+        Write-Host 'STATUS=BLOCKED_HARNESS_START'
+        Write-Host "HARNESS_MODE=$Mode"
+        Write-Host 'NEXT=ensure pwsh can launch Test-AgentSwitchboard-FirstMate-Harness.ps1, then rerun; unable to start harness process'
+        exit 1
+    }
     $stdoutTask = $process.StandardOutput.ReadToEndAsync()
     $stderrTask = $process.StandardError.ReadToEndAsync()
     $completed = $process.WaitForExit(3600 * 1000)
