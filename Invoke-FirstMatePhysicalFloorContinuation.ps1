@@ -380,10 +380,21 @@ for ($attempt = 1; $attempt -le ($MaxPackageRepairAttempts + 1); $attempt++) {
     }
 
     if ([string]::IsNullOrWhiteSpace($nextAction)) {
-        throw 'BLOCKED_MISSING_TOOLS without NEXT_ACTION; cannot perform bounded repair.'
+        # Keep structured — do not throw (throw collapses to unstructured exit 1).
+        Write-Host 'STATUS=BLOCKED_MISSING_TOOLS'
+        Write-Host 'FAILURE_CODE=MISSING_TOOLS_WITHOUT_NEXT_ACTION'
+        Write-Host 'NEXT=inspect physical-floor evidence for NEXT_ACTION=; repair gate output so missing-tools emits an allowlisted NEXT_ACTION, then rerun'
+        Write-Host "EVIDENCE_ROOT=$EvidenceRoot"
+        exit 44
     }
     if (-not (Test-AllowlistedAptNextAction -NextAction $nextAction -PackageAllowlist $allowlist)) {
-        throw "Refusing non-allowlisted NEXT_ACTION under FM-WSL-12: $nextAction"
+        # Keep structured — do not throw (throw collapses to unstructured exit 1).
+        Write-Host 'STATUS=BLOCKED_MISSING_TOOLS'
+        Write-Host 'FAILURE_CODE=NON_ALLOWLISTED_NEXT_ACTION'
+        Write-Host "NEXT_ACTION=$nextAction"
+        Write-Host 'NEXT=emit an allowlisted apt-get NEXT_ACTION from the physical-floor gate (or clear missing tools manually), then rerun'
+        Write-Host "EVIDENCE_ROOT=$EvidenceRoot"
+        exit 44
     }
 
     Write-Host "[FM-WSL-12] probing passwordless sudo for apt-get before bounded apt repair"

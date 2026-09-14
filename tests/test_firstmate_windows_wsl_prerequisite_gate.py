@@ -176,6 +176,16 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
             'throw "Exact-head mismatch. Expected=$ExpectedHead Actual=$actualHead"',
             continuation,
         )
+        self.assertIn("FAILURE_CODE=MISSING_TOOLS_WITHOUT_NEXT_ACTION", continuation)
+        self.assertNotIn(
+            "throw 'BLOCKED_MISSING_TOOLS without NEXT_ACTION; cannot perform bounded repair.'",
+            continuation,
+        )
+        self.assertIn("FAILURE_CODE=NON_ALLOWLISTED_NEXT_ACTION", continuation)
+        self.assertNotIn(
+            'throw "Refusing non-allowlisted NEXT_ACTION under FM-WSL-12: $nextAction"',
+            continuation,
+        )
 
     def test_physical_floor_preserves_structured_prerequisite_exit_codes(self) -> None:
         self.assertIn("exit $preflight.ExitCode", self.physical)
