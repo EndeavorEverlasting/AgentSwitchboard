@@ -242,7 +242,13 @@ if (-not ($validators.validators.id -contains 'firstmate-windows-wsl-bridge-cont
 }
 
 $actualHead = (& git -C $Root rev-parse HEAD).Trim()
-Assert-LastExit -ExitCode $LASTEXITCODE -Operation 'Resolve exact AgentSwitchboard HEAD'
+if ($LASTEXITCODE -ne 0) {
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_GIT_HEAD'
+    Write-Host 'NEXT=repair the AgentSwitchboard checkout so git rev-parse HEAD succeeds, then rerun Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1'
+    Write-Host 'Unable to resolve exact AgentSwitchboard HEAD.'
+    exit 1
+}
 if ($actualHead -ne $ExpectedHead.ToLowerInvariant()) {
     # Keep structured — do not throw (throw collapses to unstructured exit 1).
     Write-Host 'STATUS=BLOCKED_HEAD_MISMATCH'
@@ -277,12 +283,25 @@ if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) {
 
 if ([string]::IsNullOrWhiteSpace($SourceRepositoryPath)) {
     $commonGitDir = (& git -C $Root rev-parse --path-format=absolute --git-common-dir).Trim()
-    Assert-LastExit -ExitCode $LASTEXITCODE -Operation 'Resolve AgentSwitchboard common Git directory'
+    if ($LASTEXITCODE -ne 0) {
+        # Keep structured — do not throw (throw collapses to unstructured exit 1).
+        Write-Host 'STATUS=BLOCKED_GIT_HEAD'
+        Write-Host 'NEXT=repair the AgentSwitchboard checkout so git rev-parse --git-common-dir succeeds, then rerun'
+        Write-Host 'Unable to resolve AgentSwitchboard common Git directory.'
+        exit 1
+    }
     $SourceRepositoryPath = Split-Path -Parent $commonGitDir
 }
 $SourceRepositoryPath = (Resolve-Path -LiteralPath $SourceRepositoryPath).Path
 $sourceIsWorktree = (& git -C $SourceRepositoryPath rev-parse --is-inside-work-tree).Trim()
-Assert-LastExit -ExitCode $LASTEXITCODE -Operation 'Verify AgentSwitchboard source repository'
+if ($LASTEXITCODE -ne 0) {
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_GIT_HEAD'
+    Write-Host "SOURCE_REPOSITORY_PATH=$SourceRepositoryPath"
+    Write-Host 'NEXT=pass -SourceRepositoryPath to a Git working tree that contains the exact AgentSwitchboard HEAD, then rerun'
+    Write-Host 'Unable to verify AgentSwitchboard source repository work tree.'
+    exit 1
+}
 if ($sourceIsWorktree -ne 'true') {
     # Keep structured — do not throw (throw collapses to unstructured exit 1).
     Write-Host 'STATUS=BLOCKED_GIT_HEAD'
@@ -291,7 +310,15 @@ if ($sourceIsWorktree -ne 'true') {
     exit 1
 }
 & git -C $SourceRepositoryPath cat-file -e "$actualHead^{commit}"
-Assert-LastExit -ExitCode $LASTEXITCODE -Operation 'Verify exact AgentSwitchboard commit in source repository'
+if ($LASTEXITCODE -ne 0) {
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_GIT_HEAD'
+    Write-Host "SOURCE_REPOSITORY_PATH=$SourceRepositoryPath"
+    Write-Host "EXPECTED_HEAD=$actualHead"
+    Write-Host 'NEXT=pass -SourceRepositoryPath to a Git working tree that contains the exact AgentSwitchboard HEAD, then rerun'
+    Write-Host 'Unable to verify exact AgentSwitchboard commit in source repository.'
+    exit 1
+}
 
 if ([string]::IsNullOrWhiteSpace($EvidenceRoot)) {
     $runId = '{0}-{1}-{2}' -f $actualHead.Substring(0, 8), (Get-Date -Format 'yyyyMMdd-HHmmss'), ([guid]::NewGuid().ToString('N').Substring(0, 8))
