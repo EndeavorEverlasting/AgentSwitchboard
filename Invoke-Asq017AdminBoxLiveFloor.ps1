@@ -222,6 +222,8 @@ function Write-Asq017Blocker {
         [Parameter(Mandatory)][string]$FallbackNext,
         [string]$ProofLevel
     )
+    # Emit STATUS= so parent-mapped exits stay greppable even when child stdout is empty.
+    Write-Host ("STATUS={0}" -f $Result)
     Write-Asq017Status -Key 'ASQ017_RESULT' -Value $Result
     if (-not [string]::IsNullOrWhiteSpace($ProofLevel)) {
         Write-Asq017Status -Key 'PROOF_LEVEL' -Value $ProofLevel
