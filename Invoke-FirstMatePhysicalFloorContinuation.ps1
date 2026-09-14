@@ -147,6 +147,16 @@ function Get-NextActionFromText {
     return $null
 }
 
+function Get-OperatorNextFromText {
+    param([AllowNull()][string]$Text)
+    if ([string]::IsNullOrWhiteSpace($Text)) { return $null }
+    $match = [regex]::Match($Text, '(?m)^NEXT=(.+)$')
+    if ($match.Success) { return $match.Groups[1].Value.Trim() }
+    $inline = [regex]::Match($Text, '(?m)(?:^|\s)NEXT=(.+)$')
+    if ($inline.Success) { return $inline.Groups[1].Value.Trim() }
+    return $null
+}
+
 function Test-AllowlistedAptNextAction {
     param(
         [Parameter(Mandatory = $true)][string]$NextAction,
@@ -215,6 +225,10 @@ function Invoke-PhysicalFloorOnce {
     $prerequisitePath = Join-Path $AttemptEvidenceRoot 'firstmate-wsl-prerequisites.txt'
     if (Test-Path -LiteralPath $prerequisitePath -PathType Leaf) {
         $combined = $combined + "`n" + (Get-Content -LiteralPath $prerequisitePath -Raw)
+    }
+    $bridgeStderrPath = Join-Path $AttemptEvidenceRoot 'bridge-stderr.txt'
+    if (Test-Path -LiteralPath $bridgeStderrPath -PathType Leaf) {
+        $combined = $combined + "`n" + (Get-Content -LiteralPath $bridgeStderrPath -Raw)
     }
 
     $status = Get-StatusFromText -Text $combined
@@ -316,6 +330,16 @@ for ($attempt = 1; $attempt -le ($MaxPackageRepairAttempts + 1); $attempt++) {
 
     if ($status -ne 'BLOCKED_MISSING_TOOLS' -and $result.ExitCode -ne 44) {
         Write-Host "[BLOCKED] Non-package physical-floor blocker STATUS=$status Exit=$($result.ExitCode)"
+        $operatorBlob = @(
+            $nextAction
+            (Get-Content -LiteralPath (Join-Path $attemptRoot 'continuation-physical-floor-stdout.txt') -Raw -ErrorAction SilentlyContinue)
+            (Get-Content -LiteralPath (Join-Path $attemptRoot 'continuation-physical-floor-stderr.txt') -Raw -ErrorAction SilentlyContinue)
+            (Get-Content -LiteralPath (Join-Path $attemptRoot 'bridge-stderr.txt') -Raw -ErrorAction SilentlyContinue)
+        ) -join "`n"
+        $operatorNext = Get-OperatorNextFromText -Text $operatorBlob
+        if (-not [string]::IsNullOrWhiteSpace($operatorNext)) {
+            Write-Host "NEXT=$operatorNext"
+        }
         Write-Host "PREREQUISITE_EVIDENCE=$($result.PrerequisitePath)"
         Write-Host "EVIDENCE_ROOT=$EvidenceRoot"
         exit $(if ($result.ExitCode -ne 0) { $result.ExitCode } else { 1 })
@@ -332,6 +356,16 @@ for ($attempt = 1; $attempt -le ($MaxPackageRepairAttempts + 1); $attempt++) {
     }
     if (-not (Test-AllowlistedAptNextAction -NextAction $nextAction -PackageAllowlist $allowlist)) {
         throw "Refusing non-allowlisted NEXT_ACTION under FM-WSL-12: $nextAction"
+    }
+
+    Write-Host "[FM-WSL-12] probing passwordless sudo before bounded apt repair"
+    $sudoProbeArgs = @('--distribution', $WslDistribution, '--exec', 'bash', '-lc', 'sudo -n true')
+    $sudoProbe = Invoke-CapturedProcess -FileName $wsl.Source -Arguments $sudoProbeArgs -TimeoutSeconds 30
+    if ($sudoProbe.ExitCode -ne 0) {
+        Write-Host 'STATUS=BLOCKED_SUDO'
+        Write-Host 'NEXT=enable passwordless sudo for apt in Ubuntu (sudo -n true must succeed), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+        Write-Host "EVIDENCE_ROOT=$EvidenceRoot"
+        exit 1
     }
 
     Write-Host "[FM-WSL-12] executing bounded package repair inside $WslDistribution (no extra permission round-trip)"

@@ -203,6 +203,15 @@ if ($continue.ExitCode -ne 0) {
     )
     Write-Host "RECEIPT_PATH=$receiptPath"
     Write-Host "RESULT=$result"
+    if ($continue.ExitCode -eq 45) {
+        Write-Host 'NEXT=complete gh auth login inside Ubuntu, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+    } elseif ($continue.ExitCode -eq 46) {
+        Write-Host 'NEXT=run on Windows Admin Box with wsl.exe and Ubuntu; cloud/Linux hosts cannot prove physical floor'
+    } elseif ($continue.ExitCode -eq 44) {
+        Write-Host 'NEXT=install allowlisted missing tools via printed NEXT_ACTION, then rerun'
+    } else {
+        Write-Host 'NEXT=inspect evidence for NEXT=/NEXT_ACTION=; repair operator blocker; rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+    }
     exit $finalExit
 }
 

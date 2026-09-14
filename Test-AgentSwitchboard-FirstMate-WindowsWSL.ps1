@@ -380,9 +380,17 @@ Set-Content -LiteralPath $ProbePath -Value @(
     "WSL_DISTRIBUTION=$WslDistribution"
     "WSL_WORKSPACE=$wslWorkspace"
     $probe.Stdout.TrimEnd()
+    'STDERR<<'
+    $probe.Stderr.TrimEnd()
+    'STDERR>>'
     "WSL_STDERR=$WslDiagnosticsPath"
 )
 if ($probe.ExitCode -ne 0) {
+    if (-not [string]::IsNullOrWhiteSpace($probe.Stderr)) { Write-Host $probe.Stderr.TrimEnd() }
+    $nextMatch = [regex]::Match($probe.Stderr, '(?m)(?:^|\s)NEXT=(.+)$')
+    if ($nextMatch.Success) {
+        Write-Host ("NEXT=" + $nextMatch.Groups[1].Value.Trim())
+    }
     Complete-WslWorkspace -Distribution $WslDistribution -Workspace $wslWorkspace -TimeoutSeconds $WslTimeoutSeconds -DiagnosticsPath $WslDiagnosticsPath -PrimaryFailure $true -PreserveOnFailure:$PreserveWslWorkspaceOnFailure
     throw "FirstMate read-only interoperability floor failed. Evidence: $ProbePath"
 }
