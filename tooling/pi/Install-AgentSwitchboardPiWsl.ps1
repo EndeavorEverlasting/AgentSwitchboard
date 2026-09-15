@@ -30,6 +30,8 @@ $nodeVersion = [string]$contract.versions.node
 $piVersion = [string]$contract.versions.pi
 $piPackage = [string]$contract.versions.npmPackage
 $aptPackages = @($contract.boundedMutation.ubuntuAptPackages | ForEach-Object { [string]$_ })
+$inspectTimeoutSeconds = [int]$contract.timeouts.inspectSeconds
+$applyTimeoutSeconds = [int]$contract.timeouts.applySeconds
 
 function Get-WslDistributions {
     $raw = & wsl.exe --list --quiet 2>$null
@@ -40,7 +42,11 @@ function Get-WslDistributions {
 }
 
 function Invoke-WslBash {
-    param([Parameter(Mandatory)][string]$Script)
+    param(
+        [Parameter(Mandatory)][string]$Script,
+        [Parameter(Mandatory)][int]$TimeoutSeconds,
+        [switch]$Interactive
+    )
 
     $psi = [System.Diagnostics.ProcessStartInfo]::new()
     $psi.FileName = 'wsl.exe'
@@ -54,7 +60,22 @@ function Invoke-WslBash {
     if (-not $process.Start()) {
         throw 'Unable to start wsl.exe.'
     }
-    $process.WaitForExit()
+
+    if ($Interactive) {
+        $process.WaitForExit()
+        return $process.ExitCode
+    }
+
+    if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
+        try {
+            $process.Kill($true)
+            $process.WaitForExit()
+        }
+        catch {}
+        Write-Host 'STATUS=BLOCKED_WSL_TIMEOUT'
+        Write-Host "TIMEOUT_SECONDS=$TimeoutSeconds"
+        return 124
+    }
     return $process.ExitCode
 }
 
@@ -89,7 +110,7 @@ case "$node_path|$npm_path|$pi_path" in *'/mnt/'*) printf 'STATUS=BLOCKED_WINDOW
 case "$node_path" in "$HOME/.nvm/versions/node/"*) ;; *) printf 'PI_WSL_INSPECT=DRIFT\n'; exit 43;; esac
 case "$npm_path" in "$HOME/.nvm/versions/node/"*) ;; *) printf 'PI_WSL_INSPECT=DRIFT\n'; exit 43;; esac
 case "$pi_path" in "$HOME/.nvm/versions/node/"*) ;; *) printf 'PI_WSL_INSPECT=DRIFT\n'; exit 43;; esac
-if [ "$nvm_version" != '__NVM_VERSION_PLAIN__' ] || [ "$node_version" != 'v__NODE_VERSION__' ]; then
+if [ -z "$nvm_version" ] || [ "$node_version" != 'v__NODE_VERSION__' ]; then
   printf 'PI_WSL_INSPECT=DRIFT\n'
   exit 43
 fi
@@ -98,12 +119,11 @@ printf 'PI_WSL_INSPECT=READY\n'
 exit 0
 '@
 $inspectScript = $inspectScript.Replace('__DISTRIBUTION__', $Distribution)
-$inspectScript = $inspectScript.Replace('__NVM_VERSION_PLAIN__', $nvmVersion.TrimStart('v'))
 $inspectScript = $inspectScript.Replace('__NODE_VERSION__', $nodeVersion)
 $inspectScript = $inspectScript.Replace('__PI_VERSION__', $piVersion)
 
 if ($Mode -eq 'Inspect') {
-    exit (Invoke-WslBash -Script $inspectScript)
+    exit (Invoke-WslBash -Script $inspectScript -TimeoutSeconds $inspectTimeoutSeconds)
 }
 
 $quotedPackages = ($aptPackages | ForEach-Object { "'$_'" }) -join ' '
@@ -130,25 +150,32 @@ if [ -e "$NVM_DIR" ] && [ ! -d "$NVM_DIR/.git" ]; then
   exit 51
 fi
 if [ ! -d "$NVM_DIR/.git" ]; then
-  git clone https://github.com/nvm-sh/nvm.git "$NVM_DIR"
+  git clone --branch '__NVM_VERSION__' --depth 1 https://github.com/nvm-sh/nvm.git "$NVM_DIR"
 else
   if [ -n "$(git -C "$NVM_DIR" status --porcelain=v1)" ]; then
     printf 'STATUS=BLOCKED_NVM_DIRTY\n'
     printf 'NEXT=preserve dirty NVM work in %s, then rerun\n' "$NVM_DIR"
     exit 52
   fi
-  git -C "$NVM_DIR" fetch --tags origin
+  if [ ! -s "$NVM_DIR/nvm.sh" ]; then
+    printf 'STATUS=BLOCKED_NVM_UNUSABLE\n'
+    printf 'NEXT=repair or preserve the existing NVM checkout at %s, then rerun\n' "$NVM_DIR"
+    exit 56
+  fi
+  printf '[INFO] Preserving existing clean functional NVM checkout at %s.\n' "$NVM_DIR"
 fi
-git -C "$NVM_DIR" checkout --detach '__NVM_VERSION__'
 
-if ! grep -Fq 'export NVM_DIR="$HOME/.nvm"' "$HOME/.bashrc" 2>/dev/null; then
-  cat >> "$HOME/.bashrc" <<'ASB_NVM'
-
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-ASB_NVM
-fi
+bashrc="$HOME/.bashrc"
+touch "$bashrc"
+ensure_bashrc_line() {
+  line="$1"
+  if ! grep -Fqx "$line" "$bashrc" 2>/dev/null; then
+    printf '%s\n' "$line" >> "$bashrc"
+  fi
+}
+ensure_bashrc_line 'export NVM_DIR="$HOME/.nvm"'
+ensure_bashrc_line '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"'
+ensure_bashrc_line '[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"'
 
 . "$NVM_DIR/nvm.sh"
 nvm install '__NODE_VERSION__'
@@ -173,7 +200,8 @@ npm_version=$(npm --version)
 pi_version=$(pi --version)
 printf 'PI_WSL_BOOTSTRAP=PASS\n'
 printf 'WSL_DISTRIBUTION=%s\n' '__DISTRIBUTION__'
-printf 'NVM_VERSION=%s\n' '__NVM_VERSION__'
+printf 'NVM_BOOTSTRAP_PIN=%s\n' '__NVM_VERSION__'
+printf 'NVM_ACTIVE_VERSION=%s\n' "$(nvm --version)"
 printf 'NODE_PATH=%s\n' "$node_path"
 printf 'NODE_VERSION=%s\n' "$node_version"
 printf 'NPM_PATH=%s\n' "$npm_path"
@@ -190,7 +218,7 @@ $applyScript = $applyScript.Replace('__PI_PACKAGE__', $piPackage)
 $applyScript = $applyScript.Replace('__PI_VERSION__', $piVersion)
 $applyScript = $applyScript.Replace('__DISTRIBUTION__', $Distribution)
 
-$applyExit = Invoke-WslBash -Script $applyScript
+$applyExit = Invoke-WslBash -Script $applyScript -TimeoutSeconds $applyTimeoutSeconds
 if ($applyExit -ne 0) {
     exit $applyExit
 }
@@ -204,7 +232,7 @@ export NVM_DIR="$HOME/.nvm"
 . "$NVM_DIR/nvm.sh"
 exec pi
 '@
-    exit (Invoke-WslBash -Script $launchScript)
+    exit (Invoke-WslBash -Script $launchScript -TimeoutSeconds 0 -Interactive)
 }
 
 exit 0
