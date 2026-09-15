@@ -112,6 +112,12 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("do not automate credential entry", lower)
         self.assertIn("BLOCKED_WINDOWS_WSL_REQUIRED", self.runbook)
         self.assertIn("WINDOWS_WSL_REQUIRED", self.runbook)
+        self.assertIn("QUIESCENT_BLOCKED", self.runbook)
+        self.assertIn("PROOF_RELEVANCE_FINGERPRINT", self.runbook)
+        self.assertIn("PROGRESS_BEARING=false", self.runbook)
+        self.assertIn("QUIESCENCE_STATE=recorded", self.runbook)
+        self.assertIn("QUIESCENCE_STATE=unavailable", self.runbook)
+        self.assertIn("QUIESCENCE_ON_REPEAT=false", self.runbook)
         self.assertIn("BLOCKED_SUDO", self.runbook)
         self.assertIn("exit 47", self.runbook)
         self.assertIn("BLOCKED_PRIMARY_HARNESS", self.runbook)
@@ -219,6 +225,61 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
             continuation.index("STATUS=BLOCKED_CONTINUATION_EXHAUSTED"),
             continuation.rindex("exit 1"),
         )
+
+    def test_asq017_quiesces_repeated_unchanged_environment_blocker(self) -> None:
+        asq = (ROOT / "Invoke-Asq017AdminBoxLiveFloor.ps1").read_text(encoding="utf-8")
+        # Quiescence is runtime behavior, not a HEAD/tip citation heuristic.
+        self.assertIn("Get-Asq017ProofRelevanceFingerprint", asq)
+        self.assertIn("Get-Asq017WslEnvironmentSignature", asq)
+        self.assertIn("Get-Asq017PathIdentity", asq)
+        self.assertIn("Get-FileHash", asq)
+        self.assertIn("if ($IsWindows)", asq)
+        self.assertIn("PROOF_RELEVANCE_FINGERPRINT", asq)
+        for proof_input in (
+            "Invoke-FmWsl12AdminBoxLiveProof.ps1",
+            "Invoke-FirstMatePhysicalFloorContinuation.ps1",
+            "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1",
+            "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1",
+            "integration-contract.json",
+            "upstream-pin.json",
+            "wslDistribution=",
+            "wslEnvironmentSignature=",
+            "prerequisiteTimeoutSeconds=",
+            "skipProtectedControl=",
+            "firstMatePathSelectorSha256=",
+            "evidenceRootSelectorSha256=",
+        ):
+            self.assertIn(proof_input, asq)
+        self.assertIn("asb-quiescence-state/v1", asq)
+        self.assertIn("[System.IO.Path]::GetTempPath()", asq)
+        self.assertIn("BLOCKED_WINDOWS_WSL_REQUIRED", asq)
+        self.assertIn("STATUS=QUIESCENT_BLOCKED", asq)
+        self.assertIn("ASQ017_RESULT", asq)
+        self.assertIn("QUIESCENCE_REASON", asq)
+        self.assertIn("REPEATED_UNCHANGED_EXTERNAL_BLOCKER", asq)
+        self.assertIn("PROGRESS_BEARING", asq)
+        self.assertIn("RETRY_ELIGIBLE", asq)
+        self.assertIn("Write-Asq017QuiescenceState", asq)
+        self.assertIn("Clear-Asq017QuiescenceState", asq)
+        self.assertIn("QUIESCENCE_ON_REPEAT", asq)
+        self.assertIn("$quiescenceRecorded", asq)
+        self.assertIn("return $true", asq)
+        self.assertIn("return $false", asq)
+        self.assertIn("[System.IO.File]::Move($tempPath, $path, $true)", asq)
+        self.assertIn("do not rerun this cloud/non-Windows proof or create citation-only/tip-cite updates", asq)
+        # The stored HEAD is provenance only; fingerprint construction explicitly excludes HEAD.
+        self.assertIn("HEAD itself is deliberately excluded", asq)
+        self.assertIn("observedHead", asq)
+        # Unknown/corrupt state must never suppress a fresh bounded attempt.
+        self.assertIn("fail open to", asq)
+        self.assertIn("Unknown proof relevance must never become a false stop signal", asq)
+        self.assertIn("Corrupt/foreign/unresolvable local state", asq)
+        # Advisory cache persistence/cleanup must not replace the primary blocker.
+        self.assertIn("The cache is advisory", asq)
+        self.assertIn("QUIESCENCE_STATE", asq)
+        self.assertIn("QUIESCENCE_STATE_OPERATION", asq)
+        self.assertIn("'write'", asq)
+        self.assertIn("'clear'", asq)
 
     def test_physical_floor_preserves_structured_prerequisite_exit_codes(self) -> None:
         self.assertIn("exit $preflight.ExitCode", self.physical)

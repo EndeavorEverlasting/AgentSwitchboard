@@ -82,6 +82,9 @@ if ($childExit -eq 44) {
 if ($childExit -eq 45) {
   throw 'BLOCKED_GITHUB_AUTH — complete gh auth login inside Ubuntu then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
 }
+if ($childExit -eq 46) {
+  throw 'BLOCKED_WINDOWS_WSL_REQUIRED — move this proof to a Windows Admin Box with runnable wsl.exe+Ubuntu. If console STATUS=QUIESCENT_BLOCKED, a matching recorded quiescence state suppressed the duplicate child; otherwise this is the first/fail-open blocker observation and a later bounded attempt may still run.'
+}
 if ($childExit -eq 47) {
   throw 'BLOCKED_SUDO — enable passwordless sudo for apt-get in Ubuntu (sudo -n apt-get --version must succeed), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
 }
@@ -112,7 +115,7 @@ if ($childExit -ne 0) {
 }
 ```
 
-`Invoke-Asq017AdminBoxLiveFloor.ps1` is the durable ASQ-017 Admin Box floor owner. It fail-closes native git refresh (`fetch`/`switch`/`pull`/`rev-parse` with capture-before-Trim), then runs `Invoke-FmWsl12AdminBoxLiveProof.ps1` (contract → `physical-floor-continue` → protected `physical-floor`). The one-shot still stops for missing allowlisted tools after bounded repair (exit 44), GitHub authentication (exit 45), passwordless apt sudo (exit 47), missing primary harness on non-interactive PATH (exit 48), dirty `$HOME/firstmate` (exit 49), and FirstMate pin mismatch / blocked bootstrap (exit 50), WSL exact-head bootstrap failure (exit 51), FirstMate harness contract failure (exit 52), and prerequisite hang/timeout (exit 124 / `STATUS=BLOCKED_PREREQUISITE_TIMEOUT`); continuation loop fallthrough / other structured `STATUS=BLOCKED_*` may surface as exit 1 with preserved STATUS (inspect console before treating as generic FAILED); probes runnable `Ubuntu` before apt/preflight; and writes a local untracked receipt. Interactive pastes must print `CHILD_EXIT_CODE` and `throw` rather than calling interactive `exit`.
+`Invoke-Asq017AdminBoxLiveFloor.ps1` is the durable ASQ-017 Admin Box floor owner. It fail-closes native git refresh (`fetch`/`switch`/`pull`/`rev-parse` with capture-before-Trim), then runs `Invoke-FmWsl12AdminBoxLiveProof.ps1` (contract → `physical-floor-continue` → protected `physical-floor`). The one-shot still stops for missing allowlisted tools after bounded repair (exit 44), GitHub authentication (exit 45), unavailable Windows/WSL environment (exit 46; when local quiescence persistence succeeds, ASQ-017 records the fail-closed observation and an unchanged repeat with the same stored fingerprint returns `STATUS=QUIESCENT_BLOCKED` without launching another one-shot; unavailable persistence remains fail-open), passwordless apt sudo (exit 47), missing primary harness on non-interactive PATH (exit 48), dirty `$HOME/firstmate` (exit 49), and FirstMate pin mismatch / blocked bootstrap (exit 50), WSL exact-head bootstrap failure (exit 51), FirstMate harness contract failure (exit 52), and prerequisite hang/timeout (exit 124 / `STATUS=BLOCKED_PREREQUISITE_TIMEOUT`); continuation loop fallthrough / other structured `STATUS=BLOCKED_*` may surface as exit 1 with preserved STATUS (inspect console before treating as generic FAILED); probes runnable `Ubuntu` before apt/preflight; and writes a local untracked receipt. Interactive pastes must print `CHILD_EXIT_CODE` and `throw` rather than calling interactive `exit`.
 
 Equivalent expanded form (same proof ceiling; prefer the durable entrypoint above):
 
@@ -139,6 +142,9 @@ if ($childExit -eq 44) {
 }
 if ($childExit -eq 45) {
   throw 'BLOCKED_GITHUB_AUTH — complete gh auth login then rerun Invoke-FmWsl12AdminBoxLiveProof.ps1'
+}
+if ($childExit -eq 46) {
+  throw 'BLOCKED_WINDOWS_WSL_REQUIRED — this expanded direct form cannot prove the physical floor on cloud/Linux; move to the Windows Admin Box rather than repeating the same proof.'
 }
 if ($childExit -eq 47) {
   throw 'BLOCKED_SUDO — enable passwordless sudo for apt-get in Ubuntu (sudo -n apt-get --version must succeed), then rerun'
@@ -224,7 +230,10 @@ Preserve the console markers and the printed evidence root:
 - `WSL_DISTRIBUTION=Ubuntu` (and/or bridge `WSL_DISTRIBUTION=Ubuntu`);
 - `EVIDENCE_ROOT=...`;
 - `PREREQUISITE_EVIDENCE=...`;
+- `WSL_ENVIRONMENT_SIGNATURE=...` and `PROOF_RELEVANCE_FINGERPRINT=<sha256>` from the ASQ-017 front door.
 - `[PROOF_CEILING] Physical WSL interoperability floor only; no live FirstMate crew dispatch is proven.`
+
+On a non-Windows/cloud host, an exit-46 observation emits `QUIESCENCE_STATE=recorded` and `QUIESCENCE_ON_REPEAT=true` only when local state persistence succeeds. Only a later invocation with the same known `PROOF_RELEVANCE_FINGERPRINT` stored in that recorded state may emit `STATUS=QUIESCENT_BLOCKED`, `BLOCKER_STATUS=BLOCKED_WINDOWS_WSL_REQUIRED`, `PROGRESS_BEARING=false`, and `RETRY_ELIGIBLE=false` before another one-shot is launched. If persistence instead emits `QUIESCENCE_STATE=unavailable` and `QUIESCENCE_ON_REPEAT=false`, no durable quiescence state exists and the next invocation is allowed to launch another bounded attempt. A recorded identical repeat is the intentional stop signal: move the proof to the Admin Box or change a proof-relevant input/environment. Explicit `-EvidenceRoot` and `-FirstMatePath` selectors participate by hashed identity, and WSL command/distribution capability participates through `WSL_ENVIRONMENT_SIGNATURE`; do not create a tip-cite/ledger update merely to make repository HEAD newer.
 
 ## Failure handling
 
@@ -233,7 +242,7 @@ Preserve the console markers and the printed evidence root:
 | Missing Ubuntu tools (`git`/`gh`/`tmux`/`python3`) | Prefer `-Mode physical-floor-continue` / `Invoke-FirstMatePhysicalFloorContinuation.ps1`, which executes the exact emitted `NEXT_ACTION` package command inside explicit Ubuntu and reruns without another permission round-trip. Manual repair remains valid when using report-only `-Mode physical-floor`. |
 | `sudo` / package manager cannot complete (`STATUS=BLOCKED_SUDO`, exit 47) | Enable passwordless `sudo` for `apt-get` inside Ubuntu so `sudo -n apt-get --version` succeeds non-interactively. Preserve `sudo-probe-stdout.txt` / `sudo-probe-stderr.txt` evidence. Do not broaden to another distro, Windows package manager, or arbitrary package source. |
 | GitHub auth blocked (`STATUS=BLOCKED_GITHUB_AUTH`, exit 45) | Operator performs the emitted `gh auth login ...` command **inside Ubuntu**. Do not automate credential entry or persist tokens. Then rerun the physical floor / continuation entrypoint. |
-| Host lacks `wsl.exe`, or `Ubuntu` is missing/unrunnable (`STATUS=BLOCKED_WINDOWS_WSL_REQUIRED`, exit 46 / `FAILURE_CODE=WINDOWS_WSL_REQUIRED`) | Cloud/Linux hosts without `wsl.exe`, and Windows hosts whose contracted distribution cannot run `wsl --distribution Ubuntu --exec true`, fail closed before package repair or interop. This is a LIVE_ATTEMPT_FAIL_CLOSED receipt, not physical PASS. Move to an authorized Windows Admin Box with explicit runnable `Ubuntu`. |
+| Host lacks `wsl.exe`, or `Ubuntu` is missing/unrunnable (`STATUS=BLOCKED_WINDOWS_WSL_REQUIRED`, exit 46 / `FAILURE_CODE=WINDOWS_WSL_REQUIRED`) | Cloud/Linux hosts without `wsl.exe`, and Windows hosts whose contracted distribution cannot run `wsl --distribution Ubuntu --exec true`, fail closed before package repair or interop. This is a LIVE_ATTEMPT_FAIL_CLOSED receipt, not physical PASS. When local quiescence persistence succeeds, ASQ-017 records the blocker in local untracked state; only an unchanged second invocation with the same stored fingerprint returns `STATUS=QUIESCENT_BLOCKED` without another child proof. If persistence is unavailable, the next invocation remains eligible for another bounded attempt. Move to an authorized Windows Admin Box with explicit runnable `Ubuntu`, or change a proof-relevant input; do not rerun the unchanged cloud lane or create citation-only/tip-cite work. |
 | Primary harness missing on non-interactive PATH (`STATUS=BLOCKED_PRIMARY_HARNESS`, exit 48) | Install one primary harness (`claude`\|`grok`\|`pi`\|`pi-signed`\|`omp`\|`codex`\|`opencode`\|`cursor-agent`) so `wsl -d Ubuntu --exec bash -lc "command -v <harness>"` succeeds, then rerun. |
 | Dirty `$HOME/firstmate` (`STATUS=BLOCKED_FIRSTMATE_DIRTY`, exit 49) | Commit, stash, or move dirty work under `$HOME/firstmate`, or remove that path so bounded bootstrap can run, then rerun. Or pass `-FirstMatePath` to a different clean audited checkout — preflight then skips `$HOME/firstmate`. |
 | FirstMate pin mismatch / blocked bootstrap (`STATUS=BLOCKED_FIRSTMATE_PIN`, exit 50) | In `$HOME/firstmate` run `git fetch --all && git checkout <commit from tooling/firstmate/harness/upstream-pin.json>`, or remove that path / pass `-FirstMatePath` to a clean audited `kunchenguid/firstmate` checkout, then rerun. When `-FirstMatePath` is set, repair that override path instead of `$HOME/firstmate`. |
