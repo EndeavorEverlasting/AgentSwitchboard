@@ -115,9 +115,9 @@ jobs:
             'tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1'
           )) {
             $tokens = $null
-            $errors = $null
-            [void][System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
-            foreach ($error in @($errors)) { $failures.Add("$path`: $($error.Message)") }
+            $parseErrors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$parseErrors)
+            foreach ($parseError in @($parseErrors)) { $failures.Add("$path`: $($parseError.Message)") }
           }
           if ($failures.Count -gt 0) {
             $failures | ForEach-Object { Write-Error $_ }
