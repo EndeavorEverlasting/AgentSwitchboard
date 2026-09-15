@@ -104,6 +104,8 @@ class AutomatedTestFloorContracts(unittest.TestCase):
             "contents: read",
             "scripts/Test-AutomatedTestFloor.ps1",
             "candidateSha",
+            "github.event.pull_request.head.sha",
+            "PR_HEAD_CONTAINED",
             "ubuntu-latest",
             "windows-latest",
             "concurrency:",
