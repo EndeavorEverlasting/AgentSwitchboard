@@ -24,7 +24,11 @@ class FirstMateRecoveryRoutingTests(unittest.TestCase):
         self.assertIn("do not retry the same SHA checkout", self.probe)
 
     def test_one_shot_exit50_fallback_does_not_prescribe_same_sha_loop(self) -> None:
-        marker = "elseif ($continue.ExitCode -eq 50)"
+        # Target the NEXT= fallback (second ExitCode -eq 50 arm), not the STATUS map arm.
+        marker = (
+            "} elseif ($continue.ExitCode -eq 50) {\n"
+            "        Write-Host 'NEXT=verify the selected FirstMate checkout/object database"
+        )
         start = self.one_shot.index(marker)
         end = self.one_shot.index("} else {", start)
         block = self.one_shot[start:end]
