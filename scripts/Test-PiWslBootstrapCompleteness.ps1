@@ -47,10 +47,12 @@ foreach ($relative in @(
     'tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1'
 )) {
     $tokens = $null
-    $errors = $null
+    $parseErrors = $null
     $path = Join-Path $RootPath $relative
-    [void][System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
-    foreach ($error in @($errors)) { $failures.Add("parse:$relative:$($error.Message)") }
+    [void][System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$parseErrors)
+    foreach ($parseError in @($parseErrors)) {
+        $failures.Add("parse:${relative}:$($parseError.Message)")
+    }
 }
 
 $entry = Get-Content -LiteralPath (Join-Path $RootPath 'Bootstrap-Pi-WSL.cmd') -Raw
