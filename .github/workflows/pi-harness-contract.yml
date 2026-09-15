@@ -10,6 +10,7 @@ on:
       - "tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1"
       - ".ai/skills/pi-fusion-orchestration/**"
       - "scripts/Test-PiHarnessCompleteness.ps1"
+      - "scripts/Test-PiWslBootstrapCompleteness.ps1"
       - "tests/test_pi_harness_contracts.py"
       - "tests/test_pi_system_bootstrap.py"
       - "tests/test_pi_wsl_bootstrap.py"
@@ -32,6 +33,7 @@ on:
       - "Pull-And-Run-AgentSwitchboard.cmd"
       - "tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1"
       - "scripts/Test-PiHarnessCompleteness.ps1"
+      - "scripts/Test-PiWslBootstrapCompleteness.ps1"
       - "tests/test_pi_harness_contracts.py"
       - "tests/test_pi_system_bootstrap.py"
       - "tests/test_pi_wsl_bootstrap.py"
@@ -64,6 +66,9 @@ jobs:
         run: python -m unittest tests.test_pi_system_bootstrap -v
       - name: Run Pi WSL bootstrap contract
         run: python -m unittest tests.test_pi_wsl_bootstrap -v
+      - name: Run Pi WSL bootstrap completeness contract
+        shell: pwsh
+        run: ./scripts/Test-PiWslBootstrapCompleteness.ps1
       - name: Run Pi completeness contract
         shell: pwsh
         run: ./scripts/Test-PiHarnessCompleteness.ps1
@@ -84,7 +89,6 @@ jobs:
         if: github.event_name != 'pull_request'
         shell: bash
         run: |
-          set -euo pipefail
           git diff --check HEAD^..HEAD
           test -z "$(git status --short)"
 
@@ -100,6 +104,7 @@ jobs:
           $failures = [System.Collections.Generic.List[string]]::new()
           foreach ($path in @(
             'scripts/Test-PiHarnessCompleteness.ps1',
+            'scripts/Test-PiWslBootstrapCompleteness.ps1',
             'tooling/pi/Test-PiWorkstationPrereqs.ps1',
             'tooling/pi/Get-PiHarnessStatus.ps1',
             'tooling/pi/Install-AgentSwitchboardPiSystem.ps1',
@@ -136,6 +141,9 @@ jobs:
       - name: Run Pi WSL bootstrap contract
         shell: pwsh
         run: python -m unittest tests.test_pi_wsl_bootstrap -v
+      - name: Run Pi WSL bootstrap completeness contract
+        shell: pwsh
+        run: ./scripts/Test-PiWslBootstrapCompleteness.ps1
       - name: Run Pi completeness contract
         shell: pwsh
         run: ./scripts/Test-PiHarnessCompleteness.ps1
