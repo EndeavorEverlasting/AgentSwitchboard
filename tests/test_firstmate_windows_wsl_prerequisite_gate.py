@@ -112,6 +112,9 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("do not automate credential entry", lower)
         self.assertIn("BLOCKED_WINDOWS_WSL_REQUIRED", self.runbook)
         self.assertIn("WINDOWS_WSL_REQUIRED", self.runbook)
+        self.assertIn("QUIESCENT_BLOCKED", self.runbook)
+        self.assertIn("PROOF_RELEVANCE_FINGERPRINT", self.runbook)
+        self.assertIn("PROGRESS_BEARING=false", self.runbook)
         self.assertIn("BLOCKED_SUDO", self.runbook)
         self.assertIn("exit 47", self.runbook)
         self.assertIn("BLOCKED_PRIMARY_HARNESS", self.runbook)
@@ -260,6 +263,8 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("observedHead", asq)
         # Unknown/corrupt state must never suppress a fresh bounded attempt.
         self.assertIn("fail open to", asq)
+        self.assertIn("Unknown proof relevance must never become a false stop signal", asq)
+        self.assertIn("Corrupt/foreign/unresolvable local state", asq)
         # Advisory cache persistence/cleanup must not replace the primary blocker.
         self.assertIn("The cache is advisory", asq)
         self.assertIn("QUIESCENCE_STATE", asq)

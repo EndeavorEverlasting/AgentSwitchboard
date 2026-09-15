@@ -112,31 +112,38 @@ function Get-Asq017Sha256Text {
 function Get-Asq017ProofRelevanceFingerprint {
     # HEAD itself is deliberately excluded. Only behavior/proof inputs belong here,
     # so documentation/ledger/tip-cite movement cannot reopen an unchanged proof.
-    $relativePaths = @(
-        'Invoke-Asq017AdminBoxLiveFloor.ps1',
-        'Invoke-FmWsl12AdminBoxLiveProof.ps1',
-        'Invoke-FirstMatePhysicalFloorContinuation.ps1',
-        'Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1',
-        'Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1',
-        'tooling\firstmate\harness\integration-contract.json',
-        'tooling\firstmate\harness\upstream-pin.json'
-    )
-    $entries = [System.Collections.Generic.List[string]]::new()
-    foreach ($relativePath in $relativePaths) {
-        $fullPath = Join-Path $Root $relativePath
-        if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) {
-            return $null
+    try {
+        $relativePaths = @(
+            'Invoke-Asq017AdminBoxLiveFloor.ps1',
+            'Invoke-FmWsl12AdminBoxLiveProof.ps1',
+            'Invoke-FirstMatePhysicalFloorContinuation.ps1',
+            'Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1',
+            'Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1',
+            'tooling\firstmate\harness\integration-contract.json',
+            'tooling\firstmate\harness\upstream-pin.json'
+        )
+        $entries = [System.Collections.Generic.List[string]]::new()
+        foreach ($relativePath in $relativePaths) {
+            $fullPath = Join-Path $Root $relativePath
+            if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) {
+                return $null
+            }
+            $normalized = $relativePath.Replace('\', '/')
+            $hash = (Get-FileHash -LiteralPath $fullPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            [void]$entries.Add(('{0}={1}' -f $normalized, $hash))
         }
-        $normalized = $relativePath.Replace('\', '/')
-        $hash = (Get-FileHash -LiteralPath $fullPath -Algorithm SHA256).Hash.ToLowerInvariant()
-        [void]$entries.Add(('{0}={1}' -f $normalized, $hash))
+        [void]$entries.Add(('wslDistribution={0}' -f $WslDistribution))
+        [void]$entries.Add(('prerequisiteTimeoutSeconds={0}' -f $PrerequisiteTimeoutSeconds))
+        [void]$entries.Add(('skipProtectedControl={0}' -f [bool]$SkipProtectedControl))
+        $firstMateSelector = if ([string]::IsNullOrWhiteSpace($FirstMatePath)) { '<default>' } else { [System.IO.Path]::GetFullPath($FirstMatePath).ToLowerInvariant() }
+        [void]$entries.Add(('firstMatePathSelectorSha256={0}' -f (Get-Asq017Sha256Text -Text $firstMateSelector)))
+        return Get-Asq017Sha256Text -Text ($entries -join "`n")
     }
-    [void]$entries.Add(('wslDistribution={0}' -f $WslDistribution))
-    [void]$entries.Add(('prerequisiteTimeoutSeconds={0}' -f $PrerequisiteTimeoutSeconds))
-    [void]$entries.Add(('skipProtectedControl={0}' -f [bool]$SkipProtectedControl))
-    $firstMateSelector = if ([string]::IsNullOrWhiteSpace($FirstMatePath)) { '<default>' } else { [System.IO.Path]::GetFullPath($FirstMatePath).ToLowerInvariant() }
-    [void]$entries.Add(('firstMatePathSelectorSha256={0}' -f (Get-Asq017Sha256Text -Text $firstMateSelector)))
-    return Get-Asq017Sha256Text -Text ($entries -join "`n")
+    catch {
+        # Unknown proof relevance must never become a false stop signal. Allow one
+        # fresh bounded attempt and report the fingerprint as UNKNOWN instead.
+        return $null
+    }
 }
 
 function Get-Asq017QuiescenceStatePath {
@@ -150,17 +157,17 @@ function Get-Asq017QuiescenceStatePath {
 }
 
 function Read-Asq017QuiescenceState {
-    $path = Get-Asq017QuiescenceStatePath
-    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { return $null }
     try {
+        $path = Get-Asq017QuiescenceStatePath
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { return $null }
         $state = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
         if ([string]$state.schema -ne 'asb-quiescence-state/v1') { return $null }
         if ([string]$state.lane -ne 'FM-WSL-12') { return $null }
         return $state
     }
     catch {
-        # Corrupt/foreign local state cannot be trusted as a stop signal; fail open to
-        # a fresh bounded proof attempt instead of manufacturing a quiescence claim.
+        # Corrupt/foreign/unresolvable local state cannot be trusted as a stop signal;
+        # fail open to a fresh bounded proof attempt instead of manufacturing quiescence.
         return $null
     }
 }
