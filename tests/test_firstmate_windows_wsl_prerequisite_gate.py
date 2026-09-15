@@ -651,6 +651,12 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
             harness,
         )
         self.assertIn("Preserve structured child exits", harness)
+        self.assertNotIn("throw 'Python is unavailable on PATH.'", harness)
+        self.assertIn("install python.exe", harness)
+        self.assertLess(
+            harness.index("'contract'"),
+            harness.index("install python.exe"),
+        )
         self.assertIn("exit $LASTEXITCODE", harness)
         self.assertIn("STDERR<<", bridge)
         self.assertIn("Write-Host $probe.Stderr.TrimEnd()", bridge)

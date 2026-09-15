@@ -18,9 +18,6 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
 }
 
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
-$Python = Get-Command python.exe -ErrorAction SilentlyContinue
-if (-not $Python) { $Python = Get-Command python -ErrorAction SilentlyContinue }
-if (-not $Python) { throw 'Python is unavailable on PATH.' }
 
 function Invoke-NativeChecked {
     param(
@@ -57,6 +54,15 @@ try {
             # probe and therefore belongs to Linux CI. The Windows front door validates
             # only platform-neutral/Windows bridge suites so Windows Python never needs
             # to launch a bare POSIX shell.
+            # Python is only required for contract-mode unit suites — not physical-floor live modes.
+            $Python = Get-Command python.exe -ErrorAction SilentlyContinue
+            if (-not $Python) { $Python = Get-Command python -ErrorAction SilentlyContinue }
+            if (-not $Python) {
+                # Keep structured — do not throw (throw collapses to unstructured exit 1).
+                Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+                Write-Host 'NEXT=install python.exe (or python) on PATH for contract-mode unit suites, then rerun Test-AgentSwitchboard-FirstMate-Harness.ps1 -Mode contract'
+                exit 52
+            }
             foreach ($test in @(
                 'tests/test_firstmate_asb_convergence_contract.py',
                 'tests/test_firstmate_operational_harness.py',
