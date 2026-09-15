@@ -273,7 +273,7 @@ if ($childExit -eq 44) {
     Write-Asq017Blocker -Result 'BLOCKED_MISSING_TOOLS' -ExitCode 44 -FallbackNext 'install allowlisted missing tools via printed NEXT_ACTION=/NEXT= (or clear apt/dpkg blocker after exhausted bounded repair), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
 }
 if ($childExit -eq 45) {
-    Write-Asq017Blocker -Result 'BLOCKED_GITHUB_AUTH' -ExitCode 45 -FallbackNext 'complete gh auth login then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+    Write-Asq017Blocker -Result 'BLOCKED_GITHUB_AUTH' -ExitCode 45 -FallbackNext 'export PATH="$HOME/.local/bin:$PATH"; gh auth login --hostname github.com --git-protocol https --web inside Ubuntu, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
 }
 if ($childExit -eq 46) {
     Write-Asq017Blocker -Result 'BLOCKED_WINDOWS_WSL_REQUIRED' -ExitCode 46 -FallbackNext 'run on Windows Admin Box with wsl.exe and Ubuntu; cloud/Linux hosts cannot prove physical floor' -ProofLevel 'LIVE_ATTEMPT_FAIL_CLOSED'

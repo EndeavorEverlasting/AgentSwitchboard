@@ -257,6 +257,8 @@ $BridgeStderrPath = Join-Path $EvidenceRoot 'bridge-stderr.txt'
 
 $preflightCommand = @'
 set -euo pipefail
+# Honor user-local tool installs (OBS-04 Admin Box: gh under $HOME/.local/bin).
+export PATH="$HOME/.local/bin:$PATH"
 required=(git gh tmux python3)
 missing=()
 for tool in "${required[@]}"; do
@@ -272,7 +274,7 @@ if ((${#missing[@]} > 0)); then
 fi
 if ! gh auth status --hostname github.com >/dev/null 2>&1; then
   printf 'STATUS=BLOCKED_GITHUB_AUTH\n'
-  printf 'NEXT_ACTION=gh auth login --hostname github.com --git-protocol https --web\n'
+  printf 'NEXT_ACTION=export PATH="$HOME/.local/bin:$PATH"; gh auth login --hostname github.com --git-protocol https --web\n'
   exit 45
 fi
 # Fail fast before the long bridge/interop path when the operator-staged primary harness

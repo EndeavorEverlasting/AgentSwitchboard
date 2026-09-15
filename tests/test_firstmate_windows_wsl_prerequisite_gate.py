@@ -44,7 +44,11 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
 
     def test_gate_reports_recovery_without_silently_executing_it(self) -> None:
         self.assertIn("NEXT_ACTION=sudo apt-get update && sudo apt-get install -y", self.physical)
-        self.assertIn("NEXT_ACTION=gh auth login --hostname github.com --git-protocol https --web", self.physical)
+        self.assertIn(
+            'NEXT_ACTION=export PATH="$HOME/.local/bin:$PATH"; gh auth login --hostname github.com --git-protocol https --web',
+            self.physical,
+        )
+        self.assertIn('export PATH="$HOME/.local/bin:$PATH"', self.physical)
         for executable_form in (
             "Start-Process sudo",
             "Start-Process gh",
@@ -532,7 +536,11 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
             interop.index('if is_viable_discovered_firstmate "$candidate"; then'),
         )
         self.assertIn("NEXT=install one primary harness", interop)
-        self.assertIn("NEXT=run gh auth login inside Ubuntu", interop)
+        self.assertIn(
+            'NEXT=export PATH="$HOME/.local/bin:$PATH"; gh auth login --hostname github.com --git-protocol https --web; then rerun',
+            interop,
+        )
+        self.assertIn('export PATH="$HOME/.local/bin:$PATH"', interop)
 
         self.assertTrue(OCD_VALIDATOR.is_file(), OCD_VALIDATOR)
         with tempfile.TemporaryDirectory() as tmp:
