@@ -343,22 +343,39 @@ if (-not $SkipProtectedControl) {
     $steps.Add("physical-floor:$($protected.ExitCode)")
     if ($protected.ExitCode -ne 0) {
         $finalExit = $protected.ExitCode
+        # Child exit 124 is a hung prerequisite (WSL/sudo/apt/harness), not a protected-control regression label.
+        $protectedStatus = if ($protected.ExitCode -eq 124) {
+            'BLOCKED_PREREQUISITE_TIMEOUT'
+        } else {
+            'BLOCKED_PROTECTED_CONTROL'
+        }
+        $protectedResult = if ($protected.ExitCode -eq 124) {
+            'BLOCKED_PREREQUISITE_TIMEOUT'
+        } else {
+            'PROTECTED_CONTROL_FAILED'
+        }
+        $protectedNext = if ($protected.ExitCode -eq 124) {
+            'repair hung WSL/sudo/apt prerequisite or increase host capacity, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1; protected physical-floor step timed out after continuation PASS'
+        } else {
+            'continuation PASS then protected physical-floor failed; inspect evidence under EVIDENCE_ROOT for regression, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+        }
         Set-Content -LiteralPath $receiptPath -Value @(
             "HEAD=$actualHead"
             "WSL_DISTRIBUTION=$WslDistribution"
             "EVIDENCE_ROOT=$EvidenceRoot"
             "STEPS=$($steps -join ',')"
             "FINAL_EXIT=$finalExit"
-            'RESULT=PROTECTED_CONTROL_FAILED'
+            "RESULT=$protectedResult"
+            "STATUS=$protectedStatus"
             'LIVE_RUNTIME_PROOF=UNPROVEN'
             'NOTE=continuation PASS then protected-control failure; investigate regression'
             'RECEIPT_PATH=' + $receiptPath
         )
         Write-Host "RECEIPT_PATH=$receiptPath"
-        Write-Host 'STATUS=BLOCKED_PROTECTED_CONTROL'
-        Write-Host 'RESULT=PROTECTED_CONTROL_FAILED'
+        Write-Host "STATUS=$protectedStatus"
+        Write-Host "RESULT=$protectedResult"
         Write-Host "EVIDENCE_ROOT=$EvidenceRoot"
-        Write-Host 'NEXT=continuation PASS then protected physical-floor failed; inspect evidence under EVIDENCE_ROOT for regression, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+        Write-Host "NEXT=$protectedNext"
         exit $finalExit
     }
 } else {

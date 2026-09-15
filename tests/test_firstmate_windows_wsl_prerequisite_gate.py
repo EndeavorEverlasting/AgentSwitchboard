@@ -544,8 +544,10 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("BLOCKED_HARNESS_CONTRACT", oneshot)
         self.assertIn("STATUS=$contractStatus", oneshot)
         self.assertIn("STATUS=$result", oneshot)
-        self.assertIn("STATUS=BLOCKED_PROTECTED_CONTROL", oneshot)
-        self.assertIn("RESULT=PROTECTED_CONTROL_FAILED", oneshot)
+        self.assertIn("BLOCKED_PROTECTED_CONTROL", oneshot)
+        self.assertIn("PROTECTED_CONTROL_FAILED", oneshot)
+        self.assertIn("STATUS=$protectedStatus", oneshot)
+        self.assertIn("RESULT=$protectedResult", oneshot)
         self.assertNotIn('throw "Unable to start harness mode=', oneshot)
         self.assertIn("STATUS=BLOCKED_FIRSTMATE_PIN", oneshot)
         self.assertNotIn(
@@ -556,7 +558,7 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("STATUS=BLOCKED_HARNESS_TIMEOUT", oneshot)
         self.assertIn("exit 124", oneshot)
         self.assertNotIn('throw "Harness mode=$Mode timed out', oneshot)
-        # Child exit 124 from contract/continue must surface as timeout, not contract/generic fail.
+        # Child exit 124 from contract/continue/protected must surface as timeout, not contract/generic fail.
         self.assertIn("ExitCode -eq 124", oneshot)
         self.assertIn("BLOCKED_PREREQUISITE_TIMEOUT", oneshot)
         self.assertIn(
@@ -570,6 +572,11 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("$contract.ExitCode -eq 124", oneshot)
         self.assertIn(
             "contract step timed out",
+            oneshot,
+        )
+        self.assertIn("$protected.ExitCode -eq 124", oneshot)
+        self.assertIn(
+            "protected physical-floor step timed out after continuation PASS",
             oneshot,
         )
         bridge = (ROOT / "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1").read_text(encoding="utf-8")
