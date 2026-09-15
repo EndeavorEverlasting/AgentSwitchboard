@@ -7,7 +7,10 @@ param(
     [string]$FirstMatePath,
     [string]$SourceRepositoryPath,
     [string]$EvidenceRoot,
-    [string]$WslDistribution = 'Ubuntu'
+    [string]$WslDistribution = 'Ubuntu',
+
+    [ValidateRange(10, 300)]
+    [int]$PrerequisiteTimeoutSeconds = 60
 )
 
 Set-StrictMode -Version Latest
@@ -124,7 +127,8 @@ try {
             $args = @(
                 '-NoLogo', '-NoProfile', '-File', $physical,
                 '-ExpectedHead', $ExpectedHead,
-                '-WslDistribution', $WslDistribution
+                '-WslDistribution', $WslDistribution,
+                '-PrerequisiteTimeoutSeconds', "$PrerequisiteTimeoutSeconds"
             )
             if (-not [string]::IsNullOrWhiteSpace($FirstMatePath)) {
                 $args += @('-FirstMatePath', $FirstMatePath)
@@ -157,7 +161,8 @@ try {
             $args = @(
                 '-NoLogo', '-NoProfile', '-File', $continuation,
                 '-ExpectedHead', $ExpectedHead,
-                '-WslDistribution', $WslDistribution
+                '-WslDistribution', $WslDistribution,
+                '-PrerequisiteTimeoutSeconds', "$PrerequisiteTimeoutSeconds"
             )
             if (-not [string]::IsNullOrWhiteSpace($FirstMatePath)) {
                 $args += @('-FirstMatePath', $FirstMatePath)

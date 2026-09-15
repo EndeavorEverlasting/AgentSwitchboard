@@ -276,6 +276,14 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("STATUS=BLOCKED_PREREQUISITE_TIMEOUT", self.physical)
         self.assertIn("exit 124", self.physical)
         self.assertNotIn('throw "FirstMate WSL prerequisite probe timed out', self.physical)
+        # Distribution probe must honor PrerequisiteTimeoutSeconds (ceiling 300), not a hard 30s cap.
+        self.assertIn(
+            "$distroProbeTimeoutSeconds = [Math]::Max(15, [Math]::Min(300, $PrerequisiteTimeoutSeconds))",
+            self.physical,
+        )
+        self.assertNotIn("[Math]::Min(30, $PrerequisiteTimeoutSeconds)", self.physical)
+        self.assertIn("DISTRIBUTION_PROBE_TIMEOUT_SECONDS=", self.physical)
+        self.assertIn("honored up to 300s for the distribution probe", self.physical)
         self.assertIn("STATUS=BLOCKED_HEAD_MISMATCH", self.physical)
         self.assertIn("STATUS=BLOCKED_WSL_DISTRIBUTION", self.physical)
         self.assertNotIn('throw "WSL distribution mismatch', self.physical)

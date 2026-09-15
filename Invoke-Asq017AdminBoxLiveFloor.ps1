@@ -21,6 +21,10 @@ param(
     [string]$WslDistribution = 'Ubuntu',
     [string]$FirstMatePath,
     [string]$EvidenceRoot,
+
+    [ValidateRange(10, 300)]
+    [int]$PrerequisiteTimeoutSeconds = 60,
+
     [switch]$SkipProtectedControl,
     [switch]$SkipGitRefresh,
     [switch]$ContractOnly
@@ -114,6 +118,7 @@ if ($ContractOnly) {
     $contractArgs = @(
         '-NoLogo', '-NoProfile', '-File', $OneShotPath,
         '-WslDistribution', $WslDistribution,
+        '-PrerequisiteTimeoutSeconds', "$PrerequisiteTimeoutSeconds",
         '-ContractOnly'
     )
     if (-not [string]::IsNullOrWhiteSpace($FirstMatePath)) {
@@ -192,7 +197,8 @@ Write-Asq017Status -Key 'LIVE_RUNTIME_PROOF' -Value 'UNPROVEN'
 $argumentList = @(
     '-NoLogo', '-NoProfile', '-File', $OneShotPath,
     '-ExpectedHead', $head,
-    '-WslDistribution', $WslDistribution
+    '-WslDistribution', $WslDistribution,
+    '-PrerequisiteTimeoutSeconds', "$PrerequisiteTimeoutSeconds"
 )
 if (-not [string]::IsNullOrWhiteSpace($FirstMatePath)) {
     $argumentList += @('-FirstMatePath', $FirstMatePath)

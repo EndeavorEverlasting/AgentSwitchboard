@@ -20,6 +20,9 @@ param(
     [string]$EvidenceRoot,
     [string]$WslDistribution = 'Ubuntu',
 
+    [ValidateRange(10, 300)]
+    [int]$PrerequisiteTimeoutSeconds = 60,
+
     [switch]$SkipProtectedControl,
     [switch]$ContractOnly
 )
@@ -165,6 +168,7 @@ function Invoke-HarnessMode {
     if (-not [string]::IsNullOrWhiteSpace($FirstMatePath)) {
         $argumentList += @('-FirstMatePath', $FirstMatePath)
     }
+    $argumentList += @('-PrerequisiteTimeoutSeconds', "$PrerequisiteTimeoutSeconds")
 
     $stdoutPath = Join-Path $AttemptEvidenceRoot 'stdout.txt'
     $stderrPath = Join-Path $AttemptEvidenceRoot 'stderr.txt'
