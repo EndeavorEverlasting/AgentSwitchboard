@@ -4,8 +4,8 @@
 
 After FirstMate became the canonical live crew runtime, AgentSwitchboard remains the Windows-first bootstrapper, readiness surface, policy/evidence owner, and bounded single-agent (GNHF) launcher. This plan ranks which user journeys deserve tutorial investment and which must not be taught as current product.
 
-Evidence floor: `main@3a153c11f9db9cacc1d9d9dda8c7358c0e3ecbf0`  
-ADR: `docs/architecture/asb-firstmate-runtime-boundary.md`  
+Evidence floor: `main@3a153c11f9db9cacc1d9d9dda8c7358c0e3ecbf0`
+ADR: `docs/architecture/asb-firstmate-runtime-boundary.md`
 Open Worker: no repository matches — rejected as a product journey.
 
 ## Launch order
