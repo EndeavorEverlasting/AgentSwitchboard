@@ -197,6 +197,24 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
             'throw "Refusing non-allowlisted NEXT_ACTION under FM-WSL-12: $nextAction"',
             continuation,
         )
+        # Truncated-child recovery: map structured exits to STATUS when STATUS= is missing.
+        self.assertIn("ExitCode -eq 46", continuation)
+        self.assertIn("ExitCode -eq 47", continuation)
+        self.assertIn("ExitCode -eq 48", continuation)
+        self.assertIn("ExitCode -eq 49", continuation)
+        self.assertIn("ExitCode -eq 50", continuation)
+        self.assertIn("ExitCode -eq 51", continuation)
+        self.assertIn("ExitCode -eq 52", continuation)
+        self.assertIn("ExitCode -eq 124", continuation)
+        self.assertIn("'BLOCKED_WINDOWS_WSL_REQUIRED'", continuation)
+        self.assertIn("'BLOCKED_PREREQUISITE_TIMEOUT'", continuation)
+        # Fallthrough after the repair loop must stay structured (no bare exit 1).
+        self.assertIn("STATUS=BLOCKED_CONTINUATION_EXHAUSTED", continuation)
+        self.assertIn("FAILURE_CODE=CONTINUATION_LOOP_ENDED_WITHOUT_PASS", continuation)
+        self.assertLess(
+            continuation.index("STATUS=BLOCKED_CONTINUATION_EXHAUSTED"),
+            continuation.rindex("exit 1"),
+        )
 
     def test_physical_floor_preserves_structured_prerequisite_exit_codes(self) -> None:
         self.assertIn("exit $preflight.ExitCode", self.physical)

@@ -253,9 +253,19 @@ function Invoke-PhysicalFloorOnce {
 
     $status = Get-StatusFromText -Text $combined
     if ([string]::IsNullOrWhiteSpace($status)) {
-        if ($captured.ExitCode -eq 44) { $status = 'BLOCKED_MISSING_TOOLS' }
+        # Prefer child STATUS= when present; otherwise recover from structured exit codes
+        # so Admin Box operators still see a greppable STATUS when stdout is truncated.
+        if ($captured.ExitCode -eq 0) { $status = 'PASS' }
+        elseif ($captured.ExitCode -eq 44) { $status = 'BLOCKED_MISSING_TOOLS' }
         elseif ($captured.ExitCode -eq 45) { $status = 'BLOCKED_GITHUB_AUTH' }
-        elseif ($captured.ExitCode -eq 0) { $status = 'PASS' }
+        elseif ($captured.ExitCode -eq 46) { $status = 'BLOCKED_WINDOWS_WSL_REQUIRED' }
+        elseif ($captured.ExitCode -eq 47) { $status = 'BLOCKED_SUDO' }
+        elseif ($captured.ExitCode -eq 48) { $status = 'BLOCKED_PRIMARY_HARNESS' }
+        elseif ($captured.ExitCode -eq 49) { $status = 'BLOCKED_FIRSTMATE_DIRTY' }
+        elseif ($captured.ExitCode -eq 50) { $status = 'BLOCKED_FIRSTMATE_PIN' }
+        elseif ($captured.ExitCode -eq 51) { $status = 'BLOCKED_WSL_BOOTSTRAP' }
+        elseif ($captured.ExitCode -eq 52) { $status = 'BLOCKED_HARNESS_CONTRACT' }
+        elseif ($captured.ExitCode -eq 124) { $status = 'BLOCKED_PREREQUISITE_TIMEOUT' }
     }
 
     return [pscustomobject]@{
@@ -476,6 +486,10 @@ for ($attempt = 1; $attempt -le ($MaxPackageRepairAttempts + 1); $attempt++) {
     Write-Host "[FM-WSL-12] package repair succeeded; rerunning physical-floor (repair_count=$packageRepairs)"
 }
 
+# Keep structured — do not fall through to bare exit 1 (collapses Admin Box diagnosis).
+Write-Host 'STATUS=BLOCKED_CONTINUATION_EXHAUSTED'
+Write-Host 'FAILURE_CODE=CONTINUATION_LOOP_ENDED_WITHOUT_PASS'
 Write-Host '[BLOCKED] Continuation loop ended without PASS.'
+Write-Host 'NEXT=inspect EVIDENCE_ROOT attempts for STATUS=/NEXT=/NEXT_ACTION=; repair the last structured blocker, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
 Write-Host "EVIDENCE_ROOT=$EvidenceRoot"
 exit 1
