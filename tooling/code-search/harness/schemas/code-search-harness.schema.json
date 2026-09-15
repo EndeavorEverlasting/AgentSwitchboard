@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentswitchboard.code-search-harness.schema.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["runId", "repository", "provider", "status", "proofCeiling"],
+  "properties": {
+    "runId": {"type": "string", "minLength": 1},
+    "repository": {"type": "string", "minLength": 1},
+    "provider": {"type": ["string", "null"]},
+    "status": {"enum": ["ready", "blocked", "query-succeeded", "query-failed"]},
+    "query": {"type": ["string", "null"]},
+    "resultCount": {"type": ["integer", "null"], "minimum": 0},
+    "proofCeiling": {"type": "string", "minLength": 1}
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "schema": "agentswitchboard.code-search-workflow-registry.v1",
+  "workflows": [
+    {"id": "code-search-task-intake", "spec": "tooling/code-search/harness/workflows/task-intake.workflow.json"},
+    {"id": "code-search-provider-selection", "spec": "tooling/code-search/harness/workflows/provider-selection.workflow.json"},
+    {"id": "code-search-query-execution", "spec": "tooling/code-search/harness/workflows/query-execution.workflow.json"},
+    {"id": "code-search-failure-recovery", "spec": "tooling/code-search/harness/workflows/failure-recovery.workflow.json"},
+    {"id": "code-search-handoff", "spec": "tooling/code-search/harness/workflows/handoff.workflow.json"}
+  ]
+}

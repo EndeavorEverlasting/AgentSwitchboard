@@ -1,0 +1,12 @@
+{
+  "schema": "agentswitchboard.code-search-artifact-registry.v1",
+  "generatedEvidenceTracked": false,
+  "defaultRoot": "OS temporary directory/AgentSwitchboard/code-search/<run-id>",
+  "naming": "code-search-<artifact-role>[-<timestamp>].<ext>",
+  "artifacts": [
+    {"id": "readiness", "filename": "code-search-readiness.json", "generator": "python tooling/code-search/Get-CodeSearchHarnessStatus.py", "contains": "provider executable presence, non-secret environment readiness, policy state, and proof ceiling", "proofCeiling": "local readiness only"},
+    {"id": "operator-report", "filename": "code-search-operator-report.md", "generator": "python tooling/code-search/Get-CodeSearchHarnessStatus.py", "contains": "human-readable provider state, known traps, and next action", "proofCeiling": "repository and local capability readiness only"},
+    {"id": "query-result", "filename": "code-search-query-result.json", "generator": "python tooling/code-search/Search-Codebase.py --output <path>", "contains": "provider, query identity, bounded result metadata, exit identity, and optional local-only snippets", "proofCeiling": "one query execution only; not index completeness or freshness proof"}
+  ],
+  "forbiddenTrackedEvidence": ["access tokens", "credentials", "private repository snippets", "customer code", "unbounded search output", "Sourcegraph Authorization headers"]
+}

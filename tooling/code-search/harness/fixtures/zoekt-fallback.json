@@ -1,0 +1,13 @@
+{
+  "repositoryHostedOnGitHub": true,
+  "ghAvailable": true,
+  "ghAuthenticated": true,
+  "githubProbeSucceeded": false,
+  "localIndexingAllowed": true,
+  "zoektAvailable": true,
+  "zoektIndexPresent": true,
+  "sourcegraphExplicitOptIn": false,
+  "srcAvailable": false,
+  "srcAuthenticated": false,
+  "sourcegraphPlanVerified": false
+}

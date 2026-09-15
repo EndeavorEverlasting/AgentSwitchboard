@@ -1,0 +1,49 @@
+{
+  "schema": "agentswitchboard.code-search-provider-registry.v1",
+  "providers": [
+    {
+      "id": "github-api-code-search",
+      "status": "preferred-when-probed-ready",
+      "costClass": "included-with-existing-github-hosting",
+      "localIndexing": false,
+      "externalBoundary": "existing-github-service",
+      "requiredExecutables": ["gh"],
+      "requiredProof": ["repository is GitHub-hosted", "gh executable launches", "gh authentication succeeds", "bounded probe search succeeds"],
+      "queryTemplate": ["gh", "search", "code", "<query>", "--repo", "<owner/repo>", "--limit", "<limit>", "--json", "path,repository,sha,textMatches,url"],
+      "limitations": ["GitHub CLI documentation states gh search code uses the legacy code search engine", "results may differ from github.com web code search", "regex features from newer web search are not available through this API path"],
+      "privacy": "Private repository content remains within the existing GitHub service boundary for this search path. Do not infer AI-feature training policy from code-search availability."
+    },
+    {
+      "id": "zoekt-local",
+      "status": "local-fallback-when-installed-and-indexed",
+      "costClass": "open-source-local-compute",
+      "localIndexing": true,
+      "externalBoundary": "none-for-command-based-local-index",
+      "requiredExecutables": ["zoekt", "zoekt-git-index"],
+      "requiredProof": ["zoekt executable launches", "zoekt-git-index executable launches", "index directory exists", "index freshness recorded"],
+      "indexTemplate": ["zoekt-git-index", "-index", "<index-dir>", "<repo-path>"],
+      "queryTemplate": ["zoekt", "-index_dir", "<index-dir>", "<query>"],
+      "limitations": ["index construction uses local compute and storage", "ctags is recommended upstream for symbol ranking", "Termux support is not verified by this harness"],
+      "privacy": "Command-based local indexing keeps indexed source local unless the operator separately exposes a web/API service."
+    },
+    {
+      "id": "sourcegraph",
+      "status": "explicit-opt-in-only",
+      "costClass": "current-private-code-offering-requires-plan-or-trial",
+      "localIndexing": false,
+      "externalBoundary": "sourcegraph-instance",
+      "requiredExecutables": ["src"],
+      "requiredProof": ["explicit operator opt-in", "Sourcegraph endpoint recorded", "current plan/trial eligibility verified", "src executable launches", "src authentication succeeds"],
+      "queryTemplate": ["src", "search", "-json", "--stream", "<query>"],
+      "limitations": ["Current official Code Search docs list Enterprise Starter and Enterprise plans and a 30-day Cloud trial", "private-code use requires a Sourcegraph Cloud or self-hosted instance"],
+      "privacy": "Treat Sourcegraph as a separate code-processing boundary. Private-code access must be explicitly approved and matched to the chosen instance's security terms."
+    }
+  ],
+  "selectionOrder": ["github-api-code-search", "zoekt-local", "sourcegraph"],
+  "selectionRules": [
+    "Select GitHub only after a bounded readiness probe succeeds.",
+    "Select Zoekt only when local indexing is explicitly allowed and a usable local index is present or an authorized indexing action is separately owned.",
+    "Select Sourcegraph only after explicit opt-in plus current plan/endpoint/authentication proof.",
+    "If no provider satisfies its gate, return blocked with the smallest missing dependency; never fabricate a search result."
+  ]
+}

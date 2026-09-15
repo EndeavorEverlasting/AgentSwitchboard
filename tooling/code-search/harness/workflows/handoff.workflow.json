@@ -1,0 +1,9 @@
+{
+  "id": "code-search-handoff",
+  "trigger": "Search work transfers to another agent/chat or a provider/install/privacy dependency blocks progress.",
+  "inputs": ["exact repository/ref", "provider", "query", "artifacts", "validation receipts", "blocker"],
+  "steps": ["record only decision-relevant search metadata", "exclude credentials and private snippets from tracked handoff", "state provider proof level", "name exact next command or owner action"],
+  "outputs": ["bounded handoff", "artifact paths", "next action"],
+  "failureHandling": ["if evidence contains secrets or private source snippets, sanitize before handoff"],
+  "proofCeiling": "handoff fidelity only"
+}
