@@ -304,17 +304,17 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## ASQ-018 — Deterministic automated test floor bootstrap
 
-- **Status:** CLAIMED
+- **Status:** DONE
 - **Priority:** P1
 - **Work class:** BOUNDED
 - **Owner:** Cursor Auto / automated-test-floor lane
-- **Branch / PR:** feat/automated-test-floor-actions-quota-20260915 / successor to merged #290
-- **Scope:** FLOOR-05 Actions-quota local proof packet + receipt provenance + quota-aware workflow triggers; FLOOR-01..04 already merged via PR #290 @ main`7effd42`
+- **Branch / PR:** main / #290 + #291 merged
+- **Scope:** FLOOR-01..04 fail-closed floor bootstrap via PR #290 @ main`7effd42`; FLOOR-05 Actions-quota local proof packet + receipt provenance + quota-aware workflow triggers via PR #291 @ main`3c5cca9`
 - **Forbidden:** merge/release/deploy automation (P105); secrets; live runtime mutation; rewriting unrelated path-filtered domain workflows; claiming runtime proof from static PASS; cron schedule without explicit operator preference; patching production gates for canary; committing ephemeral receipts
 - **Dependencies:** none
-- **References:** `plans/active/ASB-2026-09-automated-test-floor.plan.json`, `.ai/harness/automated-test-floor.manifest.json`, `scripts/Test-AutomatedTestFloor.ps1`, `scripts/Prove-AutomatedTestFloorLocal.ps1`, `docs/harness/automated-test-floor.md`, `.github/workflows/automated-test-floor.yml`, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/290
+- **References:** `plans/active/ASB-2026-09-automated-test-floor.plan.json`, `.ai/harness/automated-test-floor.manifest.json`, `scripts/Test-AutomatedTestFloor.ps1`, `scripts/Prove-AutomatedTestFloorLocal.ps1`, `docs/harness/automated-test-floor.md`, `.github/workflows/automated-test-floor.yml`, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/290, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/291
 - **Acceptance gate:** local meta + floor PASS; Prove-AutomatedTestFloorLocal PASS; isolated canary fails closed without production-gate mutation; provenance receipts; FLOOR-05 integrated into main
 - **Gate:** none
-- **Last proof:** merge:7effd421060241d8a0e76e007be052064b5da677 pr:#290; canary FAIL workflow:34931598102 @dcecfd4; restore PASS workflow:34932484309 @40d46a4; meta 7/7 PASS on FLOOR-05 WIP
-- **Next action:** run Prove-AutomatedTestFloorLocal.ps1, commit/push FLOOR-05, open PR, merge when gates green
-- **Updated:** 2026-09-15T06:31:00Z
+- **Last proof:** merge:7effd421060241d8a0e76e007be052064b5da677 pr:#290; merge:3c5cca988072efbd69969cfe33d3fec18e120bcc pr:#291; canary FAIL workflow:34931598102 @dcecfd4; restore PASS workflow:34932484309 @40d46a4; floor PASS workflow:34938435764 @aa7a3b7; meta 7/7 PASS on main@3c5cca9
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-15T06:55:00Z
