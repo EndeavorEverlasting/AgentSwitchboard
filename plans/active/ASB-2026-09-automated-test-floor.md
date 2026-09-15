@@ -10,10 +10,10 @@ Bootstrap a deterministic, fail-closed automated test floor for AgentSwitchboard
    Explicit runner types, fail-closed zero-gate/zero-unittest behavior, receipt with candidate SHA.
 2. **FLOOR-02 — Meta tests + workflow + docs** *(completed)*
    Local negative canary, AFK triggers without cron/secrets.
-3. **FLOOR-03 — Provider proof** *(in progress)*
+3. **FLOOR-03 — Provider proof** *(completed; restore re-green pending)*
    Exact-head green run, controlled defect fails for the right reason, restore and re-green.
-4. **FLOOR-04 — Falsification + handoff**
-   Second pass for bypass/false-green gaps; hand evolution to P113; promotion stays with P105.
+4. **FLOOR-04 — Falsification + handoff** *(completed)*
+   Second pass repaired PR-head SHA logging and trailing-whitespace hygiene; hand evolution to P113; promotion stays with P105.
 
 ## Canonical command
 

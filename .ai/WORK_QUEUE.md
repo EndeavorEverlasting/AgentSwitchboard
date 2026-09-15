@@ -315,6 +315,6 @@ Canonical terminal action: none; no safe actionable work remains
 - **References:** `plans/active/ASB-2026-09-automated-test-floor.plan.json`, `.ai/harness/automated-test-floor.manifest.json`, `scripts/Test-AutomatedTestFloor.ps1`, `docs/harness/automated-test-floor.md`, `.github/workflows/automated-test-floor.yml`, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/290
 - **Acceptance gate:** local meta + floor PASS; provider exact-head PASS; controlled defect fails floor for the right reason then restored; no canary left on durable branch
 - **Gate:** none
-- **Last proof:** commit:8673d514df0e4ff787588ccd96b353768c687601; PR #290 open; trailing-whitespace repair pending
-- **Next action:** repair `git diff --check` trailing whitespace, push, prove Automated test floor green, run negative canary, restore, merge when gates allow
-- **Updated:** 2026-09-15T04:50:00Z
+- **Last proof:** healthy floor PASS @3f25d06 / b93c77c; canary FAIL workflow:34931598102 exact-grounding-script NEGATIVE_CANARY @dcecfd4; restore commit pending
+- **Next action:** push canary restore, prove Automated test floor green on restored head, then merge PR #290 into main when checks are green
+- **Updated:** 2026-09-15T05:18:00Z
