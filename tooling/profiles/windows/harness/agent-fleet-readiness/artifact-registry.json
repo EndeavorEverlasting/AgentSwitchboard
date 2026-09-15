@@ -1,0 +1,134 @@
+{
+  "schema": "agentswitchboard.agent-fleet-readiness-artifact-registry.v1",
+  "harnessId": "agentswitchboard.agent-fleet-readiness-harness.v1",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "artifacts": [
+    {
+      "artifactId": "fleet-state",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\state.json",
+      "producer": "tooling/gnhf/Setup-AgentSwitchboard.ps1",
+      "purpose": "Installed fleet adapter discovery/readiness state consumed by Start-AgentSwitchboard.ps1 and startup reporting.",
+      "tracked": false
+    },
+    {
+      "artifactId": "installed-operator-implementation",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\Start-AgentSwitchboard.ps1",
+      "producer": "tooling/gnhf/Install-AgentSwitchboardGnhf.ps1",
+      "purpose": "Canonical installed Windows PowerShell operator implementation. Pair with fleet-state and invoke through pwsh for readiness or bounded sprint execution.",
+      "tracked": false
+    },
+    {
+      "artifactId": "installed-operator-launcher",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\agent-switchboard.cmd",
+      "producer": "tooling/gnhf/Start-AgentSwitchboard.ps1 via Install-OperatorLauncher",
+      "purpose": "CMD compatibility shim for the installed PowerShell implementation. Presence or execution is not a prerequisite for core readiness on policy-restricted Windows.",
+      "tracked": false
+    },
+    {
+      "artifactId": "setup-summary",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\setup-logs\\<timestamp>\\setup-summary.json",
+      "producer": "tooling/gnhf/Setup-AgentSwitchboard.ps1",
+      "purpose": "Machine-readable bootstrap/repair result including step statuses, agents, install root, error state, and Hermes skipped/blocked evidence when deferred.",
+      "tracked": false
+    },
+    {
+      "artifactId": "setup-transcript",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\setup-logs\\<timestamp>\\setup-transcript.txt",
+      "producer": "tooling/gnhf/Setup-AgentSwitchboard.ps1",
+      "purpose": "Human diagnostic transcript for bootstrap/repair attempts, including shell/setup details and Hermes deferral evidence.",
+      "tracked": false
+    },
+    {
+      "artifactId": "startup-readiness-json",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\reports\\startup\\agent-startup-readiness-<timestamp>.json",
+      "producer": "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
+      "purpose": "Machine-readable local adapter readiness; does not prove provider authentication or hosted response.",
+      "tracked": false
+    },
+    {
+      "artifactId": "startup-readiness-markdown",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\reports\\startup\\agent-startup-readiness-<timestamp>.md",
+      "producer": "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
+      "purpose": "English-language startup/readiness report with next actions per agent.",
+      "tracked": false
+    },
+    {
+      "artifactId": "provider-route-proof",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\logs\\provider-routes\\<timestamp>-<sprint-name>.json",
+      "producer": "tooling/gnhf/Start-AgentSwitchboard.ps1",
+      "purpose": "Launch-time route evidence for provider-specific paths such as DeepSeek through OpenCode.",
+      "tracked": false
+    }
+  ],
+  "stateGates": [
+    {
+      "state": "not-bootstrapped",
+      "condition": "fleet-state missing AND installed-operator-implementation missing",
+      "nextWorkflow": "bootstrap-or-list-readiness",
+      "requiredAction": "run repository-owned setup/bootstrap"
+    },
+    {
+      "state": "partial-or-inconsistent",
+      "condition": "exactly one of fleet-state or installed-operator-implementation exists",
+      "nextWorkflow": "bootstrap-or-list-readiness",
+      "requiredAction": "run repository-owned setup in repair/reuse mode; do not fabricate the missing surface"
+    },
+    {
+      "state": "cmd-shim-blocked",
+      "condition": "fleet-state and installed-operator-implementation exist AND the optional installed-operator-launcher is missing or Windows denies CMD shim execution (including exit 5)",
+      "nextWorkflow": "prove-readiness-through-powershell",
+      "requiredAction": "invoke installed Start-AgentSwitchboard.ps1 through pwsh; do not rerun setup solely for the CMD shim"
+    },
+    {
+      "state": "core-ready-hermes-deferred",
+      "condition": "fleet-state and installed-operator-implementation exist AND Hermes is unavailable/skipped/blocked while core setup did not fail",
+      "nextWorkflow": "prove-readiness-through-powershell",
+      "requiredAction": "record Hermes as TBD/deferred, prove current readiness through PowerShell, and continue only with observed READY non-Hermes adapters"
+    },
+    {
+      "state": "installed-unclassified",
+      "condition": "fleet-state exists AND installed-operator-implementation exists",
+      "nextWorkflow": "prove-readiness-through-powershell",
+      "requiredAction": "run PowerShell -ListAgents/readiness before choosing an agent"
+    },
+    {
+      "state": "adapter-ready",
+      "condition": "readiness output reports requested adapter ready or verification-required",
+      "nextWorkflow": "pick-up-agent-task",
+      "requiredAction": "apply target-repository cleanliness, prompt, provider, and stop-condition gates before sprint launch"
+    }
+  ],
+  "compatibilitySurfaces": [
+    {
+      "name": "installed CMD shim",
+      "artifactId": "installed-operator-launcher",
+      "blockedClass": "cmd-shim-blocked",
+      "blockedSignals": [
+        "Access is denied.",
+        "exit 5"
+      ],
+      "fallbackArtifactId": "installed-operator-implementation",
+      "rule": "The shim delegates to the PowerShell implementation. When Windows policy blocks the shim, use the PowerShell implementation directly and preserve the shim failure as boundary evidence."
+    }
+  ],
+  "optionalDependencies": [
+    {
+      "name": "Hermes",
+      "setupFlag": "-SkipHermesInstall",
+      "deferredLabel": "TBD",
+      "acceptableSetupStatuses": [
+        "skipped",
+        "blocked"
+      ],
+      "rule": "Hermes may not block core autoconfig. Preserve setup evidence and repair Hermes later in a separate bounded lane."
+    }
+  ],
+  "namingConventions": [
+    "Generated setup and readiness evidence is local-operational and untracked.",
+    "Timestamped run directories/files are producer-owned; agents resolve them through this registry or producer output instead of guessing paths.",
+    "Hermes deferred/TBD is recorded in the setup summary and readiness report; do not create an ad-hoc tracked machine-state file.",
+    "Do not copy machine-specific paths, credentials, provider secrets, or raw runtime logs into tracked milestone docs.",
+    "The PowerShell operator implementation plus fleet state are the installed readiness authority; the CMD shim is a compatibility surface.",
+    "A launcher path is an installed surface, not proof of readiness by itself."
+  ]
+}
