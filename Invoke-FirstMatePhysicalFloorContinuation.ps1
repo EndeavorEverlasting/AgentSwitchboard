@@ -44,28 +44,49 @@ $PhysicalFloorPath = Join-Path $Root 'Test-AgentSwitchboard-FirstMate-PhysicalFl
 $IntegrationContractPath = Join-Path $Root 'tooling\firstmate\harness\integration-contract.json'
 
 if (-not (Test-Path -LiteralPath $PhysicalFloorPath -PathType Leaf)) {
-    throw "Missing physical-floor entrypoint: $PhysicalFloorPath"
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host "NEXT=restore Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1 at checkout root ($PhysicalFloorPath), then rerun Invoke-FirstMatePhysicalFloorContinuation.ps1"
+    exit 52
 }
 if (-not (Test-Path -LiteralPath $IntegrationContractPath -PathType Leaf)) {
-    throw "Missing integration contract: $IntegrationContractPath"
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host "NEXT=restore tooling/firstmate/harness/integration-contract.json ($IntegrationContractPath), then rerun Invoke-FirstMatePhysicalFloorContinuation.ps1"
+    exit 52
 }
 
 $integration = Get-Content -LiteralPath $IntegrationContractPath -Raw | ConvertFrom-Json
 $recovery = $integration.physical_floor_recovery
 if ($null -eq $recovery) {
-    throw 'integration-contract.json missing physical_floor_recovery.'
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host 'NEXT=repair tooling/firstmate/harness/integration-contract.json so physical_floor_recovery is present, then rerun Invoke-FirstMatePhysicalFloorContinuation.ps1'
+    exit 52
 }
 if ([string]$recovery.lane -ne 'FM-WSL-12') {
-    throw "Unexpected physical_floor_recovery.lane=$($recovery.lane)"
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host "NEXT=repair tooling/firstmate/harness/integration-contract.json physical_floor_recovery.lane to FM-WSL-12; Received=$($recovery.lane)"
+    exit 52
 }
 if (-not [bool]$recovery.execution_owner_may_install_missing_packages) {
-    throw 'Contract denies execution-owner package repair authority.'
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host 'NEXT=repair tooling/firstmate/harness/integration-contract.json so physical_floor_recovery.execution_owner_may_install_missing_packages=true'
+    exit 52
 }
 if ([bool]$recovery.additional_operator_confirmation_required) {
-    throw 'Contract unexpectedly requires additional operator confirmation for package repair.'
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host 'NEXT=repair tooling/firstmate/harness/integration-contract.json so physical_floor_recovery.additional_operator_confirmation_required=false'
+    exit 52
 }
 if ([bool]$recovery.credential_mutation) {
-    throw 'Contract must keep credential_mutation=false.'
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host 'NEXT=repair tooling/firstmate/harness/integration-contract.json so physical_floor_recovery.credential_mutation=false'
+    exit 52
 }
 
 $canonicalDistribution = [string]$recovery.distribution
@@ -84,10 +105,16 @@ if ($WslDistribution -ne $canonicalDistribution) {
 $packageManager = [string]$recovery.package_manager
 $allowlist = @($recovery.package_allowlist | ForEach-Object { [string]$_ })
 if ($packageManager -ne 'apt-get') {
-    throw "Unsupported package_manager=$packageManager"
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host "NEXT=repair tooling/firstmate/harness/integration-contract.json physical_floor_recovery.package_manager to apt-get; Received=$packageManager"
+    exit 52
 }
 if ($allowlist.Count -eq 0) {
-    throw 'physical_floor_recovery.package_allowlist is empty.'
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host 'NEXT=repair tooling/firstmate/harness/integration-contract.json so physical_floor_recovery.package_allowlist is non-empty'
+    exit 52
 }
 
 function Normalize-NativeText {
