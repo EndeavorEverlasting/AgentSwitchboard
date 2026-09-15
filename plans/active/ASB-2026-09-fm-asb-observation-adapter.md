@@ -31,7 +31,7 @@ Phase map for translating FirstMate `fm-fleet-snapshot.v1` into `asb.agent-obser
 
 ## Proof ceiling
 
-**Reached:** `OBSERVED_DISPOSABLE_HOME` + ASQ-017 live attempt fail-closed at `BLOCKED_GITHUB_AUTH`.  
+**Reached:** `OBSERVED_DISPOSABLE_HOME` + ASQ-017 live attempt fail-closed at `BLOCKED_GITHUB_AUTH`.
 **Not reached:** `OBSERVED_OPERATOR_CREW`, physical-floor PASS, Prompt Kit routing/rollover.
 
 ## Validation
