@@ -258,7 +258,11 @@ function Invoke-PhysicalFloorOnce {
         $argumentList += @('-FirstMatePath', $FirstMatePath)
     }
 
-    $captured = Invoke-CapturedProcess -FileName $PwshCommand.Source -Arguments $argumentList -TimeoutSeconds 900
+    # Outer kill must cover in-budget PhysicalFloor work: distro probe + prerequisite
+    # preflight (each up to PrerequisiteTimeoutSeconds) + bridge (600s) + start overhead.
+    # Fixed 900s under-ran the 180+180+600 budget after the default rose to 180 (#280).
+    $physicalFloorOuterTimeoutSeconds = [Math]::Max(900, ($PrerequisiteTimeoutSeconds * 2) + 600 + 120)
+    $captured = Invoke-CapturedProcess -FileName $PwshCommand.Source -Arguments $argumentList -TimeoutSeconds $physicalFloorOuterTimeoutSeconds
     Set-Content -LiteralPath $stdoutPath -Value $captured.Stdout.TrimEnd()
     Set-Content -LiteralPath $stderrPath -Value $captured.Stderr.TrimEnd()
     if (-not [string]::IsNullOrWhiteSpace($captured.Stdout)) {
@@ -445,8 +449,9 @@ for ($attempt = 1; $attempt -le ($MaxPackageRepairAttempts + 1); $attempt++) {
 
     Write-Host "[FM-WSL-12] probing passwordless sudo for apt-get before bounded apt repair"
     # Probe the privilege actually used for repair (apt-get), not an unrelated binary.
+    # Honor PrerequisiteTimeoutSeconds: Admin Box cold WSL wake can exceed a hard 30s probe.
     $sudoProbeArgs = @('--distribution', $WslDistribution, '--exec', 'bash', '-lc', 'sudo -n apt-get --version')
-    $sudoProbe = Invoke-CapturedProcess -FileName $wsl.Source -Arguments $sudoProbeArgs -TimeoutSeconds 30
+    $sudoProbe = Invoke-CapturedProcess -FileName $wsl.Source -Arguments $sudoProbeArgs -TimeoutSeconds $PrerequisiteTimeoutSeconds
     $sudoProbeStdout = Join-Path $attemptRoot 'sudo-probe-stdout.txt'
     $sudoProbeStderr = Join-Path $attemptRoot 'sudo-probe-stderr.txt'
     Set-Content -LiteralPath $sudoProbeStdout -Value $sudoProbe.Stdout
