@@ -10,7 +10,7 @@ param(
     [string]$WslDistribution = 'Ubuntu',
 
     [ValidateRange(10, 300)]
-    [int]$PrerequisiteTimeoutSeconds = 60
+    [int]$PrerequisiteTimeoutSeconds = 180
 )
 
 Set-StrictMode -Version Latest
