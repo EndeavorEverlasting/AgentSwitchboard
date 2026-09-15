@@ -27,7 +27,7 @@ param(
     [int]$MaxPackageRepairAttempts = 2,
 
     [ValidateRange(10, 300)]
-    [int]$PrerequisiteTimeoutSeconds = 60,
+    [int]$PrerequisiteTimeoutSeconds = 180,
 
     [switch]$ContractOnly
 )

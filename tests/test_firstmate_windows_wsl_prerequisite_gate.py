@@ -270,7 +270,7 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("pass -FirstMatePath to a clean audited", self.physical)
 
     def test_gate_is_bounded_and_uses_unique_evidence(self) -> None:
-        self.assertIn("[int]$PrerequisiteTimeoutSeconds = 60", self.physical)
+        self.assertIn("[int]$PrerequisiteTimeoutSeconds = 180", self.physical)
         self.assertIn("WaitForExit($TimeoutSeconds * 1000)", self.physical)
         self.assertIn("ExitCode = if ($timedOut) { 124 }", self.physical)
         self.assertIn("STATUS=BLOCKED_PREREQUISITE_TIMEOUT", self.physical)

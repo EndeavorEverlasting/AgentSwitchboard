@@ -23,7 +23,7 @@ param(
     [string]$EvidenceRoot,
 
     [ValidateRange(10, 300)]
-    [int]$PrerequisiteTimeoutSeconds = 60,
+    [int]$PrerequisiteTimeoutSeconds = 180,
 
     [switch]$SkipProtectedControl,
     [switch]$SkipGitRefresh,

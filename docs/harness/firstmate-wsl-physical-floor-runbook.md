@@ -73,7 +73,7 @@ $ErrorActionPreference = 'Stop'
 if (-not (Test-Path -LiteralPath .\Invoke-Asq017AdminBoxLiveFloor.ps1)) {
   throw 'Run from AgentSwitchboard checkout root (Invoke-Asq017AdminBoxLiveFloor.ps1 missing).'
 }
-pwsh -NoLogo -NoProfile -File .\Invoke-Asq017AdminBoxLiveFloor.ps1
+pwsh -NoLogo -NoProfile -File .\Invoke-Asq017AdminBoxLiveFloor.ps1 -PrerequisiteTimeoutSeconds 180
 $childExit = $LASTEXITCODE
 Write-Host "CHILD_EXIT_CODE=$childExit"
 if ($childExit -eq 44) {
