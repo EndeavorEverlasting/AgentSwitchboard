@@ -76,7 +76,9 @@ pi_path=$(command -v pi 2>/dev/null || true)
 node_version=$(node --version 2>/dev/null || true)
 npm_version=$(npm --version 2>/dev/null || true)
 pi_version=$(pi --version 2>/dev/null || true)
+nvm_version=$(nvm --version 2>/dev/null || true)
 printf 'WSL_DISTRIBUTION=%s\n' '__DISTRIBUTION__'
+printf 'NVM_VERSION=%s\n' "$nvm_version"
 printf 'NODE_PATH=%s\n' "$node_path"
 printf 'NODE_VERSION=%s\n' "$node_version"
 printf 'NPM_PATH=%s\n' "$npm_path"
@@ -84,14 +86,21 @@ printf 'NPM_VERSION=%s\n' "$npm_version"
 printf 'PI_PATH=%s\n' "$pi_path"
 printf 'PI_VERSION=%s\n' "$pi_version"
 case "$node_path|$npm_path|$pi_path" in *'/mnt/'*) printf 'STATUS=BLOCKED_WINDOWS_PATH_LEAK\n'; exit 42;; esac
-if [ -n "$node_path" ] && [ -n "$npm_path" ] && [ -n "$pi_path" ]; then
-  printf 'PI_WSL_INSPECT=READY\n'
-  exit 0
+case "$node_path" in "$HOME/.nvm/versions/node/"*) ;; *) printf 'PI_WSL_INSPECT=DRIFT\n'; exit 43;; esac
+case "$npm_path" in "$HOME/.nvm/versions/node/"*) ;; *) printf 'PI_WSL_INSPECT=DRIFT\n'; exit 43;; esac
+case "$pi_path" in "$HOME/.nvm/versions/node/"*) ;; *) printf 'PI_WSL_INSPECT=DRIFT\n'; exit 43;; esac
+if [ "$nvm_version" != '__NVM_VERSION_PLAIN__' ] || [ "$node_version" != 'v__NODE_VERSION__' ]; then
+  printf 'PI_WSL_INSPECT=DRIFT\n'
+  exit 43
 fi
-printf 'PI_WSL_INSPECT=INCOMPLETE\n'
-exit 43
+case "$pi_version" in *'__PI_VERSION__'*) ;; *) printf 'PI_WSL_INSPECT=DRIFT\n'; exit 43;; esac
+printf 'PI_WSL_INSPECT=READY\n'
+exit 0
 '@
 $inspectScript = $inspectScript.Replace('__DISTRIBUTION__', $Distribution)
+$inspectScript = $inspectScript.Replace('__NVM_VERSION_PLAIN__', $nvmVersion.TrimStart('v'))
+$inspectScript = $inspectScript.Replace('__NODE_VERSION__', $nodeVersion)
+$inspectScript = $inspectScript.Replace('__PI_VERSION__', $piVersion)
 
 if ($Mode -eq 'Inspect') {
     exit (Invoke-WslBash -Script $inspectScript)
@@ -106,6 +115,9 @@ missing_prereq=0
 for tool in git curl; do
   if ! command -v "$tool" >/dev/null 2>&1; then missing_prereq=1; fi
 done
+if ! dpkg-query -W -f='${Status}' ca-certificates 2>/dev/null | grep -Fq 'ok installed'; then
+  missing_prereq=1
+fi
 if [ "$missing_prereq" -eq 1 ]; then
   printf '[INFO] Installing bounded Ubuntu prerequisites for Pi bootstrap...\n'
   sudo apt-get update
