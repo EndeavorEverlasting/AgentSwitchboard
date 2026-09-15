@@ -142,10 +142,17 @@ class Asq005CanonicalRuntimeFloorTests(unittest.TestCase):
         self.assertTrue(g8.get("doneRequiresLivePassVerdict"))
         prep_text = prep.read_text(encoding="utf-8")
         self.assertIn("Get-NormalizedOrigin", prep_text)
+        self.assertIn("Get-NormalizedLocalPath", prep_text)
+        self.assertIn("ToLowerInvariant", prep_text)
+        self.assertIn("-replace '/', '\\'", prep_text)
         self.assertIn("NOT_ON_MAIN", prep_text)
         self.assertIn("ASQ005_LIVE_PROOF_STATUS", prep_text)
         self.assertIn("WINDOWS_REQUIRED", prep_text)
         self.assertIn("never ASQ-005 DONE", prep_text)
+        self.assertIn(
+            "(Get-NormalizedLocalPath -PathValue $root) -ne (Get-NormalizedLocalPath -PathValue $RepoPath)",
+            prep_text,
+        )
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(
             manifest["entrypoints"]["asq005RuntimeGatesContract"],
