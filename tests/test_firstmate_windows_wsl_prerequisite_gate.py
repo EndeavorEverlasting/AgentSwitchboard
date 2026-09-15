@@ -651,6 +651,32 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("$harnessTimeoutSeconds = [Math]::Max(3600, $continueBudgetSeconds)", oneshot)
         self.assertIn("$continuationMaxPackageRepairAttempts = 2", oneshot)
         self.assertNotIn("WaitForExit(3600 * 1000)", oneshot)
+        # Numeric budget at default PrerequisiteTimeoutSeconds=180 (source-of-truth formula).
+        prereq = 180
+        outer = max(900, (prereq * 2) + 600 + 120)
+        attempts = 2
+        continue_budget = ((attempts + 1) * outer) + (attempts * (prereq + 900)) + 120
+        harness_timeout = max(3600, continue_budget)
+        self.assertEqual(outer, 1080)
+        self.assertEqual(continue_budget, 5520)
+        self.assertEqual(harness_timeout, 5520)
+        self.assertGreater(harness_timeout, 3600)
+        # Kill teardown must be bounded — unbounded WaitForExit() hangs Admin Box after timeout.
+        self.assertIn("$killTeardownTimeoutMs = 30000", oneshot)
+        self.assertIn("WaitForExit($killTeardownTimeoutMs)", oneshot)
+        self.assertNotRegex(
+            oneshot,
+            r"Kill\(\$true\);\s*\$process\.WaitForExit\(\)",
+        )
+        continuation = (ROOT / "Invoke-FirstMatePhysicalFloorContinuation.ps1").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("$killTeardownTimeoutMs = 30000", continuation)
+        self.assertIn("WaitForExit($killTeardownTimeoutMs)", continuation)
+        self.assertNotRegex(
+            continuation,
+            r"Kill\(\$true\)\s*\n\s*\$process\.WaitForExit\(\)",
+        )
         self.assertIn("exit 124", oneshot)
         self.assertNotIn('throw "Harness mode=$Mode timed out', oneshot)
         # Child exit 124 from contract/continue/protected must surface as timeout, not contract/generic fail.
