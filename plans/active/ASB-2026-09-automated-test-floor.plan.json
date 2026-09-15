@@ -1,0 +1,164 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-09-AUTOMATED-TEST-FLOOR",
+  "title": "Deterministic automated test floor bootstrap and GitHub Actions proof",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "active",
+  "priority": "high",
+  "createdUtc": "2026-09-15T04:30:00Z",
+  "updatedUtc": "2026-09-15T04:30:00Z",
+  "mission": "Bootstrap a repository-owned fail-closed automated test floor from existing static contracts, expose one canonical command for developers and CI, prove it in GitHub Actions with a healthy pass and a representative negative canary, then stop at validated testing without merge/release/deploy authority.",
+  "owner": {
+    "surface": "automated test floor",
+    "role": "repository validation lane",
+    "agent": "Cursor Auto"
+  },
+  "delivery": {
+    "branch": "feat/automated-test-floor-20260915",
+    "pullRequest": null,
+    "baseRef": "main",
+    "commitRequired": true
+  },
+  "wave": "unattended validation bootstrap",
+  "lane": "automated-test-floor",
+  "dependencies": [],
+  "safeParallelWork": [
+    "Unrelated Pi WSL bootstrap PR work",
+    "FirstMate physical-floor observation",
+    "Domain path-filtered workflow ownership unchanged except foundation registration"
+  ],
+  "ownedScope": [
+    ".ai/harness/automated-test-floor.manifest.json",
+    ".ai/harness/fixtures/automated-test-floor/**",
+    "scripts/Test-AutomatedTestFloor.ps1",
+    "tests/test_automated_test_floor.py",
+    ".github/workflows/automated-test-floor.yml",
+    "docs/harness/automated-test-floor.md",
+    "plans/active/ASB-2026-09-automated-test-floor.plan.json",
+    "plans/active/ASB-2026-09-automated-test-floor.md",
+    "plans/plan-registry.json membership for this plan",
+    "README.md validation pointer",
+    "CODEBASE_MAP.md floor section",
+    "tooling/harness/operational/validator-registry.json foundation entry",
+    ".ai/WORK_QUEUE.md ASQ entry for this floor"
+  ],
+  "forbiddenScope": [
+    "automated merge, release, or deployment (P105)",
+    "secrets, credentials, or protected runtime mutation",
+    "rewriting unrelated path-filtered domain workflows",
+    "claiming live/runtime proof from static floor PASS",
+    "cron/schedule AFK spend without explicit operator schedule preference",
+    "reviving historical git-history repository-floor probe semantics under the same name"
+  ],
+  "expectedArtifacts": [
+    "manifest with explicit runner types",
+    "canonical PowerShell floor command and receipt",
+    "meta tests including negative canary",
+    "GitHub Actions workflow with push/pull_request/workflow_dispatch",
+    "operator docs and public plan",
+    "provider proof on exact candidate SHA"
+  ],
+  "tasks": [
+    {
+      "taskId": "FLOOR-01",
+      "title": "Create fail-closed floor manifest and canonical runner",
+      "status": "in_progress",
+      "owner": "repository validation lane",
+      "dependencies": [],
+      "inputs": [
+        "Existing tests/*.py script and unittest seams",
+        "validator-registry foundation pattern"
+      ],
+      "outputs": [
+        "automated-test-floor.manifest.json",
+        "Test-AutomatedTestFloor.ps1"
+      ],
+      "acceptanceCriteria": [
+        "Required gates declare python-script, python-unittest, or pwsh-file",
+        "Zero required gates or zero unittest cases fail closed",
+        "Receipt records candidateSha and PASS/FAIL/SKIP"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "FLOOR-02",
+      "title": "Wire GitHub Actions and meta contracts",
+      "status": "pending",
+      "owner": "repository validation lane",
+      "dependencies": ["FLOOR-01"],
+      "inputs": [
+        "Canonical floor command"
+      ],
+      "outputs": [
+        "automated-test-floor.yml",
+        "test_automated_test_floor.py",
+        "docs/harness/automated-test-floor.md"
+      ],
+      "acceptanceCriteria": [
+        "push, pull_request, and workflow_dispatch triggers exist",
+        "No secrets and no schedule cron for this bootstrap",
+        "Meta tests prove healthy fail-closed negative canary locally"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "FLOOR-03",
+      "title": "Prove provider green and negative canary on exact head",
+      "status": "pending",
+      "owner": "repository validation lane",
+      "dependencies": ["FLOOR-02"],
+      "inputs": [
+        "PR or push to GitHub Actions"
+      ],
+      "outputs": [
+        "Provider run URLs",
+        "Negative canary failure evidence",
+        "Restored healthy head PASS"
+      ],
+      "acceptanceCriteria": [
+        "Exact candidate SHA recorded in workflow logs/receipt",
+        "Controlled defect fails the floor for the right reason then is removed",
+        "Final head provider PASS without leaving the canary"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "FLOOR-04",
+      "title": "Second-pass falsification and handoff boundary",
+      "status": "pending",
+      "owner": "repository validation lane",
+      "dependencies": ["FLOOR-03"],
+      "inputs": [
+        "First green provider run"
+      ],
+      "outputs": [
+        "Falsification notes in plan/ledger",
+        "P113/P105/P115 routing if applicable"
+      ],
+      "acceptanceCriteria": [
+        "Concrete false-green or bypass gaps repaired or explicitly accepted with evidence",
+        "No P105 promotion claimed"
+      ],
+      "evidence": []
+    }
+  ],
+  "validation": {
+    "commands": [
+      "python -m unittest tests.test_automated_test_floor -v",
+      "pwsh -NoLogo -NoProfile -File scripts/Test-AutomatedTestFloor.ps1",
+      "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1"
+    ],
+    "ciWorkflow": ".github/workflows/automated-test-floor.yml"
+  },
+  "proof": {
+    "ceiling": "GitHub Actions provider-runtime proof of the static automated test floor on an exact candidate SHA, including one restored negative canary. Not runtime, live-target, merge, release, or deployment proof.",
+    "negativeCanaryRequired": true,
+    "scheduleConfigured": false
+  },
+  "handoff": {
+    "nextOwner": "P113 Risk-Driven Test Floor Evolution Executor after bootstrap fixed point",
+    "promotionOwner": "P105 only when automated push/merge/release/deploy is explicitly desired",
+    "feedbackOwner": "P115 when CI/review/runtime signals identify actionable gaps beyond bootstrap"
+  }
+}

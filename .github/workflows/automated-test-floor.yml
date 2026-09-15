@@ -1,0 +1,99 @@
+name: Automated test floor
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'feat/**'
+      - 'fix/**'
+      - 'chore/**'
+      - 'cursor/**'
+  workflow_dispatch:
+
+concurrency:
+  group: automated-test-floor-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  floor:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          show-progress: false
+
+      - name: Record candidate SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "candidateSha=$(git rev-parse HEAD)"
+          echo "event=${GITHUB_EVENT_NAME}"
+          echo "ref=${GITHUB_REF}"
+
+      - name: Parse floor runner
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+            (Join-Path $PWD 'scripts/Test-AutomatedTestFloor.ps1'),
+            [ref]$tokens,
+            [ref]$errors
+          )
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+
+      - name: Meta contracts for the floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_automated_test_floor -v
+
+      - name: Run canonical automated test floor
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $output = Join-Path $env:RUNNER_TEMP 'automated-test-floor'
+          & pwsh -NoLogo -NoProfile -File .\scripts\Test-AutomatedTestFloor.ps1 -OutputRoot $output
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $receipt = Get-Content -LiteralPath (Join-Path $output 'automated-test-floor-receipt.json') -Raw | ConvertFrom-Json
+          Write-Host ("receipt.result={0} candidateSha={1} requiredPass={2}" -f $receipt.result, $receipt.candidateSha, $receipt.summary.requiredPass)
+          if ($receipt.result -ne 'PASS') { throw 'floor receipt is not PASS' }
+          if ([string]::IsNullOrWhiteSpace([string]$receipt.candidateSha) -or [string]$receipt.candidateSha -eq 'UNKNOWN') {
+            throw 'floor receipt missing candidateSha'
+          }
+          if ([int]$receipt.summary.requiredPass -lt 1) { throw 'FAIL-CLOSED: receipt reports zero required passes' }
+
+      - name: Upload floor receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: automated-test-floor-${{ matrix.os }}-${{ github.sha }}
+          path: ${{ runner.temp }}/automated-test-floor/*
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Diff hygiene and clean checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git diff --check "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}"
+          else
+            if git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+              git diff --check HEAD^ HEAD
+            fi
+          fi
+          test -z "$(git status --short)"
