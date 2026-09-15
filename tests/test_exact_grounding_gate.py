@@ -155,7 +155,6 @@ def main() -> None:
     print("EXACT GROUNDING GATE: PASS")
     print("fixtures: GROUNDED_PASS, UNSOURCED_BLOCK, CONTRADICTION_BLOCK, SCHEMA_MISMATCH, GROUNDING_FAILURE")
     print("side-effect proof: valid action executed exactly once; all deterministic blocks executed zero times")
-    raise SystemExit("NEGATIVE_CANARY: intentional automated-test-floor defect")
 
 
 if __name__ == "__main__":

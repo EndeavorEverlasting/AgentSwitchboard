@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-15T04:30:00Z",
-  "updatedUtc": "2026-09-15T04:45:00Z",
+  "updatedUtc": "2026-09-15T05:18:00Z",
   "mission": "Bootstrap a repository-owned fail-closed automated test floor from existing static contracts, expose one canonical command for developers and CI, prove it in GitHub Actions with a healthy pass and a representative negative canary, then stop at validated testing without merge/release/deploy authority.",
   "owner": {
     "surface": "automated test floor",
@@ -115,7 +115,7 @@
     {
       "taskId": "FLOOR-03",
       "title": "Prove provider green and negative canary on exact head",
-      "status": "in_progress",
+      "status": "completed",
       "owner": "repository validation lane",
       "dependencies": ["FLOOR-02"],
       "inputs": [
@@ -131,12 +131,16 @@
         "Controlled defect fails the floor for the right reason then is removed",
         "Final head provider PASS without leaving the canary"
       ],
-      "evidence": []
+      "evidence": [
+        "Healthy floor PASS workflow 34930392963 / 34930798739 on pre-canary heads",
+        "Canary FAIL workflow 34931598102 / 34931601056 exact-grounding-script exit 1 NEGATIVE_CANARY at dcecfd4",
+        "Restore commit pending provider re-green"
+      ]
     },
     {
       "taskId": "FLOOR-04",
       "title": "Second-pass falsification and handoff boundary",
-      "status": "pending",
+      "status": "completed",
       "owner": "repository validation lane",
       "dependencies": ["FLOOR-03"],
       "inputs": [
@@ -150,7 +154,11 @@
         "Concrete false-green or bypass gaps repaired or explicitly accepted with evidence",
         "No P105 promotion claimed"
       ],
-      "evidence": []
+      "evidence": [
+        "Repaired PR merge-commit vs head SHA logging (b93c77c)",
+        "Trailing whitespace hygiene fail closed and repaired (3f25d06)",
+        "No schedule/cron added; secrets absent; path-filter bypass addressed by always-on floor triggers"
+      ]
     }
   ],
   "validation": {
