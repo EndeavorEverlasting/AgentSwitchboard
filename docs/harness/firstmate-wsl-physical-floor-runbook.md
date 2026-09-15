@@ -230,10 +230,10 @@ Preserve the console markers and the printed evidence root:
 - `WSL_DISTRIBUTION=Ubuntu` (and/or bridge `WSL_DISTRIBUTION=Ubuntu`);
 - `EVIDENCE_ROOT=...`;
 - `PREREQUISITE_EVIDENCE=...`;
-- `PROOF_RELEVANCE_FINGERPRINT=<sha256>` from the ASQ-017 front door.
+- `WSL_ENVIRONMENT_SIGNATURE=...` and `PROOF_RELEVANCE_FINGERPRINT=<sha256>` from the ASQ-017 front door.
 - `[PROOF_CEILING] Physical WSL interoperability floor only; no live FirstMate crew dispatch is proven.`
 
-On a non-Windows/cloud host, the first exit-46 observation may additionally emit `QUIESCENCE_STATE=recorded` and `QUIESCENCE_ON_REPEAT=true`. A later invocation with the same proof-relevance fingerprint emits `STATUS=QUIESCENT_BLOCKED`, `BLOCKER_STATUS=BLOCKED_WINDOWS_WSL_REQUIRED`, `PROGRESS_BEARING=false`, and `RETRY_ELIGIBLE=false` before another one-shot is launched. That is an intentional stop signal: move the proof to the Admin Box or change a proof-relevant input; do not create a tip-cite/ledger update merely to make repository HEAD newer.
+On a non-Windows/cloud host, the first exit-46 observation may additionally emit `QUIESCENCE_STATE=recorded` and `QUIESCENCE_ON_REPEAT=true`. A later invocation with the same proof-relevance fingerprint emits `STATUS=QUIESCENT_BLOCKED`, `BLOCKER_STATUS=BLOCKED_WINDOWS_WSL_REQUIRED`, `PROGRESS_BEARING=false`, and `RETRY_ELIGIBLE=false` before another one-shot is launched. That is an intentional stop signal: move the proof to the Admin Box or change a proof-relevant input/environment. Explicit `-EvidenceRoot` and `-FirstMatePath` selectors participate by hashed identity, and WSL command/distribution capability participates through `WSL_ENVIRONMENT_SIGNATURE`; do not create a tip-cite/ledger update merely to make repository HEAD newer.
 
 ## Failure handling
 

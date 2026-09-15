@@ -109,10 +109,58 @@ function Get-Asq017Sha256Text {
     }
 }
 
+function Get-Asq017PathIdentity {
+    param(
+        [AllowNull()][AllowEmptyString()][string]$PathValue,
+        [Parameter(Mandatory)][string]$DefaultMarker
+    )
+    if ([string]::IsNullOrWhiteSpace($PathValue)) { return $DefaultMarker }
+    $resolved = [System.IO.Path]::GetFullPath($PathValue)
+    if ($IsWindows) { return $resolved.ToLowerInvariant() }
+    return $resolved
+}
+
+function Get-Asq017WslEnvironmentSignature {
+    $wsl = Get-Command wsl.exe -ErrorAction SilentlyContinue
+    if ($null -eq $wsl) { return 'wsl=missing' }
+
+    # The signature is a cheap capability discriminator, not a second physical proof.
+    # A timeout/launch error is UNKNOWN so quiescence fails open to the real child.
+    $probeTimeoutSeconds = [Math]::Max(3, [Math]::Min(15, $PrerequisiteTimeoutSeconds))
+    try {
+        $psi = [System.Diagnostics.ProcessStartInfo]::new()
+        $psi.FileName = $wsl.Source
+        $psi.UseShellExecute = $false
+        $psi.CreateNoWindow = $true
+        foreach ($argument in @('--distribution', $WslDistribution, '--exec', 'true')) {
+            [void]$psi.ArgumentList.Add([string]$argument)
+        }
+        $process = [System.Diagnostics.Process]::new()
+        $process.StartInfo = $psi
+        if (-not $process.Start()) { return $null }
+        $completed = $process.WaitForExit($probeTimeoutSeconds * 1000)
+        if (-not $completed) {
+            try {
+                $process.Kill($true)
+                [void]$process.WaitForExit(5000)
+            }
+            catch {}
+            return $null
+        }
+        if ($process.ExitCode -eq 0) { return 'wsl=runnable' }
+        return ('wsl=blocked;exit={0}' -f $process.ExitCode)
+    }
+    catch {
+        return $null
+    }
+}
+
 function Get-Asq017ProofRelevanceFingerprint {
+    param([AllowNull()][AllowEmptyString()][string]$WslEnvironmentSignature)
     # HEAD itself is deliberately excluded. Only behavior/proof inputs belong here,
     # so documentation/ledger/tip-cite movement cannot reopen an unchanged proof.
     try {
+        if ([string]::IsNullOrWhiteSpace($WslEnvironmentSignature)) { return $null }
         $relativePaths = @(
             'Invoke-Asq017AdminBoxLiveFloor.ps1',
             'Invoke-FmWsl12AdminBoxLiveProof.ps1',
@@ -125,18 +173,19 @@ function Get-Asq017ProofRelevanceFingerprint {
         $entries = [System.Collections.Generic.List[string]]::new()
         foreach ($relativePath in $relativePaths) {
             $fullPath = Join-Path $Root $relativePath
-            if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) {
-                return $null
-            }
+            if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) { return $null }
             $normalized = $relativePath.Replace('\', '/')
             $hash = (Get-FileHash -LiteralPath $fullPath -Algorithm SHA256).Hash.ToLowerInvariant()
             [void]$entries.Add(('{0}={1}' -f $normalized, $hash))
         }
         [void]$entries.Add(('wslDistribution={0}' -f $WslDistribution))
+        [void]$entries.Add(('wslEnvironmentSignature={0}' -f $WslEnvironmentSignature))
         [void]$entries.Add(('prerequisiteTimeoutSeconds={0}' -f $PrerequisiteTimeoutSeconds))
         [void]$entries.Add(('skipProtectedControl={0}' -f [bool]$SkipProtectedControl))
-        $firstMateSelector = if ([string]::IsNullOrWhiteSpace($FirstMatePath)) { '<default>' } else { [System.IO.Path]::GetFullPath($FirstMatePath).ToLowerInvariant() }
+        $firstMateSelector = Get-Asq017PathIdentity -PathValue $FirstMatePath -DefaultMarker '<default>'
         [void]$entries.Add(('firstMatePathSelectorSha256={0}' -f (Get-Asq017Sha256Text -Text $firstMateSelector)))
+        $evidenceSelector = Get-Asq017PathIdentity -PathValue $EvidenceRoot -DefaultMarker '<default>'
+        [void]$entries.Add(('evidenceRootSelectorSha256={0}' -f (Get-Asq017Sha256Text -Text $evidenceSelector)))
         return Get-Asq017Sha256Text -Text ($entries -join "`n")
     }
     catch {
@@ -150,7 +199,8 @@ function Get-Asq017QuiescenceStatePath {
     if (-not [string]::IsNullOrWhiteSpace($QuiescenceStatePath)) {
         return [System.IO.Path]::GetFullPath($QuiescenceStatePath)
     }
-    $rootIdentity = [System.IO.Path]::GetFullPath($Root).ToLowerInvariant()
+    $rootIdentity = [System.IO.Path]::GetFullPath($Root)
+    if ($IsWindows) { $rootIdentity = $rootIdentity.ToLowerInvariant() }
     $rootKey = (Get-Asq017Sha256Text -Text $rootIdentity).Substring(0, 16)
     $directory = Join-Path ([System.IO.Path]::GetTempPath()) 'AgentSwitchboard\quiescence'
     return Join-Path $directory ("fm-wsl12-asq017-$rootKey.json")
@@ -190,7 +240,17 @@ function Write-Asq017QuiescenceState {
             observedHead = $ObservedHead
             observedAtUtc = [DateTimeOffset]::UtcNow.ToString('o')
         }
-        $state | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $path -Encoding utf8
+        $tempPath = Join-Path $parent ('.' + [System.IO.Path]::GetFileName($path) + '.' + [guid]::NewGuid().ToString('n') + '.tmp')
+        try {
+            $state | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $tempPath -Encoding utf8
+            # Same-directory replace prevents readers from observing a truncated JSON file.
+            [System.IO.File]::Move($tempPath, $path, $true)
+        }
+        finally {
+            if (Test-Path -LiteralPath $tempPath -PathType Leaf) {
+                Remove-Item -LiteralPath $tempPath -Force -ErrorAction SilentlyContinue
+            }
+        }
         Write-Asq017Status -Key 'QUIESCENCE_STATE' -Value 'recorded'
         return $true
     }
@@ -316,7 +376,14 @@ Write-Asq017Status -Key 'WSL_DISTRIBUTION' -Value $WslDistribution
 Write-Asq017Status -Key 'ASQ017_ONESHOT' -Value $OneShotPath
 Write-Asq017Status -Key 'LIVE_RUNTIME_PROOF' -Value 'UNPROVEN'
 
-$proofRelevanceFingerprint = Get-Asq017ProofRelevanceFingerprint
+$wslEnvironmentSignature = Get-Asq017WslEnvironmentSignature
+if ([string]::IsNullOrWhiteSpace($wslEnvironmentSignature)) {
+    Write-Asq017Status -Key 'WSL_ENVIRONMENT_SIGNATURE' -Value 'UNKNOWN'
+}
+else {
+    Write-Asq017Status -Key 'WSL_ENVIRONMENT_SIGNATURE' -Value $wslEnvironmentSignature
+}
+$proofRelevanceFingerprint = Get-Asq017ProofRelevanceFingerprint -WslEnvironmentSignature $wslEnvironmentSignature
 if ([string]::IsNullOrWhiteSpace($proofRelevanceFingerprint)) {
     Write-Asq017Status -Key 'PROOF_RELEVANCE_FINGERPRINT' -Value 'UNKNOWN'
 }
@@ -325,10 +392,9 @@ else {
 }
 
 # Runtime circuit breaker: a second identical environment blocker is not a new
-# evidence pass. HEAD movement is intentionally irrelevant unless one of the
-# proof-relevant files/inputs above changed.
-if ($null -eq (Get-Command wsl.exe -ErrorAction SilentlyContinue) -and
-    -not [string]::IsNullOrWhiteSpace($proofRelevanceFingerprint)) {
+# evidence pass. The environment signature lets an installed/repaired WSL floor
+# change the fingerprint and reopen the real child; UNKNOWN always fails open.
+if (-not [string]::IsNullOrWhiteSpace($proofRelevanceFingerprint)) {
     $priorQuiescence = Read-Asq017QuiescenceState
     if ($null -ne $priorQuiescence -and
         [string]$priorQuiescence.blockerStatus -eq 'BLOCKED_WINDOWS_WSL_REQUIRED' -and

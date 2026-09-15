@@ -227,7 +227,10 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         asq = (ROOT / "Invoke-Asq017AdminBoxLiveFloor.ps1").read_text(encoding="utf-8")
         # Quiescence is runtime behavior, not a HEAD/tip citation heuristic.
         self.assertIn("Get-Asq017ProofRelevanceFingerprint", asq)
+        self.assertIn("Get-Asq017WslEnvironmentSignature", asq)
+        self.assertIn("Get-Asq017PathIdentity", asq)
         self.assertIn("Get-FileHash", asq)
+        self.assertIn("if ($IsWindows)", asq)
         self.assertIn("PROOF_RELEVANCE_FINGERPRINT", asq)
         for proof_input in (
             "Invoke-FmWsl12AdminBoxLiveProof.ps1",
@@ -237,9 +240,11 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
             "integration-contract.json",
             "upstream-pin.json",
             "wslDistribution=",
+            "wslEnvironmentSignature=",
             "prerequisiteTimeoutSeconds=",
             "skipProtectedControl=",
             "firstMatePathSelectorSha256=",
+            "evidenceRootSelectorSha256=",
         ):
             self.assertIn(proof_input, asq)
         self.assertIn("asb-quiescence-state/v1", asq)
@@ -257,6 +262,7 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("$quiescenceRecorded", asq)
         self.assertIn("return $true", asq)
         self.assertIn("return $false", asq)
+        self.assertIn("[System.IO.File]::Move($tempPath, $path, $true)", asq)
         self.assertIn("do not rerun this cloud/non-Windows proof or create citation-only/tip-cite updates", asq)
         # The stored HEAD is provenance only; fingerprint construction explicitly excludes HEAD.
         self.assertIn("HEAD itself is deliberately excluded", asq)
