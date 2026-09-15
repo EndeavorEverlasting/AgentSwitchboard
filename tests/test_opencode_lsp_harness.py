@@ -33,6 +33,7 @@ class OpenCodeLspHarnessTests(unittest.TestCase):
             self.assertIn(token,lower)
         self.assertIn("if ([string]::IsNullOrWhiteSpace($env:OPENCODE_CONFIG))",text)
         self.assertIn("$effective[''lsp''] = $true",text)
+        self.assertIn("$env:OPENCODE_EXPERIMENTAL_LSP_TOOL = ''true''",text)
         self.assertIn('Test-ExactLines',text)
         self.assertNotIn('Set-Content -LiteralPath $globalConfig',text)
     def test_runner_anchors_origin_and_derives_model_provider(self):

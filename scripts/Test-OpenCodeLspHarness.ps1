@@ -161,6 +161,9 @@ else {
  foreach ($token in @('ASQ005_LIVE_PROOF_STATUS','UNPROVEN','ASQ005_CONFIGURE_IS_NOT_DONE','WINDOWS_REQUIRED','never ASQ-005 DONE','24cce9e321a4913dda32f21a2d51a599dd0e4bb4','test_technician_live_cert_surface.py','read_text','LSP_RUNTIME_SMOKE_TEST: PASS','Get-NormalizedOrigin','Get-NormalizedLocalPath','NOT_ON_MAIN')) {
   if (-not $prepRaw.Contains($token)) { [void]$failures.Add("asq005-prep-missing:$token") }
  }
+ $setupPath = Join-Path $RootPath 'tooling/harness/operational/opencode-lsp-setup/Invoke-OpenCodeLspWorkstationSetup.ps1'
+ $setupRaw = Get-Content -LiteralPath $setupPath -Raw
+ if (-not $setupRaw.Contains('OPENCODE_EXPERIMENTAL_LSP_TOOL')) { [void]$failures.Add('asq005-launcher-missing-experimental-lsp-tool') }
 }
 if (Test-Path -LiteralPath $asq005ContractPath -PathType Leaf) {
  try { $asq005Contract = Get-Content -LiteralPath $asq005ContractPath -Raw | ConvertFrom-Json } catch { [void]$failures.Add('invalid-json:asq005-runtime-gates.contract.json'); $asq005Contract = $null }

@@ -256,6 +256,9 @@ try {
         'param()',
         'Set-StrictMode -Version Latest',
         '$ErrorActionPreference = ''Stop''',
+        # ASQ-005 G2 requires the experimental LSP tool to be exposed by the durable launcher,
+        # not only by the Configure parent process environment.
+        '$env:OPENCODE_EXPERIMENTAL_LSP_TOOL = ''true''',
         ('if ([string]::IsNullOrWhiteSpace($env:OPENCODE_CONFIG)) {{ $env:OPENCODE_CONFIG = {0} }}' -f $overlayLiteral),
         '$effective = @{}',
         'if (-not [string]::IsNullOrWhiteSpace($env:OPENCODE_CONFIG_CONTENT)) {',
