@@ -1,0 +1,191 @@
+name: Temporary runtime quiescence review repair
+
+on:
+  push:
+    branches:
+      - fix/runtime-quiescence-guard-20260915
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-prove:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply review repairs
+        run: python scripts/_tmp_resolve_runtime_quiescence_reviews.py
+      - name: Focused prerequisite-gate regression
+        run: python -m unittest tests.test_firstmate_windows_wsl_prerequisite_gate -v
+      - name: PowerShell parse gate
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path './Invoke-Asq017AdminBoxLiveFloor.ps1'), [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Error $_ }; exit 1 }
+      - name: Baseline repeat quiescence and changed-timeout escape
+        shell: bash
+        run: |
+          set -euo pipefail
+          state="$RUNNER_TEMP/base-state.json"
+          run_gate() {
+            local timeout="$1"; local out="$2"
+            set +e
+            pwsh -NoLogo -NoProfile -File ./Invoke-Asq017AdminBoxLiveFloor.ps1 \
+              -SkipGitRefresh -SkipProtectedControl -PrerequisiteTimeoutSeconds "$timeout" \
+              -QuiescenceStatePath "$state" >"$out" 2>&1
+            local rc=$?
+            set -e
+            printf '%s' "$rc"
+          }
+          test "$(run_gate 180 "$RUNNER_TEMP/base-first.txt")" = 46
+          test "$(run_gate 180 "$RUNNER_TEMP/base-second.txt")" = 46
+          test "$(run_gate 181 "$RUNNER_TEMP/base-third.txt")" = 46
+          grep -q '^STATUS=BLOCKED_WINDOWS_WSL_REQUIRED$' "$RUNNER_TEMP/base-first.txt"
+          grep -q '^STATUS=QUIESCENT_BLOCKED$' "$RUNNER_TEMP/base-second.txt"
+          grep -q '^PROGRESS_BEARING=false$' "$RUNNER_TEMP/base-second.txt"
+          if grep -q '^STATUS=QUIESCENT_BLOCKED$' "$RUNNER_TEMP/base-third.txt"; then exit 1; fi
+      - name: Case-sensitive FirstMate path change reopens non-Windows attempt
+        shell: bash
+        run: |
+          set -euo pipefail
+          state="$RUNNER_TEMP/case-state.json"
+          run_case() {
+            local fm="$1"; local out="$2"
+            set +e
+            pwsh -NoLogo -NoProfile -File ./Invoke-Asq017AdminBoxLiveFloor.ps1 \
+              -SkipGitRefresh -SkipProtectedControl -FirstMatePath "$fm" \
+              -QuiescenceStatePath "$state" >"$out" 2>&1
+            local rc=$?
+            set -e
+            test "$rc" = 46
+          }
+          run_case /tmp/FirstMateCaseA "$RUNNER_TEMP/case-a.txt"
+          run_case /tmp/firstmatecasea "$RUNNER_TEMP/case-b.txt"
+          grep -q '^STATUS=BLOCKED_WINDOWS_WSL_REQUIRED$' "$RUNNER_TEMP/case-b.txt"
+          if grep -q '^STATUS=QUIESCENT_BLOCKED$' "$RUNNER_TEMP/case-b.txt"; then
+            echo 'case-distinct non-Windows path was incorrectly folded' >&2
+            exit 1
+          fi
+      - name: EvidenceRoot selector change reopens attempt
+        shell: bash
+        run: |
+          set -euo pipefail
+          state="$RUNNER_TEMP/evidence-state.json"
+          run_evidence() {
+            local evidence="$1"; local out="$2"
+            set +e
+            pwsh -NoLogo -NoProfile -File ./Invoke-Asq017AdminBoxLiveFloor.ps1 \
+              -SkipGitRefresh -SkipProtectedControl -EvidenceRoot "$evidence" \
+              -QuiescenceStatePath "$state" >"$out" 2>&1
+            local rc=$?
+            set -e
+            test "$rc" = 46
+          }
+          run_evidence "$RUNNER_TEMP/evidence-a" "$RUNNER_TEMP/evidence-a.txt"
+          run_evidence "$RUNNER_TEMP/evidence-b" "$RUNNER_TEMP/evidence-b.txt"
+          grep -q '^STATUS=BLOCKED_WINDOWS_WSL_REQUIRED$' "$RUNNER_TEMP/evidence-b.txt"
+          if grep -q '^STATUS=QUIESCENT_BLOCKED$' "$RUNNER_TEMP/evidence-b.txt"; then
+            echo 'changed EvidenceRoot was incorrectly quiesced' >&2
+            exit 1
+          fi
+      - name: Present but unusable WSL distribution also quiesces
+        shell: bash
+        run: |
+          set -euo pipefail
+          fakebin="$RUNNER_TEMP/fakebin"
+          mkdir -p "$fakebin"
+          cat >"$fakebin/wsl.exe" <<'EOF'
+          #!/usr/bin/env bash
+          exit 7
+          EOF
+          chmod +x "$fakebin/wsl.exe"
+          export PATH="$fakebin:$PATH"
+          state="$RUNNER_TEMP/fake-wsl-state.json"
+          run_fake() {
+            local out="$1"
+            set +e
+            pwsh -NoLogo -NoProfile -File ./Invoke-Asq017AdminBoxLiveFloor.ps1 \
+              -SkipGitRefresh -SkipProtectedControl -QuiescenceStatePath "$state" >"$out" 2>&1
+            local rc=$?
+            set -e
+            printf '%s' "$rc"
+          }
+          test "$(run_fake "$RUNNER_TEMP/fake-first.txt")" = 46
+          test "$(run_fake "$RUNNER_TEMP/fake-second.txt")" = 46
+          grep -q '^WSL_ENVIRONMENT_SIGNATURE=wsl=blocked;exit=7$' "$RUNNER_TEMP/fake-first.txt"
+          grep -q '^STATUS=QUIESCENT_BLOCKED$' "$RUNNER_TEMP/fake-second.txt"
+          cat >"$fakebin/wsl.exe" <<'EOF'
+          #!/usr/bin/env bash
+          exit 0
+          EOF
+          chmod +x "$fakebin/wsl.exe"
+          set +e
+          run_fake "$RUNNER_TEMP/fake-repaired.txt" >/dev/null
+          set -e
+          grep -q '^WSL_ENVIRONMENT_SIGNATURE=wsl=runnable$' "$RUNNER_TEMP/fake-repaired.txt"
+          if grep -q '^STATUS=QUIESCENT_BLOCKED$' "$RUNNER_TEMP/fake-repaired.txt"; then
+            echo 'changed WSL environment was incorrectly quiesced' >&2
+            exit 1
+          fi
+      - name: Concurrent first observations leave readable atomic state
+        shell: bash
+        run: |
+          set -euo pipefail
+          state="$RUNNER_TEMP/concurrent-state.json"
+          set +e
+          pwsh -NoLogo -NoProfile -File ./Invoke-Asq017AdminBoxLiveFloor.ps1 -SkipGitRefresh -SkipProtectedControl -QuiescenceStatePath "$state" >"$RUNNER_TEMP/concurrent-a.txt" 2>&1 & p1=$!
+          pwsh -NoLogo -NoProfile -File ./Invoke-Asq017AdminBoxLiveFloor.ps1 -SkipGitRefresh -SkipProtectedControl -QuiescenceStatePath "$state" >"$RUNNER_TEMP/concurrent-b.txt" 2>&1 & p2=$!
+          wait "$p1"; r1=$?
+          wait "$p2"; r2=$?
+          set -e
+          test "$r1" = 46
+          test "$r2" = 46
+          python - <<'PY' "$state"
+          import json, sys
+          with open(sys.argv[1], encoding='utf-8-sig') as f:
+              state = json.load(f)
+          assert state['schema'] == 'asb-quiescence-state/v1'
+          assert state['blockerStatus'] == 'BLOCKED_WINDOWS_WSL_REQUIRED'
+          PY
+          set +e
+          pwsh -NoLogo -NoProfile -File ./Invoke-Asq017AdminBoxLiveFloor.ps1 -SkipGitRefresh -SkipProtectedControl -QuiescenceStatePath "$state" >"$RUNNER_TEMP/concurrent-third.txt" 2>&1
+          r3=$?
+          set -e
+          test "$r3" = 46
+          grep -q '^STATUS=QUIESCENT_BLOCKED$' "$RUNNER_TEMP/concurrent-third.txt"
+      - name: Unavailable cache remains fail-open
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          pwsh -NoLogo -NoProfile -File ./Invoke-Asq017AdminBoxLiveFloor.ps1 \
+            -SkipGitRefresh -SkipProtectedControl -QuiescenceStatePath /proc/1/asb-quiescence.json >"$RUNNER_TEMP/unavailable.txt" 2>&1
+          rc=$?
+          set -e
+          test "$rc" = 46
+          grep -q '^STATUS=BLOCKED_WINDOWS_WSL_REQUIRED$' "$RUNNER_TEMP/unavailable.txt"
+          grep -q '^QUIESCENCE_STATE=unavailable$' "$RUNNER_TEMP/unavailable.txt"
+          grep -q '^QUIESCENCE_ON_REPEAT=false$' "$RUNNER_TEMP/unavailable.txt"
+      - name: Existing FirstMate integration contracts
+        run: python -m unittest tests.test_firstmate_integration_contract -v
+      - name: Remove transport-only review repair
+        run: git rm scripts/_tmp_resolve_runtime_quiescence_reviews.py .github/workflows/tmp-runtime-quiescence-review-repair.yml
+      - name: Patch hygiene
+        run: git diff --check
+      - name: Commit durable review repairs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add Invoke-Asq017AdminBoxLiveFloor.ps1 tests/test_firstmate_windows_wsl_prerequisite_gate.py docs/harness/firstmate-wsl-physical-floor-runbook.md
+          git commit -m 'fix(runtime): harden quiescence proof relevance and concurrency'
+          git push origin HEAD:fix/runtime-quiescence-guard-20260915
