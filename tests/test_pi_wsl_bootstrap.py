@@ -74,12 +74,21 @@ class PiWslBootstrapTests(unittest.TestCase):
             "@earendil-works/pi-coding-agent",
             "pi_wsl_bootstrap=pass",
             "pi_wsl_inspect=ready",
+            "pi_wsl_inspect=drift",
         ):
             self.assertIn(token, lower)
         self.assertIn(".Replace(([char]0).ToString(), [string]::Empty)", self.installer)
         self.assertIn("@'", self.installer)
         self.assertIn('export NVM_DIR="$HOME/.nvm"', self.installer)
         self.assertNotIn("/mnt/c/Users/", self.installer)
+
+    def test_inspect_ready_requires_pinned_nvm_node_and_pi(self) -> None:
+        self.assertIn("nvm --version", self.installer)
+        self.assertIn("__NVM_VERSION_PLAIN__", self.installer)
+        self.assertIn("__NODE_VERSION__", self.installer)
+        self.assertIn("__PI_VERSION__", self.installer)
+        self.assertIn("$nvmVersion.TrimStart('v')", self.installer)
+        self.assertIn("$HOME/.nvm/versions/node/", self.installer)
 
     def test_package_mutation_is_bounded_to_contract_allowlist(self) -> None:
         bounded = self.contract["boundedMutation"]
@@ -89,6 +98,8 @@ class PiWslBootstrapTests(unittest.TestCase):
         self.assertFalse(bounded["credentialMutation"])
         self.assertFalse(bounded["providerSelectionMutation"])
         self.assertFalse(bounded["authFileMutation"])
+        self.assertIn("dpkg-query -W -f='${Status}' ca-certificates", self.installer)
+        self.assertIn("sudo apt-get install -y __APT_PACKAGES__", self.installer)
         for forbidden in ("winget install", "choco install", "scoop install", "wsl --install"):
             self.assertNotIn(forbidden, self.installer.lower())
 
