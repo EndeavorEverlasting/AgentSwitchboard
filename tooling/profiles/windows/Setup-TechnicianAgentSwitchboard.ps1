@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('shell', 'agy', 'opencode', 'setup', 'hermes', 'bootstrap-opencode', 'bootstrap-pi')]
+    [ValidateSet('shell', 'agy', 'opencode', 'setup', 'hermes', 'bootstrap-opencode', 'bootstrap-pi', 'bootstrap-pi-wsl')]
     [string]$Mode = 'shell',
 
     [Parameter(Mandatory)]
@@ -36,6 +36,16 @@ if ($Mode -eq 'bootstrap-pi') {
     }
 
     & $piBootstrapPath -Mode Apply -RootPath $RepoRoot
+    exit $LASTEXITCODE
+}
+
+if ($Mode -eq 'bootstrap-pi-wsl') {
+    $piWslBootstrapPath = Join-Path $RepoRoot 'tooling\pi\Install-AgentSwitchboardPiWsl.ps1'
+    if (-not (Test-Path -LiteralPath $piWslBootstrapPath -PathType Leaf)) {
+        throw "Canonical WSL Pi bootstrap is missing: $piWslBootstrapPath"
+    }
+
+    & $piWslBootstrapPath -Mode Apply -Distribution $Distribution
     exit $LASTEXITCODE
 }
 
