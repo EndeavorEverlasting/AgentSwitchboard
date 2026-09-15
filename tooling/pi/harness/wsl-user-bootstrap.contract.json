@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.1.0",
   "bootstrapId": "pi-wsl-user-bootstrap",
   "status": "repository-contract-unproved-on-second-workstation",
   "entrypoint": "Bootstrap-Pi-WSL.cmd",
@@ -13,6 +13,7 @@
   },
   "versions": {
     "nvm": "v0.40.7",
+    "nvmMeaning": "bootstrap pin for a new ASB-created NVM checkout; an existing clean functional user NVM checkout is preserved in place",
     "node": "24.21.0",
     "pi": "0.85.1",
     "npmPackage": "@earendil-works/pi-coding-agent"
@@ -24,6 +25,7 @@
       "ca-certificates"
     ],
     "nvmRoot": "$HOME/.nvm",
+    "existingNvmPolicy": "preserve-clean-functional-checkout",
     "nodeOwner": "nvm",
     "piOwner": "npm-global-under-nvm",
     "windowsPackageManagerMutation": false,
@@ -31,6 +33,11 @@
     "credentialMutation": false,
     "providerSelectionMutation": false,
     "authFileMutation": false
+  },
+  "timeouts": {
+    "inspectSeconds": 120,
+    "applySeconds": 1800,
+    "interactivePiTuiBounded": false
   },
   "pathContract": {
     "nodeMustBeLinuxNative": true,
