@@ -14,6 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / ".ai/harness/automated-test-floor.manifest.json"
 RUNNER = ROOT / "scripts/Test-AutomatedTestFloor.ps1"
+LOCAL_PROOF = ROOT / "scripts/Prove-AutomatedTestFloorLocal.ps1"
 WORKFLOW = ROOT / ".github/workflows/automated-test-floor.yml"
 DOCS = ROOT / "docs/harness/automated-test-floor.md"
 CANARY = ".ai/harness/fixtures/automated-test-floor/canary_fail.py"
@@ -56,6 +57,7 @@ class AutomatedTestFloorContracts(unittest.TestCase):
     def test_manifest_and_surfaces_exist(self):
         self.assertTrue(MANIFEST.is_file())
         self.assertTrue(RUNNER.is_file())
+        self.assertTrue(LOCAL_PROOF.is_file())
         self.assertTrue(WORKFLOW.is_file())
         self.assertTrue(DOCS.is_file())
         self.assertTrue(EMPTY_SUITE.is_file())
@@ -115,8 +117,63 @@ class AutomatedTestFloorContracts(unittest.TestCase):
         self.assertNotIn("schedule:", text)
         docs = DOCS.read_text(encoding="utf-8").lower()
         self.assertIn("test-automatedtestfloor.ps1", docs)
+        self.assertIn("prove-automatedtestfloorlocal.ps1", docs)
+        self.assertIn("actions-quota", docs)
         self.assertIn("false-green", docs)
         self.assertIn("python-script", docs)
+        self.assertIn("source / generated boundary", docs)
+
+    def test_receipt_records_provenance(self):
+        with tempfile.TemporaryDirectory(prefix="asb-floor-prov-") as tmp:
+            manifest_path = Path(tmp) / "manifest.json"
+            out = Path(tmp) / "out"
+            manifest_path.write_text(
+                json.dumps(
+                    {
+                        "schemaVersion": 1,
+                        "manifestId": "agentswitchboard.automated-test-floor.v1",
+                        "proofLevel": "static-test",
+                        "proofCeiling": "provenance probe",
+                        "determinism": {
+                            "pythonHashSeed": "0",
+                            "timezone": "UTC",
+                            "networkAllowed": False,
+                            "mutationAllowed": False,
+                        },
+                        "failClosed": {"zeroUnittestCases": True},
+                        "gates": [
+                            {
+                                "id": "public-plan-script",
+                                "runner": "python-script",
+                                "path": "tests/test_public_plan_contracts.py",
+                                "required": True,
+                                "platforms": ["windows", "linux", "macos"],
+                                "expectStdoutContains": ["PASS"],
+                                "proof": "provenance probe",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            result = run_pwsh(
+                "-ManifestPath",
+                str(manifest_path),
+                "-OutputRoot",
+                str(out),
+            )
+            combined = (result.stdout or "") + (result.stderr or "")
+            self.assertEqual(result.returncode, 0, combined)
+            receipt = out / "automated-test-floor-receipt.json"
+            self.assertTrue(receipt.is_file(), combined)
+            payload = json.loads(receipt.read_text(encoding="utf-8-sig"))
+            self.assertEqual(payload["result"], "PASS")
+            provenance = payload["provenance"]
+            self.assertIn(provenance["trigger"], {"local-cli", "github-actions"})
+            self.assertEqual(len(provenance["inputManifestSha256"]), 64)
+            self.assertEqual(len(provenance["generatorSha256"]), 64)
+            self.assertFalse(provenance["committedGeneratedCode"])
+            self.assertIn("generate-commit-generate", provenance["loopGuard"])
 
     def test_fail_closed_on_empty_manifest(self):
         with tempfile.TemporaryDirectory(prefix="asb-floor-empty-") as tmp:

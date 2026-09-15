@@ -4,10 +4,10 @@
   "title": "Deterministic automated test floor bootstrap and GitHub Actions proof",
   "repository": "EndeavorEverlasting/AgentSwitchboard",
   "visibility": "public",
-  "status": "active",
+  "status": "completed",
   "priority": "high",
   "createdUtc": "2026-09-15T04:30:00Z",
-  "updatedUtc": "2026-09-15T05:18:00Z",
+  "updatedUtc": "2026-09-15T06:30:00Z",
   "mission": "Bootstrap a repository-owned fail-closed automated test floor from existing static contracts, expose one canonical command for developers and CI, prove it in GitHub Actions with a healthy pass and a representative negative canary, then stop at validated testing without merge/release/deploy authority.",
   "owner": {
     "surface": "automated test floor",
@@ -19,10 +19,12 @@
     "pullRequest": {
       "number": 290,
       "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/290",
-      "state": "open"
+      "state": "merged",
+      "mergeCommit": "7effd421060241d8a0e76e007be052064b5da677"
     },
     "baseRef": "main",
-    "commitRequired": true
+    "commitRequired": true,
+    "integratedAt": "2026-09-15T05:36:31Z"
   },
   "wave": "unattended validation bootstrap",
   "lane": "automated-test-floor",
@@ -36,6 +38,7 @@
     ".ai/harness/automated-test-floor.manifest.json",
     ".ai/harness/fixtures/automated-test-floor/**",
     "scripts/Test-AutomatedTestFloor.ps1",
+    "scripts/Prove-AutomatedTestFloorLocal.ps1",
     "tests/test_automated_test_floor.py",
     ".github/workflows/automated-test-floor.yml",
     "docs/harness/automated-test-floor.md",
