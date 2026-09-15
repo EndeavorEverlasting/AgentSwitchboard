@@ -203,13 +203,22 @@ function Invoke-HarnessMode {
     }
     $stdoutTask = $process.StandardOutput.ReadToEndAsync()
     $stderrTask = $process.StandardError.ReadToEndAsync()
-    $completed = $process.WaitForExit(3600 * 1000)
+    # Mirror continuation (#281): outer PhysicalFloor once = Max(900, 2×prereq + 600 + 120).
+    # Continuation defaults MaxPackageRepairAttempts=2 → up to 3 floor attempts + 2×(sudo+apt900).
+    # Fixed 3600s under-ran that budget at PrerequisiteTimeoutSeconds=180 (≈5400s worst case).
+    $physicalFloorOuterTimeoutSeconds = [Math]::Max(900, ($PrerequisiteTimeoutSeconds * 2) + 600 + 120)
+    $continuationMaxPackageRepairAttempts = 2
+    $continueBudgetSeconds = (($continuationMaxPackageRepairAttempts + 1) * $physicalFloorOuterTimeoutSeconds) +
+        ($continuationMaxPackageRepairAttempts * ($PrerequisiteTimeoutSeconds + 900)) + 120
+    $harnessTimeoutSeconds = [Math]::Max(3600, $continueBudgetSeconds)
+    $completed = $process.WaitForExit($harnessTimeoutSeconds * 1000)
     if (-not $completed) {
         try { $process.Kill($true); $process.WaitForExit() } catch {}
         # Keep exit 124 structured — do not throw (throw collapses to unstructured exit 1).
         Write-Host 'STATUS=BLOCKED_HARNESS_TIMEOUT'
         Write-Host "HARNESS_MODE=$Mode"
-        Write-Host 'NEXT=inspect hung WSL/harness work, increase host capacity or repair the hang, then rerun; harness timed out after 3600 seconds'
+        Write-Host "HARNESS_TIMEOUT_SECONDS=$harnessTimeoutSeconds"
+        Write-Host "NEXT=inspect hung WSL/harness work, increase host capacity or repair the hang, then rerun; harness timed out after $harnessTimeoutSeconds seconds"
         exit 124
     }
     $stdout = $stdoutTask.GetAwaiter().GetResult()

@@ -646,6 +646,11 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         )
         self.assertIn("harness process Start threw", oneshot)
         self.assertIn("STATUS=BLOCKED_HARNESS_TIMEOUT", oneshot)
+        # Oneshot harness WaitForExit must cover continuation worst-case at default prereq 180
+        # (3× outer floor + 2×(sudo+apt900)), not a fixed 3600s that under-runs ≈5400s.
+        self.assertIn("$harnessTimeoutSeconds = [Math]::Max(3600, $continueBudgetSeconds)", oneshot)
+        self.assertIn("$continuationMaxPackageRepairAttempts = 2", oneshot)
+        self.assertNotIn("WaitForExit(3600 * 1000)", oneshot)
         self.assertIn("exit 124", oneshot)
         self.assertNotIn('throw "Harness mode=$Mode timed out', oneshot)
         # Child exit 124 from contract/continue/protected must surface as timeout, not contract/generic fail.
