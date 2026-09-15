@@ -34,9 +34,18 @@ class PiWslBootstrapTests(unittest.TestCase):
         self.assertNotEqual(ENTRY, NATIVE_ENTRY)
         self.assertNotEqual(INSTALLER, NATIVE_INSTALLER)
 
-    def test_one_click_entry_uses_existing_dispatcher(self) -> None:
-        self.assertIn("Pull-And-Run-AgentSwitchboard.cmd", self.entry)
-        self.assertIn("bootstrap-pi-wsl", self.entry)
+    def test_one_click_entry_mirrors_canonical_dispatcher_contract(self) -> None:
+        for token in (
+            'set "ROOT=%~dp0"',
+            'set "GIT_REF=%~1"',
+            'if not defined GIT_REF set "GIT_REF=main"',
+            'if not exist "%ROOT%Pull-And-Run-AgentSwitchboard.cmd"',
+            'where pwsh.exe',
+            'Do not paste implementation fragments into an interactive PowerShell REPL',
+            'call "%ROOT%Pull-And-Run-AgentSwitchboard.cmd" bootstrap-pi-wsl "%ROOT%." "%GIT_REF%"',
+            'exit /b %RESULT%',
+        ):
+            self.assertIn(token, self.entry)
         self.assertNotIn("pwsh.exe -Command", self.entry)
         self.assertIn('"bootstrap-pi-wsl"', self.dispatch)
         self.assertIn("bootstrap-pi-wsl", self.setup)
