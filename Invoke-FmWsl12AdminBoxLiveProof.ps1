@@ -370,7 +370,7 @@ if ($continue.ExitCode -ne 0) {
     if (-not [string]::IsNullOrWhiteSpace($preservedNext)) {
         Write-Host "NEXT=$preservedNext"
     } elseif ($continue.ExitCode -eq 45) {
-        Write-Host 'NEXT=complete gh auth login inside Ubuntu, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+        Write-Host 'NEXT=export PATH="$HOME/.local/bin:$PATH"; gh auth login --hostname github.com --git-protocol https --web inside Ubuntu, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
     } elseif ($continue.ExitCode -eq 46) {
         Write-Host 'NEXT=run on Windows Admin Box with wsl.exe and Ubuntu; cloud/Linux hosts cannot prove physical floor'
     } elseif ($continue.ExitCode -eq 44) {

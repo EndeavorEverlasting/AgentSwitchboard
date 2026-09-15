@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Honor user-local tool installs (OBS-04 Admin Box: gh under $HOME/.local/bin).
+export PATH="$HOME/.local/bin:$PATH"
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 CONTRACT="$SCRIPT_DIR/harness/integration-contract.json"
@@ -288,7 +290,7 @@ fi
 
 if ! gh auth status --hostname github.com >/dev/null 2>&1; then
   printf 'STATUS=BLOCKED_GITHUB_AUTH\n'
-  printf 'NEXT=run gh auth login inside Ubuntu, then rerun\n'
+  printf 'NEXT=export PATH="$HOME/.local/bin:$PATH"; gh auth login --hostname github.com --git-protocol https --web; then rerun\n'
   exit 45
 fi
 
