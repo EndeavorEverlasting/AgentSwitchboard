@@ -308,13 +308,13 @@ Canonical terminal action: none; no safe actionable work remains
 - **Priority:** P1
 - **Work class:** BOUNDED
 - **Owner:** Cursor Auto / automated-test-floor lane
-- **Branch / PR:** feat/automated-test-floor-20260915 / PR pending
+- **Branch / PR:** feat/automated-test-floor-20260915 / #290
 - **Scope:** create fail-closed automated test floor (manifest + canonical `Test-AutomatedTestFloor.ps1` + meta tests + GitHub Actions push/PR/workflow_dispatch), prove healthy pass and representative negative canary on the real provider, stop at validated testing
 - **Forbidden:** merge/release/deploy automation (P105); secrets; live runtime mutation; rewriting unrelated path-filtered domain workflows; claiming runtime proof from static PASS; cron schedule without explicit operator preference
 - **Dependencies:** none
-- **References:** `plans/active/ASB-2026-09-automated-test-floor.plan.json`, `.ai/harness/automated-test-floor.manifest.json`, `scripts/Test-AutomatedTestFloor.ps1`, `docs/harness/automated-test-floor.md`, `.github/workflows/automated-test-floor.yml`
+- **References:** `plans/active/ASB-2026-09-automated-test-floor.plan.json`, `.ai/harness/automated-test-floor.manifest.json`, `scripts/Test-AutomatedTestFloor.ps1`, `docs/harness/automated-test-floor.md`, `.github/workflows/automated-test-floor.yml`, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/290
 - **Acceptance gate:** local meta + floor PASS; provider exact-head PASS; controlled defect fails floor for the right reason then restored; no canary left on durable branch
 - **Gate:** none
-- **Last proof:** local meta unittest PASS; local floor run in progress/claiming
-- **Next action:** commit floor surfaces, push branch, open PR, prove GitHub Actions green and negative canary, then integrate when merge gates allow
-- **Updated:** 2026-09-15T04:40:00Z
+- **Last proof:** commit:8673d514df0e4ff787588ccd96b353768c687601; PR #290 open; trailing-whitespace repair pending
+- **Next action:** repair `git diff --check` trailing whitespace, push, prove Automated test floor green, run negative canary, restore, merge when gates allow
+- **Updated:** 2026-09-15T04:50:00Z
