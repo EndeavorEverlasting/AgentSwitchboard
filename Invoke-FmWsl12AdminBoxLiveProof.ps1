@@ -239,6 +239,17 @@ $contract = Invoke-HarnessMode -Mode 'contract' -AttemptEvidenceRoot (Join-Path 
 $steps.Add("contract:$($contract.ExitCode)")
 if ($contract.ExitCode -ne 0) {
     $finalExit = $contract.ExitCode
+    # Child exit 124 is a hung prerequisite (WSL/sudo/apt/harness), not a harness-contract fail.
+    $contractStatus = if ($contract.ExitCode -eq 124) {
+        'BLOCKED_PREREQUISITE_TIMEOUT'
+    } else {
+        'BLOCKED_HARNESS_CONTRACT'
+    }
+    $contractNext = if ($contract.ExitCode -eq 124) {
+        'repair hung WSL/sudo/apt/harness prerequisite or increase host capacity, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1; contract step timed out'
+    } else {
+        'inspect contract evidence under EVIDENCE_ROOT; repair FirstMate harness contract failure, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+    }
     Set-Content -LiteralPath $receiptPath -Value @(
         "HEAD=$actualHead"
         "WSL_DISTRIBUTION=$WslDistribution"
@@ -246,12 +257,13 @@ if ($contract.ExitCode -ne 0) {
         "STEPS=$($steps -join ',')"
         "FINAL_EXIT=$finalExit"
         'RESULT=CONTRACT_FAILED'
+        "STATUS=$contractStatus"
         'LIVE_RUNTIME_PROOF=UNPROVEN'
     )
-    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host "STATUS=$contractStatus"
     Write-Host 'RESULT=CONTRACT_FAILED'
     Write-Host "EVIDENCE_ROOT=$EvidenceRoot"
-    Write-Host 'NEXT=inspect contract evidence under EVIDENCE_ROOT; repair FirstMate harness contract failure, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+    Write-Host "NEXT=$contractNext"
     exit $finalExit
 }
 
@@ -277,6 +289,8 @@ if ($continue.ExitCode -ne 0) {
         'BLOCKED_WSL_BOOTSTRAP'
     } elseif ($continue.ExitCode -eq 52) {
         'BLOCKED_HARNESS_CONTRACT'
+    } elseif ($continue.ExitCode -eq 124) {
+        'BLOCKED_PREREQUISITE_TIMEOUT'
     } else {
         'PHYSICAL_FLOOR_CONTINUE_FAILED'
     }
@@ -316,6 +330,8 @@ if ($continue.ExitCode -ne 0) {
         Write-Host 'NEXT=inspect WSL diagnostics/bootstrap stdout; repair exact-head WSL clone/source-repo access, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
     } elseif ($continue.ExitCode -eq 52) {
         Write-Host 'NEXT=inspect evidence root; repair FirstMate harness contract failure inside Ubuntu, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+    } elseif ($continue.ExitCode -eq 124) {
+        Write-Host 'NEXT=repair hung WSL/sudo/apt prerequisite or increase host capacity, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1; a prerequisite step timed out'
     } else {
         Write-Host 'NEXT=inspect evidence for NEXT=/NEXT_ACTION=; repair operator blocker; rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
     }

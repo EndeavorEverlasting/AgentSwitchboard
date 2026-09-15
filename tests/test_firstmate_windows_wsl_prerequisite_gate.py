@@ -541,7 +541,8 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertNotIn("throw 'Unable to resolve exact AgentSwitchboard HEAD.'", oneshot)
         self.assertNotIn('throw "ExpectedHead must be a 40-character SHA', oneshot)
         self.assertIn("STATUS=BLOCKED_HARNESS_START", oneshot)
-        self.assertIn("STATUS=BLOCKED_HARNESS_CONTRACT", oneshot)
+        self.assertIn("BLOCKED_HARNESS_CONTRACT", oneshot)
+        self.assertIn("STATUS=$contractStatus", oneshot)
         self.assertIn("STATUS=$result", oneshot)
         self.assertIn("STATUS=BLOCKED_PROTECTED_CONTROL", oneshot)
         self.assertIn("RESULT=PROTECTED_CONTROL_FAILED", oneshot)
@@ -555,6 +556,22 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("STATUS=BLOCKED_HARNESS_TIMEOUT", oneshot)
         self.assertIn("exit 124", oneshot)
         self.assertNotIn('throw "Harness mode=$Mode timed out', oneshot)
+        # Child exit 124 from contract/continue must surface as timeout, not contract/generic fail.
+        self.assertIn("ExitCode -eq 124", oneshot)
+        self.assertIn("BLOCKED_PREREQUISITE_TIMEOUT", oneshot)
+        self.assertIn(
+            "repair hung WSL/sudo/apt prerequisite or increase host capacity",
+            oneshot,
+        )
+        self.assertLess(
+            oneshot.index("elseif ($continue.ExitCode -eq 124)"),
+            oneshot.index("'PHYSICAL_FLOOR_CONTINUE_FAILED'"),
+        )
+        self.assertIn("$contract.ExitCode -eq 124", oneshot)
+        self.assertIn(
+            "contract step timed out",
+            oneshot,
+        )
         bridge = (ROOT / "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1").read_text(encoding="utf-8")
         self.assertIn("STDERR<<", bridge)
         self.assertIn("Write-Host $probe.Stderr.TrimEnd()", bridge)
