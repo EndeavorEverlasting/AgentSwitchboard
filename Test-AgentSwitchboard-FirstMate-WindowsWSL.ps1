@@ -215,7 +215,11 @@ printf 'CLEANED=%s\n' "$ASB_WSL_WORKSPACE"
 
 foreach ($required in @($IntegrationContractPath, $ManifestPath, $ArtifactRegistryPath, $ValidatorRegistryPath)) {
     if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
-        throw "Missing FirstMate bridge contract surface: $required"
+        # Keep structured — do not throw (throw collapses to unstructured exit 1).
+        Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+        Write-Host "MISSING_SURFACE=$required"
+        Write-Host "NEXT=restore FirstMate bridge contract surface ($required), then rerun Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1"
+        exit 52
     }
 }
 
@@ -226,7 +230,10 @@ $validators = Get-Content -LiteralPath $ValidatorRegistryPath -Raw | ConvertFrom
 
 $canonicalWslDistribution = [string]$integration.platform_contract.wsl_distribution
 if ([string]::IsNullOrWhiteSpace($canonicalWslDistribution)) {
-    throw 'Integration contract does not declare platform_contract.wsl_distribution.'
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host 'NEXT=repair tooling/firstmate/harness/integration-contract.json so platform_contract.wsl_distribution is set'
+    exit 52
 }
 if ([string]::IsNullOrWhiteSpace($WslDistribution)) {
     $WslDistribution = $canonicalWslDistribution
@@ -240,16 +247,29 @@ elseif ($WslDistribution -ne $canonicalWslDistribution) {
     exit 1
 }
 if ($integration.platform_contract.windows_host_role -ne 'bridge_only') {
-    throw 'Integration contract must keep Windows host role bridge_only.'
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host "WINDOWS_HOST_ROLE=$($integration.platform_contract.windows_host_role)"
+    Write-Host 'NEXT=repair tooling/firstmate/harness/integration-contract.json so platform_contract.windows_host_role=bridge_only'
+    exit 52
 }
 if ($manifest.components.windows_wsl_bridge -ne 'Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1') {
-    throw 'Operational manifest does not register the Windows-to-WSL bridge.'
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host 'NEXT=register Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1 as components.windows_wsl_bridge in the operational manifest'
+    exit 52
 }
 if (-not ($artifacts.artifacts.id -contains 'windows-wsl-runtime-proof')) {
-    throw 'Artifact registry does not register windows-wsl-runtime-proof.'
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host 'NEXT=register windows-wsl-runtime-proof in the artifact registry, then rerun Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1'
+    exit 52
 }
 if (-not ($validators.validators.id -contains 'firstmate-windows-wsl-bridge-contract')) {
-    throw 'Validator registry does not register firstmate-windows-wsl-bridge-contract.'
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host 'NEXT=register firstmate-windows-wsl-bridge-contract in the validator registry, then rerun Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1'
+    exit 52
 }
 
 $actualHead = (& git -C $Root rev-parse HEAD).Trim()

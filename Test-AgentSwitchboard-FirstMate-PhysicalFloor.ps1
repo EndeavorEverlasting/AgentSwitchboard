@@ -119,7 +119,11 @@ function Invoke-CapturedProcess {
 
 foreach ($required in @($BridgePath, $IntegrationContractPath, $ArtifactRegistryPath, $UpstreamPinPath)) {
     if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
-        throw "Missing FirstMate physical-floor contract surface: $required"
+        # Keep structured — do not throw (throw collapses to unstructured exit 1).
+        Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+        Write-Host "MISSING_SURFACE=$required"
+        Write-Host "NEXT=restore FirstMate physical-floor contract surface ($required), then rerun Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1"
+        exit 52
     }
 }
 
@@ -138,10 +142,17 @@ elseif ($WslDistribution -ne $canonicalDistribution) {
     exit 1
 }
 if ($integration.platform_contract.windows_host_role -ne 'bridge_only') {
-    throw 'Windows host role must remain bridge_only.'
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host "WINDOWS_HOST_ROLE=$($integration.platform_contract.windows_host_role)"
+    Write-Host 'NEXT=repair tooling/firstmate/harness/integration-contract.json so platform_contract.windows_host_role=bridge_only'
+    exit 52
 }
 if (-not ($artifacts.artifacts.id -contains 'windows-wsl-prerequisite-proof')) {
-    throw 'Artifact registry does not register windows-wsl-prerequisite-proof.'
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host 'NEXT=register windows-wsl-prerequisite-proof in the artifact registry, then rerun Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1'
+    exit 52
 }
 
 $actualHeadRaw = & git -C $Root rev-parse HEAD

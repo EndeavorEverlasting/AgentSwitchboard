@@ -627,6 +627,21 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
             oneshot,
         )
         bridge = (ROOT / "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1").read_text(encoding="utf-8")
+        # Early wiring/registry defects emit STATUS=BLOCKED_HARNESS_CONTRACT / exit 52 (not bare throw).
+        self.assertIn("STATUS=BLOCKED_HARNESS_CONTRACT", bridge)
+        self.assertIn("exit 52", bridge)
+        self.assertNotIn('throw "Missing FirstMate bridge contract surface:', bridge)
+        self.assertNotIn(
+            "throw 'Integration contract does not declare platform_contract.wsl_distribution.'",
+            bridge,
+        )
+        physical = (ROOT / "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1").read_text(encoding="utf-8")
+        self.assertIn("STATUS=BLOCKED_HARNESS_CONTRACT", physical)
+        self.assertIn("exit 52", physical)
+        self.assertNotIn('throw "Missing FirstMate physical-floor contract surface:', physical)
+        harness = (ROOT / "Test-AgentSwitchboard-FirstMate-Harness.ps1").read_text(encoding="utf-8")
+        self.assertIn("STATUS=BLOCKED_HARNESS_CONTRACT", harness)
+        self.assertNotIn('throw "Missing FM-WSL-12 continuation entrypoint:', harness)
         self.assertIn("STDERR<<", bridge)
         self.assertIn("Write-Host $probe.Stderr.TrimEnd()", bridge)
         self.assertIn("STATUS=BLOCKED_PREREQUISITE_TIMEOUT", bridge)

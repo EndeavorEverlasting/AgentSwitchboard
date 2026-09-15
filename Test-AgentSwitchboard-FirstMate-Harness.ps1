@@ -115,7 +115,11 @@ try {
             # BLOCKED_GITHUB_AUTH / non-package blockers.
             $continuation = Join-Path $Root 'Invoke-FirstMatePhysicalFloorContinuation.ps1'
             if (-not (Test-Path -LiteralPath $continuation -PathType Leaf)) {
-                throw "Missing FM-WSL-12 continuation entrypoint: $continuation"
+                # Keep structured — do not throw (throw collapses to unstructured exit 1).
+                Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+                Write-Host "MISSING_SURFACE=$continuation"
+                Write-Host "NEXT=restore Invoke-FirstMatePhysicalFloorContinuation.ps1 at checkout root ($continuation), then rerun Test-AgentSwitchboard-FirstMate-Harness.ps1 -Mode physical-floor-continue"
+                exit 52
             }
             $args = @(
                 '-NoLogo', '-NoProfile', '-File', $continuation,
