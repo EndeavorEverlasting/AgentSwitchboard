@@ -318,3 +318,20 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** merge:7effd421060241d8a0e76e007be052064b5da677 pr:#290; merge:3c5cca988072efbd69969cfe33d3fec18e120bcc pr:#291; merge:1f8c32addd53b598ff0f18e3c4b23796cb8d1f3d pr:#292; canary FAIL workflow:34931598102 @dcecfd4; restore PASS workflow:34932484309 @40d46a4; floor PASS workflow:34938435764 @aa7a3b7; Prove-AutomatedTestFloorLocal PASS on main@3c5cca9
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-15T07:20:00Z
+
+## ASQ-019 — Rank user tutorial paths after FirstMate crew handoff
+
+- **Status:** CLAIMED
+- **Priority:** P1
+- **Work class:** BOUNDED
+- **Owner:** Cursor Auto / user-tutorial-ranking lane
+- **Branch / PR:** docs/user-tutorial-path-ranking-20260915 / pending
+- **Scope:** inventory implemented operator journeys; classify readiness; publish durable ranked launch order and disposition ledger in `plans/active/ASB-2026-09-user-tutorial-path-ranking.*`; register plan; leave TUT-01 as first P18 writing sprint; do not author every tutorial in this item
+- **Forbidden:** teaching ASB child-bus spawn/nested crew as current product; Open Worker claims without repo evidence; claiming FM-WSL-12 or live-cert PASS from ranking; secrets/private paths in public plans; unfreezing ASQ-008..012; writing full tutorial corpus in this claim
+- **Dependencies:** ASQ-014 ADR on main; existing workstation docs and root CMD entrypoints
+- **References:** `plans/active/ASB-2026-09-user-tutorial-path-ranking.plan.json`, `plans/active/ASB-2026-09-user-tutorial-path-ranking.md`, `docs/architecture/asb-firstmate-runtime-boundary.md`, `docs/workstation/technician-pull-and-run.md`, `docs/workstation/technician-agentswitchboard-ready.md`, `docs/workstation/opencode-click-launcher.md`
+- **Acceptance gate:** schema-valid public plan + registry membership; disposition ledger complete; launch order names TUT-01 first; validators PASS; ranking integrated to main
+- **Gate:** none for ranking; TUT-05 remains blocked on ASQ-015/017
+- **Last proof:** inventory on main@3a153c11f9db9cacc1d9d9dda8c7358c0e3ecbf0; Open Worker grep zero matches
+- **Next action:** validate plan/ledger, commit, push, open PR, merge when green, then hand TUT-01 panel to a new P18 chat
+- **Updated:** 2026-09-15T16:45:00Z

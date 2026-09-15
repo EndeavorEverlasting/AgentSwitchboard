@@ -93,6 +93,15 @@
       "status": "completed",
       "priority": "high",
       "dependencies": []
+    },
+    {
+      "planId": "ASB-2026-09-USER-TUTORIAL-PATH-RANKING",
+      "path": "plans/active/ASB-2026-09-user-tutorial-path-ranking.plan.json",
+      "summaryPath": "plans/active/ASB-2026-09-user-tutorial-path-ranking.md",
+      "status": "active",
+      "priority": "high",
+      "dependencies": ["ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS"],
+      "architectureDecision": "docs/architecture/asb-firstmate-runtime-boundary.md"
     }
   ]
 }
