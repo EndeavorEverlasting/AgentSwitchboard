@@ -102,9 +102,12 @@ function Invoke-CapturedProcess {
     $completed = $process.WaitForExit($TimeoutSeconds * 1000)
     $timedOut = -not $completed
     if ($timedOut) {
+        # Bound teardown: unbounded WaitForExit after Kill can hang Admin Box forever if the
+        # child tree ignores Kill (WSL/orphans). 30s matches oneshot/continuation teardown.
+        $killTeardownTimeoutMs = 30000
         try {
             $process.Kill($true)
-            $process.WaitForExit()
+            [void]$process.WaitForExit($killTeardownTimeoutMs)
         }
         catch {}
     }
