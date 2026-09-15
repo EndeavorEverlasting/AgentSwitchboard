@@ -1,0 +1,54 @@
+name: Profile boundary harness
+
+on:
+  pull_request:
+    paths:
+      - 'PROFILE_BOUNDARY_HARNESS.md'
+      - 'Test-ProfileBoundaryHarness.cmd'
+      - 'tooling/harness/profile-boundary/**'
+      - '.ai/skills/profile-boundary-routing/**'
+      - 'docs/harness/profile-boundary-operational-harness.md'
+      - 'scripts/Test-ProfileBoundaryHarness.py'
+      - 'tests/test_profile_boundary_harness.py'
+      - '.github/workflows/profile-boundary-harness.yml'
+      - '.ai/harness/device-profile-registry.json'
+      - 'docs/governance/device-profile-launcher-contract.md'
+      - 'tooling/profiles/android/**'
+  push:
+    branches:
+      - 'feat/harness-profile-boundary-*'
+
+jobs:
+  contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Profile-boundary completeness
+        run: python scripts/Test-ProfileBoundaryHarness.py
+      - name: Profile-boundary contracts
+        run: python tests/test_profile_boundary_harness.py
+      - name: Existing device-profile contracts
+        run: python tests/test_device_profile_launcher_contract.py
+      - name: Existing Android Termux harness contracts
+        run: python tests/test_android_termux_harness.py
+      - name: Diff hygiene
+        shell: bash
+        run: git diff --check origin/main...HEAD
+
+  windows-entrypoint:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Windows-native no-Bash front door
+        shell: cmd
+        run: Test-ProfileBoundaryHarness.cmd

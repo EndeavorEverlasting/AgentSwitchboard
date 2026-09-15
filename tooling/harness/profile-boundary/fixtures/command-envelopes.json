@@ -1,0 +1,87 @@
+{
+  "schema": "agentswitchboard.profile-boundary-fixtures.v1",
+  "cases": [
+    {
+      "id": "windows-native-pass",
+      "expectedStatus": "PASS",
+      "expectedReasons": [],
+      "envelope": {
+        "schema": "agentswitchboard.command-envelope.v1",
+        "hostContext": "windows-laptop",
+        "targetProfile": "windows",
+        "executionSurface": "windows-powershell",
+        "command": "pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1"
+      }
+    },
+    {
+      "id": "android-phone-pass",
+      "expectedStatus": "PASS",
+      "expectedReasons": [],
+      "envelope": {
+        "schema": "agentswitchboard.command-envelope.v1",
+        "hostContext": "android-phone",
+        "targetProfile": "android",
+        "executionSurface": "android-termux",
+        "command": "bash Test-AgentSwitchboard-Android-Herdr.sh evidence"
+      }
+    },
+    {
+      "id": "android-command-on-windows-blocked",
+      "expectedStatus": "BLOCKED",
+      "expectedReasons": ["android-command-profile-mismatch", "android-target-on-windows-host", "host-surface-mismatch"],
+      "envelope": {
+        "schema": "agentswitchboard.command-envelope.v1",
+        "hostContext": "windows-laptop",
+        "targetProfile": "android",
+        "executionSurface": "android-termux",
+        "command": "bash Test-AgentSwitchboard-Android-Herdr.sh evidence"
+      }
+    },
+    {
+      "id": "bare-bash-from-powershell-blocked",
+      "expectedStatus": "BLOCKED",
+      "expectedReasons": ["ambiguous-bash-on-windows", "surface-profile-mismatch"],
+      "envelope": {
+        "schema": "agentswitchboard.command-envelope.v1",
+        "hostContext": "windows-laptop",
+        "targetProfile": "linux",
+        "executionSurface": "windows-powershell",
+        "command": "bash -lc 'git status --short'"
+      }
+    },
+    {
+      "id": "wsl-without-proof-blocked",
+      "expectedStatus": "BLOCKED",
+      "expectedReasons": ["wsl-bridge-evidence-missing", "wsl-bridge-probe-incomplete", "wsl-bridge-unproved"],
+      "envelope": {
+        "schema": "agentswitchboard.command-envelope.v1",
+        "hostContext": "windows-laptop",
+        "targetProfile": "linux",
+        "executionSurface": "wsl-linux",
+        "command": "python tests/test_operational_harness.py",
+        "bridgeProof": {
+          "status": "not-run",
+          "probe": "",
+          "evidence": ""
+        }
+      }
+    },
+    {
+      "id": "wsl-proved-pass",
+      "expectedStatus": "PASS",
+      "expectedReasons": [],
+      "envelope": {
+        "schema": "agentswitchboard.command-envelope.v1",
+        "hostContext": "windows-laptop",
+        "targetProfile": "linux",
+        "executionSurface": "wsl-linux",
+        "command": "python3 tests/test_operational_harness.py",
+        "bridgeProof": {
+          "status": "passed",
+          "probe": "wsl.exe --exec /bin/bash -lc 'printf WSL_BASH_READY=1'",
+          "evidence": "WSL_BASH_READY=1"
+        }
+      }
+    }
+  ]
+}

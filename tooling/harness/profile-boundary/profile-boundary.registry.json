@@ -1,0 +1,57 @@
+{
+  "schema": "agentswitchboard.profile-boundary-registry.v1",
+  "registryId": "agentswitchboard.profile-boundaries.v1",
+  "canonicalDeviceProfileRegistry": ".ai/harness/device-profile-registry.json",
+  "hostContexts": {
+    "windows-laptop": {
+      "canonicalDeviceProfile": "windows",
+      "outerShell": "powershell",
+      "allowedExecutionSurfaces": ["windows-powershell", "windows-cmd", "wsl-linux"],
+      "forbiddenExecutionSurfaces": ["android-termux"],
+      "bridgeRequirements": {
+        "wsl-linux": {
+          "proofRequired": true,
+          "requiredProbeTokens": ["wsl.exe", "/bin/bash"],
+          "requiredStatus": "passed",
+          "failureClassification": "wsl-bridge-unproved"
+        }
+      }
+    },
+    "android-phone": {
+      "canonicalDeviceProfile": "android",
+      "outerShell": "termux-bash",
+      "allowedExecutionSurfaces": ["android-termux"],
+      "forbiddenExecutionSurfaces": ["windows-powershell", "windows-cmd", "wsl-linux"]
+    }
+  },
+  "executionSurfaces": {
+    "windows-powershell": {"targetProfile": "windows"},
+    "windows-cmd": {"targetProfile": "windows"},
+    "wsl-linux": {"targetProfile": "linux"},
+    "android-termux": {"targetProfile": "android"}
+  },
+  "commandMarkers": {
+    "androidOnly": [
+      "agentswitchboard-android",
+      "Start-AgentSwitchboard-Android.sh",
+      "tooling/profiles/android/",
+      "Test-AgentSwitchboard-Android-Herdr.sh",
+      "pkg install",
+      "$PREFIX",
+      "/data/data/com.termux"
+    ],
+    "windowsOnly": [
+      "%LOCALAPPDATA%",
+      "Get-AgentSwitchboard-MachineProfile.cmd",
+      "AgentSwitchboard-Technician-Bootstrap.cmd"
+    ]
+  },
+  "handoffRules": [
+    "Host context must be explicit; never infer phone versus laptop from a repository path alone.",
+    "Execution surface must be explicit; bash text does not prove Linux or Termux.",
+    "Android-only markers require android-phone plus android-termux.",
+    "wsl-linux from windows-laptop requires a passed bridge proof whose probe names wsl.exe and /bin/bash.",
+    "A bare bash -lc command handed to windows-powershell is blocked as ambiguous-bash-on-windows.",
+    "Unknown host contexts, target profiles, or execution surfaces fail closed."
+  ]
+}
