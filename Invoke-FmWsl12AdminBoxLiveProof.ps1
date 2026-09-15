@@ -213,7 +213,14 @@ function Invoke-HarnessMode {
     $harnessTimeoutSeconds = [Math]::Max(3600, $continueBudgetSeconds)
     $completed = $process.WaitForExit($harnessTimeoutSeconds * 1000)
     if (-not $completed) {
-        try { $process.Kill($true); $process.WaitForExit() } catch {}
+        # Bound teardown: unbounded WaitForExit after Kill can hang Admin Box forever if the
+        # child tree ignores Kill (WSL/orphans). 30s matches operator-visible timeout surfaces.
+        $killTeardownTimeoutMs = 30000
+        try {
+            $process.Kill($true)
+            [void]$process.WaitForExit($killTeardownTimeoutMs)
+        }
+        catch {}
         # Keep exit 124 structured — do not throw (throw collapses to unstructured exit 1).
         Write-Host 'STATUS=BLOCKED_HARNESS_TIMEOUT'
         Write-Host "HARNESS_MODE=$Mode"

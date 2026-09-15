@@ -163,9 +163,11 @@ function Invoke-CapturedProcess {
     $completed = $process.WaitForExit($TimeoutSeconds * 1000)
     $timedOut = -not $completed
     if ($timedOut) {
+        # Bound teardown: unbounded WaitForExit after Kill can hang the continuation host forever.
+        $killTeardownTimeoutMs = 30000
         try {
             $process.Kill($true)
-            $process.WaitForExit()
+            [void]$process.WaitForExit($killTeardownTimeoutMs)
         }
         catch {}
     }
