@@ -5,15 +5,18 @@ on:
     paths:
       - "tooling/pi/**"
       - "Bootstrap-Pi-SystemWide.cmd"
+      - "Bootstrap-Pi-WSL.cmd"
       - "Pull-And-Run-AgentSwitchboard.cmd"
       - "tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1"
       - ".ai/skills/pi-fusion-orchestration/**"
       - "scripts/Test-PiHarnessCompleteness.ps1"
       - "tests/test_pi_harness_contracts.py"
       - "tests/test_pi_system_bootstrap.py"
+      - "tests/test_pi_wsl_bootstrap.py"
       - "tests/Test-PiWorkstationPrereqsContracts.ps1"
       - "docs/harness/pi-operational-harness.md"
       - "docs/harness/pi-system-bootstrap-and-child-agents.md"
+      - "docs/harness/pi-wsl-workstation-bootstrap.md"
       - ".ai/harness/manifest.json"
       - ".ai/harness/artifact-registry.json"
       - "CODEBASE_MAP.md"
@@ -25,14 +28,17 @@ on:
     paths:
       - "tooling/pi/**"
       - "Bootstrap-Pi-SystemWide.cmd"
+      - "Bootstrap-Pi-WSL.cmd"
       - "Pull-And-Run-AgentSwitchboard.cmd"
       - "tooling/profiles/windows/Setup-TechnicianAgentSwitchboard.ps1"
       - "scripts/Test-PiHarnessCompleteness.ps1"
       - "tests/test_pi_harness_contracts.py"
       - "tests/test_pi_system_bootstrap.py"
+      - "tests/test_pi_wsl_bootstrap.py"
       - "tests/Test-PiWorkstationPrereqsContracts.ps1"
       - "docs/harness/pi-operational-harness.md"
       - "docs/harness/pi-system-bootstrap-and-child-agents.md"
+      - "docs/harness/pi-wsl-workstation-bootstrap.md"
       - ".github/workflows/pi-harness-contract.yml"
   workflow_dispatch:
 
@@ -56,6 +62,8 @@ jobs:
         run: python tests/test_pi_harness_contracts.py
       - name: Run dependency-free Pi system and child contracts
         run: python -m unittest tests.test_pi_system_bootstrap -v
+      - name: Run Pi WSL bootstrap contract
+        run: python -m unittest tests.test_pi_wsl_bootstrap -v
       - name: Run Pi completeness contract
         shell: pwsh
         run: ./scripts/Test-PiHarnessCompleteness.ps1
@@ -95,6 +103,7 @@ jobs:
             'tooling/pi/Test-PiWorkstationPrereqs.ps1',
             'tooling/pi/Get-PiHarnessStatus.ps1',
             'tooling/pi/Install-AgentSwitchboardPiSystem.ps1',
+            'tooling/pi/Install-AgentSwitchboardPiWsl.ps1',
             'tooling/pi/Invoke-AgentSwitchboardPiChild.ps1',
             'tooling/pi/hooks/Invoke-PiHarnessPreCommit.ps1',
             'tests/Test-PiWorkstationPrereqsContracts.ps1',
@@ -124,6 +133,9 @@ jobs:
       - name: Run dependency-free Pi system and child contracts
         shell: pwsh
         run: python -m unittest tests.test_pi_system_bootstrap -v
+      - name: Run Pi WSL bootstrap contract
+        shell: pwsh
+        run: python -m unittest tests.test_pi_wsl_bootstrap -v
       - name: Run Pi completeness contract
         shell: pwsh
         run: ./scripts/Test-PiHarnessCompleteness.ps1
