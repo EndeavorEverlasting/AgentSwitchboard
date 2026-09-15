@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0.0",
+  "bootstrapId": "pi-wsl-user-bootstrap",
+  "status": "repository-contract-unproved-on-second-workstation",
+  "entrypoint": "Bootstrap-Pi-WSL.cmd",
+  "dispatcherMode": "bootstrap-pi-wsl",
+  "installer": "tooling/pi/Install-AgentSwitchboardPiWsl.ps1",
+  "target": {
+    "windowsHost": true,
+    "wslDistribution": "Ubuntu",
+    "linuxUserOwned": true,
+    "nativeWindowsPiUnchanged": true
+  },
+  "versions": {
+    "nvm": "v0.40.7",
+    "node": "24.21.0",
+    "pi": "0.85.1",
+    "npmPackage": "@earendil-works/pi-coding-agent"
+  },
+  "boundedMutation": {
+    "ubuntuAptPackages": [
+      "git",
+      "curl",
+      "ca-certificates"
+    ],
+    "nvmRoot": "$HOME/.nvm",
+    "nodeOwner": "nvm",
+    "piOwner": "npm-global-under-nvm",
+    "windowsPackageManagerMutation": false,
+    "wslDistributionInstallOrRemoval": false,
+    "credentialMutation": false,
+    "providerSelectionMutation": false,
+    "authFileMutation": false
+  },
+  "pathContract": {
+    "nodeMustBeLinuxNative": true,
+    "npmMustBeLinuxNative": true,
+    "piMustBeLinuxNative": true,
+    "rejectPrefix": "/mnt/",
+    "expectedNodePrefix": "$HOME/.nvm/versions/node/"
+  },
+  "operatorFlow": {
+    "applyThenLaunchPi": true,
+    "providerLoginIsInteractiveUserStep": true,
+    "recommendedFirstCommand": "/login",
+    "credentialsMayBeCopiedBetweenUsers": false
+  },
+  "evidence": {
+    "trackedSecretsAllowed": false,
+    "runtimeAuthOutputCaptured": false,
+    "requiredMarkers": [
+      "PI_WSL_BOOTSTRAP=PASS",
+      "WSL_DISTRIBUTION=Ubuntu",
+      "NODE_PATH=",
+      "NPM_PATH=",
+      "PI_PATH=",
+      "PI_VERSION="
+    ]
+  },
+  "proofCeiling": "Repository and hosted validation prove launcher/installer contracts only. The operator's LPW003ASI173 screenshot proves one manual Ubuntu/NVM/Node/Pi/OpenAI-Codex path, not this new CMD on another workstation. Provider authentication remains user-owned and is never copied or automated."
+}
