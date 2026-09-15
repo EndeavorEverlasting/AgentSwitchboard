@@ -364,8 +364,8 @@ if ($continue.ExitCode -ne 0) {
     Write-Host "RECEIPT_PATH=$receiptPath"
     Write-Host "STATUS=$result"
     Write-Host "RESULT=$result"
-    # Prefer child NEXT= (includes -FirstMatePath-specific guidance) over hardcoded
-    # $HOME/firstmate fallbacks so operators do not repair the wrong tree.
+    # Prefer child NEXT= (includes checkout/object-vs-contract distinction and
+    # -FirstMatePath-specific guidance) over generic fallbacks.
     $preservedNext = Get-OperatorNextFromEvidence -Attempt $continue
     if (-not [string]::IsNullOrWhiteSpace($preservedNext)) {
         Write-Host "NEXT=$preservedNext"
@@ -382,7 +382,7 @@ if ($continue.ExitCode -ne 0) {
     } elseif ($continue.ExitCode -eq 49) {
         Write-Host 'NEXT=commit/stash/move dirty work in $HOME/firstmate (or the -FirstMatePath override), or remove $HOME/firstmate so bounded bootstrap can run, then rerun'
     } elseif ($continue.ExitCode -eq 50) {
-        Write-Host ('NEXT=in $HOME/firstmate (or -FirstMatePath) run: git fetch --all && git checkout {0}, or remove that path / pass -FirstMatePath to a clean audited checkout, then rerun' -f $expectedFirstMateHead)
+        Write-Host 'NEXT=verify the selected FirstMate checkout/object database; if the audited commit is healthy but a required path is absent, repair tooling/firstmate/harness/integration-contract.json and tooling/firstmate/harness/upstream-pin.json (or refresh the audited pin); do not retry the same SHA blindly; then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
     } elseif ($continue.ExitCode -eq 51) {
         Write-Host 'NEXT=inspect WSL diagnostics/bootstrap stdout; repair exact-head WSL clone/source-repo access, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
     } elseif ($continue.ExitCode -eq 52) {

@@ -288,7 +288,7 @@ if ($childExit -eq 49) {
     Write-Asq017Blocker -Result 'BLOCKED_FIRSTMATE_DIRTY' -ExitCode 49 -FallbackNext 'commit/stash/move dirty work in $HOME/firstmate (or the -FirstMatePath override), or remove $HOME/firstmate so bounded bootstrap can run, then rerun'
 }
 if ($childExit -eq 50) {
-    Write-Asq017Blocker -Result 'BLOCKED_FIRSTMATE_PIN' -ExitCode 50 -FallbackNext ('in $HOME/firstmate (or -FirstMatePath) run: git fetch --all && git checkout {0}, or remove that path / pass -FirstMatePath to a clean audited checkout, then rerun' -f $expectedFirstMateHead)
+    Write-Asq017Blocker -Result 'BLOCKED_FIRSTMATE_PIN' -ExitCode 50 -FallbackNext 'follow the child NEXT= recovery above; if no child NEXT= is available, verify local FirstMate object integrity first; if the audited commit is healthy but a required path is absent, repair tooling/firstmate/harness/integration-contract.json and tooling/firstmate/harness/upstream-pin.json (or refresh the audited pin); do not retry the same SHA blindly; then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
 }
 if ($childExit -eq 51) {
     Write-Asq017Blocker -Result 'BLOCKED_WSL_BOOTSTRAP' -ExitCode 51 -FallbackNext 'inspect WSL diagnostics/bootstrap stdout; repair exact-head WSL clone/source-repo access, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'

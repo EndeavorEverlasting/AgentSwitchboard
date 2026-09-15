@@ -141,8 +141,9 @@ class FirstMateDiscoveryBehaviorTests(unittest.TestCase):
             self.assertIn("STATUS=BLOCKED_FIRSTMATE_PIN", combined)
             self.assertNotIn("[PASS] FIRSTMATE_INTEROP", combined)
 
-            # An explicitly selected/authoritative checkout with the same defect must
-            # retain the structured exit-50 API rather than degrading to generic exit 1.
+            # An explicitly selected/authoritative checkout with a healthy commit
+            # that lacks a contract-required path must route back to the ASB contract
+            # owner. Re-checking out the same immutable SHA cannot repair the mismatch.
             direct_env = dict(env)
             direct_env["FIRSTMATE_DIR"] = str(candidate)
             direct = subprocess.run(
@@ -155,9 +156,19 @@ class FirstMateDiscoveryBehaviorTests(unittest.TestCase):
             direct_combined = direct.stdout + direct.stderr
             self.assertEqual(50, direct.returncode, direct_combined)
             self.assertIn("STATUS=BLOCKED_FIRSTMATE_PIN", direct_combined)
-            self.assertIn("NEXT=repair or replace", direct_combined)
+            self.assertIn("tooling/firstmate/harness/integration-contract.json", direct_combined)
+            self.assertIn("tooling/firstmate/harness/upstream-pin.json", direct_combined)
+            self.assertIn("do not retry the same SHA checkout", direct_combined)
             self.assertIn(MISSING_REQUIRED, direct_combined)
+            self.assertNotIn("NEXT=repair or replace", direct_combined)
             self.assertNotIn("[PASS] FIRSTMATE_INTEROP", direct_combined)
+
+    def test_probe_has_distinct_local_object_integrity_recovery(self) -> None:
+        probe = PROBE.read_text(encoding="utf-8")
+        self.assertIn('git -C "$FIRSTMATE_DIR" fsck --no-dangling "$EXPECTED_HEAD"', probe)
+        self.assertIn("repair local FirstMate Git objects", probe)
+        self.assertIn("git fetch --all --prune", probe)
+        self.assertIn("without changing the audited pin", probe)
 
 
 if __name__ == "__main__":
