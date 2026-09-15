@@ -36,15 +36,24 @@ $HarnessPath = Join-Path $Root 'Test-AgentSwitchboard-FirstMate-Harness.ps1'
 $IntegrationContractPath = Join-Path $Root 'tooling\firstmate\harness\integration-contract.json'
 
 if (-not (Test-Path -LiteralPath $HarnessPath -PathType Leaf)) {
-    throw "Missing FirstMate harness front door: $HarnessPath"
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host "NEXT=restore Test-AgentSwitchboard-FirstMate-Harness.ps1 at checkout root ($HarnessPath), then rerun Invoke-FmWsl12AdminBoxLiveProof.ps1"
+    exit 52
 }
 if (-not (Test-Path -LiteralPath $IntegrationContractPath -PathType Leaf)) {
-    throw "Missing integration contract: $IntegrationContractPath"
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host "NEXT=restore tooling/firstmate/harness/integration-contract.json ($IntegrationContractPath), then rerun Invoke-FmWsl12AdminBoxLiveProof.ps1"
+    exit 52
 }
 
 $UpstreamPinPath = Join-Path $Root 'tooling\firstmate\harness\upstream-pin.json'
 if (-not (Test-Path -LiteralPath $UpstreamPinPath -PathType Leaf)) {
-    throw "Missing FirstMate upstream pin: $UpstreamPinPath"
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host "NEXT=restore tooling/firstmate/harness/upstream-pin.json ($UpstreamPinPath), then rerun Invoke-FmWsl12AdminBoxLiveProof.ps1"
+    exit 52
 }
 $upstreamPin = Get-Content -LiteralPath $UpstreamPinPath -Raw | ConvertFrom-Json
 $expectedFirstMateHead = [string]$upstreamPin.commit
@@ -58,10 +67,16 @@ if ($expectedFirstMateHead -notmatch '^[0-9a-f]{40}$') {
 $integration = Get-Content -LiteralPath $IntegrationContractPath -Raw | ConvertFrom-Json
 $recovery = $integration.physical_floor_recovery
 if ($null -eq $recovery) {
-    throw 'integration-contract.json missing physical_floor_recovery.'
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host 'NEXT=repair tooling/firstmate/harness/integration-contract.json so physical_floor_recovery is present, then rerun Invoke-FmWsl12AdminBoxLiveProof.ps1'
+    exit 52
 }
 if ([string]$recovery.lane -ne 'FM-WSL-12') {
-    throw "Unexpected physical_floor_recovery.lane=$($recovery.lane)"
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host "NEXT=repair tooling/firstmate/harness/integration-contract.json physical_floor_recovery.lane to FM-WSL-12; Received=$($recovery.lane)"
+    exit 52
 }
 
 $canonicalDistribution = [string]$recovery.distribution

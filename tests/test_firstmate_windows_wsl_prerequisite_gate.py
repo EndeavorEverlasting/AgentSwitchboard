@@ -548,11 +548,27 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("inspect child console for NEXT=", asq)
         self.assertIn("STATUS=BLOCKED_HARNESS_START", asq)
         self.assertIn("STATUS=BLOCKED_FIRSTMATE_PIN", asq)
+        # Early wiring defects emit STATUS=BLOCKED_HARNESS_CONTRACT / exit 52 (not bare throw).
+        self.assertIn("STATUS=BLOCKED_HARNESS_CONTRACT", asq)
+        self.assertIn("exit 52", asq)
+        self.assertNotIn('throw "Missing FM-WSL-12 Admin Box one-shot:', asq)
+        self.assertNotIn('throw "Missing FirstMate upstream pin:', asq)
         self.assertNotIn(
             'throw "upstream-pin.json commit must be a 40-character lowercase hex SHA',
             asq,
         )
         oneshot = (ROOT / "Invoke-FmWsl12AdminBoxLiveProof.ps1").read_text(encoding="utf-8")
+        # Early wiring/contract defects emit STATUS=BLOCKED_HARNESS_CONTRACT / exit 52 (not bare throw).
+        self.assertIn("STATUS=BLOCKED_HARNESS_CONTRACT", oneshot)
+        self.assertIn("exit 52", oneshot)
+        self.assertNotIn('throw "Missing FirstMate harness front door:', oneshot)
+        self.assertNotIn('throw "Missing integration contract:', oneshot)
+        self.assertNotIn('throw "Missing FirstMate upstream pin:', oneshot)
+        self.assertNotIn(
+            "throw 'integration-contract.json missing physical_floor_recovery.'",
+            oneshot,
+        )
+        self.assertNotIn('throw "Unexpected physical_floor_recovery.lane=', oneshot)
         self.assertIn("NEXT=run on Windows Admin Box with wsl.exe and Ubuntu", oneshot)
         self.assertIn("STATUS=BLOCKED_HEAD_MISMATCH", oneshot)
         self.assertIn("NEXT=ff-only refresh main, re-resolve HEAD, and rerun with the recorded SHA", oneshot)
@@ -617,6 +633,25 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("wsl.exe Start threw", bridge)
         self.assertIn("FAILURE_CODE=WINDOWS_WSL_REQUIRED", bridge)
         continuation = (ROOT / "Invoke-FirstMatePhysicalFloorContinuation.ps1").read_text(encoding="utf-8")
+        # Early wiring/contract defects emit STATUS=BLOCKED_HARNESS_CONTRACT / exit 52 (not bare throw).
+        self.assertIn("STATUS=BLOCKED_HARNESS_CONTRACT", continuation)
+        self.assertIn("exit 52", continuation)
+        self.assertNotIn('throw "Missing physical-floor entrypoint:', continuation)
+        self.assertNotIn('throw "Missing integration contract:', continuation)
+        self.assertNotIn(
+            "throw 'integration-contract.json missing physical_floor_recovery.'",
+            continuation,
+        )
+        self.assertNotIn('throw "Unexpected physical_floor_recovery.lane=', continuation)
+        self.assertNotIn(
+            "throw 'Contract denies execution-owner package repair authority.'",
+            continuation,
+        )
+        self.assertNotIn("throw \"Unsupported package_manager=", continuation)
+        self.assertNotIn(
+            "throw 'physical_floor_recovery.package_allowlist is empty.'",
+            continuation,
+        )
         self.assertIn("Get-OperatorNextFromText", continuation)
         self.assertIn("sudo -n apt-get --version", continuation)
         self.assertIn("STATUS=BLOCKED_SUDO", continuation)

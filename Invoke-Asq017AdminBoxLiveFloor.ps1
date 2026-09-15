@@ -36,12 +36,22 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $OneShotPath = Join-Path $Root 'Invoke-FmWsl12AdminBoxLiveProof.ps1'
 if (-not (Test-Path -LiteralPath $OneShotPath -PathType Leaf)) {
-    throw "Missing FM-WSL-12 Admin Box one-shot: $OneShotPath"
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host "ASQ017_RESULT=BLOCKED_HARNESS_CONTRACT"
+    Write-Host "CHILD_EXIT_CODE=52"
+    Write-Host "NEXT=restore Invoke-FmWsl12AdminBoxLiveProof.ps1 at checkout root ($OneShotPath), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1"
+    exit 52
 }
 
 $UpstreamPinPath = Join-Path $Root 'tooling\firstmate\harness\upstream-pin.json'
 if (-not (Test-Path -LiteralPath $UpstreamPinPath -PathType Leaf)) {
-    throw "Missing FirstMate upstream pin: $UpstreamPinPath"
+    # Keep structured — do not throw (throw collapses to unstructured exit 1).
+    Write-Host 'STATUS=BLOCKED_HARNESS_CONTRACT'
+    Write-Host "ASQ017_RESULT=BLOCKED_HARNESS_CONTRACT"
+    Write-Host "CHILD_EXIT_CODE=52"
+    Write-Host "NEXT=restore tooling/firstmate/harness/upstream-pin.json ($UpstreamPinPath), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1"
+    exit 52
 }
 
 function Get-Asq017ExpectedFirstMateHead {
