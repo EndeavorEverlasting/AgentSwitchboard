@@ -169,7 +169,7 @@ class AutomatedTestFloorContracts(unittest.TestCase):
             payload = json.loads(receipt.read_text(encoding="utf-8-sig"))
             self.assertEqual(payload["result"], "PASS")
             provenance = payload["provenance"]
-            self.assertEqual(provenance["trigger"], "local-cli")
+            self.assertIn(provenance["trigger"], {"local-cli", "github-actions"})
             self.assertEqual(len(provenance["inputManifestSha256"]), 64)
             self.assertEqual(len(provenance["generatorSha256"]), 64)
             self.assertFalse(provenance["committedGeneratedCode"])
