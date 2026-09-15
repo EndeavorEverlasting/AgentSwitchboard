@@ -271,6 +271,50 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
 
     def test_gate_is_bounded_and_uses_unique_evidence(self) -> None:
         self.assertIn("[int]$PrerequisiteTimeoutSeconds = 180", self.physical)
+        # Default 180 must be shared across the Admin Box chain (not only PhysicalFloor).
+        asq = (ROOT / "Invoke-Asq017AdminBoxLiveFloor.ps1").read_text(encoding="utf-8")
+        oneshot = (ROOT / "Invoke-FmWsl12AdminBoxLiveProof.ps1").read_text(encoding="utf-8")
+        harness = (ROOT / "Test-AgentSwitchboard-FirstMate-Harness.ps1").read_text(
+            encoding="utf-8"
+        )
+        continuation = (
+            ROOT / "Invoke-FirstMatePhysicalFloorContinuation.ps1"
+        ).read_text(encoding="utf-8")
+        for surface, text in (
+            ("asq017", asq),
+            ("oneshot", oneshot),
+            ("harness", harness),
+            ("continuation", continuation),
+        ):
+            self.assertIn(
+                "[int]$PrerequisiteTimeoutSeconds = 180",
+                text,
+                msg=f"{surface} must default PrerequisiteTimeoutSeconds to 180",
+            )
+        self.assertIn("'-PrerequisiteTimeoutSeconds', \"$PrerequisiteTimeoutSeconds\"", oneshot)
+        self.assertIn("'-PrerequisiteTimeoutSeconds', \"$PrerequisiteTimeoutSeconds\"", harness)
+        self.assertIn(
+            "'-PrerequisiteTimeoutSeconds', \"$PrerequisiteTimeoutSeconds\"",
+            continuation,
+        )
+        # Continuation outer kill must cover 2× prerequisite + 600s bridge + overhead.
+        self.assertIn(
+            "$physicalFloorOuterTimeoutSeconds = [Math]::Max(900, ($PrerequisiteTimeoutSeconds * 2) + 600 + 120)",
+            continuation,
+        )
+        self.assertNotIn(
+            "Invoke-CapturedProcess -FileName $PwshCommand.Source -Arguments $argumentList -TimeoutSeconds 900",
+            continuation,
+        )
+        # Passwordless-sudo probe must honor PrerequisiteTimeoutSeconds (not a hard 30s).
+        self.assertIn(
+            "Invoke-CapturedProcess -FileName $wsl.Source -Arguments $sudoProbeArgs -TimeoutSeconds $PrerequisiteTimeoutSeconds",
+            continuation,
+        )
+        self.assertNotIn(
+            "Invoke-CapturedProcess -FileName $wsl.Source -Arguments $sudoProbeArgs -TimeoutSeconds 30",
+            continuation,
+        )
         self.assertIn("WaitForExit($TimeoutSeconds * 1000)", self.physical)
         self.assertIn("ExitCode = if ($timedOut) { 124 }", self.physical)
         self.assertIn("STATUS=BLOCKED_PREREQUISITE_TIMEOUT", self.physical)
