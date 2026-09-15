@@ -72,9 +72,18 @@
       "planId": "ASB-2026-09-FM-ASB-PROMPTKIT-PROTOCOL-V1",
       "path": "plans/active/ASB-2026-09-fm-asb-promptkit-protocol-v1.plan.json",
       "summaryPath": "plans/active/ASB-2026-09-fm-asb-promptkit-protocol-v1.md",
-      "status": "active",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS"],
+      "architectureDecision": "docs/architecture/fm-asb-promptkit-protocol-v1.md"
+    },
+    {
+      "planId": "ASB-2026-09-FM-ASB-OBSERVATION-ADAPTER",
+      "path": "plans/active/ASB-2026-09-fm-asb-observation-adapter.plan.json",
+      "summaryPath": "plans/active/ASB-2026-09-fm-asb-observation-adapter.md",
+      "status": "active",
+      "priority": "high",
+      "dependencies": ["ASB-2026-09-FM-ASB-PROMPTKIT-PROTOCOL-V1"],
       "architectureDecision": "docs/architecture/fm-asb-promptkit-protocol-v1.md"
     }
   ]

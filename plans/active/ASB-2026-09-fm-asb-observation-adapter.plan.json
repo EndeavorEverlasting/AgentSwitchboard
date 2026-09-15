@@ -1,0 +1,199 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-09-FM-ASB-OBSERVATION-ADAPTER",
+  "title": "FirstMate to ASB observation adapter phase map",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "active",
+  "priority": "high",
+  "createdUtc": "2026-09-15T01:00:00Z",
+  "updatedUtc": "2026-09-15T01:00:00Z",
+  "mission": "Own the FirstMate fleet-snapshot to asb.agent-observation/v1 translation seam through implementation, mainline integration, Admin Box adoption, and honest live-observation proof ceilings without becoming a second crew watcher.",
+  "owner": {
+    "surface": "FirstMate observation adapter",
+    "role": "runtime-proof / protocol bridge lane",
+    "agent": "Cursor Agent (Admin Box 1)"
+  },
+  "delivery": {
+    "branch": "chore/fm-asb-observation-live-proof-cite-20260914",
+    "pullRequest": null,
+    "baseRef": "main",
+    "commitRequired": true,
+    "implementationMerge": "5187195382584787bf30c7043660d74327549cd7",
+    "implementationPr": 204
+  },
+  "wave": "FirstMate↔ASB↔PromptKit boundary",
+  "lane": "observation adapter + live proof",
+  "dependencies": [
+    "ASB-2026-09-FM-ASB-PROMPTKIT-PROTOCOL-V1"
+  ],
+  "safeParallelWork": [
+    "FM-WSL-12 Admin Box physical-floor observation",
+    "Unrelated Windows profile or OpenCode LSP work"
+  ],
+  "ownedScope": [
+    "tooling/firstmate/harness/observation/**",
+    "tests/test_firstmate_agent_observation_adapter.py",
+    ".ai/harness/fixtures/fm-asb-promptkit/firstmate-fleet-snapshot.valid.json",
+    ".github/workflows/fm-asb-promptkit-protocol.yml observation steps",
+    "plans/active/ASB-2026-09-fm-asb-observation-adapter.*",
+    "plans/plan-registry.json membership for this plan"
+  ],
+  "forbiddenScope": [
+    "fm-send / fm-control / tmux probing as ASB ownership",
+    "new ASB watcher or scheduler",
+    "Prompt Kit routing adapter implementation",
+    "context-pressure automation / automatic rollover",
+    "committing machine-local receipts, secrets, or personal FirstMate home state",
+    "personal save/account mutation"
+  ],
+  "expectedArtifacts": [
+    "emit_agent_observation.py",
+    "synthetic fleet-snapshot fixture",
+    "adapter regressions",
+    "local untracked runtime-proof receipt for live observation attempts",
+    "this public phase map"
+  ],
+  "tasks": [
+    {
+      "taskId": "OBS-01",
+      "title": "Implement snapshot→observation adapter with privacy/idempotency bounds",
+      "status": "completed",
+      "owner": "observation adapter lane",
+      "dependencies": [],
+      "inputs": [
+        "Frozen asb.agent-observation/v1",
+        "FirstMate fm-fleet-snapshot.v1 shape"
+      ],
+      "outputs": [
+        "emit_agent_observation.py",
+        "fixture",
+        "tests"
+      ],
+      "acceptanceCriteria": [
+        "Deterministic translation of one selected task",
+        "Hashes worktree paths; excludes raw status/transcript/decision text",
+        "contextPressure left null for later phase"
+      ],
+      "evidence": [
+        "PR #204 merge 5187195382584787bf30c7043660d74327549cd7"
+      ]
+    },
+    {
+      "taskId": "OBS-02",
+      "title": "Admin Box adoption of integrated Phase-2 adapter",
+      "status": "completed",
+      "owner": "Admin Box 1 runtime-proof lane",
+      "dependencies": [
+        "OBS-01"
+      ],
+      "inputs": [
+        "AgentSwitchBoard-Live checkout",
+        "origin/main containing 5187195…"
+      ],
+      "outputs": [
+        "Refreshed main containment proof",
+        "Synthetic adapter + protocol validator PASS"
+      ],
+      "acceptanceCriteria": [
+        "merge-base --is-ancestor 5187195… HEAD succeeds",
+        "python tests/test_firstmate_agent_observation_adapter.py PASS",
+        "Test-FmAsbPromptKitProtocolContract.ps1 PASS"
+      ],
+      "evidence": [
+        "Live checkout validated at af7f0130a6bae93e3e949d4006c7b7bc57e7724e; tip later advanced with containment retained"
+      ]
+    },
+    {
+      "taskId": "OBS-03",
+      "title": "Disposable-home live FirstMate emitter → ASB observation",
+      "status": "completed",
+      "owner": "Admin Box 1 runtime-proof lane",
+      "dependencies": [
+        "OBS-02"
+      ],
+      "inputs": [
+        "FirstMate pin b182d0f908b78d08c7ccb8dce3775bdca8c5d657",
+        "User-local jq",
+        "Disposable FM_HOME seed"
+      ],
+      "outputs": [
+        "live-fm-fleet-snapshot.json",
+        "live-asb-agent-observation.json",
+        "runtime-proof-receipt.json"
+      ],
+      "acceptanceCriteria": [
+        "Real fm-fleet-snapshot.sh --json emits fm-fleet-snapshot.v1",
+        "Adapter emits asb.agent-observation/v1 with key parity to frozen fixture",
+        "Privacy grep finds no raw status/detail/worktree path leak",
+        "Protected synthetic adapter tests still PASS"
+      ],
+      "evidence": [
+        "%LOCALAPPDATA%\\AgentSwitchboard\\runtime-proof\\fm-asb-observation\\20260914T204242Z\\status.txt = LIVE_SNAPSHOT_TO_OBSERVATION_PASS",
+        "eventId evt_fmobs_7d93f1af8437fe8ac6f9f4fe phase=unknown (honest crew-state unknown on disposable seed)"
+      ]
+    },
+    {
+      "taskId": "OBS-04",
+      "title": "Operator/crew live observation (non-disposable home)",
+      "status": "pending",
+      "owner": "Admin Box 1 operator / FirstMate runtime",
+      "dependencies": [
+        "OBS-03"
+      ],
+      "inputs": [
+        "Authorized FirstMate home with live task OR FM-WSL-12 physical-floor PASS"
+      ],
+      "outputs": [
+        "Local receipt bound to live taskId"
+      ],
+      "acceptanceCriteria": [
+        "Snapshot sourced from operator/crew FM_HOME (not disposable cache seed)",
+        "Observation emitted without privacy leaks",
+        "Proof labeled OBSERVED_OPERATOR_CREW only when live task is real"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "OBS-05",
+      "title": "Phase 3 handoff — Prompt Kit routing adapter",
+      "status": "pending",
+      "owner": "Prompt Kit routing adapter lane",
+      "dependencies": [
+        "OBS-04"
+      ],
+      "inputs": [
+        "asb.agent-observation/v1",
+        "Frozen routing-request/decision schemas"
+      ],
+      "outputs": [
+        "Bounded routing adapter sprint"
+      ],
+      "acceptanceCriteria": [
+        "New bounded sprint declaration",
+        "No ASB crew scheduler expansion"
+      ],
+      "evidence": []
+    }
+  ],
+  "validation": [
+    "python tests/test_firstmate_agent_observation_adapter.py",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-FmAsbPromptKitProtocolContract.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
+    "git diff --check"
+  ],
+  "proof": {
+    "target": "FirstMate snapshot → ASB observation on Admin Box with honest ceilings",
+    "achieved": "Phase-2 adapter INTEGRATED (PR #204). Admin Box adoption PASS. Disposable-home live emitter→adapter OBSERVED with privacy PASS and protected synthetic control PASS. Operator/crew observation and Prompt Kit routing remain unproven.",
+    "ceiling": "OBSERVED_DISPOSABLE_HOME. Not OBSERVED_OPERATOR_CREW. Not routing/dispatch/rollover."
+  },
+  "handoff": {
+    "nextOwner": "Admin Box operator / FirstMate runtime for OBS-04; else Prompt Kit routing lane only after OBS-04 or explicit scope change",
+    "nextCommand": "$ErrorActionPreference='Stop'; $repo = if ($env:AGENT_SWITCHBOARD_REPO) { $env:AGENT_SWITCHBOARD_REPO } else { Join-Path $env:USERPROFILE 'dev\\AgentSwitchBoard-Live' }; Set-Location -LiteralPath $repo; git fetch --all --prune --tags; if (git status --porcelain) { git status --short; throw 'Checkout dirty; preserve work before continuing.' }; git switch main; git pull --ff-only origin main; $ev = Join-Path $env:LOCALAPPDATA ('AgentSwitchboard\\runtime-proof\\fm-asb-observation\\' + (Get-Date -Format 'yyyyMMddTHHmmssZ')); New-Item -ItemType Directory -Force -Path $ev | Out-Null; Write-Host \"EVIDENCE_ROOT=$ev\"; Write-Host 'Provide FM_HOME to an authorized live FirstMate home (not ~/.cache/asb-fm-observation/disposable-home-*), then:'; Write-Host 'wsl -d Ubuntu -- bash -lc \"export PATH=$HOME/.local/bin:$PATH; export FM_HOME=<authorized-home>; <firstmate-pin>/bin/fm-fleet-snapshot.sh --json > /mnt/c/.../live-fm-fleet-snapshot.json\"'; Write-Host 'Then run emit_agent_observation.py against that snapshot and record a new local receipt.'",
+    "notes": [
+      "Do not claim operator-crew OBSERVED from the disposable-home receipt.",
+      "Machine-local evidence stays under LOCALAPPDATA; never commit receipts.",
+      "Phase 3 is Prompt Kit routing, not ASB crew scheduling."
+    ]
+  }
+}

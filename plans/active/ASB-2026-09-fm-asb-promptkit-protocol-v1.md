@@ -29,4 +29,8 @@ pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1
 
 ## Next
 
-Phase 1 observation adapter (new bounded sprint): emit `asb.agent-observation/v1` from FirstMate task state without becoming a second crew watcher.
+Observation-adapter phase map moved to `plans/active/ASB-2026-09-fm-asb-observation-adapter.md` (plan id `ASB-2026-09-FM-ASB-OBSERVATION-ADAPTER`).
+
+- Phase 2 adapter implementation: **INTEGRATED** via PR #204 (`5187195382584787bf30c7043660d74327549cd7`).
+- Disposable-home Admin Box live emitter→adapter: **OBSERVED** (local receipt only; not operator-crew).
+- Remaining: operator/crew live observation, then Phase 3 Prompt Kit routing adapter.
