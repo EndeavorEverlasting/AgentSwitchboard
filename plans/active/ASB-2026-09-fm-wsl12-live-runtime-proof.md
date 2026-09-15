@@ -57,11 +57,12 @@ Canonical coordination index: `plans/active/ASB-2026-09-multi-product-bootstrap-
 - Tip prove on `4e884b1`: cloud ContractOnly PASS + live exit 46 after #268; paste/runbook exit-1 STATUS guidance on main; live PASS still UNPROVEN.
 - Tip prove on `c70607b`: cloud ContractOnly PASS + live exit 46 after #270; live PASS still UNPROVEN.
 - Tip prove on `4258ac2`: cloud ContractOnly PASS + live exit 46 after #269/#270; live PASS still UNPROVEN.
+- Tip prove on `4b26814`: cloud ContractOnly PASS + live exit 46 after #271; live PASS still UNPROVEN.
 - Tip prove on `2cb70a3`: cloud ContractOnly PASS + live exit 46 after #259/#260; live PASS still UNPROVEN.
 
 ## Successor phases
 
-1. **Admin Box live observation (current).** Refresh main @ `4258ac2`+; run the durable `Invoke-Asq017AdminBoxLiveFloor.ps1` entrypoint (ff-only main refresh → `Invoke-FmWsl12AdminBoxLiveProof.ps1`: contract → physical-floor-continue → protected physical-floor). Pre-stage Ubuntu FirstMate @ `b182d0f908b78d08c7ccb8dce3775bdca8c5d657` + one primary harness + Ubuntu `gh` auth. Optional: pass `-FirstMatePath` to a clean audited checkout when `$HOME/firstmate` is dirty/off-pin. Alternate auto-discovery ignores dirty, off-pin, or incomplete checkouts unless their required paths are present in the audited Git tree and worktree; authoritative required-path defects return the structured pin blocker instead of generic failure. Expected: PASS markers + local receipt/evidence root, or `BLOCKED_GITHUB_AUTH` / real non-package blocker with preserved evidence.
+1. **Admin Box live observation (current).** Refresh main @ `4b26814`+; run the durable `Invoke-Asq017AdminBoxLiveFloor.ps1` entrypoint (ff-only main refresh → `Invoke-FmWsl12AdminBoxLiveProof.ps1`: contract → physical-floor-continue → protected physical-floor). Pre-stage Ubuntu FirstMate @ `b182d0f908b78d08c7ccb8dce3775bdca8c5d657` + one primary harness + Ubuntu `gh` auth. Optional: pass `-FirstMatePath` to a clean audited checkout when `$HOME/firstmate` is dirty/off-pin. Alternate auto-discovery ignores dirty, off-pin, or incomplete checkouts unless their required paths are present in the audited Git tree and worktree; authoritative required-path defects return the structured pin blocker instead of generic failure. Expected: PASS markers + local receipt/evidence root, or `BLOCKED_GITHUB_AUTH` / real non-package blocker with preserved evidence.
 2. **Credential gate (conditional).** Only if `BLOCKED_GITHUB_AUTH`: operator `gh auth login` then rerun continuation. No token capture in evidence.
 3. **FM-CREW-13 handoff.** Only after physical-floor PASS. Local-only crew pilot; out of this phase's mutation scope.
 
