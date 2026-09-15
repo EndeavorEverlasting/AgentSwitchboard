@@ -236,6 +236,7 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
             "wslDistribution=",
             "prerequisiteTimeoutSeconds=",
             "skipProtectedControl=",
+            "firstMatePathSelectorSha256=",
         ):
             self.assertIn(proof_input, asq)
         self.assertIn("asb-quiescence-state/v1", asq)
@@ -250,6 +251,9 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("Write-Asq017QuiescenceState", asq)
         self.assertIn("Clear-Asq017QuiescenceState", asq)
         self.assertIn("QUIESCENCE_ON_REPEAT", asq)
+        self.assertIn("$quiescenceRecorded", asq)
+        self.assertIn("return $true", asq)
+        self.assertIn("return $false", asq)
         self.assertIn("do not rerun this cloud/non-Windows proof or create citation-only/tip-cite updates", asq)
         # The stored HEAD is provenance only; fingerprint construction explicitly excludes HEAD.
         self.assertIn("HEAD itself is deliberately excluded", asq)

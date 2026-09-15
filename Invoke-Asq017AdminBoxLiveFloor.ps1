@@ -134,6 +134,8 @@ function Get-Asq017ProofRelevanceFingerprint {
     [void]$entries.Add(('wslDistribution={0}' -f $WslDistribution))
     [void]$entries.Add(('prerequisiteTimeoutSeconds={0}' -f $PrerequisiteTimeoutSeconds))
     [void]$entries.Add(('skipProtectedControl={0}' -f [bool]$SkipProtectedControl))
+    $firstMateSelector = if ([string]::IsNullOrWhiteSpace($FirstMatePath)) { '<default>' } else { [System.IO.Path]::GetFullPath($FirstMatePath).ToLowerInvariant() }
+    [void]$entries.Add(('firstMatePathSelectorSha256={0}' -f (Get-Asq017Sha256Text -Text $firstMateSelector)))
     return Get-Asq017Sha256Text -Text ($entries -join "`n")
 }
 
@@ -183,12 +185,14 @@ function Write-Asq017QuiescenceState {
         }
         $state | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $path -Encoding utf8
         Write-Asq017Status -Key 'QUIESCENCE_STATE' -Value 'recorded'
+        return $true
     }
     catch {
         # The cache is advisory. Persistence failure must not replace the real
         # runtime blocker or fabricate a successful quiescence observation.
         Write-Asq017Status -Key 'QUIESCENCE_STATE' -Value 'unavailable'
         Write-Asq017Status -Key 'QUIESCENCE_STATE_OPERATION' -Value 'write'
+        return $false
     }
 }
 
@@ -382,8 +386,8 @@ $childExit = [int]$oneshotProcess.ExitCode
 Write-Asq017Status -Key 'CHILD_EXIT_CODE' -Value "$childExit"
 
 if ($childExit -eq 46 -and -not [string]::IsNullOrWhiteSpace($proofRelevanceFingerprint)) {
-    Write-Asq017QuiescenceState -BlockerStatus 'BLOCKED_WINDOWS_WSL_REQUIRED' -Fingerprint $proofRelevanceFingerprint -ObservedHead $head
-    Write-Asq017Status -Key 'QUIESCENCE_ON_REPEAT' -Value 'true'
+    $quiescenceRecorded = Write-Asq017QuiescenceState -BlockerStatus 'BLOCKED_WINDOWS_WSL_REQUIRED' -Fingerprint $proofRelevanceFingerprint -ObservedHead $head
+    Write-Asq017Status -Key 'QUIESCENCE_ON_REPEAT' -Value $(if ($quiescenceRecorded) { 'true' } else { 'false' })
 }
 else {
     # The old environment blocker is no longer the current outcome. Clear it so a
