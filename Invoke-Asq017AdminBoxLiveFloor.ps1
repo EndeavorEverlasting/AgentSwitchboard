@@ -263,6 +263,10 @@ if ($childExit -eq 51) {
 if ($childExit -eq 52) {
     Write-Asq017Blocker -Result 'BLOCKED_HARNESS_CONTRACT' -ExitCode 52 -FallbackNext 'inspect evidence root; repair FirstMate harness contract failure inside Ubuntu, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
 }
+if ($childExit -eq 124) {
+    # Keep hang/timeout exits structured — do not collapse to generic FAILED.
+    Write-Asq017Blocker -Result 'BLOCKED_PREREQUISITE_TIMEOUT' -ExitCode 124 -FallbackNext 'repair hung WSL/sudo/apt prerequisite or increase host capacity, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1; a prerequisite step timed out'
+}
 if ($childExit -ne 0) {
     Write-Asq017Blocker -Result 'FAILED' -ExitCode $childExit -FallbackNext 'inspect child console for NEXT=/NEXT_ACTION=; repair operator blocker; rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
 }
