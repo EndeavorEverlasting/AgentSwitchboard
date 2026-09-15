@@ -169,24 +169,41 @@ function Write-Asq017QuiescenceState {
         [Parameter(Mandatory)][string]$Fingerprint,
         [Parameter(Mandatory)][string]$ObservedHead
     )
-    $path = Get-Asq017QuiescenceStatePath
-    $parent = Split-Path -Parent $path
-    New-Item -ItemType Directory -Force -Path $parent | Out-Null
-    $state = [ordered]@{
-        schema = 'asb-quiescence-state/v1'
-        lane = 'FM-WSL-12'
-        blockerStatus = $BlockerStatus
-        proofRelevanceFingerprint = $Fingerprint
-        observedHead = $ObservedHead
-        observedAtUtc = [DateTimeOffset]::UtcNow.ToString('o')
+    try {
+        $path = Get-Asq017QuiescenceStatePath
+        $parent = Split-Path -Parent $path
+        New-Item -ItemType Directory -Force -Path $parent | Out-Null
+        $state = [ordered]@{
+            schema = 'asb-quiescence-state/v1'
+            lane = 'FM-WSL-12'
+            blockerStatus = $BlockerStatus
+            proofRelevanceFingerprint = $Fingerprint
+            observedHead = $ObservedHead
+            observedAtUtc = [DateTimeOffset]::UtcNow.ToString('o')
+        }
+        $state | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $path -Encoding utf8
+        Write-Asq017Status -Key 'QUIESCENCE_STATE' -Value 'recorded'
     }
-    $state | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $path -Encoding utf8
+    catch {
+        # The cache is advisory. Persistence failure must not replace the real
+        # runtime blocker or fabricate a successful quiescence observation.
+        Write-Asq017Status -Key 'QUIESCENCE_STATE' -Value 'unavailable'
+        Write-Asq017Status -Key 'QUIESCENCE_STATE_OPERATION' -Value 'write'
+    }
 }
 
 function Clear-Asq017QuiescenceState {
-    $path = Get-Asq017QuiescenceStatePath
-    if (Test-Path -LiteralPath $path -PathType Leaf) {
-        Remove-Item -LiteralPath $path -Force
+    try {
+        $path = Get-Asq017QuiescenceStatePath
+        if (Test-Path -LiteralPath $path -PathType Leaf) {
+            Remove-Item -LiteralPath $path -Force
+        }
+    }
+    catch {
+        # Stale cache cleanup is also advisory. The current child result remains
+        # authoritative; a cleanup problem cannot replace it.
+        Write-Asq017Status -Key 'QUIESCENCE_STATE' -Value 'unavailable'
+        Write-Asq017Status -Key 'QUIESCENCE_STATE_OPERATION' -Value 'clear'
     }
 }
 

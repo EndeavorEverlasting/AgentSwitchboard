@@ -256,6 +256,12 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("observedHead", asq)
         # Unknown/corrupt state must never suppress a fresh bounded attempt.
         self.assertIn("fail open to", asq)
+        # Advisory cache persistence/cleanup must not replace the primary blocker.
+        self.assertIn("The cache is advisory", asq)
+        self.assertIn("QUIESCENCE_STATE", asq)
+        self.assertIn("QUIESCENCE_STATE_OPERATION", asq)
+        self.assertIn("'write'", asq)
+        self.assertIn("'clear'", asq)
 
     def test_physical_floor_preserves_structured_prerequisite_exit_codes(self) -> None:
         self.assertIn("exit $preflight.ExitCode", self.physical)
