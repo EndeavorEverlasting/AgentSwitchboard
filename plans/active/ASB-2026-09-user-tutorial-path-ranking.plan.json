@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-15T16:30:00Z",
-  "updatedUtc": "2026-09-15T16:45:00Z",
+  "updatedUtc": "2026-09-15T16:55:00Z",
   "mission": "Recover current user-facing truth after FirstMate became the canonical live crew runtime, rank only teachable implemented journeys, reject frozen control-plane theater, and leave durable launch-ordered P18/P07/P08 sprint panels for successor chats. Full ranked portfolio and disposition ledger live in plans/active/ASB-2026-09-user-tutorial-path-ranking.md.",
   "owner": {
     "surface": "user tutorials and operator docs",
@@ -16,9 +16,15 @@
   },
   "delivery": {
     "branch": "docs/user-tutorial-path-ranking-20260915",
-    "pullRequest": null,
+    "pullRequest": {
+      "number": 294,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/294",
+      "state": "merged",
+      "mergeCommit": "fd9ace5ab10644b887a41b48e6ac7183e3ed1257"
+    },
     "baseRef": "main",
-    "commitRequired": true
+    "commitRequired": true,
+    "integratedAt": "2026-09-15T16:54:36Z"
   },
   "wave": "post-FirstMate operator clarity",
   "lane": "user-tutorial-ranking",
@@ -246,17 +252,18 @@
   ],
   "proof": {
     "target": "durable ranked tutorial launch order and disposition ledger after FirstMate crew handoff",
-    "achieved": "Inventory and readiness classifications persisted; TUT-RANK-01 completed; successor tutorial tasks ready or blocked with named gates",
+    "achieved": "Ranking integrated on main via PR #294 merge fd9ace5; TUT-RANK-01 completed; successor tutorial tasks ready or blocked with named gates",
     "ceiling": "Ranking and durable plan only. Does not prove tutorial step execution, technician workstation acceptance, provider auth, FirstMate crew dispatch, or operator live-cert PASS."
   },
   "handoff": {
     "nextOwner": "P18 writer for TUT-01",
-    "nextCommand": "Open a new chat and paste the TUT-01 Day-0 bootstrap sprint panel from the ranking closeout; keep TUT-03 and TUT-04 safe-parallel after TUT-01 lands",
+    "nextCommand": "Open a new chat and paste the TUT-01 Day-0 bootstrap sprint panel; keep TUT-03 and TUT-04 safe-parallel after TUT-01 lands",
     "notes": [
       "Launch order: TUT-01 first; then safe-parallel TUT-03 + TUT-04; then TUT-02; P07 prerequisites TUT-PRE-01 and TUT-PRE-02 may run in parallel with tutorials; TUT-05 waits on ASQ-015/017.",
       "Reject ASB child-bus spawn, nested crew, Open Worker, and Prompt Kit live-bridge tutorials.",
       "Canonical ADR: docs/architecture/asb-firstmate-runtime-boundary.md",
-      "Evidence floor for ranking: main@3a153c11f9db9cacc1d9d9dda8c7358c0e3ecbf0"
+      "Evidence floor for ranking: main@3a153c11f9db9cacc1d9d9dda8c7358c0e3ecbf0",
+      "Integration: PR #294 merged as fd9ace5ab10644b887a41b48e6ac7183e3ed1257"
     ]
   }
 }

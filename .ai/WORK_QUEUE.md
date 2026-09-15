@@ -321,17 +321,17 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## ASQ-019 — Rank user tutorial paths after FirstMate crew handoff
 
-- **Status:** CLAIMED
+- **Status:** DONE
 - **Priority:** P1
 - **Work class:** BOUNDED
 - **Owner:** Cursor Auto / user-tutorial-ranking lane
-- **Branch / PR:** docs/user-tutorial-path-ranking-20260915 / pending
+- **Branch / PR:** main / #294 merged
 - **Scope:** inventory implemented operator journeys; classify readiness; publish durable ranked launch order and disposition ledger in `plans/active/ASB-2026-09-user-tutorial-path-ranking.*`; register plan; leave TUT-01 as first P18 writing sprint; do not author every tutorial in this item
 - **Forbidden:** teaching ASB child-bus spawn/nested crew as current product; Open Worker claims without repo evidence; claiming FM-WSL-12 or live-cert PASS from ranking; secrets/private paths in public plans; unfreezing ASQ-008..012; writing full tutorial corpus in this claim
 - **Dependencies:** ASQ-014 ADR on main; existing workstation docs and root CMD entrypoints
-- **References:** `plans/active/ASB-2026-09-user-tutorial-path-ranking.plan.json`, `plans/active/ASB-2026-09-user-tutorial-path-ranking.md`, `docs/architecture/asb-firstmate-runtime-boundary.md`, `docs/workstation/technician-pull-and-run.md`, `docs/workstation/technician-agentswitchboard-ready.md`, `docs/workstation/opencode-click-launcher.md`
+- **References:** `plans/active/ASB-2026-09-user-tutorial-path-ranking.plan.json`, `plans/active/ASB-2026-09-user-tutorial-path-ranking.md`, `docs/architecture/asb-firstmate-runtime-boundary.md`, `docs/workstation/technician-pull-and-run.md`, `docs/workstation/technician-agentswitchboard-ready.md`, `docs/workstation/opencode-click-launcher.md`, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/294
 - **Acceptance gate:** schema-valid public plan + registry membership; disposition ledger complete; launch order names TUT-01 first; validators PASS; ranking integrated to main
-- **Gate:** none for ranking; TUT-05 remains blocked on ASQ-015/017
-- **Last proof:** inventory on main@3a153c11f9db9cacc1d9d9dda8c7358c0e3ecbf0; Open Worker grep zero matches
-- **Next action:** validate plan/ledger, commit, push, open PR, merge when green, then hand TUT-01 panel to a new P18 chat
-- **Updated:** 2026-09-15T16:45:00Z
+- **Gate:** none
+- **Last proof:** merge:fd9ace5ab10644b887a41b48e6ac7183e3ed1257 pr:#294; contains tip d9f9ddb942437804387f80b21693fd38d77a5caf; inventory floor main@3a153c11f9db9cacc1d9d9dda8c7358c0e3ecbf0; Open Worker grep zero matches; Test-PublicPlanContracts PASS; Test-RepositoryWorkLedgerContract PASS
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-15T16:55:00Z
