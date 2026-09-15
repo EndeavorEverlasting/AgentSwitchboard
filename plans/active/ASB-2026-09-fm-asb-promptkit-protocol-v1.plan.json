@@ -7,7 +7,7 @@
   "status": "completed",
   "priority": "high",
   "createdUtc": "2026-09-14T18:40:00Z",
-  "updatedUtc": "2026-09-14T19:35:00Z",
+  "updatedUtc": "2026-09-15T01:00:00Z",
   "mission": "Freeze the FirstMate\u2194AgentSwitchboard\u2194PromptKit integration boundary as six v1 schemas plus a quiet context-rollover UX state machine and receipt drafts, without implementing live adapters.",
   "owner": {
     "surface": "cross-product protocol contracts",
@@ -190,12 +190,12 @@
     "ceiling": "Contract and synthetic fixture proof only. No live observation, routing API, durable inbox delivery, or automatic rollover is claimed."
   },
   "handoff": {
-    "nextOwner": "FirstMate observation adapter lane",
-    "nextCommand": "python tests/test_fm_asb_promptkit_protocol_contract.py",
+    "nextOwner": "ASB-2026-09-FM-ASB-OBSERVATION-ADAPTER",
+    "nextCommand": "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
     "notes": [
-      "Contract freeze is INTEGRATED on main; proof ceiling remains contract-only.",
-      "Do not implement live adapters without a new bounded Phase 1 sprint declaration.",
-      "Phase 1 successor: consume FirstMate task state into asb.agent-observation/v1 without becoming a second watcher."
+      "Contract freeze remains INTEGRATED on main; proof ceiling for this plan stays contract-only.",
+      "Observation adapter implementation and disposable-home live proof are owned by plans/active/ASB-2026-09-fm-asb-observation-adapter.plan.json.",
+      "Do not reopen this contract-freeze plan for adapter or routing implementation."
     ]
   }
 }
