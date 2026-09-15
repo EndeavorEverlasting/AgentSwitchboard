@@ -135,13 +135,19 @@ class RepositoryWorkLedgerContractTests(unittest.TestCase):
         self.assertFalse(adopted['portableRequirement'])
 
     def run_temp(self, content):
-        with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False, dir=ROOT, encoding='utf-8') as handle:
-            handle.write(content)
-            relative = pathlib.Path(handle.name).relative_to(ROOT)
+        # Prefer system temp over the OneDrive checkout root so Test-Path in the
+        # PowerShell validator does not race cloud-filter hydration of a brand-new file.
+        handle = tempfile.NamedTemporaryFile(
+            'w', suffix='.md', delete=False, encoding='utf-8', prefix='asb-ledger-'
+        )
+        path = pathlib.Path(handle.name)
         try:
-            return run_validator(relative)
+            handle.write(content)
+            handle.flush()
+            handle.close()
+            return run_validator(str(path))
         finally:
-            pathlib.Path(handle.name).unlink(missing_ok=True)
+            path.unlink(missing_ok=True)
 
     def test_done_requires_durable_proof_and_terminal_action(self):
         result = self.run_temp(task(Status='DONE', **{'Last proof': 'completed successfully', 'Next action': 'merge later'}))
