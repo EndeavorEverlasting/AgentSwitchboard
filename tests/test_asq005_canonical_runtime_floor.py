@@ -44,37 +44,58 @@ class Asq005CanonicalRuntimeFloorTests(unittest.TestCase):
     def test_asq005_next_action_uses_canonical_live_configure_flow(self) -> None:
         text = WORK_QUEUE.read_text(encoding="utf-8")
         block = _section(text, "## ASQ-005")
+        status = None
         next_action = None
+        last_proof = None
         for line in block.splitlines():
+            if line.startswith("- **Status:**"):
+                status = line.split(":**", 1)[1].strip()
             if line.startswith("- **Next action:**"):
                 next_action = line
-                break
+            if line.startswith("- **Last proof:**"):
+                last_proof = line
+        self.assertIsNotNone(status)
         self.assertIsNotNone(next_action)
+        self.assertIsNotNone(last_proof)
         assert next_action is not None
+        assert last_proof is not None
         lowered = next_action.lower()
         for forbidden in _PRIVATE_PATH_MARKERS:
             self.assertNotIn(forbidden, lowered, next_action)
-        self.assertTrue(lowered.startswith("- **next action:** run "))
-        self.assertIn("AgentSwitchBoard-Live", next_action)
-        self.assertIn("USERPROFILE", next_action)
-        self.assertIn("Invoke-Asq005FreshTuiCertificationPrep.ps1", next_action)
-        self.assertIn("Open-AgentSwitchboard-OpenCode-Lsp.cmd", next_action)
-        self.assertIn("test_technician_live_cert_surface.py", next_action)
-        self.assertIn("read_text", next_action)
-        self.assertIn("24cce9e321a4913dda32f21a2d51a599dd0e4bb4", next_action)
-        self.assertIn("20260912T194619Z-e3f423df", next_action)
+            self.assertNotIn(forbidden, last_proof.lower(), last_proof)
         self.assertIn("G0", block)
         self.assertIn("G8", block)
-        self.assertIn("LIVE_RUNTIME_PROOF:UNPROVEN", block)
-        self.assertIn("WINDOWS_REQUIRED", block)
-        self.assertIn("LIVE_ATTEMPT", block)
         self.assertIn("asq005-fresh-tui-lsp-runtime-gates.md", block)
         self.assertIn("Configure-only proof is insufficient", block)
-        self.assertIn("1e5c599", block)
-        self.assertIn("pr:#170", block.lower())
-        self.assertIn("3c31d2c", block)
-        self.assertIn("pr:#173", block.lower())
-
+        self.assertIn("FirstMate FREEZE/HAND-OFF", block)
+        if status == "DONE":
+            self.assertIn("none; no safe actionable work remains", next_action.lower())
+            self.assertIn("LSP_RUNTIME_SMOKE_TEST: PASS", last_proof)
+            self.assertIn("nonLspSemanticFallbackUsed=No", last_proof)
+            self.assertIn("9af49c5", last_proof)
+            self.assertIn("20260915T035056Z-62bcc7ed", last_proof)
+            self.assertIn("PASS_TUI_HEADLESS_DIFFERENTIAL", last_proof)
+            self.assertIn("pr:#286", last_proof.lower())
+            self.assertIn("pr:#287", last_proof.lower())
+            self.assertIn("liveProofStatus", last_proof)
+            self.assertIn("remains UNPROVEN", last_proof)
+        else:
+            self.assertTrue(lowered.startswith("- **next action:** run "))
+            self.assertIn("AgentSwitchBoard-Live", next_action)
+            self.assertIn("USERPROFILE", next_action)
+            self.assertIn("Invoke-Asq005FreshTuiCertificationPrep.ps1", next_action)
+            self.assertIn("Open-AgentSwitchboard-OpenCode-Lsp.cmd", next_action)
+            self.assertIn("test_technician_live_cert_surface.py", next_action)
+            self.assertIn("read_text", next_action)
+            self.assertIn("24cce9e321a4913dda32f21a2d51a599dd0e4bb4", next_action)
+            self.assertIn("20260912T194619Z-e3f423df", next_action)
+            self.assertIn("LIVE_RUNTIME_PROOF:UNPROVEN", block)
+            self.assertIn("WINDOWS_REQUIRED", block)
+            self.assertIn("LIVE_ATTEMPT", block)
+            self.assertIn("1e5c599", block)
+            self.assertIn("pr:#170", block.lower())
+            self.assertIn("3c31d2c", block)
+            self.assertIn("pr:#173", block.lower())
     def test_adapter_lanes_are_frozen_by_firstmate_boundary(self) -> None:
         text = WORK_QUEUE.read_text(encoding="utf-8")
         asq5 = _section(text, "## ASQ-005")
@@ -188,25 +209,32 @@ class Asq005CanonicalRuntimeFloorTests(unittest.TestCase):
         lowered = next_command.lower()
         for forbidden in _PRIVATE_PATH_MARKERS:
             self.assertNotIn(forbidden, lowered, next_command)
-        self.assertIn("AgentSwitchBoard-Live", next_command)
-        self.assertIn("USERPROFILE", next_command)
-        self.assertIn("Invoke-Asq005FreshTuiCertificationPrep.ps1", next_command)
-        self.assertIn("24cce9e321a4913dda32f21a2d51a599dd0e4bb4", next_command)
-        self.assertIn("Admin Box 1", handoff["nextOwner"])
         self.assertTrue(any("FREEZE" in n for n in handoff.get("notes") or []))
         lsp02 = next(t for t in plan["tasks"] if t["taskId"] == "LSP-02")
         evidence = " ".join(lsp02.get("evidence") or [])
         criteria = " ".join(lsp02.get("acceptanceCriteria") or [])
-        self.assertIn("UNPROVEN", evidence)
-        self.assertIn("24cce9e", evidence)
-        self.assertIn("1e5c599", evidence)
         self.assertIn("G0", criteria)
         self.assertIn("G8", criteria)
         self.assertIn("test_technician_live_cert_surface.py", criteria)
         self.assertIn("read_text", criteria)
         self.assertIn("never promote", criteria.lower())
         self.assertIn("Invoke-Asq005FreshTuiCertificationPrep.ps1", " ".join(lsp02.get("inputs") or []))
-
+        self.assertIn("24cce9e", evidence)
+        self.assertIn("1e5c599", evidence)
+        if lsp02.get("status") == "done":
+            self.assertIn("LSP_RUNTIME_SMOKE_TEST: PASS", evidence)
+            self.assertIn("9af49c5", evidence)
+            self.assertIn("20260915T035056Z-62bcc7ed", evidence)
+            self.assertIn("none;", lowered)
+            self.assertIn("ASQ-015", handoff["nextOwner"])
+            self.assertIn("UNPROVEN", evidence)  # historical + sentinel notes remain
+        else:
+            self.assertIn("AgentSwitchBoard-Live", next_command)
+            self.assertIn("USERPROFILE", next_command)
+            self.assertIn("Invoke-Asq005FreshTuiCertificationPrep.ps1", next_command)
+            self.assertIn("24cce9e321a4913dda32f21a2d51a599dd0e4bb4", next_command)
+            self.assertIn("Admin Box 1", handoff["nextOwner"])
+            self.assertIn("UNPROVEN", evidence)
 
 if __name__ == "__main__":
     unittest.main()
