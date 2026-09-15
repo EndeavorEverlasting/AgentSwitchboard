@@ -1,0 +1,262 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-09-USER-TUTORIAL-PATH-RANKING",
+  "title": "Rank and launch durable user tutorial sprints after FirstMate crew handoff",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "active",
+  "priority": "high",
+  "createdUtc": "2026-09-15T16:30:00Z",
+  "updatedUtc": "2026-09-15T16:45:00Z",
+  "mission": "Recover current user-facing truth after FirstMate became the canonical live crew runtime, rank only teachable implemented journeys, reject frozen control-plane theater, and leave durable launch-ordered P18/P07/P08 sprint panels for successor chats. Full ranked portfolio and disposition ledger live in plans/active/ASB-2026-09-user-tutorial-path-ranking.md.",
+  "owner": {
+    "surface": "user tutorials and operator docs",
+    "role": "tutorial ranking / P18 coordination lane",
+    "agent": "Cursor Auto"
+  },
+  "delivery": {
+    "branch": "docs/user-tutorial-path-ranking-20260915",
+    "pullRequest": null,
+    "baseRef": "main",
+    "commitRequired": true
+  },
+  "wave": "post-FirstMate operator clarity",
+  "lane": "user-tutorial-ranking",
+  "dependencies": [
+    "ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS"
+  ],
+  "safeParallelWork": [
+    "ASQ-015 FirstMate interop pin refresh on a separate branch",
+    "ASQ-017 Admin Box physical-floor observation (operator-only)",
+    "Unrelated harness PR triage that does not touch docs/workstation tutorial owners"
+  ],
+  "ownedScope": [
+    "plans/active/ASB-2026-09-user-tutorial-path-ranking.plan.json",
+    "plans/active/ASB-2026-09-user-tutorial-path-ranking.md",
+    "plans/plan-registry.json membership for this plan",
+    ".ai/WORK_QUEUE.md ASQ-019 entry",
+    "future docs/workstation tutorial owners named by TUT-01 through TUT-04",
+    "future README and CODEBASE_MAP pointers to the tutorial index when authored"
+  ],
+  "forbiddenScope": [
+    "writing every tutorial inside the ranking sprint",
+    "teaching ASB child-bus spawn, nested bus, or multi-crew supervision as current product",
+    "Open Worker product claims without repository evidence",
+    "claiming FirstMate crew dispatch or FM-WSL-12 live PASS from static ranking",
+    "secrets, private hostnames, machine-local receipts, or OneDrive paths in public docs",
+    "merge/release/deploy automation (P105)",
+    "mutating FirstMate upstream or unfreezing ASQ-008 through ASQ-012"
+  ],
+  "expectedArtifacts": [
+    "ranked tutorial portfolio with readiness classifications in the plan summary markdown",
+    "candidate disposition ledger",
+    "copyable P18/P07/P08 sprint panels in launch order",
+    "public plan plus registry plus ASQ-019 ledger row"
+  ],
+  "tasks": [
+    {
+      "taskId": "TUT-RANK-01",
+      "title": "Inventory entrypoints and classify tutorial readiness",
+      "status": "completed",
+      "owner": "tutorial ranking lane",
+      "dependencies": [],
+      "inputs": [
+        "Root CMD launchers",
+        "docs/workstation operator guides",
+        "docs/architecture/asb-firstmate-runtime-boundary.md",
+        ".ai/WORK_QUEUE.md ASQ-005 through ASQ-018",
+        "main@3a153c11f9db9cacc1d9d9dda8c7358c0e3ecbf0"
+      ],
+      "outputs": [
+        "Ranked portfolio in plan summary markdown",
+        "Disposition ledger in plan summary markdown"
+      ],
+      "acceptanceCriteria": [
+        "Every meaningful candidate is disposed exactly once",
+        "Frozen crew and control-plane journeys are marked rejected",
+        "Open Worker is rejected for missing repository evidence"
+      ],
+      "evidence": [
+        "Repository inventory on main@3a153c1",
+        "ADR ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME accepted",
+        "Grep found zero Open Worker matches"
+      ]
+    },
+    {
+      "taskId": "TUT-01",
+      "title": "P18 Day-0 technician bootstrap to Ready",
+      "status": "ready",
+      "owner": "P18 tutorial writer",
+      "dependencies": ["TUT-RANK-01"],
+      "inputs": [
+        "AgentSwitchboard-Technician-Bootstrap.cmd",
+        "Pull-And-Run-AgentSwitchboard.cmd",
+        "Technician-AgentSwitchboard-Ready.cmd",
+        "docs/workstation/technician-pull-and-run.md",
+        "docs/workstation/technician-agentswitchboard-ready.md",
+        "docs/workstation/machine-profile-bootstrap.md"
+      ],
+      "outputs": [
+        "Day-0 technician tutorial consolidating existing docs",
+        "README or docs index pointer",
+        "Verified commands against documented modes"
+      ],
+      "acceptanceCriteria": [
+        "Starting state is a Windows technician with network and GitHub access",
+        "Useful result is Technician-AgentSwitchboard-Ready shell mode success and AgentSwitchboard.lnk",
+        "Does not teach multi-crew ASB control",
+        "Proof ceiling states local readiness not provider auth"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "TUT-02",
+      "title": "P18 startup readiness to OpenCode click sprint",
+      "status": "ready",
+      "owner": "P18 tutorial writer",
+      "dependencies": ["TUT-01"],
+      "inputs": [
+        "AgentSwitchboard.cmd",
+        "Start-AgentSwitchboard-OpenCode.cmd",
+        "Setup-AgentSwitchboard.cmd",
+        "docs/workstation/agent-startup-readiness.md",
+        "docs/workstation/opencode-click-launcher.md",
+        "tooling/gnhf/README.md"
+      ],
+      "outputs": [
+        "Single-agent GNHF OpenCode tutorial",
+        "Explicit NARROW language versus FirstMate crew"
+      ],
+      "acceptanceCriteria": [
+        "Teaches bounded single-agent or fleet launch only",
+        "States push-off-by-default and provider auth outside ASB",
+        "Does not claim ASQ-016 NARROW validator work is already DONE"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "TUT-03",
+      "title": "P18 technician live-cert click path",
+      "status": "ready",
+      "owner": "P18 tutorial writer",
+      "dependencies": ["TUT-01"],
+      "inputs": [
+        "Run-Technician-LiveCert.cmd",
+        "Technician-LiveCert stage CMDs",
+        "docs/workstation/technician-live-cert-click-guide.md"
+      ],
+      "outputs": [
+        "Certification walkthrough with repair branches",
+        "Expected stage evidence locations"
+      ],
+      "acceptanceCriteria": [
+        "Click path matches current stage CMDs",
+        "Hermes remains optional P09",
+        "Per-machine live PASS is not claimed from docs alone"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "TUT-04",
+      "title": "P18 machine-profile anti-OneDrive path",
+      "status": "ready",
+      "owner": "P18 tutorial writer",
+      "dependencies": ["TUT-01"],
+      "inputs": [
+        "Get-AgentSwitchboard-MachineProfile.cmd",
+        "Bootstrap-AgentSwitchboard-In-Directory.cmd",
+        "docs/workstation/machine-profile-bootstrap.md"
+      ],
+      "outputs": [
+        "Short anti-footgun tutorial or Day-0 appendix"
+      ],
+      "acceptanceCriteria": [
+        "Explicit operator path wins",
+        "No committed machine-profile output",
+        "Safe parallel with TUT-03 after TUT-01"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "TUT-PRE-01",
+      "title": "P07 prerequisite encode GNHF NARROW ownership",
+      "status": "ready",
+      "owner": "P07 ASQ-016 lane",
+      "dependencies": ["TUT-RANK-01"],
+      "inputs": [
+        "docs/architecture/asb-firstmate-runtime-boundary.md",
+        "tooling/gnhf/README.md",
+        ".ai/WORK_QUEUE.md ASQ-016"
+      ],
+      "outputs": [
+        "GNHF README and validators stating single-agent fleet NARROW boundary"
+      ],
+      "acceptanceCriteria": [
+        "ASQ-016 acceptance gate satisfied",
+        "Unblocks expanded GNHF fleet and night-panel tutorials beyond TUT-02"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "TUT-PRE-02",
+      "title": "P07 prerequisite strip stale ASB child-bus teaching from Pi docs",
+      "status": "ready",
+      "owner": "P07 docs repair lane",
+      "dependencies": ["TUT-RANK-01"],
+      "inputs": [
+        "docs/harness/pi-system-bootstrap-and-child-agents.md",
+        "docs/architecture/asb-firstmate-runtime-boundary.md"
+      ],
+      "outputs": [
+        "Pi install and bootstrap docs without hub-and-spoke crew claims"
+      ],
+      "acceptanceCriteria": [
+        "Pi system bootstrap sections remain usable",
+        "Child-adapter launch tutorials stay rejected until a FirstMate path exists"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "TUT-05",
+      "title": "P08 deferred FirstMate Windows to WSL floor tutorial",
+      "status": "blocked",
+      "owner": "P08 after ASQ-017",
+      "dependencies": ["TUT-PRE-01"],
+      "inputs": [
+        "docs/harness/firstmate-wsl-physical-floor-runbook.md",
+        "Invoke-Asq017AdminBoxLiveFloor.ps1",
+        "ASQ-015 and ASQ-017 ledger state"
+      ],
+      "outputs": [
+        "Admin-only bridge and floor tutorial stopping before crew spawn claims"
+      ],
+      "acceptanceCriteria": [
+        "Requires observed FM-WSL-12 PASS or named blocker disposition",
+        "Never teaches ASB as crew supervisor"
+      ],
+      "evidence": [
+        "ASQ-017 LIVE_RUNTIME_PROOF UNPROVEN; last Admin Box BLOCKED_GITHUB_AUTH"
+      ]
+    }
+  ],
+  "validation": [
+    "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-RepositoryWorkLedgerContract.ps1",
+    "git diff --check"
+  ],
+  "proof": {
+    "target": "durable ranked tutorial launch order and disposition ledger after FirstMate crew handoff",
+    "achieved": "Inventory and readiness classifications persisted; TUT-RANK-01 completed; successor tutorial tasks ready or blocked with named gates",
+    "ceiling": "Ranking and durable plan only. Does not prove tutorial step execution, technician workstation acceptance, provider auth, FirstMate crew dispatch, or operator live-cert PASS."
+  },
+  "handoff": {
+    "nextOwner": "P18 writer for TUT-01",
+    "nextCommand": "Open a new chat and paste the TUT-01 Day-0 bootstrap sprint panel from the ranking closeout; keep TUT-03 and TUT-04 safe-parallel after TUT-01 lands",
+    "notes": [
+      "Launch order: TUT-01 first; then safe-parallel TUT-03 + TUT-04; then TUT-02; P07 prerequisites TUT-PRE-01 and TUT-PRE-02 may run in parallel with tutorials; TUT-05 waits on ASQ-015/017.",
+      "Reject ASB child-bus spawn, nested crew, Open Worker, and Prompt Kit live-bridge tutorials.",
+      "Canonical ADR: docs/architecture/asb-firstmate-runtime-boundary.md",
+      "Evidence floor for ranking: main@3a153c11f9db9cacc1d9d9dda8c7358c0e3ecbf0"
+    ]
+  }
+}
