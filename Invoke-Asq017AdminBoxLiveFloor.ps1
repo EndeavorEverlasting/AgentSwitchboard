@@ -67,6 +67,16 @@ function Get-Asq017OperatorNextFromText {
     return $null
 }
 
+function Get-Asq017StatusFromText {
+    param([AllowNull()][AllowEmptyString()][string]$Text)
+    if ([string]::IsNullOrWhiteSpace($Text)) { return $null }
+    $matches = [regex]::Matches($Text, '(?m)^STATUS=(.+)$')
+    if ($matches.Count -gt 0) {
+        return $matches[$matches.Count - 1].Groups[1].Value.Trim()
+    }
+    return $null
+}
+
 function Write-Asq017Status {
     param([Parameter(Mandatory)][string]$Key, [Parameter(Mandatory)][string]$Value)
     Write-Host ('{0}={1}' -f $Key, $Value)
@@ -275,6 +285,11 @@ if ($childExit -eq 124) {
     Write-Asq017Blocker -Result 'BLOCKED_PREREQUISITE_TIMEOUT' -ExitCode 124 -FallbackNext 'repair hung WSL/sudo/apt prerequisite or increase host capacity, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1; a prerequisite step timed out'
 }
 if ($childExit -ne 0) {
+    # Prefer child STATUS=BLOCKED_* (e.g. BLOCKED_CONTINUATION_EXHAUSTED) over generic FAILED.
+    $preservedStatus = Get-Asq017StatusFromText -Text $oneshotBlob
+    if (-not [string]::IsNullOrWhiteSpace($preservedStatus) -and $preservedStatus -match '^BLOCKED_') {
+        Write-Asq017Blocker -Result $preservedStatus -ExitCode $childExit -FallbackNext 'inspect child console for NEXT=/NEXT_ACTION=; repair operator blocker; rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+    }
     Write-Asq017Blocker -Result 'FAILED' -ExitCode $childExit -FallbackNext 'inspect child console for NEXT=/NEXT_ACTION=; repair operator blocker; rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
 }
 
