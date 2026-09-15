@@ -677,6 +677,28 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
             continuation,
             r"Kill\(\$true\)\s*\n\s*\$process\.WaitForExit\(\)",
         )
+        # PhysicalFloor + WindowsWSL capture helpers must bound Kill teardown too (#283 residual).
+        physical = (ROOT / "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1").read_text(
+            encoding="utf-8"
+        )
+        windows_wsl = (ROOT / "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1").read_text(
+            encoding="utf-8"
+        )
+        for surface_name, surface in (
+            ("physical", physical),
+            ("windows_wsl", windows_wsl),
+        ):
+            self.assertIn(
+                "$killTeardownTimeoutMs = 30000",
+                surface,
+                msg=f"{surface_name} must bound Kill teardown at 30s",
+            )
+            self.assertIn("WaitForExit($killTeardownTimeoutMs)", surface)
+            self.assertNotRegex(
+                surface,
+                r"Kill\(\$true\)\s*\n\s*\$process\.WaitForExit\(\)",
+                msg=f"{surface_name} must not use unbounded WaitForExit after Kill",
+            )
         self.assertIn("exit 124", oneshot)
         self.assertNotIn('throw "Harness mode=$Mode timed out', oneshot)
         # Child exit 124 from contract/continue/protected must surface as timeout, not contract/generic fail.
