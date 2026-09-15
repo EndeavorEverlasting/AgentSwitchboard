@@ -202,7 +202,9 @@ $EvidenceRoot = (Resolve-Path -LiteralPath $EvidenceRoot).Path
 
 # wsl.exe present is not enough: the contracted distribution must be registered and runnable.
 # Probe before apt/preflight so a missing Ubuntu yields structured exit 46, not an unstructured WSL process error.
-$distroProbeTimeoutSeconds = [Math]::Max(15, [Math]::Min(30, $PrerequisiteTimeoutSeconds))
+# Honor PrerequisiteTimeoutSeconds for cold-start WSL VMs (Admin Box cold probe often exceeds 30s).
+# Floor 15s / ceiling 300s keeps the probe bounded while making NEXT=increase PrerequisiteTimeoutSeconds truthful.
+$distroProbeTimeoutSeconds = [Math]::Max(15, [Math]::Min(300, $PrerequisiteTimeoutSeconds))
 $distroProbe = Invoke-CapturedProcess `
     -FileName $wsl.Source `
     -Arguments @('--distribution', $WslDistribution, '--exec', 'true') `
@@ -212,6 +214,8 @@ Set-Content -LiteralPath $distroProbePath -Value @(
     "HEAD=$actualHead"
     "WSL_DISTRIBUTION=$WslDistribution"
     "PROBE=wsl --distribution $WslDistribution --exec true"
+    "PREREQUISITE_TIMEOUT_SECONDS=$PrerequisiteTimeoutSeconds"
+    "DISTRIBUTION_PROBE_TIMEOUT_SECONDS=$distroProbeTimeoutSeconds"
     "EXIT_CODE=$($distroProbe.ExitCode)"
     "TIMED_OUT=$($distroProbe.TimedOut)"
     'STDOUT<<'
@@ -227,7 +231,7 @@ if ($distroProbe.TimedOut -or $distroProbe.ExitCode -eq 124) {
     Write-Host 'PROOF_LEVEL=LIVE_ATTEMPT_FAIL_CLOSED'
     Write-Host "HEAD=$actualHead"
     Write-Host "WSL_DISTRIBUTION=$WslDistribution"
-    Write-Host "NEXT=increase PrerequisiteTimeoutSeconds or repair hung WSL distribution probe, then rerun; probe timed out after $distroProbeTimeoutSeconds seconds"
+    Write-Host "NEXT=increase -PrerequisiteTimeoutSeconds (honored up to 300s for the distribution probe) or repair hung WSL distribution probe, then rerun; probe timed out after $distroProbeTimeoutSeconds seconds"
     Write-Host "DISTRIBUTION_PROBE_PATH=$distroProbePath"
     exit 124
 }
