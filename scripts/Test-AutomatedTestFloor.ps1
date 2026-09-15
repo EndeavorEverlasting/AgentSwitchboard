@@ -273,6 +273,16 @@ if ($requiredExecuted -lt 1) {
 }
 
 $overall = if ($failures.Count -eq 0) { 'PASS' } else { 'FAIL' }
+
+$generatorPath = $MyInvocation.MyCommand.Path
+$manifestSha = (Get-FileHash -LiteralPath $ManifestPath -Algorithm SHA256).Hash.ToLowerInvariant()
+$generatorSha = (Get-FileHash -LiteralPath $generatorPath -Algorithm SHA256).Hash.ToLowerInvariant()
+$trigger = if (-not [string]::IsNullOrWhiteSpace($env:GITHUB_ACTIONS) -and $env:GITHUB_ACTIONS -eq 'true') {
+    'github-actions'
+} else {
+    'local-cli'
+}
+
 $receipt = [ordered]@{
     schema           = 'agentswitchboard.automated-test-floor.receipt.v1'
     generatedUtc     = [DateTime]::UtcNow.ToString('o')
@@ -283,6 +293,19 @@ $receipt = [ordered]@{
     proofLevel       = [string]$manifest.proofLevel
     proofCeiling     = [string]$manifest.proofCeiling
     result           = $overall
+    provenance       = [ordered]@{
+        trigger              = $trigger
+        inputManifestSha256  = $manifestSha
+        generatorPath        = $generatorPath
+        generatorSha256      = $generatorSha
+        ownedOutputs         = @(
+            'automated-test-floor-receipt.json'
+            'automated-test-floor-receipt.md'
+        )
+        outputPolicy         = 'ephemeral-outside-checkout-by-default'
+        committedGeneratedCode = $false
+        loopGuard            = 'receipts are not tracked; generation cannot create a generate-commit-generate cycle'
+    }
     summary          = [ordered]@{
         requiredGates = $requiredGateCount
         pass          = $passCount
@@ -308,6 +331,9 @@ $md = [System.Collections.Generic.List[string]]::new()
 [void]$md.Add(('Required pass/fail/skip: {0} / {1} / {2}' -f $requiredPass, $failCount, $skipCount))
 [void]$md.Add(('Proof level: {0}' -f [string]$manifest.proofLevel))
 [void]$md.Add(('Proof ceiling: {0}' -f [string]$manifest.proofCeiling))
+[void]$md.Add(('Trigger: {0}' -f $trigger))
+[void]$md.Add(('Manifest SHA-256: {0}' -f $manifestSha))
+[void]$md.Add(('Generator SHA-256: {0}' -f $generatorSha))
 [void]$md.Add('')
 [void]$md.Add('| Gate | Runner | Status | Detail |')
 [void]$md.Add('|---|---|---|---|')

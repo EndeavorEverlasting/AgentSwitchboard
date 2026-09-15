@@ -308,13 +308,13 @@ Canonical terminal action: none; no safe actionable work remains
 - **Priority:** P1
 - **Work class:** BOUNDED
 - **Owner:** Cursor Auto / automated-test-floor lane
-- **Branch / PR:** feat/automated-test-floor-20260915 / #290
-- **Scope:** create fail-closed automated test floor (manifest + canonical `Test-AutomatedTestFloor.ps1` + meta tests + GitHub Actions push/PR/workflow_dispatch), prove healthy pass and representative negative canary on the real provider, stop at validated testing
-- **Forbidden:** merge/release/deploy automation (P105); secrets; live runtime mutation; rewriting unrelated path-filtered domain workflows; claiming runtime proof from static PASS; cron schedule without explicit operator preference
+- **Branch / PR:** feat/automated-test-floor-actions-quota-20260915 / successor to merged #290
+- **Scope:** FLOOR-05 Actions-quota local proof packet + receipt provenance + quota-aware workflow triggers; FLOOR-01..04 already merged via PR #290 @ main`7effd42`
+- **Forbidden:** merge/release/deploy automation (P105); secrets; live runtime mutation; rewriting unrelated path-filtered domain workflows; claiming runtime proof from static PASS; cron schedule without explicit operator preference; patching production gates for canary; committing ephemeral receipts
 - **Dependencies:** none
-- **References:** `plans/active/ASB-2026-09-automated-test-floor.plan.json`, `.ai/harness/automated-test-floor.manifest.json`, `scripts/Test-AutomatedTestFloor.ps1`, `docs/harness/automated-test-floor.md`, `.github/workflows/automated-test-floor.yml`, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/290
-- **Acceptance gate:** local meta + floor PASS; provider exact-head PASS; controlled defect fails floor for the right reason then restored; no canary left on durable branch
+- **References:** `plans/active/ASB-2026-09-automated-test-floor.plan.json`, `.ai/harness/automated-test-floor.manifest.json`, `scripts/Test-AutomatedTestFloor.ps1`, `scripts/Prove-AutomatedTestFloorLocal.ps1`, `docs/harness/automated-test-floor.md`, `.github/workflows/automated-test-floor.yml`, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/290
+- **Acceptance gate:** local meta + floor PASS; Prove-AutomatedTestFloorLocal PASS; isolated canary fails closed without production-gate mutation; provenance receipts; FLOOR-05 integrated into main
 - **Gate:** none
-- **Last proof:** healthy floor PASS @3f25d06 / b93c77c; canary FAIL workflow:34931598102 exact-grounding-script NEGATIVE_CANARY @dcecfd4; restore commit pending
-- **Next action:** push canary restore, prove Automated test floor green on restored head, then merge PR #290 into main when checks are green
-- **Updated:** 2026-09-15T05:18:00Z
+- **Last proof:** merge:7effd421060241d8a0e76e007be052064b5da677 pr:#290; canary FAIL workflow:34931598102 @dcecfd4; restore PASS workflow:34932484309 @40d46a4; meta 7/7 PASS on FLOOR-05 WIP
+- **Next action:** run Prove-AutomatedTestFloorLocal.ps1, commit/push FLOOR-05, open PR, merge when gates green
+- **Updated:** 2026-09-15T06:31:00Z

@@ -2,13 +2,11 @@ name: Automated test floor
 
 on:
   pull_request:
+  # Quota-aware: feature-branch pushes are covered by pull_request.
+  # Avoid double-spend when monthly GitHub Actions minutes are exhausted.
   push:
     branches:
       - main
-      - 'feat/**'
-      - 'fix/**'
-      - 'chore/**'
-      - 'cursor/**'
   workflow_dispatch:
 
 concurrency:

@@ -90,7 +90,7 @@
       "planId": "ASB-2026-09-AUTOMATED-TEST-FLOOR",
       "path": "plans/active/ASB-2026-09-automated-test-floor.plan.json",
       "summaryPath": "plans/active/ASB-2026-09-automated-test-floor.md",
-      "status": "active",
+      "status": "completed",
       "priority": "high",
       "dependencies": []
     }

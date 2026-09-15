@@ -5,10 +5,11 @@ Load only the smallest surface required by the selected skill, workflow, public 
 ## Automated test floor
 
 - `.ai/harness/automated-test-floor.manifest.json` — required static gates and explicit runner types (`python-script`, `python-unittest`, `pwsh-file`).
-- `scripts/Test-AutomatedTestFloor.ps1` — canonical developer/CI command; fail-closed on zero required gates or zero unittest cases.
+- `scripts/Test-AutomatedTestFloor.ps1` — canonical developer/CI command; fail-closed on zero required gates or zero unittest cases; emits provenance receipts outside the checkout.
+- `scripts/Prove-AutomatedTestFloorLocal.ps1` — Actions-quota workaround: meta + floor + isolated canary local proof packet.
 - `tests/test_automated_test_floor.py` — meta contracts and negative canary fixtures.
-- `.github/workflows/automated-test-floor.yml` — AFK `push` / `pull_request` / `workflow_dispatch` proof on Windows and Ubuntu.
-- `docs/harness/automated-test-floor.md` — operator-facing floor contract and proof boundary.
+- `.github/workflows/automated-test-floor.yml` — AFK `pull_request` / `main` push / `workflow_dispatch` proof on Windows and Ubuntu.
+- `docs/harness/automated-test-floor.md` — operator-facing floor contract, source/generated boundary, and proof boundary.
 
 ## Root coordination
 

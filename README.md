@@ -108,6 +108,12 @@ Run the always-on automated test floor (static contracts shared by developers an
 pwsh -NoLogo -NoProfile -File .\scripts\Test-AutomatedTestFloor.ps1
 ```
 
+When GitHub Actions minutes are exhausted, prove the same entrypoints locally without consuming provider minutes:
+
+```powershell
+pwsh -NoLogo -NoProfile -File .\scripts\Prove-AutomatedTestFloorLocal.ps1
+```
+
 Validate focused documentation, public plans, and family harness owners with:
 
 ```powershell

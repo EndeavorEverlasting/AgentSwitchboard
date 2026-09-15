@@ -15,6 +15,17 @@
       "proof": "always-on static automated test floor with fail-closed zero-test and explicit script/unittest runners"
     },
     {
+      "id": "automated-test-floor-local-proof",
+      "command": "pwsh -NoLogo -NoProfile -File scripts/Prove-AutomatedTestFloorLocal.ps1",
+      "platforms": [
+        "windows",
+        "linux"
+      ],
+      "tier": "foundation",
+      "mutatesTarget": false,
+      "proof": "Actions-quota workaround: meta + floor + isolated canary local proof packet without consuming GitHub Actions minutes"
+    },
+    {
       "id": "operational-python",
       "command": "python3 tests/test_operational_harness.py",
       "platforms": [
