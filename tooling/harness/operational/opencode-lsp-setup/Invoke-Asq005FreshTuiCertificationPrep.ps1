@@ -49,6 +49,17 @@ function Get-NormalizedOrigin {
     return $value
 }
 
+function Get-NormalizedLocalPath {
+    param([Parameter(Mandatory)][string]$PathValue)
+    # Git on Windows often emits forward slashes from rev-parse; Resolve-Path uses backslashes.
+    $value = $PathValue.Trim().TrimEnd('\', '/')
+    $value = $value -replace '/', '\'
+    if ($env:OS -like '*Windows*') {
+        return $value.ToLowerInvariant()
+    }
+    return $value
+}
+
 $canonicalOrigin = 'https://github.com/EndeavorEverlasting/AgentSwitchboard'
 $fixtureRel = 'tests/test_technician_live_cert_surface.py'
 $symbol = 'read_text'
@@ -81,7 +92,7 @@ if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($root)) {
     Stop-Asq005Prep -Code 'NOT_A_GIT_REPOSITORY' -Message 'ASQ-005 requires a Git checkout at the Live root.'
 }
 $root = $root.Trim()
-if ($root -ne $RepoPath) {
+if ((Get-NormalizedLocalPath -PathValue $root) -ne (Get-NormalizedLocalPath -PathValue $RepoPath)) {
     Stop-Asq005Prep -Code 'WRONG_REPOSITORY_ROOT' -Message ("actual={0}|expected={1}" -f $root, $RepoPath)
 }
 

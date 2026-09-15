@@ -158,7 +158,7 @@ else {
  $prepTokens=$null; $prepErrors=$null; [void][Management.Automation.Language.Parser]::ParseFile($asq005PrepPath,[ref]$prepTokens,[ref]$prepErrors)
  if ($prepErrors.Count -gt 0) { [void]$failures.Add("powershell-parse:Invoke-Asq005FreshTuiCertificationPrep.ps1:$($prepErrors[0].Message)") }
  $prepRaw = Get-Content -LiteralPath $asq005PrepPath -Raw
- foreach ($token in @('ASQ005_LIVE_PROOF_STATUS','UNPROVEN','ASQ005_CONFIGURE_IS_NOT_DONE','WINDOWS_REQUIRED','never ASQ-005 DONE','24cce9e321a4913dda32f21a2d51a599dd0e4bb4','test_technician_live_cert_surface.py','read_text','LSP_RUNTIME_SMOKE_TEST: PASS','Get-NormalizedOrigin','NOT_ON_MAIN')) {
+ foreach ($token in @('ASQ005_LIVE_PROOF_STATUS','UNPROVEN','ASQ005_CONFIGURE_IS_NOT_DONE','WINDOWS_REQUIRED','never ASQ-005 DONE','24cce9e321a4913dda32f21a2d51a599dd0e4bb4','test_technician_live_cert_surface.py','read_text','LSP_RUNTIME_SMOKE_TEST: PASS','Get-NormalizedOrigin','Get-NormalizedLocalPath','NOT_ON_MAIN')) {
   if (-not $prepRaw.Contains($token)) { [void]$failures.Add("asq005-prep-missing:$token") }
  }
 }
