@@ -24,7 +24,7 @@
     "baseRef": "main",
     "commitRequired": true
   },
-  "wave": "1 \u2014 FirstMate runtime boundary",
+  "wave": "1 — FirstMate runtime boundary",
   "lane": "public-plan / architecture-decision / repository-work-ledger coordination",
   "dependencies": [],
   "safeParallelWork": [
@@ -91,7 +91,7 @@
     {
       "taskId": "LSP-02",
       "title": "OpenCode fresh-TUI LSP runtime certification",
-      "status": "in-progress",
+      "status": "done",
       "owner": "Admin Box 1",
       "dependencies": [
         "COORD-01"
@@ -130,13 +130,14 @@
       "evidence": [
         "PR #163 squash-merged to main @ 24cce9e321a4913dda32f21a2d51a599dd0e4bb4 (canonical Live floor, ASQ-008/009 gated on ASQ-005)",
         "Cloud/Linux runtime sprint: INTEGRATED contract floor only; launcher/TUI/LSP hover-def-refs NOT OBSERVED; no opencode-lsp-runtime-smoke.json/.md",
-        "LIVE_RUNTIME_PROOF: UNPROVEN \u2014 Admin Box 1 interactive OpenCode TUI required",
+        "LIVE_RUNTIME_PROOF: UNPROVEN — Admin Box 1 interactive OpenCode TUI required",
         "Runtime sprint ASQ-005/LSP-02 on Linux Cloud Agent 2026-09-13T18:05Z: stop/safe-start N/A (no Windows OpenCode session); launcher attach NOT RUN; target surface NOT OBSERVED; LSP hover/def/refs on read_text NOT OBSERVED; runtime artifact NONE; protected headless control 20260912T194619Z-e3f423df NOT RE-OBSERVED; proof level INTEGRATED contract floor only",
         "2026-09-13 cloud agent: durable G0-G8 gate contract encoded; live TUI still UNPROVEN on Linux Cloud Agent (WINDOWS_REQUIRED on Configure)",
         "PR #170 squash-merged to main @ 1e5c599a13e84cb3ccfd23ae723cf6c77264d7ed (durable G0-G8 gate encoding)",
         "2026-09-13 cloud deepen: Invoke-Asq005FreshTuiCertificationPrep.ps1 graduates G0/G1 prep from WORK_QUEUE snippet; harness validates liveProofStatus=UNPROVEN and configureNeverPromotesToDone; live TUI still UNPROVEN",
         "PR #173 merged to main @ 3c31d2c440e805533946cbfaa95aa733cfffbacb (G0-G8 harness deepen + Invoke-Asq005FreshTuiCertificationPrep.ps1); live TUI still UNPROVEN",
-        "2026-09-14T00:23Z cloud LIVE_ATTEMPT on main@bf6c6a4: Invoke-Asq005FreshTuiCertificationPrep G0 PASS; G1 Configure FAIL_CLOSED WINDOWS_REQUIRED; G2-G8 NOT OBSERVED; no runtime-smoke receipt; LIVE_RUNTIME_PROOF remains UNPROVEN (Admin Box 1 only)"
+        "2026-09-14T00:23Z cloud LIVE_ATTEMPT on main@bf6c6a4: Invoke-Asq005FreshTuiCertificationPrep G0 PASS; G1 Configure FAIL_CLOSED WINDOWS_REQUIRED; G2-G8 NOT OBSERVED; no runtime-smoke receipt; LIVE_RUNTIME_PROOF remains UNPROVEN (Admin Box 1 only)",
+        "2026-09-15T03:50Z Admin Box 1 LIVE_PASS on main@9af49c5e65960080cbfd5c709eca1becc86b30a6 run 20260915T035056Z-62bcc7ed: G0-G8 with LSP_RUNTIME_SMOKE_TEST: PASS; hover/def/refs on read_text; nonLspSemanticFallbackUsed=No; differential PASS_TUI_HEADLESS_DIFFERENTIAL; observation via launcher-equivalent opencode run + G2 CMD launch (not TUI chrome keyboard); pr:#286+#287 integrated; tracked contract liveProofStatus remains UNPROVEN sentinel"
       ]
     },
     {
@@ -276,7 +277,7 @@
       "taskId": "PI-ADAPTER-05",
       "title": "Pi child adapter conformance (frozen)",
       "status": "skipped",
-      "owner": "frozen \u2014 FirstMate owns live child runtime",
+      "owner": "frozen — FirstMate owns live child runtime",
       "dependencies": [
         "ARCH-FM-01"
       ],
@@ -298,7 +299,7 @@
       "taskId": "OC-ADAPTER-06",
       "title": "OpenCode child adapter parity (frozen)",
       "status": "skipped",
-      "owner": "frozen \u2014 FirstMate owns live child runtime",
+      "owner": "frozen — FirstMate owns live child runtime",
       "dependencies": [
         "ARCH-FM-01"
       ],
@@ -319,7 +320,7 @@
       "taskId": "PILOT-07",
       "title": "Heterogeneous read-only pilot via ASB bus (frozen/repurposed)",
       "status": "skipped",
-      "owner": "frozen \u2014 repurpose through FirstMate crew",
+      "owner": "frozen — repurpose through FirstMate crew",
       "dependencies": [
         "ARCH-FM-01"
       ],
@@ -427,18 +428,14 @@
     "ceiling": "Public plan/ledger coordination + INTEGRATED Live routing floor. Does not prove live OpenCode TUI LSP hover/definition/references, FirstMate crew dispatch, or provider delivery."
   },
   "handoff": {
-    "nextOwner": "Admin Box 1 (ASQ-005 / LSP-02 G0-G8 live TUI); ASQ-015 may proceed in parallel; ASQ-008/009 remain FirstMate FREEZE/HAND-OFF",
-    "nextCommand": "run Admin Box 1 Live-floor fresh-TUI certification through G0-G8: $ErrorActionPreference='Stop'; $repo = Join-Path $env:USERPROFILE 'dev\\AgentSwitchBoard-Live'; Set-Location -LiteralPath $repo; pwsh -NoLogo -NoProfile -File .\\tooling\\harness\\operational\\opencode-lsp-setup\\Invoke-Asq005FreshTuiCertificationPrep.ps1; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; # then complete G2-G8 in fresh TUI; Configure/CI never DONE; floor 24cce9e321a4913dda32f21a2d51a599dd0e4bb4 enforced by prep",
+    "nextOwner": "ASQ-015 FirstMate interop refresh owner; ASQ-008/009 remain FirstMate FREEZE/HAND-OFF",
+    "nextCommand": "none; ASQ-005/LSP-02 live PASS recorded — continue ASQ-015 from refreshed main without tip-citing ASQ-005 proof SHA",
     "notes": [
-      "ASQ-005 critical path is Admin Box 1 fresh-TUI G0-G8 observation; Configure alone is not DONE.",
-      "Durable gates: docs/harness/asq005-fresh-tui-lsp-runtime-gates.md + tooling/harness/operational/opencode-lsp-setup/asq005-runtime-gates.contract.json",
-      "Fixture tests/test_technician_live_cert_surface.py; symbol read_text; baseline 20260912T194619Z-e3f423df.",
-      "After Configure launcher: open fixture once; LSP-only hover/definition/references; write local opencode-lsp-runtime-smoke.json/.md; run scripts/Test-OpenCodeLspHarness.ps1 -RootPath $repo.",
-      "Cloud/Linux cannot substitute; INTEGRATED routing floor is not OBSERVED runtime PASS.",
-      "ASQ-008/009 remain FREEZE/HAND-OFF under ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME; do not restart as ASB live adapter lanes after ASQ-005.",
-      "If nested work is ever reauthorized: ASQ-011 owns nested-delegation contract/mechanism; ASQ-012 owns depth-2 runtime certification.",
-      "Public plan data must remain public-safe: no private operator host/user/OneDrive path in tracked artifacts.",
-      "Reusable prep: tooling/harness/operational/opencode-lsp-setup/Invoke-Asq005FreshTuiCertificationPrep.ps1"
+      "ASQ-005 DONE on Admin Box 1 with local untracked runtime-smoke under run 20260915T035056Z-62bcc7ed; Configure alone was never DONE.",
+      "Durable gates remain: docs/harness/asq005-fresh-tui-lsp-runtime-gates.md + asq005-runtime-gates.contract.json (tracked liveProofStatus stays UNPROVEN sentinel).",
+      "ASQ-008/009 remain FREEZE/HAND-OFF under ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME; ASQ-005 completion does not authorize ASB live adapter expansion.",
+      "Do not open tip-cite PRs merely because main advanced after this live PASS; revalidate only if proof-relevant OpenCode LSP surfaces change.",
+      "Public plan data must remain public-safe: no private operator host/user/OneDrive path in tracked artifacts."
     ]
   }
 }
