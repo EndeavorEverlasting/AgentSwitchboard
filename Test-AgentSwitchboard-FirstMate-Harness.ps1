@@ -29,14 +29,26 @@ function Invoke-NativeChecked {
     )
     & $Action
     $exitCode = $LASTEXITCODE
-    if ($exitCode -ne 0) { throw "$Name failed with exit code $exitCode." }
+    if ($exitCode -ne 0) {
+        # Keep structured child exits — do not throw (throw collapses to unstructured exit 1).
+        Write-Host "STATUS=BLOCKED_HARNESS_CONTRACT"
+        Write-Host "FAILED_CHECK=$Name"
+        Write-Host "CHILD_EXIT_CODE=$exitCode"
+        Write-Host "NEXT=repair $Name (child exit $exitCode), then rerun Test-AgentSwitchboard-FirstMate-Harness.ps1"
+        exit $exitCode
+    }
 }
 
 Push-Location $Root
 try {
     if ([string]::IsNullOrWhiteSpace($ExpectedHead)) {
         $ExpectedHead = (& git rev-parse HEAD).Trim()
-        if ($LASTEXITCODE -ne 0) { throw 'Unable to resolve the exact AgentSwitchboard HEAD.' }
+        if ($LASTEXITCODE -ne 0) {
+            # Keep structured — do not throw (throw collapses to unstructured exit 1).
+            Write-Host 'STATUS=BLOCKED_GIT_HEAD'
+            Write-Host 'NEXT=repair the AgentSwitchboard checkout so git rev-parse HEAD succeeds, then rerun Test-AgentSwitchboard-FirstMate-Harness.ps1'
+            exit 1
+        }
     }
 
     switch ($Mode) {
@@ -57,23 +69,38 @@ try {
 
             $bridge = Join-Path $Root 'Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1'
             & pwsh -NoLogo -NoProfile -File $bridge -ExpectedHead $ExpectedHead -WslDistribution $WslDistribution -ContractOnly
-            if ($LASTEXITCODE -ne 0) { throw "Windows-to-WSL bridge ContractOnly gate failed with exit code $LASTEXITCODE." }
+            if ($LASTEXITCODE -ne 0) {
+                # Preserve structured child exits — do not throw (throw collapses to unstructured exit 1).
+                exit $LASTEXITCODE
+            }
 
             $physical = Join-Path $Root 'Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1'
             & pwsh -NoLogo -NoProfile -File $physical -ExpectedHead $ExpectedHead -WslDistribution $WslDistribution -ContractOnly
-            if ($LASTEXITCODE -ne 0) { throw "Physical-floor ContractOnly gate failed with exit code $LASTEXITCODE." }
+            if ($LASTEXITCODE -ne 0) {
+                # Preserve structured child exits — do not throw (throw collapses to unstructured exit 1).
+                exit $LASTEXITCODE
+            }
 
             $continuation = Join-Path $Root 'Invoke-FirstMatePhysicalFloorContinuation.ps1'
             & pwsh -NoLogo -NoProfile -File $continuation -ExpectedHead $ExpectedHead -WslDistribution $WslDistribution -ContractOnly
-            if ($LASTEXITCODE -ne 0) { throw "Physical-floor continuation ContractOnly gate failed with exit code $LASTEXITCODE." }
+            if ($LASTEXITCODE -ne 0) {
+                # Preserve structured child exits — do not throw (throw collapses to unstructured exit 1).
+                exit $LASTEXITCODE
+            }
 
             $adminBoxLive = Join-Path $Root 'Invoke-FmWsl12AdminBoxLiveProof.ps1'
             & pwsh -NoLogo -NoProfile -File $adminBoxLive -ExpectedHead $ExpectedHead -WslDistribution $WslDistribution -ContractOnly
-            if ($LASTEXITCODE -ne 0) { throw "FM-WSL-12 Admin Box live-proof ContractOnly gate failed with exit code $LASTEXITCODE." }
+            if ($LASTEXITCODE -ne 0) {
+                # Preserve structured child exits — do not throw (throw collapses to unstructured exit 1).
+                exit $LASTEXITCODE
+            }
 
             $asq017LiveFloor = Join-Path $Root 'Invoke-Asq017AdminBoxLiveFloor.ps1'
             & pwsh -NoLogo -NoProfile -File $asq017LiveFloor -WslDistribution $WslDistribution -ContractOnly
-            if ($LASTEXITCODE -ne 0) { throw "ASQ-017 Admin Box live-floor ContractOnly gate failed with exit code $LASTEXITCODE." }
+            if ($LASTEXITCODE -ne 0) {
+                # Preserve structured child exits — do not throw (throw collapses to unstructured exit 1).
+                exit $LASTEXITCODE
+            }
 
             Invoke-NativeChecked -Name 'Working-tree diff hygiene' -Action { & git diff --check }
             Invoke-NativeChecked -Name 'Staged diff hygiene' -Action { & git diff --cached --check }
