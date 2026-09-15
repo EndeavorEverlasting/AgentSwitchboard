@@ -55,11 +55,16 @@ class PiWslBootstrapTests(unittest.TestCase):
     def test_contract_pins_observed_working_linux_stack(self) -> None:
         versions = self.contract["versions"]
         self.assertEqual("v0.40.7", versions["nvm"])
+        self.assertIn("bootstrap pin", versions["nvmMeaning"])
         self.assertEqual("24.21.0", versions["node"])
         self.assertEqual("0.85.1", versions["pi"])
         self.assertEqual("@earendil-works/pi-coding-agent", versions["npmPackage"])
         self.assertEqual("Ubuntu", self.contract["target"]["wslDistribution"])
         self.assertTrue(self.contract["target"]["linuxUserOwned"])
+        self.assertEqual(
+            "preserve-clean-functional-checkout",
+            self.contract["boundedMutation"]["existingNvmPolicy"],
+        )
 
     def test_installer_is_linux_native_and_rejects_windows_path_leak(self) -> None:
         lower = self.installer.lower()
@@ -71,7 +76,7 @@ class PiWslBootstrapTests(unittest.TestCase):
             "status=blocked_windows_path_leak",
             "$home/.nvm/versions/node/",
             "npm install -g --ignore-scripts",
-            "@earendil-works/pi-coding-agent",
+            "__pi_package__@__pi_version__",
             "pi_wsl_bootstrap=pass",
             "pi_wsl_inspect=ready",
             "pi_wsl_inspect=drift",
@@ -82,13 +87,22 @@ class PiWslBootstrapTests(unittest.TestCase):
         self.assertIn('export NVM_DIR="$HOME/.nvm"', self.installer)
         self.assertNotIn("/mnt/c/Users/", self.installer)
 
-    def test_inspect_ready_requires_pinned_nvm_node_and_pi(self) -> None:
+    def test_inspect_ready_requires_nvm_owned_pinned_node_and_pi(self) -> None:
         self.assertIn("nvm --version", self.installer)
-        self.assertIn("__NVM_VERSION_PLAIN__", self.installer)
         self.assertIn("__NODE_VERSION__", self.installer)
         self.assertIn("__PI_VERSION__", self.installer)
-        self.assertIn("$nvmVersion.TrimStart('v')", self.installer)
         self.assertIn("$HOME/.nvm/versions/node/", self.installer)
+        self.assertNotIn("__NVM_VERSION_PLAIN__", self.installer)
+
+    def test_noninteractive_wsl_work_is_bounded_but_pi_tui_is_interactive(self) -> None:
+        timeouts = self.contract["timeouts"]
+        self.assertEqual(120, timeouts["inspectSeconds"])
+        self.assertEqual(1800, timeouts["applySeconds"])
+        self.assertFalse(timeouts["interactivePiTuiBounded"])
+        self.assertIn("WaitForExit($TimeoutSeconds * 1000)", self.installer)
+        self.assertIn("$process.Kill($true)", self.installer)
+        self.assertIn("STATUS=BLOCKED_WSL_TIMEOUT", self.installer)
+        self.assertIn("-Interactive", self.installer)
 
     def test_package_mutation_is_bounded_to_contract_allowlist(self) -> None:
         bounded = self.contract["boundedMutation"]
@@ -113,14 +127,21 @@ class PiWslBootstrapTests(unittest.TestCase):
         self.assertIn("does **not** choose a provider", self.docs)
         self.assertIn("/login", self.docs)
 
-    def test_nvm_is_preservation_first_and_shell_init_is_literal(self) -> None:
+    def test_nvm_is_preservation_first_and_shell_init_is_complete(self) -> None:
         self.assertIn("STATUS=BLOCKED_NVM_ROOT_OWNERSHIP", self.installer)
         self.assertIn("STATUS=BLOCKED_NVM_DIRTY", self.installer)
+        self.assertIn("STATUS=BLOCKED_NVM_UNUSABLE", self.installer)
         self.assertIn("status --porcelain=v1", self.installer)
+        self.assertIn("git clone --branch '__NVM_VERSION__' --depth 1", self.installer)
+        self.assertIn("Preserving existing clean functional NVM checkout", self.installer)
+        self.assertNotIn("git -C \"$NVM_DIR\" checkout", self.installer)
+        self.assertNotIn("git -C \"$NVM_DIR\" fetch", self.installer)
         self.assertNotIn("git reset", self.installer.lower())
         self.assertNotIn("git clean", self.installer.lower())
-        self.assertIn("<<'ASB_NVM'", self.installer)
+        self.assertIn("ensure_bashrc_line", self.installer)
         self.assertIn('export NVM_DIR="$HOME/.nvm"', self.installer)
+        self.assertIn('[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"', self.installer)
+        self.assertIn('[ -s "$NVM_DIR/bash_completion" ] && \\. "$NVM_DIR/bash_completion"', self.installer)
 
     def test_proof_ceiling_does_not_promote_manual_screenshot_to_cmd_field_proof(self) -> None:
         ceiling = self.contract["proofCeiling"].lower()
