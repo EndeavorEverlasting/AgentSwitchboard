@@ -153,6 +153,20 @@ class Asq005CanonicalRuntimeFloorTests(unittest.TestCase):
             "(Get-NormalizedLocalPath -PathValue $root) -ne (Get-NormalizedLocalPath -PathValue $RepoPath)",
             prep_text,
         )
+        setup = (
+            ROOT
+            / "tooling"
+            / "harness"
+            / "operational"
+            / "opencode-lsp-setup"
+            / "Invoke-OpenCodeLspWorkstationSetup.ps1"
+        )
+        setup_text = setup.read_text(encoding="utf-8")
+        self.assertIn(
+            "$env:OPENCODE_EXPERIMENTAL_LSP_TOOL = ''true''",
+            setup_text,
+            "Durable ASQ-005 launcher must expose the experimental LSP tool",
+        )
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(
             manifest["entrypoints"]["asq005RuntimeGatesContract"],
