@@ -416,6 +416,18 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertNotIn("(git rev-parse HEAD).Trim()", durable_text)
         self.assertNotIn("$head=(git rev-parse HEAD).Trim()", durable_text)
         self.assertIn("[switch]$ContractOnly", durable_text)
+        self.assertIn("STATUS=CONTRACT_FAIL", durable_text)
+        self.assertIn("ASQ017_RESULT", durable_text)
+        # ContractOnly failure must stay structured (no throw → unstructured exit 1).
+        contract_block = durable_text.split("if ($ContractOnly)", 1)[1].split(
+            "Set-Location -LiteralPath $Root", 1
+        )[0]
+        self.assertIn("STATUS=CONTRACT_FAIL", contract_block)
+        self.assertIn("CHILD_EXIT_CODE", contract_block)
+        self.assertNotIn('throw "', contract_block)
+        self.assertNotIn("throw '", contract_block)
+        self.assertNotIn('throw "ASQ-017 ContractOnly', durable_text)
+
         self.assertIn("[string]$FirstMatePath", durable_text)
         self.assertIn("-FirstMatePath", durable_text)
         self.assertIn("LIVE_RUNTIME_PROOF", durable_text)
