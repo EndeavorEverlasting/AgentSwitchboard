@@ -220,6 +220,43 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
             continuation.rindex("exit 1"),
         )
 
+    def test_asq017_quiesces_repeated_unchanged_environment_blocker(self) -> None:
+        asq = (ROOT / "Invoke-Asq017AdminBoxLiveFloor.ps1").read_text(encoding="utf-8")
+        # Quiescence is runtime behavior, not a HEAD/tip citation heuristic.
+        self.assertIn("Get-Asq017ProofRelevanceFingerprint", asq)
+        self.assertIn("Get-FileHash", asq)
+        self.assertIn("PROOF_RELEVANCE_FINGERPRINT", asq)
+        for proof_input in (
+            "Invoke-FmWsl12AdminBoxLiveProof.ps1",
+            "Invoke-FirstMatePhysicalFloorContinuation.ps1",
+            "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1",
+            "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1",
+            "integration-contract.json",
+            "upstream-pin.json",
+            "wslDistribution=",
+            "prerequisiteTimeoutSeconds=",
+            "skipProtectedControl=",
+        ):
+            self.assertIn(proof_input, asq)
+        self.assertIn("asb-quiescence-state/v1", asq)
+        self.assertIn("[System.IO.Path]::GetTempPath()", asq)
+        self.assertIn("BLOCKED_WINDOWS_WSL_REQUIRED", asq)
+        self.assertIn("STATUS=QUIESCENT_BLOCKED", asq)
+        self.assertIn("ASQ017_RESULT", asq)
+        self.assertIn("QUIESCENCE_REASON", asq)
+        self.assertIn("REPEATED_UNCHANGED_EXTERNAL_BLOCKER", asq)
+        self.assertIn("PROGRESS_BEARING", asq)
+        self.assertIn("RETRY_ELIGIBLE", asq)
+        self.assertIn("Write-Asq017QuiescenceState", asq)
+        self.assertIn("Clear-Asq017QuiescenceState", asq)
+        self.assertIn("QUIESCENCE_ON_REPEAT", asq)
+        self.assertIn("do not rerun this cloud/non-Windows proof or create citation-only/tip-cite updates", asq)
+        # The stored HEAD is provenance only; fingerprint construction explicitly excludes HEAD.
+        self.assertIn("HEAD itself is deliberately excluded", asq)
+        self.assertIn("observedHead", asq)
+        # Unknown/corrupt state must never suppress a fresh bounded attempt.
+        self.assertIn("fail open to", asq)
+
     def test_physical_floor_preserves_structured_prerequisite_exit_codes(self) -> None:
         self.assertIn("exit $preflight.ExitCode", self.physical)
         self.assertIn("FIRSTMATE_WSL_PREREQUISITE_BLOCKED", self.physical)
