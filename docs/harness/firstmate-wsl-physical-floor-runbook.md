@@ -104,12 +104,15 @@ if ($childExit -eq 52) {
 if ($childExit -eq 124) {
   throw 'BLOCKED_PREREQUISITE_TIMEOUT — repair hung WSL/sudo/apt prerequisite or increase host capacity, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1; a prerequisite step timed out'
 }
+if ($childExit -eq 1) {
+  throw 'Inspect STATUS=/NEXT= from child console (may be BLOCKED_CONTINUATION_EXHAUSTED or other BLOCKED_* preserved via oneshot/Asq017); repair that blocker, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1'
+}
 if ($childExit -ne 0) {
   throw "ASQ-017 Admin Box live floor failed with exit $childExit"
 }
 ```
 
-`Invoke-Asq017AdminBoxLiveFloor.ps1` is the durable ASQ-017 Admin Box floor owner. It fail-closes native git refresh (`fetch`/`switch`/`pull`/`rev-parse` with capture-before-Trim), then runs `Invoke-FmWsl12AdminBoxLiveProof.ps1` (contract → `physical-floor-continue` → protected `physical-floor`). The one-shot still stops for missing allowlisted tools after bounded repair (exit 44), GitHub authentication (exit 45), passwordless apt sudo (exit 47), missing primary harness on non-interactive PATH (exit 48), dirty `$HOME/firstmate` (exit 49), and FirstMate pin mismatch / blocked bootstrap (exit 50), WSL exact-head bootstrap failure (exit 51), FirstMate harness contract failure (exit 52), and prerequisite hang/timeout (exit 124 / `STATUS=BLOCKED_PREREQUISITE_TIMEOUT`); probes runnable `Ubuntu` before apt/preflight; and writes a local untracked receipt. Interactive pastes must print `CHILD_EXIT_CODE` and `throw` rather than calling interactive `exit`.
+`Invoke-Asq017AdminBoxLiveFloor.ps1` is the durable ASQ-017 Admin Box floor owner. It fail-closes native git refresh (`fetch`/`switch`/`pull`/`rev-parse` with capture-before-Trim), then runs `Invoke-FmWsl12AdminBoxLiveProof.ps1` (contract → `physical-floor-continue` → protected `physical-floor`). The one-shot still stops for missing allowlisted tools after bounded repair (exit 44), GitHub authentication (exit 45), passwordless apt sudo (exit 47), missing primary harness on non-interactive PATH (exit 48), dirty `$HOME/firstmate` (exit 49), and FirstMate pin mismatch / blocked bootstrap (exit 50), WSL exact-head bootstrap failure (exit 51), FirstMate harness contract failure (exit 52), and prerequisite hang/timeout (exit 124 / `STATUS=BLOCKED_PREREQUISITE_TIMEOUT`); continuation loop fallthrough / other structured `STATUS=BLOCKED_*` may surface as exit 1 with preserved STATUS (inspect console before treating as generic FAILED); probes runnable `Ubuntu` before apt/preflight; and writes a local untracked receipt. Interactive pastes must print `CHILD_EXIT_CODE` and `throw` rather than calling interactive `exit`.
 
 Equivalent expanded form (same proof ceiling; prefer the durable entrypoint above):
 
@@ -158,6 +161,9 @@ if ($childExit -eq 52) {
 }
 if ($childExit -eq 124) {
   throw 'BLOCKED_PREREQUISITE_TIMEOUT — repair hung WSL/sudo/apt prerequisite or increase host capacity, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1; a prerequisite step timed out'
+}
+if ($childExit -eq 1) {
+  throw 'Inspect STATUS=/NEXT= from child console (may be BLOCKED_CONTINUATION_EXHAUSTED or other BLOCKED_* preserved via oneshot/Asq017); repair that blocker, then rerun Invoke-FmWsl12AdminBoxLiveProof.ps1'
 }
 if ($childExit -ne 0) {
   throw "FM-WSL-12 Admin Box live proof failed with exit $childExit"
