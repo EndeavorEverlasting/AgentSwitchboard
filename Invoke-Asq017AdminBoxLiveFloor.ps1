@@ -101,7 +101,14 @@ if ($ContractOnly) {
     }
     & pwsh @contractArgs
     if ($LASTEXITCODE -ne 0) {
-        throw "ASQ-017 ContractOnly one-shot failed with exit $LASTEXITCODE"
+        # Keep structured — do not throw (throw collapses to unstructured exit 1).
+        $contractExit = [int]$LASTEXITCODE
+        Write-Host 'STATUS=CONTRACT_FAIL'
+        Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'CONTRACT_FAIL'
+        Write-Asq017Status -Key 'CHILD_EXIT_CODE' -Value "$contractExit"
+        Write-Asq017Status -Key 'NEXT' -Value 'inspect ContractOnly oneshot console; repair wiring/contract surfaces, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1 -ContractOnly'
+        Write-Asq017Status -Key 'PROOF_CEILING' -Value 'ContractOnly is not Admin Box live PASS'
+        exit $contractExit
     }
     Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'CONTRACT_PASS'
     Write-Asq017Status -Key 'LIVE_RUNTIME_PROOF' -Value 'UNPROVEN'
