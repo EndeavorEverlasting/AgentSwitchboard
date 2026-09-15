@@ -642,6 +642,16 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         harness = (ROOT / "Test-AgentSwitchboard-FirstMate-Harness.ps1").read_text(encoding="utf-8")
         self.assertIn("STATUS=BLOCKED_HARNESS_CONTRACT", harness)
         self.assertNotIn('throw "Missing FM-WSL-12 continuation entrypoint:', harness)
+        self.assertNotIn(
+            'throw "Windows-to-WSL bridge ContractOnly gate failed with exit code',
+            harness,
+        )
+        self.assertNotIn(
+            'throw "Physical-floor ContractOnly gate failed with exit code',
+            harness,
+        )
+        self.assertIn("Preserve structured child exits", harness)
+        self.assertIn("exit $LASTEXITCODE", harness)
         self.assertIn("STDERR<<", bridge)
         self.assertIn("Write-Host $probe.Stderr.TrimEnd()", bridge)
         self.assertIn("STATUS=BLOCKED_PREREQUISITE_TIMEOUT", bridge)
