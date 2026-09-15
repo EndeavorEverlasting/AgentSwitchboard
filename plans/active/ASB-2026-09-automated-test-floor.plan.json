@@ -7,8 +7,8 @@
   "status": "completed",
   "priority": "high",
   "createdUtc": "2026-09-15T04:30:00Z",
-  "updatedUtc": "2026-09-15T06:30:00Z",
-  "mission": "Bootstrap a repository-owned fail-closed automated test floor from existing static contracts, expose one canonical command for developers and CI, prove it in GitHub Actions with a healthy pass and a representative negative canary, then stop at validated testing without merge/release/deploy authority.",
+  "updatedUtc": "2026-09-15T07:20:00Z",
+  "mission": "Bootstrap a repository-owned fail-closed automated test floor from existing static contracts, expose one canonical CLI for developers and CI, prove healthy pass plus negative canary, then add CLI-first local proof with receipt provenance so Actions-quota exhaustion does not block the floor.",
   "owner": {
     "surface": "automated test floor",
     "role": "repository validation lane",
@@ -162,18 +162,47 @@
         "Trailing whitespace hygiene fail closed and repaired (3f25d06)",
         "No schedule/cron added; secrets absent; path-filter bypass addressed by always-on floor triggers"
       ]
+    },
+    {
+      "taskId": "FLOOR-05",
+      "title": "Actions-quota local proof, provenance, and source/generated boundary",
+      "status": "completed",
+      "owner": "repository validation lane",
+      "dependencies": ["FLOOR-04"],
+      "inputs": [
+        "Merged floor on main via PR 290",
+        "Operator Actions-quota exhaustion constraint"
+      ],
+      "outputs": [
+        "Prove-AutomatedTestFloorLocal.ps1",
+        "Receipt provenance fields",
+        "Quota-aware workflow push triggers",
+        "Updated docs/plan/ledger"
+      ],
+      "acceptanceCriteria": [
+        "Local proof runs meta + floor + isolated canary without mutating production gates",
+        "Receipts record manifest/generator SHA-256 and trigger; never committed",
+        "Feature-branch push no longer double-spends Actions minutes for this workflow",
+        "Local proof PASS substitutes for provider when Actions unavailable"
+      ],
+      "evidence": [
+        "PR 291 merge 3c5cca9",
+        "Prove-AutomatedTestFloorLocal PASS on main at 3c5cca9",
+        "ASQ-018 DONE via PR 292 merge 1f8c32a"
+      ]
     }
   ],
   "validation": {
     "commands": [
       "python -m unittest tests.test_automated_test_floor -v",
       "pwsh -NoLogo -NoProfile -File scripts/Test-AutomatedTestFloor.ps1",
+      "pwsh -NoLogo -NoProfile -File scripts/Prove-AutomatedTestFloorLocal.ps1",
       "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1"
     ],
     "ciWorkflow": ".github/workflows/automated-test-floor.yml"
   },
   "proof": {
-    "ceiling": "GitHub Actions provider-runtime proof of the static automated test floor on an exact candidate SHA, including one restored negative canary. Not runtime, live-target, merge, release, or deployment proof.",
+    "ceiling": "Local same-entrypoint static-test proof with provenance receipts; provider Actions proof when minutes remain. Not runtime, live-target, merge automation, release, or deployment proof.",
     "negativeCanaryRequired": true,
     "scheduleConfigured": false
   },

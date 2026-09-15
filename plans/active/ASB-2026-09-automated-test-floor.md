@@ -14,8 +14,8 @@ Bootstrap a deterministic, fail-closed automated test floor for AgentSwitchboard
    Exact-head green run, controlled defect fails for the right reason, restore and re-green.
 4. **FLOOR-04 — Falsification + handoff** *(completed)*
    Second pass repaired PR-head SHA logging and trailing-whitespace hygiene; hand evolution to P113; promotion stays with P105.
-5. **FLOOR-05 — Closeout hardening** *(this successor)*
-   Actions-quota local proof packet, receipt provenance, quota-aware CI triggers, ASQ-018 DONE after mainline merge `7effd42`.
+5. **FLOOR-05 — Closeout hardening** *(completed)*
+   Actions-quota local proof packet, receipt provenance, quota-aware CI triggers; merged via PR #291 @ `3c5cca9`; ASQ DONE via PR #292 @ `1f8c32a`.
 
 ## Canonical command
 

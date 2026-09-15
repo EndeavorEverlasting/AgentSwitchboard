@@ -315,6 +315,6 @@ Canonical terminal action: none; no safe actionable work remains
 - **References:** `plans/active/ASB-2026-09-automated-test-floor.plan.json`, `.ai/harness/automated-test-floor.manifest.json`, `scripts/Test-AutomatedTestFloor.ps1`, `scripts/Prove-AutomatedTestFloorLocal.ps1`, `docs/harness/automated-test-floor.md`, `.github/workflows/automated-test-floor.yml`, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/290, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/291
 - **Acceptance gate:** local meta + floor PASS; Prove-AutomatedTestFloorLocal PASS; isolated canary fails closed without production-gate mutation; provenance receipts; FLOOR-05 integrated into main
 - **Gate:** none
-- **Last proof:** merge:7effd421060241d8a0e76e007be052064b5da677 pr:#290; merge:3c5cca988072efbd69969cfe33d3fec18e120bcc pr:#291; canary FAIL workflow:34931598102 @dcecfd4; restore PASS workflow:34932484309 @40d46a4; floor PASS workflow:34938435764 @aa7a3b7; meta 7/7 PASS on main@3c5cca9
+- **Last proof:** merge:7effd421060241d8a0e76e007be052064b5da677 pr:#290; merge:3c5cca988072efbd69969cfe33d3fec18e120bcc pr:#291; merge:1f8c32addd53b598ff0f18e3c4b23796cb8d1f3d pr:#292; canary FAIL workflow:34931598102 @dcecfd4; restore PASS workflow:34932484309 @40d46a4; floor PASS workflow:34938435764 @aa7a3b7; Prove-AutomatedTestFloorLocal PASS on main@3c5cca9
 - **Next action:** none; no safe actionable work remains
-- **Updated:** 2026-09-15T06:55:00Z
+- **Updated:** 2026-09-15T07:20:00Z
