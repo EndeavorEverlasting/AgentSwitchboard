@@ -102,7 +102,13 @@ A `ready` result proves only local clone identity and required-path presence. Ea
 
 ## Validation
 
-Validate the canonical documentation contract, public plans, and family harness with:
+Run the always-on automated test floor (static contracts shared by developers and GitHub Actions):
+
+```powershell
+pwsh -NoLogo -NoProfile -File .\scripts\Test-AutomatedTestFloor.ps1
+```
+
+Validate focused documentation, public plans, and family harness owners with:
 
 ```powershell
 pwsh -NoLogo -NoProfile -File .\scripts\Test-AgentDocumentationContract.ps1
@@ -114,6 +120,6 @@ pwsh -NoLogo -NoProfile -File .\scripts\Test-RepositoryFamilyHarness.ps1
 
 - [Agentic Software Factory](docs/architecture/agentic-software-factory.md)
 - [Canonical Mermaid source](diagrams/agentic-software-factory.mmd)
-- [Repository-floor recovery](docs/repository-floor.md)
+- [Automated test floor](docs/harness/automated-test-floor.md)
 
 The current architecture keeps humans responsible for constraints, exceptions, and acceptance while progressively automating decomposition, coding, repair, testing, evidence generation, and workflow routing.

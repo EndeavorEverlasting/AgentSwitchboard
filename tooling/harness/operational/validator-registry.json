@@ -4,6 +4,17 @@
   "selectionRule": "Run owning validators first. Add foundation validators for shared contract/catalog changes. Runtime or deployment validators require separate authority.",
   "validators": [
     {
+      "id": "automated-test-floor",
+      "command": "pwsh -NoLogo -NoProfile -File scripts/Test-AutomatedTestFloor.ps1",
+      "platforms": [
+        "windows",
+        "linux"
+      ],
+      "tier": "foundation",
+      "mutatesTarget": false,
+      "proof": "always-on static automated test floor with fail-closed zero-test and explicit script/unittest runners"
+    },
+    {
       "id": "operational-python",
       "command": "python3 tests/test_operational_harness.py",
       "platforms": [

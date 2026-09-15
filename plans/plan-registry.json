@@ -85,6 +85,14 @@
       "priority": "high",
       "dependencies": ["ASB-2026-09-FM-ASB-PROMPTKIT-PROTOCOL-V1"],
       "architectureDecision": "docs/architecture/fm-asb-promptkit-protocol-v1.md"
+    },
+    {
+      "planId": "ASB-2026-09-AUTOMATED-TEST-FLOOR",
+      "path": "plans/active/ASB-2026-09-automated-test-floor.plan.json",
+      "summaryPath": "plans/active/ASB-2026-09-automated-test-floor.md",
+      "status": "active",
+      "priority": "high",
+      "dependencies": []
     }
   ]
 }
