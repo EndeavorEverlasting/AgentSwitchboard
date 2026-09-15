@@ -1,0 +1,81 @@
+name: Android Herdr migration
+
+on:
+  pull_request:
+    paths:
+      - 'Test-AgentSwitchboard-Android-Herdr.sh'
+      - 'tooling/profiles/android/harness/herdr/**'
+      - 'tooling/profiles/android/harness/termux/manifest.json'
+      - 'tooling/profiles/android/harness/termux/codebase-map.json'
+      - '.ai/skills/android-herdr-migration/SKILL.md'
+      - 'docs/workstation/android-herdr-migration.md'
+      - 'docs/harness/android-herdr-operational-harness.md'
+      - 'tests/test_android_herdr_migration.py'
+      - 'tests/test_android_herdr_install_review.py'
+      - 'tests/test_android_herdr_compatibility_review.py'
+      - 'tests/test_android_herdr_harness_completeness.py'
+      - 'scripts/Test-AndroidHerdrHarnessCompleteness.ps1'
+      - '.github/workflows/android-herdr-migration.yml'
+  push:
+    branches:
+      - 'feat/android-herdr-migration-probe-20260808'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Parse shell entrypoints and hooks
+        run: |
+          bash -n Test-AgentSwitchboard-Android-Herdr.sh
+          bash -n tooling/profiles/android/harness/herdr/Probe-Herdr-Migration.sh
+          bash -n tooling/profiles/android/harness/herdr/hooks/Invoke-HerdrHarnessPreCommit.sh
+          bash -n tooling/profiles/android/harness/herdr/hooks/Invoke-HerdrHarnessPrePush.sh
+      - name: Herdr migration contracts
+        run: |
+          python tests/test_android_herdr_migration.py
+          python tests/test_android_herdr_install_review.py
+          python tests/test_android_herdr_compatibility_review.py
+          python tests/test_android_herdr_harness_completeness.py
+          python tooling/profiles/android/harness/herdr/Probe-HerdrPrebuiltCompatibility.py contract
+      - name: Herdr completeness validator
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File scripts/Test-AndroidHerdrHarnessCompleteness.ps1
+      - name: Status and source-bound review contracts
+        run: |
+          python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --evidence tooling/profiles/android/harness/herdr/fixtures/herdr-not-installed.fixture.env --format json > "$RUNNER_TEMP/herdr-status.json"
+          grep -q '"status": "blocked-herdr-not-installed"' "$RUNNER_TEMP/herdr-status.json"
+          python tooling/profiles/android/harness/herdr/Build-HerdrInstallReview.py --output "$RUNNER_TEMP/herdr-install-review.md" | tee "$RUNNER_TEMP/herdr-install-review.out"
+          grep -q 'Status: BLOCKED' "$RUNNER_TEMP/herdr-install-review.md"
+          grep -q 'DECISION=BLOCKED' "$RUNNER_TEMP/herdr-install-review.out"
+          grep -q 'Exact installation command, only when APPROVED: none' "$RUNNER_TEMP/herdr-install-review.md"
+          python tooling/profiles/android/harness/herdr/Get-HerdrHarnessStatus.py --evidence tooling/profiles/android/harness/herdr/fixtures/herdr-not-installed.fixture.env --install-review "$RUNNER_TEMP/herdr-install-review.md" --format json > "$RUNNER_TEMP/herdr-status-after-review.json"
+          grep -q '"status": "blocked-herdr-runtime-compatibility-unproved"' "$RUNNER_TEMP/herdr-status-after-review.json"
+          grep -q '"nextGate": "source-bound-runtime-compatibility-review"' "$RUNNER_TEMP/herdr-status-after-review.json"
+          python tooling/profiles/android/harness/herdr/Build-HerdrCompatibilityReview.py --output "$RUNNER_TEMP/herdr-compatibility-review.md" | tee "$RUNNER_TEMP/herdr-compatibility-review.out"
+          grep -q 'Status: EXECUTION_PROBE_APPROVED_NO_INSTALL' "$RUNNER_TEMP/herdr-compatibility-review.md"
+          grep -q 'Installation authorized: no' "$RUNNER_TEMP/herdr-compatibility-review.md"
+          grep -q 'Server startup authorized: no' "$RUNNER_TEMP/herdr-compatibility-review.md"
+          grep -q 'DECISION=EXECUTION_PROBE_APPROVED_NO_INSTALL' "$RUNNER_TEMP/herdr-compatibility-review.out"
+      - name: Existing Android harness floor
+        run: |
+          python tests/test_android_termux_harness.py
+          python tests/test_android_termux_modal_state_harness.py
+      - name: Focused opt-in pre-commit hook
+        run: bash tooling/profiles/android/harness/herdr/hooks/Invoke-HerdrHarnessPreCommit.sh
+      - name: Diff hygiene
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git diff --check "origin/${{ github.base_ref }}...HEAD"
+          elif [ -n "${{ github.event.before }}" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            git diff --check "${{ github.event.before }}...${{ github.sha }}"
+          else
+            git diff --check HEAD^ HEAD
+          fi

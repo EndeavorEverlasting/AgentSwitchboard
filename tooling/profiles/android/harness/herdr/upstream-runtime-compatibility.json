@@ -1,0 +1,83 @@
+{
+  "schema": "agentswitchboard.android-herdr-runtime-compatibility-source.v1",
+  "verifiedAtUtc": "2026-08-09T01:35:00Z",
+  "source": {
+    "repository": "https://github.com/herdrdev/herdr",
+    "releaseTag": "v0.8.0",
+    "releaseCommit": "346411fa21afd297f5ed3b3fa56f9e3fbf7654b7",
+    "artifact": "herdr-linux-aarch64",
+    "artifactUrl": "https://github.com/herdrdev/herdr/releases/download/v0.8.0/herdr-linux-aarch64",
+    "artifactSizeBytes": 19960864,
+    "artifactSha256": "f647ac66468d9efbc642fe534fb284468f0aea60641606fc008dfc0d82a3ca87"
+  },
+  "sourceEvidence": [
+    {
+      "path": ".github/workflows/release.yml",
+      "fact": "The published ARM64 Linux asset is built with Rust target aarch64-unknown-linux-musl; no Android target is present in the release matrix."
+    },
+    {
+      "path": "Cargo.toml",
+      "fact": "Herdr depends on libc, interprocess, and a repository-patched portable-pty implementation; Windows-only dependencies are separately gated."
+    },
+    {
+      "path": "src/platform/mod.rs",
+      "fact": "Linux, macOS, and Windows have explicit platform modules. Other target operating systems select the fallback module; target_os=android is therefore not the Linux module."
+    },
+    {
+      "path": "src/platform/fallback.rs",
+      "fact": "The fallback is explicitly marked unsupported and stubs daemon detachment, process discovery, process signalling/existence, clipboard, URL opening, notifications, and related platform behavior."
+    },
+    {
+      "path": "src/pty/backend/unix.rs",
+      "fact": "The Unix PTY backend delegates PTY creation and child spawning to the vendored portable-pty implementation."
+    },
+    {
+      "path": "src/ipc.rs",
+      "fact": "Unix IPC uses interprocess local sockets with filesystem socket paths and Unix metadata/permission operations."
+    },
+    {
+      "path": "src/platform/linux.rs",
+      "fact": "The Linux build relies on Linux /proc process metadata plus Unix process-group and signal APIs for foreground-job and agent/process behavior."
+    }
+  ],
+  "upstreamSupportSignal": {
+    "officialAndroidTermuxSupport": "not-stated",
+    "termuxIssueSearchCount": 0,
+    "androidTitleIssueSearchCount": 0,
+    "searchObservedAtUtc": "2026-08-09T01:35:00Z",
+    "note": "Absence of issues is not support proof; it only records that no explicit upstream Termux/Android issue signal was found during this review."
+  },
+  "compatibility": {
+    "nativeAndroidSourceBuild": {
+      "rustTarget": "aarch64-linux-android",
+      "decision": "BLOCKED_UNSUPPORTED_PLATFORM_FALLBACK",
+      "reason": "A native Android Rust target would compile target_os=android and select Herdr's unsupported fallback platform module, so it cannot be treated as feature-complete migration evidence."
+    },
+    "linuxMuslPrebuiltOnTermux": {
+      "buildTarget": "aarch64-unknown-linux-musl",
+      "decision": "EXECUTION_PROBE_APPROVED_NO_INSTALL",
+      "reason": "The exact official Linux-musl ARM64 asset may be tested as an ephemeral executable on the Android kernel only after exact size and SHA-256 verification. This does not authorize installation or server startup.",
+      "allowedActions": [
+        "download the exact release asset into a temporary private directory",
+        "verify exact byte size and SHA-256 before making it executable",
+        "execute only --version with isolated temporary HOME/XDG state and a bounded timeout",
+        "write sanitized local untracked execution evidence",
+        "remove the temporary binary and sandbox on exit"
+      ],
+      "forbiddenActions": [
+        "copy or symlink the binary into PREFIX/bin or another persistent executable path",
+        "start a Herdr server",
+        "create or attach a Herdr workspace/session",
+        "run Herdr update or installer commands",
+        "mutate Android device_config, phantom-process limits, or battery policy",
+        "remove or replace tmux"
+      ],
+      "successGate": "verified digest plus exit code 0 from the exact asset's --version command with output identifying Herdr 0.8.0",
+      "failureGate": "any download, size, digest, exec, timeout, signal, or identity failure keeps tmux canonical and records the failure without installation"
+    }
+  },
+  "migrationDecision": "KEEP_TMUX",
+  "reviewDecision": "EXECUTION_PROBE_APPROVED_NO_INSTALL",
+  "nextGate": "exact-device-prebuilt-execution-identity",
+  "proofCeiling": "Pinned source inspection proves the release build target and source platform routing. It approves only an ephemeral checksum-verified --version execution probe of the exact Linux-musl ARM64 release asset. It does not prove Android support, authorize installation or server startup, prove PTY/IPC/process detection, persistence, detach/reattach, agent state, background survival, sprint success, or tmux retirement."
+}

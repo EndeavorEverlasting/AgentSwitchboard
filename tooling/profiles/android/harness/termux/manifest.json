@@ -42,7 +42,10 @@
     "completenessValidator": "scripts/Test-AndroidTermuxHarnessCompleteness.ps1",
     "modalStatePortableTest": "tests/test_android_termux_modal_state_harness.py",
     "modalStateCompletenessValidator": "scripts/Test-AndroidTermuxModalStateHarness.ps1",
-    "ci": ".github/workflows/android-termux-harness.yml"
+    "ci": ".github/workflows/android-termux-harness.yml",
+    "migrationExperiments": {
+      "herdr": "tooling/profiles/android/harness/herdr/manifest.json"
+    }
   },
   "requiredTools": ["git", "tmux", "gh", "ssh", "curl", "jq", "python"],
   "harnessBootstrap": "pkg install -y python",
@@ -52,5 +55,5 @@
     {"id":"scrollback-unclear","signature":"operator cannot reliably browse prior output with touch scrolling","classification":"terminal-scrollback-boundary"},
     {"id":"nano-modal-editor","signature":"filename plus Modified with ^G Help / ^O Write Out / ^X Exit","classification":"modal-editor-awaiting-input"}
   ],
-  "proofCeiling": "This harness proves tracked Android/Termux operational contracts, root skill/trigger discovery, aggregate validator registration, bounded pane-capture procedures, modal foreground-state classification, explicit editor exit contracts, validators, hooks, skills and hosted checks. The Android runtime is separately implemented and remains subject to its own live proof. This harness does not prove provider login, model output, tool execution, foreground-process health, repository mutation, clipboard behavior on every device, repository-family status on a Termux host without PowerShell, or operator acceptance."
+  "proofCeiling": "This harness proves tracked Android/Termux operational contracts, root skill/trigger discovery, aggregate validator registration, bounded pane-capture procedures, modal foreground-state classification, explicit editor exit contracts, validators, hooks, skills and hosted checks. Herdr is registered only as an experimental migration probe and does not replace tmux without separate live Android proof. The Android runtime is separately implemented and remains subject to its own live proof. This harness does not prove provider login, model output, tool execution, foreground-process health, repository mutation, clipboard behavior on every device, repository-family status on a Termux host without PowerShell, Herdr Android compatibility, or operator acceptance."
 }
