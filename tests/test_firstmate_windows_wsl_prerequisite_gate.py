@@ -587,6 +587,15 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
             oneshot.index("elseif ($continue.ExitCode -eq 124)"),
             oneshot.index("'PHYSICAL_FLOOR_CONTINUE_FAILED'"),
         )
+        # Unknown continue exits must prefer child STATUS=BLOCKED_* (e.g. CONTINUATION_EXHAUSTED).
+        self.assertIn("Get-StatusFromEvidence", oneshot)
+        self.assertIn("Get-AttemptEvidenceBlob", oneshot)
+        self.assertIn("^BLOCKED_", oneshot)
+        self.assertIn("BLOCKED_CONTINUATION_EXHAUSTED", oneshot)
+        self.assertLess(
+            oneshot.index("Get-StatusFromEvidence -Attempt $continue"),
+            oneshot.index("'PHYSICAL_FLOOR_CONTINUE_FAILED'"),
+        )
         self.assertIn("$contract.ExitCode -eq 124", oneshot)
         self.assertIn(
             "contract step timed out",
@@ -653,6 +662,14 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("Get-Asq017ExpectedFirstMateHead", asq)
         self.assertIn("Get-Asq017OperatorNextFromText", asq)
         self.assertIn("$preservedNext = Get-Asq017OperatorNextFromText -Text $oneshotBlob", asq)
+        self.assertIn("Get-Asq017StatusFromText", asq)
+        self.assertIn("$preservedStatus = Get-Asq017StatusFromText -Text $oneshotBlob", asq)
+        self.assertIn("^BLOCKED_", asq)
+        # Generic nonzero path must prefer preserved BLOCKED_* STATUS before FAILED.
+        self.assertLess(
+            asq.index("$preservedStatus = Get-Asq017StatusFromText -Text $oneshotBlob"),
+            asq.index("Write-Asq017Blocker -Result 'FAILED'"),
+        )
         self.assertIn("Write-Asq017Blocker", asq)
         self.assertIn("$childExit -eq 124", asq)
         self.assertIn("BLOCKED_PREREQUISITE_TIMEOUT", asq)

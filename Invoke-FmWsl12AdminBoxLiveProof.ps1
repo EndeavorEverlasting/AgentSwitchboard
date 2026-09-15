@@ -209,7 +209,7 @@ function Invoke-HarnessMode {
     }
 }
 
-function Get-OperatorNextFromEvidence {
+function Get-AttemptEvidenceBlob {
     param([Parameter(Mandatory = $true)]$Attempt)
     $blob = ''
     foreach ($path in @($Attempt.StdoutPath, $Attempt.StderrPath)) {
@@ -217,12 +217,28 @@ function Get-OperatorNextFromEvidence {
             $blob += "`n" + (Get-Content -LiteralPath $path -Raw)
         }
     }
+    return $blob
+}
+
+function Get-OperatorNextFromEvidence {
+    param([Parameter(Mandatory = $true)]$Attempt)
+    $blob = Get-AttemptEvidenceBlob -Attempt $Attempt
     $match = [regex]::Match($blob, '(?m)^NEXT=(.+)$')
     if ($match.Success) { return $match.Groups[1].Value.Trim() }
     $inline = [regex]::Match($blob, '(?m)(?:^|\s)NEXT=(.+)$')
     if ($inline.Success) { return $inline.Groups[1].Value.Trim() }
     $nextAction = [regex]::Match($blob, '(?m)^NEXT_ACTION=(.+)$')
     if ($nextAction.Success) { return $nextAction.Groups[1].Value.Trim() }
+    return $null
+}
+
+function Get-StatusFromEvidence {
+    param([Parameter(Mandatory = $true)]$Attempt)
+    $blob = Get-AttemptEvidenceBlob -Attempt $Attempt
+    $matches = [regex]::Matches($blob, '(?m)^STATUS=(.+)$')
+    if ($matches.Count -gt 0) {
+        return $matches[$matches.Count - 1].Groups[1].Value.Trim()
+    }
     return $null
 }
 
@@ -292,7 +308,13 @@ if ($continue.ExitCode -ne 0) {
     } elseif ($continue.ExitCode -eq 124) {
         'BLOCKED_PREREQUISITE_TIMEOUT'
     } else {
-        'PHYSICAL_FLOOR_CONTINUE_FAILED'
+        # Prefer child STATUS=BLOCKED_* (e.g. BLOCKED_CONTINUATION_EXHAUSTED) over generic continue-fail.
+        $preservedStatus = Get-StatusFromEvidence -Attempt $continue
+        if (-not [string]::IsNullOrWhiteSpace($preservedStatus) -and $preservedStatus -match '^BLOCKED_') {
+            $preservedStatus
+        } else {
+            'PHYSICAL_FLOOR_CONTINUE_FAILED'
+        }
     }
     Set-Content -LiteralPath $receiptPath -Value @(
         "HEAD=$actualHead"
