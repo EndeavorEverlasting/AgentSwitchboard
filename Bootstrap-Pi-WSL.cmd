@@ -1,7 +1,25 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
-rem One-click Pi bootstrap for the user-owned Ubuntu/WSL runtime.
-rem This intentionally does not replace Bootstrap-Pi-SystemWide.cmd.
-set "ASB_SOURCE_REPO=%~dp0"
-call "%~dp0Pull-And-Run-AgentSwitchboard.cmd" bootstrap-pi-wsl "%~dp0" main
-exit /b %ERRORLEVEL%
+title AgentSwitchboard Pi WSL Bootstrap
+
+set "ROOT=%~dp0"
+set "GIT_REF=%~1"
+if not defined GIT_REF set "GIT_REF=main"
+
+if not exist "%ROOT%Pull-And-Run-AgentSwitchboard.cmd" (
+  echo [FAIL] Canonical AgentSwitchboard pull-and-run entrypoint is missing.
+  endlocal & exit /b 2
+)
+
+where pwsh.exe >nul 2>nul
+if errorlevel 1 (
+  echo [FAIL] PowerShell 7 is required.
+  endlocal & exit /b 127
+)
+
+rem Invoke one repository-owned script path through the canonical dispatcher.
+rem Do not paste implementation fragments into an interactive PowerShell REPL.
+rem This companion launcher preserves Bootstrap-Pi-SystemWide.cmd for native Windows Pi.
+call "%ROOT%Pull-And-Run-AgentSwitchboard.cmd" bootstrap-pi-wsl "%ROOT%." "%GIT_REF%"
+set "RESULT=%ERRORLEVEL%"
+endlocal & exit /b %RESULT%
