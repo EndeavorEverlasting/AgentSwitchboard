@@ -432,9 +432,37 @@ if ($SkipProtectedControl) {
 
 $oneshotStdoutPath = Join-Path ([System.IO.Path]::GetTempPath()) ('asq017-oneshot-stdout-' + [guid]::NewGuid().ToString('n') + '.log')
 $oneshotStderrPath = Join-Path ([System.IO.Path]::GetTempPath()) ('asq017-oneshot-stderr-' + [guid]::NewGuid().ToString('n') + '.log')
+# Use ProcessStartInfo.ArgumentList (not Start-Process -ArgumentList). PowerShell's
+# Start-Process flattens ArgumentList into one command line without quoting, so an
+# Admin Box checkout under a spaced path (for example OneDrive) splits -File and
+# yields pwsh usage exit 64 before the oneshot can run.
+$pwshCommand = Get-Command pwsh -ErrorAction SilentlyContinue
+if ($null -eq $pwshCommand) {
+    Write-Host 'STATUS=BLOCKED_HARNESS_START'
+    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_HARNESS_START'
+    Write-Host 'NEXT=install PowerShell 7+ (pwsh) on PATH, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1; unable to resolve pwsh'
+    exit 1
+}
+$oneshotPsi = [System.Diagnostics.ProcessStartInfo]::new()
+$oneshotPsi.FileName = $pwshCommand.Source
+$oneshotPsi.WorkingDirectory = $Root
+$oneshotPsi.UseShellExecute = $false
+$oneshotPsi.CreateNoWindow = $true
+$oneshotPsi.RedirectStandardOutput = $true
+$oneshotPsi.RedirectStandardError = $true
+foreach ($argument in $argumentList) {
+    [void]$oneshotPsi.ArgumentList.Add([string]$argument)
+}
+$oneshotProcess = [System.Diagnostics.Process]::new()
+$oneshotProcess.StartInfo = $oneshotPsi
 # Keep structured — do not throw (throw collapses to unstructured exit 1).
 try {
-    $oneshotProcess = Start-Process -FilePath 'pwsh' -ArgumentList $argumentList -NoNewWindow -Wait -PassThru -RedirectStandardOutput $oneshotStdoutPath -RedirectStandardError $oneshotStderrPath -ErrorAction Stop
+    if (-not $oneshotProcess.Start()) {
+        Write-Host 'STATUS=BLOCKED_HARNESS_START'
+        Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_HARNESS_START'
+        Write-Host 'NEXT=ensure pwsh can launch Invoke-FmWsl12AdminBoxLiveProof.ps1 on this host, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1; unable to start oneshot process'
+        exit 1
+    }
 }
 catch {
     Write-Host 'STATUS=BLOCKED_HARNESS_START'
@@ -443,12 +471,13 @@ catch {
     Write-Host ("HARNESS_START_ERROR={0}" -f $_.Exception.Message)
     exit 1
 }
-if ($null -eq $oneshotProcess) {
-    Write-Host 'STATUS=BLOCKED_HARNESS_START'
-    Write-Asq017Status -Key 'ASQ017_RESULT' -Value 'BLOCKED_HARNESS_START'
-    Write-Host 'NEXT=ensure pwsh can launch Invoke-FmWsl12AdminBoxLiveProof.ps1 on this host, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1; oneshot Start-Process returned no process object'
-    exit 1
-}
+$oneshotStdoutTask = $oneshotProcess.StandardOutput.ReadToEndAsync()
+$oneshotStderrTask = $oneshotProcess.StandardError.ReadToEndAsync()
+$oneshotProcess.WaitForExit()
+$oneshotStdoutText = $oneshotStdoutTask.GetAwaiter().GetResult()
+$oneshotStderrText = $oneshotStderrTask.GetAwaiter().GetResult()
+Set-Content -LiteralPath $oneshotStdoutPath -Value $oneshotStdoutText -Encoding utf8
+Set-Content -LiteralPath $oneshotStderrPath -Value $oneshotStderrText -Encoding utf8
 if (Test-Path -LiteralPath $oneshotStdoutPath -PathType Leaf) {
     Get-Content -LiteralPath $oneshotStdoutPath | ForEach-Object { Write-Host $_ }
 }
