@@ -102,6 +102,14 @@
       "priority": "high",
       "dependencies": ["ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS"],
       "architectureDecision": "docs/architecture/asb-firstmate-runtime-boundary.md"
+    },
+    {
+      "planId": "ASB-2026-09-SAFE-PATCH-PROOF-TRANSPORT",
+      "path": "plans/active/ASB-2026-09-safe-patch-proof-transport.plan.json",
+      "summaryPath": "plans/active/ASB-2026-09-safe-patch-proof-transport.md",
+      "status": "active",
+      "priority": "medium",
+      "dependencies": []
     }
   ]
 }

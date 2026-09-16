@@ -62,11 +62,12 @@ Canonical coordination index: `plans/active/ASB-2026-09-multi-product-bootstrap-
 - Tip prove on `2cb70a3`: cloud ContractOnly PASS + live exit 46 after #259/#260; live PASS still UNPROVEN.
 - Tip prove on `2562b92`: cloud ContractOnly PASS + live exit 46 after #274/#275/#276; live PASS still UNPROVEN.
 - Encode: raise `PrerequisiteTimeoutSeconds` default 60→180 across Asq017/oneshot/harness/PhysicalFloor/continuation + ASQ-017 paste/runbook so Admin Box cold WSL probes (39-67s+) do not race the post-#278 honored timeout; live PASS still UNPROVEN.
+- Admin Box host `LPW003ASI173` LIVE_ATTEMPT on refreshed `main@9ad46447…` (OneDrive spaced checkout): first entrypoint launch failed with unstructured pwsh usage exit 64 because `Start-Process -ArgumentList` split the spaced path; repaired on `fix/asq017-oneshot-spaced-path-launch-20260915` via `ProcessStartInfo.ArgumentList`. Post-repair observation reached contract PASS + physical-floor-continue `STATUS=BLOCKED_GITHUB_AUTH` exit 45 with local receipt under `%TEMP%\AgentSwitchboard\fm-wsl12-admin-box-live\9ad46447-20260915-212256-731c554f\`; Ubuntu `gh` present but not logged in. Live PASS still UNPROVEN.
 
 ## Successor phases
 
-1. **Admin Box live observation (current).** Refresh main @ tip (includes PrerequisiteTimeoutSeconds default 180); prefer `-PrerequisiteTimeoutSeconds 180`+; run the durable `Invoke-Asq017AdminBoxLiveFloor.ps1` entrypoint (ff-only main refresh → `Invoke-FmWsl12AdminBoxLiveProof.ps1`: contract → physical-floor-continue → protected physical-floor). Pre-stage Ubuntu FirstMate @ `b182d0f908b78d08c7ccb8dce3775bdca8c5d657` + one primary harness + Ubuntu `gh` auth. Optional: pass `-FirstMatePath` to a clean audited checkout when `$HOME/firstmate` is dirty/off-pin. Alternate auto-discovery ignores dirty, off-pin, or incomplete checkouts unless their required paths are present in the audited Git tree and worktree; authoritative required-path defects return the structured pin blocker instead of generic failure. Expected: PASS markers + local receipt/evidence root, or `BLOCKED_GITHUB_AUTH` / real non-package blocker with preserved evidence.
-2. **Credential gate (conditional).** Only if `BLOCKED_GITHUB_AUTH`: operator `gh auth login` then rerun continuation. No token capture in evidence.
+1. **Credential gate (current).** Operator completes Ubuntu `gh auth login` (no token capture in evidence), then reruns `Invoke-Asq017AdminBoxLiveFloor.ps1` from refreshed tip that contains the spaced-path launch fix.
+2. **Admin Box live observation (resume).** After auth, expect PASS markers + local receipt/evidence root, or the next real non-package blocker with preserved evidence. Optional: `-FirstMatePath` when `$HOME/firstmate` is dirty/off-pin.
 3. **FM-CREW-13 handoff.** Only after physical-floor PASS. Local-only crew pilot; out of this phase's mutation scope.
 
 ## Owned / forbidden
