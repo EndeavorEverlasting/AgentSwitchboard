@@ -281,6 +281,65 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("'write'", asq)
         self.assertIn("'clear'", asq)
 
+    def test_asq017_oneshot_launch_preserves_spaced_checkout_paths(self) -> None:
+        asq = (ROOT / "Invoke-Asq017AdminBoxLiveFloor.ps1").read_text(encoding="utf-8")
+        # Start-Process -ArgumentList flattens without quoting and splits OneDrive paths.
+        self.assertNotIn("Start-Process -FilePath 'pwsh' -ArgumentList", asq)
+        self.assertNotIn("Start-Process -FilePath \"pwsh\" -ArgumentList", asq)
+        self.assertIn("[System.Diagnostics.ProcessStartInfo]::new()", asq)
+        self.assertIn("$oneshotPsi.ArgumentList.Add([string]$argument)", asq)
+        self.assertIn("$oneshotPsi.FileName = $pwshCommand.Source", asq)
+        self.assertIn("$oneshotPsi.WorkingDirectory = $Root", asq)
+        self.assertIn("spaced path", asq)
+        # Behavioral: ArgumentList.Add keeps a spaced -File path intact (exit 0),
+        # while Start-Process -ArgumentList splits it (pwsh usage / nonzero).
+        with tempfile.TemporaryDirectory(prefix="asb spaced path ") as tmp:
+            probe = Path(tmp) / "probe-oneshot.ps1"
+            probe.write_text("exit 0\n", encoding="utf-8")
+            env = os.environ.copy()
+            env["ASB_SPACED_PROBE"] = str(probe)
+            completed = subprocess.run(
+                [
+                    "pwsh",
+                    "-NoLogo",
+                    "-NoProfile",
+                    "-Command",
+                    (
+                        "$ErrorActionPreference='Stop'; "
+                        "$path = $env:ASB_SPACED_PROBE; "
+                        "if ($path -notmatch '\\s') { throw 'probe path must contain whitespace' }; "
+                        "$args = @('-NoLogo','-NoProfile','-File',$path); "
+                        "$psi = [System.Diagnostics.ProcessStartInfo]::new(); "
+                        "$psi.FileName = (Get-Command pwsh).Source; "
+                        "$psi.UseShellExecute = $false; "
+                        "$psi.CreateNoWindow = $true; "
+                        "foreach ($a in $args) { [void]$psi.ArgumentList.Add([string]$a) }; "
+                        "$p = [System.Diagnostics.Process]::new(); "
+                        "$p.StartInfo = $psi; "
+                        "if (-not $p.Start()) { throw 'ProcessStartInfo failed to start' }; "
+                        "$p.WaitForExit(); "
+                        "if ($p.ExitCode -ne 0) { throw ('ProcessStartInfo exit=' + $p.ExitCode) }; "
+                        "$legacy = Start-Process -FilePath 'pwsh' -ArgumentList $args -NoNewWindow -Wait -PassThru; "
+                        "if ($legacy.ExitCode -eq 0) { "
+                        "throw 'Start-Process -ArgumentList unexpectedly preserved spaced -File path' "
+                        "}; "
+                        "Write-Output ('LEGACY_EXIT=' + $legacy.ExitCode); "
+                        "Write-Output 'SPACED_PATH_LAUNCH=PASS'"
+                    ),
+                ],
+                cwd=ROOT,
+                check=False,
+                capture_output=True,
+                text=True,
+                env=env,
+            )
+            self.assertEqual(
+                0,
+                completed.returncode,
+                f"spaced-path launch probe failed:\n{completed.stdout}\n{completed.stderr}",
+            )
+            self.assertIn("SPACED_PATH_LAUNCH=PASS", completed.stdout)
+
     def test_physical_floor_preserves_structured_prerequisite_exit_codes(self) -> None:
         self.assertIn("exit $preflight.ExitCode", self.physical)
         self.assertIn("FIRSTMATE_WSL_PREREQUISITE_BLOCKED", self.physical)

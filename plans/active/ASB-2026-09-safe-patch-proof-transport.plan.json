@@ -1,0 +1,135 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-09-SAFE-PATCH-PROOF-TRANSPORT",
+  "title": "Repository-native safe patch/proof transport contract",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "active",
+  "priority": "medium",
+  "createdUtc": "2026-09-16T01:25:00Z",
+  "updatedUtc": "2026-09-16T01:25:00Z",
+  "mission": "Establish one repository-owned safe patch/proof transport that applies and proves branch repairs without persistent checkout write credentials, without leftover temporary workflows, and with deterministic exact-head PR-check re-arming.",
+  "owner": {
+    "surface": "repository execution infrastructure",
+    "role": "architecture then bounded implementation",
+    "agent": "P95 then P07"
+  },
+  "delivery": {
+    "branch": "fix/asq017-oneshot-spaced-path-launch-20260915",
+    "baseRef": "main",
+    "commitRequired": true
+  },
+  "wave": "owner strengthening after FM-WSL-12 exact-head transport friction",
+  "lane": "execution-infrastructure",
+  "dependencies": [],
+  "safeParallelWork": [
+    "FM-WSL-12 Admin Box physical observation after Ubuntu gh auth",
+    "Unrelated FirstMate crew work after physical-floor PASS"
+  ],
+  "ownedScope": [
+    "plans/active/ASB-2026-09-safe-patch-proof-transport.plan.json",
+    "plans/active/ASB-2026-09-safe-patch-proof-transport.md",
+    "plans/plan-registry.json membership for this plan",
+    "future P95 design artifact named by that sprint",
+    "future P07 implementation surfaces named by the design"
+  ],
+  "forbiddenScope": [
+    "Prompt Kit changes",
+    "FirstMate crew scheduling/control",
+    "ledger/tip-cite churn",
+    "credential mutation or secret persistence",
+    "reusing temporary self-mutating workflow pattern unchanged",
+    "claiming inventory as implemented transport"
+  ],
+  "expectedArtifacts": [
+    "durable inventory of existing pattern donors",
+    "P95 design naming owner path, permission matrix, cleanup, exact-head check re-arm, proof ceiling",
+    "P07 implementation with validators proving non-persistent checkout creds, scoped final-push write auth, automatic cleanup, and deterministic exact-head PR checks"
+  ],
+  "tasks": [
+    {
+      "taskId": "TRANSPORT-INV-01",
+      "title": "Inventory existing repo-native patch/proof runners and temporary-workflow patterns",
+      "status": "completed",
+      "owner": "runtime proof lane",
+      "dependencies": [],
+      "inputs": [
+        ".github/workflows",
+        "docs/harness",
+        "tooling/harness/operational",
+        "stale-checkout exact-head bootstrap"
+      ],
+      "outputs": [
+        "plans/active/ASB-2026-09-safe-patch-proof-transport.md inventory floor",
+        "verdict: no current write-transport owner; pattern donors identified"
+      ],
+      "validation": [
+        "Read-only workflow corpus scan: 0 contents:write, 0 persist-credentials:true"
+      ],
+      "proofCeiling": "inventory only"
+    },
+    {
+      "taskId": "TRANSPORT-P95-02",
+      "title": "P95 design for safe patch/proof transport owner",
+      "status": "pending",
+      "owner": "P95 architecture lane",
+      "dependencies": ["TRANSPORT-INV-01"],
+      "inputs": [
+        "inventory floor",
+        "discriminating design question in summary md"
+      ],
+      "outputs": [
+        "canonical design artifact naming owner path and permission matrix"
+      ],
+      "validation": [
+        "design names cleanup contract and exact-head check re-arm event"
+      ],
+      "proofCeiling": "design acceptance; not implementation"
+    },
+    {
+      "taskId": "TRANSPORT-P07-03",
+      "title": "P07 bounded implementation of approved transport",
+      "status": "pending",
+      "owner": "P07 repo sprint executor",
+      "dependencies": ["TRANSPORT-P95-02"],
+      "inputs": [
+        "approved P95 design"
+      ],
+      "outputs": [
+        "tracked transport owner + validators + CI proof"
+      ],
+      "validation": [
+        "non-persistent checkout credentials",
+        "write auth scoped to final push",
+        "automatic transport cleanup",
+        "deterministic exact-head PR-check trigger"
+      ],
+      "proofCeiling": "hosted CI + contract proof; not arbitrary live credential use"
+    }
+  ],
+  "validation": {
+    "order": [
+      "focused inventory/docs validators when present",
+      "Test-PublicPlanContracts.ps1 when plan schema surfaces change",
+      "P95 design acceptance before P07 mutation"
+    ],
+    "commands": [
+      "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1"
+    ]
+  },
+  "proof": {
+    "ceiling": "Inventory and routing are proven. Transport implementation remains unproven pending P95 then P07.",
+    "completed": [
+      "Read-only inventory on Admin Box host LPW003ASI173 against main-derived branch floor"
+    ],
+    "remaining": [
+      "P95 design decision",
+      "P07 implementation and validators"
+    ]
+  },
+  "handoff": {
+    "nextOwner": "P95 architecture lane",
+    "nextAction": "Answer the discriminating design question and name the canonical transport owner path before any write-capable workflow lands.",
+    "blocker": "none for design start; implementation blocked on P95 acceptance"
+  }
+}
