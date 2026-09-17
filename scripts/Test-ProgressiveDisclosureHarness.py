@@ -12,8 +12,8 @@ ROOT = Path(__file__).resolve().parents[1]
 ROUTER_PATH = ROOT / "tooling/harness/context/context.routes.json"
 WORKFLOW_INDEX_PATH = ROOT / "tooling/harness/operational/opencode-lsp-setup/workflows.json"
 CANONICAL_GOVERNANCE_PATH = "docs/governance/agent-operating-details.md"
-CANONICAL_GOVERNANCE_BLOB = "c94b797bef04942636af61b980c478919710e067"
-CANONICAL_GOVERNANCE_BYTES = 27896
+CANONICAL_GOVERNANCE_BLOB = "aa71c38683bb14775e6c11af4adbb2f5f3f62874"
+CANONICAL_GOVERNANCE_BYTES = 34029
 REQUIRED_WORKFLOW_KEYS = ("trigger", "inputs", "outputs", "dependencies", "validator", "failurePolicy", "proofCeiling", "handoff")
 REQUIRED_WORKFLOW_SHARED_LOAD = {
     ".ai/skills/opencode-lsp-workstation-setup/SKILL.md",
