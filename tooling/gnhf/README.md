@@ -2,6 +2,21 @@
 
 Windows-first launchers for bounded unattended GNHF sprints.
 
+## Ownership boundary
+
+GNHF remains the **Windows-first bounded single-agent/fleet launcher** with unique readiness contracts. It must **not** expand into a multi-crew control plane competing with FirstMate.
+
+This NARROW boundary is defined by architecture decision `ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME` in `docs/architecture/asb-firstmate-runtime-boundary.md`. FirstMate (`kunchenguid/firstmate`) is the canonical live crew runtime for multi-agent orchestration, worktree allocation, supervision, and lifecycle control. GNHF preserves:
+
+- Windows-first click launchers and fleet installers
+- Bounded single-agent sprints with iteration/token limits
+- Provider readiness probes (DeepSeek, Hermes, ACP)
+- Local evidence roots and launcher transcripts
+- Thinker/token-saving routes
+- Idempotent setup and failure contracts
+
+Do not implement multi-crew supervision, nested delegation, or live orchestration features inside GNHF. Route crew runtime requirements through FirstMate interop after ASQ-015.
+
 ## Safety contract
 
 - GNHF runs in isolated Git worktrees.
