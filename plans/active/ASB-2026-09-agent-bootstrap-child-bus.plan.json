@@ -253,7 +253,7 @@
     {
       "taskId": "GNHF-NARROW-03",
       "title": "Encode GNHF NARROW ownership boundary",
-      "status": "ready",
+      "status": "done",
       "owner": "GNHF contract lane",
       "dependencies": [
         "ARCH-FM-01"
@@ -271,7 +271,12 @@
         "Docs forbid expanding GNHF into multi-crew runtime competing with FirstMate",
         "No deletion of GNHF launchers in this task"
       ],
-      "evidence": []
+      "evidence": [
+        "tooling/gnhf/README.md Ownership boundary section with ADR cite",
+        "tests/test_gnhf_narrow_ownership_contract.py focused unittest",
+        "scripts/Test-GnhfNarrowOwnershipContract.ps1 PowerShell validator",
+        "ASQ-016 integration"
+      ]
     },
     {
       "taskId": "PI-ADAPTER-05",
