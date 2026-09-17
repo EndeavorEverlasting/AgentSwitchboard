@@ -335,3 +335,20 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** merge:fd9ace5ab10644b887a41b48e6ac7183e3ed1257 pr:#294; contains tip d9f9ddb942437804387f80b21693fd38d77a5caf; inventory floor main@3a153c11f9db9cacc1d9d9dda8c7358c0e3ecbf0; Open Worker grep zero matches; Test-PublicPlanContracts PASS; Test-RepositoryWorkLedgerContract PASS
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-15T16:55:00Z
+
+## ASQ-020 — Local merge-gate proof orchestration
+
+- **Status:** READY
+- **Priority:** P2
+- **Work class:** BOUNDED
+- **Owner:** Cursor Cloud Agent / merge-gate-local implementation
+- **Branch / PR:** cursor/asq020-prove-merge-gate-local-f5b7
+- **Scope:** add the smallest durable AgentSwitchboard change that gives operators one local CLI to emanate/emulate merge-relevant GitHub Actions gates, preserving real app/host validators (not gate-gaming), and failing closed when the host cannot run a selected gate; includes manifest, Prove-MergeGateLocal.ps1, linux-hygiene twin, unittest, docs, registry update
+- **Forbidden:** no force-push; no merge; no secrets; no cron; do not claim merge/release/deploy authority; do not rewrite unrelated path-filtered domain workflows; do not touch PR #300 / ASQ-016 preserve branch; never skip-as-pass; no merge authority claims
+- **Dependencies:** ASQ-018 (Prove-AutomatedTestFloorLocal exists and is always-on)
+- **References:** `.ai/harness/merge-gate-local.manifest.json`, `scripts/Prove-MergeGateLocal.ps1`, `scripts/Test-ApplicationFloorLinuxHygiene.ps1`, `tests/test_merge_gate_local.py`, `docs/harness/merge-gate-local.md`, `tooling/harness/operational/validator-registry.json`, `CODEBASE_MAP.md`
+- **Acceptance gate:** Prove-AutomatedTestFloorLocal PASS; Prove-MergeGateLocal -ListOnly lists gates; Prove-MergeGateLocal PASS on clean tree; test_merge_gate_local unittest PASS with multiple tests; packet shows always-on PASS; simulated Windows-only gate on Linux → non-zero exit (not pass); proof ceiling text forbids merge authority; git diff --check clean
+- **Gate:** none
+- **Last proof:** pending acceptance run
+- **Next action:** run acceptance commands: Prove-AutomatedTestFloorLocal, Prove-MergeGateLocal -ListOnly, Prove-MergeGateLocal, python -m unittest tests.test_merge_gate_local -v, git diff --check
+- **Updated:** 2026-09-17T19:05:00Z

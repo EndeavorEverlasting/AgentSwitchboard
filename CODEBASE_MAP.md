@@ -11,6 +11,13 @@ Load only the smallest surface required by the selected skill, workflow, public 
 - `.github/workflows/automated-test-floor.yml` — AFK `pull_request` / `main` push / `workflow_dispatch` proof on Windows and Ubuntu.
 - `docs/harness/automated-test-floor.md` — operator-facing floor contract, source/generated boundary, and proof boundary.
 
+## Merge gate local proof
+
+- `.ai/harness/merge-gate-local.manifest.json` — always-on and path-activated gate definitions with paths filters, commands, host requirements, and fail-closed rules.
+- `scripts/Prove-MergeGateLocal.ps1` — local emulation orchestrator for merge-relevant GHA gates; selects path-activated gates via git diff, always runs always-on floor, fails closed on unmet host capability.
+- `tests/test_merge_gate_local.py` — meta contracts, manifest schema validation, proof ceiling enforcement, and zero-test detection.
+- `docs/harness/merge-gate-local.md` — usage, gate selection, fail-closed behavior, and proof ceiling boundary.
+
 ## Root coordination
 
 - `AGENTS.md` — universal operating contract and safety floor.

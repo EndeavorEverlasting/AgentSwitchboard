@@ -26,6 +26,17 @@
       "proof": "Actions-quota workaround: meta + floor + isolated canary local proof packet without consuming GitHub Actions minutes"
     },
     {
+      "id": "merge-gate-local-proof",
+      "command": "pwsh -NoLogo -NoProfile -File scripts/Prove-MergeGateLocal.ps1",
+      "platforms": [
+        "windows",
+        "linux"
+      ],
+      "tier": "foundation",
+      "mutatesTarget": false,
+      "proof": "Local emulation of merge-relevant GHA gates with path-selection, always-on floor, and fail-closed host capability checks"
+    },
+    {
       "id": "operational-python",
       "command": "python3 tests/test_operational_harness.py",
       "platforms": [
