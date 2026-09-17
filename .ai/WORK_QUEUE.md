@@ -282,7 +282,7 @@ Canonical terminal action: none; no safe actionable work remains
 - **Acceptance gate:** README or owning contract states NARROW boundary explicitly; optional validator asserts no crew-runtime claim language; launchers remain intact; static validators and required CI pass before merge
 - **Gate:** required CI/local merge-gate prove before merge
 - **Last proof:** revert:pr:#299 commit:`913db33` merged to main@`a754f7c` (premature squash commit `8ad50d6` reverted); preservation:branch:`cursor/preserve-asq-016-gnhf-narrow-cherry-pick-6964` commits:`f71f19a`+`a8d5118` cherry-picked from original branch `cursor/asq-016-gnhf-narrow-boundary-bcfc` @ `2eef899`; artifact:tooling/gnhf/README.md Ownership boundary section citing ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME; artifact:tests/test_gnhf_narrow_ownership_contract.py unittest with 13 contract assertions; artifact:scripts/Test-GnhfNarrowOwnershipContract.ps1 PowerShell validator; preservation branch opened in PR pending validation
-- **Next action:** preservation PR opened; run validation steps 1-5 on preservation branch; merge only after honest CI/local merge-gate prove (do not force-merge past red CI)
+- **Next action:** Run scripts/Test-RepositoryWorkLedgerContract.ps1 and scripts/Test-AutomatedTestFloor.ps1 on PR #300 branch; merge PR #300 only after required CI is green (do not force-merge past red CI)
 - **Updated:** 2026-09-17T18:47:00Z
 
 ## ASQ-017 — FM-WSL-12 physical-floor-continue live runtime proof
