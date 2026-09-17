@@ -31,6 +31,8 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
             "Invoke-FmWsl12AdminBoxLiveProof.ps1",
             "Invoke-Asq017AdminBoxLiveFloor.ps1",
             "tooling/firstmate/Test-FirstMateInterop.sh",
+            "tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPreCommit.sh",
+            "tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPrePush.sh",
             "docs/harness/firstmate-operational-harness.md",
             "docs/harness/firstmate-wsl-physical-floor-runbook.md",
         ):
@@ -42,6 +44,14 @@ class FirstMateOperationalHarnessTests(unittest.TestCase):
         self.assertEqual(
             "Invoke-Asq017AdminBoxLiveFloor.ps1",
             self.manifest["components"]["asq017_admin_box_live_floor"],
+        )
+        self.assertEqual(
+            "tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPreCommit.sh",
+            self.manifest["components"]["pre_commit_hook"],
+        )
+        self.assertEqual(
+            "tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPrePush.sh",
+            self.manifest["components"]["pre_push_hook"],
         )
 
     def test_manifest_binds_physical_floor_runbook(self) -> None:

@@ -19,6 +19,8 @@
     "windows_cmd_entrypoint": "Test-AgentSwitchboard-FirstMate-Harness.cmd",
     "linux_contract_entrypoint": "Test-AgentSwitchboard-FirstMate-Harness.sh",
     "interop_probe": "tooling/firstmate/Test-FirstMateInterop.sh",
+    "pre_commit_hook": "tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPreCommit.sh",
+    "pre_push_hook": "tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPrePush.sh",
     "operator_guide": "docs/harness/firstmate-operational-harness.md",
     "physical_floor_runbook": "docs/harness/firstmate-wsl-physical-floor-runbook.md",
     "completeness_test": "tests/test_firstmate_operational_harness.py",
