@@ -4,10 +4,10 @@
   "title": "Product-pass posture: function + no-flags over GitHub mergeability",
   "repository": "EndeavorEverlasting/AgentSwitchboard",
   "visibility": "public",
-  "status": "proposed",
+  "status": "completed",
   "priority": "high",
   "createdUtc": "2026-09-17T20:00:19Z",
-  "updatedUtc": "2026-09-17T20:00:19Z",
+  "updatedUtc": "2026-09-17T20:47:16Z",
   "mission": "Make AgentSwitchboard agent completion use product function plus no harness flags as the primary pass standard, so agents stop hanging on GitHub mergeability while still preserving honest forge hygiene when landing on main.",
   "owner": {
     "surface": "agent operating doctrine and public plan coordination",
@@ -59,7 +59,7 @@
     {
       "taskId": "PPP-01",
       "title": "Persist durable product-pass sprint map",
-      "status": "ready",
+      "status": "completed",
       "owner": "public-plan-coordination lane",
       "dependencies": [],
       "inputs": [
@@ -77,12 +77,17 @@
         "Registry lists ASB-2026-09-PRODUCT-PASS-POSTURE",
         "Plan encodes waves, owned/forbidden scope, proof ceiling, and successor tasks"
       ],
-      "evidence": []
+      "evidence": [
+        "merge:ce78fc5 pr:#302",
+        "artifact:plans/active/ASB-2026-09-product-pass-posture.plan.json on main@ce78fc5",
+        "artifact:plans/active/ASB-2026-09-product-pass-posture.md on main@ce78fc5",
+        "artifact:plans/plan-registry.json membership on main@ce78fc5"
+      ]
     },
     {
       "taskId": "PPP-02",
       "title": "Index ASQ-021 in WORK_QUEUE",
-      "status": "ready",
+      "status": "completed",
       "owner": "ledger lane",
       "dependencies": [
         "PPP-01"
@@ -97,12 +102,15 @@
         "Next action starts with an executable verb",
         "scripts/Test-RepositoryWorkLedgerContract.ps1 PASS"
       ],
-      "evidence": []
+      "evidence": [
+        "merge:ce78fc5 pr:#302",
+        "artifact:.ai/WORK_QUEUE.md ASQ-021 entry on main@ce78fc5"
+      ]
     },
     {
       "taskId": "PPP-03",
       "title": "Encode product-pass vs forge-pass in AGENTS.md",
-      "status": "pending",
+      "status": "completed",
       "owner": "doctrine lane",
       "dependencies": [
         "PPP-01",
@@ -123,12 +131,16 @@
         "scripts/Test-AgentGovernanceDoctrine.ps1 PASS",
         "git diff --check origin/main...HEAD clean"
       ],
-      "evidence": []
+      "evidence": [
+        "merge:16fc141 pr:#303",
+        "artifact:AGENTS.md product-pass section on main@16fc141",
+        "artifact:docs/governance/agent-operating-details.md governance detail on main@16fc141"
+      ]
     },
     {
       "taskId": "PPP-04",
       "title": "Rewire bounded-sprint and pr-integration completion criteria",
-      "status": "pending",
+      "status": "completed",
       "owner": "agent-harness lane",
       "dependencies": [
         "PPP-03"
@@ -146,12 +158,16 @@
         "Handoff requires prove command, result level, flags, forge status",
         "Test-AgentDocumentationContract.ps1 PASS"
       ],
-      "evidence": []
+      "evidence": [
+        "merge:64c8350 pr:#304",
+        "artifact:.ai/skills/bounded-sprint/SKILL.md updated completion criteria on main@64c8350",
+        "artifact:.ai/skills/pr-integration/SKILL.md updated completion criteria on main@64c8350"
+      ]
     },
     {
       "taskId": "PPP-05",
       "title": "Optional Prove-ProductPassLocal alias",
-      "status": "pending",
+      "status": "completed",
       "owner": "validation lane",
       "dependencies": [
         "PPP-03"
@@ -168,25 +184,35 @@
         "Proof ceiling still forbids merge/release/deploy authority",
         "unittest or meta contract covers fail-closed"
       ],
-      "evidence": []
+      "evidence": [
+        "merge:684672f pr:#305",
+        "artifact:scripts/Prove-ProductPassLocal.ps1 on main@684672f",
+        "artifact:docs/harness/product-pass-local.md on main@684672f",
+        "artifact:tests/test_product_pass_local.py unittest on main@684672f"
+      ]
     },
     {
       "taskId": "PPP-06",
-      "title": "Stale ASQ-016 ledger next-action repair",
-      "status": "pending",
+      "title": "Stale ASQ-016 ledger next-action repair + plan status sync",
+      "status": "completed",
       "owner": "ledger hygiene lane",
       "dependencies": [
         "PPP-02"
       ],
       "inputs": [
-        "ASQ-016 already on main@ba19f7c / e999602 ancestry"
+        "ASQ-016 already on main@ba19f7c / e999602 ancestry",
+        "PPP-01..PPP-05 integrated on main@684672f"
       ],
       "outputs": [
-        "WORK_QUEUE ASQ-016 Next action reflects DONE/integrated state"
+        "WORK_QUEUE ASQ-016 Next action reflects DONE/integrated state",
+        "WORK_QUEUE ASQ-021 Next action reflects remaining work or DONE",
+        "Plan JSON PPP-01..PPP-05 marked completed with evidence"
       ],
       "acceptanceCriteria": [
         "No instruction to merge already-merged PR #300",
-        "Ledger contract PASS"
+        "Plan task statuses reflect main@684672f integration",
+        "Ledger contract PASS",
+        "Plan contract PASS"
       ],
       "evidence": []
     }
