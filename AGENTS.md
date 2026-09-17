@@ -12,7 +12,6 @@
 - **No completion without proof.** Claims, plans, summaries, generated text, and process exit alone are not completion.
 
 ## Precedence
-
 Instruction precedence when instructions conflict:
 1. Platform, security, legal, and repository-owner instructions.
 2. This governance contract, triggered governance details, and the nearest nested `AGENTS.md`.
@@ -22,7 +21,6 @@ Instruction precedence when instructions conflict:
 `CLAUDE.md` and other adapters may specialize execution but may not silently weaken a higher-priority boundary.
 
 ## Mandatory sprint declaration
-
 Before every writing sprint, state:
 - repo and branch;
 - lane and mission;
@@ -36,7 +34,6 @@ Before every writing sprint, state:
 If remote state or ownership is uncertain, perform read-only intake first. Preserve existing work and keep mutation inside owned scope.
 
 ## Universal operating law
-
 - Repository knowledge is compiled state. Search repository law, architecture/specs, manifests/registries, skills, validators/tests, plans/reports, helpers, and relevant history before inventing or searching outward. External research or a new abstraction requires an explicit unresolved gap.
 - Keep judgment in skills; deterministic behavior belongs in code, schemas, registries, validators, workflows, and artifacts.
 - Preserve unrelated dirty work. Destructive Git is not cleanup.
@@ -48,7 +45,6 @@ If remote state or ownership is uncertain, perform read-only intake first. Prese
 - Merge/release/deployment/live-target authority must be explicit and current.
 
 ## Progressive disclosure reading order
-
 1. Read this file and the nearest nested `AGENTS.md`.
 2. Read `HARNESS.md` only for 50k repository orientation.
 3. Select one 30k domain through `tooling/harness/context/context.routes.json`; load only its `defaultLoad`.
@@ -59,7 +55,6 @@ If remote state or ownership is uncertain, perform read-only intake first. Prese
 Repository-family work loads `.ai/harness/repository-family.registry.json`. Public-plan work loads `plans/plan-registry.json` and `.ai/skills/public-plan-coordination/SKILL.md` after that trigger is selected. `.ai/agent-contract.json` remains the machine-readable repository contract.
 
 ## Triggered governance detail
-
 Load `docs/governance/agent-operating-details.md` for launch/dependency gates, broad multi-surface sprints, cross-device transport, live continuation, AXI/interface design, multi-agent/local-model orchestration, privacy proof, autovalidation loops, or another clause not fully stated here.
 
 Relevant policy pairs:
@@ -70,35 +65,13 @@ Relevant policy pairs:
 For a PR or sprint governed by harness doctrine, use its selected route, validation order, and proof boundary.
 
 ## Sprint and proof contract
-
 Before mutation, resolve branch, scope, dependencies/collisions, canonical owner, artifacts, validation order, proof ceiling, and commit/push/PR expectation. Run focused owning validators before broader gates. Preserve failing evidence and repair the first deterministic boundary. Process exit code zero alone is not delivery proof.
 
 Operator-visible work crossing shell/process/platform/terminal/TUI/GUI routes to `.ai/skills/end-to-end-runtime-validation/SKILL.md`. Repository operation routes through `HARNESS.md` and progressive context.
 
 ## Product pass vs Forge pass
 
-Agents must distinguish between **product pass** (functional accept) and **forge pass** (optional integration into main).
-
-**Product pass** is the primary acceptance gate:
-- Run owning prove commands for changed scope (`Prove-AutomatedTestFloorLocal.ps1`, `Prove-MergeGateLocal.ps1` when paths activate it, domain-specific validators).
-- Candidate status: `PROVEN` / `UNPROVEN` / `BLOCKED_HOST` / `FLAGGED`.
-- No open harness flags: no `FAIL` or `FAIL_CLOSED` results, clean `git diff --check origin/main...HEAD`, verb-first ledger entries, no zero-test fail-closed conditions.
-- Product pass means the work is functionally correct and ready for review.
-
-**Forge pass** is an optional subsequent step:
-- Forge pass means landing the change on the default branch (`main`) through merge.
-- This requires GitHub mergeability: satisfied required checks, passing CI, approved reviews, no merge conflicts.
-- Forge pass is relevant only when the operator chooses to integrate the change into `main`.
-- Forge pass is never the product verdict.
-
-**Agent completion discipline:**
-- Product pass is the primary acceptance criterion for completing a bounded sprint.
-- Do not idle-wait on GitHub Actions status, CodeRabbit reviews, or `mergeable_state` when the owning prove already shows `PASS` and harness flags are clean.
-- Do not treat GitHub mergeability as equivalent to product function.
-- When merge is authorized and product pass holds, check forge status (mergeability, CI, reviews) just-in-time and merge if clear, or report the specific forge blocker.
-- When merge is not authorized or not requested, product pass is sufficient to complete the sprint.
-- Report both product status and forge status separately: prove results, flag status, and merge readiness are independent signals.
-- Preserve honest forge hygiene: never force-merge past red required checks; fail-closed when a gate cannot run; respect review requirements.
+Product pass: prove PASS + no flags; no idle-wait on forge. Forge pass is optional land-on-main, never product verdict (`docs/governance/agent-operating-details.md`).
 
 ## Completion standard
 

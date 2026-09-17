@@ -24,8 +24,8 @@ $rootRelative = 'AGENTS.md'
 $detailRelative = 'docs/governance/agent-operating-details.md'
 $rootDocumentPath = Join-Path $RepositoryRoot $rootRelative
 $detailDocumentPath = Join-Path $RepositoryRoot $detailRelative
-$expectedDetailBlob = 'c94b797bef04942636af61b980c478919710e067'
-$expectedDetailBytes = 27896
+$expectedDetailBlob = 'aa71c38683bb14775e6c11af4adbb2f5f3f62874'
+$expectedDetailBytes = 34029
 
 foreach ($entry in @(
     @{ Label='root'; Relative=$rootRelative; Path=$rootDocumentPath },
