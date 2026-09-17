@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "manifestId": "agentswitchboard.merge-gate-local.v1",
+  "title": "AgentSwitchboard local merge gate proof",
+  "proofLevel": "static-test",
+  "proofCeiling": "Local static/contract emulation of merge-relevant gates only. Does not prove GitHub mergeability, required-check satisfaction, branch protection, reviews, live Admin Box, provider delivery, merge, release, or deployment.",
+  "canonicalCommand": "pwsh -NoLogo -NoProfile -File scripts/Prove-MergeGateLocal.ps1",
+  "failClosed": {
+    "skipMustNotCountAsPass": true,
+    "missingHostCapabilityFails": true,
+    "missingToolFails": true,
+    "zeroAlwaysOnGates": true
+  },
+  "notes": [
+    "Always-on gates run on every invocation.",
+    "Path-activated gates run only when changed files match workflow paths filters.",
+    "When a selected gate's host requirement is unmet, status is FAIL or BLOCKED with NEXT= and exit != 0.",
+    "Substitutes Actions minutes for runnable gates; never skip-as-pass when host cannot run a selected gate."
+  ],
+  "gates": [
+    {
+      "id": "automated-test-floor",
+      "tier": "always-on",
+      "workflow": "automated-test-floor.yml",
+      "job": "floor",
+      "paths": [],
+      "commands": [
+        "pwsh -NoLogo -NoProfile -File scripts/Prove-AutomatedTestFloorLocal.ps1"
+      ],
+      "host": "any",
+      "required": true,
+      "proof": "Dependency-free static automated test floor with fail-closed zero-test and explicit script/unittest runners"
+    },
+    {
+      "id": "application-floor-windows-core",
+      "tier": "path-activated",
+      "workflow": "application-floor.yml",
+      "job": "windows-core",
+      "paths": [
+        "Setup-AgentSwitchboard.cmd",
+        "README.md",
+        "tooling/gnhf/**",
+        ".github/workflows/application-floor.yml"
+      ],
+      "commands": [
+        "pwsh -NoLogo -NoProfile -File tooling/gnhf/Test-GnhfFleetContracts.ps1",
+        "pwsh -NoLogo -NoProfile -File tooling/gnhf/Test-HermesSetupContracts.ps1"
+      ],
+      "host": "any",
+      "required": true,
+      "proof": "GNHF fleet and Hermes setup contracts; setup routing checks are inline-validated by Prove-MergeGateLocal"
+    },
+    {
+      "id": "application-floor-linux-hygiene",
+      "tier": "path-activated",
+      "workflow": "application-floor.yml",
+      "job": "linux-hygiene",
+      "paths": [
+        "Setup-AgentSwitchboard.cmd",
+        "README.md",
+        "tooling/gnhf/**",
+        ".github/workflows/application-floor.yml"
+      ],
+      "commands": [
+        "pwsh -NoLogo -NoProfile -File scripts/Test-ApplicationFloorLinuxHygiene.ps1"
+      ],
+      "host": "any",
+      "required": true,
+      "proof": "JSON parse validation, shell script syntax check, diff hygiene"
+    },
+    {
+      "id": "operational-merge-authority",
+      "tier": "path-activated",
+      "workflow": "operational-merge-authority.yml",
+      "job": "contract",
+      "paths": [
+        "tooling/harness/operational/Get-OperationalHarnessStatus.py",
+        "tooling/harness/operational/workflows/handoff.workflow.json",
+        ".ai/skills/operational-harness-routing/SKILL.md",
+        "docs/harness/operational-harness.md",
+        "tests/test_operational_merge_authority.py",
+        ".github/workflows/operational-merge-authority.yml"
+      ],
+      "commands": [
+        "python tests/test_operational_merge_authority.py",
+        "pwsh -NoLogo -NoProfile -File scripts/Test-OperationalHarness.ps1",
+        "python tests/test_operational_harness.py"
+      ],
+      "host": "any",
+      "required": true,
+      "proof": "Merge-authority continuation contract and operational harness completeness"
+    },
+    {
+      "id": "opinion-ledger-tracer",
+      "tier": "path-activated",
+      "workflow": "opinion-ledger-tracer.yml",
+      "job": "tracer-contracts",
+      "paths": [
+        ".ai/WORK_QUEUE.md",
+        ".ai/skills/opinion-ledger-tracer/**",
+        "docs/harness/opinion-ledger-tracer.md",
+        "tooling/harness/operational/manifest.json",
+        "tooling/harness/operational/workflow-registry.json",
+        "tooling/harness/operational/opinion-ledger/**",
+        "tests/test_opinion_ledger_tracer.py",
+        ".github/workflows/opinion-ledger-tracer.yml"
+      ],
+      "commands": [
+        "python -m unittest tests.test_opinion_ledger_tracer -v",
+        "python tests/test_operational_harness.py",
+        "pwsh -NoLogo -NoProfile -File scripts/Test-RepositoryWorkLedgerContract.ps1",
+        "python -m unittest tests.test_repository_work_ledger_contract -v"
+      ],
+      "host": "any",
+      "required": true,
+      "proof": "Opinion tracer, operational harness, and work ledger contract"
+    },
+    {
+      "id": "firstmate-interop-contract",
+      "tier": "path-activated",
+      "workflow": "firstmate-interop.yml",
+      "job": "linux-contracts",
+      "paths": [
+        "tooling/firstmate/**",
+        "tests/test_firstmate_integration_contract.py",
+        "tests/test_firstmate_asb_convergence_contract.py",
+        "tests/test_firstmate_operational_harness.py",
+        "tests/test_firstmate_windows_harness_portability.py",
+        "tests/test_firstmate_windows_wsl_bridge.py",
+        "tests/test_firstmate_windows_wsl_prerequisite_gate.py",
+        "docs/harness/firstmate-integration.md",
+        "docs/harness/firstmate-asb-convergence.md",
+        "docs/harness/firstmate-operational-harness.md",
+        "docs/architecture/asb-firstmate-runtime-boundary.md",
+        "Test-AgentSwitchboard-FirstMate-Harness.cmd",
+        "Test-AgentSwitchboard-FirstMate-Harness.ps1",
+        "Test-AgentSwitchboard-FirstMate-Harness.sh",
+        "Test-AgentSwitchboard-FirstMate-WindowsWSL.ps1",
+        "Test-AgentSwitchboard-FirstMate-PhysicalFloor.ps1",
+        ".github/workflows/firstmate-interop.yml"
+      ],
+      "commands": [
+        "bash Test-AgentSwitchboard-FirstMate-Harness.sh contract"
+      ],
+      "host": "linux",
+      "required": true,
+      "proof": "FirstMate contract-only mode; does not run physical-floor"
+    }
+  ]
+}
