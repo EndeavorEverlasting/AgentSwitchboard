@@ -186,7 +186,7 @@
     {
       "taskId": "TUT-PRE-01",
       "title": "P07 prerequisite encode GNHF NARROW ownership",
-      "status": "ready",
+      "status": "done",
       "owner": "P07 ASQ-016 lane",
       "dependencies": ["TUT-RANK-01"],
       "inputs": [
@@ -201,7 +201,12 @@
         "ASQ-016 acceptance gate satisfied",
         "Unblocks expanded GNHF fleet and night-panel tutorials beyond TUT-02"
       ],
-      "evidence": []
+      "evidence": [
+        "tooling/gnhf/README.md Ownership boundary section",
+        "tests/test_gnhf_narrow_ownership_contract.py validator",
+        "scripts/Test-GnhfNarrowOwnershipContract.ps1 PowerShell validator",
+        "ASQ-016 updated with evidence"
+      ]
     },
     {
       "taskId": "TUT-PRE-02",

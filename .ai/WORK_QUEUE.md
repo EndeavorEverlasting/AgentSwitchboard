@@ -274,16 +274,16 @@ Canonical terminal action: none; no safe actionable work remains
 - **Priority:** P1
 - **Work class:** BOUNDED
 - **Owner:** GNHF contract lane
-- **Branch / PR:** none yet
+- **Branch / PR:** cursor/preserve-asq-016-gnhf-narrow-cherry-pick-6964
 - **Scope:** document and enforce that tooling/gnhf remains the Windows-first bounded single-agent/fleet launcher with unique readiness contracts, and must not expand into a multi-crew control plane competing with FirstMate; no launcher deletion
-- **Forbidden:** deleting GNHF; implementing multi-crew supervision inside GNHF; unfreezing child-bus adapters; provider credential commits
+- **Forbidden:** deleting GNHF; implementing multi-crew supervision inside GNHF; unfreezing child-bus adapters; provider credential commits; force-merge past red CI
 - **Dependencies:** ASQ-014
 - **References:** `docs/architecture/asb-firstmate-runtime-boundary.md`, `tooling/gnhf/README.md`, `tooling/gnhf/Start-GnhfSprint.ps1`
-- **Acceptance gate:** README or owning contract states NARROW boundary explicitly; optional validator asserts no crew-runtime claim language; launchers remain intact
-- **Gate:** none
-- **Last proof:** none
-- **Next action:** open isolated branch and add NARROW ownership clause plus focused contract check referencing the ADR
-- **Updated:** 2026-09-13T17:30:00Z
+- **Acceptance gate:** README or owning contract states NARROW boundary explicitly; optional validator asserts no crew-runtime claim language; launchers remain intact; static validators and required CI pass before merge
+- **Gate:** required CI/local merge-gate prove before merge
+- **Last proof:** revert:pr:#299 commit:`913db33` merged to main@`a754f7c` (premature squash commit `8ad50d6` reverted); preservation:branch:`cursor/preserve-asq-016-gnhf-narrow-cherry-pick-6964` commits:`f71f19a`+`a8d5118` cherry-picked from original branch `cursor/asq-016-gnhf-narrow-boundary-bcfc` @ `2eef899`; artifact:tooling/gnhf/README.md Ownership boundary section citing ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME; artifact:tests/test_gnhf_narrow_ownership_contract.py unittest with 13 contract assertions; artifact:scripts/Test-GnhfNarrowOwnershipContract.ps1 PowerShell validator; preservation branch opened in PR pending validation
+- **Next action:** Run scripts/Test-RepositoryWorkLedgerContract.ps1 and scripts/Test-AutomatedTestFloor.ps1 on PR #300 branch; merge PR #300 only after required CI is green (do not force-merge past red CI)
+- **Updated:** 2026-09-17T18:47:00Z
 
 ## ASQ-017 — FM-WSL-12 physical-floor-continue live runtime proof
 
