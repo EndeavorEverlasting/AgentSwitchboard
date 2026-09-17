@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import re
 from pathlib import Path
@@ -13,6 +14,7 @@ POLICY = ROOT / ".ai/harness/fm-asb-promptkit-protocol.policy.json"
 STATE_MACHINE = ROOT / ".ai/harness/fm-asb-promptkit-rollover-state-machine.json"
 SCHEMA_DIR = ROOT / ".ai/harness/schemas/fm-asb-promptkit"
 FIXTURES = ROOT / ".ai/harness/fixtures/fm-asb-promptkit"
+ROUTING_BUILDER = ROOT / "tooling/firstmate/harness/routing/build_routing_request.py"
 DOCS_PROTOCOL = ROOT / "docs/architecture/fm-asb-promptkit-protocol-v1.md"
 DOCS_UX = ROOT / "docs/harness/context-rollover-ux.md"
 ADR_BOUNDARY = ROOT / "docs/architecture/asb-firstmate-runtime-boundary.md"
@@ -36,6 +38,13 @@ CTX_RE = re.compile(r"^ctx_[A-Za-z0-9][A-Za-z0-9._-]{7,95}$")
 
 def load(path: Path):
     return json.loads(path.read_text(encoding="utf-8-sig"))
+
+
+def load_module(path: Path, name: str):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def semantic_sha(obj: dict) -> str:
@@ -220,6 +229,61 @@ def main() -> None:
         == idem_key("asb.context-transition/v1", ctx["transitionId"], ctx["state"]),
         "ctx idempotency key",
     )
+
+    # Routing-request builder reproduces the frozen fixture deterministically
+    assert_true(ROUTING_BUILDER.is_file(), "routing-request builder missing")
+    builder = load_module(ROUTING_BUILDER, "build_routing_request")
+    built = builder.build_routing_request(
+        obs,
+        summary=req["mission"]["summary"],
+        observed=req["evidenceState"]["observed"],
+        claimed=req["evidenceState"]["claimed"],
+        execution_surface=req["executionSurface"],
+        signals=list(req["signals"]),
+        forbidden_scopes=list(req["constraints"]["forbiddenScopes"]),
+        max_candidates=req["routingPolicy"]["maxCandidates"],
+        created_at=req["createdAt"],
+    )
+    assert_true(not envelope_ok(built), f"built routing-request envelope: {envelope_ok(built)}")
+    assert_true(built["schema"] == "prompt-kit.routing-request/v1", "built schema")
+    assert_true(built["causationId"] == obs["eventId"], "built causation links observation")
+    assert_true(built["observationEventId"] == obs["eventId"], "built observationEventId")
+    assert_true(built["task"]["firstMateTaskId"] == obs["source"]["taskId"], "built task id")
+    assert_true(built["task"]["repository"] == obs["repository"], "built repository parity")
+    assert_true(
+        built["mission"]["groundingEpisodeId"] == obs["promptContext"]["groundingEpisodeId"],
+        "built grounding parity",
+    )
+    assert_true(built["constraints"]["rawTranscriptIncluded"] is False, "built raw transcript forbidden")
+    assert_true(built["routingPolicy"]["crossSurfaceFallbackAllowed"] is False, "built no cross-surface")
+    assert_true(
+        built["idempotency"]["semanticSha256"] == req["idempotency"]["semanticSha256"],
+        "built semanticSha256 matches frozen fixture",
+    )
+    assert_true(
+        built["idempotency"]["key"] == req["idempotency"]["key"],
+        "built idempotency key matches frozen fixture",
+    )
+
+    # Builder fails closed on raw-transcript override attempts and bad enums
+    for bad in (
+        {"observed": "NOT_A_STATE"},
+        {"execution_surface": "shell"},
+        {"signals": ["not-a-signal"]},
+        {"max_candidates": 9},
+    ):
+        try:
+            builder.build_routing_request(
+                obs,
+                summary=req["mission"]["summary"],
+                observed=bad.get("observed", "VALIDATED"),
+                execution_surface=bad.get("execution_surface", "regular_ai_prompt"),
+                signals=bad.get("signals"),
+                max_candidates=bad.get("max_candidates", 3),
+            )
+            raise AssertionError(f"builder accepted invalid input {bad}")
+        except builder.ContractError:
+            pass
 
     # Invalid fixtures must fail semantic rules
     bad_ctx = load(FIXTURES / "context-transition.estimated-automatic.invalid.json")
