@@ -271,7 +271,7 @@
     {
       "taskId": "GNHF-NARROW-09",
       "title": "Encode GNHF NARROW ownership boundary",
-      "status": "ready",
+      "status": "done",
       "owner": "GNHF contract lane",
       "dependencies": [
         "FM-03"
@@ -291,7 +291,12 @@
         "Preserve all existing launcher behavior unless a separate defect is proven",
         "Integrate the validated boundary to current main"
       ],
-      "evidence": []
+      "evidence": [
+        "tooling/gnhf/README.md Ownership boundary section citing ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME",
+        "tests/test_gnhf_narrow_ownership_contract.py unittest with 13 assertions",
+        "scripts/Test-GnhfNarrowOwnershipContract.ps1 PowerShell validator",
+        "ASQ-016 DONE"
+      ]
     },
     {
       "taskId": "FM-BRIDGE-10",
