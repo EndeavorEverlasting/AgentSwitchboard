@@ -253,20 +253,20 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## ASQ-015 — Refresh FirstMate interop floor to b182d0f
 
-- **Status:** READY
+- **Status:** IN_PROGRESS
 - **Priority:** P0
 - **Work class:** BOUNDED
-- **Owner:** FirstMate interop lane
-- **Branch / PR:** none yet — derive from PR #96 lineage on current main
+- **Owner:** Cursor Cloud Agent cursor/asq-015-firstmate-interop-refresh-11b8
+- **Branch / PR:** cursor/asq-015-firstmate-interop-refresh-11b8 / PR pending
 - **Scope:** rebase/refresh AgentSwitchboard FirstMate interop harness (PR #96 lineage) onto current main; update upstream pin from 833a9a25… to FirstMate main@b182d0f908b78d08c7ccb8dce3775bdca8c5d657; preserve Windows→WSL anti-regression contracts; keep first_safe_sprint local-only and yolo_enabled false
 - **Forbidden:** FirstMate upstream mutation; enabling +yolo; claiming live crew dispatch without runtime floor; native-Windows FirstMate compatibility claim; deleting GNHF; unfreezing ASQ-008..012
 - **Dependencies:** ASQ-014
 - **References:** `docs/architecture/asb-firstmate-runtime-boundary.md`, `plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json`, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/96, https://github.com/kunchenguid/firstmate
 - **Acceptance gate:** refreshed verified_commit pin; contract tests green; Windows bridge regressions preserved; proof ceiling remains below live crew unless physical floor passes
 - **Gate:** none
-- **Last proof:** none
-- **Next action:** create isolated branch from refreshed main, import/rebase PR #96 FirstMate harness surfaces, update upstream pin to b182d0f, run firstmate contract tests and Windows -ContractOnly bridge
-- **Updated:** 2026-09-13T17:30:00Z
+- **Last proof:** contract tests PASS (test_firstmate_integration_contract 14 tests, test_firstmate_operational_harness 9 tests, test_public_plan_contracts PASS); pin verified at b182d0f908b78d08c7ccb8dce3775bdca8c5d657; historical PR#96 commit 833a9a25 recorded as provenance; added missing harness hooks; Linux contract validation PASS; Windows tests require pwsh (expected BLOCKED on Linux)
+- **Next action:** commit changes, push branch, create PR against main with ASQ-015 summary, run full Windows -ContractOnly validation if available
+- **Updated:** 2026-09-17T21:18:00Z
 
 ## ASQ-016 — Encode GNHF NARROW ownership boundary
 
