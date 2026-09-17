@@ -91,8 +91,9 @@ if ($null -ne $readmeText) {
         -FailureMessage "README must reference ADR path docs/architecture/asb-firstmate-runtime-boundary.md"
 
     # Check for explicit forbid multi-crew control plane language
+    # Allow for markdown formatting like **not**
     Add-Result `
-        -Passed ($readmeText -match '(?i)must\s+not\s+expand.*multi-crew.*control\s+plane') `
+        -Passed ($readmeText -match '(?i)must\s+\*?\*?not\*?\*?\s+expand.*multi-crew.*control\s+plane') `
         -Name "ownership/forbid-multi-crew" `
         -FailureMessage "README must forbid expanding into multi-crew control plane"
 
@@ -102,9 +103,10 @@ if ($null -ne $readmeText) {
         -Name "ownership/competing-firstmate" `
         -FailureMessage "README must state boundary prevents competing with FirstMate"
 
-    # Negative check: ensure no crew orchestration claims
+    # Negative check: ensure no crew orchestration CAPABILITY claims
+    # Require positive claim verbs to avoid matching the forbid sentence itself
     Add-Result `
-        -Passed ($readmeText -notmatch '(?i)GNHF.*(?:crew|multi-agent)\s+(?:orchestration|supervision|control\s+plane)') `
+        -Passed ($readmeText -notmatch '(?i)GNHF\s+(?:is|provides|enables|supports|implements).*(?:crew|multi-agent)\s+(?:orchestration|supervision|control\s+plane)') `
         -Name "ownership/no-crew-claims" `
         -FailureMessage "README must not claim GNHF is a crew orchestration platform"
 }
