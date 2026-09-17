@@ -115,9 +115,17 @@
       "planId": "ASB-2026-09-PRODUCT-PASS-POSTURE",
       "path": "plans/active/ASB-2026-09-product-pass-posture.plan.json",
       "summaryPath": "plans/active/ASB-2026-09-product-pass-posture.md",
-      "status": "proposed",
+      "status": "completed",
       "priority": "high",
       "dependencies": []
+    },
+    {
+      "planId": "ASB-2026-09-POST-PPP-REMAINING-SPRINTS",
+      "path": "plans/active/ASB-2026-09-post-ppp-remaining-sprints.plan.json",
+      "summaryPath": "plans/active/ASB-2026-09-post-ppp-remaining-sprints.md",
+      "status": "active",
+      "priority": "high",
+      "dependencies": ["ASB-2026-09-PRODUCT-PASS-POSTURE"]
     }
   ]
 }

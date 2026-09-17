@@ -1,0 +1,242 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-09-POST-PPP-REMAINING-SPRINTS",
+  "title": "Post-product-pass remaining sprints: FirstMate interop, Admin Box physical floor, and open PR triage",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "active",
+  "priority": "high",
+  "createdUtc": "2026-09-17T20:57:00Z",
+  "updatedUtc": "2026-09-17T20:57:00Z",
+  "mission": "Complete remaining September coordination work after product-pass posture (#302-#306): refresh FirstMate interop floor to b182d0f, prove Admin Box FM-WSL-12 physical floor, and triage stale open PRs. Encode parallelism constraints, proof ceilings, and dependency order for safe autonomous execution.",
+  "owner": {
+    "surface": "repository coordination and remaining September program convergence",
+    "role": "multi-lane coordination (FirstMate interop, Admin Box physical floor, PR triage)",
+    "agent": "Cursor Cloud Agent"
+  },
+  "delivery": {
+    "branch": "cursor/post-ppp-remaining-sprints-plan-ca73",
+    "pullRequest": null,
+    "baseRef": "main",
+    "commitRequired": true
+  },
+  "wave": "post-product-pass remaining sprints",
+  "lane": "coordination",
+  "dependencies": [
+    "ASQ-021 product-pass posture complete on main@770c855",
+    "ASB-2026-09-PRODUCT-PASS-POSTURE plan completed (#302-#306)",
+    "Prove-ProductPassLocal.ps1 canonical prove available"
+  ],
+  "safeParallelWork": [
+    "ASQ-015 (repo writer) || ASQ-017 (Admin Box host-isolated, no AGENTS.md/WORK_QUEUE/plans/* shared writes) when Admin Box available",
+    "Unrelated FirstMate open-source observation without AgentSwitchboard mutation"
+  ],
+  "ownedScope": [
+    "plans/active/ASB-2026-09-post-ppp-remaining-sprints.plan.json",
+    "plans/active/ASB-2026-09-post-ppp-remaining-sprints.md",
+    "plans/plan-registry.json membership for this plan",
+    "plans/plan-registry.json PRODUCT-PASS-POSTURE status fix (proposed → completed)",
+    ".ai/WORK_QUEUE.md ASQ-015, ASQ-017, TRIAGE-01 entries",
+    "REG-01 ledger hygiene coordination artifact"
+  ],
+  "forbiddenScope": [
+    "inventing scripts/prompt_parallel_dispatch.py or harness/contracts/prompt-parallel-dispatch.v1.json (foreign, ABSENT from this repo)",
+    "implementing ASQ-015 FirstMate refresh or ASQ-017 physical floor in this planning task",
+    "claiming Admin Box physical floor PASS from coordination",
+    "claiming live OpenCode LSP runtime from planning",
+    "mass-closing stale PRs without triage plan and containment proof",
+    "unfreezing ASQ-008..013 (frozen by FirstMate crew ADR)",
+    "secrets, credentials, private hostnames, machine-local runtime evidence in public plans",
+    "force-merge, destructive Git, automatic merge of triage candidates"
+  ],
+  "expectedArtifacts": [
+    "schema-valid public plan JSON + English summary",
+    "plan-registry membership row for ASB-2026-09-POST-PPP-REMAINING-SPRINTS",
+    "plan-registry PRODUCT-PASS-POSTURE status corrected to completed",
+    "REG-01, ASQ-015, ASQ-017, LSP-01, TRIAGE-01, TUT-WAVE task definitions with owned/forbidden/deps/proof",
+    "parallelism constraints encoded (width 2 when Admin Box available, width 1 for shared writers)",
+    "PR transporting the plan"
+  ],
+  "tasks": [
+    {
+      "taskId": "REG-01",
+      "title": "Registry hygiene: PRODUCT-PASS-POSTURE status=completed",
+      "status": "ready",
+      "owner": "registry hygiene lane",
+      "dependencies": [],
+      "inputs": [
+        "plans/plan-registry.json current state showing status=proposed",
+        "plans/active/ASB-2026-09-product-pass-posture.plan.json showing status=completed",
+        "main@770c855 contains PPP-01..06 completion (#302-#306)"
+      ],
+      "outputs": [
+        "plans/plan-registry.json ASB-2026-09-PRODUCT-PASS-POSTURE status=completed"
+      ],
+      "acceptanceCriteria": [
+        "Registry status matches plan JSON status (completed)",
+        "Test-PublicPlanContracts.ps1 PASS",
+        "git diff --check clean"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "ASQ-015",
+      "title": "Refresh FirstMate interop floor to b182d0f",
+      "status": "ready",
+      "owner": "FirstMate interop lane",
+      "dependencies": [
+        "REG-01"
+      ],
+      "inputs": [
+        "PR #96 lineage (FirstMate interop harness)",
+        "main@770c855 current floor",
+        "FirstMate main@b182d0f908b78d08c7ccb8dce3775bdca8c5d657 upstream pin target",
+        "tooling/firstmate/harness/upstream-pin.json",
+        "docs/architecture/asb-firstmate-runtime-boundary.md"
+      ],
+      "outputs": [
+        "refreshed FirstMate interop harness on current main",
+        "upstream pin updated from 833a9a25… to b182d0f",
+        "Windows→WSL bridge contracts preserved (ContractOnly mode)",
+        "first_safe_sprint local-only, yolo_enabled=false preserved"
+      ],
+      "acceptanceCriteria": [
+        "FirstMate contract tests green",
+        "Windows bridge -ContractOnly preserved (no native-Windows claim)",
+        "Proof ceiling remains below live crew dispatch unless physical floor passes",
+        "Test-AgentSwitchboard-FirstMate-Harness.ps1 PASS or BLOCKED_* structured exit",
+        "git diff --check clean"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "ASQ-017",
+      "title": "Admin Box FM-WSL-12 physical-floor-continue live proof",
+      "status": "ready",
+      "owner": "Windows Admin Box operator / runtime-proof lane",
+      "dependencies": [
+        "ASQ-015"
+      ],
+      "inputs": [
+        "Invoke-Asq017AdminBoxLiveFloor.ps1 durable entrypoint on main",
+        "Admin Box with wsl.exe + explicit Ubuntu",
+        "operator gh auth, passwordless apt sudo, primary harness on PATH",
+        "clean FirstMate pin at $HOME/firstmate or -FirstMatePath override",
+        "tooling/firstmate/harness/upstream-pin.json for pin target"
+      ],
+      "outputs": [
+        "FM-WSL-12 physical-floor PASS with exact-head readback and evidence root",
+        "OR structured BLOCKED_* exit (BLOCKED_MISSING_TOOLS after exhausted repair, BLOCKED_GITHUB_AUTH, BLOCKED_SUDO, BLOCKED_PRIMARY_HARNESS, BLOCKED_FIRSTMATE_DIRTY, BLOCKED_FIRSTMATE_PIN, BLOCKED_WSL_BOOTSTRAP, BLOCKED_HARNESS_CONTRACT, BLOCKED_PREREQUISITE_TIMEOUT)",
+        "local untracked evidence under Admin Box (not committed)",
+        "cloud hosts emit STATUS=BLOCKED_WINDOWS_WSL_REQUIRED exit 46 rather than crash"
+      ],
+      "acceptanceCriteria": [
+        "Admin Box run reaches physical-floor PASS markers",
+        "OR stops at structured BLOCKED_* with preserved evidence and NEXT_ACTION guidance",
+        "Cloud/Linux agents emit exit 46 BLOCKED_WINDOWS_WSL_REQUIRED (not unstructured failure)",
+        "No local receipts/tokens/machine paths committed",
+        "Proof ceiling: host-isolated live runtime only; no ASQ-008/009 unfreeze, no FirstMate crew dispatch claims"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "LSP-01",
+      "title": "OpenCode LSP fresh-TUI / ASQ-005 runtime observation (Windows-only)",
+      "status": "blocked",
+      "owner": "OpenCode LSP runtime lane",
+      "dependencies": [
+        "ASQ-017"
+      ],
+      "inputs": [
+        "ASQ-005 already DONE on main with Configure-only proof",
+        "docs/harness/asq005-fresh-tui-lsp-runtime-gates.md",
+        "authorized Windows host (Admin Box or equivalent)",
+        "fresh interactive OpenCode TUI session"
+      ],
+      "outputs": [
+        "Fresh-TUI LSP hover/goToDefinition/findReferences runtime observation on authorized Windows host",
+        "OR explicit BLOCKED_HOST when on Linux/CI/cloud"
+      ],
+      "acceptanceCriteria": [
+        "Fresh TUI opened once; LSP operations observed; nonLspSemanticFallbackUsed=No",
+        "OR BLOCKED_HOST on Linux/cloud (Configure-only proof insufficient for runtime claim)",
+        "No claiming runtime PASS from static prove or CI",
+        "Local receipts not committed"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "TRIAGE-01",
+      "title": "Stale open PR triage plan (list keep/close/rebase candidates)",
+      "status": "ready",
+      "owner": "PR triage lane",
+      "dependencies": [
+        "ASQ-015"
+      ],
+      "inputs": [
+        "Stale open PRs #92-#159 era (not auto-merge enabled)",
+        "main@770c855 current floor",
+        "ASQ-013 original convergence scope (PR #151, #115, #149)"
+      ],
+      "outputs": [
+        "Triage plan listing keep/close/rebase candidates",
+        "Containment proof requirements for superseded PRs",
+        "Explicit NOT mass-merge disposition"
+      ],
+      "acceptanceCriteria": [
+        "Triage plan enumerates candidates with disposition (keep/close/rebase/superseded)",
+        "Superseded PRs require containment proof before close",
+        "No mass-merge, no auto-merge enabling without explicit operator approval",
+        "Plan artifact persisted (not just chat)"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "TUT-WAVE",
+      "title": "Tutorial path ranking deferred until FirstMate physical/interop floor evidence",
+      "status": "blocked",
+      "owner": "user-tutorial-ranking lane",
+      "dependencies": [
+        "ASQ-015",
+        "ASQ-017"
+      ],
+      "inputs": [
+        "ASQ-019 existing tutorial ranking on main (ranked launch order published)",
+        "FirstMate interop floor refresh (ASQ-015)",
+        "Admin Box physical floor evidence (ASQ-017)"
+      ],
+      "outputs": [
+        "Deferred until FirstMate physical/interop floor evidence exists",
+        "TUT-01 first P18 writing sprint remains queued"
+      ],
+      "acceptanceCriteria": [
+        "Explicitly deferred (not skipped or rejected)",
+        "Unblock condition: ASQ-015 + ASQ-017 complete with physical floor evidence",
+        "No tutorial corpus writing in this coordination task"
+      ],
+      "evidence": []
+    }
+  ],
+  "validation": [
+    "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-RepositoryWorkLedgerContract.ps1",
+    "git diff --check origin/main...HEAD"
+  ],
+  "proof": {
+    "target": "Durable public plan encoding post-product-pass remaining work with parallelism constraints, proof ceilings, and safe execution order",
+    "achieved": "PLANNED/DESIGNED in this coordination task; TRACKED after commit/PR; implementation proof delegated to successor sprints",
+    "ceiling": "Coordination planning only. Does not prove FirstMate interop refresh, Admin Box physical floor, live OpenCode LSP runtime, PR triage implementation, tutorial authoring, GitHub mergeability, provider delivery, merge, release, or deployment."
+  },
+  "handoff": {
+    "nextOwner": "Cursor cloud agent / public-plan-coordination implementation",
+    "nextCommand": "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
+    "notes": [
+      "Foreign scripts/prompt_parallel_dispatch.py and harness/contracts/prompt-parallel-dispatch.v1.json are ABSENT from this repo; do not invent them. Dispatch uses plan-embedded lanes + Cursor CloudAgent/Task / local agent adapters.",
+      "ASQ-008..013 remain FROZEN by FirstMate crew ADR (docs/architecture/asb-firstmate-runtime-boundary.md); do not unfreeze as part of this work.",
+      "Parallelism: width 2 when Admin Box available (ASQ-015 repo writer || ASQ-017 host-isolated). Shared writers (AGENTS.md/WORK_QUEUE/plans/*) = width 1. If Admin Box unavailable: ASQ-017 BLOCKED; run ASQ-015 serially after REG-01.",
+      "Canonical prove: pwsh -NoLogo -NoProfile -File scripts/Prove-ProductPassLocal.ps1",
+      "Ledger READY: ASQ-015 (FirstMate pin refresh), ASQ-017 (Admin Box physical floor)",
+      "main@770c855 product-pass wave DONE (#302-#306)"
+    ]
+  }
+}
