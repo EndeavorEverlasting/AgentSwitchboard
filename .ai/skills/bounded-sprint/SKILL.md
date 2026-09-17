@@ -31,14 +31,60 @@ Use after repository intake identifies a safe implementation, validation, cleanu
 
 ## Outputs
 
-- useful tracked implementation;
-- deterministic tests, validators, schemas, or operational docs;
-- commit SHA and PR state;
-- honest validation and gap report.
+Sprint completion reports must separate prove results, flag status, and forge status as independent signals:
+
+### Prove results
+
+- Which validators ran (command paths, versions when relevant);
+- Exit codes and result levels (PASS, SKIP, FAIL, FAIL_CLOSED, BLOCKED_HOST);
+- Proof packet or artifact locations when applicable;
+- Proof level achieved (contract proof, static test proof, build proof, runtime proof);
+- Proof ceiling for this sprint (what the validators do NOT prove).
+
+### Flag status
+
+- Diff hygiene: `git diff --check` result and trailing whitespace violations;
+- Ledger contracts: verb-first entries, required fields, WORK_QUEUE coherence;
+- Zero-test guards: test discovery count, fail-closed conditions;
+- Unrelated dirty work preservation: `git status --short` before/after.
+
+### Forge status
+
+Report forge readiness only when merge authority is present or when the task explicitly requires forge-pass evaluation:
+
+- PR state and URL;
+- Mergeability: conflicts with target branch, conflict file list;
+- Required status checks: passing, pending, or failing (with check names and log URLs);
+- Required reviews: approved, pending, or changes requested;
+- Branch protection rules satisfied or blocked.
+
+When merge authority is absent, product pass (prove + flags clean) completes the sprint. Do not idle-wait on GitHub Actions, external CI, or `mergeable_state` when product pass holds.
+
+### General outputs
+
+- Useful tracked implementation and commit SHA;
+- Deterministic tests, validators, schemas, or operational docs added or updated;
+- Honest validation and gap report.
 
 ## Deterministic validation
 
-Run targeted tests, relevant validators/static checks, build checks, `git diff --check`, `git status --short`, and final diff review.
+Product pass requires:
+
+1. **Owning prove commands pass:**
+   - `pwsh -NoLogo -NoProfile -File scripts/Prove-AutomatedTestFloorLocal.ps1` for always-on floor contracts.
+   - `pwsh -NoLogo -NoProfile -File scripts/Prove-MergeGateLocal.ps1` when changed paths activate merge-relevant gates.
+   - Domain-specific `Test-*.ps1` validators for owned subsystems.
+
+2. **Harness flags clean:**
+   - `git diff --check origin/main...HEAD` exits clean (no trailing whitespace).
+   - Ledger contracts satisfied (verb-first entries, required fields).
+   - Zero-test guards satisfied (test discovery returned expected non-zero count when tests were required).
+
+3. **Proof ceiling respected:**
+   - Static validators provide contract proof or static test proof only.
+   - They do NOT prove runtime behavior, live-target success, merge authority, release readiness, or deployment outcomes.
+
+Run targeted tests first, then broader checks when practical. Preserve failing evidence and repair the first deterministic boundary.
 
 ## Forbidden scope
 
