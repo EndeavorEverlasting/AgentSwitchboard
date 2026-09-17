@@ -12,6 +12,7 @@
 - **No completion without proof.** Claims, plans, summaries, generated text, and process exit alone are not completion.
 
 ## Precedence
+
 Instruction precedence when instructions conflict:
 1. Platform, security, legal, and repository-owner instructions.
 2. This governance contract, triggered governance details, and the nearest nested `AGENTS.md`.
@@ -21,6 +22,7 @@ Instruction precedence when instructions conflict:
 `CLAUDE.md` and other adapters may specialize execution but may not silently weaken a higher-priority boundary.
 
 ## Mandatory sprint declaration
+
 Before every writing sprint, state:
 - repo and branch;
 - lane and mission;
@@ -34,6 +36,7 @@ Before every writing sprint, state:
 If remote state or ownership is uncertain, perform read-only intake first. Preserve existing work and keep mutation inside owned scope.
 
 ## Universal operating law
+
 - Repository knowledge is compiled state. Search repository law, architecture/specs, manifests/registries, skills, validators/tests, plans/reports, helpers, and relevant history before inventing or searching outward. External research or a new abstraction requires an explicit unresolved gap.
 - Keep judgment in skills; deterministic behavior belongs in code, schemas, registries, validators, workflows, and artifacts.
 - Preserve unrelated dirty work. Destructive Git is not cleanup.
@@ -45,6 +48,7 @@ If remote state or ownership is uncertain, perform read-only intake first. Prese
 - Merge/release/deployment/live-target authority must be explicit and current.
 
 ## Progressive disclosure reading order
+
 1. Read this file and the nearest nested `AGENTS.md`.
 2. Read `HARNESS.md` only for 50k repository orientation.
 3. Select one 30k domain through `tooling/harness/context/context.routes.json`; load only its `defaultLoad`.
@@ -55,6 +59,7 @@ If remote state or ownership is uncertain, perform read-only intake first. Prese
 Repository-family work loads `.ai/harness/repository-family.registry.json`. Public-plan work loads `plans/plan-registry.json` and `.ai/skills/public-plan-coordination/SKILL.md` after that trigger is selected. `.ai/agent-contract.json` remains the machine-readable repository contract.
 
 ## Triggered governance detail
+
 Load `docs/governance/agent-operating-details.md` for launch/dependency gates, broad multi-surface sprints, cross-device transport, live continuation, AXI/interface design, multi-agent/local-model orchestration, privacy proof, autovalidation loops, or another clause not fully stated here.
 
 Relevant policy pairs:
@@ -65,6 +70,7 @@ Relevant policy pairs:
 For a PR or sprint governed by harness doctrine, use its selected route, validation order, and proof boundary.
 
 ## Sprint and proof contract
+
 Before mutation, resolve branch, scope, dependencies/collisions, canonical owner, artifacts, validation order, proof ceiling, and commit/push/PR expectation. Run focused owning validators before broader gates. Preserve failing evidence and repair the first deterministic boundary. Process exit code zero alone is not delivery proof.
 
 Operator-visible work crossing shell/process/platform/terminal/TUI/GUI routes to `.ai/skills/end-to-end-runtime-validation/SKILL.md`. Repository operation routes through `HARNESS.md` and progressive context.
