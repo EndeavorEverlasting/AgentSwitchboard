@@ -81,12 +81,12 @@ class ProgressiveDisclosureHarnessTests(unittest.TestCase):
         router = json.loads(ROUTER.read_text(encoding="utf-8"))
         deep = router["preservedGovernance"]
         self.assertEqual("docs/governance/agent-operating-details.md", deep["path"])
-        self.assertEqual("c94b797bef04942636af61b980c478919710e067", deep["expectedGitBlobSha"])
-        self.assertEqual(27896, deep["expectedBytes"])
+        self.assertEqual("aa71c38683bb14775e6c11af4adbb2f5f3f62874", deep["expectedGitBlobSha"])
+        self.assertEqual(34029, deep["expectedBytes"])
         actual_sha = git("rev-parse", "HEAD:docs/governance/agent-operating-details.md")
         actual_size = int(git("cat-file", "-s", actual_sha))
-        self.assertEqual("c94b797bef04942636af61b980c478919710e067", actual_sha)
-        self.assertEqual(27896, actual_size)
+        self.assertEqual("aa71c38683bb14775e6c11af4adbb2f5f3f62874", actual_sha)
+        self.assertEqual(34029, actual_size)
 
     def test_measure_keeps_missing_routes_structured(self):
         module = load_validator_module()
@@ -98,7 +98,7 @@ class ProgressiveDisclosureHarnessTests(unittest.TestCase):
     def test_validator_has_independent_governance_anchor(self):
         text = VALIDATOR.read_text(encoding="utf-8")
         self.assertIn('CANONICAL_GOVERNANCE_PATH = "docs/governance/agent-operating-details.md"', text)
-        self.assertIn('CANONICAL_GOVERNANCE_BLOB = "c94b797bef04942636af61b980c478919710e067"', text)
+        self.assertIn('CANONICAL_GOVERNANCE_BLOB = "aa71c38683bb14775e6c11af4adbb2f5f3f62874"', text)
         self.assertIn('deep.get("path") == CANONICAL_GOVERNANCE_PATH', text)
         self.assertIn('tracked_blob(CANONICAL_GOVERNANCE_PATH)', text)
 

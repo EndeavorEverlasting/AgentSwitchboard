@@ -75,6 +75,10 @@ Before mutation, resolve branch, scope, dependencies/collisions, canonical owner
 
 Operator-visible work crossing shell/process/platform/terminal/TUI/GUI routes to `.ai/skills/end-to-end-runtime-validation/SKILL.md`. Repository operation routes through `HARNESS.md` and progressive context.
 
+## Product pass vs Forge pass
+
+Product pass: prove PASS + no flags; no idle-wait on forge. Forge pass is optional land-on-main, never product verdict (`docs/governance/agent-operating-details.md`).
+
 ## Completion standard
 
 A task is complete only when:

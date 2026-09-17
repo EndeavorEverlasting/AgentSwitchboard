@@ -104,7 +104,7 @@
   ],
   "baseline": {
     "capturedAtHead": "5682bb2b544b1a986d7b14fbe750e5e93cf60f31",
-    "governance": {"path": "AGENTS.md", "bytes": 27896, "gitBlobSha": "c94b797bef04942636af61b980c478919710e067", "measurementPolicy": "reported separately because required safety/governance is outside repo-specific zoom budgets"},
+    "governance": {"path": "AGENTS.md", "bytes": 34029, "gitBlobSha": "aa71c38683bb14775e6c11af4adbb2f5f3f62874", "measurementPolicy": "reported separately because required safety/governance is outside repo-specific zoom budgets"},
     "simulations": {
       "orientation50k": {
         "query": "What is this app and how is it organized?",
@@ -139,8 +139,8 @@
   ],
   "preservedGovernance": {
     "path": "docs/governance/agent-operating-details.md",
-    "expectedGitBlobSha": "c94b797bef04942636af61b980c478919710e067",
-    "expectedBytes": 27896,
+    "expectedGitBlobSha": "aa71c38683bb14775e6c11af4adbb2f5f3f62874",
+    "expectedBytes": 34029,
     "loadCondition": "triggered deep governance only"
   },
   "glossary": {"path": "tooling/harness/context/glossary.json", "loadCondition": "only when a repository term is unclear"},

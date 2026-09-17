@@ -24,8 +24,8 @@ $rootRelative = 'AGENTS.md'
 $detailRelative = 'docs/governance/agent-operating-details.md'
 $rootDocumentPath = Join-Path $RepositoryRoot $rootRelative
 $detailDocumentPath = Join-Path $RepositoryRoot $detailRelative
-$expectedDetailBlob = 'c94b797bef04942636af61b980c478919710e067'
-$expectedDetailBytes = 27896
+$expectedDetailBlob = 'aa71c38683bb14775e6c11af4adbb2f5f3f62874'
+$expectedDetailBytes = 34029
 
 foreach ($entry in @(
     @{ Label='root'; Relative=$rootRelative; Path=$rootDocumentPath },
@@ -40,6 +40,11 @@ foreach ($entry in @(
     }
     Add-Result -Passed $tracked -Name "governance/$($entry.Label)-file-tracked" -FailureMessage "$($entry.Relative) is not tracked by Git"
 }
+
+# Measure git blob size (LF-normalized) to be platform-independent and match progressive-disclosure pin style
+$rootBlobSha = (& git -C $RepositoryRoot rev-parse "HEAD:$rootRelative" 2>$null) -join ''
+$rootBlobSize = if ($rootBlobSha) { [int]((& git -C $RepositoryRoot cat-file -s $rootBlobSha 2>$null) -join '') } else { 0 }
+Add-Result -Passed ($rootBlobSize -le 7000) -Name 'governance/root-context-budget' -FailureMessage "compact root AGENTS.md git blob exceeds 7000 bytes (actual: $rootBlobSize)"
 
 $rootText = if (Test-Path -LiteralPath $rootDocumentPath -PathType Leaf) { Get-Content -LiteralPath $rootDocumentPath -Raw } else { '' }
 $detailText = if (Test-Path -LiteralPath $detailDocumentPath -PathType Leaf) { Get-Content -LiteralPath $detailDocumentPath -Raw } else { '' }
@@ -98,7 +103,6 @@ foreach ($token in @(
 )) {
     Add-Result -Passed $rootText.Contains($token) -Name "governance/root-route/$token" -FailureMessage 'compact root authority/routing token is missing'
 }
-Add-Result -Passed ([Text.Encoding]::UTF8.GetByteCount($rootText) -le 7000) -Name 'governance/root-context-budget' -FailureMessage 'compact root AGENTS.md exceeds 7000 UTF-8 bytes'
 
 # Prove precedence ordering within the precedence section itself. Scoping the
 # search prevents duplicated explanatory text elsewhere from hiding a bad order.
