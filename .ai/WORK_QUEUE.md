@@ -265,7 +265,7 @@ Canonical terminal action: none; no safe actionable work remains
 - **Acceptance gate:** refreshed verified_commit pin; contract tests green; Windows bridge regressions preserved; hooks wired into manifest; proof ceiling remains below live crew unless physical floor passes
 - **Gate:** none
 - **Last proof:** tip rebased onto main@3dc2fe3; test_firstmate_integration_contract 14 tests PASS; test_firstmate_operational_harness 9 tests PASS (hooks wired); test_public_plan_contracts PASS; git diff --check clean; pin verified b182d0f908b78d08c7ccb8dce3775bdca8c5d657; historical PR#96 commit 833a9a25 recorded as provenance; 3 Windows pwsh tests BLOCKED_WINDOWS_REQUIRED (structured, expected on Linux); rebaseRequiredBeforePr96StackMerge remains true
-- **Next action:** merge pull request #308 after product-pass review on tip bbe6483; then update this entry to DONE with merge SHA (stale #96–#101 remain rebaseRequired / TRIAGE-01)
+- **Next action:** merge pull request #308 after product-pass review on tip 5ae21da; then update this entry to DONE with merge SHA (stale #96–#101 remain rebaseRequired / TRIAGE-01)
 - **Updated:** 2026-09-17T21:35:00Z
 
 ## ASQ-016 — Encode GNHF NARROW ownership boundary
