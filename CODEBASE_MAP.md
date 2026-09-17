@@ -37,6 +37,7 @@ Load only the smallest surface required by the selected skill, workflow, public 
 - `plans/plan-registry.json` — active plan index.
 - `plans/schemas/public-plan.schema.json` — closed plan contract.
 - `plans/active/` and `plans/archive/` — current and historical coordination.
+- `plans/active/ASB-2026-09-product-pass-posture.*` — product-pass vs forge-pass posture; product function + no flags over GitHub mergeability.
 - `.ai/skills/public-plan-coordination/SKILL.md` — plan procedure.
 - `scripts/Test-PublicPlanContracts.ps1` and `tests/test_public_plan_contracts.py` — plan validators.
 - `.github/workflows/public-plan-contracts.yml` — Windows and Linux proof gate.

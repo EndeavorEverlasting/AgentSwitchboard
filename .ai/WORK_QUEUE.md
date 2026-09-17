@@ -270,20 +270,20 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## ASQ-016 — Encode GNHF NARROW ownership boundary
 
-- **Status:** READY
+- **Status:** DONE
 - **Priority:** P1
 - **Work class:** BOUNDED
 - **Owner:** GNHF contract lane
-- **Branch / PR:** cursor/preserve-asq-016-gnhf-narrow-cherry-pick-6964
+- **Branch / PR:** main / #300 merged
 - **Scope:** document and enforce that tooling/gnhf remains the Windows-first bounded single-agent/fleet launcher with unique readiness contracts, and must not expand into a multi-crew control plane competing with FirstMate; no launcher deletion
 - **Forbidden:** deleting GNHF; implementing multi-crew supervision inside GNHF; unfreezing child-bus adapters; provider credential commits; force-merge past red CI
 - **Dependencies:** ASQ-014
 - **References:** `docs/architecture/asb-firstmate-runtime-boundary.md`, `tooling/gnhf/README.md`, `tooling/gnhf/Start-GnhfSprint.ps1`
 - **Acceptance gate:** README or owning contract states NARROW boundary explicitly; optional validator asserts no crew-runtime claim language; launchers remain intact; static validators and required CI pass before merge
-- **Gate:** required CI/local merge-gate prove before merge
-- **Last proof:** revert:pr:#299 commit:`913db33` merged to main@`a754f7c` (premature squash commit `8ad50d6` reverted); preservation:branch:`cursor/preserve-asq-016-gnhf-narrow-cherry-pick-6964` commits:`f71f19a`+`a8d5118` cherry-picked from original branch `cursor/asq-016-gnhf-narrow-boundary-bcfc` @ `2eef899`; artifact:tooling/gnhf/README.md Ownership boundary section citing ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME; artifact:tests/test_gnhf_narrow_ownership_contract.py unittest with 13 contract assertions; artifact:scripts/Test-GnhfNarrowOwnershipContract.ps1 PowerShell validator; preservation branch opened in PR pending validation
-- **Next action:** Run scripts/Test-RepositoryWorkLedgerContract.ps1 and scripts/Test-AutomatedTestFloor.ps1 on PR #300 branch; merge PR #300 only after required CI is green (do not force-merge past red CI)
-- **Updated:** 2026-09-17T18:47:00Z
+- **Gate:** none
+- **Last proof:** merge:ba19f7c pr:#300; artifact:tooling/gnhf/README.md Ownership boundary section citing ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME; artifact:tests/test_gnhf_narrow_ownership_contract.py unittest with 13 contract assertions; artifact:scripts/Test-GnhfNarrowOwnershipContract.ps1 PowerShell validator; main@ba19f7c contains preservation commits f71f19a+a8d5118 cherry-picked from original branch
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-17T20:00:00Z
 
 ## ASQ-017 — FM-WSL-12 physical-floor-continue live runtime proof
 
@@ -338,17 +338,34 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## ASQ-020 — Local merge-gate proof orchestration
 
-- **Status:** READY
+- **Status:** DONE
 - **Priority:** P2
 - **Work class:** BOUNDED
 - **Owner:** Cursor Cloud Agent / merge-gate-local implementation
-- **Branch / PR:** cursor/asq020-prove-merge-gate-local-f5b7
+- **Branch / PR:** main / #301 merged
 - **Scope:** add the smallest durable AgentSwitchboard change that gives operators one local CLI to emanate/emulate merge-relevant GitHub Actions gates, preserving real app/host validators (not gate-gaming), and failing closed when the host cannot run a selected gate; includes manifest, Prove-MergeGateLocal.ps1, linux-hygiene twin, unittest, docs, registry update
 - **Forbidden:** no force-push; no merge; no secrets; no cron; do not claim merge/release/deploy authority; do not rewrite unrelated path-filtered domain workflows; do not touch PR #300 / ASQ-016 preserve branch; never skip-as-pass; no merge authority claims
 - **Dependencies:** ASQ-018 (Prove-AutomatedTestFloorLocal exists and is always-on)
 - **References:** `.ai/harness/merge-gate-local.manifest.json`, `scripts/Prove-MergeGateLocal.ps1`, `scripts/Test-ApplicationFloorLinuxHygiene.ps1`, `tests/test_merge_gate_local.py`, `docs/harness/merge-gate-local.md`, `tooling/harness/operational/validator-registry.json`, `CODEBASE_MAP.md`
 - **Acceptance gate:** Prove-AutomatedTestFloorLocal PASS; Prove-MergeGateLocal -ListOnly lists gates; Prove-MergeGateLocal PASS on clean tree; test_merge_gate_local unittest PASS with multiple tests; packet shows always-on PASS; simulated Windows-only gate on Linux → non-zero exit (not pass); proof ceiling text forbids merge authority; git diff --check clean
 - **Gate:** none
-- **Last proof:** pending acceptance run
-- **Next action:** run acceptance commands: Prove-AutomatedTestFloorLocal, Prove-MergeGateLocal -ListOnly, Prove-MergeGateLocal, python -m unittest tests.test_merge_gate_local -v, git diff --check
-- **Updated:** 2026-09-17T19:05:00Z
+- **Last proof:** merge:e999602 pr:#301; artifact:scripts/Prove-MergeGateLocal.ps1 artifact:scripts/Test-ApplicationFloorLinuxHygiene.ps1 artifact:tests/test_merge_gate_local.py artifact:docs/harness/merge-gate-local.md on main@e999602
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-17T20:00:00Z
+
+## ASQ-021 — Persist product-pass posture public plan
+
+- **Status:** READY
+- **Priority:** P1
+- **Work class:** BOUNDED
+- **Owner:** Cursor Cloud Agent / product-pass-posture plan coordination
+- **Branch / PR:** cursor/product-pass-posture-plan-5847
+- **Scope:** create durable product-pass posture public plan in `plans/active/ASB-2026-09-product-pass-posture.*` with schema validation; register plan in `plans/plan-registry.json`; encode waves PPP-01..06 with owned/forbidden scope, proof ceiling, and successor tasks; product pass = owning prove PASS + no flags (primary), forge merge = optional land-on-main (secondary)
+- **Forbidden:** implementing PPP-03 AGENTS.md doctrine mutation yet; implementing Prove-ProductPassLocal yet; claiming Admin Box physical floor from planning; forcing merge/release/deploy; inventing scripts/prompt_parallel_dispatch.py as if already present
+- **Dependencies:** ASQ-020 Prove-MergeGateLocal on main@e999602; ASQ-018 Prove-AutomatedTestFloorLocal completed
+- **References:** `plans/active/ASB-2026-09-product-pass-posture.plan.json`, `plans/active/ASB-2026-09-product-pass-posture.md`, `plans/plan-registry.json`, `plans/schemas/public-plan.schema.json`, `docs/governance/repository-work-ledger-contract.md`, `scripts/Test-PublicPlanContracts.ps1`, `scripts/Test-RepositoryWorkLedgerContract.ps1`
+- **Acceptance gate:** public plan validates with Test-PublicPlanContracts.ps1; plan-registry lists ASB-2026-09-PRODUCT-PASS-POSTURE; ledger contract passes; git diff --check clean; plan encodes product-pass vs forge-pass posture, waves, owned/forbidden scope, proof ceiling
+- **Gate:** none
+- **Last proof:** none
+- **Next action:** Run scripts/Test-PublicPlanContracts.ps1 && scripts/Test-RepositoryWorkLedgerContract.ps1 && git diff --check origin/main...HEAD to validate plan persistence and ledger contract
+- **Updated:** 2026-09-17T20:00:00Z
