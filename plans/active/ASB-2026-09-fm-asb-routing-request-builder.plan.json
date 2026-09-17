@@ -16,7 +16,11 @@
   },
   "delivery": {
     "branch": "feat/fm-asb-routing-request-builder",
-    "pullRequest": null,
+    "pullRequest": {
+      "number": 309,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/309",
+      "state": "open"
+    },
     "baseRef": "main",
     "commitRequired": true
   },
