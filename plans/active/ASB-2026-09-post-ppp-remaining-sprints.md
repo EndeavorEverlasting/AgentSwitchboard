@@ -4,7 +4,7 @@
 **Repo:** EndeavorEverlasting/AgentSwitchboard
 **Floor:** `main@770c855` (product-pass wave #302-#306 complete)
 **Status:** active
-**Updated:** 2026-09-17T20:57:00Z
+**Updated:** 2026-09-17T21:03:00Z
 
 ## Mission
 
@@ -14,10 +14,13 @@ Complete remaining September coordination work after product-pass posture wave: 
 
 ### REG-01 — Registry hygiene: PRODUCT-PASS-POSTURE status=completed
 
-**Status:** ready
+**Status:** completed (implemented by PR #307)
 **Owner:** registry hygiene lane
 
-Fix `plans/plan-registry.json` PRODUCT-PASS-POSTURE status from stale `proposed` to `completed` to match the plan JSON state after wave #302-#306.
+Fix `plans/plan-registry.json` PRODUCT-PASS-POSTURE status from stale `proposed` to `completed` to match the plan JSON state after wave #302-#306. Add POST-PPP-REMAINING-SPRINTS plan membership.
+
+**Evidence:**
+- PR #307 implements REG-01: fixes plan-registry.json PRODUCT-PASS-POSTURE status proposed→completed and adds POST-PPP-REMAINING-SPRINTS membership
 
 **Acceptance:**
 - Registry status matches plan JSON (completed)
@@ -28,7 +31,7 @@ Fix `plans/plan-registry.json` PRODUCT-PASS-POSTURE status from stale `proposed`
 
 **Status:** ready
 **Owner:** FirstMate interop lane
-**Dependencies:** REG-01
+**Dependencies:** none (repo writer lane; may run in parallel with ASQ-017 when Admin Box available)
 
 Rebase/refresh AgentSwitchboard FirstMate interop harness (PR #96 lineage) onto current main@770c855. Update upstream pin from 833a9a25… to FirstMate main@b182d0f908b78d08c7ccb8dce3775bdca8c5d657. Preserve Windows→WSL bridge ContractOnly mode. Keep first_safe_sprint local-only and yolo_enabled=false.
 
@@ -56,7 +59,7 @@ Rebase/refresh AgentSwitchboard FirstMate interop harness (PR #96 lineage) onto 
 
 **Status:** ready
 **Owner:** Windows Admin Box operator / runtime-proof lane
-**Dependencies:** ASQ-015
+**Dependencies:** none (host-isolated; may run in parallel with ASQ-015 when Admin Box available)
 
 Prove FM-WSL-12 physical WSL/Ubuntu floor through harness `-Mode physical-floor-continue` on authorized Windows Admin Box with explicit Ubuntu. Stop at structured BLOCKED_* exits with preserved evidence and NEXT_ACTION guidance. Cloud/Linux hosts emit STATUS=BLOCKED_WINDOWS_WSL_REQUIRED exit 46.
 
@@ -140,7 +143,7 @@ Tutorial path ranking remains deferred until FirstMate physical/interop floor ev
 
 - **Width 2** when Admin Box available: ASQ-015 (repo writer) || ASQ-017 (host-isolated, no AGENTS.md/WORK_QUEUE/plans/* shared writes)
 - **Width 1** for shared writers (AGENTS.md / WORK_QUEUE / plans/*)
-- **If Admin Box unavailable:** ASQ-017 BLOCKED; run ASQ-015 serially after REG-01
+- **If Admin Box unavailable:** ASQ-017 BLOCKED_HOST; ASQ-015 may proceed independently (REG-01 completed by this PR)
 
 ## Floor facts
 
