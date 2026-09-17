@@ -105,12 +105,12 @@ class GnhfNarrowOwnershipContractTests(unittest.TestCase):
     def test_readme_no_crew_orchestration_claims(self):
         """README must not claim GNHF is a crew orchestration platform."""
         self.assertIsNotNone(self.readme_text, "README text not loaded")
-        
+
         # Negative assertion: should not contain patterns CLAIMING crew orchestration capability
         # Exclude the ownership section's forbidding language by requiring positive claim verbs
         crew_claim_pattern = r'(?i)GNHF\s+(?:is|provides|enables|supports|implements).*(?:crew|multi-agent)\s+(?:orchestration|supervision|control\s+plane)'
         match = re.search(crew_claim_pattern, self.readme_text)
-        
+
         self.assertIsNone(
             match,
             f"README must not claim GNHF is a crew orchestration platform. Found: {match.group(0) if match else 'N/A'}"
