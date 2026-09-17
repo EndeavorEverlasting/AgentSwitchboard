@@ -159,6 +159,26 @@ That canonical Linux entrypoint owns the focused integration/convergence/operati
 
 Windows CI runs the native PowerShell contract front door. That hosted contract path intentionally returns before requiring a live WSL distro.
 
+### Optional validation hooks
+
+Two optional pre-commit and pre-push validation hooks are registered in the operational manifest:
+
+**Pre-commit hook:**
+```bash
+bash tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPreCommit.sh
+```
+
+Runs the integration contract, operational harness, and Windows WSL bridge tests plus shell syntax checks and `git diff --check`.
+
+**Pre-push hook:**
+```bash
+bash tooling/firstmate/harness/operational/hooks/Invoke-FirstMateHarnessPrePush.sh --base <exact-base-ref>
+```
+
+Runs the pre-commit suite plus `git diff --check` against the specified base branch.
+
+These hooks are **optional operator/CI helper surfaces** registered in `tooling/firstmate/harness/operational/manifest.json` as `pre_commit_hook` and `pre_push_hook`. They are not automatically installed as Git hooks. Proof ceiling remains unchanged: contract validation only, not physical WSL execution or live crew dispatch.
+
 ## Proof ceiling
 
 Repository and hosted CI proof may establish:
