@@ -206,6 +206,86 @@ pwsh -NoLogo -NoProfile -File .\scripts\Get-RepositoryFamilyHarnessStatus.ps1
 
 A ready profile proves only observed clone identity and required paths. It does not authorize mutation or prove child validators. Child adoption occurs through tracked reviewable PRs; local rules may strengthen but not silently weaken the canonical baseline.
 
+## Product pass vs Forge pass
+
+Agent sprints distinguish between **product pass** (functional accept criterion) and **forge pass** (optional integration into the default branch). This distinction prevents agents from blocking on GitHub Actions, required checks, or `mergeable_state` when the product work is functionally complete.
+
+### Product pass definition
+
+Product pass is the primary acceptance gate for a bounded sprint. It requires:
+
+1. **Owning prove commands pass.** Run the validators that own the changed scope:
+   - `pwsh -NoLogo -NoProfile -File scripts/Prove-AutomatedTestFloorLocal.ps1` for always-on floor contracts.
+   - `pwsh -NoLogo -NoProfile -File scripts/Prove-MergeGateLocal.ps1` when changed paths activate merge-relevant gates.
+   - Domain-specific `Test-*.ps1` validators for owned subsystems.
+   - Report candidate status as `PROVEN`, `UNPROVEN`, `BLOCKED_HOST`, or `FLAGGED`.
+
+2. **No open harness flags.** The candidate must not have:
+   - `FAIL` or `FAIL_CLOSED` results from any executed validator.
+   - Trailing whitespace or diff hygiene violations: `git diff --check origin/main...HEAD` must exit clean.
+   - Ledger contract violations (non-verb-first entries, missing required fields).
+   - Zero-test fail-closed conditions (test discovery returned zero tests when tests were expected).
+
+3. **Proof ceiling respected.** Static validators provide contract proof or static test proof only. They do not prove runtime behavior, live-target success, merge authority, release readiness, or deployment outcomes. Report the honest proof level.
+
+Product pass means the change is functionally correct, follows repository contracts, and is ready for review. It does not require GitHub CI to complete, does not require merge approval, and does not depend on external CI services.
+
+### Forge pass definition
+
+Forge pass means the change can be integrated into the default branch (`main`) through GitHub merge. It requires:
+
+1. **GitHub mergeability satisfied:**
+   - No merge conflicts with the target branch.
+   - All required status checks passing (GitHub Actions workflows, external CI).
+   - Required reviews approved.
+   - Branch protection rules satisfied.
+
+2. **Forge hygiene preserved:**
+   - Never force-merge (`--force`, `--no-verify`, bypassing required checks).
+   - Respect review requirements even when product pass holds.
+   - Fail closed when a required gate cannot run on the current host.
+
+Forge pass is relevant only when the operator chooses to land the change on `main`. It is not the product verdict and does not supersede product pass as the functional accept criterion.
+
+### Agent completion discipline with product pass and forge pass
+
+1. **Product pass is the primary sprint acceptance gate.** When the owning prove commands pass and harness flags are clean, the sprint's functional goal is complete. Do not treat GitHub Actions status, CodeRabbit state, or `mergeable_state` as equivalent to product function.
+
+2. **Do not idle-wait on forge signals when product pass holds.** If the sprint's declared goal is to implement and validate a feature, and product pass is achieved, do not block completion while waiting for:
+   - GitHub Actions workflows to finish (unless runtime or integration proof was explicitly required).
+   - External CI services (CodeRabbit, Codecov, third-party checks).
+   - Review approvals (unless review integration is part of the declared sprint scope).
+   - The `mergeable` or `mergeable_state` API field to become `"clean"`.
+
+3. **Forge pass is checked just-in-time when merge is authorized.** When the sprint includes merge authority and product pass holds:
+   - Fetch current PR state, mergeability, check statuses, and review state.
+   - If forge pass holds (no conflicts, checks green, reviews approved), merge immediately.
+   - If forge pass is blocked, report the specific blocker: conflicted files, failing check name and log URL, missing review, or protection rule.
+   - Do not merge if required checks are red, even if product pass holds (honest forge hygiene).
+
+4. **Report product status and forge status separately.** Completion reports must distinguish:
+   - **Prove results:** Which validators ran, their exit codes, proof packet locations, and proof level.
+   - **Flag status:** Diff hygiene, ledger contracts, zero-test guards.
+   - **Forge readiness:** Mergeability, conflicts, required checks, reviews (when merge was attempted or is relevant).
+
+5. **Preserve fail-closed posture.** When a validator cannot run on the current host (e.g., Windows-only gate on Linux, Admin Box requirement on a standard host), report `BLOCKED_HOST` and do not claim product pass. The blocker must be resolved or the gate must be run on a capable host.
+
+6. **Merge is never assumed.** Merge authority must be explicit in the task prompt or standing repository directive. When merge authority is absent, product pass completes the sprint. When merge authority is present but forge pass is blocked, name the blocker and stop (do not silently skip merge).
+
+### Proof ceiling for product pass and forge pass
+
+- **Product pass with local static validators:** Contract proof or static test proof. Does not prove runtime behavior, live-target integration, or user-visible success.
+- **Forge pass (GitHub merge completion):** Proves the change landed on `main` with required checks satisfied. Does not prove deployment, release, runtime stability, or production readiness.
+- **Runtime or live-target proof:** Requires explicit runtime lane, authorized environment, observed execution, effective-state readback, and correlation of source revision to running artifact. Use `.ai/skills/end-to-end-runtime-validation/SKILL.md`.
+
+### References
+
+- `docs/harness/merge-gate-local.md`: Local merge-gate proof orchestration and fail-closed behavior.
+- `.ai/harness/merge-gate-local.manifest.json`: Gate definitions, path filters, host requirements.
+- `scripts/Prove-MergeGateLocal.ps1`: Orchestrator implementation.
+- `scripts/Prove-AutomatedTestFloorLocal.ps1`: Always-on floor validator.
+- `AGENTS.md`: Root operating contract with product-pass vs forge-pass principle.
+
 ## Completion standard
 
 A task is complete only when, at minimum:

@@ -75,6 +75,31 @@ Before mutation, resolve branch, scope, dependencies/collisions, canonical owner
 
 Operator-visible work crossing shell/process/platform/terminal/TUI/GUI routes to `.ai/skills/end-to-end-runtime-validation/SKILL.md`. Repository operation routes through `HARNESS.md` and progressive context.
 
+## Product pass vs Forge pass
+
+Agents must distinguish between **product pass** (functional accept) and **forge pass** (optional integration into main).
+
+**Product pass** is the primary acceptance gate:
+- Run owning prove commands for changed scope (`Prove-AutomatedTestFloorLocal.ps1`, `Prove-MergeGateLocal.ps1` when paths activate it, domain-specific validators).
+- Candidate status: `PROVEN` / `UNPROVEN` / `BLOCKED_HOST` / `FLAGGED`.
+- No open harness flags: no `FAIL` or `FAIL_CLOSED` results, clean `git diff --check origin/main...HEAD`, verb-first ledger entries, no zero-test fail-closed conditions.
+- Product pass means the work is functionally correct and ready for review.
+
+**Forge pass** is an optional subsequent step:
+- Forge pass means landing the change on the default branch (`main`) through merge.
+- This requires GitHub mergeability: satisfied required checks, passing CI, approved reviews, no merge conflicts.
+- Forge pass is relevant only when the operator chooses to integrate the change into `main`.
+- Forge pass is never the product verdict.
+
+**Agent completion discipline:**
+- Product pass is the primary acceptance criterion for completing a bounded sprint.
+- Do not idle-wait on GitHub Actions status, CodeRabbit reviews, or `mergeable_state` when the owning prove already shows `PASS` and harness flags are clean.
+- Do not treat GitHub mergeability as equivalent to product function.
+- When merge is authorized and product pass holds, check forge status (mergeability, CI, reviews) just-in-time and merge if clear, or report the specific forge blocker.
+- When merge is not authorized or not requested, product pass is sufficient to complete the sprint.
+- Report both product status and forge status separately: prove results, flag status, and merge readiness are independent signals.
+- Preserve honest forge hygiene: never force-merge past red required checks; fail-closed when a gate cannot run; respect review requirements.
+
 ## Completion standard
 
 A task is complete only when:
