@@ -57,7 +57,7 @@ function Test-PathMatch([string]$FilePath, [string]$Pattern) {
     # Supports ** for directory recursion and * for single segment wildcard
     $Pattern = $Pattern.Replace('\', '/')
     $FilePath = $FilePath.Replace('\', '/')
-    
+
     if ($Pattern -match '\*\*') {
         # Pattern contains **, convert to regex
         $regexPattern = '^' + [regex]::Escape($Pattern).Replace('\*\*/', '.*').Replace('\*\*', '.*').Replace('\*', '[^/]*') + '$'
@@ -198,7 +198,7 @@ $failures = [System.Collections.Generic.List[string]]::new()
 
 foreach ($gate in $selectedGates) {
     Write-Host ("`n=== Gate: {0} ===" -f $gate.id)
-    
+
     # Check host capability
     if (-not (Test-HostCapable -RequiredHost $gate.host -CurrentHost $currentHost)) {
         $blockReason = "Host capability mismatch: gate requires {0}, current host is {1}" -f $gate.host, $currentHost
@@ -216,20 +216,20 @@ foreach ($gate in $selectedGates) {
         $failures.Add(("{0}: {1}" -f $gate.id, $blockReason))
         continue
     }
-    
+
     # Execute commands
     $gateOk = $true
     $gateDetails = [System.Collections.Generic.List[string]]::new()
     $gateExitCodes = [System.Collections.Generic.List[int]]::new()
-    
+
     foreach ($cmd in $gate.commands) {
         Write-Host ("Running: {0}" -f $cmd)
-        
+
         # Parse command
         $parts = $cmd -split '\s+', 2
         $executable = $parts[0]
         $args = if ($parts.Count -gt 1) { $parts[1] } else { '' }
-        
+
         # Resolve executable
         $resolvedExe = $null
         if ($executable -eq 'pwsh') {
@@ -267,7 +267,7 @@ foreach ($gate in $selectedGates) {
             [void]$gateExitCodes.Add(-1)
             continue
         }
-        
+
         # Split arguments properly
         $argList = [System.Collections.Generic.List[string]]::new()
         if (-not [string]::IsNullOrWhiteSpace($args)) {
@@ -293,11 +293,11 @@ foreach ($gate in $selectedGates) {
                 [void]$argList.Add($currentArg)
             }
         }
-        
+
         # Execute
         $result = Invoke-CapturedProcess -FilePath $resolvedExe -ArgumentList $argList -WorkingDirectory $RootPath
         [void]$gateExitCodes.Add($result.ExitCode)
-        
+
         if ($result.ExitCode -eq 0) {
             Write-Host "PASS"
             [void]$gateDetails.Add("command passed")
@@ -311,7 +311,7 @@ foreach ($gate in $selectedGates) {
             [void]$gateDetails.Add(("command failed with exit code {0}" -f $result.ExitCode))
         }
     }
-    
+
     # Record step
     $stepStatus = if ($gateOk) { 'PASS' } else { 'FAIL' }
     $steps.Add([ordered]@{
@@ -324,7 +324,7 @@ foreach ($gate in $selectedGates) {
             detail       = ($gateDetails -join '; ')
             commandCount = $gate.commands.Count
         })
-    
+
     if (-not $gateOk) {
         $failures.Add(("{0} gate failed" -f $gate.id))
     }
