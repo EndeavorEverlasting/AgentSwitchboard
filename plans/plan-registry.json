@@ -110,6 +110,14 @@
       "status": "active",
       "priority": "medium",
       "dependencies": []
+    },
+    {
+      "planId": "ASB-2026-09-PRODUCT-PASS-POSTURE",
+      "path": "plans/active/ASB-2026-09-product-pass-posture.plan.json",
+      "summaryPath": "plans/active/ASB-2026-09-product-pass-posture.md",
+      "status": "proposed",
+      "priority": "high",
+      "dependencies": []
     }
   ]
 }

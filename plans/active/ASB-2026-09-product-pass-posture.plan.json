@@ -1,0 +1,213 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-09-PRODUCT-PASS-POSTURE",
+  "title": "Product-pass posture: function + no-flags over GitHub mergeability",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "proposed",
+  "priority": "high",
+  "createdUtc": "2026-09-17T20:00:19Z",
+  "updatedUtc": "2026-09-17T20:00:19Z",
+  "mission": "Make AgentSwitchboard agent completion use product function plus no harness flags as the primary pass standard, so agents stop hanging on GitHub mergeability while still preserving honest forge hygiene when landing on main.",
+  "owner": {
+    "surface": "agent operating doctrine and public plan coordination",
+    "role": "repository planning lane",
+    "agent": "FirstMate parallel with AgentSwitchboard"
+  },
+  "delivery": {
+    "branch": null,
+    "pullRequest": null,
+    "baseRef": "main",
+    "commitRequired": true
+  },
+  "wave": "product-pass posture",
+  "lane": "coordination-then-doctrine",
+  "dependencies": [
+    "ASQ-020 Prove-MergeGateLocal on main@e999602",
+    "ASQ-018 Prove-AutomatedTestFloorLocal completed"
+  ],
+  "safeParallelWork": [
+    "ASQ-017 Admin Box FM-WSL-12 physical-floor live proof (host-isolated; do not share AGENTS.md/WORK_QUEUE writers)",
+    "Unrelated FirstMate open-source observation without AgentSwitchboard mutation"
+  ],
+  "ownedScope": [
+    "plans/active/ASB-2026-09-product-pass-posture.plan.json",
+    "plans/active/ASB-2026-09-product-pass-posture.md",
+    "plans/plan-registry.json membership for this plan",
+    ".ai/WORK_QUEUE.md ASQ-021 entry",
+    "AGENTS.md product-pass vs forge-pass section (successor task)",
+    "docs/governance/agent-operating-details.md related clauses (successor task)",
+    ".ai/skills/bounded-sprint and .ai/skills/pr-integration completion criteria (successor task)",
+    "optional scripts/Prove-ProductPassLocal.ps1 alias (successor task)"
+  ],
+  "forbiddenScope": [
+    "force-merge past red required checks",
+    "claiming GitHub mergeability as product PASS",
+    "claiming live Admin Box / provider / deploy from static prove PASS",
+    "secrets, credentials, private hostnames, machine-local runtime evidence in public plans",
+    "ASQ-017 physical-floor mutation from this coordination lane",
+    "inventing scripts/prompt_parallel_dispatch.py as if already present"
+  ],
+  "expectedArtifacts": [
+    "schema-valid public plan JSON + English summary",
+    "plan-registry membership row",
+    "ASQ-021 WORK_QUEUE ledger entry with executable Next action",
+    "dispatch manifest for successor sprints (plan-embedded; foreign prompt_parallel_dispatch CLI absent)",
+    "PR transporting the plan"
+  ],
+  "tasks": [
+    {
+      "taskId": "PPP-01",
+      "title": "Persist durable product-pass sprint map",
+      "status": "ready",
+      "owner": "public-plan-coordination lane",
+      "dependencies": [],
+      "inputs": [
+        "main@e999602 ASQ-020",
+        "operator posture: function + no-flags > GitHub mergeability",
+        "plans/schemas/public-plan.schema.json"
+      ],
+      "outputs": [
+        "plans/active/ASB-2026-09-product-pass-posture.plan.json",
+        "plans/active/ASB-2026-09-product-pass-posture.md",
+        "plans/plan-registry.json update"
+      ],
+      "acceptanceCriteria": [
+        "Public plan validates with scripts/Test-PublicPlanContracts.ps1",
+        "Registry lists ASB-2026-09-PRODUCT-PASS-POSTURE",
+        "Plan encodes waves, owned/forbidden scope, proof ceiling, and successor tasks"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "PPP-02",
+      "title": "Index ASQ-021 in WORK_QUEUE",
+      "status": "ready",
+      "owner": "ledger lane",
+      "dependencies": [
+        "PPP-01"
+      ],
+      "inputs": [
+        ".ai/WORK_QUEUE.md ledger contract"
+      ],
+      "outputs": [
+        "ASQ-021 READY entry with verb-first Next action"
+      ],
+      "acceptanceCriteria": [
+        "Next action starts with an executable verb",
+        "scripts/Test-RepositoryWorkLedgerContract.ps1 PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "PPP-03",
+      "title": "Encode product-pass vs forge-pass in AGENTS.md",
+      "status": "pending",
+      "owner": "doctrine lane",
+      "dependencies": [
+        "PPP-01",
+        "PPP-02"
+      ],
+      "inputs": [
+        "AGENTS.md",
+        "docs/governance/agent-operating-details.md",
+        "docs/harness/merge-gate-local.md"
+      ],
+      "outputs": [
+        "Doctrine section + governance detail pair"
+      ],
+      "acceptanceCriteria": [
+        "Product pass defined as owning prove PASS + no flags",
+        "Forge pass defined as optional land-on-main",
+        "Agents forbidden from idle-waiting on mergeability as primary accept",
+        "scripts/Test-AgentGovernanceDoctrine.ps1 PASS",
+        "git diff --check origin/main...HEAD clean"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "PPP-04",
+      "title": "Rewire bounded-sprint and pr-integration completion criteria",
+      "status": "pending",
+      "owner": "agent-harness lane",
+      "dependencies": [
+        "PPP-03"
+      ],
+      "inputs": [
+        ".ai/skills/bounded-sprint",
+        ".ai/skills/pr-integration",
+        "TRIGGERS.md"
+      ],
+      "outputs": [
+        "Skill completion sections listing prove/flags/forge separately"
+      ],
+      "acceptanceCriteria": [
+        "Skills keep deterministic activation; no product logic only in prompts",
+        "Handoff requires prove command, result level, flags, forge status",
+        "Test-AgentDocumentationContract.ps1 PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "PPP-05",
+      "title": "Optional Prove-ProductPassLocal alias",
+      "status": "pending",
+      "owner": "validation lane",
+      "dependencies": [
+        "PPP-03"
+      ],
+      "inputs": [
+        "Prove-AutomatedTestFloorLocal.ps1",
+        "Prove-MergeGateLocal.ps1"
+      ],
+      "outputs": [
+        "scripts/Prove-ProductPassLocal.ps1 thin orchestrator + docs pointer"
+      ],
+      "acceptanceCriteria": [
+        "Alias runs always-on floor then path-selected merge-gate proves",
+        "Proof ceiling still forbids merge/release/deploy authority",
+        "unittest or meta contract covers fail-closed"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "PPP-06",
+      "title": "Stale ASQ-016 ledger next-action repair",
+      "status": "pending",
+      "owner": "ledger hygiene lane",
+      "dependencies": [
+        "PPP-02"
+      ],
+      "inputs": [
+        "ASQ-016 already on main@ba19f7c / e999602 ancestry"
+      ],
+      "outputs": [
+        "WORK_QUEUE ASQ-016 Next action reflects DONE/integrated state"
+      ],
+      "acceptanceCriteria": [
+        "No instruction to merge already-merged PR #300",
+        "Ledger contract PASS"
+      ],
+      "evidence": []
+    }
+  ],
+  "validation": [
+    "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-RepositoryWorkLedgerContract.ps1",
+    "git diff --check origin/main...HEAD"
+  ],
+  "proof": {
+    "target": "Durable public plan + ledger index that other agents can execute without chat context",
+    "achieved": "PLANNED/DESIGNED in coordinating agent; TRACKED only after commit/PR",
+    "ceiling": "Coordination and doctrine planning only. Does not prove product runtime, Admin Box physical floor, GitHub mergeability, provider delivery, merge, release, or deployment."
+  },
+  "handoff": {
+    "nextOwner": "Cursor cloud agent / public-plan-coordination implementation",
+    "nextCommand": "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
+    "notes": [
+      "Foreign prompt_parallel_dispatch.py / harness/contracts/prompt-parallel-dispatch.v1.json are ABSENT on this repo floor; do not invent them. Use ASB public plans + Cursor CloudAgent/Task adapters.",
+      "PARALLEL EXECUTION for mutation writers that share AGENTS.md/WORK_QUEUE is width 1; ASQ-017 Admin Box is the only host-isolated parallel lane.",
+      "Product pass = owning prove PASS + no flags. Forge merge is optional land-on-main, not the product verdict."
+    ]
+  }
+}
