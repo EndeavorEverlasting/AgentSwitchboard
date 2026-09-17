@@ -85,7 +85,7 @@
     {
       "taskId": "ASQ-015",
       "title": "Refresh FirstMate interop floor to b182d0f",
-      "status": "ready",
+      "status": "completed",
       "owner": "FirstMate interop lane",
       "dependencies": [],
       "inputs": [
@@ -108,7 +108,11 @@
         "Test-AgentSwitchboard-FirstMate-Harness.ps1 PASS or BLOCKED_* structured exit",
         "git diff --check clean"
       ],
-      "evidence": []
+      "evidence": [
+        "PR #308 squash merged as faac296d4b8e292d3ed22893155162d7e17d7a57",
+        "PRODUCT_PASS_LOCAL_POSTURE PROVEN on tip 9ee6f8d",
+        "hooks+manifest+tests+docs landed; pin b182d0f; rebaseRequiredBeforePr96StackMerge remains true"
+      ]
     },
     {
       "taskId": "ASQ-017",

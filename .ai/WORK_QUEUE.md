@@ -253,19 +253,19 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## ASQ-015 — Refresh FirstMate interop floor to b182d0f
 
-- **Status:** READY
+- **Status:** DONE
 - **Priority:** P0
 - **Work class:** BOUNDED
 - **Owner:** Cursor Cloud Agent cursor/asq-015-firstmate-interop-refresh-11b8
-- **Branch / PR:** cursor/asq-015-firstmate-interop-refresh-11b8/ #308
+- **Branch / PR:** merged #308 / faac296d4b8e292d3ed22893155162d7e17d7a57
 - **Scope:** rebase/refresh AgentSwitchboard FirstMate interop harness (PR #96 lineage) onto current main; update upstream pin from 833a9a25… to FirstMate main@b182d0f908b78d08c7ccb8dce3775bdca8c5d657; preserve Windows→WSL anti-regression contracts; keep first_safe_sprint local-only and yolo_enabled false; wire validation hooks into operational manifest
 - **Forbidden:** FirstMate upstream mutation; enabling +yolo; claiming live crew dispatch without runtime floor; native-Windows FirstMate compatibility claim; deleting GNHF; unfreezing ASQ-008..012; reviving stale crew orchestration skill/selector
 - **Dependencies:** ASQ-014
 - **References:** `docs/architecture/asb-firstmate-runtime-boundary.md`, `plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json`, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/96, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/308, https://github.com/kunchenguid/firstmate
 - **Acceptance gate:** refreshed verified_commit pin; contract tests green; Windows bridge regressions preserved; hooks wired into manifest; proof ceiling remains below live crew unless physical floor passes
 - **Gate:** none
-- **Last proof:** tip rebased onto main@3dc2fe3; test_firstmate_integration_contract 14 tests PASS; test_firstmate_operational_harness 9 tests PASS (hooks wired); test_public_plan_contracts PASS; git diff --check clean; pin verified b182d0f908b78d08c7ccb8dce3775bdca8c5d657; historical PR#96 commit 833a9a25 recorded as provenance; 3 Windows pwsh tests BLOCKED_WINDOWS_REQUIRED (structured, expected on Linux); rebaseRequiredBeforePr96StackMerge remains true
-- **Next action:** merge pull request #308 after product-pass review on tip 5ae21da; then update this entry to DONE with merge SHA (stale #96–#101 remain rebaseRequired / TRIAGE-01)
+- **Last proof:** PRODUCT_PASS_LOCAL_POSTURE PROVEN on tip 9ee6f8d; merge:faac296; hooks+manifest+tests+docs landed; pin b182d0f; rebaseRequiredBeforePr96StackMerge remains true
+- **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-17T21:35:00Z
 
 ## ASQ-016 — Encode GNHF NARROW ownership boundary
