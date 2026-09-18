@@ -7,7 +7,7 @@
   "status": "proposed",
   "priority": "high",
   "createdUtc": "2026-09-18T19:35:00Z",
-  "updatedUtc": "2026-09-18T19:35:00Z",
+  "updatedUtc": "2026-09-18T19:46:36Z",
   "mission": "Build a concrete privacy-bounded OpenCode V2 external-agent adapter for P67 Gen2, with AgentSwitchboard owning provider execution/evidence transport and Triage P67 retaining scientific grading authority.",
   "owner": {
     "surface": "P67 external-agent evaluation adapter",
@@ -16,7 +16,11 @@
   },
   "delivery": {
     "branch": "plan/p67-opencode-evaluation-adapter-20260918",
-    "pullRequest": null,
+    "pullRequest": {
+      "number": 311,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/311",
+      "state": "draft"
+    },
     "baseRef": "main",
     "commitRequired": true
   },
