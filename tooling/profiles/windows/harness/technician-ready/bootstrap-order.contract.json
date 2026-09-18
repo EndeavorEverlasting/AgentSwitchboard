@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 2,
+  "contractId": "agentswitchboard.technician-bootstrap-order.v2",
+  "frontDoor": "Technician-AgentSwitchboard-Ready.cmd",
+  "bootstrapOwner": "tooling/profiles/windows/Invoke-TechnicianBootstrapPrerequisites.ps1",
+  "runtimeOwner": "tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1",
+  "purpose": "Fail closed unless the Windows front door establishes WezTerm, WSL/Ubuntu, and tmux before the higher runtime setup engine can execute.",
+  "bootstrapGates": [
+    {
+      "id": "wezterm-version-readback",
+      "token": "$wezTermVersion = Invoke-BoundedProcess"
+    },
+    {
+      "id": "wezterm-pass",
+      "token": "PASS: WezTerm prerequisite"
+    },
+    {
+      "id": "wsl-distribution-readback",
+      "token": "$rawDistributions = @(& $wslPath --list --quiet)"
+    },
+    {
+      "id": "tmux-install-gate",
+      "token": "if ! command -v tmux >/dev/null 2>&1; then"
+    },
+    {
+      "id": "tmux-version-readback",
+      "token": "tmux -V"
+    },
+    {
+      "id": "tmux-pass",
+      "token": "PASS: tmux prerequisite"
+    }
+  ],
+  "frontDoorGates": [
+    {
+      "id": "bootstrap-invocation",
+      "token": "-File \"%BOOTSTRAP%\" -RepoRoot"
+    },
+    {
+      "id": "bootstrap-failure-stop",
+      "token": "if not \"%RESULT%\"==\"0\" goto :finish"
+    },
+    {
+      "id": "runtime-invocation",
+      "token": "-File \"%ENGINE%\" -Mode"
+    }
+  ],
+  "higherRuntimeTokens": [
+    "if ! command -v agy >/dev/null 2>&1; then",
+    "if ! command -v opencode >/dev/null 2>&1; then",
+    "'-File', $gnhfSetup",
+    "-Operation Launch"
+  ],
+  "generatedEvidence": {
+    "tracked": false,
+    "defaultRoot": "operating-system temporary directory/AgentSwitchboard/technician-bootstrap-order"
+  },
+  "proofCeiling": "Static front-door ordering, prerequisite ownership, token uniqueness, PowerShell parsing, and deterministic contract validation only. No package installation, WSL mutation, tmux session, WezTerm window, provider response, or operator acceptance is proven."
+}
