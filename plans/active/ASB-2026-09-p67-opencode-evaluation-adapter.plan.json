@@ -1,0 +1,259 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-09-P67-OPENCODE-EVALUATION-ADAPTER",
+  "title": "P67 OpenCode evaluation adapter",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "proposed",
+  "priority": "high",
+  "createdUtc": "2026-09-18T19:35:00Z",
+  "updatedUtc": "2026-09-18T19:35:00Z",
+  "mission": "Build a concrete privacy-bounded OpenCode V2 external-agent adapter for P67 Gen2, with AgentSwitchboard owning provider execution/evidence transport and Triage P67 retaining scientific grading authority.",
+  "owner": {
+    "surface": "P67 external-agent evaluation adapter",
+    "role": "provider-runtime / evidence-transport lane",
+    "agent": null
+  },
+  "delivery": {
+    "branch": "plan/p67-opencode-evaluation-adapter-20260918",
+    "pullRequest": null,
+    "baseRef": "main",
+    "commitRequired": true
+  },
+  "wave": "P67 Gen2 observed-runtime enablement",
+  "lane": "OpenCode provider adapter + neutral telemetry",
+  "dependencies": [
+    "ASB-2026-09-PRODUCT-PASS-POSTURE"
+  ],
+  "safeParallelWork": [
+    "Triage ADP-00 neutral capture/annotation repair",
+    "AgentSwitchboard ADP-01 OpenCode capability/readiness probe",
+    "PR #309 routing-request builder; no shared implementation files"
+  ],
+  "ownedScope": [
+    "plans/active/ASB-2026-09-p67-opencode-evaluation-adapter.md",
+    "plans/active/ASB-2026-09-p67-opencode-evaluation-adapter.plan.json",
+    "future tooling/evals/p67-opencode-adapter/**",
+    "future tests/test_p67_opencode_adapter.py",
+    "future scripts/Test-P67OpenCodeAdapter.ps1",
+    "machine-local adapter config/status/runtime receipts"
+  ],
+  "forbiddenScope": [
+    "plans/plan-registry.json until PR #309 releases sole-writer ownership",
+    "Triage frozen Gen1/Gen2 prompt identities or treatment wording",
+    "FirstMate crew scheduling/session lifecycle",
+    "provider credential values or automated provider login",
+    "raw prompt/response/transcript/clipboard/query/tool-output persistence",
+    "global OpenCode configuration mutation",
+    "effectiveness claims from static, synthetic, or smoke proof"
+  ],
+  "expectedArtifacts": [
+    "versioned P67 neutral capture/annotation contract",
+    "OpenCode capability/readiness contract and status probe",
+    "Invoke-P67OpenCodeAdapter.ps1",
+    "New-P67AdapterConfig.ps1",
+    "neutral structural event normalizer and local instrumentation plugin",
+    "synthetic interoperability/privacy/error-path tests",
+    "bounded observed adapter smoke receipt",
+    "16-run Gen2 pilot receipts after smoke"
+  ],
+  "tasks": [
+    {
+      "taskId": "ADP-00",
+      "title": "Version neutral capture and evaluator-owned annotations",
+      "status": "ready",
+      "owner": "Triage P67 scientific-authority lane",
+      "dependencies": [],
+      "inputs": [
+        "P67 adapter-contract.v1.json",
+        "runtime_adapter.py",
+        "frozen Gen2 identities"
+      ],
+      "outputs": [
+        "neutral capture contract",
+        "evaluator annotation derivation",
+        "negative self-rating fixture",
+        "positive neutral telemetry fixture"
+      ],
+      "acceptanceCriteria": [
+        "adapter cannot assert evaluator-only usefulness/first-green/fixed-point judgments",
+        "P67 derives evaluative labels from neutral workspace/validation/contract evidence",
+        "Gen1/Gen2 frozen prompt identities remain unchanged",
+        "privacy and invalid-run semantics remain fail-closed"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "ADP-01",
+      "title": "Implement OpenCode capability and provider-readiness probe",
+      "status": "ready",
+      "owner": "AgentSwitchboard provider-runtime lane",
+      "dependencies": [],
+      "inputs": [
+        "official/installed OpenCode contract",
+        "ASB provider governance",
+        "P67 argv/privacy contract"
+      ],
+      "outputs": [
+        "capability contract",
+        "Get-P67OpenCodeAdapterStatus.ps1",
+        "synthetic readiness fixtures"
+      ],
+      "acceptanceCriteria": [
+        "required noninteractive structured execution, explicit provider/model, isolated config and instrumentation capabilities are verified not guessed",
+        "provider/model/agent identity is explicit",
+        "credentials are never emitted",
+        "missing capability/auth/quota returns one typed blocker"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "ADP-02",
+      "title": "Build canonical OpenCode P67 adapter",
+      "status": "pending",
+      "owner": "AgentSwitchboard provider-runtime lane",
+      "dependencies": [
+        "ADP-00",
+        "ADP-01"
+      ],
+      "inputs": [
+        "neutral P67 capture contract",
+        "verified OpenCode capability document"
+      ],
+      "outputs": [
+        "Invoke-P67OpenCodeAdapter.ps1",
+        "New-P67AdapterConfig.ps1",
+        "neutral normalizer",
+        "instrumentation plugin"
+      ],
+      "acceptanceCriteria": [
+        "shell-free P67 argv invocation works without manual prompt copying",
+        "one privacy-bounded result JSON is produced",
+        "raw provider text/stdout/stderr is not persisted",
+        "workspace/process/time bounds are enforced",
+        "one machine-local config holds pair identity constant"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "ADP-03",
+      "title": "Prove synthetic cross-repo interoperability",
+      "status": "pending",
+      "owner": "ASB + Triage compatibility seam",
+      "dependencies": [
+        "ADP-02"
+      ],
+      "inputs": [
+        "fake OpenCode structured event streams",
+        "P67 adapter consumer"
+      ],
+      "outputs": [
+        "synthetic receipts",
+        "privacy/error-path regressions"
+      ],
+      "acceptanceCriteria": [
+        "action/validation/subagent/parallel/timeout/nonzero/missing/malformed paths covered",
+        "P67 accepts neutral results and rejects forbidden/self-rated capture",
+        "no hidden-gold/raw-text leakage",
+        "repository validators and patch hygiene pass"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "ADP-04",
+      "title": "Run bounded observed adapter smoke",
+      "status": "pending",
+      "owner": "authorized workstation/runtime lane",
+      "dependencies": [
+        "ADP-03"
+      ],
+      "inputs": [
+        "real provider auth/quota",
+        "machine-local config",
+        "P67 Gen2"
+      ],
+      "outputs": [
+        "TC01 paired smoke",
+        "conditional TC06 paired parallel smoke"
+      ],
+      "acceptanceCriteria": [
+        "pair identity matches",
+        "runs are VALID or explicitly INVALID",
+        "no forbidden escape/gold leakage",
+        "TC06 only when >=2 real worker slots exist",
+        "no effectiveness verdict from smoke"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "ADP-05",
+      "title": "Execute Gen2 16-run pilot",
+      "status": "pending",
+      "owner": "P67 model-runtime lane",
+      "dependencies": [
+        "ADP-04"
+      ],
+      "inputs": [
+        "proven adapter",
+        "frozen Gen2",
+        "pilot pairing"
+      ],
+      "outputs": [
+        "16 run bundles",
+        "pilot aggregate",
+        "fixture-validity disposition"
+      ],
+      "acceptanceCriteria": [
+        "16 paired runs classified",
+        "same provider/agent/model within pairs",
+        "zero forbidden mutation escape/gold leakage",
+        "privacy-bounded evidence is sufficient for grading",
+        "runtime promotion limited to exact observed population"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "ADP-06",
+      "title": "Hand off valid pilot to P67 Sprint 3",
+      "status": "pending",
+      "owner": "P67 convergence owner",
+      "dependencies": [
+        "ADP-05"
+      ],
+      "inputs": [
+        "valid Gen2 pilot"
+      ],
+      "outputs": [
+        "existing 48-valid-run/blinded-decision phase"
+      ],
+      "acceptanceCriteria": [
+        "Gen2 treatment and thresholds remain frozen after observing pilot",
+        "Sprint 3 dependency gate is proven"
+      ],
+      "evidence": []
+    }
+  ],
+  "validation": [
+    "python tests/test_p67_opencode_adapter.py",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-P67OpenCodeAdapter.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-AgentGovernanceDoctrine.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1 after registry ownership is available",
+    "pwsh -NoLogo -NoProfile -File scripts/Prove-AutomatedTestFloorLocal.ps1",
+    "git diff --check"
+  ],
+  "proof": {
+    "target": "Observed privacy-bounded OpenCode execution consumable by P67 without adapter self-grading",
+    "achieved": "TRACKED PLAN only; no adapter or provider-runtime observation is claimed.",
+    "ceiling": "PLANNED/TRACKED; implementation, provider smoke, pilot behavior, and effectiveness remain separately unproven."
+  },
+  "handoff": {
+    "nextOwner": "Triage ADP-00 and AgentSwitchboard ADP-01 in parallel",
+    "nextCommand": "Execute the Triage neutral-capture sprint and ASB capability/readiness sprint concurrently; converge on ADP-02 only after both contracts are green.",
+    "notes": [
+      "Do not ask the operator to hand-author adapter JSON.",
+      "Registry sync is blocked only by PR #309 shared-file ownership.",
+      "Do not begin the 16-run pilot before neutral-capture and observed-smoke gates pass.",
+      "FirstMate remains canonical crew runtime; this adapter is an evaluation seam."
+    ]
+  }
+}
