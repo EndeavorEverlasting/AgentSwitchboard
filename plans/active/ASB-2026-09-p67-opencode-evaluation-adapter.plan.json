@@ -7,7 +7,7 @@
   "status": "proposed",
   "priority": "high",
   "createdUtc": "2026-09-18T19:35:00Z",
-  "updatedUtc": "2026-09-18T19:46:36Z",
+  "updatedUtc": "2026-09-18T19:48:11Z",
   "mission": "Build a concrete privacy-bounded OpenCode V2 external-agent adapter for P67 Gen2, with AgentSwitchboard owning provider execution/evidence transport and Triage P67 retaining scientific grading authority.",
   "owner": {
     "surface": "P67 external-agent evaluation adapter",
@@ -254,6 +254,7 @@
     "nextOwner": "Triage ADP-00 and AgentSwitchboard ADP-01 in parallel",
     "nextCommand": "Execute the Triage neutral-capture sprint and ASB capability/readiness sprint concurrently; converge on ADP-02 only after both contracts are green.",
     "notes": [
+      "Triage scientific/capture owner is draft PR #559: https://github.com/EndeavorEverlasting/web-excel-repair-triage/pull/559.",
       "Do not ask the operator to hand-author adapter JSON.",
       "Registry sync is blocked only by PR #309 shared-file ownership.",
       "Do not begin the 16-run pilot before neutral-capture and observed-smoke gates pass.",
