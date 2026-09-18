@@ -136,7 +136,7 @@ Implementation can reach IMPLEMENTED/VALIDATED/INTEGRATED. A live smoke can reac
 
 ## Cross-repository coordination
 
-Triage scientific/capture authority is tracked in draft PR #559: `EndeavorEverlasting/web-excel-repair-triage#559`.
+Triage scientific/capture authority is integrated via PR #559 / merge `ce22389e10813b7ed611d56d2c19b6afe5bfcbb6`.
 
 ## Immediate next action
 
