@@ -1,0 +1,32 @@
+{
+  "schema": "agentswitchboard.agent-fleet-readiness-workflow.v1",
+  "workflowId": "handoff-agent-task",
+  "purpose": "Produce a clean operator/agent handoff after bootstrap, readiness, or bounded sprint work.",
+  "requiredFields": [
+    "repository and exact branch/worktree identity",
+    "fleet bootstrap state",
+    "installed PowerShell operator implementation state",
+    "optional CMD compatibility-shim state and last exit when attempted",
+    "requested and observed agent readiness",
+    "provider verification state when applicable",
+    "target repository cleanliness/isolation state",
+    "prompt source and StopWhen",
+    "artifacts produced and canonical paths",
+    "validation commands and results",
+    "commit/push/PR state when work was launched",
+    "proof ceiling",
+    "remaining blocker or gap",
+    "one exact next executable command or action"
+  ],
+  "rules": [
+    "Never hand off a post-setup readiness command when bootstrap state has not been observed.",
+    "If fleet state or the installed PowerShell operator implementation is absent, the next action is repository-owned bootstrap/repair, not -ListAgents.",
+    "If the CMD shim is missing or returned Access is denied / exit 5 while the PowerShell implementation exists, report cmd-shim-blocked and use prove-readiness-through-powershell; do not retry the shim.",
+    "If fleet is installed but readiness is not current, the next action is PowerShell -ListAgents/readiness, not sprint launch.",
+    "If an adapter is blocked, report its recorded evidence and repair command rather than switching agents silently.",
+    "If provider verification is outstanding, name that exact gate without claiming hosted response.",
+    "If the target repository is dirty, preserve the dirty work and name the isolation/cleanup owner before launching GNHF.",
+    "Local runtime artifacts remain untracked unless deliberately minimized and reviewed."
+  ],
+  "proofCeiling": "Handoff completeness only; it cannot promote bootstrap, provider, sprint, merge, or deployment proof."
+}

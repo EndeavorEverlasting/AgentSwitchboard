@@ -1,0 +1,104 @@
+{
+  "schema": "agentswitchboard.agent-fleet-readiness-workflow.v1",
+  "workflowId": "bootstrap-or-list-readiness",
+  "purpose": "Choose bootstrap/repair versus post-setup readiness proof from observed installed state without allowing optional Hermes work or a blocked Windows CMD shim to block the core fleet.",
+  "inputs": [
+    "verified repository root",
+    "%LOCALAPPDATA% install root",
+    "current target repository when known"
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "name": "resolve repository-owned surfaces",
+      "required": [
+        "Setup-AgentSwitchboard.cmd",
+        "tooling/gnhf/Setup-AgentSwitchboard.ps1",
+        "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
+        "tooling/gnhf/Start-AgentSwitchboard.ps1"
+      ],
+      "rule": "The repository root must be observed and contain .git plus these surfaces. Reject stale hard-coded profile paths before Git/setup.",
+      "stopIfMissing": true
+    },
+    {
+      "order": 2,
+      "name": "observe installed readiness authority",
+      "checks": [
+        "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\state.json exists as file",
+        "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\Start-AgentSwitchboard.ps1 exists as file"
+      ],
+      "compatibilityCheck": "Observe agent-switchboard.cmd separately; its absence or Windows policy denial is not a core-readiness failure when the readiness authority exists.",
+      "rule": "Do not invoke post-setup readiness before state plus the PowerShell implementation are classified."
+    },
+    {
+      "order": 3,
+      "name": "classify bootstrap state",
+      "branches": {
+        "neither authority file exists": "not-bootstrapped",
+        "exactly one authority file exists": "partial-or-inconsistent",
+        "both authority files exist": "installed-unclassified",
+        "both authority files exist and CMD shim is missing or access-denied": "cmd-shim-blocked"
+      }
+    },
+    {
+      "order": 4,
+      "name": "bootstrap or repair when required",
+      "when": [
+        "not-bootstrapped",
+        "partial-or-inconsistent"
+      ],
+      "action": "Use the core-autoconfig-defer-hermes workflow when Hermes is unavailable, hanging, or not a priority; otherwise use repository-owned full setup. Reuse healthy components and preserve setup-summary.json/setup-transcript.txt.",
+      "forbidden": [
+        "manually fabricate state.json",
+        "manually copy Start-AgentSwitchboard.ps1 as a substitute for setup",
+        "block core setup on Hermes",
+        "rerun setup solely because the CMD compatibility shim is blocked",
+        "reset unrelated operator work"
+      ]
+    },
+    {
+      "order": 5,
+      "name": "verify installed surfaces after setup",
+      "checks": [
+        "setup result is not failed",
+        "fleet state exists",
+        "installed Start-AgentSwitchboard.ps1 exists"
+      ],
+      "rule": "A partial setup is acceptable when the only deferred dependency is Hermes and the core authority files exist. The CMD shim is observed separately.",
+      "stopIfFailed": true
+    },
+    {
+      "order": 6,
+      "name": "prove readiness through PowerShell",
+      "when": [
+        "installed-unclassified",
+        "successful bootstrap/repair",
+        "core-ready-hermes-deferred",
+        "cmd-shim-blocked"
+      ],
+      "action": "Run the prove-readiness-through-powershell workflow. Invoke installed Start-AgentSwitchboard.ps1 through pwsh for -ListAgents and generate/resolve the startup readiness report. Treat Hermes unavailable as TBD/deferred; do not block other READY adapters.",
+      "proof": "local adapter readiness only"
+    },
+    {
+      "order": 7,
+      "name": "route next action",
+      "rules": [
+        "READY/adapter-ready -> pick-up-agent-task workflow",
+        "CMD shim missing/access-denied with healthy PowerShell readiness authority -> cmd-shim-blocked; preserve evidence and continue through PowerShell",
+        "Hermes unavailable/skipped/blocked with healthy core -> core-ready-hermes-deferred; record TBD and continue with non-Hermes READY adapters",
+        "verification-required -> preserve launch-time provider/model probe requirement",
+        "core BLOCKED/not-configured/unknown -> follow recorded setup/readiness guidance; do not launch work"
+      ]
+    }
+  ],
+  "artifacts": [
+    "fleet-state",
+    "installed-operator-implementation",
+    "installed-operator-launcher",
+    "setup-summary",
+    "setup-transcript",
+    "startup-readiness-json",
+    "startup-readiness-markdown"
+  ],
+  "proofCeiling": "Proves deterministic state classification, optional-Hermes deferral routing, CMD-shim recovery routing, and the required next workflow. Runtime bootstrap/readiness success requires observed setup/readiness artifacts; provider response remains unproved."
+}
