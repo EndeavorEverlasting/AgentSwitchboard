@@ -134,6 +134,10 @@ Current: **TRACKED PLAN only**.
 
 Implementation can reach IMPLEMENTED/VALIDATED/INTEGRATED. A live smoke can reach OBSERVED_ADAPTER_RUNTIME for the exact workstation/provider/model/config. Only the P67 pilot can promote the tested Gen2 population to observed pilot behavior; the final effectiveness verdict remains Sprint 3.
 
+## Cross-repository coordination
+
+Triage scientific/capture authority is tracked in draft PR #559: `EndeavorEverlasting/web-excel-repair-triage#559`.
+
 ## Immediate next action
 
 Run ADP-00 and ADP-01 concurrently. After both are green, build ADP-02. The operator should never need to hand-author the adapter JSON.
