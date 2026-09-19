@@ -4,10 +4,10 @@
   "title": "P67 OpenCode evaluation adapter",
   "repository": "EndeavorEverlasting/AgentSwitchboard",
   "visibility": "public",
-  "status": "proposed",
+  "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-18T19:35:00Z",
-  "updatedUtc": "2026-09-18T19:50:00Z",
+  "updatedUtc": "2026-09-19T17:34:00Z",
   "mission": "Build a concrete privacy-bounded OpenCode V2 external-agent adapter for P67 Gen2, with AgentSwitchboard owning provider execution/evidence transport and Triage P67 retaining scientific grading authority.",
   "owner": {
     "surface": "P67 external-agent evaluation adapter",
@@ -19,9 +19,9 @@
     "pullRequest": {
       "number": 311,
       "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/311",
-      "state": "draft"
+      "state": "open"
     },
-    "baseRef": "main",
+    "baseRef": "320998d",
     "commitRequired": true
   },
   "wave": "P67 Gen2 observed-runtime enablement",
@@ -43,7 +43,6 @@
     "machine-local adapter config/status/runtime receipts"
   ],
   "forbiddenScope": [
-    "plans/plan-registry.json until PR #309 releases sole-writer ownership",
     "Triage frozen Gen1/Gen2 prompt identities or treatment wording",
     "FirstMate crew scheduling/session lifecycle",
     "provider credential values or automated provider login",
@@ -256,7 +255,7 @@
     "notes": [
       "Triage scientific/capture plan is integrated via PR #559 / merge ce22389e10813b7ed611d56d2c19b6afe5bfcbb6.",
       "Do not ask the operator to hand-author adapter JSON.",
-      "Registry sync is blocked only by PR #309 shared-file ownership.",
+      "Registry now synchronized after PR #309 was salvaged via #314 onto main.",
       "Do not begin the 16-run pilot before neutral-capture and observed-smoke gates pass.",
       "FirstMate remains canonical crew runtime; this adapter is an evaluation seam."
     ]

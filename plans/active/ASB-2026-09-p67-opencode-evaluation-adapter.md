@@ -6,12 +6,12 @@ Concrete implementation plan for replacing P67's generic external-agent placehol
 
 ## Evidence floor
 
-- AgentSwitchboard: `main@8e96082334baf30295513568b82e151e05045b95`.
+- AgentSwitchboard: `main@320998d` (includes PR #312 TRIAGE-01, #313, #314 routing-builder salvage).
 - P67 Gen2: integrated/deployed in `EndeavorEverlasting/web-excel-repair-triage@e0038eec048af029f6f27bb2f0dc70f875e09e06`.
 - Gen2 control is the byte-frozen pre-`a583b333` baseline; treatment is released Operant v0.9.0 at `fc9437ff3fa83ce9df82c6ad85a79d09d7e0bd17`.
 - P67 already owns argv-only execution, temporary result transport, privacy allowlists, pair identity, timeouts, isolated workspaces, and invalid-run semantics.
 - AgentSwitchboard owns provider/runtime routing and evidence normalization. FirstMate remains the canonical crew/session runtime; this adapter must not become another scheduler.
-- PR #309 currently owns `plans/plan-registry.json`; this plan intentionally does not mutate that shared registry until #309 converges.
+- Registry now registered after PR #309 was salvaged via #314 onto main; registry includes TRIAGE-01 and FM-ASB-ROUTING-REQUEST-BUILDER entries.
 
 ## Architectural decision
 
@@ -106,7 +106,6 @@ Adapter may **not** decide usefulness, first-green semantic sufficiency, true fi
 
 ## Safety and collisions
 
-- #309 remains sole writer for `plans/plan-registry.json`; registry registration is deferred, not duplicated.
 - No FirstMate scheduler expansion.
 - No provider login automation or tracked credentials.
 - No raw prompt/response/transcript/clipboard/query/tool-output persistence.
