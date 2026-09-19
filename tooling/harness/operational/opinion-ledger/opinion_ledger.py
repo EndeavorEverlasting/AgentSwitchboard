@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 import datetime as dt
 import hashlib
 import json
@@ -11,7 +12,7 @@ import os
 import pathlib
 import re
 import sys
-from typing import Iterable
+from typing import Iterable, Iterator
 
 SCRIPT = pathlib.Path(__file__).resolve()
 REPO_ROOT = SCRIPT.parents[4]
@@ -21,6 +22,7 @@ CONFIDENCE_LEVELS = ("low", "medium", "high")
 VISIBILITY = "local-only"
 STATUS = "candidate"
 OPINION_ID_PATTERN = re.compile(r"^opn-[0-9a-f]{20}$")
+LOCK_TIMEOUT_MILLISECONDS = 10_000
 
 
 class OpinionLedgerError(RuntimeError):
@@ -87,6 +89,66 @@ def resolve_state_root(explicit: str | None = None) -> pathlib.Path:
 
 def ledger_path(state_root: pathlib.Path) -> pathlib.Path:
     return state_root / "opinions.jsonl"
+
+
+def _mutex_identity(path: pathlib.Path) -> str:
+    canonical = str(path.resolve(strict=False)).casefold().encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()[:32]
+
+
+@contextmanager
+def _exclusive_ledger_lock(path: pathlib.Path) -> Iterator[None]:
+    """Serialize ledger access without creating a second persistent artifact."""
+
+    _validate_ledger_path(path)
+    if os.name == "nt":
+        import ctypes
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.CreateMutexW.argtypes = [ctypes.c_void_p, wintypes.BOOL, wintypes.LPCWSTR]
+        kernel32.CreateMutexW.restype = wintypes.HANDLE
+        kernel32.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+        kernel32.WaitForSingleObject.restype = wintypes.DWORD
+        kernel32.ReleaseMutex.argtypes = [wintypes.HANDLE]
+        kernel32.ReleaseMutex.restype = wintypes.BOOL
+        kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+        kernel32.CloseHandle.restype = wintypes.BOOL
+
+        name = f"Local\\AgentSwitchboardOpinionLedger-{_mutex_identity(path)}"
+        handle = kernel32.CreateMutexW(None, False, name)
+        if not handle:
+            error_code = ctypes.get_last_error()
+            raise OSError(error_code, "unable to create opinion-ledger mutex")
+
+        wait_object_0 = 0x00000000
+        wait_abandoned = 0x00000080
+        wait_timeout = 0x00000102
+        try:
+            wait_result = kernel32.WaitForSingleObject(handle, LOCK_TIMEOUT_MILLISECONDS)
+            if wait_result == wait_timeout:
+                raise OpinionLedgerError("timed out waiting for concurrent opinion-ledger access")
+            if wait_result not in (wait_object_0, wait_abandoned):
+                error_code = ctypes.get_last_error()
+                raise OSError(error_code, f"opinion-ledger mutex wait failed ({wait_result})")
+            try:
+                yield
+            finally:
+                if not kernel32.ReleaseMutex(handle):
+                    error_code = ctypes.get_last_error()
+                    raise OSError(error_code, "unable to release opinion-ledger mutex")
+        finally:
+            kernel32.CloseHandle(handle)
+        return
+
+    import fcntl
+
+    with path.open("a+b") as handle:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
 
 
 def _prepare_private_path(state_root: pathlib.Path) -> pathlib.Path:
@@ -280,17 +342,12 @@ def append_entry(path: pathlib.Path, entry: dict) -> None:
     validate_entry(entry)
     _validate_ledger_path(path)
     serialized = json.dumps(entry, sort_keys=True, ensure_ascii=False)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    lock_path = path.with_name(path.name + ".lock")
-    with lock_path.open("a+b") as lock_handle:
-        _lock_file(lock_handle)
-        try:
-            with path.open("a", encoding="utf-8", newline="\n") as handle:
-                handle.write(serialized + "\n")
-                handle.flush()
-                os.fsync(handle.fileno())
-        finally:
-            _unlock_file(lock_handle)
+    with _exclusive_ledger_lock(path):
+        _validate_ledger_path(path)
+        with path.open("a", encoding="utf-8", newline="\n") as handle:
+            handle.write(serialized + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
 
 
 def load_entries(path: pathlib.Path) -> list[dict]:
@@ -299,19 +356,21 @@ def load_entries(path: pathlib.Path) -> list[dict]:
         return []
     entries: list[dict] = []
     seen_ids: set[str] = set()
-    with path.open("r", encoding="utf-8") as handle:
-        for line_number, raw in enumerate(handle, start=1):
-            if not raw.strip():
-                continue
-            try:
-                parsed = json.loads(raw)
-            except json.JSONDecodeError as exc:
-                raise OpinionLedgerError(f"line {line_number}: malformed JSON: {exc.msg}") from exc
-            entry = validate_entry(parsed, line_number=line_number)
-            if entry["opinion_id"] in seen_ids:
-                raise OpinionLedgerError(f"line {line_number}: duplicate opinion_id")
-            seen_ids.add(entry["opinion_id"])
-            entries.append(entry)
+    with _exclusive_ledger_lock(path):
+        _validate_ledger_path(path)
+        with path.open("r", encoding="utf-8") as handle:
+            for line_number, raw in enumerate(handle, start=1):
+                if not raw.strip():
+                    continue
+                try:
+                    parsed = json.loads(raw)
+                except json.JSONDecodeError as exc:
+                    raise OpinionLedgerError(f"line {line_number}: malformed JSON: {exc.msg}") from exc
+                entry = validate_entry(parsed, line_number=line_number)
+                if entry["opinion_id"] in seen_ids:
+                    raise OpinionLedgerError(f"line {line_number}: duplicate opinion_id")
+                seen_ids.add(entry["opinion_id"])
+                entries.append(entry)
     return entries
 
 

@@ -5,7 +5,7 @@
   "repository": "EndeavorEverlasting/AgentSwitchboard",
   "visibility": "public",
   "status": "active",
-  "priority": "medium",
+  "priority": "normal",
   "createdUtc": "2026-09-16T01:25:00Z",
   "updatedUtc": "2026-09-16T01:25:00Z",
   "mission": "Establish one repository-owned safe patch/proof transport that applies and proves branch repairs without persistent checkout write credentials, without leftover temporary workflows, and with deterministic exact-head PR-check re-arming.",
@@ -17,7 +17,8 @@
   "delivery": {
     "branch": "fix/asq017-oneshot-spaced-path-launch-20260915",
     "baseRef": "main",
-    "commitRequired": true
+    "commitRequired": true,
+    "pullRequest": null
   },
   "wave": "owner strengthening after FM-WSL-12 exact-head transport friction",
   "lane": "execution-infrastructure",
@@ -63,17 +64,19 @@
         "plans/active/ASB-2026-09-safe-patch-proof-transport.md inventory floor",
         "verdict: no current write-transport owner; pattern donors identified"
       ],
-      "validation": [
-        "Read-only workflow corpus scan: 0 contents:write, 0 persist-credentials:true"
+      "acceptanceCriteria": [
+        "Task completion criteria to be determined"
       ],
-      "proofCeiling": "inventory only"
+      "evidence": []
     },
     {
       "taskId": "TRANSPORT-P95-02",
       "title": "P95 design for safe patch/proof transport owner",
       "status": "pending",
       "owner": "P95 architecture lane",
-      "dependencies": ["TRANSPORT-INV-01"],
+      "dependencies": [
+        "TRANSPORT-INV-01"
+      ],
       "inputs": [
         "inventory floor",
         "discriminating design question in summary md"
@@ -81,55 +84,42 @@
       "outputs": [
         "canonical design artifact naming owner path and permission matrix"
       ],
-      "validation": [
-        "design names cleanup contract and exact-head check re-arm event"
+      "acceptanceCriteria": [
+        "Task completion criteria to be determined"
       ],
-      "proofCeiling": "design acceptance; not implementation"
+      "evidence": []
     },
     {
       "taskId": "TRANSPORT-P07-03",
       "title": "P07 bounded implementation of approved transport",
       "status": "pending",
       "owner": "P07 repo sprint executor",
-      "dependencies": ["TRANSPORT-P95-02"],
+      "dependencies": [
+        "TRANSPORT-P95-02"
+      ],
       "inputs": [
         "approved P95 design"
       ],
       "outputs": [
         "tracked transport owner + validators + CI proof"
       ],
-      "validation": [
-        "non-persistent checkout credentials",
-        "write auth scoped to final push",
-        "automatic transport cleanup",
-        "deterministic exact-head PR-check trigger"
+      "acceptanceCriteria": [
+        "Task completion criteria to be determined"
       ],
-      "proofCeiling": "hosted CI + contract proof; not arbitrary live credential use"
+      "evidence": []
     }
   ],
-  "validation": {
-    "order": [
-      "focused inventory/docs validators when present",
-      "Test-PublicPlanContracts.ps1 when plan schema surfaces change",
-      "P95 design acceptance before P07 mutation"
-    ],
-    "commands": [
-      "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1"
-    ]
-  },
+  "validation": [
+    "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1"
+  ],
   "proof": {
     "ceiling": "Inventory and routing are proven. Transport implementation remains unproven pending P95 then P07.",
-    "completed": [
-      "Read-only inventory on Admin Box host LPW003ASI173 against main-derived branch floor"
-    ],
-    "remaining": [
-      "P95 design decision",
-      "P07 implementation and validators"
-    ]
+    "target": "Inventory and routing are proven. Transport implementation remains unproven pending P95 then P07.",
+    "achieved": "Partial implementation"
   },
   "handoff": {
     "nextOwner": "P95 architecture lane",
-    "nextAction": "Answer the discriminating design question and name the canonical transport owner path before any write-capable workflow lands.",
-    "blocker": "none for design start; implementation blocked on P95 acceptance"
+    "nextCommand": null,
+    "notes": []
   }
 }
