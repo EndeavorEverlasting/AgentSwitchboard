@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Contract tests for P67 OpenCode adapter capability probe (ADP-01)."""
+"""Contract tests for P67 OpenCode adapter (ADP-01 + ADP-02)."""
 
 from __future__ import annotations
 
@@ -14,6 +14,9 @@ ADAPTER_DIR = ROOT / "tooling" / "evals" / "p67-opencode-adapter"
 PROBE_SCRIPT = ADAPTER_DIR / "Get-P67OpenCodeAdapterStatus.ps1"
 CAPABILITY_CONTRACT = ADAPTER_DIR / "capability-contract.v1.json"
 FIXTURES_DIR = ADAPTER_DIR / "fixtures"
+NEW_CONFIG_SCRIPT = ADAPTER_DIR / "New-P67AdapterConfig.ps1"
+INVOKE_SCRIPT = ADAPTER_DIR / "Invoke-P67OpenCodeAdapter.ps1"
+NORMALIZER_MODULE = ADAPTER_DIR / "ConvertTo-NeutralCapture.psm1"
 
 
 def load_json(path: Path) -> dict:
@@ -230,6 +233,153 @@ class P67OpenCodeAdapterTests(unittest.TestCase):
         for forbidden in evaluative_fields:
             self.assertNotIn(f'"{forbidden}"', contract_fields,
                            f"Status schema must not contain evaluative field: {forbidden}")
+
+
+class P67OpenCodeAdapterADP02Tests(unittest.TestCase):
+    """ADP-02: Adapter implementation tests."""
+
+    def test_adp02_components_exist(self) -> None:
+        """Verify all ADP-02 components are present."""
+        required = [
+            NEW_CONFIG_SCRIPT,
+            INVOKE_SCRIPT,
+            NORMALIZER_MODULE,
+        ]
+        for path in required:
+            self.assertTrue(path.exists(), f"Missing ADP-02 component: {path}")
+
+    def test_new_config_script_structure(self) -> None:
+        """Verify New-P67AdapterConfig.ps1 structure and contracts."""
+        content = NEW_CONFIG_SCRIPT.read_text(encoding="utf-8")
+
+        self.assertIn("ADP-02", content)
+        self.assertIn("compute-authority-agent-adapter/v1", content)
+        self.assertIn("Invoke-P67OpenCodeAdapter.ps1", content)
+
+        self.assertIn("Provider", content)
+        self.assertIn("Model", content)
+        self.assertIn("Agent", content)
+
+        self.assertNotIn("api_key.*=.*[a-zA-Z0-9]{10,}", content.lower())
+        self.assertNotIn("token.*=.*[a-zA-Z0-9]{10,}", content.lower())
+
+    def test_new_config_no_credential_values(self) -> None:
+        """Verify config generator never stores credential values."""
+        content = NEW_CONFIG_SCRIPT.read_text(encoding="utf-8")
+
+        credential_leak_patterns = [
+            r'api[_-]?key.*[:=]\s*[a-zA-Z0-9+/]{10,}',
+            r'token.*[:=]\s*[a-zA-Z0-9+/]{10,}',
+            r'secret.*[:=]\s*[a-zA-Z0-9+/]{10,}',
+        ]
+
+        for pattern in credential_leak_patterns:
+            import re
+            self.assertIsNone(re.search(pattern, content, re.IGNORECASE),
+                            f"Config script may contain credential values matching: {pattern}")
+
+    def test_invoke_script_argv_only(self) -> None:
+        """Verify Invoke script accepts only argv parameters (no shell composition)."""
+        content = INVOKE_SCRIPT.read_text(encoding="utf-8")
+
+        self.assertIn("[Parameter(Mandatory)]", content)
+        self.assertIn("$Workspace", content)
+        self.assertIn("$Task", content)
+        self.assertIn("$Prompt", content)
+        self.assertIn("$Result", content)
+
+        self.assertNotIn("Invoke-Expression", content)
+        self.assertNotIn("iex", content.lower())
+
+    def test_invoke_script_privacy_bounded(self) -> None:
+        """Verify Invoke script maintains privacy boundaries."""
+        content = INVOKE_SCRIPT.read_text(encoding="utf-8")
+
+        forbidden_persistence = [
+            "raw_transcript",
+            "full_conversation",
+            "model_text.*Set-Content",
+            "chat_history",
+        ]
+
+        for forbidden in forbidden_persistence:
+            import re
+            self.assertIsNone(re.search(forbidden, content, re.IGNORECASE),
+                            f"Invoke script may persist forbidden data: {forbidden}")
+
+    def test_invoke_script_fail_closed(self) -> None:
+        """Verify Invoke script fails closed on timeout/nonzero/missing."""
+        content = INVOKE_SCRIPT.read_text(encoding="utf-8")
+
+        self.assertIn("INVALID", content)
+        self.assertIn("timeout", content.lower())
+        self.assertIn("exit 1", content)
+
+    def test_invoke_script_evaluative_rejected(self) -> None:
+        """Verify Invoke script enforces CAPTURE_EVALUATIVE_REJECTED."""
+        content = INVOKE_SCRIPT.read_text(encoding="utf-8")
+
+        self.assertIn("CAPTURE_EVALUATIVE_REJECTED", content)
+
+        evaluative_fields = ["useful", "first_green", "after_fixed_point", "correct", "effectiveness"]
+        for field in evaluative_fields:
+            self.assertIn(field, content.lower())
+
+    def test_normalizer_module_structure(self) -> None:
+        """Verify neutral event normalizer module structure."""
+        content = NORMALIZER_MODULE.read_text(encoding="utf-8")
+
+        self.assertIn("ADP-02", content)
+        self.assertIn("CAPTURE_EVALUATIVE_REJECTED", content)
+        self.assertIn("Export-ModuleMember", content)
+
+        required_functions = [
+            "Test-CaptureFieldAllowed",
+            "Test-CaptureObjectValid",
+            "ConvertTo-NeutralExecutionSummary",
+            "ConvertTo-NeutralProviderIdentity",
+        ]
+
+        for func in required_functions:
+            self.assertIn(func, content)
+
+    def test_normalizer_rejects_evaluative_fields(self) -> None:
+        """Verify normalizer rejects evaluative fields."""
+        content = NORMALIZER_MODULE.read_text(encoding="utf-8")
+
+        evaluative_fields = ["useful", "first_green", "after_fixed_point", "correct", "effectiveness"]
+        for field in evaluative_fields:
+            self.assertIn(field, content.lower())
+
+        self.assertIn("ForbiddenEvaluativeFields", content)
+
+    def test_normalizer_rejects_privacy_fields(self) -> None:
+        """Verify normalizer rejects privacy-violating fields."""
+        content = NORMALIZER_MODULE.read_text(encoding="utf-8")
+
+        privacy_fields = ["raw_prompt", "raw_response", "transcript", "full_conversation"]
+        for field in privacy_fields:
+            self.assertIn(field, content.lower())
+
+        self.assertIn("ForbiddenPrivacyFields", content)
+
+    def test_normalizer_rejects_credential_fields(self) -> None:
+        """Verify normalizer rejects credential fields."""
+        content = NORMALIZER_MODULE.read_text(encoding="utf-8")
+
+        credential_fields = ["api_key", "token", "secret", "password", "credential"]
+        for field in credential_fields:
+            self.assertIn(field, content.lower())
+
+        self.assertIn("ForbiddenCredentialFields", content)
+
+    def test_capture_contract_v2_schema(self) -> None:
+        """Verify capture contract v2 schema is used."""
+        invoke_content = INVOKE_SCRIPT.read_text(encoding="utf-8")
+        normalizer_content = NORMALIZER_MODULE.read_text(encoding="utf-8")
+
+        self.assertIn("compute-authority-provider-capture/v2", invoke_content)
+        self.assertIn("compute-authority-provider-capture/v2", normalizer_content)
 
 
 if __name__ == "__main__":
