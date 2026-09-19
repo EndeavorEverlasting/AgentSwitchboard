@@ -146,6 +146,30 @@ class TestTechnicianAgentSwitchboardReady(unittest.TestCase):
             self.assertNotRegex(text, r"(?m)^\s*>>")
             self.assertNotRegex(text, r"(?m)^\s*\+\s+CategoryInfo")
 
+    def test_fresh_shell_listagents_probe_uses_proper_argumentlist(self) -> None:
+        """Regression test for issue #66 fresh-shell probe failure.
+
+        The probe must pass shim path and -ListAgents as separate ArgumentList entries
+        via 'call' builtin, not as a manually-quoted single string that produces nested
+        quotes cmd.exe cannot parse.
+        """
+        text = read(READY_ENGINE)
+
+        # Forbidden: manual quote-wrapping that produces nested quotes under ArgumentList
+        self.assertNotRegex(
+            text,
+            r'\$probeCommand\s*=\s*["`].*\$.*shimPaths\.AgentSwitchboard.*["`].*-ListAgents',
+            "Fresh-shell probe must not manually quote shim path into a single string"
+        )
+
+        # Required: proper ArgumentList construction with separate entries
+        self.assertIn("'/d', '/c', 'call', $shimPaths.AgentSwitchboard, '-ListAgents'", text,
+                     "Fresh-shell probe must use separate ArgumentList entries including 'call'")
+
+        # Ensure the probe still targets the AgentSwitchboard shim
+        self.assertIn("$shimPaths.AgentSwitchboard", text)
+        self.assertIn("fresh-shell-agentswitchboard", text)
+
 
 if __name__ == "__main__":
     unittest.main()
