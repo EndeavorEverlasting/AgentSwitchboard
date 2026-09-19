@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-17T00:00:00Z",
-  "updatedUtc": "2026-09-19T17:36:00Z",
+  "updatedUtc": "2026-09-19T18:36:00Z",
   "mission": "Own the read-only asb.agent-observation/v1 to prompt-kit.routing-request/v1 translation seam (ASB cross-product-translation) so a correlated observation can be turned into a bounded routing request, without selecting prompts, consulting a registry, dispatching, rolling over, or scheduling crew.",
   "owner": {
     "surface": "FirstMate/ASB routing-request builder",
@@ -109,10 +109,11 @@
     {
       "taskId": "RRB-03",
       "title": "Phase 3 handoff — routing-decision consumer and prompt-dispatch",
-      "status": "pending",
+      "status": "blocked",
       "owner": "Prompt Kit routing-decision lane",
       "dependencies": [
-        "RRB-02"
+        "RRB-02",
+        "EndeavorEverlasting/web-excel-repair-triage route-control-plane salvage"
       ],
       "inputs": [
         "prompt-kit.routing-request/v1 built requests",
@@ -125,7 +126,10 @@
         "New bounded sprint declaration before decision/dispatch code",
         "No crew scheduler or automatic rollover expansion"
       ],
-      "evidence": []
+      "evidence": [
+        "Prompt Kit P95 architecture on current main requires adapting only PR #450 actor-neutral route receipt, destination provenance, and idempotency concepts rather than wholesale merging the stale route-state implementation.",
+        "Prompt Kit PR #450 remains open on stale head 5c1cd0ae5f30c13e1a336f1d1acbdd29694791d4 with unresolved critical/major route-control-plane review defects; RRB-03 must not consume it directly."
+      ]
     }
   ],
   "validation": [
@@ -142,14 +146,14 @@
   },
   "handoff": {
     "nextOwner": "Prompt Kit route-control-plane salvage / RRB-03 dependency lane",
-    "nextCommand": "python3 tests/test_prompt_route_receipt_acceptance.py",
+    "nextCommand": "gh repo clone EndeavorEverlasting/web-excel-repair-triage ../web-excel-repair-triage-rrb03-salvage && git -C ../web-excel-repair-triage-rrb03-salvage fetch --all --prune --tags && git -C ../web-excel-repair-triage-rrb03-salvage switch -c fix/evidence-spine-route-receipt-salvage-20260919 origin/main",
     "notes": [
       "The builder never selects prompts or consults a registry; it emits a bounded request only.",
       "requireCurrentRegistry is asserted true so downstream decision must bind to the current registry.",
       "Phase 3 decision/dispatch/rollover is a separate bounded sprint, not part of this seam.",
       "RRB-01/RRB-02 integrated via PR #314 / main 320998d7c1519370fbecb0cf5da56d4c729be247.",
       "Original PR #309 is closed as superseded; its four unresolved review findings were repaired and resolved by #314.",
-      "RRB-03 must not consume stale Prompt Kit PR #450 directly: current donor has unresolved route-control-plane security/correctness findings and requires fresh-main salvage first."
+      "RRB-03 is machine-blocked until the Prompt Kit route-control-plane salvage is integrated; resume decision/dispatch only from that repaired current-main owner."
     ]
   }
 }
