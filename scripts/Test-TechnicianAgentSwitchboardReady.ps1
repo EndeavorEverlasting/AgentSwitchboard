@@ -103,6 +103,12 @@ if ($failures.Count -eq 0) {
     )) {
         Require-Token -Text $ready -Token $token -Label 'WSL bash payload normalization'
     }
+
+    if ($ready.Contains('agentswitchboard-command-path')) {
+        Add-Failure 'Get-WslCommandPath must not use fragile positional parameter handoff (agentswitchboard-command-path marker)'
+    }
+
+    Require-Token -Text $ready -Token "`$script = 'export PATH=" -Label 'Get-WslCommandPath safe script embedding'
     $linuxNormalize = $ready.IndexOf('$linuxSetup = ConvertTo-WslBashPayload -Script $linuxSetup')
     $linuxInvoke = $ready.IndexOf('& $wslPath -d $Distribution -- bash -lc $linuxSetup')
     if ($linuxNormalize -lt 0 -or $linuxInvoke -lt 0 -or $linuxNormalize -gt $linuxInvoke) {

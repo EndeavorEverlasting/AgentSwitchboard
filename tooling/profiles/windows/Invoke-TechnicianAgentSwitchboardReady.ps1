@@ -225,10 +225,9 @@ function Get-WslCommandPath {
         [ValidateSet('tmux', 'agy', 'opencode')][string]$Tool
     )
 
+    $script = 'export PATH="$HOME/.local/bin:$HOME/.opencode/bin:$PATH"; command -v {0}' -f $Tool
     $probe = Invoke-BoundedProcess -FilePath $WslPath -ArgumentList @(
-        '-d', $Distribution, '--', 'bash', '-lc',
-        'export PATH="$HOME/.local/bin:$HOME/.opencode/bin:$PATH"; command -v "$1"',
-        'agentswitchboard-command-path', $Tool
+        '-d', $Distribution, '--', 'bash', '-lc', $script
     ) -ProcessTimeoutSeconds 30
 
     if ($probe.TimedOut -or $probe.ExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($probe.Stdout)) {
