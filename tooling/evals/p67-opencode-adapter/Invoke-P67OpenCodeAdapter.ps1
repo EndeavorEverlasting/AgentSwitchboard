@@ -160,25 +160,28 @@ function Invoke-OpenCodeExecution {
         [string]$PromptText,
         [string]$ProviderName,
         [string]$ModelName,
+        [string]$AgentName,
         [int]$Timeout
     )
 
     Write-DiagnosticMessage "Starting OpenCode execution (timeout: ${Timeout}s)"
 
-    $ephemeralPromptFile = Join-Path $script:ephemeralDir 'prompt.txt'
     $ephemeralOutputFile = Join-Path $script:ephemeralDir 'opencode-output.txt'
+    $ephemeralStderrFile = Join-Path $script:ephemeralDir 'opencode-stderr.txt'
 
-    $PromptText | Set-Content -LiteralPath $ephemeralPromptFile -Encoding utf8NoBOM -NoNewline
+    $modelSpec = "${ProviderName}/${ModelName}"
 
     $opencodeArgs = @(
-        'execute',
-        '--workspace', $WorkspacePath,
-        '--prompt-file', $ephemeralPromptFile,
-        '--provider', $ProviderName,
-        '--model', $ModelName,
-        '--non-interactive',
-        '--output', 'json'
+        'run',
+        $PromptText,
+        '--format', 'json',
+        '-m', $modelSpec,
+        '--dir', $WorkspacePath
     )
+
+    if ($AgentName) {
+        $opencodeArgs += @('--agent', $AgentName)
+    }
 
     Write-DiagnosticMessage "OpenCode command: opencode $($opencodeArgs -join ' ')"
 
@@ -188,7 +191,7 @@ function Invoke-OpenCodeExecution {
             -ArgumentList $opencodeArgs `
             -WorkingDirectory $WorkspacePath `
             -RedirectStandardOutput $ephemeralOutputFile `
-            -RedirectStandardError (Join-Path $script:ephemeralDir 'opencode-stderr.txt') `
+            -RedirectStandardError $ephemeralStderrFile `
             -NoNewWindow `
             -PassThru
 
@@ -346,6 +349,7 @@ try {
         -PromptText $Prompt `
         -ProviderName $Provider `
         -ModelName $Model `
+        -AgentName $Agent `
         -Timeout $TimeoutSeconds
 
     if ($execResult.TimedOut) {
