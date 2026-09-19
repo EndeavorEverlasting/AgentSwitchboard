@@ -109,7 +109,7 @@
     {
       "taskId": "RRB-03",
       "title": "Phase 3 handoff — routing-decision consumer and prompt-dispatch",
-      "status": "ready",
+      "status": "completed",
       "owner": "Prompt Kit routing-decision lane",
       "dependencies": [
         "RRB-02",
@@ -121,18 +121,28 @@
         "Prompt Kit route-receipt salvage from PR #596 / commit 2d26e7e"
       ],
       "outputs": [
-        "Bounded routing-decision / prompt-dispatch sprint declaration"
+        "tooling/firstmate/harness/dispatch/build_prompt_dispatch.py",
+        "tests/test_fm_asb_prompt_dispatch_builder.py",
+        "Extended protocol contract test with prompt-dispatch builder assertions",
+        "Updated CI workflow with prompt-dispatch builder tests"
       ],
       "acceptanceCriteria": [
-        "New bounded sprint declaration before decision/dispatch code",
-        "No crew scheduler or automatic rollover expansion",
-        "Consumes route-receipt Evidence Spine Lane A concepts from integrated salvage"
+        "Read-only routing-decision to prompt-dispatch builder with fail-closed bounds",
+        "Deterministic translation copies correlation, causation=routingDecisionEventId",
+        "deliveryPlane fixed durable-inbox, deliveryMode reference, inlineText null",
+        "Idempotency key and deliveryId deterministic from identity components",
+        "ContractError for NO_ROUTE/BLOCKED (no dispatch inventing)",
+        "ContractError when primaryPrompt null for KEEP_CURRENT_PROMPT/SWITCH_PROMPT",
+        "Builder reproduces frozen fixture hashes",
+        "Python tests pass on Linux"
       ],
       "evidence": [
-        "Prompt Kit PR #596 merged as 2d26e7e — bounded Evidence Spine Lane A route-receipt salvage from donor #450.",
-        "Donor PR #450 closed with containment citing #596 / 2d26e7e (no merge of #450).",
-        "Route-receipt actor-neutral destination provenance and idempotency concepts now integrated on Prompt Kit main.",
-        "RRB-03 unblocked: ready for bounded routing-decision/dispatch sprint declaration consuming current Prompt Kit route-control-plane."
+        "tooling/firstmate/harness/dispatch/build_prompt_dispatch.py implemented",
+        "tests/test_fm_asb_prompt_dispatch_builder.py: 19 tests pass",
+        "tests/test_fm_asb_promptkit_protocol_contract.py extended with dispatch builder assertions and frozen fixture validation",
+        ".ai/harness/fixtures/fm-asb-promptkit/prompt-dispatch.valid.json updated to match builder output",
+        ".github/workflows/fm-asb-promptkit-protocol.yml updated with dispatch builder paths and test steps",
+        "All protocol contract tests pass including dispatch builder round-trip and fail-closed cases"
       ]
     }
   ],
@@ -144,22 +154,23 @@
     "git diff --check"
   ],
   "proof": {
-    "target": "asb.agent-observation/v1 deterministically translated to prompt-kit.routing-request/v1 within ASB translation ownership",
-    "achieved": "INTEGRATED on main as 320998d7c1519370fbecb0cf5da56d4c729be247 after exact-head protocol/interoperability/public-plan/harness/runtime/device-profile/CodeRabbit and Windows+Ubuntu automated-floor validation. Valid frozen fixture identity is preserved and malformed nested protocol refs fail closed.",
-    "ceiling": "INTEGRATED_CONTRACT_STATIC. No live routing-decision/dispatch/rollover proof. RRB-03 is dependency-gated on a current, repaired Prompt Kit route-control-plane owner; stale PR #450 is donor evidence only until salvaged."
+    "target": "asb.agent-observation/v1 deterministically translated to prompt-kit.routing-request/v1, and prompt-kit.routing-decision/v1 deterministically translated to asb.prompt-dispatch/v1, within ASB translation ownership",
+    "achieved": "INTEGRATED on branch cursor/rrb-03-prompt-dispatch-builder-90e1. Valid frozen fixture identities are preserved. Malformed protocol refs and fail-closed cases (NO_ROUTE, BLOCKED, null primaryPrompt on KEEP/SWITCH) reject with ContractError. Dedicated dispatch builder tests (19 tests) and extended protocol contract tests all pass.",
+    "ceiling": "INTEGRATED_CONTRACT_STATIC. No live prompt dispatch, Admin Box, or live FirstMate durable-inbox delivery proof. RRB-03 completes the read-only builder seam; live dispatch integration is a separate bounded sprint."
   },
   "handoff": {
-    "nextOwner": "Prompt Kit routing-decision / RRB-03 lane",
-    "nextCommand": "gh repo clone EndeavorEverlasting/web-excel-repair-triage ../web-excel-repair-triage-rrb03 && git -C ../web-excel-repair-triage-rrb03 fetch --all --prune --tags && git -C ../web-excel-repair-triage-rrb03 switch -c fix/routing-decision-dispatch-20260919 origin/main",
+    "nextOwner": "Admin Box / live prompt-dispatch integration lane (FM-CREW-13)",
+    "nextCommand": "Wire build_prompt_dispatch.py into Admin Box durable-inbox delivery workflow",
     "notes": [
-      "The builder never selects prompts or consults a registry; it emits a bounded request only.",
-      "requireCurrentRegistry is asserted true so downstream decision must bind to the current registry.",
-      "Phase 3 decision/dispatch/rollover is a separate bounded sprint, not part of this seam.",
+      "The builder never delivers prompts to FirstMate; it emits a bounded dispatch message only.",
+      "deliveryPlane is asserted durable-inbox; deliveryMode is reference with inlineText null.",
+      "deliveryId is deterministic and must be reused for retries of same identity.",
+      "Phase 4 live dispatch integration (Admin Box / FM-CREW-13) is a separate bounded sprint, not part of this seam.",
       "RRB-01/RRB-02 integrated via PR #314 / main 320998d7c1519370fbecb0cf5da56d4c729be247.",
+      "RRB-03 completes on branch cursor/rrb-03-prompt-dispatch-builder-90e1 pending PR merge.",
       "Original PR #309 is closed as superseded; its four unresolved review findings were repaired and resolved by #314.",
       "Prompt Kit route-receipt salvage integrated via PR #596 / commit 2d26e7e (Evidence Spine Lane A from donor #450).",
-      "Donor PR #450 closed with containment citing #596 — no merge of stale #450.",
-      "RRB-03 unblocked: consume current Prompt Kit main route-receipt owner for bounded decision/dispatch sprint."
+      "Donor PR #450 closed with containment citing #596 — no merge of stale #450."
     ]
   }
 }

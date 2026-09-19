@@ -16,6 +16,7 @@ STATE_MACHINE = ROOT / ".ai/harness/fm-asb-promptkit-rollover-state-machine.json
 SCHEMA_DIR = ROOT / ".ai/harness/schemas/fm-asb-promptkit"
 FIXTURES = ROOT / ".ai/harness/fixtures/fm-asb-promptkit"
 ROUTING_BUILDER = ROOT / "tooling/firstmate/harness/routing/build_routing_request.py"
+DISPATCH_BUILDER = ROOT / "tooling/firstmate/harness/dispatch/build_prompt_dispatch.py"
 DOCS_PROTOCOL = ROOT / "docs/architecture/fm-asb-promptkit-protocol-v1.md"
 DOCS_UX = ROOT / "docs/harness/context-rollover-ux.md"
 ADR_BOUNDARY = ROOT / "docs/architecture/asb-firstmate-runtime-boundary.md"
@@ -234,8 +235,8 @@ def main() -> None:
 
     # Routing-request builder reproduces the frozen fixture and rejects malformed nested refs.
     assert_true(ROUTING_BUILDER.is_file(), "routing-request builder missing")
-    builder = load_module(ROUTING_BUILDER, "build_routing_request")
-    builder_args = {
+    routing_builder = load_module(ROUTING_BUILDER, "build_routing_request")
+    routing_builder_args = {
         "summary": req["mission"]["summary"],
         "observed": req["evidenceState"]["observed"],
         "claimed": req["evidenceState"]["claimed"],
@@ -245,7 +246,7 @@ def main() -> None:
         "max_candidates": req["routingPolicy"]["maxCandidates"],
         "created_at": req["createdAt"],
     }
-    built = builder.build_routing_request(obs, **builder_args)
+    built = routing_builder.build_routing_request(obs, **routing_builder_args)
     assert_true(not envelope_ok(built), f"built routing-request envelope: {envelope_ok(built)}")
     assert_true(built["schema"] == "prompt-kit.routing-request/v1", "built schema")
     assert_true(built["task"]["repository"] == obs["repository"], "built repository parity")
@@ -327,15 +328,15 @@ def main() -> None:
         bad_obs = copy.deepcopy(obs)
         mutate(bad_obs)
         try:
-            builder.build_routing_request(bad_obs, **builder_args)
+            routing_builder.build_routing_request(bad_obs, **routing_builder_args)
             raise AssertionError(f"builder accepted invalid {label}")
-        except builder.ContractError:
+        except routing_builder.ContractError:
             pass
 
     try:
-        builder.build_routing_request(obs, **{**builder_args, "created_at": "2026-09-19 12:00:00"})
+        routing_builder.build_routing_request(obs, **{**routing_builder_args, "created_at": "2026-09-19 12:00:00"})
         raise AssertionError("builder accepted invalid routing-request createdAt")
-    except builder.ContractError:
+    except routing_builder.ContractError:
         pass
 
     # Existing caller-controlled protocol enums remain fail-closed.
@@ -346,16 +347,115 @@ def main() -> None:
         {"max_candidates": 9},
     ):
         try:
-            builder.build_routing_request(
+            routing_builder.build_routing_request(
                 obs,
                 **{
-                    **builder_args,
+                    **routing_builder_args,
                     **bad,
                 },
             )
             raise AssertionError(f"builder accepted invalid input {bad}")
-        except builder.ContractError:
+        except routing_builder.ContractError:
             pass
+
+    # Prompt-dispatch builder reproduces the frozen fixture and rejects fail-closed cases.
+    assert_true(DISPATCH_BUILDER.is_file(), "prompt-dispatch builder missing")
+    dispatch_builder = load_module(DISPATCH_BUILDER, "build_prompt_dispatch")
+    dispatch_builder_args = {
+        "firstmate_task_id": dispatch["target"]["firstMateTaskId"],
+        "resolved_variables": dict(dispatch["resolvedVariables"]),
+        "instruction_summary": dispatch["instructionPacket"]["summary"],
+        "proof_gate": dispatch["instructionPacket"]["proofGate"],
+        "allow_mutation": dispatch["authority"]["allowMutation"],
+        "allowed_scopes": list(dispatch["authority"]["allowedScopes"]),
+        "forbidden_scopes": list(dispatch["authority"]["forbiddenScopes"]),
+        "expected_generation": dispatch["target"]["expectedGeneration"],
+        "created_at": dispatch["createdAt"],
+    }
+    built_dispatch = dispatch_builder.build_prompt_dispatch(dec, **dispatch_builder_args)
+    assert_true(not envelope_ok(built_dispatch), f"built dispatch envelope: {envelope_ok(built_dispatch)}")
+    assert_true(built_dispatch["schema"] == "asb.prompt-dispatch/v1", "built dispatch schema")
+    assert_true(built_dispatch["correlationId"] == dec["correlationId"], "built dispatch correlation")
+    assert_true(built_dispatch["causationId"] == dec["eventId"], "built dispatch causation")
+    assert_true(built_dispatch["routingDecisionEventId"] == dec["eventId"], "built dispatch decision ref")
+    assert_true(built_dispatch["target"]["deliveryPlane"] == "durable-inbox", "built dispatch plane")
+    assert_true(built_dispatch["prompt"]["deliveryMode"] == "reference", "built dispatch mode")
+    assert_true(built_dispatch["prompt"]["inlineText"] is None, "built dispatch inline null")
+    assert_true(built_dispatch["prompt"]["ref"] == dec["decision"]["primaryPrompt"], "built dispatch prompt ref")
+    assert_true(
+        built_dispatch["idempotency"]["semanticSha256"] == dispatch["idempotency"]["semanticSha256"],
+        "built dispatch semanticSha256 matches frozen fixture",
+    )
+    assert_true(
+        built_dispatch["idempotency"]["key"] == dispatch["idempotency"]["key"],
+        "built dispatch idempotency key matches frozen fixture",
+    )
+    assert_true(
+        built_dispatch["delivery"]["deliveryId"] == dispatch["delivery"]["deliveryId"],
+        "built dispatch deliveryId matches frozen fixture",
+    )
+
+    # Dispatch builder fail-closed: NO_ROUTE and BLOCKED cannot be dispatched.
+    for action in ("NO_ROUTE", "BLOCKED"):
+        bad_dec = copy.deepcopy(dec)
+        bad_dec["decision"]["routeAction"] = action
+        bad_dec["decision"]["primaryPrompt"] = None
+        try:
+            dispatch_builder.build_prompt_dispatch(bad_dec, **dispatch_builder_args)
+            raise AssertionError(f"dispatch builder accepted {action}")
+        except dispatch_builder.ContractError as exc:
+            assert_true("no prompt is routed" in str(exc).lower(), f"expected no-route error for {action}")
+
+    # Dispatch builder fail-closed: KEEP/SWITCH with null primaryPrompt.
+    for action in ("KEEP_CURRENT_PROMPT", "SWITCH_PROMPT"):
+        bad_dec = copy.deepcopy(dec)
+        bad_dec["decision"]["routeAction"] = action
+        bad_dec["decision"]["primaryPrompt"] = None
+        try:
+            dispatch_builder.build_prompt_dispatch(bad_dec, **dispatch_builder_args)
+            raise AssertionError(f"dispatch builder accepted null primary for {action}")
+        except dispatch_builder.ContractError as exc:
+            assert_true("primaryPrompt must not be null" in str(exc), f"expected null-primary error for {action}")
+
+    # Dispatch builder rejects malformed promptRef.
+    for label, mutate in (
+        ("missing id", lambda p: p.pop("id")),
+        ("invalid id", lambda p: p.update({"id": "BAD"})),
+        ("missing promptSha256", lambda p: p.pop("promptSha256")),
+        ("invalid promptSha256", lambda p: p.update({"promptSha256": "not-a-sha"})),
+        ("invalid surface", lambda p: p.update({"executionSurface": "shell"})),
+        ("extra field", lambda p: p.update({"unexpected": "x"})),
+    ):
+        bad_dec = copy.deepcopy(dec)
+        mutate(bad_dec["decision"]["primaryPrompt"])
+        try:
+            dispatch_builder.build_prompt_dispatch(bad_dec, **dispatch_builder_args)
+            raise AssertionError(f"dispatch builder accepted invalid promptRef {label}")
+        except dispatch_builder.ContractError:
+            pass
+
+    # Dispatch builder rejects invalid inputs.
+    try:
+        dispatch_builder.build_prompt_dispatch(dec, **{**dispatch_builder_args, "created_at": "2026-09-19 12:00:00"})
+        raise AssertionError("dispatch builder accepted invalid createdAt")
+    except dispatch_builder.ContractError:
+        pass
+
+    try:
+        dispatch_builder.build_prompt_dispatch(
+            dec, **{**dispatch_builder_args, "instruction_summary": ""}
+        )
+        raise AssertionError("dispatch builder accepted empty instruction summary")
+    except dispatch_builder.ContractError:
+        pass
+
+    try:
+        dispatch_builder.build_prompt_dispatch(
+            dec, **{**dispatch_builder_args, "proof_gate": "x" * 4001}
+        )
+        raise AssertionError("dispatch builder accepted oversized proof gate")
+    except dispatch_builder.ContractError:
+        pass
 
     # Invalid fixtures must fail semantic rules
     bad_ctx = load(FIXTURES / "context-transition.estimated-automatic.invalid.json")
