@@ -224,12 +224,12 @@ function New-ReadinessStatus {
         probe_timestamp_utc = (Get-Date).ToUniversalTime().ToString('o')
     }
 
-    return $status
+    return ,$status
 }
 
 function ConvertTo-BlockerObject {
     param([string]$Code, [string]$Message)
-    return [ordered]@{ code = $Code; message = $Message }
+    return ,[ordered]@{ code = $Code; message = $Message }
 }
 
 try {
@@ -252,10 +252,10 @@ try {
         } `
         -Blocker (ConvertTo-BlockerObject 'OPENCODE_NOT_FOUND' 'OpenCode CLI not found in PATH. Install OpenCode or ensure it is available.')
 
-        $jsonText = $status | ConvertTo-Json -Depth 10
+        $jsonText = ConvertTo-Json -InputObject $status -Depth 10
 
         if ($OutputPath) {
-            [string]$jsonText | Set-Content -LiteralPath $OutputPath -Encoding utf8
+            [System.IO.File]::WriteAllText($OutputPath, $jsonText)
             Write-DiagnosticMessage "Status written to: $OutputPath"
         } else {
             Write-Output $jsonText
@@ -317,10 +317,10 @@ try {
         } `
         -Blocker $blocker
 
-    $jsonText = $status | ConvertTo-Json -Depth 10
+    $jsonText = ConvertTo-Json -InputObject $status -Depth 10
 
     if ($OutputPath) {
-        [string]$jsonText | Set-Content -LiteralPath $OutputPath -Encoding utf8
+        [System.IO.File]::WriteAllText($OutputPath, $jsonText)
         Write-DiagnosticMessage "Status written to: $OutputPath"
     } else {
         Write-Output $jsonText
@@ -343,10 +343,10 @@ try {
         } `
         -Blocker (ConvertTo-BlockerObject 'CAPABILITY_PROBE_ERROR' "Probe execution failed: $($_.Exception.Message)")
 
-    $jsonText = $errorStatus | ConvertTo-Json -Depth 10
+    $jsonText = ConvertTo-Json -InputObject $errorStatus -Depth 10
 
     if ($OutputPath) {
-        [string]$jsonText | Set-Content -LiteralPath $OutputPath -Encoding utf8
+        [System.IO.File]::WriteAllText($OutputPath, $jsonText)
     } else {
         Write-Output $jsonText
     }
