@@ -71,6 +71,11 @@ class TestTechnicianAgentSwitchboardReady(unittest.TestCase):
         )
         self.assertEqual(2, text.count("set -euo pipefail"))
 
+    def test_wsl_command_path_uses_safe_script_embedding(self) -> None:
+        text = read(READY_ENGINE)
+        self.assertNotIn("agentswitchboard-command-path", text, "Get-WslCommandPath must not use fragile positional parameter handoff")
+        self.assertIn("$script = 'export PATH=", text, "Get-WslCommandPath must use safe script embedding")
+
     def test_compatibility_entrypoint_delegates_to_ready_engine(self) -> None:
         text = read(COMPAT_SETUP)
         self.assertIn("Invoke-TechnicianAgentSwitchboardReady.ps1", text)
