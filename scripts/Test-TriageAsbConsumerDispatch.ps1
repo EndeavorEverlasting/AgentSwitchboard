@@ -146,7 +146,7 @@ $ExampleReceipts = @(
 foreach ($fixture in $ExampleReceipts) {
     $fixturePath = Join-Path $FixturesDir $fixture
     Test-Condition "Fixture $fixture exists" (Test-Path $fixturePath)
-    
+
     if (Test-Path $fixturePath) {
         try {
             $receipt = Get-Content $fixturePath -Raw | ConvertFrom-Json
