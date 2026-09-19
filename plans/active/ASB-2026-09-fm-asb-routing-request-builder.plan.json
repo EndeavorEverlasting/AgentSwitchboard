@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-17T00:00:00Z",
-  "updatedUtc": "2026-09-19T17:31:00Z",
+  "updatedUtc": "2026-09-19T17:36:00Z",
   "mission": "Own the read-only asb.agent-observation/v1 to prompt-kit.routing-request/v1 translation seam (ASB cross-product-translation) so a correlated observation can be turned into a bounded routing request, without selecting prompts, consulting a registry, dispatching, rolling over, or scheduling crew.",
   "owner": {
     "surface": "FirstMate/ASB routing-request builder",
@@ -19,7 +19,7 @@
     "pullRequest": {
       "number": 314,
       "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/314",
-      "state": "open"
+      "state": "merged"
     },
     "baseRef": "main@41504c3783744c26dd9e46cd25eaf013ccf010ec",
     "commitRequired": true
@@ -137,16 +137,19 @@
   ],
   "proof": {
     "target": "asb.agent-observation/v1 deterministically translated to prompt-kit.routing-request/v1 within ASB translation ownership",
-    "achieved": "VALIDATED contract/static builder on exact head a00238e0f77ddaec88737bd2a8fde75e0895082b: FirstMate ASB PromptKit protocol, First Mate interoperability, public-plan, app-harness, app-output, runtime-event, device-profile, CodeRabbit, and Windows+Ubuntu automated floor all green. Valid frozen fixture identity preserved; malformed nested protocol refs fail closed.",
-    "ceiling": "VALIDATED_CONTRACT_STATIC. Integration to main is the next gate. Not runtime, routing-decision/dispatch/rollover, or live prompt dispatch."
+    "achieved": "INTEGRATED on main as 320998d7c1519370fbecb0cf5da56d4c729be247 after exact-head protocol/interoperability/public-plan/harness/runtime/device-profile/CodeRabbit and Windows+Ubuntu automated-floor validation. Valid frozen fixture identity is preserved and malformed nested protocol refs fail closed.",
+    "ceiling": "INTEGRATED_CONTRACT_STATIC. No live routing-decision/dispatch/rollover proof. RRB-03 is dependency-gated on a current, repaired Prompt Kit route-control-plane owner; stale PR #450 is donor evidence only until salvaged."
   },
   "handoff": {
-    "nextOwner": "mainline integration; then Prompt Kit routing-decision lane (RRB-03)",
-    "nextCommand": "gh pr merge 314 --squash --delete-branch",
+    "nextOwner": "Prompt Kit route-control-plane salvage / RRB-03 dependency lane",
+    "nextCommand": "python3 tests/test_prompt_route_receipt_acceptance.py",
     "notes": [
       "The builder never selects prompts or consults a registry; it emits a bounded request only.",
       "requireCurrentRegistry is asserted true so downstream decision must bind to the current registry.",
-      "Phase 3 decision/dispatch/rollover is a separate bounded sprint, not part of this seam."
+      "Phase 3 decision/dispatch/rollover is a separate bounded sprint, not part of this seam.",
+      "RRB-01/RRB-02 integrated via PR #314 / main 320998d7c1519370fbecb0cf5da56d4c729be247.",
+      "Original PR #309 is closed as superseded; its four unresolved review findings were repaired and resolved by #314.",
+      "RRB-03 must not consume stale Prompt Kit PR #450 directly: current donor has unresolved route-control-plane security/correctness findings and requires fresh-main salvage first."
     ]
   }
 }
