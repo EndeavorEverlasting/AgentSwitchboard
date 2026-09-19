@@ -201,16 +201,16 @@ function Test-AuthReadiness {
 
 function New-ReadinessStatus {
     param(
-        [string]$Status,
+        [string]$OverallStatus,
         [bool]$OpenCodeFound,
         [string]$OpenCodeVersion,
         [hashtable]$Capabilities,
-        [hashtable]$Blocker
+        [AllowNull()][object]$Blocker
     )
 
-    $status = [ordered]@{
+    $resultObject = [ordered]@{
         schema_version = 'p67-opencode-readiness-status/v1'
-        status = $Status
+        status = $OverallStatus
         opencode_found = $OpenCodeFound
         opencode_version = $OpenCodeVersion
         capabilities_verified = [ordered]@{
@@ -224,7 +224,7 @@ function New-ReadinessStatus {
         probe_timestamp_utc = (Get-Date).ToUniversalTime().ToString('o')
     }
 
-    return ,$status
+    return ,$resultObject
 }
 
 function ConvertTo-BlockerObject {
@@ -240,7 +240,7 @@ try {
 
     if (-not $versionInfo.Found) {
     $status = New-ReadinessStatus `
-        -Status 'BLOCKED' `
+        -OverallStatus 'BLOCKED' `
         -OpenCodeFound $false `
         -OpenCodeVersion $null `
         -Capabilities @{
@@ -305,7 +305,7 @@ try {
     }
 
     $status = New-ReadinessStatus `
-        -Status $overallStatus `
+        -OverallStatus $overallStatus `
         -OpenCodeFound $true `
         -OpenCodeVersion $versionInfo.Version `
         -Capabilities @{
@@ -331,7 +331,7 @@ try {
 
 } catch {
     $errorStatus = New-ReadinessStatus `
-        -Status 'BLOCKED' `
+        -OverallStatus 'BLOCKED' `
         -OpenCodeFound $false `
         -OpenCodeVersion $null `
         -Capabilities @{
