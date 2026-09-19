@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentswitchboard.triage-checkpoint/v1",
+  "title": "Triage Conversation Continuity Checkpoint",
+  "description": "ASB consumer schema for Triage checkpoint.schema.v1 (live-thread-p02-checkpoint/v1)",
+  "type": "object",
+  "required": ["handoff_version", "source_controller", "source_conversation_state", "created_at", "threads"],
+  "properties": {
+    "handoff_version": {"const": "live-thread-p02-checkpoint/v1"},
+    "source_controller": {"const": "live-thread-convergence-controller"},
+    "source_conversation_state": {
+      "type": "string",
+      "enum": ["ACTIVE", "DEGRADED", "CLOSING", "TERMINAL"]
+    },
+    "created_at": {"type": "string", "format": "date-time"},
+    "threads": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/thread"}
+    }
+  },
+  "$defs": {
+    "thread": {
+      "type": "object",
+      "required": ["id", "target", "disposition", "first_unproven_gate"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "target": {"type": "string", "minLength": 1},
+        "disposition": {
+          "type": "string",
+          "enum": ["COMPLETE", "BLOCKED", "HANDOFF-READY", "SUSPENDED", "SUPERSEDED"]
+        },
+        "first_unproven_gate": {"type": ["string", "null"]},
+        "repository_state": {
+          "type": "object",
+          "properties": {
+            "repository": {"type": "string"},
+            "working_branch": {"type": "string"},
+            "head_sha": {"type": "string"},
+            "first_unproven_repository_gate": {"type": "string"}
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentswitchboard.lane-mapping/v1",
+  "title": "Lane to ASB Descriptor Mapping",
+  "description": "Maps a Triage lane to an AgentSwitchboard execution descriptor (public-plan, cursor-cloud-agent, or local argv)",
+  "type": "object",
+  "required": ["lane_id", "asb_descriptor_kind", "mapping_confidence", "execution_ready"],
+  "properties": {
+    "lane_id": {"type": "string", "minLength": 1},
+    "asb_descriptor_kind": {
+      "type": "string",
+      "enum": ["public-plan", "cursor-cloud-agent", "local-argv", "unmapped"]
+    },
+    "mapping_confidence": {
+      "type": "string",
+      "enum": ["high", "medium", "low", "none"]
+    },
+    "execution_ready": {"type": "boolean"},
+    "public_plan_id": {"type": "string"},
+    "cloud_agent_prompt": {"type": "string"},
+    "argv": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "cwd": {"type": "string"},
+    "blocking_reason": {"type": "string"}
+  }
+}

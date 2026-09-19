@@ -1,0 +1,23 @@
+{
+  "panel_id": "panel-01",
+  "lane_id": "lane-01-policy",
+  "sprint_name": "P07 Triage ASB Consumer Floor",
+  "repo": "https://github.com/EndeavorEverlasting/AgentSwitchboard",
+  "branch": "cursor/p07-triage-asb-consumer-floor-ca7b",
+  "mission": "Implement consumer policy with human_scheduler_allowed:false and panel_ingest_required:true",
+  "owned_scope": [
+    "tooling/harness/triage-consumer/consumer.policy.json"
+  ],
+  "forbidden_scope": [
+    "tooling/evals/p67-opencode-adapter/**"
+  ],
+  "expected_artifacts": [
+    "tooling/harness/triage-consumer/consumer.policy.json"
+  ],
+  "validation_order": [
+    "python3 -m json.tool tooling/harness/triage-consumer/consumer.policy.json"
+  ],
+  "prompt_content": "EXECUTE THE REPO SPRINT. DO NOT REWRITE THIS PROMPT.\n\nRepo: https://github.com/EndeavorEverlasting/AgentSwitchboard\nBranch: cursor/p07-triage-asb-consumer-floor-ca7b\nSprint: P07 Lane 01 - Consumer Policy\nOwned scope: tooling/harness/triage-consumer/consumer.policy.json\nForbidden scope: tooling/evals/p67-opencode-adapter/**\n\nImplement consumer policy JSON with:\n- human_scheduler_allowed: false\n- panel_ingest_required: true\n- autonomy_gap_classification_required: true\n\nValidate with: python3 -m json.tool tooling/harness/triage-consumer/consumer.policy.json\n\nCommit, push, and report SHA.",
+  "dependencies": [],
+  "wave": 1
+}

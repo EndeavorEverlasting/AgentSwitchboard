@@ -1,0 +1,208 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-09-TRIAGE-ASB-CONSUMER-FLOOR",
+  "title": "P07: Triage→ASB Durable Consumer Contract Floor",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "active",
+  "priority": "high",
+  "createdUtc": "2026-09-19T21:30:00Z",
+  "updatedUtc": "2026-09-19T21:30:00Z",
+  "mission": "Close AUTONOMY_GAP by implementing AgentSwitchboard's durable consumer for Triage prompt-parallel-dispatch manifests and panel/lane-prompt transport artifacts. Enforce human_scheduler_allowed:false and panel_ingest_required:true.",
+  "owner": {
+    "surface": "Triage→ASB consumer harness",
+    "role": "AgentSwitchboard harness owner",
+    "agent": null
+  },
+  "delivery": {
+    "branch": "cursor/p07-triage-asb-consumer-floor-ca7b",
+    "pullRequest": {
+      "number": 320,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/320",
+      "state": "draft"
+    },
+    "baseRef": "main",
+    "commitRequired": true
+  },
+  "wave": "Harness completion",
+  "lane": "Triage consumer floor",
+  "dependencies": [],
+  "safeParallelWork": [
+    "Provider runtime work not touching triage-consumer",
+    "P67 OpenCode evaluation adapter work in tooling/evals/p67-opencode-adapter/**",
+    "Other harness or app work using separate branches"
+  ],
+  "ownedScope": [
+    "tooling/harness/triage-consumer/**",
+    "scripts/Test-TriageAsbConsumerContract.ps1",
+    "tests/test_triage_asb_consumer_contract.py",
+    "plans/active/ASB-2026-09-triage-asb-consumer-floor.*",
+    "CODEBASE_MAP.md Triage consumer section",
+    "plans/plan-registry.json entry"
+  ],
+  "forbiddenScope": [
+    "tooling/evals/p67-opencode-adapter/**",
+    "technician/#319 surfaces",
+    "Triage repository mutation",
+    "Deleting or forbidding panels as design goal",
+    "Live lane dispatch without contract floor"
+  ],
+  "expectedArtifacts": [
+    "Consumer policy JSON with human_scheduler_allowed:false and panel_ingest_required:true",
+    "5 consumer schemas (manifest, panel, checkpoint, lane-mapping, autonomy-gap)",
+    "5 example fixtures",
+    "Python module with ingest/classify/map implementation",
+    "PowerShell and pytest validators",
+    "CODEBASE_MAP.md section and plan-registry.json entry"
+  ],
+  "tasks": [
+    {
+      "taskId": "P07-01",
+      "title": "Implement consumer policy with enforcement assertions",
+      "status": "completed",
+      "owner": "Triage consumer harness",
+      "dependencies": [],
+      "inputs": ["Triage upstream contracts", "Operator correction binding", "AGENTS.md policy precedence"],
+      "outputs": ["tooling/harness/triage-consumer/consumer.policy.json"],
+      "acceptanceCriteria": [
+        "human_scheduler_allowed is false",
+        "panel_ingest_required is true",
+        "autonomy_gap_classification_required is true",
+        "Policy JSON validates"
+      ],
+      "evidence": ["consumer.policy.json created", "JSON validation passes", "Commit SHA 96a3571"]
+    },
+    {
+      "taskId": "P07-02",
+      "title": "Create consumer schemas for upstream contracts",
+      "status": "completed",
+      "owner": "Triage consumer harness",
+      "dependencies": ["P07-01"],
+      "inputs": ["Triage prompt-parallel-dispatch.v1", "checkpoint.schema.v1", "pr-merge-gate.v1"],
+      "outputs": ["tooling/harness/triage-consumer/schemas/*.json"],
+      "acceptanceCriteria": [
+        "5 schemas created and valid",
+        "Schemas align with Triage upstream contracts",
+        "JSON Schema draft/2020-12 format"
+      ],
+      "evidence": ["5 schema files created", "All validate as JSON", "Commit SHA 96a3571"]
+    },
+    {
+      "taskId": "P07-03",
+      "title": "Create example fixtures for all schemas",
+      "status": "completed",
+      "owner": "Triage consumer harness",
+      "dependencies": ["P07-02"],
+      "inputs": ["Consumer schemas"],
+      "outputs": ["tooling/harness/triage-consumer/fixtures/*.json"],
+      "acceptanceCriteria": [
+        "5 example fixtures created",
+        "All fixtures are valid JSON",
+        "Fixtures demonstrate schema coverage"
+      ],
+      "evidence": ["5 fixture files created", "All validate as JSON", "Commit SHA 96a3571"]
+    },
+    {
+      "taskId": "P07-04",
+      "title": "Implement Python consumer module",
+      "status": "completed",
+      "owner": "Triage consumer harness",
+      "dependencies": ["P07-01", "P07-02", "P07-03"],
+      "inputs": ["Consumer policy", "Schemas", "Fixtures"],
+      "outputs": ["tooling/harness/triage-consumer/triage_consumer.py"],
+      "acceptanceCriteria": [
+        "TriageConsumer class enforces policy assertions",
+        "ingest_manifest and ingest_panel work",
+        "classify_autonomy_gap detects unmapped lanes",
+        "map_lane_to_asb_descriptor maps structurally",
+        "apply_merge_gate_classification implements degraded+local_proof=>CONTINUE",
+        "extract_first_unproven_gate parses checkpoints",
+        "Python syntax valid"
+      ],
+      "evidence": [
+        "triage_consumer.py created (475 lines)",
+        "Manifest ingestion: run_id=triage-2026-09-19-001 lanes=2",
+        "Panel ingestion: panel_id=panel-01",
+        "AUTONOMY_GAP: detected=True reason=adapters_unavailable",
+        "py_compile passes",
+        "Commit SHA 96a3571"
+      ]
+    },
+    {
+      "taskId": "P07-05",
+      "title": "Implement validators",
+      "status": "completed",
+      "owner": "Triage consumer harness",
+      "dependencies": ["P07-04"],
+      "inputs": ["Python consumer module", "Policy", "Schemas", "Fixtures"],
+      "outputs": ["scripts/Test-TriageAsbConsumerContract.ps1", "tests/test_triage_asb_consumer_contract.py"],
+      "acceptanceCriteria": [
+        "PowerShell validator checks policy enforcement",
+        "Pytest suite has 28 tests covering all consumer requirements",
+        "Validators parse and validate JSON files",
+        "Validators test Python functionality"
+      ],
+      "evidence": [
+        "Test-TriageAsbConsumerContract.ps1 created (194 lines)",
+        "test_triage_asb_consumer_contract.py created (358 lines, 28 tests)",
+        "Commit SHA 96a3571"
+      ]
+    },
+    {
+      "taskId": "P07-06",
+      "title": "Update documentation and plan registry",
+      "status": "completed",
+      "owner": "Triage consumer harness",
+      "dependencies": ["P07-05"],
+      "inputs": ["Completed consumer implementation"],
+      "outputs": ["CODEBASE_MAP.md section", "plans/plan-registry.json entry", "Plan JSON and markdown"],
+      "acceptanceCriteria": [
+        "CODEBASE_MAP.md has Triage consumer section",
+        "plan-registry.json includes P07 plan",
+        "Plan files exist and validate"
+      ],
+      "evidence": [
+        "CODEBASE_MAP.md updated",
+        "plan-registry.json updated",
+        "Plan JSON and markdown created",
+        "Commit SHA 96a3571"
+      ]
+    },
+    {
+      "taskId": "P07-07",
+      "title": "Fix CI failures and merge",
+      "status": "in-progress",
+      "owner": "Triage consumer harness",
+      "dependencies": ["P07-06"],
+      "inputs": ["Initial implementation", "CI failure logs"],
+      "outputs": ["Plan JSON matching schema", "Passing CI"],
+      "acceptanceCriteria": [
+        "Plan JSON matches public-plan.schema.json",
+        "All CI gates pass",
+        "PR marked ready for review",
+        "Merged to main"
+      ],
+      "evidence": ["Working on fixing plan schema compliance"]
+    }
+  ],
+  "validation": [
+    "pwsh -NoLogo -NoProfile -File scripts/Test-TriageAsbConsumerContract.ps1",
+    "python3 -m pytest tests/test_triage_asb_consumer_contract.py -v",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
+    "git diff --check"
+  ],
+  "proof": {
+    "target": "Contract proof + static test proof",
+    "achieved": "Contract proof (schemas validate, fixtures pass, policy enforces requirements). Static test proof (ingest/classify/map works structurally).",
+    "ceiling": "Does NOT prove live lane dispatch, runtime execution, or Cursor Cloud Agent launch. Next phase: live dispatch adapter."
+  },
+  "handoff": {
+    "nextOwner": "Live lane dispatch adapter owner",
+    "nextCommand": "Implement live dispatch adapter consuming TriageConsumer output",
+    "notes": [
+      "Consumer floor provides machine ingestion and structural mapping only",
+      "Live launches require separate adapter layer",
+      "Upstream contracts: github.com/EndeavorEverlasting/web-excel-repair-triage"
+    ]
+  }
+}

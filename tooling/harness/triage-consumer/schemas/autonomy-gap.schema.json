@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentswitchboard.autonomy-gap/v1",
+  "title": "AUTONOMY_GAP Classification",
+  "description": "Classification when panels/manifests exist but no adapter would execute lanes",
+  "type": "object",
+  "required": ["gap_detected", "manifest_present", "panels_present", "ready_lanes_count", "unmapped_lanes_count", "gap_reason"],
+  "properties": {
+    "gap_detected": {"type": "boolean"},
+    "manifest_present": {"type": "boolean"},
+    "panels_present": {"type": "boolean"},
+    "ready_lanes_count": {"type": "integer", "minimum": 0},
+    "unmapped_lanes_count": {"type": "integer", "minimum": 0},
+    "gap_reason": {
+      "type": "string",
+      "enum": [
+        "no_gap",
+        "no_manifest_or_panels",
+        "no_ready_lanes",
+        "all_lanes_mapped",
+        "adapters_unavailable",
+        "panel_ingest_missing",
+        "unknown"
+      ]
+    },
+    "unmapped_lane_ids": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "recommended_action": {"type": "string"}
+  }
+}

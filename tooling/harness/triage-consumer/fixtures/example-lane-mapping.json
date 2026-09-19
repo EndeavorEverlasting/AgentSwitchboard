@@ -1,0 +1,7 @@
+{
+  "lane_id": "lane-01-policy",
+  "asb_descriptor_kind": "cursor-cloud-agent",
+  "mapping_confidence": "high",
+  "execution_ready": true,
+  "cloud_agent_prompt": "Implement consumer policy JSON with human_scheduler_allowed:false and panel_ingest_required:true at tooling/harness/triage-consumer/consumer.policy.json"
+}

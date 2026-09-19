@@ -151,6 +151,14 @@
       "priority": "high",
       "dependencies": ["ASB-2026-09-FM-ASB-OBSERVATION-ADAPTER", "ASB-2026-09-FM-ASB-PROMPTKIT-PROTOCOL-V1"],
       "architectureDecision": "docs/architecture/fm-asb-promptkit-protocol-v1.md"
+    },
+    {
+      "planId": "ASB-2026-09-TRIAGE-ASB-CONSUMER-FLOOR",
+      "path": "plans/active/ASB-2026-09-triage-asb-consumer-floor.plan.json",
+      "summaryPath": "plans/active/ASB-2026-09-triage-asb-consumer-floor.md",
+      "status": "active",
+      "priority": "high",
+      "dependencies": []
     }
   ]
 }

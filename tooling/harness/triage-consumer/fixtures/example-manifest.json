@@ -1,0 +1,61 @@
+{
+  "schema_version": "prompt-parallel-dispatch/v1",
+  "run_id": "triage-2026-09-19-001",
+  "graph_width": 2,
+  "parallel_disposition": "REQUIRED",
+  "autonomy_gap": null,
+  "lanes": [
+    {
+      "lane_id": "lane-01-policy",
+      "mission": "Implement consumer policy with human_scheduler_allowed:false and panel_ingest_required:true",
+      "dependencies": [],
+      "owned_mutation_surfaces": ["tooling/harness/triage-consumer/consumer.policy.json"],
+      "forbidden_surfaces": ["tooling/evals/p67-opencode-adapter/**"],
+      "adapter": {
+        "kind": "cursor-cloud-agent",
+        "rung": 2
+      },
+      "launch": {
+        "mode": "runtime_tool",
+        "tool": "cursor_cloud_agent",
+        "operation": "launch",
+        "arguments": {
+          "prompt": "Implement Triage consumer policy JSON with human_scheduler_allowed:false and panel_ingest_required:true"
+        }
+      },
+      "expected_artifacts": ["tooling/harness/triage-consumer/consumer.policy.json"],
+      "validation": ["python3 -m json.tool tooling/harness/triage-consumer/consumer.policy.json"],
+      "convergence_owner": "main-coordinator",
+      "status": "PLANNED"
+    },
+    {
+      "lane_id": "lane-02-schemas",
+      "mission": "Create consumer schemas for manifests, panels, checkpoints, lane mappings, autonomy gaps",
+      "dependencies": [],
+      "owned_mutation_surfaces": ["tooling/harness/triage-consumer/schemas/**"],
+      "forbidden_surfaces": ["tooling/evals/p67-opencode-adapter/**"],
+      "adapter": {
+        "kind": "cursor-cloud-agent",
+        "rung": 2
+      },
+      "launch": {
+        "mode": "runtime_tool",
+        "tool": "cursor_cloud_agent",
+        "operation": "launch",
+        "arguments": {
+          "prompt": "Create consumer schemas for Triage manifests, panels, checkpoints, lane mappings, and autonomy gaps"
+        }
+      },
+      "expected_artifacts": [
+        "tooling/harness/triage-consumer/schemas/triage-manifest.schema.json",
+        "tooling/harness/triage-consumer/schemas/triage-panel.schema.json",
+        "tooling/harness/triage-consumer/schemas/triage-checkpoint.schema.json",
+        "tooling/harness/triage-consumer/schemas/lane-mapping.schema.json",
+        "tooling/harness/triage-consumer/schemas/autonomy-gap.schema.json"
+      ],
+      "validation": ["find tooling/harness/triage-consumer/schemas -name '*.json' -exec python3 -m json.tool {} \\;"],
+      "convergence_owner": "main-coordinator",
+      "status": "PLANNED"
+    }
+  ]
+}
