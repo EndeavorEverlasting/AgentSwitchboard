@@ -25,7 +25,9 @@
       "summaryPath": "plans/active/ASB-2026-07-one-command-harness-proof.md",
       "status": "active",
       "priority": "high",
-      "dependencies": ["ASB-2026-07-PUBLIC-PLANS-STARTUP"]
+      "dependencies": [
+        "ASB-2026-07-PUBLIC-PLANS-STARTUP"
+      ]
     },
     {
       "planId": "ASB-2026-07-RUNTIME-EVENT-CONTRACT",
@@ -33,7 +35,9 @@
       "summaryPath": "plans/active/ASB-2026-07-runtime-event-contract.md",
       "status": "completed",
       "priority": "high",
-      "dependencies": ["ASB-2026-07-ONE-COMMAND-HARNESS-PROOF"]
+      "dependencies": [
+        "ASB-2026-07-ONE-COMMAND-HARNESS-PROOF"
+      ]
     },
     {
       "planId": "ASB-2026-07-WINDOWS-PROFILE-LAUNCHER-DOCTRINE",
@@ -41,7 +45,9 @@
       "summaryPath": "plans/active/ASB-2026-07-windows-profile-launcher-doctrine.md",
       "status": "completed",
       "priority": "high",
-      "dependencies": ["ASB-2026-07-RUNTIME-EVENT-CONTRACT"]
+      "dependencies": [
+        "ASB-2026-07-RUNTIME-EVENT-CONTRACT"
+      ]
     },
     {
       "planId": "ASB-2026-07-APP-OUTPUT-CONTEXT-ENGINE",
@@ -49,7 +55,9 @@
       "summaryPath": "plans/active/ASB-2026-07-app-output-context-engine.md",
       "status": "active",
       "priority": "high",
-      "dependencies": ["ASB-2026-07-WINDOWS-PROFILE-LAUNCHER-DOCTRINE"]
+      "dependencies": [
+        "ASB-2026-07-WINDOWS-PROFILE-LAUNCHER-DOCTRINE"
+      ]
     },
     {
       "planId": "ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS",
@@ -66,7 +74,9 @@
       "summaryPath": "plans/active/ASB-2026-09-multi-product-bootstrap-charter.md",
       "status": "active",
       "priority": "high",
-      "dependencies": ["ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS"]
+      "dependencies": [
+        "ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS"
+      ]
     },
     {
       "planId": "ASB-2026-09-FM-ASB-PROMPTKIT-PROTOCOL-V1",
@@ -74,7 +84,9 @@
       "summaryPath": "plans/active/ASB-2026-09-fm-asb-promptkit-protocol-v1.md",
       "status": "completed",
       "priority": "high",
-      "dependencies": ["ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS"],
+      "dependencies": [
+        "ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS"
+      ],
       "architectureDecision": "docs/architecture/fm-asb-promptkit-protocol-v1.md"
     },
     {
@@ -83,7 +95,9 @@
       "summaryPath": "plans/active/ASB-2026-09-fm-asb-observation-adapter.md",
       "status": "active",
       "priority": "high",
-      "dependencies": ["ASB-2026-09-FM-ASB-PROMPTKIT-PROTOCOL-V1"],
+      "dependencies": [
+        "ASB-2026-09-FM-ASB-PROMPTKIT-PROTOCOL-V1"
+      ],
       "architectureDecision": "docs/architecture/fm-asb-promptkit-protocol-v1.md"
     },
     {
@@ -100,7 +114,9 @@
       "summaryPath": "plans/active/ASB-2026-09-user-tutorial-path-ranking.md",
       "status": "active",
       "priority": "high",
-      "dependencies": ["ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS"],
+      "dependencies": [
+        "ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS"
+      ],
       "architectureDecision": "docs/architecture/asb-firstmate-runtime-boundary.md"
     },
     {
@@ -125,7 +141,9 @@
       "summaryPath": "plans/active/ASB-2026-09-post-ppp-remaining-sprints.md",
       "status": "active",
       "priority": "high",
-      "dependencies": ["ASB-2026-09-PRODUCT-PASS-POSTURE"]
+      "dependencies": [
+        "ASB-2026-09-PRODUCT-PASS-POSTURE"
+      ]
     },
     {
       "planId": "ASB-2026-09-STALE-PR-TRIAGE-01",
@@ -133,7 +151,21 @@
       "summaryPath": "plans/active/ASB-2026-09-stale-pr-triage-01.md",
       "status": "active",
       "priority": "high",
-      "dependencies": ["ASB-2026-09-POST-PPP-REMAINING-SPRINTS"]
+      "dependencies": [
+        "ASB-2026-09-POST-PPP-REMAINING-SPRINTS"
+      ]
+    },
+    {
+      "planId": "ASB-2026-09-FM-ASB-ROUTING-REQUEST-BUILDER",
+      "path": "plans/active/ASB-2026-09-fm-asb-routing-request-builder.plan.json",
+      "summaryPath": "plans/active/ASB-2026-09-fm-asb-routing-request-builder.md",
+      "status": "active",
+      "priority": "high",
+      "dependencies": [
+        "ASB-2026-09-FM-ASB-OBSERVATION-ADAPTER",
+        "ASB-2026-09-FM-ASB-PROMPTKIT-PROTOCOL-V1"
+      ],
+      "architectureDecision": "docs/architecture/fm-asb-promptkit-protocol-v1.md"
     }
   ]
 }
