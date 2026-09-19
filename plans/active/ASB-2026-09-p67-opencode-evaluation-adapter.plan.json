@@ -89,7 +89,7 @@
     {
       "taskId": "ADP-01",
       "title": "Implement OpenCode capability and provider-readiness probe",
-      "status": "complete",
+      "status": "completed",
       "owner": "AgentSwitchboard provider-runtime lane",
       "dependencies": [],
       "inputs": [
