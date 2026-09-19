@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "contractId": "agentswitchboard.canonical-path-seam.v1",
+  "purpose": "Cross-harness seam that requires repository-backed actions to resolve canonical development/use/worktree/entrypoint roles and keep remote, checkout, use-path, and entrypoint proof states independent. Machine/profile-specific path resolution remains owned by the registered profile owner; P92 owns deep repair/audit.",
+  "authority": {
+    "p01SeamOwner": "tooling/harness/operational/canonical-path.contract.json",
+    "machineProfileOwner": "tooling/profiles/windows/harness/machine-profile/machine-profile.registry.json",
+    "machineProfileResolver": "tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1",
+    "deepRepairOwner": "P92 Canonical Path Prompt"
+  },
+  "defaultPolicy": {
+    "required": true,
+    "requiredBefore": [
+      "local repository mutation",
+      "local validator, build, generator, launcher, updater, or deployment-helper invocation",
+      "local artifact generation whose correctness depends on repository state",
+      "operator handoff that tells a workstation to run a repository-owned command"
+    ],
+    "exemptions": [
+      {
+        "id": "provider-only-remote-read",
+        "condition": "The action reads remote/provider metadata only and makes no claim about a local checkout, production/use path, or operator entrypoint.",
+        "mustRecord": "canonical path proof is not applicable to this action because no local repository-backed action occurs"
+      },
+      {
+        "id": "static-source-inspection",
+        "condition": "The action only inspects already-addressed source evidence and performs no local invocation or local-adoption claim.",
+        "mustRecord": "canonical path proof deferred until the first local repository-backed action"
+      }
+    ]
+  },
+  "requiredRoles": [
+    {"role": "developmentCheckout", "meaning": "The one mutable canonical checkout used for normal development for the selected machine/profile.", "notApplicableAllowed": false},
+    {"role": "productionUsePath", "meaning": "The path from which the application or repository-owned operator commands are actually used/served/installed for the selected machine/profile.", "notApplicableAllowed": true},
+    {"role": "temporaryWorktreeRoot", "meaning": "The approved root for isolated parallel/proof worktrees; not a second mutable canonical clone.", "notApplicableAllowed": true},
+    {"role": "realOperatorEntrypoint", "meaning": "The actual launcher/command surfaced to the operator for the requested action.", "notApplicableAllowed": true}
+  ],
+  "currentBindings": {
+    "windowsTechnicianProfile": {
+      "profileOwner": "tooling/profiles/windows/harness/machine-profile/machine-profile.registry.json",
+      "stableDefaultDevelopmentCheckout": "%USERPROFILE%\\dev\\AgentSwitchBoard-Live",
+      "productionUsePath": "%USERPROFILE%\\dev\\AgentSwitchBoard-Live",
+      "temporaryWorktreeRoot": "%LOCALAPPDATA%\\AgentSwitchboard\\worktrees",
+      "realOperatorEntrypoint": "Pull-And-Run-AgentSwitchboard.cmd",
+      "pathRelation": "same-path",
+      "bindingStatus": "seam-floor",
+      "deepRepairNote": "P92/PR #149 owns stronger Windows candidate classification, NONCANONICAL_PRESERVE behavior, emitted pathRoles, and launcher enforcement. P01 must not fork that owner."
+    }
+  },
+  "proofStates": [
+    {
+      "id": "remote-main-contains-sha",
+      "proof": "Refreshed provider/Git evidence shows the integration SHA is contained in the actual remote default branch.",
+      "doesNotImply": ["canonical-development-checkout-current", "production-use-path-current", "real-entrypoint-observes-it"]
+    },
+    {
+      "id": "canonical-development-checkout-current",
+      "proof": "The resolved canonical development checkout was inspected after refresh and contains the required integration/content floor.",
+      "doesNotImply": ["production-use-path-current", "real-entrypoint-observes-it"]
+    },
+    {
+      "id": "production-use-path-current",
+      "proof": "The resolved production/use path is the expected canonical path (or has an explicit N/A relation) and contains/uses the required integration floor.",
+      "doesNotImply": ["real-entrypoint-observes-it"]
+    },
+    {
+      "id": "real-entrypoint-observes-it",
+      "proof": "The resolved real operator entrypoint was actually invoked or observed against the current production/use path and produced the requested bounded receipt/result.",
+      "doesNotImply": ["higher runtime, provider, deployment, or user-visible acceptance"]
+    }
+  ],
+  "pathSprawl": {
+    "secondMutableCloneAllowed": false,
+    "noncanonicalExistingCheckoutDisposition": "PRESERVE_NOT_AUTHORITY",
+    "dirtyOrDivergedDisposition": "PRESERVE_AND_USE_APPROVED_ISOLATED_WORKTREE",
+    "parallelWriterDisposition": "ONE_WRITER_PER_BRANCH_OR_WORKTREE",
+    "destructiveCleanupAllowed": false,
+    "silentStashAllowed": false,
+    "modelChosenDirectoryAllowed": false
+  },
+  "consumerRequirement": "Every app/profile harness must resolve all four requiredRoles through its canonical profile/path owner or record a role-specific notApplicableReason. Launchers, updaters, worktree helpers, status reporters, and operator handoffs must consume that owner rather than inventing paths.",
+  "proofCeiling": "Repository contract and hosted/static seam proof only. It does not prove a particular physical workstation path, local fast-forward, installed/use path, or entrypoint execution until that proof state is observed there."
+}

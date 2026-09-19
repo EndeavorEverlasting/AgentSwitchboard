@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/harness/operational/schemas/canonical-path-proof.schema.json",
+  "title": "AgentSwitchboard canonical path proof receipt",
+  "type": "object",
+  "required": ["schemaVersion", "repository", "profileOwner", "roles", "proofStates", "nextAction", "proofCeiling"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "repository": {"type": "string", "minLength": 1},
+    "profileOwner": {"type": "string", "minLength": 1},
+    "roles": {
+      "type": "object",
+      "required": ["developmentCheckout", "productionUsePath", "temporaryWorktreeRoot", "realOperatorEntrypoint"],
+      "additionalProperties": false,
+      "properties": {
+        "developmentCheckout": {"$ref": "#/$defs/pathRole"},
+        "productionUsePath": {"$ref": "#/$defs/pathRole"},
+        "temporaryWorktreeRoot": {"$ref": "#/$defs/pathRole"},
+        "realOperatorEntrypoint": {"$ref": "#/$defs/pathRole"}
+      }
+    },
+    "proofStates": {
+      "type": "object",
+      "required": ["remote-main-contains-sha", "canonical-development-checkout-current", "production-use-path-current", "real-entrypoint-observes-it"],
+      "additionalProperties": false,
+      "properties": {
+        "remote-main-contains-sha": {"$ref": "#/$defs/proofState"},
+        "canonical-development-checkout-current": {"$ref": "#/$defs/proofState"},
+        "production-use-path-current": {"$ref": "#/$defs/proofState"},
+        "real-entrypoint-observes-it": {"$ref": "#/$defs/proofState"}
+      }
+    },
+    "nextAction": {
+      "type": "object",
+      "required": ["owner", "dependency", "command", "proof"],
+      "additionalProperties": false,
+      "properties": {
+        "owner": {"type": "string", "minLength": 1},
+        "dependency": {"type": "string", "minLength": 1},
+        "command": {"type": "string", "minLength": 1},
+        "proof": {"type": "string", "minLength": 1}
+      }
+    },
+    "proofCeiling": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "pathRole": {
+      "type": "object",
+      "required": ["status"],
+      "additionalProperties": false,
+      "properties": {
+        "status": {"enum": ["RESOLVED", "NOT_APPLICABLE", "UNPROVEN"]},
+        "value": {"type": ["string", "null"]},
+        "notApplicableReason": {"type": ["string", "null"]}
+      }
+    },
+    "proofState": {
+      "type": "object",
+      "required": ["status", "evidence"],
+      "additionalProperties": false,
+      "properties": {
+        "status": {"enum": ["PROVEN", "UNPROVEN", "NOT_APPLICABLE"]},
+        "evidence": {"type": "string"},
+        "observedSha": {"type": ["string", "null"]}
+      }
+    }
+  },
+  "additionalProperties": false
+}
