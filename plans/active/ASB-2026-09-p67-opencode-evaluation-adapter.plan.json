@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-18T19:35:00Z",
-  "updatedUtc": "2026-09-19T20:58:00Z",
+  "updatedUtc": "2026-09-19T21:28:00Z",
   "mission": "Build a concrete privacy-bounded OpenCode V2 external-agent adapter for P67 Gen2, with AgentSwitchboard owning provider execution/evidence transport and Triage P67 retaining scientific grading authority.",
   "owner": {
     "surface": "P67 external-agent evaluation adapter",
@@ -126,7 +126,7 @@
     {
       "taskId": "ADP-02",
       "title": "Build canonical OpenCode P67 adapter",
-      "status": "pending",
+      "status": "completed",
       "owner": "AgentSwitchboard provider-runtime lane",
       "dependencies": [
         "ADP-00",
@@ -149,7 +149,21 @@
         "workspace/process/time bounds are enforced",
         "one machine-local config holds pair identity constant"
       ],
-      "evidence": []
+      "evidence": [
+        "tooling/evals/p67-opencode-adapter/New-P67AdapterConfig.ps1 - machine-local config generator; emits compute-authority-agent-adapter/v1 schema; names/paths/provider/model/limits only; never stores credential values",
+        "tooling/evals/p67-opencode-adapter/Invoke-P67OpenCodeAdapter.ps1 - canonical P67 argv target; accepts only workspace/task/prompt/result placeholders; enforces workspace/timeout/privacy bounds; emits compute-authority-provider-capture/v2 schema; fails closed on timeout/nonzero/missing; enforces CAPTURE_EVALUATIVE_REJECTED",
+        "tooling/evals/p67-opencode-adapter/ConvertTo-NeutralCapture.psm1 - neutral event normalizer PowerShell module; maps provider events to capture v2 allowed fields; rejects evaluative/privacy/credential fields; validates capture contract compliance",
+        "tests/test_p67_opencode_adapter.py - extended with 12 ADP-02 tests covering: component existence, config no-credential-values, invoke argv-only, invoke privacy-bounded, invoke fail-closed, invoke evaluative-rejected, normalizer structure, normalizer evaluative/privacy/credential rejection, capture v2 schema",
+        "scripts/Test-P67OpenCodeAdapter.ps1 - extended with ADP-02 contract tests for New-P67AdapterConfig.ps1, Invoke-P67OpenCodeAdapter.ps1, and ConvertTo-NeutralCapture.psm1",
+        "Python tests: 23 tests total (21 passed, 2 skipped due to pwsh unavailable in test environment); all ADP-02 tests passed",
+        "argv-only invocation: no shell composition (Invoke-Expression, iex forbidden)",
+        "privacy boundary: no raw_transcript, full_conversation, model_text persistence",
+        "fail-closed: timeout/nonzero/missing-result return INVALID status with exit 1",
+        "evaluative rejection: CAPTURE_EVALUATIVE_REJECTED enforced for useful, first_green, after_fixed_point, correct, effectiveness",
+        "credential safety: no api_key, token, secret, password, credential values in tracked files or config output",
+        "capture contract v2: compute-authority-provider-capture/v2 schema; neutral structural telemetry only",
+        "proof ceiling: IMPLEMENTATION + STATIC/SYNTHETIC VALIDATION (ADP-02 complete); live OpenCode smoke (ADP-04) and effectiveness remain unproven"
+      ]
     },
     {
       "taskId": "ADP-03",

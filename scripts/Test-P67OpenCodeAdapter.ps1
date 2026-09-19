@@ -189,8 +189,70 @@ foreach ($evaluative in @('useful','first_green','after_fixed_point','correct','
     Add-Result ($contractJson -notmatch $evaluative) "contract/no-evaluative/$evaluative" "contract should not contain evaluative field: $evaluative"
 }
 
-Write-Host "`nP67 OpenCode Adapter (ADP-01) Contract Tests" -ForegroundColor Cyan
-Write-Host "=============================================" -ForegroundColor Cyan
+$newConfigScript = Join-Path $adapterDir 'New-P67AdapterConfig.ps1'
+$invokeScript = Join-Path $adapterDir 'Invoke-P67OpenCodeAdapter.ps1'
+$normalizerModule = Join-Path $adapterDir 'ConvertTo-NeutralCapture.psm1'
+
+Add-Result (Test-Path -LiteralPath $newConfigScript -PathType Leaf) 'adp02/new-config-exists' 'New-P67AdapterConfig.ps1 missing'
+Add-Result (Test-Path -LiteralPath $invokeScript -PathType Leaf) 'adp02/invoke-exists' 'Invoke-P67OpenCodeAdapter.ps1 missing'
+Add-Result (Test-Path -LiteralPath $normalizerModule -PathType Leaf) 'adp02/normalizer-exists' 'ConvertTo-NeutralCapture.psm1 missing'
+
+if (Test-Path -LiteralPath $newConfigScript -PathType Leaf) {
+    $configContent = Get-Content -LiteralPath $newConfigScript -Raw
+
+    Add-Result ($configContent -match 'ADP-02') 'adp02/new-config/adp-marker' 'config script does not reference ADP-02'
+    Add-Result ($configContent -match 'compute-authority-agent-adapter/v1') 'adp02/new-config/schema' 'config script does not reference correct schema'
+    Add-Result ($configContent -match 'Invoke-P67OpenCodeAdapter\.ps1') 'adp02/new-config/invoke-ref' 'config script does not reference Invoke script'
+    Add-Result ($configContent -notmatch 'api[_-]?key.*[:=]\s*[a-zA-Z0-9]{10,}') 'adp02/new-config/no-credential-values' 'config script may contain credential values'
+}
+
+if (Test-Path -LiteralPath $invokeScript -PathType Leaf) {
+    $invokeContent = Get-Content -LiteralPath $invokeScript -Raw
+
+    Add-Result ($invokeContent -match 'ADP-02') 'adp02/invoke/adp-marker' 'invoke script does not reference ADP-02'
+    Add-Result ($invokeContent -match '\[Parameter\(Mandatory\)\]') 'adp02/invoke/mandatory-params' 'invoke script missing mandatory parameters'
+    Add-Result ($invokeContent -match '\$Workspace') 'adp02/invoke/workspace-param' 'invoke script missing Workspace parameter'
+    Add-Result ($invokeContent -match '\$Task') 'adp02/invoke/task-param' 'invoke script missing Task parameter'
+    Add-Result ($invokeContent -match '\$Prompt') 'adp02/invoke/prompt-param' 'invoke script missing Prompt parameter'
+    Add-Result ($invokeContent -match '\$Result') 'adp02/invoke/result-param' 'invoke script missing Result parameter'
+
+    Add-Result ($invokeContent -notmatch 'Invoke-Expression|iex') 'adp02/invoke/no-shell-composition' 'invoke script contains shell composition'
+
+    Add-Result ($invokeContent -match 'INVALID') 'adp02/invoke/invalid-status' 'invoke script does not emit INVALID status'
+    Add-Result ($invokeContent -match 'timeout') 'adp02/invoke/timeout-handling' 'invoke script does not handle timeouts'
+    Add-Result ($invokeContent -match 'CAPTURE_EVALUATIVE_REJECTED') 'adp02/invoke/evaluative-check' 'invoke script does not check for evaluative fields'
+
+    Add-Result ($invokeContent -match 'compute-authority-provider-capture/v2') 'adp02/invoke/capture-schema' 'invoke script does not reference capture contract v2'
+
+    Add-Result ($invokeContent -notmatch 'raw_transcript|full_conversation|model_text.*Set-Content') 'adp02/invoke/no-raw-persistence' 'invoke script may persist raw provider output'
+}
+
+if (Test-Path -LiteralPath $normalizerModule -PathType Leaf) {
+    $normalizerContent = Get-Content -LiteralPath $normalizerModule -Raw
+
+    Add-Result ($normalizerContent -match 'ADP-02') 'adp02/normalizer/adp-marker' 'normalizer does not reference ADP-02'
+    Add-Result ($normalizerContent -match 'CAPTURE_EVALUATIVE_REJECTED') 'adp02/normalizer/evaluative-rule' 'normalizer does not reference evaluative rejection rule'
+
+    Add-Result ($normalizerContent -match 'Test-CaptureFieldAllowed') 'adp02/normalizer/field-allowed-func' 'normalizer missing Test-CaptureFieldAllowed'
+    Add-Result ($normalizerContent -match 'Test-CaptureObjectValid') 'adp02/normalizer/object-valid-func' 'normalizer missing Test-CaptureObjectValid'
+
+    Add-Result ($normalizerContent -match 'ForbiddenEvaluativeFields') 'adp02/normalizer/evaluative-list' 'normalizer missing evaluative fields list'
+    Add-Result ($normalizerContent -match 'ForbiddenPrivacyFields') 'adp02/normalizer/privacy-list' 'normalizer missing privacy fields list'
+    Add-Result ($normalizerContent -match 'ForbiddenCredentialFields') 'adp02/normalizer/credential-list' 'normalizer missing credential fields list'
+
+    foreach ($evaluative in @('useful','first_green','after_fixed_point','correct','effectiveness')) {
+        Add-Result ($normalizerContent -match $evaluative) "adp02/normalizer/evaluative/$evaluative" "normalizer missing evaluative field: $evaluative"
+    }
+
+    foreach ($privacy in @('raw_prompt','raw_response','transcript','full_conversation')) {
+        Add-Result ($normalizerContent -match $privacy) "adp02/normalizer/privacy/$privacy" "normalizer missing privacy field: $privacy"
+    }
+
+    Add-Result ($normalizerContent -match 'compute-authority-provider-capture/v2') 'adp02/normalizer/capture-schema' 'normalizer does not reference capture contract v2'
+}
+
+Write-Host "`nP67 OpenCode Adapter (ADP-01 + ADP-02) Contract Tests" -ForegroundColor Cyan
+Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host "Passes: $($passes.Count)" -ForegroundColor Green
 if ($failures.Count -gt 0) {
     Write-Host "Failures: $($failures.Count)" -ForegroundColor Red
