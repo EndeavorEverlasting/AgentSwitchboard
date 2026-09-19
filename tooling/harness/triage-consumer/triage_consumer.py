@@ -171,7 +171,7 @@ class AutonomyGap:
 class TriageConsumer:
     """
     AgentSwitchboard consumer for Triage manifests and panels.
-    
+
     Policy enforcement:
     - human_scheduler_allowed: false
     - panel_ingest_required: true
@@ -182,10 +182,10 @@ class TriageConsumer:
         """Initialize consumer with policy."""
         if policy_path is None:
             policy_path = Path(__file__).parent / "consumer.policy.json"
-        
+
         with open(policy_path, 'r') as f:
             self.policy = json.load(f)
-        
+
         # Enforce policy requirements
         assert not self.policy["policy"]["human_scheduler_allowed"], \
             "human_scheduler_allowed must be false"
@@ -197,53 +197,53 @@ class TriageConsumer:
     def ingest_manifest(self, manifest_path: Path) -> TriageManifest:
         """
         Ingest Triage prompt-parallel-dispatch manifest as first-class machine input.
-        
+
         Args:
             manifest_path: Path to manifest JSON file
-            
+
         Returns:
             Parsed TriageManifest
         """
         with open(manifest_path, 'r') as f:
             data = json.load(f)
-        
+
         return TriageManifest.from_dict(data)
 
     def ingest_panel(self, panel_path: Path) -> TriagePanel:
         """
         Ingest Triage panel/lane-prompt transport artifact as first-class machine input.
-        
+
         Args:
             panel_path: Path to panel JSON file
-            
+
         Returns:
             Parsed TriagePanel
         """
         with open(panel_path, 'r') as f:
             data = json.load(f)
-        
+
         return TriagePanel.from_dict(data)
 
     def classify_autonomy_gap(
-        self, 
+        self,
         manifest: Optional[TriageManifest] = None,
         panels: Optional[List[TriagePanel]] = None,
         lane_mappings: Optional[List[LaneMapping]] = None
     ) -> AutonomyGap:
         """
         Classify AUTONOMY_GAP when panels/manifests exist but no adapter executes lanes.
-        
+
         Args:
             manifest: Optional Triage manifest
             panels: Optional list of Triage panels
             lane_mappings: Optional list of lane mappings
-            
+
         Returns:
             AutonomyGap classification
         """
         manifest_present = manifest is not None
         panels_present = panels is not None and len(panels) > 0
-        
+
         if not manifest_present and not panels_present:
             return AutonomyGap(
                 gap_detected=False,
@@ -255,15 +255,15 @@ class TriageConsumer:
                 unmapped_lane_ids=[],
                 recommended_action="No manifest or panels to consume"
             )
-        
+
         # Count ready lanes (PLANNED status, no blocking dependencies)
         ready_lanes = []
         if manifest:
             ready_lanes = [
-                lane for lane in manifest.lanes 
+                lane for lane in manifest.lanes
                 if lane.status == "PLANNED" and not lane.dependencies
             ]
-        
+
         if not ready_lanes:
             return AutonomyGap(
                 gap_detected=False,
@@ -275,16 +275,16 @@ class TriageConsumer:
                 unmapped_lane_ids=[],
                 recommended_action="No dependency-ready PLANNED lanes to dispatch"
             )
-        
+
         # Check if lanes are mapped
         if lane_mappings is None:
             lane_mappings = []
-        
+
         unmapped_lanes = [
             lane.lane_id for lane in ready_lanes
             if not any(m.lane_id == lane.lane_id and m.execution_ready for m in lane_mappings)
         ]
-        
+
         if not unmapped_lanes:
             return AutonomyGap(
                 gap_detected=False,
@@ -296,7 +296,7 @@ class TriageConsumer:
                 unmapped_lane_ids=[],
                 recommended_action="All ready lanes mapped to ASB descriptors"
             )
-        
+
         # AUTONOMY_GAP detected
         return AutonomyGap(
             gap_detected=True,
@@ -312,12 +312,12 @@ class TriageConsumer:
     def map_lane_to_asb_descriptor(self, lane: TriageLane) -> LaneMapping:
         """
         Map Triage lane to ASB execution descriptor.
-        
+
         This is a structural mapping that does not require live launches.
-        
+
         Args:
             lane: Triage lane to map
-            
+
         Returns:
             LaneMapping to ASB descriptor
         """
@@ -332,7 +332,7 @@ class TriageConsumer:
                     execution_ready=True,
                     cloud_agent_prompt=lane.mission
                 )
-        
+
         # Check for argv launch mode with deterministic command
         if lane.launch.get("mode") == "argv":
             argv = lane.launch.get("argv", [])
@@ -357,7 +357,7 @@ class TriageConsumer:
                         execution_ready=True,
                         cloud_agent_prompt=lane.mission
                     )
-        
+
         # Default: unmapped
         return LaneMapping(
             lane_id=lane.lane_id,
@@ -375,15 +375,15 @@ class TriageConsumer:
     ) -> str:
         """
         Apply merge-gate classification from pr-merge-gate.v1.json.
-        
+
         degraded provider limits + local_proof => CONTINUE
         true blockers => BLOCKED
-        
+
         Args:
             required_checks: List of required checks with conclusion status
             local_proof_exists: Whether local proof exists for this exact head
             degradation_reason: Optional reason for degradation
-            
+
         Returns:
             Classification: "CONTINUE" or "BLOCKED"
         """
@@ -394,41 +394,41 @@ class TriageConsumer:
             "review_bot_usage_limit",
             "ci_provider_usage_limit"
         ]
-        
+
         # Check if any required checks are degraded
         degraded_checks = [
             check for check in required_checks
             if check.get("conclusion") in degraded_conclusions
         ]
-        
+
         if not degraded_checks:
             # No degraded checks, normal flow
             return "CONTINUE"
-        
+
         # Degraded checks found
         if not local_proof_exists:
             return "BLOCKED"
-        
+
         if degradation_reason not in allowed_degradation_reasons:
             return "BLOCKED"
-        
+
         # Degraded provider limits + local_proof => CONTINUE
         return "CONTINUE"
 
     def extract_first_unproven_gate(self, checkpoint: Dict[str, Any]) -> Optional[str]:
         """
         Extract first_unproven_gate from Triage checkpoint.
-        
+
         Args:
             checkpoint: Triage checkpoint.schema.v1 structure
-            
+
         Returns:
             First unproven gate or None
         """
         threads = checkpoint.get("threads", [])
         if not threads:
             return None
-        
+
         # Get first thread's first_unproven_gate
         first_thread = threads[0]
         return first_thread.get("first_unproven_gate")
@@ -437,33 +437,33 @@ class TriageConsumer:
 def main():
     """CLI entrypoint for testing."""
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Triage→ASB consumer")
     parser.add_argument("--manifest", type=Path, help="Path to Triage manifest")
     parser.add_argument("--panel", type=Path, help="Path to Triage panel")
     parser.add_argument("--checkpoint", type=Path, help="Path to Triage checkpoint")
-    parser.add_argument("--classify-gap", action="store_true", 
+    parser.add_argument("--classify-gap", action="store_true",
                        help="Classify AUTONOMY_GAP")
-    
+
     args = parser.parse_args()
-    
+
     consumer = TriageConsumer()
-    
+
     if args.manifest:
         manifest = consumer.ingest_manifest(args.manifest)
         print(f"Ingested manifest: run_id={manifest.run_id}, "
               f"lanes={len(manifest.lanes)}")
-        
+
         if args.classify_gap:
             gap = consumer.classify_autonomy_gap(manifest=manifest)
             print(f"AUTONOMY_GAP: detected={gap.gap_detected}, "
                   f"reason={gap.gap_reason.value}")
-    
+
     if args.panel:
         panel = consumer.ingest_panel(args.panel)
         print(f"Ingested panel: panel_id={panel.panel_id}, "
               f"lane_id={panel.lane_id}")
-    
+
     if args.checkpoint:
         with open(args.checkpoint, 'r') as f:
             checkpoint = json.load(f)
