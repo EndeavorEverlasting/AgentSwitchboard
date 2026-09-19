@@ -382,5 +382,181 @@ class P67OpenCodeAdapterADP02Tests(unittest.TestCase):
         self.assertIn("compute-authority-provider-capture/v2", normalizer_content)
 
 
+class P67OpenCodeAdapterADP03Tests(unittest.TestCase):
+    """ADP-03: Synthetic interoperability tests."""
+
+    def setUp(self) -> None:
+        self.adp03_fixtures_dir = FIXTURES_DIR / "adp03"
+
+    def test_adp03_fixtures_exist(self) -> None:
+        """Verify all ADP-03 synthetic fixtures are present."""
+        required_fixtures = [
+            "synthetic-01-happy-path-valid.json",
+            "synthetic-02-validation-nonzero.json",
+            "synthetic-03-timeout-fail-closed.json",
+            "synthetic-04-missing-result-fail-closed.json",
+            "synthetic-05-parallel-subagent-lane.json",
+            "synthetic-06-privacy-rejected.json",
+            "synthetic-07-evaluative-rejected.json",
+            "synthetic-08-invalid-workspace.json",
+        ]
+        for fixture in required_fixtures:
+            fixture_path = self.adp03_fixtures_dir / fixture
+            self.assertTrue(fixture_path.exists(), f"Missing ADP-03 fixture: {fixture}")
+
+    def test_adp03_fixture_01_happy_path_valid(self) -> None:
+        """Verify happy path fixture produces VALID capture v2."""
+        fixture = load_json(self.adp03_fixtures_dir / "synthetic-01-happy-path-valid.json")
+
+        self.assertEqual(fixture["schema_version"], "compute-authority-provider-capture/v2")
+        self.assertEqual(fixture["run_status"], "VALID")
+        self.assertIn("provider_identity", fixture)
+        self.assertIn("task_id", fixture)
+        self.assertIn("execution_summary", fixture)
+        self.assertIn("workspace_state", fixture)
+        self.assertIn("validation_result", fixture)
+
+        self.assertTrue(fixture["validation_result"]["validation_passed"])
+
+    def test_adp03_fixture_02_validation_nonzero(self) -> None:
+        """Verify validation nonzero fixture handles test failure correctly."""
+        fixture = load_json(self.adp03_fixtures_dir / "synthetic-02-validation-nonzero.json")
+
+        self.assertEqual(fixture["schema_version"], "compute-authority-provider-capture/v2")
+        self.assertEqual(fixture["run_status"], "VALID")
+        self.assertFalse(fixture["validation_result"]["validation_passed"])
+        self.assertEqual(fixture["validation_result"]["validation_exit_code"], 1)
+
+    def test_adp03_fixture_03_timeout_fail_closed(self) -> None:
+        """Verify timeout fixture produces INVALID with EXECUTION_TIMEOUT."""
+        fixture = load_json(self.adp03_fixtures_dir / "synthetic-03-timeout-fail-closed.json")
+
+        self.assertEqual(fixture["schema_version"], "compute-authority-provider-capture/v2")
+        self.assertEqual(fixture["run_status"], "INVALID")
+        self.assertEqual(fixture["invalid_reason"]["code"], "EXECUTION_TIMEOUT")
+        self.assertIn("timeout", fixture["invalid_reason"]["message"].lower())
+
+    def test_adp03_fixture_04_missing_result_fail_closed(self) -> None:
+        """Verify missing result fixture produces INVALID with fail-closed code."""
+        fixture = load_json(self.adp03_fixtures_dir / "synthetic-04-missing-result-fail-closed.json")
+
+        self.assertEqual(fixture["schema_version"], "compute-authority-provider-capture/v2")
+        self.assertEqual(fixture["run_status"], "INVALID")
+        self.assertIn(fixture["invalid_reason"]["code"], ["RUNTIME_UNAVAILABLE", "ADAPTER_ERROR"])
+
+    def test_adp03_fixture_05_parallel_subagent_lane(self) -> None:
+        """Verify parallel/subagent synthetic fixture captures multi-lane execution."""
+        fixture = load_json(self.adp03_fixtures_dir / "synthetic-05-parallel-subagent-lane.json")
+
+        self.assertEqual(fixture["schema_version"], "compute-authority-provider-capture/v2")
+        self.assertEqual(fixture["run_status"], "VALID")
+        self.assertIn("neutral_telemetry", fixture)
+        self.assertGreater(fixture["neutral_telemetry"]["provider_actions_count"], 1)
+
+    def test_adp03_fixture_06_privacy_rejected(self) -> None:
+        """Verify privacy rejection fixture contains no actual privacy violations."""
+        fixture = load_json(self.adp03_fixtures_dir / "synthetic-06-privacy-rejected.json")
+
+        self.assertEqual(fixture["schema_version"], "compute-authority-provider-capture/v2")
+        self.assertEqual(fixture["run_status"], "INVALID")
+        self.assertIn("PRIVACY", fixture["invalid_reason"]["code"])
+
+        fixture_text = json.dumps(fixture)
+        forbidden_privacy_fields = ["raw_prompt", "raw_response", "transcript", "full_conversation", "chat_history"]
+        for field in forbidden_privacy_fields:
+            pattern = f'"{field}":\\s*[^"]'
+            self.assertNotRegex(fixture_text, pattern,
+                              f"Privacy rejection fixture must not contain actual {field} field outside marker")
+
+    def test_adp03_fixture_07_evaluative_rejected(self) -> None:
+        """Verify evaluative rejection fixture contains no actual evaluative judgments."""
+        fixture = load_json(self.adp03_fixtures_dir / "synthetic-07-evaluative-rejected.json")
+
+        self.assertEqual(fixture["schema_version"], "compute-authority-provider-capture/v2")
+        self.assertEqual(fixture["run_status"], "INVALID")
+        self.assertEqual(fixture["invalid_reason"]["code"], "CAPTURE_EVALUATIVE_REJECTED")
+
+        fixture_text = json.dumps(fixture)
+        forbidden_evaluative_fields = ["useful", "first_green", "after_fixed_point", "correct", "effectiveness"]
+        for field in forbidden_evaluative_fields:
+            if field in fixture["invalid_reason"].get("FORBIDDEN_FIELD_EXAMPLE", ""):
+                continue
+            pattern = f'"{field}":\\s*(true|false|[0-9])'
+            self.assertNotRegex(fixture_text, pattern,
+                              f"Evaluative rejection fixture must not contain actual {field} field outside marker")
+
+    def test_adp03_fixture_08_invalid_workspace(self) -> None:
+        """Verify invalid workspace fixture fails closed with WORKSPACE_INVALID."""
+        fixture = load_json(self.adp03_fixtures_dir / "synthetic-08-invalid-workspace.json")
+
+        self.assertEqual(fixture["schema_version"], "compute-authority-provider-capture/v2")
+        self.assertEqual(fixture["run_status"], "INVALID")
+        self.assertEqual(fixture["invalid_reason"]["code"], "WORKSPACE_INVALID")
+        self.assertIn("workspace", fixture["invalid_reason"]["message"].lower())
+
+    def test_adp03_all_fixtures_have_no_live_opencode(self) -> None:
+        """Verify ADP-03 fixtures are synthetic only (no live OpenCode execution)."""
+        fixtures = [
+            "synthetic-01-happy-path-valid.json",
+            "synthetic-02-validation-nonzero.json",
+            "synthetic-03-timeout-fail-closed.json",
+            "synthetic-04-missing-result-fail-closed.json",
+            "synthetic-05-parallel-subagent-lane.json",
+            "synthetic-06-privacy-rejected.json",
+            "synthetic-07-evaluative-rejected.json",
+            "synthetic-08-invalid-workspace.json",
+        ]
+
+        for fixture_name in fixtures:
+            fixture = load_json(self.adp03_fixtures_dir / fixture_name)
+            self.assertIn("synthetic", fixture.get("task_id", "").lower(),
+                        f"Fixture {fixture_name} must have synthetic marker in task_id")
+
+    def test_adp03_synthetic_interop_runner_exists(self) -> None:
+        """Verify ADP-03 synthetic interoperability runner script exists."""
+        runner_script = ROOT / "scripts" / "Invoke-P67OpenCodeAdapterSyntheticInterop.ps1"
+        self.assertTrue(runner_script.exists(), "ADP-03 runner script missing")
+
+        content = runner_script.read_text(encoding="utf-8")
+        self.assertIn("ADP-03", content)
+        self.assertIn("synthetic interoperability", content.lower())
+        self.assertIn("no live OpenCode", content.lower())
+
+    def test_adp03_runner_produces_receipt(self) -> None:
+        """Verify ADP-03 runner can produce a machine-readable receipt."""
+        import shutil
+
+        if not shutil.which("pwsh"):
+            self.skipTest("PowerShell (pwsh) not available")
+
+        runner_script = ROOT / "scripts" / "Invoke-P67OpenCodeAdapterSyntheticInterop.ps1"
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            output_path = f.name
+
+        try:
+            result = subprocess.run(
+                ["pwsh", "-NoLogo", "-NoProfile", "-File", str(runner_script), "-OutputPath", output_path],
+                capture_output=True,
+                text=True
+            )
+
+            self.assertTrue(Path(output_path).exists(), "Receipt file not created")
+
+            receipt = load_json(Path(output_path))
+            self.assertIn("schema_version", receipt)
+            self.assertIn("test_run_summary", receipt)
+            self.assertIn("adp03_paths_covered", receipt)
+            self.assertEqual(receipt["proof_level"], "SYNTHETIC_INTEROPERABILITY")
+
+            paths_covered = receipt["adp03_paths_covered"]
+            self.assertIn("happy_path_valid_capture_v2", paths_covered)
+            self.assertIn("timeout_fail_closed", paths_covered)
+            self.assertIn("privacy_rejection", paths_covered)
+            self.assertIn("evaluative_rejection", paths_covered)
+
+        finally:
+            Path(output_path).unlink(missing_ok=True)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,21 @@
+{
+  "schema_version": "compute-authority-provider-capture/v2",
+  "run_status": "INVALID",
+  "invalid_reason": {
+    "code": "CAPTURE_EVALUATIVE_REJECTED",
+    "message": "Adapter attempted to emit forbidden evaluative field: correct",
+    "FORBIDDEN_FIELD_EXAMPLE": "correct"
+  },
+  "provider_identity": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4",
+    "agent": "opencode-v2-synthetic",
+    "adapter_version": "asb-p67-opencode-adp-02/v1"
+  },
+  "task_id": "TC07-SYNTHETIC",
+  "execution_summary": {
+    "started_utc": "2026-09-19T20:00:00.000Z",
+    "ended_utc": "2026-09-19T20:00:20.000Z",
+    "elapsed_seconds": 20.0
+  }
+}

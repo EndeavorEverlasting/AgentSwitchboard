@@ -1,0 +1,27 @@
+{
+  "schema_version": "compute-authority-provider-capture/v2",
+  "run_status": "VALID",
+  "provider_identity": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4",
+    "agent": "opencode-v2-synthetic",
+    "adapter_version": "asb-p67-opencode-adp-02/v1"
+  },
+  "task_id": "TC02-SYNTHETIC",
+  "execution_summary": {
+    "started_utc": "2026-09-19T20:00:00.000Z",
+    "ended_utc": "2026-09-19T20:02:00.000Z",
+    "elapsed_seconds": 120.0,
+    "exit_code": 0
+  },
+  "workspace_state": "MODIFIED",
+  "validation_result": {
+    "validation_passed": false,
+    "validation_command": "python -m pytest",
+    "validation_exit_code": 1
+  },
+  "neutral_telemetry": {
+    "provider_actions_count": 5,
+    "subprocess_spawned": false
+  }
+}

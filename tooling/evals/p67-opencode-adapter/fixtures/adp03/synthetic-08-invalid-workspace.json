@@ -1,0 +1,20 @@
+{
+  "schema_version": "compute-authority-provider-capture/v2",
+  "run_status": "INVALID",
+  "invalid_reason": {
+    "code": "WORKSPACE_INVALID",
+    "message": "Workspace is not a git repository"
+  },
+  "provider_identity": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4",
+    "agent": "opencode-v2-synthetic",
+    "adapter_version": "asb-p67-opencode-adp-02/v1"
+  },
+  "task_id": "TC08-SYNTHETIC",
+  "execution_summary": {
+    "started_utc": "2026-09-19T20:00:00.000Z",
+    "ended_utc": "2026-09-19T20:00:01.000Z",
+    "elapsed_seconds": 1.0
+  }
+}

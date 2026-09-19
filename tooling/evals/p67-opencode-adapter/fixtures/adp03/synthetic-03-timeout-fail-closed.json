@@ -1,0 +1,20 @@
+{
+  "schema_version": "compute-authority-provider-capture/v2",
+  "run_status": "INVALID",
+  "invalid_reason": {
+    "code": "EXECUTION_TIMEOUT",
+    "message": "OpenCode execution exceeded timeout of 600s"
+  },
+  "provider_identity": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4",
+    "agent": "opencode-v2-synthetic",
+    "adapter_version": "asb-p67-opencode-adp-02/v1"
+  },
+  "task_id": "TC03-SYNTHETIC",
+  "execution_summary": {
+    "started_utc": "2026-09-19T20:00:00.000Z",
+    "ended_utc": "2026-09-19T20:10:00.000Z",
+    "elapsed_seconds": 600.0
+  }
+}
