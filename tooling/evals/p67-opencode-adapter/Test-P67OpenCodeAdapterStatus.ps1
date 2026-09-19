@@ -115,6 +115,20 @@ try {
                 -Name 'has-capabilities' `
                 -FailureMessage 'JSON object missing capabilities_verified property'
 
+            if ($statusValue -eq 'BLOCKED' -and $null -ne $statusObject.blocker) {
+                $blockerCode = $statusObject.blocker.code
+                $blockerMessage = $statusObject.blocker.message
+
+                $notCountError = -not ($blockerCode -eq 'CAPABILITY_PROBE_ERROR' -and $blockerMessage -match "property 'Count' cannot be found")
+                Add-Result -Passed $notCountError `
+                    -Name 'no-strictmode-count-error' `
+                    -FailureMessage "REGRESSION: StrictMode .Count error detected: $blockerMessage"
+            } else {
+                Add-Result -Passed $true `
+                    -Name 'no-strictmode-count-error' `
+                    -FailureMessage ''
+            }
+
         } catch {
             Add-Result -Passed $false `
                 -Name 'output-is-valid-json' `
