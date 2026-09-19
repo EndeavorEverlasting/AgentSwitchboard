@@ -18,9 +18,7 @@
     "branch": "chore/fm-asb-observation-live-proof-cite-20260914",
     "pullRequest": null,
     "baseRef": "main",
-    "commitRequired": true,
-    "implementationMerge": "5187195382584787bf30c7043660d74327549cd7",
-    "implementationPr": 204
+    "commitRequired": true
   },
   "wave": "FirstMate↔ASB↔PromptKit boundary",
   "lane": "observation adapter + live proof",
