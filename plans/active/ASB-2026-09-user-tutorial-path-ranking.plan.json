@@ -19,10 +19,12 @@
     "pullRequest": {
       "number": 294,
       "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/294",
-      "state": "merged"
+      "state": "merged",
+      "mergeCommit": "fd9ace5ab10644b887a41b48e6ac7183e3ed1257"
     },
     "baseRef": "main",
-    "commitRequired": true
+    "commitRequired": true,
+    "integratedAt": "2026-09-15T16:54:36Z"
   },
   "wave": "post-FirstMate operator clarity",
   "lane": "user-tutorial-ranking",
@@ -91,9 +93,7 @@
       "title": "P18 Day-0 technician bootstrap to Ready",
       "status": "ready",
       "owner": "P18 tutorial writer",
-      "dependencies": [
-        "TUT-RANK-01"
-      ],
+      "dependencies": ["TUT-RANK-01"],
       "inputs": [
         "AgentSwitchboard-Technician-Bootstrap.cmd",
         "Pull-And-Run-AgentSwitchboard.cmd",
@@ -120,9 +120,7 @@
       "title": "P18 startup readiness to OpenCode click sprint",
       "status": "ready",
       "owner": "P18 tutorial writer",
-      "dependencies": [
-        "TUT-01"
-      ],
+      "dependencies": ["TUT-01"],
       "inputs": [
         "AgentSwitchboard.cmd",
         "Start-AgentSwitchboard-OpenCode.cmd",
@@ -147,9 +145,7 @@
       "title": "P18 technician live-cert click path",
       "status": "ready",
       "owner": "P18 tutorial writer",
-      "dependencies": [
-        "TUT-01"
-      ],
+      "dependencies": ["TUT-01"],
       "inputs": [
         "Run-Technician-LiveCert.cmd",
         "Technician-LiveCert stage CMDs",
@@ -171,9 +167,7 @@
       "title": "P18 machine-profile anti-OneDrive path",
       "status": "ready",
       "owner": "P18 tutorial writer",
-      "dependencies": [
-        "TUT-01"
-      ],
+      "dependencies": ["TUT-01"],
       "inputs": [
         "Get-AgentSwitchboard-MachineProfile.cmd",
         "Bootstrap-AgentSwitchboard-In-Directory.cmd",
@@ -192,11 +186,9 @@
     {
       "taskId": "TUT-PRE-01",
       "title": "P07 prerequisite encode GNHF NARROW ownership",
-      "status": "completed",
+      "status": "done",
       "owner": "P07 ASQ-016 lane",
-      "dependencies": [
-        "TUT-RANK-01"
-      ],
+      "dependencies": ["TUT-RANK-01"],
       "inputs": [
         "docs/architecture/asb-firstmate-runtime-boundary.md",
         "tooling/gnhf/README.md",
@@ -221,9 +213,7 @@
       "title": "P07 prerequisite strip stale ASB child-bus teaching from Pi docs",
       "status": "ready",
       "owner": "P07 docs repair lane",
-      "dependencies": [
-        "TUT-RANK-01"
-      ],
+      "dependencies": ["TUT-RANK-01"],
       "inputs": [
         "docs/harness/pi-system-bootstrap-and-child-agents.md",
         "docs/architecture/asb-firstmate-runtime-boundary.md"
@@ -242,9 +232,7 @@
       "title": "P08 deferred FirstMate Windows to WSL floor tutorial",
       "status": "blocked",
       "owner": "P08 after ASQ-017",
-      "dependencies": [
-        "TUT-PRE-01"
-      ],
+      "dependencies": ["TUT-PRE-01"],
       "inputs": [
         "docs/harness/firstmate-wsl-physical-floor-runbook.md",
         "Invoke-Asq017AdminBoxLiveFloor.ps1",

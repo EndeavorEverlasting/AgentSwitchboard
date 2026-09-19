@@ -1,80 +1,78 @@
 # September agent bootstrap and child bus program
 
-**Plan:** `ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS` — `EndeavorEverlasting/AgentSwitchboard` — `active` `high` `wave 0 — coordination floor`
+**Plan:** `ASB-2026-09-AGENT-BOOTSTRAP-CHILD-BUS` — `EndeavorEverlasting/AgentSwitchboard` — `active` `high` `wave 1 — FirstMate runtime boundary`
 
 ## Mission
 
-Replace chat-only coordination with one repository-owned program for reversible system bootstrap lifecycle (`Inspect / Apply / Remove`), provider-neutral child execution, fresh-TUI LSP runtime certification, heterogeneous/nested delegation, and stale-owner convergence. Public coordination must not carry workstation-specific paths or runtime evidence.
+Replace chat-only coordination with one repository-owned September program. After the accepted architecture decision `ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME`, the program **narrows**: AgentSwitchboard owns reversible system bootstrap, provider/environment readiness, policy, validation, evidence, and public planning; **FirstMate is the canonical live crew runtime**. The child-agent-bus spine remains as a narrowed interop/policy envelope. Pi/OpenCode ASB child-bus adapters, heterogeneous ASB fan-out, and ASB nested delegation are **frozen**. Fresh-TUI LSP certification, Pi bootstrap registry truth, FirstMate interop refresh, GNHF narrowing, and PR/path convergence continue.
 
-## Current provider floor
+## Canonical architecture decision
 
-The original coordination floor was integrated at `38fd434ed7496413a33e1143d9cbb381849d81de`. Current provider truth is `main@85ecf77bd1eb94d296ce015aee72dd783dd63b53`.
+Durable decision: [`docs/architecture/asb-firstmate-runtime-boundary.md`](../../docs/architecture/asb-firstmate-runtime-boundary.md)
 
-Important movement since the original floor:
+**Accepted thesis:** FirstMate (`kunchenguid/firstmate@b182d0f`) owns live crew execution (decomposition, worktrees, spawn, supervision, interrupt/exit/relaunch, delivery postures). AgentSwitchboard does not expand a second crew control plane.
 
-- reversible system-bootstrap lifecycle remains beneath current `main` via `81461e7`;
-- PR #149 path authority is merged via `3b47a9129730bc8fc3c988f8cbc6ec2fbfa515d8`;
-- PR #151 Pi bootstrap/private child seam is merged via `1f20499d5771456c9ce88da67eced345899928fa`;
-- provider-neutral child bus v1 is now merged via `85ecf77bd1eb94d296ce015aee72dd783dd63b53`;
-- PR #115 remains open and stale pending containment proof;
-- current lifecycle adapter registry still contains only OpenCode, so Pi `Inspect/Apply/Remove` parity remains work;
-- OpenCode child-adapter parity is now unblocked by the shared-bus merge;
-- OpenCode Python LSP still requires the fresh-TUI runtime observation; headless failure is not promoted to a harness failure.
+## Provider floor
 
-## Waves and dependencies
+- AgentSwitchboard: `main@e76ba4becbb5361afbb0596727d7bb326bd6b689` (Pi lifecycle + child-bus spine marked integrated; adapter registry empty).
+- FirstMate upstream: `main@b182d0f908b78d08c7ccb8dce3775bdca8c5d657`.
+- FirstMate ASB interop: open PR #96 on stale base/`833a9a25…` pin — must refresh (ASQ-015), not treat as current `main` truth.
 
-```text
-Panel 01 coordination floor / reconciliation
-  ├─ Panel 02 fresh-TUI LSP runtime certification
-  ├─ Panel 03 Pi lifecycle parity
-  └─ Panel 04 shared child bus spine — DONE at 85ecf77
-       ├─ Panel 05 Pi adapter (still waits for Panel 03)
-       └─ Panel 06 OpenCode adapter — READY
-            └─ Panel 07 heterogeneous read-only pilot (needs 05+06 + physical runtime)
-                 └─ Panel 08 mediated nested delegation v1
-                      └─ Panel 09 nested runtime certification
-                           └─ Panel 10 final convergence
+## Waves and dependencies (revised)
+
 ```
-
-The current independent actionable frontier is therefore **Panel 02 + Panel 03 + Panel 06**. Do not relaunch Panel 04.
+Panel 01 coordination floor — DONE
+  ├─ Panel 02 / ASQ-005 fresh-TUI LSP — PROCEED (parallel)
+  ├─ Panel 03 / ASQ-006 Pi bootstrap — DONE on main; registry truth reconcile separately
+  ├─ Panel 04 / ASQ-007 child-bus spine — DONE + NARROW (no adapter expansion)
+  ├─ ARCH ADR / ASQ-014 FirstMate boundary — DONE when this sync lands
+  ├─ ASQ-015 FirstMate interop refresh — PROCEED (depends on ADR)
+  ├─ ASQ-016 GNHF NARROW contract — PROCEED (depends on ADR)
+  └─ Panel 10 / ASQ-013 PR/path cleanup — PROCEED with narrowed deps (no longer waits on 05–09 live bus)
+Panels 05–09 / ASQ-008…012 — FREEZE (HAND-OFF crew runtime to FirstMate)
+```
 
 ## Collision ledger
 
-| Surface | Owner | Current disposition |
+| Surface | Owner | Disposition |
 |---|---|---|
-| `tooling/harness/system-bootstrap-lifecycle/**` | shared lifecycle owner; Panel 03 may add Pi adapter but must not redefine lifecycle semantics | keep |
-| `tooling/harness/child-agent-bus/**` | merged shared bus v1 owner at `85ecf77`; serialized adapter additions only | keep / consume |
-| `Pull-And-Run-AgentSwitchboard.cmd` / technician setup | Panel 03 only when Pi lifecycle parity genuinely requires dispatcher changes | serialize |
-| OpenCode LSP harness/docs | Panel 02 runtime evidence; no tracked edits without a reproducible defect | read-only/runtime |
-| merged PR #151 | current main contains Pi bootstrap plus Pi-private child seam | refactor bootstrap into lifecycle parity at 03; migrate private child seam behind shared bus at 05 |
-| merged PR #149 | canonical Windows checkout/path authority is active on main | preserve history; reconcile operator workflow only with evidence at 10 |
-| open PR #115 | stale OpenCode LSP owner candidate | compare with current main and close only after supersession proof at 10 |
+| `docs/architecture/asb-firstmate-runtime-boundary.md` | P95 architecture lane (this sync) | create / keep as ADR owner |
+| `tooling/harness/child-agent-bus/**` | NARROW owner; freeze adapter writers | keep spine; no Pi/OpenCode adapter expansion |
+| `tooling/gnhf/**` | GNHF NARROW owner (ASQ-016) | keep Windows bounded launchers; no crew-runtime expansion |
+| `tooling/harness/system-bootstrap-lifecycle/**` | bootstrap owner | keep; reconcile Pi registry drift without unfreezing child bus |
+| `tooling/firstmate/**` + FirstMate skill/docs (PR #96 lineage) | ASQ-015 interop lane | refresh pin to `b182d0f`; rebase onto current main |
+| `tooling/harness/operational/opencode-lsp-setup/**` | Panel 02 / ASQ-005 | proceed; no architecture mutation |
+| PR #151 / #149 / #115 | Panel 10 / ASQ-013 | converge with narrowed dependency set |
+| PR #163 ASQ-005 Live floor | Panel 02 | parallel; avoid conflicting WORK_QUEUE semantics beyond encoding/status sync |
 
 ## Safety boundary
 
-No credentials in Git/evidence, no force reset/push, no private absolute workstation paths in public plan/ledger artifacts, no direct child merge to `main`, no TUI-success claim from headless evidence, no provider/model fallback without contract authority, and no user-local receipt as machine-deletion authority.
+No credentials in Git/evidence, no force reset/push, no silent local-path relocation, no direct child merge to `main`, no TUI-success claim from headless evidence, no provider/model fallback without contract authority, no user-local receipt as machine-deletion authority. Do not delete GNHF or child-bus spine under this plan. Do not implement frozen Panels 05–09 as ASB live runtime. `service` and `runtime` remain `constrained/unverified` until corresponding runtime panels/floors prove them.
 
-## Tasks (10)
+## Tasks — owners and gates
 
-- **COORD-01** `completed` — durable coordination floor + current-state/privacy reconciliation.
-- **LSP-02** `pending` — fresh-TUI vs headless runtime proof.
-- **PI-BOOT-03** `pending` — refactor merged Pi bootstrap into shared reversible lifecycle parity and add unbootstrap.
-- **BUS-04** `completed` — provider-neutral child request/result/error contracts and dispatcher merged at `85ecf77`.
-- **PI-ADAPTER-05** `pending` — migrate the merged Pi-private child seam to the shared bus after Pi lifecycle parity.
-- **OC-ADAPTER-06** `pending` — OpenCode adapter parity; child-bus dependency is satisfied.
-- **PILOT-07** `pending` — Pi + OpenCode read-only heterogeneous pilot.
-- **NESTED-08** `pending` — mediated nested delegation with bounded authority inheritance.
-- **NESTED-RT-09** `pending` — one depth-2 heterogeneous runtime chain.
-- **CLEANUP-10** `pending` — reconcile merged #151/#149 behavior, supersede #115 when proven, then close the September plan/ledger.
+*   **COORD-01** `completed` — September coordination floor established.
+*   **LSP-02** `in-progress` — ASQ-005 fresh-TUI vs headless `20260912T194619Z-e3f423df` through durable G0–G8 (`docs/harness/asq005-fresh-tui-lsp-runtime-gates.md`). Floor on main (PR #163 @ `24cce9e`); G0–G8 encoding on main (PR #170 @ `1e5c599`); prep entrypoint `Invoke-Asq005FreshTuiCertificationPrep.ps1`; live TUI still UNPROVEN; Admin Box 1 only on `%USERPROFILE%\dev\AgentSwitchBoard-Live`. ASQ-008/009 remain FirstMate FREEZE/HAND-OFF.
+*   **PI-BOOT-03** `completed` — Pi reversible bootstrap on main; follow-up registry truth only.
+*   **BUS-04** `completed` — child-bus spine on main; subsequent work is **NARROW** only.
+*   **ARCH-FM-01** `completed` — accepted FirstMate crew-runtime boundary ADR + plan/ledger sync.
+*   **FM-INTEROP-02** `ready` — refresh/rebase FirstMate interop (PR #96 lineage) to current main + FirstMate `b182d0f`.
+*   **GNHF-NARROW-03** `ready` — encode GNHF KEEP/NARROW boundary in docs/validators; no launcher deletion.
+*   **PI-ADAPTER-05** `skipped` — **FREEZE**; Pi live child runtime hands off to FirstMate harnesses.
+*   **OC-ADAPTER-06** `skipped` — **FREEZE**.
+*   **PILOT-07** `skipped` — **FREEZE / REPURPOSE** through FirstMate crew, not ASB bus adapters.
+*   **NESTED-08** `skipped` — **RETIRE** as ASB live nested bus (FirstMate secondmates are flat; lineage schemas stay POLICY-INPUT only).
+*   **NESTED-RT-09** `skipped` — **RETIRE** as ASB live nested certification.
+*   **CLEANUP-10** `pending` — PR/path authority cleanup with narrowed dependencies (no longer blocked on 05–09).
 
 ## Validation
 
-`public coordination privacy scan` → `JSON schema validation` → `Test-PublicPlanContracts.ps1` → `Test-RepositoryWorkLedgerContract.ps1` → `Get-RepositoryWorkLedgerFrontier.ps1 -Json` → `git diff --check` → clean checkout.
+`JSON parse/schema` → `Test-PublicPlanContracts.ps1` → `Test-RepositoryWorkLedgerContract.ps1` → `Test-AgentDocumentationContract.ps1` if routing/docs map changed → `git diff --check` → clean checkout.
 
 ## Proof ceiling
 
-This coordination layer proves ownership, dependencies, current PR disposition and public-artifact hygiene only. It does not prove Pi lifecycle parity, OpenCode TUI LSP activation, Pi/OpenCode adapter conformance, provider delivery, heterogeneous fan-out, or nested delegation.
+Proves current ownership/dependency/collision state and the accepted FirstMate boundary ADR only. Does not prove Pi/OpenCode installation, LSP activation, FirstMate live crew dispatch, GNHF redundancy, child-agent execution, or provider delivery.
 
 ## Handoff
 
-After this reconciliation is integrated, the actionable independent lanes are **Panel 02 + Panel 03 + Panel 06**. Resolve the current canonical checkout through repository/machine-profile authority rather than embedding a machine-specific path in tracked coordination data.
+Next: **Admin Box 1** runs `Invoke-Asq005FreshTuiCertificationPrep.ps1` then G2–G8 live TUI smoke from canonical Live. Configure/CI is G1 only and never DONE. ASQ-008/009 stay FirstMate FREEZE/HAND-OFF. See `handoff.nextCommand` in `.plan.json`.

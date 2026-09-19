@@ -19,10 +19,12 @@
     "pullRequest": {
       "number": 290,
       "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/290",
-      "state": "merged"
+      "state": "merged",
+      "mergeCommit": "7effd421060241d8a0e76e007be052064b5da677"
     },
     "baseRef": "main",
-    "commitRequired": true
+    "commitRequired": true,
+    "integratedAt": "2026-09-15T05:36:31Z"
   },
   "wave": "unattended validation bootstrap",
   "lane": "automated-test-floor",
@@ -94,9 +96,7 @@
       "title": "Wire GitHub Actions and meta contracts",
       "status": "completed",
       "owner": "repository validation lane",
-      "dependencies": [
-        "FLOOR-01"
-      ],
+      "dependencies": ["FLOOR-01"],
       "inputs": [
         "Canonical floor command"
       ],
@@ -120,9 +120,7 @@
       "title": "Prove provider green and negative canary on exact head",
       "status": "completed",
       "owner": "repository validation lane",
-      "dependencies": [
-        "FLOOR-02"
-      ],
+      "dependencies": ["FLOOR-02"],
       "inputs": [
         "PR or push to GitHub Actions"
       ],
@@ -147,9 +145,7 @@
       "title": "Second-pass falsification and handoff boundary",
       "status": "completed",
       "owner": "repository validation lane",
-      "dependencies": [
-        "FLOOR-03"
-      ],
+      "dependencies": ["FLOOR-03"],
       "inputs": [
         "First green provider run"
       ],
@@ -172,9 +168,7 @@
       "title": "Actions-quota local proof, provenance, and source/generated boundary",
       "status": "completed",
       "owner": "repository validation lane",
-      "dependencies": [
-        "FLOOR-04"
-      ],
+      "dependencies": ["FLOOR-04"],
       "inputs": [
         "Merged floor on main via PR 290",
         "Operator Actions-quota exhaustion constraint"
