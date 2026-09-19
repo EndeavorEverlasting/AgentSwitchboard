@@ -4,8 +4,8 @@
   "purpose": "Define AgentSwitchboard's consumer contract for Triage prompt-parallel-dispatch manifests and panel/lane-prompt transport artifacts. This closes the AUTONOMY_GAP by making ASB a machine executor of Triage-generated lanes.",
   "upstream_repository": "https://github.com/EndeavorEverlasting/web-excel-repair-triage",
   "upstream_pin": {
-    "sha": "24b70c07",
-    "note": "Read-only upstream reference; short SHA documented as full SHA not publicly resolvable via git ls-remote"
+    "sha": "58221fcb61b3e524b129fc1f4184096333ee9ed2",
+    "note": "Read-only upstream reference; current main tip after Triage #603; 24b70c07 remains ancestor (#601 ledger)"
   },
   "upstream_contracts": [
     "harness/contracts/prompt-parallel-dispatch.v1.json",
