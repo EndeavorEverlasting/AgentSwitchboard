@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-19T16:30:00Z",
-  "updatedUtc": "2026-09-19T17:15:00Z",
+  "updatedUtc": "2026-09-19T17:18:00Z",
   "mission": "Systematically analyze 47 open PRs from July-September 2026 era, assign evidence-based dispositions (keep/rebase/superseded/close-candidate), document containment proof for superseded PRs, and produce actionable triage guidance for repository operator. Does NOT close, merge, or comment on PRs.",
   "owner": {
     "surface": "coordination",
@@ -19,15 +19,19 @@
     "pullRequest": {
       "number": 312,
       "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/312",
-      "state": "open"
+      "state": "merged"
     },
     "baseRef": "main@8e96082",
     "commitRequired": true
   },
   "wave": "POST-PPP",
   "lane": "coordination-triage",
-  "dependencies": ["ASB-2026-09-POST-PPP-REMAINING-SPRINTS"],
-  "safeParallelWork": ["ASQ-017 Admin Box physical floor (host-isolated)"],
+  "dependencies": [
+    "ASB-2026-09-POST-PPP-REMAINING-SPRINTS"
+  ],
+  "safeParallelWork": [
+    "ASQ-017 Admin Box physical floor (host-isolated)"
+  ],
   "ownedScope": [
     "plans/active/ASB-2026-09-stale-pr-triage-01.plan.json",
     "plans/active/ASB-2026-09-stale-pr-triage-01.md",
@@ -88,7 +92,9 @@
       "title": "Create machine-readable plan.json (schema-compliant)",
       "status": "completed",
       "owner": "triage-lane",
-      "dependencies": ["TRIAGE-PR-ANALYSIS"],
+      "dependencies": [
+        "TRIAGE-PR-ANALYSIS"
+      ],
       "inputs": [
         "Per-PR disposition analysis",
         "public-plan.schema.json requirements (additionalProperties: false)"
@@ -104,9 +110,8 @@
         "Full per-PR detail preserved in markdown"
       ],
       "evidence": [
-        "plan.json created without prDispositions (violates additionalProperties: false)",
-        "Disposition summary added to handoff.notes",
-        "Schema validation pending tests"
+        "plan.json omits plan-specific prDispositions from the closed public-plan root; full per-PR detail remains in the markdown summary",
+        "Public plan and startup readiness contracts workflow 35457635946 succeeded on head d0e175c4545f2a76331f08c606429da5c4711d41"
       ]
     },
     {
@@ -114,7 +119,9 @@
       "title": "Create human-readable markdown summary with full PR detail",
       "status": "completed",
       "owner": "triage-lane",
-      "dependencies": ["CREATE-DISPOSITION-PLAN"],
+      "dependencies": [
+        "CREATE-DISPOSITION-PLAN"
+      ],
       "inputs": [
         "Per-PR disposition analysis (47 rows)"
       ],
@@ -140,7 +147,9 @@
       "title": "Update plan-registry.json to register triage plan",
       "status": "completed",
       "owner": "triage-lane",
-      "dependencies": ["CREATE-SUMMARY-MD"],
+      "dependencies": [
+        "CREATE-SUMMARY-MD"
+      ],
       "inputs": [
         "plans/plan-registry.json current state",
         "TRIAGE-01 plan metadata"
@@ -155,7 +164,8 @@
         "Sole-writer discipline honored"
       ],
       "evidence": [
-        "Registry updated with TRIAGE-01 entry"
+        "plans/plan-registry.json contains active ASB-2026-09-STALE-PR-TRIAGE-01 entry on head d0e175c4545f2a76331f08c606429da5c4711d41",
+        "Public plan and startup readiness contracts workflow 35457635946 succeeded on that head"
       ]
     },
     {
@@ -163,7 +173,9 @@
       "title": "Run public plan contract validation",
       "status": "completed",
       "owner": "triage-lane",
-      "dependencies": ["UPDATE-REGISTRY"],
+      "dependencies": [
+        "UPDATE-REGISTRY"
+      ],
       "inputs": [
         "Plan artifacts",
         "tests/test_public_plan_contracts.py"
@@ -178,11 +190,10 @@
         "Schema compliance verified (no additionalProperties)"
       ],
       "evidence": [
-        "Python JSON parse successful",
-        "All required schema fields present",
-        "Trailing whitespace stripped",
-        "prDispositions removed (schema violation fixed)",
-        "CI validation pending"
+        "Public plan and startup readiness contracts workflow 35457635946: SUCCESS",
+        "Automated test floor workflow 35457635944: SUCCESS",
+        "App harness validation workflow 35457635906: SUCCESS",
+        "All seven observed exact-head workflow runs for d0e175c4545f2a76331f08c606429da5c4711d41 completed successfully"
       ]
     }
   ],
@@ -192,8 +203,8 @@
   ],
   "proof": {
     "target": "Static triage plan artifact with evidence-based PR dispositions",
-    "achieved": "Per-PR disposition assignments (47/47) with containment evidence, schema-compliant artifact",
-    "ceiling": "Does NOT prove PR merge authority, close authority, GitHub write capability, forge CI pass, live system state, operator approval, or actual PR closure. Plan is advisory only."
+    "achieved": "Per-PR disposition assignments (47/47) with containment evidence; closed-schema plan shape; exact-head public-plan, automated-floor, app-harness, protocol, launcher, context-engine, and runtime-event workflows green on d0e175c4545f2a76331f08c606429da5c4711d41; initial plan merged to main as 067efa298953d8454f1eaf31c07dd8f4098bfc3c",
+    "ceiling": "Static/provider-validated coordination plan only. Does NOT prove PR close authority or operator approval, actual stale-PR closure, rebase execution, merge of #309/#311, live system state, or runtime behavior."
   },
   "handoff": {
     "nextOwner": "Repository operator",
@@ -203,7 +214,7 @@
       "KEEP: #309 (FM-ASB routing builder - active Phase 3), #311 (P67 OpenCode plan draft - waits on #309)",
       "REBASE: #154 (operational harness - CONFLICTING), #159 (coordination floor - CONFLICTING)",
       "SUPERSEDED with containment: #96-#101 (FirstMate - absorbed by PR #308 faac296; PR body explicitly marks for closure)",
-      "CLOSE-CANDIDATE: 17 July GNHF era (#5,#7,#10-#18,#20,#23-#24,#28-#29,#41 - 3+ months stale, predate ASQ-004 Sept floor) + 20 Aug harness/Android era (#59-#60,#62,#64,#70-#71,#73,#79,#92,#94-#95,#102-#104,#106,#112-#114,#117-#118 - Herdr abandoned per 7c7f2da, harness evolved)",
+      "CLOSE-CANDIDATE: 17 July GNHF era (#5,#7,#10-#18,#20,#23-#24,#28-#29,#41 - roughly two months old at the Sept 19 floor; predate ASQ-004 Sept floor) + 20 Aug harness/Android era (#59-#60,#62,#64,#70-#71,#73,#79,#92,#94-#95,#102-#104,#106,#112-#114,#117-#118 - Herdr abandoned per 7c7f2da, harness evolved)",
       "Full per-PR disposition detail with number/title/rationale/containmentProof/nextAction in ASB-2026-09-stale-pr-triage-01.md",
       "Containment evidence: PR #308 body (FirstMate #96-#101), PR #288 ecea397 (WSL #11/#17), PRs #21/4c5c902 + #145/d2bafc7 (DeepSeek #13), PR #144/5ea7ce4 (Codex #117), commit 7c7f2da (Herdr #95/#102-#104)",
       "Operator approval required before closing any PR",
