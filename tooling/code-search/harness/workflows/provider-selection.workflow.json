@@ -1,0 +1,9 @@
+{
+  "id": "code-search-provider-selection",
+  "trigger": "A normalized code-search request needs a concrete provider.",
+  "inputs": ["capability snapshot", "provider registry", "privacy boundary", "resource budget"],
+  "steps": ["probe GitHub search readiness when GitHub-hosted", "prefer GitHub after successful probe", "otherwise use existing Zoekt index only when local indexing is allowed", "consider Sourcegraph only after explicit opt-in and current plan/endpoint/auth proof", "block if no provider gate passes"],
+  "outputs": ["selected provider or blocked state", "missing dependency", "proof ceiling"],
+  "failureHandling": ["never interpret empty results as provider readiness", "never install or authenticate a provider from this workflow"],
+  "proofCeiling": "provider route decision only"
+}

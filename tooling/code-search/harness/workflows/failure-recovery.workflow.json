@@ -1,0 +1,9 @@
+{
+  "id": "code-search-failure-recovery",
+  "trigger": "A readiness probe or query fails, times out, returns an authentication error, or contradicts registry expectations.",
+  "inputs": ["provider", "command", "exit code", "stderr", "capability snapshot"],
+  "steps": ["preserve bounded diagnostics", "classify missing executable vs authentication vs index unavailable vs query syntax vs stale local index", "repair only harness-owned command/routing defects", "re-probe the same provider after repair", "reselect only when the original provider gate is genuinely unavailable"],
+  "outputs": ["failure classification", "repaired harness evidence or exact blocker", "next executable action"],
+  "failureHandling": ["do not install dependencies, expose tokens, or weaken privacy gates"],
+  "proofCeiling": "failure diagnosis and owned repair only"
+}
