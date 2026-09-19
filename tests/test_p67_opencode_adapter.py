@@ -218,6 +218,36 @@ class P67OpenCodeAdapterTests(unittest.TestCase):
         self.assertEqual(status["schema_version"], "p67-opencode-readiness-status/v1")
         self.assertIn(status["status"], ["READY", "BLOCKED"])
 
+    def test_probe_json_serialization_regression(self) -> None:
+        """Regression test: Verify probe writes valid JSON, not OrderedDictionary type string (LPW003ASI173)."""
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            output_path = f.name
+
+        try:
+            exit_code, stdout = run_probe(output_path)
+
+            self.assertIn(exit_code, [0, 1], "Probe should exit 0 or 1, not crash")
+
+            with open(output_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            self.assertGreater(len(content), 5, "Output file should not be empty")
+            self.assertTrue(content.strip().startswith('{'),
+                          f"Output must start with '{{', got: {content[:100]}")
+            self.assertNotIn("OrderedDictionary", content,
+                           "Output must not contain 'OrderedDictionary' type string")
+            self.assertNotIn("System.Collections", content,
+                           "Output must not contain System.Collections namespace")
+
+            status = json.loads(content)
+            self.assertEqual(status["schema_version"], "p67-opencode-readiness-status/v1")
+            self.assertIn(status["status"], ["READY", "BLOCKED"])
+            self.assertIn("capabilities_verified", status)
+            self.assertIn("opencode_found", status)
+
+        finally:
+            Path(output_path).unlink(missing_ok=True)
+
     def test_no_evaluative_fields_in_status_schema(self) -> None:
         """Verify status schema rejects evaluative fields per CAPTURE_EVALUATIVE_REJECTED rule."""
         contract = load_json(CAPABILITY_CONTRACT)
