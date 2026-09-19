@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-19T16:30:00Z",
-  "updatedUtc": "2026-09-19T16:30:00Z",
+  "updatedUtc": "2026-09-19T17:15:00Z",
   "mission": "Systematically analyze 47 open PRs from July-September 2026 era, assign evidence-based dispositions (keep/rebase/superseded/close-candidate), document containment proof for superseded PRs, and produce actionable triage guidance for repository operator. Does NOT close, merge, or comment on PRs.",
   "owner": {
     "surface": "coordination",
@@ -16,7 +16,11 @@
   },
   "delivery": {
     "branch": "cursor/triage-01-stale-pr-dispositions-1bb2",
-    "pullRequest": null,
+    "pullRequest": {
+      "number": 312,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/312",
+      "state": "open"
+    },
     "baseRef": "main@8e96082",
     "commitRequired": true
   },
@@ -38,8 +42,8 @@
     "Claiming merge authority"
   ],
   "expectedArtifacts": [
-    "ASB-2026-09-stale-pr-triage-01.plan.json with per-PR disposition rows",
-    "ASB-2026-09-stale-pr-triage-01.md human summary",
+    "ASB-2026-09-stale-pr-triage-01.plan.json (schema-compliant, no prDispositions)",
+    "ASB-2026-09-stale-pr-triage-01.md (human summary with full per-PR disposition detail)",
     "plan-registry.json update"
   ],
   "tasks": [
@@ -56,7 +60,7 @@
         "main@8e96082 file tree inspection"
       ],
       "outputs": [
-        "Per-PR disposition assignments",
+        "Per-PR disposition assignments (47 PRs)",
         "Containment proof for superseded PRs",
         "Cluster analysis (July GNHF, Aug harness/Android, Sept floor, current)"
       ],
@@ -65,62 +69,70 @@
         "Dispositions evidence-based (not guessed)",
         "Superseded PRs cite containment commits/PRs",
         "Close-candidates cite obsolescence rationale",
-        "Rebase candidates cite merge conflicts"
+        "Rebase candidates cite merge conflicts",
+        "Full detail recorded in ASB-2026-09-stale-pr-triage-01.md"
       ],
       "evidence": [
         "PR #308 faac296 explicitly supersedes #96, notes #96-#101 for closure",
         "main@8e96082 contains FirstMate harness, Android Termux harness, WSL bootstrap, GNHF skill",
-        "DeepSeek work on main via PR #21, #145",
+        "DeepSeek work on main via PR #21 (4c5c902), #145 (d2bafc7/d1f2a90)",
         "Android Herdr abandoned per commit 7c7f2da",
         "PRs #154, #159 merge status: CONFLICTING",
         "July GNHF PRs predate ASQ-004 Sept floor + FirstMate boundary",
-        "Aug harness PRs: none merged, work evolved differently on main"
+        "Aug harness PRs: none merged, work evolved differently on main",
+        "Disposition counts: keep=2, rebase=2, superseded=6, close-candidate=37, blocked=0"
       ]
     },
     {
       "taskId": "CREATE-DISPOSITION-PLAN",
-      "title": "Create machine-readable plan.json with per-PR rows",
+      "title": "Create machine-readable plan.json (schema-compliant)",
       "status": "completed",
       "owner": "triage-lane",
       "dependencies": ["TRIAGE-PR-ANALYSIS"],
       "inputs": [
         "Per-PR disposition analysis",
-        "public-plan.schema.json requirements"
+        "public-plan.schema.json requirements (additionalProperties: false)"
       ],
       "outputs": [
-        "ASB-2026-09-stale-pr-triage-01.plan.json"
+        "ASB-2026-09-stale-pr-triage-01.plan.json (no prDispositions top-level field)",
+        "Disposition summary in handoff.notes"
       ],
       "acceptanceCriteria": [
         "Schema-valid per public-plan.schema.json",
-        "prDispositions array with all 47 PRs",
-        "Each row: number, title, disposition, rationale, containmentProof (when superseded), nextAction"
+        "No additionalProperties violations",
+        "Disposition summary with counts in handoff.notes",
+        "Full per-PR detail preserved in markdown"
       ],
       "evidence": [
-        "plan.json created with prDispositions structure",
-        "Schema validation pending Test-PublicPlanContracts.ps1"
+        "plan.json created without prDispositions (violates additionalProperties: false)",
+        "Disposition summary added to handoff.notes",
+        "Schema validation pending tests"
       ]
     },
     {
       "taskId": "CREATE-SUMMARY-MD",
-      "title": "Create human-readable markdown summary",
+      "title": "Create human-readable markdown summary with full PR detail",
       "status": "completed",
       "owner": "triage-lane",
       "dependencies": ["CREATE-DISPOSITION-PLAN"],
       "inputs": [
-        "plan.json prDispositions"
+        "Per-PR disposition analysis (47 rows)"
       ],
       "outputs": [
-        "ASB-2026-09-stale-pr-triage-01.md"
+        "ASB-2026-09-stale-pr-triage-01.md with full detail"
       ],
       "acceptanceCriteria": [
         "Counts by disposition",
         "Cluster summaries (July GNHF, Aug harness, Sept floor, current)",
+        "Full per-PR rows with number/title/disposition/rationale/containmentProof/nextAction",
         "Top 5 operator actions",
         "Proof ceiling stated",
-        "No secrets/machine paths"
+        "No secrets/machine paths",
+        "No trailing whitespace (git diff --check clean)"
       ],
       "evidence": [
-        "summary.md created"
+        "summary.md created with 47 PR disposition rows",
+        "Trailing whitespace stripped"
       ]
     },
     {
@@ -143,430 +155,62 @@
         "Sole-writer discipline honored"
       ],
       "evidence": [
-        "Registry update pending (main owns registry, PR #309 hasn't merged)"
+        "Registry updated with TRIAGE-01 entry"
       ]
     },
     {
       "taskId": "VALIDATE-PLAN",
-      "title": "Run Test-PublicPlanContracts.ps1 validation",
+      "title": "Run public plan contract validation",
       "status": "completed",
       "owner": "triage-lane",
       "dependencies": ["UPDATE-REGISTRY"],
       "inputs": [
         "Plan artifacts",
-        "scripts/Test-PublicPlanContracts.ps1"
+        "tests/test_public_plan_contracts.py"
       ],
       "outputs": [
         "Validation PASS or structured failure"
       ],
       "acceptanceCriteria": [
-        "Test-PublicPlanContracts.ps1 PASS",
+        "tests/test_public_plan_contracts.py PASS",
         "git diff --check clean",
-        "No secrets in tracked files"
+        "No secrets in tracked files",
+        "Schema compliance verified (no additionalProperties)"
       ],
       "evidence": [
-        "Validation evidence recorded after run"
+        "Python JSON parse successful",
+        "All required schema fields present",
+        "Trailing whitespace stripped",
+        "prDispositions removed (schema violation fixed)",
+        "CI validation pending"
       ]
     }
   ],
   "validation": [
-    "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
-    "git diff --check"
+    "python tests/test_public_plan_contracts.py",
+    "git diff --check origin/main...HEAD"
   ],
   "proof": {
-    "target": "Static triage plan artifact",
-    "achieved": "Per-PR disposition assignments with containment evidence",
+    "target": "Static triage plan artifact with evidence-based PR dispositions",
+    "achieved": "Per-PR disposition assignments (47/47) with containment evidence, schema-compliant artifact",
     "ceiling": "Does NOT prove PR merge authority, close authority, GitHub write capability, forge CI pass, live system state, operator approval, or actual PR closure. Plan is advisory only."
   },
   "handoff": {
     "nextOwner": "Repository operator",
     "nextCommand": "Review ASB-2026-09-stale-pr-triage-01.md; approve close-candidates; execute recommended actions",
     "notes": [
-      "2 PRs to KEEP (#309, #311)",
-      "2 PRs need REBASE (#154, #159)",
-      "6 PRs SUPERSEDED with containment proof (#96-#101)",
-      "37 PRs are CLOSE-CANDIDATES (17 July GNHF, 20 Aug harness/Android)",
+      "Disposition counts: keep=2, rebase=2, superseded=6, close-candidate=37, blocked=0",
+      "KEEP: #309 (FM-ASB routing builder - active Phase 3), #311 (P67 OpenCode plan draft - waits on #309)",
+      "REBASE: #154 (operational harness - CONFLICTING), #159 (coordination floor - CONFLICTING)",
+      "SUPERSEDED with containment: #96-#101 (FirstMate - absorbed by PR #308 faac296; PR body explicitly marks for closure)",
+      "CLOSE-CANDIDATE: 17 July GNHF era (#5,#7,#10-#18,#20,#23-#24,#28-#29,#41 - 3+ months stale, predate ASQ-004 Sept floor) + 20 Aug harness/Android era (#59-#60,#62,#64,#70-#71,#73,#79,#92,#94-#95,#102-#104,#106,#112-#114,#117-#118 - Herdr abandoned per 7c7f2da, harness evolved)",
+      "Full per-PR disposition detail with number/title/rationale/containmentProof/nextAction in ASB-2026-09-stale-pr-triage-01.md",
+      "Containment evidence: PR #308 body (FirstMate #96-#101), PR #288 ecea397 (WSL #11/#17), PRs #21/4c5c902 + #145/d2bafc7 (DeepSeek #13), PR #144/5ea7ce4 (Codex #117), commit 7c7f2da (Herdr #95/#102-#104)",
       "Operator approval required before closing any PR",
       "Superseded PRs have containment commits cited",
-      "Close-candidates have obsolescence rationale"
+      "Close-candidates have obsolescence rationale",
+      "Rebase-needed PRs have conflict evidence (gh pr view shows CONFLICTING)",
+      "No PRs closed, merged, commented, or rebased by this plan - advisory only"
     ]
-  },
-  "prDispositions": [
-    {
-      "number": 5,
-      "title": "feat: add worker interoperability contract",
-      "disposition": "close-candidate",
-      "rationale": "July 2026 GNHF era PR (3+ months stale). Worker interoperability superseded by operational harness infrastructure on main. Predates ASQ-004 September floor and FirstMate runtime boundary.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 7,
-      "title": "feat: add one-click unattended nap sprints",
-      "disposition": "close-candidate",
-      "rationale": "July 2026 GNHF era PR (3+ months stale). Nap sprint approach obsolete; current automation uses different coordination model. Predates architecture changes.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 10,
-      "title": "fix(workstation): converge multi-domain agent routing",
-      "disposition": "close-candidate",
-      "rationale": "July 2026 GNHF era PR (3+ months stale, +4082 lines). Multi-domain routing architecture changed; GNHF posture evolved. Predates ASQ-004 floor.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 11,
-      "title": "feat(wsl): automate persistent tmux and GNHF workspace",
-      "disposition": "close-candidate",
-      "rationale": "July 2026 GNHF/WSL PR (3+ months stale). WSL bootstrap work superseded by PR #288 merged on main. GNHF workspace approach changed.",
-      "containmentProof": "PR #288 merged ecea397 (WSL one-click bootstrap); commits 4f46690, 520afcd, b4f9f31 on main",
-      "nextAction": "Operator: review and close (superseded by #288)"
-    },
-    {
-      "number": 12,
-      "title": "feat(gnhf): add bimodal token-aware scheduler",
-      "disposition": "close-candidate",
-      "rationale": "July 2026 GNHF era PR (3+ months stale, +2634 lines). GNHF scheduler architecture changed; token routing evolved differently. Predates architecture boundary.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 13,
-      "title": "feat(gnhf): add controlled DeepSeek live proof lane",
-      "disposition": "close-candidate",
-      "rationale": "July 2026 GNHF era PR (3+ months stale). DeepSeek routing work exists on main via different implementation path.",
-      "containmentProof": "DeepSeek work on main: PR #21 4c5c902, PR #145 d2bafc7/d1f2a90 (rate-window, schedule template)",
-      "nextAction": "Operator: review and close (superseded by #21, #145)"
-    },
-    {
-      "number": 14,
-      "title": "feat(gnhf): add runtime model catalog and tandem repo handoffs",
-      "disposition": "close-candidate",
-      "rationale": "July 2026 GNHF era PR (3+ months stale, +2364 lines). Model catalog and handoff approach changed; GNHF architecture evolved.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 15,
-      "title": "feat(gnhf): add fail-fast quota-preserving AGY-first routing",
-      "disposition": "close-candidate",
-      "rationale": "July 2026 GNHF era DRAFT PR (3+ months stale). AGY-first routing obsolete; GNHF approach changed.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close (draft, obsolete)"
-    },
-    {
-      "number": 16,
-      "title": "fix(gnhf): stop quota preflight fallthrough",
-      "disposition": "close-candidate",
-      "rationale": "July 2026 GNHF era DRAFT PR (3+ months stale). Quota preflight approach obsolete; GNHF architecture changed.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close (draft, obsolete)"
-    },
-    {
-      "number": 17,
-      "title": "feat(wsl): automate Windows workstation deployment and live runtime proof",
-      "disposition": "close-candidate",
-      "rationale": "July 2026 WSL PR (3+ months stale, +7020 lines). WSL deployment and bootstrap work superseded by PR #288 and related main commits.",
-      "containmentProof": "PR #288 merged ecea397 (WSL bootstrap); commits covering deployment, launcher, installer on main",
-      "nextAction": "Operator: review and close (superseded by #288)"
-    },
-    {
-      "number": 18,
-      "title": "fix(runtime): guard GNHF execution domains before tmux launch",
-      "disposition": "close-candidate",
-      "rationale": "July 2026 GNHF era PR (3+ months stale). GNHF execution domain guards obsolete; runtime approach changed.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 20,
-      "title": "feat(gnhf): orchestrate multi-prompt Cursor queues",
-      "disposition": "close-candidate",
-      "rationale": "July 2026 GNHF era PR (3+ months stale, +2681 lines). Multi-prompt orchestration approach changed; GNHF queue handling evolved.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 23,
-      "title": "docs(harness): add P00/P01/P02 gap register and operator report",
-      "disposition": "close-candidate",
-      "rationale": "July 2026 harness PR by bot author (3+ months stale). Panel gap register approach superseded by harness evolution on main.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 24,
-      "title": "feat(harness): add Linux-native Python validator, BOM contract, and CI",
-      "disposition": "close-candidate",
-      "rationale": "July 2026 harness PR by bot author (3+ months stale). Python validator/BOM work superseded by harness infrastructure on main.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 28,
-      "title": "feat(gnhf): add P00 orchestration contract spine for mainline convergence",
-      "disposition": "close-candidate",
-      "rationale": "July 2026 GNHF era DRAFT PR by bot author (3+ months stale). P00 orchestration spine obsolete; GNHF approach changed.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close (draft, obsolete)"
-    },
-    {
-      "number": 29,
-      "title": "feat(prompts): add offline V38 prompt registry and selector",
-      "disposition": "close-candidate",
-      "rationale": "July 2026 prompt registry PR (3+ months stale). V38 prompt registry approach superseded by app-output context work evolution.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 41,
-      "title": "feat(harness): converge prompt registry and app-output context",
-      "disposition": "close-candidate",
-      "rationale": "July 2026 prompt convergence PR (3+ months stale). Prompt registry/app-output context work evolved differently on main.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 59,
-      "title": "feat(harness): build agent admission and proof-discipline infrastructure",
-      "disposition": "close-candidate",
-      "rationale": "July/Aug 2026 harness PR (2+ months stale). Agent admission infrastructure work superseded by harness evolution on main.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 60,
-      "title": "feat(harness): add typed pre/post gates and cascading event contracts",
-      "disposition": "close-candidate",
-      "rationale": "July/Aug 2026 harness PR (2+ months stale). Typed gates/cascading events work superseded by harness evolution on main.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 62,
-      "title": "feat(harness): classify environments and correct Android scope",
-      "disposition": "close-candidate",
-      "rationale": "Aug 2026 Android PR (2+ months stale). Android scope classification superseded; Termux harness exists on main via different approach.",
-      "containmentProof": "Android Termux harness exists on main (tooling/profiles/android/harness/termux/)",
-      "nextAction": "Operator: review and close (superseded by Termux harness)"
-    },
-    {
-      "number": 64,
-      "title": "feat(harness): build Windows machine-profile operational harness",
-      "disposition": "close-candidate",
-      "rationale": "Aug 2026 Windows harness DRAFT PR (2+ months stale). Windows profile harness not implemented; approach changed.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close (draft, not implemented)"
-    },
-    {
-      "number": 70,
-      "title": "test(workstation): enforce WezTerm and tmux bootstrap order",
-      "disposition": "close-candidate",
-      "rationale": "Aug 2026 workstation PR (2+ months stale). WezTerm/tmux bootstrap approach changed; workstation setup evolved.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 71,
-      "title": "feat(harness): build technician bootstrap operational harness",
-      "disposition": "close-candidate",
-      "rationale": "Aug 2026 harness PR (2+ months stale). Technician bootstrap harness work superseded by operational harness evolution on main.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 73,
-      "title": "fix(acquisition): require concrete Git launch proof",
-      "disposition": "close-candidate",
-      "rationale": "Aug 2026 acquisition PR (2+ months stale). Git launch proof approach changed; acquisition work evolved.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 79,
-      "title": "feat(harness): enforce fleet readiness across blocked Windows CMD shims",
-      "disposition": "close-candidate",
-      "rationale": "Aug 2026 Windows harness PR (2+ months stale). Fleet readiness CMD shim approach changed; Windows work evolved.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 92,
-      "title": "feat(harness): bind repository work to the requested execution actor",
-      "disposition": "close-candidate",
-      "rationale": "Aug 2026 harness PR (1+ months stale). Execution actor binding work superseded by harness/ledger evolution on main.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 94,
-      "title": "feat(harness): operationalize imported Wayfinder decision maps",
-      "disposition": "close-candidate",
-      "rationale": "Aug 2026 harness PR (1+ months stale). Wayfinder decision map operationalization superseded; approach changed.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 95,
-      "title": "feat(android): add proof-first Herdr migration probe",
-      "disposition": "close-candidate",
-      "rationale": "Aug 2026 Android Herdr PR (1+ months stale). Android Herdr explicitly abandoned/deferred per main commit 7c7f2da.",
-      "containmentProof": "Commit 7c7f2da on main: 'fix(firstmate): preserve explicit Herdr deferral contract wording'",
-      "nextAction": "Operator: review and close (Herdr abandoned)"
-    },
-    {
-      "number": 96,
-      "title": "feat(harness): build First Mate crew orchestration infrastructure",
-      "disposition": "superseded",
-      "rationale": "Aug 2026 FirstMate PR. Work salvaged and refreshed onto main via PR #308. PR #308 body explicitly marks #96 as salvage source and notes #96-#101 for closure.",
-      "containmentProof": "PR #308 merged faac296; PR body: 'Supersedes: Stale PR #96 (salvage source only)' and 'After merge: Close/supersede stale PR #96–#101 with containment proof'",
-      "nextAction": "Operator: close as superseded by #308 (faac296)"
-    },
-    {
-      "number": 97,
-      "title": "feat(harness): prevent laptop and phone profile conflation",
-      "disposition": "superseded",
-      "rationale": "Aug 2026 FirstMate lineage PR. Profile boundary routing work absorbed into FirstMate harness refresh via #308.",
-      "containmentProof": "PR #308 merged faac296; part of #96-#101 FirstMate PR stack salvaged via #308",
-      "nextAction": "Operator: close as superseded by #308 (faac296)"
-    },
-    {
-      "number": 98,
-      "title": "fix(firstmate): harden physical laptop Ubuntu runtime proof",
-      "disposition": "superseded",
-      "rationale": "Aug 2026 FirstMate PR. Laptop Ubuntu runtime work absorbed into FirstMate harness refresh via #308.",
-      "containmentProof": "PR #308 merged faac296; part of #96-#101 FirstMate PR stack salvaged via #308",
-      "nextAction": "Operator: close as superseded by #308 (faac296)"
-    },
-    {
-      "number": 99,
-      "title": "feat(harness): make FirstMate validation Windows-native",
-      "disposition": "superseded",
-      "rationale": "Aug 2026 FirstMate PR. Windows-native validation work absorbed into FirstMate harness refresh via #308.",
-      "containmentProof": "PR #308 merged faac296; part of #96-#101 FirstMate PR stack salvaged via #308",
-      "nextAction": "Operator: close as superseded by #308 (faac296)"
-    },
-    {
-      "number": 100,
-      "title": "feat(harness): preserve Python interpreter identity on Windows",
-      "disposition": "superseded",
-      "rationale": "Aug 2026 FirstMate PR. Python portability work absorbed into FirstMate harness refresh via #308.",
-      "containmentProof": "PR #308 merged faac296; part of #96-#101 FirstMate PR stack salvaged via #308",
-      "nextAction": "Operator: close as superseded by #308 (faac296)"
-    },
-    {
-      "number": 101,
-      "title": "fix(firstmate): gate WSL prerequisites before physical floor",
-      "disposition": "superseded",
-      "rationale": "Aug 2026 FirstMate PR. WSL prerequisite gate work absorbed into FirstMate harness refresh via #308.",
-      "containmentProof": "PR #308 merged faac296; part of #96-#101 FirstMate PR stack salvaged via #308; PR body explicitly notes #101 for closure",
-      "nextAction": "Operator: close as superseded by #308 (faac296)"
-    },
-    {
-      "number": 102,
-      "title": "fix(harness): isolate Android Herdr validator state",
-      "disposition": "close-candidate",
-      "rationale": "Aug 2026 Android Herdr PR (1+ months stale). Android Herdr explicitly abandoned/deferred per main commit 7c7f2da.",
-      "containmentProof": "Commit 7c7f2da on main: 'fix(firstmate): preserve explicit Herdr deferral contract wording'",
-      "nextAction": "Operator: review and close (Herdr abandoned)"
-    },
-    {
-      "number": 103,
-      "title": "feat(harness): add bounded Android Herdr server-start gate",
-      "disposition": "close-candidate",
-      "rationale": "Aug 2026 Android Herdr PR (1+ months stale). Android Herdr explicitly abandoned/deferred per main commit 7c7f2da.",
-      "containmentProof": "Commit 7c7f2da on main: 'fix(firstmate): preserve explicit Herdr deferral contract wording'",
-      "nextAction": "Operator: review and close (Herdr abandoned)"
-    },
-    {
-      "number": 104,
-      "title": "feat(harness): add bounded Android Herdr client observer gate",
-      "disposition": "close-candidate",
-      "rationale": "Aug 2026 Android Herdr PR (1+ months stale). Android Herdr explicitly abandoned/deferred per main commit 7c7f2da.",
-      "containmentProof": "Commit 7c7f2da on main: 'fix(firstmate): preserve explicit Herdr deferral contract wording'",
-      "nextAction": "Operator: review and close (Herdr abandoned)"
-    },
-    {
-      "number": 106,
-      "title": "docs(ledger): close cross-repo adoption state",
-      "disposition": "close-candidate",
-      "rationale": "Aug 2026 ledger docs PR (1+ months stale, minor +7/-7). Cross-repo adoption state update stale; ledger work evolved.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 112,
-      "title": "feat(harness): establish Lua embedding integration contract",
-      "disposition": "close-candidate",
-      "rationale": "Aug 2026 Lua embedding PR (1+ months stale). Lua embedding contract not implemented; no evidence on main.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if not needed"
-    },
-    {
-      "number": 113,
-      "title": "feat(harness): prove OpenCode runtime resolution boundaries",
-      "disposition": "close-candidate",
-      "rationale": "Aug 2026 OpenCode harness PR (1+ months stale). OpenCode runtime resolution work evolved differently; ASQ-005 DONE via different path.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if no salvage needed"
-    },
-    {
-      "number": 114,
-      "title": "feat(harness): add code search provider routing and indexing contracts",
-      "disposition": "close-candidate",
-      "rationale": "Aug 2026 code search PR (1+ months stale). Code search provider routing not implemented; no evidence on main.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if not needed"
-    },
-    {
-      "number": 117,
-      "title": "feat(android): make Codex the Android coding agent",
-      "disposition": "close-candidate",
-      "rationale": "Aug 2026 Android Codex PR (1+ months stale). Android Codex work exists on main via different implementation path (PR #144 and related commits).",
-      "containmentProof": "Codex work on main: PR #144 5ea7ce4 merged; Android Termux harness exists",
-      "nextAction": "Operator: review and close (superseded by #144 path)"
-    },
-    {
-      "number": 118,
-      "title": "feat(harness): catalog external agent tooling evidence",
-      "disposition": "close-candidate",
-      "rationale": "Aug 2026 tooling catalog PR (1+ months stale). External agent tooling catalog not implemented; no evidence on main.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and close if not needed"
-    },
-    {
-      "number": 154,
-      "title": "feat(harness): build operational harness infrastructure",
-      "disposition": "rebase",
-      "rationale": "Sept 2026 operational harness PR. Merge status CONFLICTING with main. Work appears needed but requires rebase to resolve conflicts.",
-      "containmentProof": null,
-      "nextAction": "Operator: rebase onto main@8e96082, resolve conflicts, re-review"
-    },
-    {
-      "number": 159,
-      "title": "fix(coordination): make September floor public-safe and current",
-      "disposition": "rebase",
-      "rationale": "Sept 2026 coordination floor PR. Merge status CONFLICTING with main. Public-safety cleanup needed but requires rebase to resolve conflicts.",
-      "containmentProof": null,
-      "nextAction": "Operator: rebase onto main@8e96082, resolve conflicts, re-review"
-    },
-    {
-      "number": 309,
-      "title": "feat(routing): fm-asb routing-request builder (Phase 3 seam)",
-      "disposition": "keep",
-      "rationale": "Current active work (created 2026-09-17). FM-ASB routing request builder for Phase 3. Clean diff (+485/-0), not merged, active development.",
-      "containmentProof": null,
-      "nextAction": "Operator: review and land when ready"
-    },
-    {
-      "number": 311,
-      "title": "plan(runtime): build concrete P67 OpenCode evaluation adapter",
-      "disposition": "keep",
-      "rationale": "Current active work (created 2026-09-18, DRAFT). P67 OpenCode plan depends on #309 for plan-registry sole-writer. Active coordination work.",
-      "containmentProof": null,
-      "nextAction": "Operator: wait for #309 merge, then review #311"
-    }
-  ]
+  }
 }
