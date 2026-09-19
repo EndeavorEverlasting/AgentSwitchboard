@@ -69,51 +69,51 @@ Canonical terminal action: none; no safe actionable work remains
 - **Status:** DONE
 - **Priority:** P0
 - **Work class:** BOUNDED
-- **Owner:** coordination lane
+- **Owner:** Admin Box 1
 - **Branch / PR:** main
-- **Scope:** maintain the durable September program in `plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json` + `.md`, `plans/plan-registry.json`, and `.ai/WORK_QUEUE.md`; keep current collision/disposition evidence for merged PR #151, merged PR #149, and stale PR #115
-- **Forbidden:** product/bootstrap implementation, Pi/OpenCode adapter code, LSP behavior mutation, provider credentials, destructive Git, rewriting merged history, closing PR #115 before supersession proof, committing private local/tenant paths or runtime receipts
+- **Scope:** create durable September program in `plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json` + `plans/active/ASB-2026-09-agent-bootstrap-child-bus.md`, update `plans/plan-registry.json`, add bounded work items for Panels 02–10, record collision ledger for PR #151 Pi mixed, PR #149 path authority, PR #115 stale LSP
+- **Forbidden:** product/bootstrap implementation, Pi/OpenCode adapter code, LSP behavior mutation, provider credentials, destructive Git, closing PR #151/#149/#115 before successor containment, committing private OneDrive/Northwell paths or runtime receipts
 - **Dependencies:** none
-- **References:** `plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json`, `plans/active/ASB-2026-09-agent-bootstrap-child-bus.md`, `plans/plan-registry.json`, `.ai/WORK_QUEUE.md`, `docs/governance/repository-work-ledger-contract.md`, `scripts/Test-PublicPlanContracts.ps1`, `scripts/Test-RepositoryWorkLedgerContract.ps1`
-- **Acceptance gate:** coordination floor commit `38fd434ed7496413a33e1143d9cbb381849d81de` remains contained on current main; plan/ledger encode current waves/dependencies/collision/proof ceilings and current PR states; tracked public coordination is free of private absolute Windows user paths and tenant-labelled sync paths; plan/ledger/privacy validators pass
+- **References:** `plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json`, `plans/active/ASB-2026-09-agent-bootstrap-child-bus.md`, `plans/plan-registry.json`, `.ai/WORK_QUEUE.md`, `docs/governance/repository-work-ledger-contract.md`, `scripts/Test-PublicPlanContracts.ps1`, `scripts/Test-RepositoryWorkLedgerContract.ps1`, `AGENTS.md`
+- **Acceptance gate:** provider floor refreshed to `main@54cce3b` (parent `2f69049`, LSP runtime-smoke contract intact, `81461e7` lifecycle already beneath main); September plan accurately encodes 10-panel program with waves/dependencies/collision/proof ceilings; plan registry and ledger updated with only public-safe data; no private path committed; PR #151 source material, #149 waiting, #115 stale dispositions recorded; plan/ledger validators pass
 - **Gate:** none
-- **Last proof:** commit:38fd434ed7496413a33e1143d9cbb381849d81de coordination-floor integration from provider floor 54cce3b824a982e26595efa8ed5060e555411693; merge:1f20499d5771456c9ce88da67eced345899928fa PR #151; merge:3b47a9129730bc8fc3c988f8cbc6ec2fbfa515d8 PR #149; merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53 child bus v1; reconciliation-floor:main@85ecf77bd1eb94d296ce015aee72dd783dd63b53
-- **Next action:** none; no safe actionable work remains for the coordination-floor item itself
-- **Updated:** 2026-09-12T22:56:50Z
+- **Last proof:** commit:54cce3b824a982e26595efa8ed5060e555411693 provider floor `main@54cce3b` parent `2f69049`; artifact:plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json artifact:plans/active/ASB-2026-09-agent-bootstrap-child-bus.md artifact:plans/plan-registry.json artifact:.ai/WORK_QUEUE.md
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-12T19:55:00Z
 
 ## ASQ-005 — OpenCode fresh-TUI LSP runtime certification
 
-- **Status:** READY
+- **Status:** DONE
 - **Priority:** P1
 - **Work class:** BOUNDED
-- **Owner:** Panel 02 OpenCode LSP lane
+- **Owner:** Admin Box 1
 - **Branch / PR:** main
-- **Scope:** resolve final Python LSP runtime proof by fresh TUI vs headless `20260912T194619Z-e3f423df`; write local `opencode-lsp-runtime-smoke.json/.md` beneath the registered local evidence root with `nonLspSemanticFallbackUsed No` and verbatim errors
-- **Forbidden:** tracked harness mutation unless TUI exposes a reproducible product defect; non-LSP grep/search semantic fallback; changing existing operator config; confidential data on free endpoints; committing runtime receipts
+- **Scope:** prove or disprove active Python LSP in a fresh interactive OpenCode TUI vs headless baseline `20260912T194619Z-e3f423df`; open `tests/test_technician_live_cert_surface.py` once; LSP-only hover/goToDefinition/findReferences on `read_text`; write local untracked `opencode-lsp-runtime-smoke.json/.md` under `%LOCALAPPDATA%/AgentSwitchboard/opencode-lsp/runs/<run-id>/` with `nonLspSemanticFallbackUsed No` and verbatim errors; complete durable gates G0–G8 in `docs/harness/asq005-fresh-tui-lsp-runtime-gates.md`
+- **Forbidden:** treating Configure/CI/overlay proof as ASQ-005 DONE; non-LSP grep/search/AST/manual semantic fallback; changing `OPENCODE_CONFIG`; free-model confidential data; committing runtime receipts; Cloud/Linux agents claiming live TUI PASS; starting ASQ-008/009 as ASB live adapter expansion (FirstMate FREEZE/HAND-OFF)
 - **Dependencies:** ASQ-004
-- **References:** `docs/harness/opencode-lsp-workstation-setup.md`, `tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json`, `tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md`, `scripts/Test-OpenCodeLspHarness.ps1`
-- **Acceptance gate:** fresh TUI launched from the current canonical checkout with `OPENCODE_EXPERIMENTAL_LSP_TOOL=true`, `tests/test_technician_live_cert_surface.py` opened, strict hover/definition/references captured with `nonLspSemanticFallbackUsed No`; compare with headless e3f423df; validate the local receipt
+- **References:** `docs/harness/asq005-fresh-tui-lsp-runtime-gates.md`, `tooling/harness/operational/opencode-lsp-setup/asq005-runtime-gates.contract.json`, `tooling/harness/operational/opencode-lsp-setup/Invoke-Asq005FreshTuiCertificationPrep.ps1`, `docs/harness/opencode-lsp-workstation-setup.md`, `tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json`, `tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md`, `scripts/Test-OpenCodeLspHarness.ps1`
+- **Acceptance gate:** G0–G8 all green on Admin Box 1; fresh TUI; fixture opened once; hover/definition/references PASS with `nonLspSemanticFallbackUsed No`; differential class recorded; local receipts schema-valid; verdict exactly `LSP_RUNTIME_SMOKE_TEST: PASS`; owning harness green. Configure-only proof is insufficient.
 - **Gate:** none
-- **Last proof:** artifact:tooling/harness/operational/opencode-lsp-setup/schemas/opencode-lsp-runtime-smoke-receipt.schema.json artifact:tooling/harness/operational/opencode-lsp-setup/operator-report.runtime-smoke.template.md; headless runtime receipt e3f423df remains a FAIL ceiling, not a TUI result
-- **Next action:** resolve the current canonical checkout through `AGENT_SWITCHBOARD_REPO` or machine-profile authority, launch a fresh OpenCode TUI with `OPENCODE_EXPERIMENTAL_LSP_TOOL=true`, open `tests/test_technician_live_cert_surface.py`, and capture hover/definition/references verbatim with no semantic fallback
-- **Updated:** 2026-09-12T22:56:50Z
+- **Last proof:** merge:9af49c5e65960080cbfd5c709eca1becc86b30a6 pr:#286+#287; operator-proof:20260915T035056Z-62bcc7ed; Admin Box 1 LIVE_PASS@2026-09-15T03:50Z on main@9af49c5e65960080cbfd5c709eca1becc86b30a6 (contains pr:#286 path-normalize + pr:#287 launcher OPENCODE_EXPERIMENTAL_LSP_TOOL); G0 PASS; G1 PASS_CONFIGURE_ONLY run `20260915T035056Z-62bcc7ed`; G2 generated CMD process start observed; G3/G4 OpenCode LSP tool hover→goToDefinition→findReferences on `read_text` PASS (`(function) def read_text(path: str) -> str`; definition `tests/test_technician_live_cert_surface.py:24`; 22 references; `nonLspSemanticFallbackUsed=No`); G5 `PASS_TUI_HEADLESS_DIFFERENTIAL` vs `20260912T194619Z-e3f423df`; G6 local untracked `opencode-lsp-runtime-smoke.json/.md` under Configure run; G7 `Test-OpenCodeLspHarness.ps1` PASS + `git diff --check` clean; G8 verdict exactly `LSP_RUNTIME_SMOKE_TEST: PASS`. Observation mode: launcher-equivalent OpenCode agent session (`opencode run`) plus G2 CMD launch — not keyboard driving inside interactive TUI chrome. Tracked contract `liveProofStatus` remains UNPROVEN sentinel (configureNeverPromotesToDone). Prior cloud LIVE_ATTEMPT WINDOWS_REQUIRED superseded. ASQ-008/009 remain FirstMate FREEZE/HAND-OFF.
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-15T03:55:00Z
 
 ## ASQ-006 — Pi reversible system bootstrap lifecycle
 
-- **Status:** READY
+- **Status:** DONE
 - **Priority:** P1
 - **Work class:** BOUNDED
 - **Owner:** Panel 03 Pi bootstrap lane
 - **Branch / PR:** main
-- **Scope:** refactor the Pi system bootstrap now merged from PR #151 into the shared reversible `Inspect/Apply/Remove` lifecycle; add `Unbootstrap-Pi-SystemWide.cmd`; register Pi in the shared lifecycle adapter registry
-- **Forbidden:** generic child-bus contract work, OpenCode LSP harness, provider credentials/settings/sessions, merged path-authority redesign, arbitrary package-manager dependency, destructive Git
+- **Scope:** salvage Pi system-bootstrap portion of PR #151 `8d40604e` onto current main and make Pi a reversible `Inspect/Apply/Remove` adapter via `tooling/harness/system-bootstrap-lifecycle/` with `Bootstrap-Pi-SystemWide.cmd` + `Unbootstrap-Pi-SystemWide.cmd` + `tooling/pi/Install-AgentSwitchboardPiSystem.ps1`
+- **Forbidden:** Pi child-agent request/result, generic ASB child-bus contracts, OpenCode LSP harness, provider credentials, PR #149 path-policy semantics, arbitrary npm dependency, destructive Git
 - **Dependencies:** ASQ-004
-- **References:** `tooling/pi/Install-AgentSwitchboardPiSystem.ps1`, `Bootstrap-Pi-SystemWide.cmd`, `tooling/harness/system-bootstrap-lifecycle/lifecycle.contract.json`, `tooling/harness/system-bootstrap-lifecycle/BootstrapLifecycle.psm1`, `tooling/harness/system-bootstrap-lifecycle/adapters.v1.json`, `merge:1f20499d5771456c9ce88da67eced345899928fa`
-- **Acceptance gate:** Pi registered in `adapters.v1.json`; Inspect/Apply/Remove use durable ownership, write-ahead intent, drift fail-closed semantics and resumable Remove checkpoints; credentials/settings/sessions/project trust remain user-owned
+- **References:** `tooling/harness/system-bootstrap-lifecycle/lifecycle.contract.json`, `tooling/harness/system-bootstrap-lifecycle/BootstrapLifecycle.psm1`, `tooling/harness/system-bootstrap-lifecycle/adapters.v1.json`, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/151
+- **Acceptance gate:** Pi registered in `adapters.v1.json` without redesigning shared contract; `Inspect/Apply/Remove` parity via lifecycle module, state under `%ProgramData%\AgentSwitchboard\bootstrap-lifecycle\pi`, preserves credentials/settings/sessions, fails closed on drift, recovers interrupted Remove
 - **Gate:** none
-- **Last proof:** merge:1f20499d5771456c9ce88da67eced345899928fa placed Pi bootstrap on main, but current lifecycle registry still contains only the OpenCode reference adapter, so Pi lifecycle parity is not yet proven
-- **Next action:** implement Pi lifecycle parity from current main in an isolated worktree and validate against the shared lifecycle contract
-- **Updated:** 2026-09-12T22:56:50Z
+- **Last proof:** merge:1f20499 Pi after P13 guard sync; merge:85ecf77 child bus v1 on main; Pi lifecycle already on main, child bus now DONE
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-12T22:45:00Z
 
 ## ASQ-007 — Shared ASB child bus v1 contract spine
 
@@ -122,100 +122,100 @@ Canonical terminal action: none; no safe actionable work remains
 - **Work class:** BOUNDED
 - **Owner:** Panel 04 shared child-bus lane
 - **Branch / PR:** main
-- **Scope:** provider-neutral `tooling/harness/child-agent-bus/` with request/result/error schemas, adapter registry, artifact registry, fixture validation and generic `Invoke-AgentSwitchboardChild` front door
-- **Forbidden:** Pi/OpenCode CLI invocation details, provider calls, credentials, actual child runtime, Pi fusion product logic, direct pairwise agent config, system-bootstrap lifecycle mutation, default-branch child writers
+- **Scope:** create provider-neutral `tooling/harness/child-agent-bus/` with `child-agent-request.v1`, `child-agent-result.v1`, `child-agent-error.v1`, adapter registry, artifact registry, fixtures, validator, generic `Invoke-AgentSwitchboardChild` front door, docs, CI, capabilities `agent.child.dispatch` etc.
+- **Forbidden:** Pi/OpenCode CLI invocation, provider calls, credentials, actual child runtime, Pi fusion product logic, direct agent-to-agent pairwise config, system-bootstrap lifecycle mutation, default-branch child writers
 - **Dependencies:** ASQ-004
-- **References:** `tooling/harness/child-agent-bus/`, `scripts/Test-ChildAgentBus.ps1`, `merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53`
-- **Acceptance gate:** provider-neutral request/result/error schemas and dispatcher are integrated; absent adapters fail closed; child-bus contract validation is on current main
+- **References:** `AGENTS.md`, `CODEBASE_MAP.md`, `.ai/harness/manifest.json`, `docs/governance/harness-doctrine.md`, `tooling/harness/child-agent-bus/`
+- **Acceptance gate:** closed schemas with invocationId/lineage/authority/budgets/evidence root, generic dispatcher fails closed when adapter absent, validator + fixture matrix (read-only, isolated writer, dirty/default-branch/base-SHA mismatch, budget exceeded etc.) green, hub-and-spoke `parent → ASB → adapter → child` enforced
 - **Gate:** none
-- **Last proof:** merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53 merged child bus v1 onto main; artifact:tooling/harness/child-agent-bus/ artifact:scripts/Test-ChildAgentBus.ps1
-- **Next action:** none; no safe actionable work remains for the shared-spine task itself
-- **Updated:** 2026-09-12T22:56:50Z
+- **Last proof:** merge:85ecf77 child bus v1 on main; Pi lifecycle already on main, child bus now DONE
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-12T22:45:00Z
 
 ## ASQ-008 — Pi child adapter conformance
 
 - **Status:** BLOCKED
 - **Priority:** P1
 - **Work class:** BOUNDED
-- **Owner:** Panel 05 Pi adapter lane
+- **Owner:** frozen by ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME
 - **Branch / PR:** main
-- **Scope:** migrate the current merged Pi-private child execution behind the provider-neutral shared bus: register Pi adapter, retain launch/event/cancellation translation, read-only and isolated writer paths, and rewire Pi orchestration guidance
-- **Forbidden:** redefining common request/result fields, redefining lifecycle, OpenCode adapter, direct pairwise agent calls, persistent RPC, provider fallback, main/default-branch child writer
-- **Dependencies:** ASQ-006, ASQ-007
-- **References:** `tooling/pi/Invoke-AgentSwitchboardPiChild.ps1`, `tooling/pi/harness/child-agent-invocation.contract.json`, `tooling/pi/harness/`, `tooling/harness/child-agent-bus/`
-- **Acceptance gate:** Pi conforms to the shared bus, resolves only the ASB-managed runtime, preserves read-only/isolation guards, requires terminal `agent_end`, and obeys common budgets/evidence uniqueness
-- **Gate:** ASQ-006 is not yet DONE — Pi lifecycle parity must be on main; ASQ-007 is satisfied by merge 85ecf77bd1eb94d296ce015aee72dd783dd63b53
-- **Last proof:** merge:1f20499d5771456c9ce88da67eced345899928fa supplies the current private Pi child seam; merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53 supplies the common bus
-- **Next action:** after ASQ-006 completes, map the merged Pi-private fields to the common bus in an isolated lane
-- **Updated:** 2026-09-12T22:56:50Z
+- **Scope:** historically: migrate Pi child-execution behind shared bus. Architecture decision FREEZES ASB live Pi child-bus adapter implementation; Pi live child runtime hands off to FirstMate harness adapters. Pi system bootstrap and experimental pi-fusion-orchestration remain separately owned.
+- **Forbidden:** implementing ASB Pi child-bus adapter launchers; redefining common request/result fields to invent a second crew runtime; pairwise Pi↔OpenCode calls; persistent RPC; provider fallback; main/default-branch child writer
+- **Dependencies:** ASQ-014
+- **References:** `docs/architecture/asb-firstmate-runtime-boundary.md`, `tooling/harness/child-agent-bus/`, `plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json`
+- **Acceptance gate:** remain frozen until an explicit superseding architecture revision reopens ASB-owned live child adapters; no adapter registry mutation for Pi launch
+- **Gate:** FREEZE — FirstMate is canonical crew runtime; do not implement Panel 05 as ASB live launcher
+- **Last proof:** artifact:docs/architecture/asb-firstmate-runtime-boundary.md disposition FREEZE/HAND-OFF; child-bus `adapters: []` on main@e76ba4b
+- **Next action:** none; no safe actionable work remains under frozen scope — route crew runtime through ASQ-015 FirstMate interop
+- **Updated:** 2026-09-13T17:30:00Z
 
 ## ASQ-009 — OpenCode child adapter parity
 
-- **Status:** READY
+- **Status:** BLOCKED
 - **Priority:** P1
 - **Work class:** BOUNDED
-- **Owner:** Panel 06 OpenCode adapter lane
+- **Owner:** frozen by ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME
 - **Branch / PR:** main
-- **Scope:** add OpenCode as the second shared-bus adapter using the managed OpenCode runtime and the same common conformance contract
-- **Forbidden:** OpenCode LSP harness redesign, Pi adapter, common schema semantic changes unless a provider-neutral defect is proven, pairwise agent config, global config mutation, provider fallback
-- **Dependencies:** ASQ-007
-- **References:** `tooling/harness/child-agent-bus/`, `tooling/profiles/windows/Install-AgentSwitchboardOpenCode.ps1`, `merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53`
-- **Acceptance gate:** OpenCode consumes the same request and produces the same result/error envelopes as the common bus; exact managed runtime identity; no arbitrary PATH fallback
-- **Gate:** none — ASQ-007 is DONE on current main
-- **Last proof:** merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53 satisfies the shared-bus dependency; adapter registry still has no OpenCode adapter
-- **Next action:** implement OpenCode adapter parity from current main against the shared bus contract
-- **Updated:** 2026-09-12T22:56:50Z
+- **Scope:** historically: OpenCode as second bus adapter. Architecture decision FREEZES ASB OpenCode child-bus adapter implementation; live child runtime hands off to FirstMate.
+- **Forbidden:** implementing ASB OpenCode child-bus adapters; OpenCode LSP harness redesign; pairwise Pi/OpenCode config; global OPENCODE_CONFIG mutation; provider fallback
+- **Dependencies:** ASQ-014
+- **References:** `docs/architecture/asb-firstmate-runtime-boundary.md`, `tooling/harness/child-agent-bus/`
+- **Acceptance gate:** remain frozen until an explicit superseding architecture revision; no OpenCode adapter registry entry for ASB live launch
+- **Gate:** FREEZE — FirstMate is canonical crew runtime; do not implement Panel 06 as ASB live launcher
+- **Last proof:** artifact:docs/architecture/asb-firstmate-runtime-boundary.md disposition FREEZE
+- **Next action:** none; no safe actionable work remains under frozen scope — route crew runtime through ASQ-015
+- **Updated:** 2026-09-13T17:30:00Z
 
 ## ASQ-010 — Heterogeneous read-only pilot (Pi + OpenCode)
 
 - **Status:** BLOCKED
 - **Priority:** P2
 - **Work class:** BOUNDED
-- **Owner:** Panel 07 runtime pilot lane
+- **Owner:** frozen/repurposed by ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME
 - **Branch / PR:** main
-- **Scope:** first real shared-bus session with Pi and OpenCode together, zero writers, distinct invocation IDs/evidence roots, budgets, and repository before/after identity
-- **Forbidden:** repository mutation, writer tools, provider/model fallback, credentials in artifacts, direct cross-agent spawning, persistent RPC, nested delegation
-- **Dependencies:** ASQ-008, ASQ-009
-- **References:** `tooling/harness/child-agent-bus/`, `tooling/pi/harness/`
-- **Acceptance gate:** Pi architect + OpenCode validator dispatched through ASB, terminal completion required, repository unchanged, coordinator rejoin records consensus/divergence
-- **Gate:** ASQ-008 and ASQ-009 are not yet DONE — both adapters must conform
-- **Last proof:** common bus dependency is integrated at 85ecf77bd1eb94d296ce015aee72dd783dd63b53; adapter runtime proof remains absent
-- **Next action:** after both adapters complete, build two independent read-only packets through the common ASB front door
-- **Updated:** 2026-09-12T22:56:50Z
+- **Scope:** historically: ASB child-bus Pi+OpenCode fan-out. FREEZE ASB dual-adapter pilot; REPURPOSE any heterogeneous crew pilot through FirstMate after ASQ-015 interop floor.
+- **Forbidden:** ASB bus dual-adapter fan-out implementation; repository mutation via ASB nested children; direct Pi↔OpenCode spawning; persistent RPC
+- **Dependencies:** ASQ-014, ASQ-015
+- **References:** `docs/architecture/asb-firstmate-runtime-boundary.md`, `tooling/harness/child-agent-bus/`
+- **Acceptance gate:** no ASB child-bus heterogeneous pilot proceeds; future FirstMate crew pilot requires refreshed interop floor and explicit local-only posture
+- **Gate:** FREEZE/REPURPOSE — do not implement Panel 07 on the ASB child-bus spine
+- **Last proof:** artifact:docs/architecture/asb-firstmate-runtime-boundary.md disposition FREEZE/REPURPOSE
+- **Next action:** none; no safe actionable work remains under frozen ASB-bus scope — after ASQ-015, open a FirstMate-routed crew pilot task if needed
+- **Updated:** 2026-09-13T17:30:00Z
 
 ## ASQ-011 — Mediated nested delegation v1 (maxDepth 2)
 
 - **Status:** BLOCKED
 - **Priority:** P2
 - **Work class:** BOUNDED
-- **Owner:** Panel 08 shared bus lane
+- **Owner:** retired as ASB live nested bus; FirstMate flat crew/secondmates cover parallelism
 - **Branch / PR:** main
-- **Scope:** add bounded child→ASB→grandchild delegation with lineage, budget inheritance, cancellation cascade, maxDepth=2, maxChildrenPerInvocation=3 and one writer globally
-- **Forbidden:** direct cross-agent subprocesses, unlimited recursion, multiple concurrent writers, child merge/push, automatic retries, silent fallback, persistent RPC
-- **Dependencies:** ASQ-010
-- **References:** `tooling/harness/child-agent-bus/`
-- **Acceptance gate:** authority only narrows downward; maxDepth=2; maxChildrenPerInvocation=3; maxConcurrentWriters=1; attempts=1; no fallback; deterministic scope/budget/cancellation fixtures green
-- **Gate:** ASQ-010 is not yet DONE — heterogeneous pilot must PASS
-- **Last proof:** none
-- **Next action:** after the pilot passes, implement nested lineage/budget inheritance with deterministic fixtures
-- **Updated:** 2026-09-12T22:56:50Z
+- **Scope:** historically: ASB child→ASB→grandchild nested bus. RETIRE ASB nested live program. FirstMate secondmates are flat direct reports and do not implement ASB maxDepth lineage; any future lineage guarantee is POLICY-INPUT/bridge only.
+- **Forbidden:** implementing ASB nested bus runtime; direct Pi↔OpenCode subprocess; unlimited recursion; multiple concurrent writers; child merge/push; automatic retries; silent fallback; persistent RPC
+- **Dependencies:** ASQ-014
+- **References:** `docs/architecture/asb-firstmate-runtime-boundary.md`
+- **Acceptance gate:** ASB nested bus remains unimplemented; FirstMate owns nesting/secondmates unless a superseding ADR proves an ASB-only guarantee
+- **Gate:** RETIRE/FREEZE — do not implement Panel 08 on the ASB child-bus spine; do not treat FirstMate as an ASB nested-bus clone
+- **Last proof:** artifact:docs/architecture/asb-firstmate-runtime-boundary.md disposition RETIRE (ASB live) + POLICY-INPUT residue; FirstMate flat secondmates at b182d0f
+- **Next action:** none; no safe actionable work remains under retired ASB nested-bus scope
+- **Updated:** 2026-09-13T17:30:00Z
 
 ## ASQ-012 — Nested runtime certification (depth-2 chain)
 
 - **Status:** BLOCKED
 - **Priority:** P2
 - **Work class:** BOUNDED
-- **Owner:** Panel 09 runtime certification lane
+- **Owner:** retired as ASB live nested certification; route crew runtime proofs through FirstMate after ASQ-015
 - **Branch / PR:** main
-- **Scope:** prove one bounded heterogeneous depth-2 chain with lineage, inherited budgets, independent evidence roots, terminal propagation and unchanged repository state
-- **Forbidden:** writer children, depth>2, more than 3 children per invocation, direct cross-agent subprocess, automatic retries/fallback, persistent RPC, repository mutation, secrets
-- **Dependencies:** ASQ-011
-- **References:** `tooling/harness/child-agent-bus/`
-- **Acceptance gate:** parent/root lineage proven; grandchild scope <= child <= root; budgets narrowed; independent evidence roots; terminal propagation; repository unchanged
-- **Gate:** ASQ-011 is not yet DONE — nested delegation contract must be on main
-- **Last proof:** none
-- **Next action:** after ASQ-011 completes, submit one bounded read-only depth-2 request through ASB
-- **Updated:** 2026-09-12T22:56:50Z
+- **Scope:** historically: ASB depth-2 heterogeneous child-bus certification. RETIRE ASB-owned nested bus certification program. Future depth/parallelism proofs use FirstMate flat crew after interop floor.
+- **Forbidden:** ASB depth-2 child-bus certification implementation; writer children via ASB bus; direct cross-agent subprocess; automatic retries/fallback; persistent RPC; repository mutation; secrets
+- **Dependencies:** ASQ-014
+- **References:** `docs/architecture/asb-firstmate-runtime-boundary.md`
+- **Acceptance gate:** ASB nested runtime certification program remains frozen; any depth-2 crew proof uses FirstMate after ASQ-015
+- **Gate:** RETIRE/FREEZE — do not implement Panel 09 as ASB-owned live nested bus certification
+- **Last proof:** artifact:docs/architecture/asb-firstmate-runtime-boundary.md disposition RETIRE (ASB live nested certification)
+- **Next action:** none; no safe actionable work remains under retired ASB nested-bus scope
+- **Updated:** 2026-09-13T17:30:00Z
 
 ## ASQ-013 — PR/path authority cleanup and final convergence
 
@@ -224,12 +224,148 @@ Canonical terminal action: none; no safe actionable work remains
 - **Work class:** BOUNDED
 - **Owner:** Panel 10 convergence lane
 - **Branch / PR:** main
-- **Scope:** reconcile merged PR #151 behavior into the reversible lifecycle/shared-bus successors, reconcile merged PR #149 path authority with the current operator workflow without history rewrite, prove PR #115 superseded before closing it, then close the September plan/work ledger to terminal states
-- **Forbidden:** closing unrelated PRs, deleting preserved worktrees without proof, force operations, rewriting merged history, deleting preserved noncanonical checkouts, new feature implementation, lowering proof gates
-- **Dependencies:** ASQ-005, ASQ-006, ASQ-007, ASQ-008, ASQ-009, ASQ-010, ASQ-011, ASQ-012
-- **References:** `plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json`, `.ai/WORK_QUEUE.md`, `merge:1f20499d5771456c9ce88da67eced345899928fa`, `merge:3b47a9129730bc8fc3c988f8cbc6ec2fbfa515d8`, `merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53`, `PR #115`, `tooling/harness/system-bootstrap-lifecycle/`
-- **Acceptance gate:** Pi lifecycle + shared-bus successors cover the intended merged #151 behavior; #149 path-authority behavior is reconciled without destructive path changes; #115 old LSP owner is closed only after current-main containment proof; September plan/ledger terminal states have ancestor checks
-- **Gate:** ASQ-005, ASQ-006, ASQ-008, ASQ-009, ASQ-010, ASQ-011, and ASQ-012 are not all DONE — implementation/runtime successors remain; ASQ-007 is already DONE
-- **Last proof:** merge:1f20499d5771456c9ce88da67eced345899928fa PR #151; merge:3b47a9129730bc8fc3c988f8cbc6ec2fbfa515d8 PR #149; merge:85ecf77bd1eb94d296ce015aee72dd783dd63b53 child bus v1; PR #115 remains open at 39fd59df15857127ace8814ef03eabbd7b4d53c7
-- **Next action:** after the remaining dependencies are dispositioned, prove successor containment and PR #115 supersession, then close the September coordination program
-- **Updated:** 2026-09-12T22:56:50Z
+- **Scope:** reconcile superseded PR #151 Pi mixed, #115 stale LSP harness, #149 draft path authority; close/supersede with containment proof after successors integrated; close September plan/work-ledger to terminal states. Dependencies narrowed by FirstMate ADR: no longer waits on ASQ-008..012 live runtime.
+- **Forbidden:** closing unrelated PRs, deleting worktrees without proof, force operations, silently invalidating explicit operator OneDrive path, new feature implementation, lowering proof gates, reopening frozen ASQ-008..012 as ASB live runtime
+- **Dependencies:** ASQ-005, ASQ-006, ASQ-007, ASQ-014
+- **References:** `plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json`, `docs/architecture/asb-firstmate-runtime-boundary.md`, `.ai/WORK_QUEUE.md`, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/151, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/115, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/149
+- **Acceptance gate:** PR #151/#115/#149 dispositioned only with successor containment proof; frozen ASQ-008..012 remain skipped/blocked rather than silently reopened; September plan terminal only when remaining proceed gates are satisfied
+- **Gate:** ASQ-005 still required for LSP certification; ASQ-014 ADR must be on main
+- **Last proof:** none
+- **Next action:** after ASQ-014 integrates and ASQ-005 completes or is explicitly waived, refresh main and PRs #151/#115/#149, prove containment, then close as superseded with successor references
+- **Updated:** 2026-09-13T17:30:00Z
+
+## ASQ-014 — Accept FirstMate canonical crew-runtime boundary
+
+- **Status:** DONE
+- **Priority:** P0
+- **Work class:** BOUNDED
+- **Owner:** P95 architecture lane
+- **Branch / PR:** main / #164 merged
+- **Scope:** persist accepted architecture decision that FirstMate is the canonical live crew runtime; ownership matrix; subtraction analysis; KEEP/NARROW/HAND-OFF/RETIRE dispositions; revise September plan and freeze ASQ-008..012
+- **Forbidden:** implementing adapters; deleting GNHF or child-bus; Prompt Kit FirstMate bridge; README rewrite; claiming live FirstMate crew proof
+- **Dependencies:** ASQ-004, ASQ-007
+- **References:** `docs/architecture/asb-firstmate-runtime-boundary.md`, `plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json`, `plans/active/ASB-2026-09-agent-bootstrap-child-bus.md`, https://github.com/kunchenguid/firstmate, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/96
+- **Acceptance gate:** ADR committed with matrix/subtraction/dispositions; September plan tasks updated; ledger FREEZE/PROCEED states recorded; public-plan and work-ledger validators pass
+- **Gate:** none
+- **Last proof:** merge:3a1aa4fb4c700af251a7e94cbbcccf3cb5fb0016 artifact:docs/architecture/asb-firstmate-runtime-boundary.md artifact:plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-13T17:30:00Z
+
+## ASQ-015 — Refresh FirstMate interop floor to b182d0f
+
+- **Status:** DONE
+- **Priority:** P0
+- **Work class:** BOUNDED
+- **Owner:** Cursor Cloud Agent cursor/asq-015-firstmate-interop-refresh-11b8
+- **Branch / PR:** merged #308 / faac296d4b8e292d3ed22893155162d7e17d7a57
+- **Scope:** rebase/refresh AgentSwitchboard FirstMate interop harness (PR #96 lineage) onto current main; update upstream pin from 833a9a25… to FirstMate main@b182d0f908b78d08c7ccb8dce3775bdca8c5d657; preserve Windows→WSL anti-regression contracts; keep first_safe_sprint local-only and yolo_enabled false; wire validation hooks into operational manifest
+- **Forbidden:** FirstMate upstream mutation; enabling +yolo; claiming live crew dispatch without runtime floor; native-Windows FirstMate compatibility claim; deleting GNHF; unfreezing ASQ-008..012; reviving stale crew orchestration skill/selector
+- **Dependencies:** ASQ-014
+- **References:** `docs/architecture/asb-firstmate-runtime-boundary.md`, `plans/active/ASB-2026-09-agent-bootstrap-child-bus.plan.json`, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/96, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/308, https://github.com/kunchenguid/firstmate
+- **Acceptance gate:** refreshed verified_commit pin; contract tests green; Windows bridge regressions preserved; hooks wired into manifest; proof ceiling remains below live crew unless physical floor passes
+- **Gate:** none
+- **Last proof:** PRODUCT_PASS_LOCAL_POSTURE PROVEN on tip 9ee6f8d; merge:faac296; hooks+manifest+tests+docs landed; pin b182d0f; rebaseRequiredBeforePr96StackMerge remains true
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-17T21:35:00Z
+
+## ASQ-016 — Encode GNHF NARROW ownership boundary
+
+- **Status:** DONE
+- **Priority:** P1
+- **Work class:** BOUNDED
+- **Owner:** GNHF contract lane
+- **Branch / PR:** main / #300 merged
+- **Scope:** document and enforce that tooling/gnhf remains the Windows-first bounded single-agent/fleet launcher with unique readiness contracts, and must not expand into a multi-crew control plane competing with FirstMate; no launcher deletion
+- **Forbidden:** deleting GNHF; implementing multi-crew supervision inside GNHF; unfreezing child-bus adapters; provider credential commits; force-merge past red CI
+- **Dependencies:** ASQ-014
+- **References:** `docs/architecture/asb-firstmate-runtime-boundary.md`, `tooling/gnhf/README.md`, `tooling/gnhf/Start-GnhfSprint.ps1`
+- **Acceptance gate:** README or owning contract states NARROW boundary explicitly; optional validator asserts no crew-runtime claim language; launchers remain intact; static validators and required CI pass before merge
+- **Gate:** none
+- **Last proof:** merge:ba19f7c pr:#300; artifact:tooling/gnhf/README.md Ownership boundary section citing ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME; artifact:tests/test_gnhf_narrow_ownership_contract.py unittest with 13 contract assertions; artifact:scripts/Test-GnhfNarrowOwnershipContract.ps1 PowerShell validator; main@ba19f7c contains preservation commits f71f19a+a8d5118 cherry-picked from original branch
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-17T20:00:00Z
+
+## ASQ-017 — FM-WSL-12 physical-floor-continue live runtime proof
+
+- **Status:** READY
+- **Priority:** P0
+- **Work class:** BOUNDED
+- **Owner:** Windows Admin Box operator / runtime-proof lane
+- **Branch / PR:** main (durable Admin Box floor entrypoint integrated via #183); live observation pending Admin Box
+- **Scope:** prove FM-WSL-12 physical WSL/Ubuntu floor through harness `-Mode physical-floor-continue` on an authorized Windows Admin Box with explicit `Ubuntu`; allowlisted missing packages may be repaired and the floor rerun without another permission round-trip; stop for `BLOCKED_GITHUB_AUTH` only as the credential gate; exercise report-only `-Mode physical-floor` as the protected control in the same session when safe
+- **Forbidden:** claiming LIVE PASS from cloud/Linux/contract/CI; automating GitHub credential entry; broadening package allowlist; ASQ-008/009 unfreeze; FirstMate crew dispatch claims (`FM-CREW-13`); committing local receipts/tokens/machine paths
+- **Dependencies:** FM-BRIDGE-10 / PR #177 bounded repair authority; PR #178 continuation entrypoint on main; PR #183 durable `Invoke-Asq017AdminBoxLiveFloor.ps1` on main; PR #189 Admin Box `NEXT=` surface + passwordless-sudo preflight on main; PR #192 apt-scoped sudo probe + exit 47 BLOCKED_SUDO propagation on main; PR #194 primary-harness early preflight exit 48 + child `NEXT=` preservation on main; PR #196 FirstMate dirty/pin early preflight exits 49/50 on main; PR #198 `-FirstMatePath` physical-floor dirty/pin override (skips `$HOME/firstmate`) on main; PR #200 skip dirty/off-pin FirstMate auto-discovery (bounded $HOME/firstmate bootstrap) on main; PR #207 surface exit 44 BLOCKED_MISSING_TOOLS on Asq017/continuation after exhausted/failed bounded apt repair on main; PR #211 structure bridge bootstrap/contract exits 51/52 + late interop 45/48 on main; PR #213 PhysicalFloor FirstMate pin loaded from `tooling/firstmate/harness/upstream-pin.json` on main; PR #215 Asq017/oneshot exit-50 NEXT pin loaded from `tooling/firstmate/harness/upstream-pin.json` on main; PR #217 Asq017 reloads FirstMate pin after ff-only git refresh before exit-50 NEXT on main; PR #219 Asq017 prefers child NEXT= over parent fallbacks and ASQ-017 paste loads exit-50 pin from upstream-pin.json on main; PR #221 physical-floor runbook exit-50 paste/table load pin from upstream-pin.json on main; PR #223 behavioral Asq017 NEXT-helper + pin-loader gate proof on main; PR #225 PhysicalFloor prerequisite timeout / head-mismatch structured STATUS+NEXT (no throw) on main; PR #227 bridge Exact-head mismatch / missing wsl.exe structured STATUS+NEXT (no throw) on main; PR #229 oneshot Exact-head mismatch / harness-timeout structured STATUS+NEXT (no throw) on main; PR #231 Asq017 git-refresh / HEAD-resolve structured STATUS+NEXT (no throw) on main; PR #233 oneshot WSL-distribution / HEAD / harness-start structured STATUS+NEXT (no throw) on main; PR #235 PhysicalFloor WSL-distribution / HEAD / FirstMate-pin structured STATUS+NEXT (no throw) on main; PR #237 bridge WSL-distribution / start / source-tree structured STATUS+NEXT (no throw) on main; PR #239 continuation WSL-distribution / start / HEAD structured STATUS+NEXT (no throw) on main; PR #241 PhysicalFloor process-start structured STATUS+NEXT (no throw) on main; PR #243 continuation missing/non-allowlisted NEXT_ACTION structured STATUS+NEXT (no throw) on main; PR #245 bridge git Assert-LastExit failures structured STATUS+NEXT (no throw) on main; PR #247 bridge WSL workspace-cleanup structured STATUS+NEXT (no throw) on main; PR #250 structure Asq017/oneshot harness-start + FirstMate-pin and bridge/PhysicalFloor prerequisite-timeout STATUS+NEXT (no throw) on main; PR #252 emit parent STATUS= on Asq017 blockers + oneshot structured fail STATUS + continuation sudo/apt hang exits keep 124 (STATUS=BLOCKED_PREREQUISITE_TIMEOUT) on main; PR #254 surface Asq017/parent paste/runbook exit 124 as STATUS=BLOCKED_PREREQUISITE_TIMEOUT (no generic FAILED collapse) on main; PR #257 structure Asq017 -ContractOnly failure as STATUS=CONTRACT_FAIL (no throw) on main; PR #259 map oneshot contract/continue child exit 124 to STATUS=BLOCKED_PREREQUISITE_TIMEOUT (not harness-contract/generic continue-fail) on main; PR #262 map oneshot protected-control child exit 124 to STATUS=BLOCKED_PREREQUISITE_TIMEOUT (not BLOCKED_PROTECTED_CONTROL) on main; PR #264 structure continuation exit→STATUS recovery (46–52/124) and STATUS=BLOCKED_CONTINUATION_EXHAUSTED fallthrough on main; PR #266 preserve child STATUS=BLOCKED_* through oneshot/Asq017 (incl. CONTINUATION_EXHAUSTED) on main; PR #268 Admin Box paste/runbook exit-1 STATUS guidance on main; PR #270 tip-cite ContractOnly+exit46 on 4e884b1 after #268 on main; PR #269 FM→ASB observation disposable-home cite on main; PR #271 tip-cite ContractOnly+exit46 on 4258ac2 after #269/#270 on main; PR #272 tip-cite ContractOnly+exit46 on 4b26814 after #271 on main; PR #274 Invoke-*/Test-* early wiring→BLOCKED_HARNESS_CONTRACT/52; PR #275 Harness preserve child exits; PR #276 Harness Python check deferred to contract mode/52 on main
+- **References:** `docs/harness/firstmate-wsl-physical-floor-runbook.md`, `Invoke-Asq017AdminBoxLiveFloor.ps1`, `Invoke-FmWsl12AdminBoxLiveProof.ps1`, `Invoke-FirstMatePhysicalFloorContinuation.ps1`, `Test-AgentSwitchboard-FirstMate-Harness.ps1`, `plans/active/ASB-2026-09-multi-product-bootstrap-charter.plan.json`, `tooling/firstmate/harness/integration-contract.json`
+- **Acceptance gate:** Admin Box run reaches physical-floor PASS markers with exact-head readback and evidence root, or stops at `BLOCKED_MISSING_TOOLS` after exhausted bounded repair, or at `BLOCKED_WSL_BOOTSTRAP` / `BLOCKED_HARNESS_CONTRACT`, or at a real non-package blocker (`BLOCKED_GITHUB_AUTH` / `BLOCKED_SUDO` / `BLOCKED_PRIMARY_HARNESS` / `BLOCKED_FIRSTMATE_DIRTY` / `BLOCKED_FIRSTMATE_PIN` / transport) with preserved evidence; cloud hosts must emit `STATUS=BLOCKED_WINDOWS_WSL_REQUIRED` exit 46 rather than unstructured crash
+- **Gate:** authorized Windows Admin Box with `wsl.exe` + explicit `Ubuntu`; operator `gh auth`, passwordless apt sudo, one primary harness on non-interactive PATH, and clean FirstMate pin at `$HOME/firstmate` (or `-FirstMatePath`, which skips dirty/pin checks on `$HOME/firstmate`) when required
+- **Last proof:** PrerequisiteTimeoutSeconds default 180 encode (Asq017/oneshot/harness/PhysicalFloor/continuation + ASQ-017 paste/runbook) for Admin Box cold WSL probes 39-67s+ after #278 honor path; cloud ContractOnly PASS + live exit 46 STATUS=BLOCKED_WINDOWS_WSL_REQUIRED on tip `4168ae1` parent; workers=0; LIVE_RUNTIME_PROOF:UNPROVEN — Admin Box reached BLOCKED_GITHUB_AUTH/45 (operator gh auth), not physical PASS
+- **Next action:** run Admin Box FM-WSL-12 live floor via durable entrypoint (no interactive `exit`): `$ErrorActionPreference='Stop'; if (-not (Test-Path -LiteralPath .\Invoke-Asq017AdminBoxLiveFloor.ps1)) { throw 'Run from AgentSwitchboard checkout root (Invoke-Asq017AdminBoxLiveFloor.ps1 missing).' }; pwsh -NoLogo -NoProfile -File .\Invoke-Asq017AdminBoxLiveFloor.ps1 -PrerequisiteTimeoutSeconds 180; $childExit=$LASTEXITCODE; Write-Host "CHILD_EXIT_CODE=$childExit"; if ($childExit -eq 44) { throw 'BLOCKED_MISSING_TOOLS — install allowlisted missing tools via printed NEXT_ACTION=/NEXT= (or clear apt/dpkg blocker after exhausted bounded repair), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1' }; if ($childExit -eq 45) { throw 'BLOCKED_GITHUB_AUTH — complete gh auth login inside Ubuntu then rerun Invoke-Asq017AdminBoxLiveFloor.ps1' }; if ($childExit -eq 47) { throw 'BLOCKED_SUDO — enable passwordless sudo for apt-get in Ubuntu (sudo -n apt-get --version must succeed), then rerun Invoke-Asq017AdminBoxLiveFloor.ps1' }; if ($childExit -eq 48) { throw 'BLOCKED_PRIMARY_HARNESS — install one primary harness on PATH inside Ubuntu visible to non-interactive bash -lc (claude|grok|pi|pi-signed|omp|codex|opencode|cursor-agent), then rerun' }; if ($childExit -eq 49) { throw 'BLOCKED_FIRSTMATE_DIRTY — commit/stash/move dirty work in $HOME/firstmate (or the -FirstMatePath override), or remove $HOME/firstmate so bounded bootstrap can run, then rerun' }; if ($childExit -eq 50) { $pin=(Get-Content -LiteralPath .\tooling\firstmate\harness\upstream-pin.json -Raw | ConvertFrom-Json).commit; throw "BLOCKED_FIRSTMATE_PIN — in `$HOME/firstmate (or -FirstMatePath) run: git fetch --all && git checkout $pin, or remove that path / pass -FirstMatePath to a clean audited checkout, then rerun" }; if ($childExit -eq 51) { throw 'BLOCKED_WSL_BOOTSTRAP — inspect WSL diagnostics/bootstrap stdout; repair exact-head WSL clone/source-repo access, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1' }; if ($childExit -eq 52) { throw 'BLOCKED_HARNESS_CONTRACT — inspect evidence root; repair FirstMate harness contract failure inside Ubuntu, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1' }; if ($childExit -eq 124) { throw 'BLOCKED_PREREQUISITE_TIMEOUT — repair hung WSL/sudo/apt prerequisite or increase host capacity, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1; a prerequisite step timed out' }; if ($childExit -eq 1) { throw 'Inspect STATUS=/NEXT= from child console (may be BLOCKED_CONTINUATION_EXHAUSTED or other BLOCKED_* preserved via oneshot/Asq017); repair that blocker, then rerun Invoke-Asq017AdminBoxLiveFloor.ps1' }; if ($childExit -ne 0) { throw "ASQ-017 Admin Box live floor failed with exit $childExit" }`
+- **Updated:** 2026-09-15T01:43:36Z
+
+## ASQ-018 — Deterministic automated test floor bootstrap
+
+- **Status:** DONE
+- **Priority:** P1
+- **Work class:** BOUNDED
+- **Owner:** Cursor Auto / automated-test-floor lane
+- **Branch / PR:** main / #290 + #291 merged
+- **Scope:** FLOOR-01..04 fail-closed floor bootstrap via PR #290 @ main`7effd42`; FLOOR-05 Actions-quota local proof packet + receipt provenance + quota-aware workflow triggers via PR #291 @ main`3c5cca9`
+- **Forbidden:** merge/release/deploy automation (P105); secrets; live runtime mutation; rewriting unrelated path-filtered domain workflows; claiming runtime proof from static PASS; cron schedule without explicit operator preference; patching production gates for canary; committing ephemeral receipts
+- **Dependencies:** none
+- **References:** `plans/active/ASB-2026-09-automated-test-floor.plan.json`, `.ai/harness/automated-test-floor.manifest.json`, `scripts/Test-AutomatedTestFloor.ps1`, `scripts/Prove-AutomatedTestFloorLocal.ps1`, `docs/harness/automated-test-floor.md`, `.github/workflows/automated-test-floor.yml`, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/290, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/291
+- **Acceptance gate:** local meta + floor PASS; Prove-AutomatedTestFloorLocal PASS; isolated canary fails closed without production-gate mutation; provenance receipts; FLOOR-05 integrated into main
+- **Gate:** none
+- **Last proof:** merge:7effd421060241d8a0e76e007be052064b5da677 pr:#290; merge:3c5cca988072efbd69969cfe33d3fec18e120bcc pr:#291; merge:1f8c32addd53b598ff0f18e3c4b23796cb8d1f3d pr:#292; canary FAIL workflow:34931598102 @dcecfd4; restore PASS workflow:34932484309 @40d46a4; floor PASS workflow:34938435764 @aa7a3b7; Prove-AutomatedTestFloorLocal PASS on main@3c5cca9
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-15T07:20:00Z
+
+## ASQ-019 — Rank user tutorial paths after FirstMate crew handoff
+
+- **Status:** DONE
+- **Priority:** P1
+- **Work class:** BOUNDED
+- **Owner:** Cursor Auto / user-tutorial-ranking lane
+- **Branch / PR:** main / #294 merged
+- **Scope:** inventory implemented operator journeys; classify readiness; publish durable ranked launch order and disposition ledger in `plans/active/ASB-2026-09-user-tutorial-path-ranking.*`; register plan; leave TUT-01 as first P18 writing sprint; do not author every tutorial in this item
+- **Forbidden:** teaching ASB child-bus spawn/nested crew as current product; Open Worker claims without repo evidence; claiming FM-WSL-12 or live-cert PASS from ranking; secrets/private paths in public plans; unfreezing ASQ-008..012; writing full tutorial corpus in this claim
+- **Dependencies:** ASQ-014 ADR on main; existing workstation docs and root CMD entrypoints
+- **References:** `plans/active/ASB-2026-09-user-tutorial-path-ranking.plan.json`, `plans/active/ASB-2026-09-user-tutorial-path-ranking.md`, `docs/architecture/asb-firstmate-runtime-boundary.md`, `docs/workstation/technician-pull-and-run.md`, `docs/workstation/technician-agentswitchboard-ready.md`, `docs/workstation/opencode-click-launcher.md`, https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/294
+- **Acceptance gate:** schema-valid public plan + registry membership; disposition ledger complete; launch order names TUT-01 first; validators PASS; ranking integrated to main
+- **Gate:** none
+- **Last proof:** merge:fd9ace5ab10644b887a41b48e6ac7183e3ed1257 pr:#294; contains tip d9f9ddb942437804387f80b21693fd38d77a5caf; inventory floor main@3a153c11f9db9cacc1d9d9dda8c7358c0e3ecbf0; Open Worker grep zero matches; Test-PublicPlanContracts PASS; Test-RepositoryWorkLedgerContract PASS
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-15T16:55:00Z
+
+## ASQ-020 — Local merge-gate proof orchestration
+
+- **Status:** DONE
+- **Priority:** P2
+- **Work class:** BOUNDED
+- **Owner:** Cursor Cloud Agent / merge-gate-local implementation
+- **Branch / PR:** main / #301 merged
+- **Scope:** add the smallest durable AgentSwitchboard change that gives operators one local CLI to emanate/emulate merge-relevant GitHub Actions gates, preserving real app/host validators (not gate-gaming), and failing closed when the host cannot run a selected gate; includes manifest, Prove-MergeGateLocal.ps1, linux-hygiene twin, unittest, docs, registry update
+- **Forbidden:** no force-push; no merge; no secrets; no cron; do not claim merge/release/deploy authority; do not rewrite unrelated path-filtered domain workflows; do not touch PR #300 / ASQ-016 preserve branch; never skip-as-pass; no merge authority claims
+- **Dependencies:** ASQ-018 (Prove-AutomatedTestFloorLocal exists and is always-on)
+- **References:** `.ai/harness/merge-gate-local.manifest.json`, `scripts/Prove-MergeGateLocal.ps1`, `scripts/Test-ApplicationFloorLinuxHygiene.ps1`, `tests/test_merge_gate_local.py`, `docs/harness/merge-gate-local.md`, `tooling/harness/operational/validator-registry.json`, `CODEBASE_MAP.md`
+- **Acceptance gate:** Prove-AutomatedTestFloorLocal PASS; Prove-MergeGateLocal -ListOnly lists gates; Prove-MergeGateLocal PASS on clean tree; test_merge_gate_local unittest PASS with multiple tests; packet shows always-on PASS; simulated Windows-only gate on Linux → non-zero exit (not pass); proof ceiling text forbids merge authority; git diff --check clean
+- **Gate:** none
+- **Last proof:** merge:e999602 pr:#301; artifact:scripts/Prove-MergeGateLocal.ps1 artifact:scripts/Test-ApplicationFloorLinuxHygiene.ps1 artifact:tests/test_merge_gate_local.py artifact:docs/harness/merge-gate-local.md on main@e999602
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-17T20:00:00Z
+
+## ASQ-021 — Persist product-pass posture public plan
+
+- **Status:** DONE
+- **Priority:** P1
+- **Work class:** BOUNDED
+- **Owner:** Cursor Cloud Agent / product-pass-posture plan coordination
+- **Branch / PR:** main / #302 through #305 merged
+- **Scope:** create durable product-pass posture public plan in `plans/active/ASB-2026-09-product-pass-posture.*` with schema validation; register plan in `plans/plan-registry.json`; encode waves PPP-01..06 with owned/forbidden scope, proof ceiling, and successor tasks; product pass = owning prove PASS + no flags (primary), forge merge = optional land-on-main (secondary)
+- **Forbidden:** implementing PPP-03 AGENTS.md doctrine mutation yet; implementing Prove-ProductPassLocal yet; claiming Admin Box physical floor from planning; forcing merge/release/deploy; inventing scripts/prompt_parallel_dispatch.py as if already present
+- **Dependencies:** ASQ-020 Prove-MergeGateLocal on main@e999602; ASQ-018 Prove-AutomatedTestFloorLocal completed
+- **References:** `plans/active/ASB-2026-09-product-pass-posture.plan.json`, `plans/active/ASB-2026-09-product-pass-posture.md`, `plans/plan-registry.json`, `plans/schemas/public-plan.schema.json`, `docs/governance/repository-work-ledger-contract.md`, `scripts/Test-PublicPlanContracts.ps1`, `scripts/Test-RepositoryWorkLedgerContract.ps1`
+- **Acceptance gate:** public plan validates with Test-PublicPlanContracts.ps1; plan-registry lists ASB-2026-09-PRODUCT-PASS-POSTURE; ledger contract passes; git diff --check clean; plan encodes product-pass vs forge-pass posture, waves, owned/forbidden scope, proof ceiling
+- **Gate:** none
+- **Last proof:** merge:ce78fc5 pr:#302 PPP-01+02; merge:16fc141 pr:#303 PPP-03; merge:64c8350 pr:#304 PPP-04; merge:684672f pr:#305 PPP-05; all tasks integrated on main@684672f
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-17T20:47:16Z
