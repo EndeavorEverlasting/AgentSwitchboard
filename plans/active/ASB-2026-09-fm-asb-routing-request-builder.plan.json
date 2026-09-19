@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-17T00:00:00Z",
-  "updatedUtc": "2026-09-19T18:36:00Z",
+  "updatedUtc": "2026-09-19T20:43:00Z",
   "mission": "Own the read-only asb.agent-observation/v1 to prompt-kit.routing-request/v1 translation seam (ASB cross-product-translation) so a correlated observation can be turned into a bounded routing request, without selecting prompts, consulting a registry, dispatching, rolling over, or scheduling crew.",
   "owner": {
     "surface": "FirstMate/ASB routing-request builder",
@@ -109,26 +109,30 @@
     {
       "taskId": "RRB-03",
       "title": "Phase 3 handoff — routing-decision consumer and prompt-dispatch",
-      "status": "blocked",
+      "status": "ready",
       "owner": "Prompt Kit routing-decision lane",
       "dependencies": [
         "RRB-02",
-        "EndeavorEverlasting/web-excel-repair-triage route-control-plane salvage"
+        "EndeavorEverlasting/web-excel-repair-triage PR #596 route-receipt salvage (integrated)"
       ],
       "inputs": [
         "prompt-kit.routing-request/v1 built requests",
-        "Frozen routing-decision and prompt-dispatch schemas"
+        "Frozen routing-decision and prompt-dispatch schemas",
+        "Prompt Kit route-receipt salvage from PR #596 / commit 2d26e7e"
       ],
       "outputs": [
         "Bounded routing-decision / prompt-dispatch sprint declaration"
       ],
       "acceptanceCriteria": [
         "New bounded sprint declaration before decision/dispatch code",
-        "No crew scheduler or automatic rollover expansion"
+        "No crew scheduler or automatic rollover expansion",
+        "Consumes route-receipt Evidence Spine Lane A concepts from integrated salvage"
       ],
       "evidence": [
-        "Prompt Kit P95 architecture on current main requires adapting only PR #450 actor-neutral route receipt, destination provenance, and idempotency concepts rather than wholesale merging the stale route-state implementation.",
-        "Prompt Kit PR #450 remains open on stale head 5c1cd0ae5f30c13e1a336f1d1acbdd29694791d4 with unresolved critical/major route-control-plane review defects; RRB-03 must not consume it directly."
+        "Prompt Kit PR #596 merged as 2d26e7e — bounded Evidence Spine Lane A route-receipt salvage from donor #450.",
+        "Donor PR #450 closed with containment citing #596 / 2d26e7e (no merge of #450).",
+        "Route-receipt actor-neutral destination provenance and idempotency concepts now integrated on Prompt Kit main.",
+        "RRB-03 unblocked: ready for bounded routing-decision/dispatch sprint declaration consuming current Prompt Kit route-control-plane."
       ]
     }
   ],
@@ -145,15 +149,17 @@
     "ceiling": "INTEGRATED_CONTRACT_STATIC. No live routing-decision/dispatch/rollover proof. RRB-03 is dependency-gated on a current, repaired Prompt Kit route-control-plane owner; stale PR #450 is donor evidence only until salvaged."
   },
   "handoff": {
-    "nextOwner": "Prompt Kit route-control-plane salvage / RRB-03 dependency lane",
-    "nextCommand": "gh repo clone EndeavorEverlasting/web-excel-repair-triage ../web-excel-repair-triage-rrb03-salvage && git -C ../web-excel-repair-triage-rrb03-salvage fetch --all --prune --tags && git -C ../web-excel-repair-triage-rrb03-salvage switch -c fix/evidence-spine-route-receipt-salvage-20260919 origin/main",
+    "nextOwner": "Prompt Kit routing-decision / RRB-03 lane",
+    "nextCommand": "gh repo clone EndeavorEverlasting/web-excel-repair-triage ../web-excel-repair-triage-rrb03 && git -C ../web-excel-repair-triage-rrb03 fetch --all --prune --tags && git -C ../web-excel-repair-triage-rrb03 switch -c fix/routing-decision-dispatch-20260919 origin/main",
     "notes": [
       "The builder never selects prompts or consults a registry; it emits a bounded request only.",
       "requireCurrentRegistry is asserted true so downstream decision must bind to the current registry.",
       "Phase 3 decision/dispatch/rollover is a separate bounded sprint, not part of this seam.",
       "RRB-01/RRB-02 integrated via PR #314 / main 320998d7c1519370fbecb0cf5da56d4c729be247.",
       "Original PR #309 is closed as superseded; its four unresolved review findings were repaired and resolved by #314.",
-      "RRB-03 is machine-blocked until the Prompt Kit route-control-plane salvage is integrated; resume decision/dispatch only from that repaired current-main owner."
+      "Prompt Kit route-receipt salvage integrated via PR #596 / commit 2d26e7e (Evidence Spine Lane A from donor #450).",
+      "Donor PR #450 closed with containment citing #596 — no merge of stale #450.",
+      "RRB-03 unblocked: consume current Prompt Kit main route-receipt owner for bounded decision/dispatch sprint."
     ]
   }
 }

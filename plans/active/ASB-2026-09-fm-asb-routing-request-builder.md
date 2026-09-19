@@ -43,4 +43,4 @@ git diff --check
 Phase 3 routing-decision consumer and prompt-dispatch require a new bounded
 sprint declaration; they are out of this seam's mutation scope.
 
-RRB-03 is blocked from consuming stale Prompt Kit PR #450 directly; that route-control-plane donor must be salvaged onto current Prompt Kit main with its unresolved security/correctness findings repaired first.
+**RRB-03 unblocked:** Prompt Kit route-receipt salvage integrated via PR #596 / commit `2d26e7e` (Evidence Spine Lane A from donor #450). Donor PR #450 closed with containment — no merge of stale #450. Ready for bounded routing-decision/dispatch sprint consuming current Prompt Kit main route-control-plane.
