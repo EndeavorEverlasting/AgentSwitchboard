@@ -25,7 +25,7 @@ scheduling crew. This is ASB `cross-product-translation` ownership only.
 
 ## Proof ceiling
 
-**Reached:** `VALIDATED_CONTRACT_STATIC` — the frozen valid path is preserved, nested repository/evidence/timestamp/prompt inputs fail closed, and the exact candidate passed protocol/interoperability/public-plan/harness/runtime/device-profile plus Windows+Ubuntu automated-floor proof.
+**Reached:** `INTEGRATED_CONTRACT_STATIC` — the frozen valid path is preserved, nested repository/evidence/timestamp/prompt inputs fail closed, and the exact candidate passed protocol/interoperability/public-plan/harness/runtime/device-profile plus Windows+Ubuntu automated-floor proof and merged to main as `320998d7c1519370fbecb0cf5da56d4c729be247`.
 **Not reached:** runtime, routing-decision/dispatch/rollover, live prompt dispatch. Prompt selection and registry binding remain owned by Prompt Kit.
 
 ## Validation
@@ -42,3 +42,5 @@ git diff --check
 
 Phase 3 routing-decision consumer and prompt-dispatch require a new bounded
 sprint declaration; they are out of this seam's mutation scope.
+
+RRB-03 is blocked from consuming stale Prompt Kit PR #450 directly; that route-control-plane donor must be salvaged onto current Prompt Kit main with its unresolved security/correctness findings repaired first.
