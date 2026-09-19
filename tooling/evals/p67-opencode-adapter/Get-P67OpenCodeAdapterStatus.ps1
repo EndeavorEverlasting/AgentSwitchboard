@@ -64,19 +64,19 @@ function Get-OpenCodeVersion {
 
 function Test-NoninteractiveExecution {
     param([hashtable]$VersionInfo)
-    
+
     if (-not $VersionInfo.Found) {
         return @{ Status = 'BLOCKED'; Reason = 'OpenCode CLI not found' }
     }
-    
+
     try {
         $helpOutput = & opencode --help 2>&1
         $hasHelpFlag = $LASTEXITCODE -eq 0 -or $helpOutput -match '--help'
-        
+
         if ($hasHelpFlag -and $helpOutput -match '(--config|--prompt|--task|--model)') {
             return @{ Status = 'VERIFIED'; Reason = 'CLI with structured arguments detected' }
         }
-        
+
         return @{ Status = 'UNVERIFIED'; Reason = 'Structured argument interface not clearly documented' }
     } catch {
         return @{ Status = 'BLOCKED'; Reason = "Help invocation failed: $($_.Exception.Message)" }
@@ -85,22 +85,22 @@ function Test-NoninteractiveExecution {
 
 function Test-ExplicitIdentity {
     param([hashtable]$VersionInfo)
-    
+
     if (-not $VersionInfo.Found) {
         return @{ Status = 'BLOCKED'; Reason = 'OpenCode CLI not found' }
     }
-    
+
     try {
         $helpOutput = & opencode --help 2>&1
-        
+
         $hasModelFlag = $helpOutput -match '--model'
         $hasProviderFlag = $helpOutput -match '--provider'
         $hasAgentFlag = $helpOutput -match '--agent'
-        
+
         if ($hasModelFlag) {
             return @{ Status = 'VERIFIED'; Reason = 'Model identity flag found' }
         }
-        
+
         return @{ Status = 'UNVERIFIED'; Reason = 'Provider/model/agent identity flags not clearly documented' }
     } catch {
         return @{ Status = 'BLOCKED'; Reason = "Identity verification failed: $($_.Exception.Message)" }
@@ -109,21 +109,21 @@ function Test-ExplicitIdentity {
 
 function Test-IsolatedConfig {
     param([hashtable]$VersionInfo)
-    
+
     if (-not $VersionInfo.Found) {
         return @{ Status = 'BLOCKED'; Reason = 'OpenCode CLI not found' }
     }
-    
+
     try {
         $helpOutput = & opencode --help 2>&1
-        
+
         $hasConfigFlag = $helpOutput -match '--config'
         $supportsEnvVars = $helpOutput -match 'OPENCODE_' -or $helpOutput -match 'environment variable'
-        
+
         if ($hasConfigFlag -or $supportsEnvVars) {
             return @{ Status = 'VERIFIED'; Reason = 'Per-run configuration mechanism detected' }
         }
-        
+
         return @{ Status = 'UNVERIFIED'; Reason = 'Isolated configuration mechanism not clearly documented' }
     } catch {
         return @{ Status = 'BLOCKED'; Reason = "Config verification failed: $($_.Exception.Message)" }
@@ -132,22 +132,22 @@ function Test-IsolatedConfig {
 
 function Test-InstrumentationFeasibility {
     param([hashtable]$VersionInfo)
-    
+
     if (-not $VersionInfo.Found) {
         return @{ Status = 'BLOCKED'; Reason = 'OpenCode CLI not found' }
     }
-    
+
     try {
         $helpOutput = & opencode --help 2>&1
-        
+
         $hasJsonOutput = $helpOutput -match '--output.*json' -or $helpOutput -match '--format.*json'
         $hasVerboseLogging = $helpOutput -match '--verbose' -or $helpOutput -match '--debug'
         $hasLogFile = $helpOutput -match '--log'
-        
+
         if ($hasJsonOutput -or $hasVerboseLogging -or $hasLogFile) {
             return @{ Status = 'VERIFIED'; Reason = 'Structured output or logging detected' }
         }
-        
+
         return @{ Status = 'UNVERIFIED'; Reason = 'Instrumentation interface not clearly documented' }
     } catch {
         return @{ Status = 'BLOCKED'; Reason = "Instrumentation verification failed: $($_.Exception.Message)" }
@@ -156,29 +156,29 @@ function Test-InstrumentationFeasibility {
 
 function Test-AuthReadiness {
     param([hashtable]$VersionInfo)
-    
+
     if (-not $VersionInfo.Found) {
         return @{ Status = 'BLOCKED'; Reason = 'OpenCode CLI not found' }
     }
-    
+
     try {
         $statusOutput = & opencode status 2>&1
         $statusExitCode = $LASTEXITCODE
-        
+
         $credentialLeaked = $statusOutput -match '(api[_-]?key|token|secret|password).*[:=]\s*[a-zA-Z0-9+/]+'
-        
+
         if ($credentialLeaked) {
             return @{ Status = 'BLOCKED'; Reason = 'SECURITY: Credentials exposed in status output' }
         }
-        
+
         if ($statusExitCode -eq 0) {
             return @{ Status = 'VERIFIED'; Reason = 'Status command succeeded without credential exposure' }
         }
-        
+
         if ($statusOutput -match '(auth|login|token|credential)') {
             return @{ Status = 'VERIFIED'; Reason = 'Auth status distinguishable from other errors' }
         }
-        
+
         return @{ Status = 'UNVERIFIED'; Reason = 'Auth readiness signal not clearly distinguishable' }
     } catch {
         return @{ Status = 'UNVERIFIED'; Reason = "Status command unavailable: $($_.Exception.Message)" }
@@ -193,7 +193,7 @@ function New-ReadinessStatus {
         [hashtable]$Capabilities,
         [hashtable]$Blocker
     )
-    
+
     $status = [ordered]@{
         schema_version = 'p67-opencode-readiness-status/v1'
         status = $Status
@@ -209,7 +209,7 @@ function New-ReadinessStatus {
         blocker = $Blocker
         probe_timestamp_utc = (Get-Date).ToUniversalTime().ToString('o')
     }
-    
+
     return $status
 }
 
@@ -220,10 +220,10 @@ function ConvertTo-BlockerObject {
 
 try {
     Write-DiagnosticMessage "Starting OpenCode capability probe (ADP-01)"
-    
+
     $versionInfo = Get-OpenCodeVersion
     Write-DiagnosticMessage "OpenCode found: $($versionInfo.Found), Version: $($versionInfo.Version)"
-    
+
     if (-not $versionInfo.Found) {
         $status = New-ReadinessStatus `
             -Status 'BLOCKED' `
@@ -237,40 +237,40 @@ try {
                 auth_readiness = 'BLOCKED'
             } `
             -Blocker (ConvertTo-BlockerObject 'OPENCODE_NOT_FOUND' 'OpenCode CLI not found in PATH. Install OpenCode or ensure it is available.')
-        
+
         $json = $status | ConvertTo-Json -Depth 10
-        
+
         if ($OutputPath) {
             $json | Set-Content -LiteralPath $OutputPath -Encoding utf8NoBOM
             Write-DiagnosticMessage "Status written to: $OutputPath"
         } else {
             Write-Output $json
         }
-        
+
         exit 0
     }
-    
+
     $noninteractiveResult = Test-NoninteractiveExecution -VersionInfo $versionInfo
     $identityResult = Test-ExplicitIdentity -VersionInfo $versionInfo
     $configResult = Test-IsolatedConfig -VersionInfo $versionInfo
     $instrumentationResult = Test-InstrumentationFeasibility -VersionInfo $versionInfo
     $authResult = Test-AuthReadiness -VersionInfo $versionInfo
-    
+
     Write-DiagnosticMessage "Noninteractive: $($noninteractiveResult.Status) - $($noninteractiveResult.Reason)"
     Write-DiagnosticMessage "Identity: $($identityResult.Status) - $($identityResult.Reason)"
     Write-DiagnosticMessage "Config: $($configResult.Status) - $($configResult.Reason)"
     Write-DiagnosticMessage "Instrumentation: $($instrumentationResult.Status) - $($instrumentationResult.Reason)"
     Write-DiagnosticMessage "Auth: $($authResult.Status) - $($authResult.Reason)"
-    
+
     $allBlocked = @($noninteractiveResult, $identityResult, $configResult, $instrumentationResult, $authResult) | Where-Object { $_.Status -eq 'BLOCKED' }
-    
+
     $overallStatus = 'READY'
     $blocker = $null
-    
+
     if ($allBlocked.Count -gt 0) {
         $overallStatus = 'BLOCKED'
         $firstBlocker = $allBlocked[0]
-        
+
         if ($firstBlocker.Reason -match 'not found') {
             $blocker = ConvertTo-BlockerObject 'OPENCODE_NOT_FOUND' $firstBlocker.Reason
         } elseif ($firstBlocker.Reason -match 'SECURITY') {
@@ -289,7 +289,7 @@ try {
             $blocker = ConvertTo-BlockerObject 'CAPABILITY_PROBE_ERROR' $firstBlocker.Reason
         }
     }
-    
+
     $status = New-ReadinessStatus `
         -Status $overallStatus `
         -OpenCodeFound $true `
@@ -302,19 +302,19 @@ try {
             auth_readiness = $authResult.Status
         } `
         -Blocker $blocker
-    
+
     $json = $status | ConvertTo-Json -Depth 10
-    
+
     if ($OutputPath) {
         $json | Set-Content -LiteralPath $OutputPath -Encoding utf8NoBOM
         Write-DiagnosticMessage "Status written to: $OutputPath"
     } else {
         Write-Output $json
     }
-    
+
     Write-DiagnosticMessage "Probe complete: $overallStatus"
     exit 0
-    
+
 } catch {
     $errorStatus = New-ReadinessStatus `
         -Status 'BLOCKED' `
@@ -328,14 +328,14 @@ try {
             auth_readiness = 'BLOCKED'
         } `
         -Blocker (ConvertTo-BlockerObject 'CAPABILITY_PROBE_ERROR' "Probe execution failed: $($_.Exception.Message)")
-    
+
     $json = $errorStatus | ConvertTo-Json -Depth 10
-    
+
     if ($OutputPath) {
         $json | Set-Content -LiteralPath $OutputPath -Encoding utf8NoBOM
     } else {
         Write-Output $json
     }
-    
+
     exit 1
 }
