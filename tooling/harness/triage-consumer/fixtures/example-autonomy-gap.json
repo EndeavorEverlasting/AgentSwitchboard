@@ -1,0 +1,10 @@
+{
+  "gap_detected": true,
+  "manifest_present": true,
+  "panels_present": true,
+  "ready_lanes_count": 2,
+  "unmapped_lanes_count": 2,
+  "gap_reason": "adapters_unavailable",
+  "unmapped_lane_ids": ["lane-01-policy", "lane-02-schemas"],
+  "recommended_action": "Implement ASB consumer floor to ingest manifests/panels and map lanes to ASB descriptors (public-plan, cursor-cloud-agent, local-argv)"
+}

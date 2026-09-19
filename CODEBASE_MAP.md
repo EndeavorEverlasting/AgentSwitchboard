@@ -99,6 +99,18 @@ This engine reads supplied output only. It does not launch apps or providers, st
 
 The initial topology is contract-only. It does not prove live emission, observation, handling, successor delivery, or sink recording.
 
+## Triage→ASB consumer floor
+
+- `tooling/harness/triage-consumer/consumer.policy.json` — consumer policy with `human_scheduler_allowed:false` and `panel_ingest_required:true`.
+- `tooling/harness/triage-consumer/schemas/` — consumer schemas for Triage manifests, panels, checkpoints, lane mappings, and autonomy-gap classifications.
+- `tooling/harness/triage-consumer/fixtures/` — example manifests, panels, checkpoints, lane mappings, and autonomy-gap fixtures.
+- `tooling/harness/triage-consumer/triage_consumer.py` — Python module that ingests Triage artifacts, classifies AUTONOMY_GAP, maps lanes to ASB descriptors, and applies merge-gate rules.
+- `scripts/Test-TriageAsbConsumerContract.ps1` — PowerShell validator for consumer policy, schemas, fixtures, and Python functionality.
+- `tests/test_triage_asb_consumer_contract.py` — Pytest test suite for manifest/panel ingestion, AUTONOMY_GAP classification, lane mapping, and merge-gate classification.
+- `plans/active/ASB-2026-09-triage-asb-consumer-floor.*` — P07 plan: close AUTONOMY_GAP by machine-ingesting Triage panels and manifests.
+
+This consumer floor provides contract and static test proof that ASB can ingest Triage prompt-parallel-dispatch manifests and panel/lane-prompt transport artifacts, classify AUTONOMY_GAP when panels/manifests exist but no adapter executes lanes, map lanes to ASB descriptors structurally, and apply merge-gate rules with degraded provider limits + local_proof => CONTINUE. It does NOT prove live lane dispatch, runtime execution, or Cursor Cloud Agent launch.
+
 ## Device profile launcher contract
 
 - `docs/governance/device-profile-launcher-contract.md` — canonical profile ownership, open-or-activate, delegation, certification, and proof doctrine.

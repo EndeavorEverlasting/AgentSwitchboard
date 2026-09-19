@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentswitchboard.triage-manifest/v1",
+  "title": "Triage Prompt Parallel Dispatch Manifest",
+  "description": "ASB consumer schema for Triage prompt-parallel-dispatch.v1 manifests",
+  "type": "object",
+  "required": ["schema_version", "run_id", "graph_width", "parallel_disposition", "autonomy_gap", "lanes"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "prompt-parallel-dispatch/v1"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "graph_width": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "parallel_disposition": {
+      "type": "string",
+      "enum": ["REQUIRED", "NOT_APPLICABLE", "DEGRADED"]
+    },
+    "autonomy_gap": {
+      "type": ["string", "null"]
+    },
+    "lanes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/lane"
+      }
+    }
+  },
+  "$defs": {
+    "lane": {
+      "type": "object",
+      "required": ["lane_id", "mission", "dependencies", "owned_mutation_surfaces", "forbidden_surfaces", "adapter", "launch", "expected_artifacts", "validation", "convergence_owner", "status"],
+      "properties": {
+        "lane_id": {"type": "string", "minLength": 1},
+        "mission": {"type": "string", "minLength": 1},
+        "dependencies": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "owned_mutation_surfaces": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "forbidden_surfaces": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "adapter": {
+          "type": "object",
+          "required": ["kind", "rung"],
+          "properties": {
+            "kind": {"type": "string"},
+            "rung": {"type": "integer", "minimum": 1, "maximum": 5}
+          }
+        },
+        "launch": {
+          "type": "object",
+          "required": ["mode"],
+          "properties": {
+            "mode": {"type": "string", "enum": ["argv", "runtime_tool"]},
+            "argv": {"type": "array", "items": {"type": "string"}},
+            "cwd": {"type": "string"},
+            "timeout_seconds": {"type": "integer"},
+            "tool": {"type": "string"},
+            "operation": {"type": "string"},
+            "arguments": {"type": "object"}
+          }
+        },
+        "expected_artifacts": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "validation": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "convergence_owner": {"type": "string"},
+        "status": {
+          "type": "string",
+          "enum": ["PLANNED", "DISPATCHED", "PASS", "FAIL", "BLOCKED"]
+        }
+      }
+    }
+  }
+}
