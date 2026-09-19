@@ -1,0 +1,135 @@
+{
+  "schema_version": "p67-opencode-capability-contract/v1",
+  "rationale": "Read-only probe for OpenCode V2 provider readiness. Verifies required capabilities for privacy-bounded P67 adapter execution without mutating configuration or persisting credentials.",
+  "required_capabilities": {
+    "noninteractive_execution": {
+      "description": "Provider must support fully automated execution without human interaction",
+      "verification": [
+        "argv or structured configuration interface exists",
+        "no interactive prompts during execution",
+        "exit codes reflect success/failure deterministically"
+      ]
+    },
+    "explicit_identity": {
+      "description": "Provider, agent, and model identity must be explicitly retrievable",
+      "verification": [
+        "provider name is documented or discoverable",
+        "agent/model selection is explicit in configuration or output",
+        "identity fields align with P67 pairing requirements"
+      ]
+    },
+    "isolated_config": {
+      "description": "Configuration can be scoped to individual runs without global mutation",
+      "verification": [
+        "per-run config files or environment variables are supported",
+        "global user configuration is not required for basic operation"
+      ]
+    },
+    "instrumentation_feasibility": {
+      "description": "Provider emits or supports capturing structural events for neutral telemetry",
+      "verification": [
+        "stdout/stderr contain parseable events, or",
+        "structured output format exists (JSON, logs), or",
+        "hook/plugin interface allows external instrumentation"
+      ]
+    },
+    "auth_readiness": {
+      "description": "Authentication/quota status can be verified without credentials in output",
+      "verification": [
+        "readiness check exists (e.g., version command, status endpoint)",
+        "auth failure returns distinct error code/message",
+        "credentials are never echoed to stdout/stderr/logs"
+      ]
+    }
+  },
+  "blocker_codes": [
+    "OPENCODE_NOT_FOUND",
+    "OPENCODE_VERSION_INCOMPATIBLE",
+    "OPENCODE_AUTH_UNAVAILABLE",
+    "OPENCODE_QUOTA_EXHAUSTED",
+    "OPENCODE_CONFIG_IMMUTABLE",
+    "OPENCODE_NONINTERACTIVE_UNSUPPORTED",
+    "OPENCODE_IDENTITY_OPAQUE",
+    "OPENCODE_INSTRUMENTATION_IMPOSSIBLE",
+    "CAPABILITY_PROBE_ERROR"
+  ],
+  "readiness_status_schema": {
+    "schema_version": "p67-opencode-readiness-status/v1",
+    "fields": {
+      "status": {
+        "type": "enum",
+        "values": [
+          "READY",
+          "BLOCKED"
+        ],
+        "required": true
+      },
+      "opencode_found": {
+        "type": "boolean",
+        "required": true
+      },
+      "opencode_version": {
+        "type": "string_or_null",
+        "required": true
+      },
+      "capabilities_verified": {
+        "type": "object",
+        "keys": [
+          "noninteractive_execution",
+          "explicit_identity",
+          "isolated_config",
+          "instrumentation_feasibility",
+          "auth_readiness"
+        ],
+        "values": {
+          "type": "enum",
+          "values": [
+            "VERIFIED",
+            "UNVERIFIED",
+            "BLOCKED"
+          ]
+        },
+        "required": true
+      },
+      "blocker": {
+        "type": "object_or_null",
+        "required": true,
+        "fields": {
+          "code": {
+            "type": "enum",
+            "values": "blocker_codes",
+            "required": true
+          },
+          "message": {
+            "type": "string",
+            "required": true
+          }
+        }
+      },
+      "probe_timestamp_utc": {
+        "type": "string",
+        "required": true
+      }
+    },
+    "forbidden_fields": [
+      "api_key",
+      "token",
+      "secret",
+      "password",
+      "credential"
+    ]
+  },
+  "alignment_with_triage_contract": {
+    "invalid_run_codes_reused": [
+      "RUNTIME_UNAVAILABLE"
+    ],
+    "note": "RUNTIME_UNAVAILABLE maps to OPENCODE_NOT_FOUND or OPENCODE_VERSION_INCOMPATIBLE when OpenCode is the provider runtime"
+  },
+  "forbidden_mutations": [
+    "no global OpenCode configuration writes",
+    "no credential storage or automated login",
+    "no raw prompt/response persistence",
+    "no tracked files created"
+  ],
+  "proof_boundary": "Capability verification only. Does not prove adapter implementation correctness or provider effectiveness."
+}

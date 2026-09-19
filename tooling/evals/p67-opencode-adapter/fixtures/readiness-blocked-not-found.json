@@ -1,0 +1,18 @@
+{
+  "schema_version": "p67-opencode-readiness-status/v1",
+  "status": "BLOCKED",
+  "opencode_found": false,
+  "opencode_version": null,
+  "capabilities_verified": {
+    "noninteractive_execution": "BLOCKED",
+    "explicit_identity": "BLOCKED",
+    "isolated_config": "BLOCKED",
+    "instrumentation_feasibility": "BLOCKED",
+    "auth_readiness": "BLOCKED"
+  },
+  "blocker": {
+    "code": "OPENCODE_NOT_FOUND",
+    "message": "OpenCode CLI not found in PATH. Install OpenCode or ensure it is available."
+  },
+  "probe_timestamp_utc": "2026-09-19T20:00:00.000Z"
+}

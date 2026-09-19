@@ -1,0 +1,18 @@
+{
+  "schema_version": "p67-opencode-readiness-status/v1",
+  "status": "BLOCKED",
+  "opencode_found": true,
+  "opencode_version": "1.5.0",
+  "capabilities_verified": {
+    "noninteractive_execution": "VERIFIED",
+    "explicit_identity": "BLOCKED",
+    "isolated_config": "VERIFIED",
+    "instrumentation_feasibility": "UNVERIFIED",
+    "auth_readiness": "BLOCKED"
+  },
+  "blocker": {
+    "code": "OPENCODE_IDENTITY_OPAQUE",
+    "message": "Provider/model/agent identity flags not clearly documented"
+  },
+  "probe_timestamp_utc": "2026-09-19T20:00:00.000Z"
+}
