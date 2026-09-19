@@ -218,6 +218,16 @@ if (Test-Path -LiteralPath $invokeScript -PathType Leaf) {
 
     Add-Result ($invokeContent -notmatch 'Invoke-Expression|iex') 'adp02/invoke/no-shell-composition' 'invoke script contains shell composition'
 
+    Add-Result ($invokeContent -notmatch "'execute'|`"execute`"") 'adp02/invoke/no-fictional-execute' 'invoke script must not use fictional execute command'
+    Add-Result ($invokeContent -notmatch '--workspace') 'adp02/invoke/no-fictional-workspace' 'invoke script must not use fictional --workspace flag'
+    Add-Result ($invokeContent -notmatch '--prompt-file') 'adp02/invoke/no-fictional-prompt-file' 'invoke script must not use fictional --prompt-file flag'
+    Add-Result ($invokeContent -notmatch '--non-interactive') 'adp02/invoke/no-fictional-noninteractive' 'invoke script must not use fictional --non-interactive flag'
+
+    Add-Result ($invokeContent -match "'run'") 'adp02/invoke/uses-run-command' 'invoke script must use run command'
+    Add-Result ($invokeContent -match "'--format'") 'adp02/invoke/uses-format-flag' 'invoke script must use --format flag'
+    Add-Result ($invokeContent -match "'-m'") 'adp02/invoke/uses-m-flag' 'invoke script must use -m flag for model'
+    Add-Result ($invokeContent -match "'--dir'") 'adp02/invoke/uses-dir-flag' 'invoke script must use --dir flag for workspace'
+
     Add-Result ($invokeContent -match 'INVALID') 'adp02/invoke/invalid-status' 'invoke script does not emit INVALID status'
     Add-Result ($invokeContent -match 'timeout') 'adp02/invoke/timeout-handling' 'invoke script does not handle timeouts'
     Add-Result ($invokeContent -match 'CAPTURE_EVALUATIVE_REJECTED') 'adp02/invoke/evaluative-check' 'invoke script does not check for evaluative fields'

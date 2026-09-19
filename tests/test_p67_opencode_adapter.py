@@ -291,6 +291,23 @@ class P67OpenCodeAdapterADP02Tests(unittest.TestCase):
         self.assertNotIn("Invoke-Expression", content)
         self.assertNotIn("iex", content.lower())
 
+    def test_invoke_script_uses_real_opencode_cli(self) -> None:
+        """Verify Invoke script uses real OpenCode CLI (run command, not fictional execute)."""
+        content = INVOKE_SCRIPT.read_text(encoding="utf-8")
+
+        self.assertNotIn("'execute'", content, "Invoke script must not use fictional 'execute' command")
+        self.assertNotIn('"execute"', content, "Invoke script must not use fictional 'execute' command")
+        self.assertNotIn("--workspace", content, "Invoke script must not use fictional --workspace flag")
+        self.assertNotIn("--prompt-file", content, "Invoke script must not use fictional --prompt-file flag")
+        self.assertNotIn("--non-interactive", content, "Invoke script must not use fictional --non-interactive flag")
+        self.assertNotIn("--output", content, "Invoke script must not use fictional --output flag (should be --format)")
+
+        self.assertIn("'run'", content, "Invoke script must use 'run' command")
+        self.assertIn("'--format'", content, "Invoke script must use --format flag")
+        self.assertIn("'-m'", content, "Invoke script must use -m flag for model")
+        self.assertIn("'--dir'", content, "Invoke script must use --dir flag for workspace")
+        self.assertIn("provider/model", content.lower(), "Invoke script must build provider/model spec")
+
     def test_invoke_script_privacy_bounded(self) -> None:
         """Verify Invoke script maintains privacy boundaries."""
         content = INVOKE_SCRIPT.read_text(encoding="utf-8")

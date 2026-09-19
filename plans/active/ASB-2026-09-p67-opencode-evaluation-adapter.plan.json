@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-18T19:35:00Z",
-  "updatedUtc": "2026-09-19T21:28:00Z",
+  "updatedUtc": "2026-09-19T22:00:00Z",
   "mission": "Build a concrete privacy-bounded OpenCode V2 external-agent adapter for P67 Gen2, with AgentSwitchboard owning provider execution/evidence transport and Triage P67 retaining scientific grading authority.",
   "owner": {
     "surface": "P67 external-agent evaluation adapter",
@@ -203,7 +203,7 @@
     {
       "taskId": "ADP-04",
       "title": "Run bounded observed adapter smoke",
-      "status": "pending",
+      "status": "in-progress",
       "owner": "authorized workstation/runtime lane",
       "dependencies": [
         "ADP-03"
@@ -224,7 +224,17 @@
         "TC06 only when >=2 real worker slots exist",
         "no effectiveness verdict from smoke"
       ],
-      "evidence": []
+      "evidence": [
+        "field blocker LPW003ASI173 resolved: CLI alignment fix on cursor/adp-04-opencode-cli-alignment-23a4",
+        "Invoke-P67OpenCodeAdapter.ps1 updated to use real OpenCode CLI: 'run [message] --format json -m provider/model --dir <workspace> --agent <agent>'",
+        "fictional CLI removed: no 'execute', no '--workspace', no '--prompt-file', no '--non-interactive', no '--output'",
+        "Get-P67OpenCodeAdapterStatus.ps1 updated to probe for 'run' command and real flags (--format, -m, --dir)",
+        "JSON serialization bug fixed on Windows pwsh: ConvertTo-Json output cast to string before Set-Content to prevent OrderedDictionary ToString leak",
+        "regression tests added: test_invoke_script_uses_real_opencode_cli, PowerShell contract tests for fictional CLI absence and real CLI presence",
+        "commit 37bb257: fix(p67-adapter): align OpenCode adapter with real CLI interface (ADP-04)",
+        "proof ceiling: IMPLEMENTATION + STATIC; live OBSERVED_ADAPTER_RUNTIME remains unproven (requires field re-run with real provider auth/quota)",
+        "remaining blockers: operator-owned credential setup; live smoke execution requires authorized workstation with OpenCode v1.1.48+ and provider credentials"
+      ]
     },
     {
       "taskId": "ADP-05",
@@ -288,16 +298,18 @@
     "ceiling": "PLANNED/TRACKED; implementation, provider smoke, pilot behavior, and effectiveness remain separately unproven."
   },
   "handoff": {
-    "nextOwner": "AgentSwitchboard ADP-02 full adapter implementation",
-    "nextCommand": "Build Invoke-P67OpenCodeAdapter.ps1 using verified capability contract (tooling/evals/p67-opencode-adapter/capability-contract.v1.json) and Triage adapter-contract.v2.json from PR #598. Gate: both ADP-00 (Triage) and ADP-01 (ASB) must be green.",
+    "nextOwner": "authorized workstation/runtime lane for ADP-04 live smoke",
+    "nextCommand": "Configure operator-owned OpenCode credentials (e.g., ANTHROPIC_API_KEY, OPENAI_API_KEY) and run live smoke with real provider execution using pwsh -File tooling/evals/p67-opencode-adapter/Invoke-P67OpenCodeAdapter.ps1 -Workspace <fixture-workspace> -Task TC01 -Prompt <frozen-prompt> -Result <output-path> -Provider <provider> -Model <model>",
     "notes": [
       "ADP-01 COMPLETE: capability/readiness probe integrated on cursor/adp-01-opencode-probe-1cda.",
       "ADP-00 INTEGRATED: Triage neutral capture contract via PR #598 / merge 0733897ce4a934e5e1ce7fa3ea1dedba2f4fd0f7 on EndeavorEverlasting/web-excel-repair-triage.",
-      "ADP-02 gate satisfied: verified OpenCode capability document and neutral capture contract both exist.",
-      "Next ADP-02 artifacts: Invoke-P67OpenCodeAdapter.ps1, New-P67AdapterConfig.ps1, neutral event normalizer, instrumentation plugin.",
-      "Do not ask the operator to hand-author adapter JSON.",
-      "Registry now synchronized after PR #309 was salvaged via #314 onto main.",
-      "Do not begin the 16-run pilot before neutral-capture and observed-smoke gates pass.",
+      "ADP-02 COMPLETE: Invoke-P67OpenCodeAdapter.ps1, New-P67AdapterConfig.ps1, neutral event normalizer, instrumentation plugin.",
+      "ADP-03 COMPLETE: 8-path synthetic interoperability proven via scripts/Invoke-P67OpenCodeAdapterSyntheticInterop.ps1.",
+      "ADP-04 IN PROGRESS: CLI alignment fix committed on cursor/adp-04-opencode-cli-alignment-23a4 @ 37bb257; real 'run' command now used; fictional 'execute' removed; JSON serialization bug fixed.",
+      "ADP-04 blocker resolved: field-proven LPW003ASI173 CLI mismatch fixed; real OpenCode v1.1.48+ interface now aligned.",
+      "ADP-04 remaining: live OBSERVED_ADAPTER_RUNTIME smoke requires operator-owned credentials and authorized workstation; proof ceiling remains IMPLEMENTATION + STATIC until live smoke completes.",
+      "Do not claim OBSERVED_ADAPTER_RUNTIME or effectiveness until live smoke with real provider execution passes.",
+      "Do not begin the 16-run pilot (ADP-05) before live smoke (ADP-04) gate passes.",
       "FirstMate remains canonical crew runtime; this adapter is an evaluation seam."
     ]
   }

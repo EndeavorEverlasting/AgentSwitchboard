@@ -100,7 +100,7 @@ Adapter may **not** decide usefulness, first-green semantic sufficiency, true fi
 - **ADP-01 — Capability/readiness (ASB):** ✓ COMPLETE. Exact capabilities and provider identity proven or one typed blocker.
 - **ADP-02 — Adapter + instrumentation (ASB):** ✓ COMPLETE. P67 placeholder invocation produces privacy-bounded neutral JSON; timeout/nonzero/missing-result fail closed.
 - **ADP-03 — Synthetic interoperability:** ✓ COMPLETE. Fake structured events exercise action, validation, subagent/parallel, timeout, malformed-result, privacy, and mutation-boundary paths. 8 synthetic fixtures + durable runner + machine-readable receipt. Proof: SYNTHETIC_INTEROPERABILITY only.
-- **ADP-04 — Observed adapter smoke:** one TC01 control/treatment pair. If real worker capacity >=2, add one TC06 pair. Smoke proves adapter runtime only, not effectiveness.
+- **ADP-04 — Observed adapter smoke:** IN PROGRESS. Field blocker LPW003ASI173 resolved on cursor/adp-04-opencode-cli-alignment-23a4 @ 37bb257. Real OpenCode CLI now aligned: 'run [message] --format json -m provider/model --dir <workspace> --agent <agent>'. Fictional 'execute --workspace --prompt-file' removed. JSON serialization bug fixed on Windows pwsh. Proof: IMPLEMENTATION + STATIC. Live OBSERVED_ADAPTER_RUNTIME requires operator-owned credentials and field re-run.
 - **ADP-05 — Gen2 16-run pilot:** 16 classified paired runs, stable pair identity, zero forbidden escape/gold leakage, pilot aggregate and fixture-validity disposition.
 - **ADP-06 — P67 Sprint 3:** only after valid pilot; keep Gen2 treatment and thresholds frozen.
 
@@ -129,9 +129,9 @@ Adapter may **not** decide usefulness, first-green semantic sufficiency, true fi
 
 ## Proof ceiling
 
-Current: **SYNTHETIC INTEROPERABILITY (ADP-03)**.
+Current: **IMPLEMENTATION + STATIC (ADP-04 in progress)**.
 
-ADP-00 through ADP-03 are COMPLETE: neutral capture contract integrated, capability/readiness probe validated, adapter implementation complete, synthetic interoperability proven via 8-path fixture coverage with machine-readable receipt. Live OpenCode smoke (ADP-04) remains pending. Only the P67 pilot can promote the tested Gen2 population to observed pilot behavior; the final effectiveness verdict remains Sprint 3.
+ADP-00 through ADP-03 are COMPLETE: neutral capture contract integrated, capability/readiness probe validated, adapter implementation complete, synthetic interoperability proven via 8-path fixture coverage with machine-readable receipt. ADP-04 CLI alignment fix committed @ 37bb257: real OpenCode 'run' command now used, fictional 'execute' removed, JSON serialization bug fixed. Live OBSERVED_ADAPTER_RUNTIME smoke with real provider auth/quota remains pending. Only the P67 pilot can promote the tested Gen2 population to observed pilot behavior; the final effectiveness verdict remains Sprint 3.
 
 ## Cross-repository coordination
 
@@ -139,4 +139,4 @@ Triage scientific/capture authority is integrated via PR #559 / merge `ce22389e1
 
 ## Immediate next action
 
-ADP-03 COMPLETE. Next: **ADP-04 bounded observed adapter smoke** with real OpenCode provider auth/quota on authorized workstation/runtime. One TC01 paired smoke (control/treatment), conditional TC06 paired parallel smoke only when >=2 real worker slots exist. Smoke proves adapter runtime only, not effectiveness. No live smoke until operator confirms provider readiness and machine-local config.
+ADP-04 CLI alignment: ✓ COMPLETE @ 37bb257 on cursor/adp-04-opencode-cli-alignment-23a4. Real OpenCode interface aligned, fictional CLI removed, JSON serialization fixed. Next: **ADP-04 live smoke execution** with real OpenCode provider auth/quota on authorized workstation/runtime. One TC01 paired smoke (control/treatment), conditional TC06 paired parallel smoke only when >=2 real worker slots exist. Smoke proves adapter runtime only, not effectiveness. Requires operator-owned credentials (e.g., ANTHROPIC_API_KEY, OPENAI_API_KEY) and OpenCode v1.1.48+.
