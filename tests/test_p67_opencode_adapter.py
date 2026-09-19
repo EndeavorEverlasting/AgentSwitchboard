@@ -232,9 +232,9 @@ class P67OpenCodeAdapterTests(unittest.TestCase):
                 content = f.read()
 
             self.assertGreater(len(content), 5, "Output file should not be empty")
-            self.assertTrue(content.strip().startswith('{'), 
+            self.assertTrue(content.strip().startswith('{'),
                           f"Output must start with '{{', got: {content[:100]}")
-            self.assertNotIn("OrderedDictionary", content, 
+            self.assertNotIn("OrderedDictionary", content,
                            "Output must not contain 'OrderedDictionary' type string")
             self.assertNotIn("System.Collections", content,
                            "Output must not contain System.Collections namespace")
