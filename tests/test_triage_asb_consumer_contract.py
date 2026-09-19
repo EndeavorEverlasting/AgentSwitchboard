@@ -68,30 +68,30 @@ def policy_path():
 
 class TestPolicy:
     """Test consumer policy enforcement."""
-    
+
     def test_policy_exists(self, policy_path):
         """Test policy file exists and is valid JSON."""
         assert policy_path.exists()
         with open(policy_path, 'r') as f:
             policy = json.load(f)
         assert policy is not None
-    
+
     def test_human_scheduler_not_allowed(self, consumer):
         """Test human_scheduler_allowed is false."""
         assert consumer.policy["policy"]["human_scheduler_allowed"] is False
-    
+
     def test_panel_ingest_required(self, consumer):
         """Test panel_ingest_required is true."""
         assert consumer.policy["policy"]["panel_ingest_required"] is True
-    
+
     def test_autonomy_gap_classification_required(self, consumer):
         """Test autonomy_gap_classification_required is true."""
         assert consumer.policy["policy"]["autonomy_gap_classification_required"] is True
-    
+
     def test_manifest_and_panels_are_machine_inputs(self, consumer):
         """Test manifest_and_panels_are_machine_inputs is true."""
         assert consumer.policy["policy"]["manifest_and_panels_are_machine_inputs"] is True
-    
+
     def test_panel_deletion_forbidden(self, consumer):
         """Test panel_deletion_forbidden is true."""
         assert consumer.policy["policy"]["panel_deletion_forbidden"] is True
@@ -99,7 +99,7 @@ class TestPolicy:
 
 class TestSchemas:
     """Test schema files are valid."""
-    
+
     def test_manifest_schema_valid(self):
         """Test manifest schema is valid JSON."""
         schema_path = CONSUMER_ROOT / "schemas/triage-manifest.schema.json"
@@ -108,7 +108,7 @@ class TestSchemas:
             schema = json.load(f)
         assert "$schema" in schema
         assert "$id" in schema
-    
+
     def test_panel_schema_valid(self):
         """Test panel schema is valid JSON."""
         schema_path = CONSUMER_ROOT / "schemas/triage-panel.schema.json"
@@ -117,7 +117,7 @@ class TestSchemas:
             schema = json.load(f)
         assert "$schema" in schema
         assert "$id" in schema
-    
+
     def test_checkpoint_schema_valid(self):
         """Test checkpoint schema is valid JSON."""
         schema_path = CONSUMER_ROOT / "schemas/triage-checkpoint.schema.json"
@@ -126,7 +126,7 @@ class TestSchemas:
             schema = json.load(f)
         assert "$schema" in schema
         assert "$id" in schema
-    
+
     def test_lane_mapping_schema_valid(self):
         """Test lane-mapping schema is valid JSON."""
         schema_path = CONSUMER_ROOT / "schemas/lane-mapping.schema.json"
@@ -135,7 +135,7 @@ class TestSchemas:
             schema = json.load(f)
         assert "$schema" in schema
         assert "$id" in schema
-    
+
     def test_autonomy_gap_schema_valid(self):
         """Test autonomy-gap schema is valid JSON."""
         schema_path = CONSUMER_ROOT / "schemas/autonomy-gap.schema.json"
@@ -148,7 +148,7 @@ class TestSchemas:
 
 class TestFixtures:
     """Test fixture files are valid."""
-    
+
     def test_example_manifest_valid(self, example_manifest_path):
         """Test example manifest fixture is valid JSON."""
         assert example_manifest_path.exists()
@@ -157,7 +157,7 @@ class TestFixtures:
         assert manifest["schema_version"] == "prompt-parallel-dispatch/v1"
         assert "run_id" in manifest
         assert "lanes" in manifest
-    
+
     def test_example_panel_valid(self, example_panel_path):
         """Test example panel fixture is valid JSON."""
         assert example_panel_path.exists()
@@ -166,7 +166,7 @@ class TestFixtures:
         assert "panel_id" in panel
         assert "lane_id" in panel
         assert "prompt_content" in panel
-    
+
     def test_example_checkpoint_valid(self, example_checkpoint_path):
         """Test example checkpoint fixture is valid JSON."""
         assert example_checkpoint_path.exists()
@@ -178,7 +178,7 @@ class TestFixtures:
 
 class TestManifestIngestion:
     """Test Triage manifest ingestion as first-class machine input."""
-    
+
     def test_ingest_manifest(self, consumer, example_manifest_path):
         """Test manifest ingestion."""
         manifest = consumer.ingest_manifest(example_manifest_path)
@@ -188,7 +188,7 @@ class TestManifestIngestion:
         assert manifest.graph_width == 2
         assert manifest.parallel_disposition == "REQUIRED"
         assert len(manifest.lanes) == 2
-    
+
     def test_manifest_lanes_parsed(self, consumer, example_manifest_path):
         """Test manifest lanes are correctly parsed."""
         manifest = consumer.ingest_manifest(example_manifest_path)
@@ -201,7 +201,7 @@ class TestManifestIngestion:
 
 class TestPanelIngestion:
     """Test Triage panel ingestion as first-class machine input."""
-    
+
     def test_ingest_panel(self, consumer, example_panel_path):
         """Test panel ingestion."""
         panel = consumer.ingest_panel(example_panel_path)
@@ -210,7 +210,7 @@ class TestPanelIngestion:
         assert panel.lane_id == "lane-01-policy"
         assert panel.sprint_name == "P07 Triage ASB Consumer Floor"
         assert len(panel.prompt_content) > 0
-    
+
     def test_panel_scope_parsed(self, consumer, example_panel_path):
         """Test panel scope is correctly parsed."""
         panel = consumer.ingest_panel(example_panel_path)
@@ -221,14 +221,14 @@ class TestPanelIngestion:
 
 class TestAutonomyGapClassification:
     """Test AUTONOMY_GAP classification."""
-    
+
     def test_no_manifest_or_panels(self, consumer):
         """Test no gap when no manifest or panels."""
         gap = consumer.classify_autonomy_gap()
         assert isinstance(gap, AutonomyGap)
         assert gap.gap_detected is False
         assert gap.gap_reason == AutonomyGapReason.NO_MANIFEST_OR_PANELS
-    
+
     def test_gap_detected_with_unmapped_lanes(self, consumer, example_manifest_path):
         """Test AUTONOMY_GAP detected when lanes are unmapped."""
         manifest = consumer.ingest_manifest(example_manifest_path)
@@ -238,7 +238,7 @@ class TestAutonomyGapClassification:
         assert gap.ready_lanes_count == 2
         assert gap.unmapped_lanes_count == 2
         assert len(gap.unmapped_lane_ids) == 2
-    
+
     def test_no_gap_when_all_lanes_mapped(self, consumer, example_manifest_path):
         """Test no AUTONOMY_GAP when all lanes are mapped."""
         manifest = consumer.ingest_manifest(example_manifest_path)
@@ -263,7 +263,7 @@ class TestAutonomyGapClassification:
 
 class TestLaneMapping:
     """Test lane mapping to ASB descriptors."""
-    
+
     def test_map_runtime_tool_to_cloud_agent(self, consumer, example_manifest_path):
         """Test runtime_tool lanes map to cursor-cloud-agent."""
         manifest = consumer.ingest_manifest(example_manifest_path)
@@ -273,7 +273,7 @@ class TestLaneMapping:
         assert mapping.asb_descriptor_kind == AsbDescriptorKind.CURSOR_CLOUD_AGENT
         assert mapping.mapping_confidence == MappingConfidence.HIGH
         assert mapping.execution_ready is True
-    
+
     def test_map_argv_deterministic_to_local(self, consumer):
         """Test deterministic argv lanes map to local-argv."""
         lane = TriageLane(
@@ -298,7 +298,7 @@ class TestLaneMapping:
 
 class TestMergeGateClassification:
     """Test merge-gate classification with degraded provider + local_proof."""
-    
+
     def test_continue_with_degraded_and_local_proof(self, consumer):
         """Test CONTINUE when degraded checks + local proof exists."""
         required_checks = [
@@ -310,7 +310,7 @@ class TestMergeGateClassification:
             degradation_reason="actions_minute_exhaustion"
         )
         assert result == "CONTINUE"
-    
+
     def test_blocked_without_local_proof(self, consumer):
         """Test BLOCKED when degraded checks but no local proof."""
         required_checks = [
@@ -322,7 +322,7 @@ class TestMergeGateClassification:
             degradation_reason="actions_minute_exhaustion"
         )
         assert result == "BLOCKED"
-    
+
     def test_continue_with_no_degraded_checks(self, consumer):
         """Test CONTINUE when no degraded checks."""
         required_checks = [
@@ -338,15 +338,15 @@ class TestMergeGateClassification:
 
 class TestCheckpointProcessing:
     """Test checkpoint processing and first_unproven_gate extraction."""
-    
+
     def test_extract_first_unproven_gate(self, consumer, example_checkpoint_path):
         """Test extracting first_unproven_gate from checkpoint."""
         with open(example_checkpoint_path, 'r') as f:
             checkpoint = json.load(f)
-        
+
         first_unproven = consumer.extract_first_unproven_gate(checkpoint)
         assert first_unproven == "merge-gate-validation"
-    
+
     def test_extract_none_for_empty_checkpoint(self, consumer):
         """Test extracting from empty checkpoint returns None."""
         checkpoint = {"threads": []}

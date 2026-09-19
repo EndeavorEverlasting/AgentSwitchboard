@@ -35,13 +35,13 @@ function Test-Condition {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [Parameter(Mandatory)]
         [bool]$Condition,
-        
+
         [string]$FailureMessage = ""
     )
-    
+
     if ($Condition) {
         Write-Host "  ✓ $Name" -ForegroundColor Green
         $script:PassCount++
@@ -71,31 +71,31 @@ Write-Host "Test: Consumer policy contract" -ForegroundColor Yellow
 $PolicyPath = Join-Path $ConsumerRoot "consumer.policy.json"
 try {
     $Policy = Get-Content $PolicyPath -Raw | ConvertFrom-Json
-    
+
     Test-Condition "Policy has schemaVersion" ($null -ne $Policy.schemaVersion)
     Test-Condition "Policy has policyId" ($null -ne $Policy.policyId)
     Test-Condition "Policy has policy object" ($null -ne $Policy.policy)
-    
+
     # Critical policy enforcement
     Test-Condition "human_scheduler_allowed is false" `
         ($Policy.policy.human_scheduler_allowed -eq $false) `
         "MUST be false to enforce autonomous dispatch"
-    
+
     Test-Condition "panel_ingest_required is true" `
         ($Policy.policy.panel_ingest_required -eq $true) `
         "MUST be true to treat panels as machine inputs"
-    
+
     Test-Condition "autonomy_gap_classification_required is true" `
         ($Policy.policy.autonomy_gap_classification_required -eq $true) `
         "MUST be true to classify AUTONOMY_GAP"
-    
+
     Test-Condition "manifest_and_panels_are_machine_inputs is true" `
         ($Policy.policy.manifest_and_panels_are_machine_inputs -eq $true)
-    
+
     Test-Condition "panel_deletion_forbidden is true" `
         ($Policy.policy.panel_deletion_forbidden -eq $true) `
         "MUST NOT delete panels as design goal"
-    
+
 } catch {
     Test-Condition "Policy JSON parses" $false $_.Exception.Message
 }
@@ -161,19 +161,19 @@ Write-Host "Test: Python module functionality" -ForegroundColor Yellow
 try {
     $manifestPath = Join-Path $ConsumerRoot "fixtures/example-manifest.json"
     $panelPath = Join-Path $ConsumerRoot "fixtures/example-panel.json"
-    
+
     # Test manifest ingestion
     $manifestTest = python3 $PythonModulePath --manifest $manifestPath 2>&1
     Test-Condition "Manifest ingestion works" ($LASTEXITCODE -eq 0) "$manifestTest"
-    
+
     # Test panel ingestion
     $panelTest = python3 $PythonModulePath --panel $panelPath 2>&1
     Test-Condition "Panel ingestion works" ($LASTEXITCODE -eq 0) "$panelTest"
-    
+
     # Test AUTONOMY_GAP classification
     $gapTest = python3 $PythonModulePath --manifest $manifestPath --classify-gap 2>&1
     Test-Condition "AUTONOMY_GAP classification works" ($LASTEXITCODE -eq 0) "$gapTest"
-    
+
 } catch {
     Test-Condition "Python module functionality" $false $_.Exception.Message
 }

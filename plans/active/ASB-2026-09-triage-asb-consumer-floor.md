@@ -1,8 +1,8 @@
 # P07: Triage→ASB Durable Consumer Contract Floor
 
-**Plan ID**: ASB-2026-09-TRIAGE-ASB-CONSUMER-FLOOR  
-**Status**: Active  
-**Priority**: High  
+**Plan ID**: ASB-2026-09-TRIAGE-ASB-CONSUMER-FLOOR
+**Status**: Active
+**Priority**: High
 **Created**: 2026-09-19
 
 ## Mission
