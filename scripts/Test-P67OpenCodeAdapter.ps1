@@ -251,8 +251,89 @@ if (Test-Path -LiteralPath $normalizerModule -PathType Leaf) {
     Add-Result ($normalizerContent -match 'compute-authority-provider-capture/v2') 'adp02/normalizer/capture-schema' 'normalizer does not reference capture contract v2'
 }
 
-Write-Host "`nP67 OpenCode Adapter (ADP-01 + ADP-02) Contract Tests" -ForegroundColor Cyan
-Write-Host "======================================================" -ForegroundColor Cyan
+$adp03FixturesDir = Join-Path $adapterDir 'fixtures/adp03'
+$syntheticInteropScript = Join-Path $RootPath 'scripts/Invoke-P67OpenCodeAdapterSyntheticInterop.ps1'
+
+Add-Result (Test-Path -LiteralPath $adp03FixturesDir -PathType Container) 'adp03/fixtures-dir-exists' 'ADP-03 fixtures directory missing'
+Add-Result (Test-Path -LiteralPath $syntheticInteropScript -PathType Leaf) 'adp03/runner-exists' 'ADP-03 synthetic interop runner missing'
+
+if (Test-Path -LiteralPath $adp03FixturesDir -PathType Container) {
+    $requiredFixtures = @(
+        'synthetic-01-happy-path-valid.json',
+        'synthetic-02-validation-nonzero.json',
+        'synthetic-03-timeout-fail-closed.json',
+        'synthetic-04-missing-result-fail-closed.json',
+        'synthetic-05-parallel-subagent-lane.json',
+        'synthetic-06-privacy-rejected.json',
+        'synthetic-07-evaluative-rejected.json',
+        'synthetic-08-invalid-workspace.json'
+    )
+
+    foreach ($fixtureName in $requiredFixtures) {
+        $fixturePath = Join-Path $adp03FixturesDir $fixtureName
+        Add-Result (Test-Path -LiteralPath $fixturePath -PathType Leaf) "adp03/fixture/$fixtureName" "fixture missing"
+
+        if (Test-Path -LiteralPath $fixturePath -PathType Leaf) {
+            try {
+                $fixture = Get-Content -LiteralPath $fixturePath -Raw | ConvertFrom-Json
+                Add-Result ($fixture.schema_version -eq 'compute-authority-provider-capture/v2') "adp03/fixture/$fixtureName/schema" 'incorrect schema version'
+                Add-Result ($fixture.run_status -in @('VALID','INVALID')) "adp03/fixture/$fixtureName/status" 'invalid run_status'
+                Add-Result ($null -ne $fixture.provider_identity) "adp03/fixture/$fixtureName/identity" 'provider_identity missing'
+                Add-Result ($null -ne $fixture.task_id) "adp03/fixture/$fixtureName/task-id" 'task_id missing'
+                Add-Result ($fixture.task_id -match 'SYNTHETIC') "adp03/fixture/$fixtureName/synthetic-marker" 'fixture must have SYNTHETIC marker'
+            } catch {
+                [void]$failures.Add("adp03/fixture/$fixtureName/parse-error: $($_.Exception.Message)")
+            }
+        }
+    }
+}
+
+if (Test-Path -LiteralPath $syntheticInteropScript -PathType Leaf) {
+    $runnerContent = Get-Content -LiteralPath $syntheticInteropScript -Raw
+
+    Add-Result ($runnerContent -match 'ADP-03') 'adp03/runner/adp-marker' 'runner does not reference ADP-03'
+    Add-Result ($runnerContent -match 'synthetic interoperability') 'adp03/runner/interop-claim' 'runner does not claim synthetic interoperability'
+    Add-Result ($runnerContent -match 'no live OpenCode') 'adp03/runner/no-live-provider' 'runner does not document no-live-provider constraint'
+    Add-Result ($runnerContent -match 'asb-p67-adp03-synthetic-interop-receipt') 'adp03/runner/receipt-schema' 'runner does not define receipt schema'
+    Add-Result ($runnerContent -match 'SYNTHETIC_INTEROPERABILITY') 'adp03/runner/proof-level' 'runner does not declare SYNTHETIC_INTEROPERABILITY proof level'
+
+    try {
+        $tempReceipt = [System.IO.Path]::GetTempFileName()
+        $runnerResult = & pwsh -NoLogo -NoProfile -File $syntheticInteropScript -OutputPath $tempReceipt -ErrorAction Stop
+        $runnerExitCode = $LASTEXITCODE
+
+        Add-Result ($runnerExitCode -eq 0) 'adp03/runner/execution/exit-code' "runner exited with non-zero code: $runnerExitCode"
+
+        if (Test-Path -LiteralPath $tempReceipt -PathType Leaf) {
+            $receipt = Get-Content -LiteralPath $tempReceipt -Raw | ConvertFrom-Json
+
+            Add-Result ($receipt.schema_version -match 'asb-p67-adp03-synthetic-interop-receipt') 'adp03/runner/execution/receipt-schema' 'receipt has incorrect schema'
+            Add-Result ($null -ne $receipt.test_run_summary) 'adp03/runner/execution/summary' 'receipt missing test_run_summary'
+            Add-Result ($receipt.proof_level -eq 'SYNTHETIC_INTEROPERABILITY') 'adp03/runner/execution/proof-level' 'receipt has incorrect proof level'
+            Add-Result ($null -ne $receipt.adp03_paths_covered) 'adp03/runner/execution/paths-covered' 'receipt missing adp03_paths_covered'
+
+            if ($null -ne $receipt.adp03_paths_covered) {
+                $pathsCovered = @($receipt.adp03_paths_covered)
+                Add-Result ($pathsCovered -contains 'happy_path_valid_capture_v2') 'adp03/runner/execution/path/happy' 'happy path not covered'
+                Add-Result ($pathsCovered -contains 'timeout_fail_closed') 'adp03/runner/execution/path/timeout' 'timeout path not covered'
+                Add-Result ($pathsCovered -contains 'privacy_rejection') 'adp03/runner/execution/path/privacy' 'privacy path not covered'
+                Add-Result ($pathsCovered -contains 'evaluative_rejection') 'adp03/runner/execution/path/evaluative' 'evaluative path not covered'
+            }
+
+            if ($null -ne $receipt.test_run_summary) {
+                Add-Result ($receipt.test_run_summary.total_tests -ge 8) 'adp03/runner/execution/test-count' 'insufficient test coverage (expected >= 8)'
+                Add-Result ($receipt.test_run_summary.success -eq $true) 'adp03/runner/execution/success' 'synthetic interop tests did not pass'
+            }
+
+            Remove-Item -LiteralPath $tempReceipt -Force -ErrorAction SilentlyContinue
+        }
+    } catch {
+        [void]$failures.Add("adp03/runner/execution/crash: $($_.Exception.Message)")
+    }
+}
+
+Write-Host "`nP67 OpenCode Adapter (ADP-01 + ADP-02 + ADP-03) Contract Tests" -ForegroundColor Cyan
+Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host "Passes: $($passes.Count)" -ForegroundColor Green
 if ($failures.Count -gt 0) {
     Write-Host "Failures: $($failures.Count)" -ForegroundColor Red

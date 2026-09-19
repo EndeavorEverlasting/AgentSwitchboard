@@ -1,0 +1,21 @@
+{
+  "schema_version": "compute-authority-provider-capture/v2",
+  "run_status": "INVALID",
+  "invalid_reason": {
+    "code": "CAPTURE_PRIVACY_REJECTED",
+    "message": "Adapter attempted to emit forbidden privacy-violating field: raw_transcript",
+    "FORBIDDEN_FIELD_EXAMPLE": "raw_transcript"
+  },
+  "provider_identity": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4",
+    "agent": "opencode-v2-synthetic",
+    "adapter_version": "asb-p67-opencode-adp-02/v1"
+  },
+  "task_id": "TC06-SYNTHETIC",
+  "execution_summary": {
+    "started_utc": "2026-09-19T20:00:00.000Z",
+    "ended_utc": "2026-09-19T20:00:15.000Z",
+    "elapsed_seconds": 15.0
+  }
+}

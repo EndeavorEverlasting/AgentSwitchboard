@@ -168,7 +168,7 @@
     {
       "taskId": "ADP-03",
       "title": "Prove synthetic cross-repo interoperability",
-      "status": "pending",
+      "status": "completed",
       "owner": "ASB + Triage compatibility seam",
       "dependencies": [
         "ADP-02"
@@ -187,7 +187,18 @@
         "no hidden-gold/raw-text leakage",
         "repository validators and patch hygiene pass"
       ],
-      "evidence": []
+      "evidence": [
+        "tooling/evals/p67-opencode-adapter/fixtures/adp03/ - 8 synthetic fixtures covering all required paths: happy-path VALID, validation-nonzero, timeout fail-closed, missing-result fail-closed, parallel/subagent lane, privacy rejection, evaluative rejection, invalid workspace",
+        "scripts/Invoke-P67OpenCodeAdapterSyntheticInterop.ps1 - durable synthetic interoperability runner; exercises config → invoke → normalize → capture v2 paths with machine-readable receipt (schema: asb-p67-adp03-synthetic-interop-receipt/v1)",
+        "tests/test_p67_opencode_adapter.py - extended with 13 ADP-03 Python tests covering fixture validation, contract compliance, synthetic-only constraint, and receipt generation",
+        "scripts/Test-P67OpenCodeAdapter.ps1 - extended with ADP-03 contract tests covering fixtures, runner execution, receipt schema, and 8-path coverage verification",
+        "synthetic fixtures validated: all contain compute-authority-provider-capture/v2 schema; VALID fixtures include workspace_state and validation_result; INVALID fixtures include invalid_reason with typed codes",
+        "privacy/evaluative rejection: fixtures demonstrate fail-closed behavior; no actual forbidden fields outside rejection markers; normalizer module validates against ForbiddenEvaluativeFields, ForbiddenPrivacyFields, ForbiddenCredentialFields",
+        "8 required paths covered: (1) happy-path VALID with validation_passed=true, (2) validation_passed=false with exit_code=1, (3) EXECUTION_TIMEOUT with 600s elapsed, (4) RUNTIME_UNAVAILABLE for missing result, (5) parallel/subagent synthetic lane with provider_actions_count>1, (6) CAPTURE_PRIVACY_REJECTED, (7) CAPTURE_EVALUATIVE_REJECTED, (8) WORKSPACE_INVALID fail-closed",
+        "receipt schema: asb-p67-adp03-synthetic-interop-receipt/v1 with test_run_summary (total/passed/failed/success), execution_summary, test_results array, proof_level=SYNTHETIC_INTEROPERABILITY, adp03_paths_covered array",
+        "runner execution: pwsh scripts/Invoke-P67OpenCodeAdapterSyntheticInterop.ps1 -OutputPath <path>; validates all 8 fixtures + normalizer module; emits machine-readable receipt; exits 0 on success",
+        "proof ceiling: SYNTHETIC INTEROPERABILITY only; no live OpenCode provider execution; live smoke remains ADP-04"
+      ]
     },
     {
       "taskId": "ADP-04",

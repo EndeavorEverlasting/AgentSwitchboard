@@ -96,10 +96,10 @@ Adapter may **not** decide usefulness, first-green semantic sufficiency, true fi
 
 ## Phases
 
-- **ADP-00 — Neutral capture authority (Triage):** self-rating rejected; neutral telemetry accepted; frozen prompt identities unchanged.
-- **ADP-01 — Capability/readiness (ASB):** exact capabilities and provider identity proven or one typed blocker.
-- **ADP-02 — Adapter + instrumentation (ASB):** P67 placeholder invocation produces privacy-bounded neutral JSON; timeout/nonzero/missing-result fail closed.
-- **ADP-03 — Synthetic interoperability:** fake structured events exercise action, validation, subagent/parallel, timeout, malformed-result, privacy, and mutation-boundary paths.
+- **ADP-00 — Neutral capture authority (Triage):** ✓ COMPLETE. Self-rating rejected; neutral telemetry accepted; frozen prompt identities unchanged.
+- **ADP-01 — Capability/readiness (ASB):** ✓ COMPLETE. Exact capabilities and provider identity proven or one typed blocker.
+- **ADP-02 — Adapter + instrumentation (ASB):** ✓ COMPLETE. P67 placeholder invocation produces privacy-bounded neutral JSON; timeout/nonzero/missing-result fail closed.
+- **ADP-03 — Synthetic interoperability:** ✓ COMPLETE. Fake structured events exercise action, validation, subagent/parallel, timeout, malformed-result, privacy, and mutation-boundary paths. 8 synthetic fixtures + durable runner + machine-readable receipt. Proof: SYNTHETIC_INTEROPERABILITY only.
 - **ADP-04 — Observed adapter smoke:** one TC01 control/treatment pair. If real worker capacity >=2, add one TC06 pair. Smoke proves adapter runtime only, not effectiveness.
 - **ADP-05 — Gen2 16-run pilot:** 16 classified paired runs, stable pair identity, zero forbidden escape/gold leakage, pilot aggregate and fixture-validity disposition.
 - **ADP-06 — P67 Sprint 3:** only after valid pilot; keep Gen2 treatment and thresholds frozen.
@@ -129,9 +129,9 @@ Adapter may **not** decide usefulness, first-green semantic sufficiency, true fi
 
 ## Proof ceiling
 
-Current: **TRACKED PLAN only**.
+Current: **SYNTHETIC INTEROPERABILITY (ADP-03)**.
 
-Implementation can reach IMPLEMENTED/VALIDATED/INTEGRATED. A live smoke can reach OBSERVED_ADAPTER_RUNTIME for the exact workstation/provider/model/config. Only the P67 pilot can promote the tested Gen2 population to observed pilot behavior; the final effectiveness verdict remains Sprint 3.
+ADP-00 through ADP-03 are COMPLETE: neutral capture contract integrated, capability/readiness probe validated, adapter implementation complete, synthetic interoperability proven via 8-path fixture coverage with machine-readable receipt. Live OpenCode smoke (ADP-04) remains pending. Only the P67 pilot can promote the tested Gen2 population to observed pilot behavior; the final effectiveness verdict remains Sprint 3.
 
 ## Cross-repository coordination
 
@@ -139,4 +139,4 @@ Triage scientific/capture authority is integrated via PR #559 / merge `ce22389e1
 
 ## Immediate next action
 
-Run ADP-00 and ADP-01 concurrently. After both are green, build ADP-02. The operator should never need to hand-author the adapter JSON.
+ADP-03 COMPLETE. Next: **ADP-04 bounded observed adapter smoke** with real OpenCode provider auth/quota on authorized workstation/runtime. One TC01 paired smoke (control/treatment), conditional TC06 paired parallel smoke only when >=2 real worker slots exist. Smoke proves adapter runtime only, not effectiveness. No live smoke until operator confirms provider readiness and machine-local config.
