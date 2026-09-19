@@ -465,8 +465,7 @@ opencode --version
     $summary.shortcuts = [ordered]@{ AgentSwitchboard = $shortcutPath }
     Add-Step -Name 'operator-shortcut' -Status 'passed' -Evidence $shortcutPath
 
-    $probeCommand = "`"$($shimPaths.AgentSwitchboard)`" -ListAgents"
-    $freshProbe = Invoke-BoundedProcess -FilePath (Join-Path $env:SystemRoot 'System32\cmd.exe') -ArgumentList @('/d', '/c', $probeCommand) -ProcessTimeoutSeconds 120
+    $freshProbe = Invoke-BoundedProcess -FilePath (Join-Path $env:SystemRoot 'System32\cmd.exe') -ArgumentList @('/d', '/c', 'call', $shimPaths.AgentSwitchboard, '-ListAgents') -ProcessTimeoutSeconds 120
     @($freshProbe.Stdout, $freshProbe.Stderr) | Set-Content -LiteralPath $probeOutputPath -Encoding utf8
     if ($freshProbe.TimedOut -or $freshProbe.ExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($freshProbe.Stdout)) {
         throw "Fresh-shell AgentSwitchboard -ListAgents probe failed. exit=$($freshProbe.ExitCode) timeout=$($freshProbe.TimedOut) evidence=$probeOutputPath"
