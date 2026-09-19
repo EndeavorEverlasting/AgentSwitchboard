@@ -91,7 +91,7 @@
     {
       "taskId": "LSP-02",
       "title": "OpenCode fresh-TUI LSP runtime certification",
-      "status": "done",
+      "status": "completed",
       "owner": "Admin Box 1",
       "dependencies": [
         "COORD-01"
@@ -253,7 +253,7 @@
     {
       "taskId": "GNHF-NARROW-03",
       "title": "Encode GNHF NARROW ownership boundary",
-      "status": "done",
+      "status": "completed",
       "owner": "GNHF contract lane",
       "dependencies": [
         "ARCH-FM-01"

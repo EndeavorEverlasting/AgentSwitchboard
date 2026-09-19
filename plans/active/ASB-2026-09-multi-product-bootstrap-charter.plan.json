@@ -271,7 +271,7 @@
     {
       "taskId": "GNHF-NARROW-09",
       "title": "Encode GNHF NARROW ownership boundary",
-      "status": "done",
+      "status": "completed",
       "owner": "GNHF contract lane",
       "dependencies": [
         "FM-03"
@@ -385,7 +385,7 @@
         "Do not claim live crew dispatch from this floor alone"
       ],
       "evidence": [
-        "cloud LIVE_ATTEMPT@2026-09-14T17:56Z on main@dd303228cf5b35476d0a822fb655728474f1ab4c: contract Mode=contract PASS; Mode=physical-floor and Mode=physical-floor-continue FAIL_CLOSED WINDOWS_WSL_REQUIRED (no wsl.exe on Linux cloud host; zero self-hosted workers); protected control physical-floor also blocked at same gate; LIVE_RUNTIME_PROOF:UNPROVEN \u2014 Admin Box physical-floor-continue required; stop only for BLOCKED_GITHUB_AUTH after package repair",
+        "cloud LIVE_ATTEMPT@2026-09-14T17:56Z on main@dd303228cf5b35476d0a822fb655728474f1ab4c: contract Mode=contract PASS; Mode=physical-floor and Mode=physical-floor-continue FAIL_CLOSED WINDOWS_WSL_REQUIRED (no wsl.exe on Linux cloud host; zero self-hosted workers); protected control physical-floor also blocked at same gate; LIVE_RUNTIME_PROOF:UNPROVEN — Admin Box physical-floor-continue required; stop only for BLOCKED_GITHUB_AUTH after package repair",
         "merge:627e31d16c078b9a0ceb38c2b4cbbeef8fdfc98b pr:#179 INTEGRATED WINDOWS_WSL_REQUIRED exit-46 fail-closed; cloud reconfirm PASS contract / FAIL_CLOSED physical-floor(+continue); LIVE_RUNTIME_PROOF:UNPROVEN pending Admin Box",
         "merge:1ada0344e47f8d52a31aac56d69f95cce1453b2c pr:#181 INTEGRATED Invoke-FmWsl12AdminBoxLiveProof.ps1 Admin Box one-shot; cloud ContractOnly PASS / live exit 46 WINDOWS_WSL_REQUIRED; LIVE_RUNTIME_PROOF:UNPROVEN",
         "merge:f10872522ff2c9a20c03dbd792dce04ac30f9811 pr:#182 cites Admin Box one-shot on ASQ-017; LIVE_RUNTIME_PROOF:UNPROVEN pending Admin Box"
