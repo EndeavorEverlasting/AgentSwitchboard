@@ -1,0 +1,152 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-09-FM-ASB-ROUTING-REQUEST-BUILDER",
+  "title": "FirstMate to ASB routing-request builder (Phase 3 seam)",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "active",
+  "priority": "high",
+  "createdUtc": "2026-09-17T00:00:00Z",
+  "updatedUtc": "2026-09-19T17:31:00Z",
+  "mission": "Own the read-only asb.agent-observation/v1 to prompt-kit.routing-request/v1 translation seam (ASB cross-product-translation) so a correlated observation can be turned into a bounded routing request, without selecting prompts, consulting a registry, dispatching, rolling over, or scheduling crew.",
+  "owner": {
+    "surface": "FirstMate/ASB routing-request builder",
+    "role": "protocol bridge lane (contract proof)",
+    "agent": "Augment Agent"
+  },
+  "delivery": {
+    "branch": "fix/fm-asb-routing-request-builder-review-20260919",
+    "pullRequest": {
+      "number": 314,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/314",
+      "state": "open"
+    },
+    "baseRef": "main@41504c3783744c26dd9e46cd25eaf013ccf010ec",
+    "commitRequired": true
+  },
+  "wave": "FirstMate↔ASB↔PromptKit boundary",
+  "lane": "routing-request builder",
+  "dependencies": [
+    "ASB-2026-09-FM-ASB-OBSERVATION-ADAPTER",
+    "ASB-2026-09-FM-ASB-PROMPTKIT-PROTOCOL-V1"
+  ],
+  "safeParallelWork": [
+    "Observation adapter live-proof (OBS-04)",
+    "Unrelated Windows profile or OpenCode LSP work"
+  ],
+  "ownedScope": [
+    "tooling/firstmate/harness/routing/**",
+    "tests/test_fm_asb_promptkit_protocol_contract.py routing-request builder assertions",
+    "plans/active/ASB-2026-09-fm-asb-routing-request-builder.*",
+    "plans/plan-registry.json membership for this plan"
+  ],
+  "forbiddenScope": [
+    "prompt selection / registry consultation / routing decision consumer",
+    "prompt dispatch, context rollover, or automatic transition",
+    "new ASB crew scheduler or watcher",
+    "fm-send / fm-control / tmux probing / direct terminal manipulation",
+    "live prompt dispatch or credential automation",
+    "upstream FirstMate mutation or pin bump",
+    "committing machine-local receipts, secrets, or personal FirstMate home state"
+  ],
+  "expectedArtifacts": [
+    "tooling/firstmate/harness/routing/build_routing_request.py",
+    "routing-request builder round-trip assertions in the protocol contract test",
+    "this public phase map"
+  ],
+  "tasks": [
+    {
+      "taskId": "RRB-01",
+      "title": "Implement observation→routing-request builder with fail-closed bounds",
+      "status": "completed",
+      "owner": "routing-request builder lane",
+      "dependencies": [],
+      "inputs": [
+        "Frozen prompt-kit.routing-request/v1 schema and fixture",
+        "asb.agent-observation/v1 observation document"
+      ],
+      "outputs": [
+        "build_routing_request.py",
+        "importable build_routing_request() plus read-only CLI"
+      ],
+      "acceptanceCriteria": [
+        "Deterministic translation copies correlation, causation, task, schema-valid repository ref, and grounding from the observation",
+        "rawTranscriptIncluded, crossSurfaceFallbackAllowed fixed false; requireCurrentRegistry fixed true",
+        "RepositoryRef, evidenceRef, RFC3339 createdAt, currentPrompt, evidence state, execution surface, signal, and maxCandidates violations fail closed with ContractError"
+      ],
+      "evidence": [
+        "Nested repositoryRef/evidenceRef/RFC3339/promptRef validation implemented in tooling/firstmate/harness/routing/build_routing_request.py",
+        "FirstMate ASB PromptKit protocol workflow 35458217842: SUCCESS on exact head a00238e0f77ddaec88737bd2a8fde75e0895082b",
+        "Automated test floor workflow 35458218054: Windows and Ubuntu SUCCESS on the same exact head"
+      ]
+    },
+    {
+      "taskId": "RRB-02",
+      "title": "Pin builder to the frozen routing-request fixture via protocol contract test",
+      "status": "completed",
+      "owner": "routing-request builder lane",
+      "dependencies": [
+        "RRB-01"
+      ],
+      "inputs": [
+        "tests/test_fm_asb_promptkit_protocol_contract.py",
+        "agent-observation.valid.json + routing-request.valid.json"
+      ],
+      "outputs": [
+        "Round-trip and fail-closed assertions in the existing protocol contract test"
+      ],
+      "acceptanceCriteria": [
+        "Built request passes envelope_ok and matches the frozen fixture hashes",
+        "Correlation and causation continuity with the observation is asserted",
+        "Bad enum/override inputs are asserted to raise ContractError"
+      ],
+      "evidence": [
+        "Frozen valid routing-request semanticSha256/idempotency assertions retained",
+        "Negative regressions reject malformed repository branch/head/worktree/extra fields, evidence scalar/missing-ref/secret cases, invalid observation/output timestamps, and invalid/missing promptRef fields",
+        "FirstMate ASB PromptKit protocol workflow 35458217842: SUCCESS on exact head a00238e0f77ddaec88737bd2a8fde75e0895082b"
+      ]
+    },
+    {
+      "taskId": "RRB-03",
+      "title": "Phase 3 handoff — routing-decision consumer and prompt-dispatch",
+      "status": "pending",
+      "owner": "Prompt Kit routing-decision lane",
+      "dependencies": [
+        "RRB-02"
+      ],
+      "inputs": [
+        "prompt-kit.routing-request/v1 built requests",
+        "Frozen routing-decision and prompt-dispatch schemas"
+      ],
+      "outputs": [
+        "Bounded routing-decision / prompt-dispatch sprint declaration"
+      ],
+      "acceptanceCriteria": [
+        "New bounded sprint declaration before decision/dispatch code",
+        "No crew scheduler or automatic rollover expansion"
+      ],
+      "evidence": []
+    }
+  ],
+  "validation": [
+    "python tests/test_fm_asb_promptkit_protocol_contract.py",
+    "python tests/test_public_plan_contracts.py",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-FmAsbPromptKitProtocolContract.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
+    "git diff --check"
+  ],
+  "proof": {
+    "target": "asb.agent-observation/v1 deterministically translated to prompt-kit.routing-request/v1 within ASB translation ownership",
+    "achieved": "VALIDATED contract/static builder on exact head a00238e0f77ddaec88737bd2a8fde75e0895082b: FirstMate ASB PromptKit protocol, First Mate interoperability, public-plan, app-harness, app-output, runtime-event, device-profile, CodeRabbit, and Windows+Ubuntu automated floor all green. Valid frozen fixture identity preserved; malformed nested protocol refs fail closed.",
+    "ceiling": "VALIDATED_CONTRACT_STATIC. Integration to main is the next gate. Not runtime, routing-decision/dispatch/rollover, or live prompt dispatch."
+  },
+  "handoff": {
+    "nextOwner": "mainline integration; then Prompt Kit routing-decision lane (RRB-03)",
+    "nextCommand": "gh pr merge 314 --squash --delete-branch",
+    "notes": [
+      "The builder never selects prompts or consults a registry; it emits a bounded request only.",
+      "requireCurrentRegistry is asserted true so downstream decision must bind to the current registry.",
+      "Phase 3 decision/dispatch/rollover is a separate bounded sprint, not part of this seam."
+    ]
+  }
+}

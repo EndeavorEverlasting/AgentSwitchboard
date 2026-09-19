@@ -134,6 +134,15 @@
       "status": "active",
       "priority": "high",
       "dependencies": ["ASB-2026-09-POST-PPP-REMAINING-SPRINTS"]
+    },
+    {
+      "planId": "ASB-2026-09-FM-ASB-ROUTING-REQUEST-BUILDER",
+      "path": "plans/active/ASB-2026-09-fm-asb-routing-request-builder.plan.json",
+      "summaryPath": "plans/active/ASB-2026-09-fm-asb-routing-request-builder.md",
+      "status": "active",
+      "priority": "high",
+      "dependencies": ["ASB-2026-09-FM-ASB-OBSERVATION-ADAPTER", "ASB-2026-09-FM-ASB-PROMPTKIT-PROTOCOL-V1"],
+      "architectureDecision": "docs/architecture/fm-asb-promptkit-protocol-v1.md"
     }
   ]
 }

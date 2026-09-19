@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
+import copy
 import hashlib
+import importlib.util
 import json
 import re
 from pathlib import Path
@@ -13,6 +15,7 @@ POLICY = ROOT / ".ai/harness/fm-asb-promptkit-protocol.policy.json"
 STATE_MACHINE = ROOT / ".ai/harness/fm-asb-promptkit-rollover-state-machine.json"
 SCHEMA_DIR = ROOT / ".ai/harness/schemas/fm-asb-promptkit"
 FIXTURES = ROOT / ".ai/harness/fixtures/fm-asb-promptkit"
+ROUTING_BUILDER = ROOT / "tooling/firstmate/harness/routing/build_routing_request.py"
 DOCS_PROTOCOL = ROOT / "docs/architecture/fm-asb-promptkit-protocol-v1.md"
 DOCS_UX = ROOT / "docs/harness/context-rollover-ux.md"
 ADR_BOUNDARY = ROOT / "docs/architecture/asb-firstmate-runtime-boundary.md"
@@ -36,6 +39,14 @@ CTX_RE = re.compile(r"^ctx_[A-Za-z0-9][A-Za-z0-9._-]{7,95}$")
 
 def load(path: Path):
     return json.loads(path.read_text(encoding="utf-8-sig"))
+
+
+def load_module(path: Path, name: str):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
 
 
 def semantic_sha(obj: dict) -> str:
@@ -220,6 +231,131 @@ def main() -> None:
         == idem_key("asb.context-transition/v1", ctx["transitionId"], ctx["state"]),
         "ctx idempotency key",
     )
+
+    # Routing-request builder reproduces the frozen fixture and rejects malformed nested refs.
+    assert_true(ROUTING_BUILDER.is_file(), "routing-request builder missing")
+    builder = load_module(ROUTING_BUILDER, "build_routing_request")
+    builder_args = {
+        "summary": req["mission"]["summary"],
+        "observed": req["evidenceState"]["observed"],
+        "claimed": req["evidenceState"]["claimed"],
+        "execution_surface": req["executionSurface"],
+        "signals": list(req["signals"]),
+        "forbidden_scopes": list(req["constraints"]["forbiddenScopes"]),
+        "max_candidates": req["routingPolicy"]["maxCandidates"],
+        "created_at": req["createdAt"],
+    }
+    built = builder.build_routing_request(obs, **builder_args)
+    assert_true(not envelope_ok(built), f"built routing-request envelope: {envelope_ok(built)}")
+    assert_true(built["schema"] == "prompt-kit.routing-request/v1", "built schema")
+    assert_true(built["task"]["repository"] == obs["repository"], "built repository parity")
+    assert_true(built["currentPrompt"] == obs["promptContext"]["currentPrompt"], "built prompt parity")
+    assert_true(built["constraints"]["evidenceRefs"] == obs["evidence"], "built evidence parity")
+    assert_true(
+        built["idempotency"]["semanticSha256"] == req["idempotency"]["semanticSha256"],
+        "built semanticSha256 matches frozen fixture",
+    )
+    assert_true(
+        built["idempotency"]["key"] == req["idempotency"]["key"],
+        "built idempotency key matches frozen fixture",
+    )
+
+    for label, mutate in (
+        ("repository branch type", lambda x: x["repository"].update({"branch": 7})),
+        ("repository head sha", lambda x: x["repository"].update({"headSha": "not-a-git-sha"})),
+        ("repository worktree type", lambda x: x["repository"].update({"worktreeId": 9})),
+        ("repository extra field", lambda x: x["repository"].update({"unexpected": "x"})),
+        ("evidence scalar", lambda x: x.update({"evidence": ["not-an-object"]})),
+        (
+            "evidence missing ref",
+            lambda x: x.update(
+                {
+                    "evidence": [
+                        {
+                            "kind": "validator",
+                            "containsRawUserText": False,
+                            "containsSecrets": False,
+                        }
+                    ]
+                }
+            ),
+        ),
+        (
+            "evidence secret flag",
+            lambda x: x.update(
+                {
+                    "evidence": [
+                        {
+                            "kind": "validator",
+                            "ref": "validator://one",
+                            "containsRawUserText": False,
+                            "containsSecrets": True,
+                        }
+                    ]
+                }
+            ),
+        ),
+        ("observation timestamp", lambda x: x.update({"createdAt": "not-a-date"})),
+        (
+            "prompt ref id",
+            lambda x: x["promptContext"].update(
+                {
+                    "currentPrompt": {
+                        "id": "BAD",
+                        "kitVersion": "v1",
+                        "registrySha256": "a" * 64,
+                        "promptSha256": "b" * 64,
+                        "executionSurface": "regular_ai_prompt",
+                    }
+                }
+            ),
+        ),
+        (
+            "prompt ref missing field",
+            lambda x: x["promptContext"].update(
+                {
+                    "currentPrompt": {
+                        "id": "P07",
+                        "kitVersion": "v1",
+                        "registrySha256": "a" * 64,
+                        "executionSurface": "regular_ai_prompt",
+                    }
+                }
+            ),
+        ),
+    ):
+        bad_obs = copy.deepcopy(obs)
+        mutate(bad_obs)
+        try:
+            builder.build_routing_request(bad_obs, **builder_args)
+            raise AssertionError(f"builder accepted invalid {label}")
+        except builder.ContractError:
+            pass
+
+    try:
+        builder.build_routing_request(obs, **{**builder_args, "created_at": "2026-09-19 12:00:00"})
+        raise AssertionError("builder accepted invalid routing-request createdAt")
+    except builder.ContractError:
+        pass
+
+    # Existing caller-controlled protocol enums remain fail-closed.
+    for bad in (
+        {"observed": "NOT_A_STATE"},
+        {"execution_surface": "shell"},
+        {"signals": ["not-a-signal"]},
+        {"max_candidates": 9},
+    ):
+        try:
+            builder.build_routing_request(
+                obs,
+                **{
+                    **builder_args,
+                    **bad,
+                },
+            )
+            raise AssertionError(f"builder accepted invalid input {bad}")
+        except builder.ContractError:
+            pass
 
     # Invalid fixtures must fail semantic rules
     bad_ctx = load(FIXTURES / "context-transition.estimated-automatic.invalid.json")
