@@ -1,0 +1,20 @@
+{
+  "schema_version": "p67-opencode-readiness-status/v1",
+  "status": "BLOCKED",
+  "opencode_found": true,
+  "opencode_version": "2.0.0",
+  "capabilities_verified": {
+    "noninteractive_execution": "VERIFIED",
+    "explicit_identity": "VERIFIED",
+    "isolated_config": "VERIFIED",
+    "instrumentation_feasibility": "VERIFIED",
+    "auth_readiness": "BLOCKED"
+  },
+  "blocker": {
+    "code": "OPENCODE_AUTH_UNAVAILABLE",
+    "message": "Authentication required but not configured"
+  },
+  "probe_timestamp_utc": "2026-09-19T20:00:00.000Z",
+  "FORBIDDEN_FIELD_api_key": "sk-test-should-never-appear",
+  "FORBIDDEN_FIELD_token": "bearer_token_12345"
+}

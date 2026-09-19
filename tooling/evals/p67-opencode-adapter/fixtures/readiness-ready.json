@@ -1,0 +1,15 @@
+{
+  "schema_version": "p67-opencode-readiness-status/v1",
+  "status": "READY",
+  "opencode_found": true,
+  "opencode_version": "2.1.0",
+  "capabilities_verified": {
+    "noninteractive_execution": "VERIFIED",
+    "explicit_identity": "VERIFIED",
+    "isolated_config": "VERIFIED",
+    "instrumentation_feasibility": "VERIFIED",
+    "auth_readiness": "VERIFIED"
+  },
+  "blocker": null,
+  "probe_timestamp_utc": "2026-09-19T20:00:00.000Z"
+}

@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-18T19:35:00Z",
-  "updatedUtc": "2026-09-19T17:34:00Z",
+  "updatedUtc": "2026-09-19T20:58:00Z",
   "mission": "Build a concrete privacy-bounded OpenCode V2 external-agent adapter for P67 Gen2, with AgentSwitchboard owning provider execution/evidence transport and Triage P67 retaining scientific grading authority.",
   "owner": {
     "surface": "P67 external-agent evaluation adapter",
@@ -89,7 +89,7 @@
     {
       "taskId": "ADP-01",
       "title": "Implement OpenCode capability and provider-readiness probe",
-      "status": "ready",
+      "status": "completed",
       "owner": "AgentSwitchboard provider-runtime lane",
       "dependencies": [],
       "inputs": [
@@ -108,7 +108,20 @@
         "credentials are never emitted",
         "missing capability/auth/quota returns one typed blocker"
       ],
-      "evidence": []
+      "evidence": [
+        "tooling/evals/p67-opencode-adapter/capability-contract.v1.json - versioned capability/readiness contract",
+        "tooling/evals/p67-opencode-adapter/Get-P67OpenCodeAdapterStatus.ps1 - read-only probe script",
+        "tooling/evals/p67-opencode-adapter/fixtures/ - synthetic readiness fixtures (ready, blocked-not-found, blocked-identity, evaluative-rejected)",
+        "tests/test_p67_opencode_adapter.py - Python contract tests",
+        "scripts/Test-P67OpenCodeAdapter.ps1 - PowerShell contract tests",
+        "probe verifies 5 required capabilities: noninteractive_execution, explicit_identity, isolated_config, instrumentation_feasibility, auth_readiness",
+        "blocker codes aligned with Triage adapter-contract.v2.json vocabulary (RUNTIME_UNAVAILABLE)",
+        "read-only probe: no global config mutation, no credential storage, no raw prompt/response persistence",
+        "typed blockers implemented: OPENCODE_NOT_FOUND, OPENCODE_AUTH_UNAVAILABLE, OPENCODE_IDENTITY_OPAQUE, OPENCODE_CONFIG_IMMUTABLE, OPENCODE_NONINTERACTIVE_UNSUPPORTED, OPENCODE_INSTRUMENTATION_IMPOSSIBLE",
+        "status schema forbids credential fields: api_key, token, secret, password, credential",
+        "test coverage: happy path (ready fixture), typed blocker paths, evaluative field rejection",
+        "proof ceiling: capability verification only, does not prove adapter implementation or provider effectiveness"
+      ]
     },
     {
       "taskId": "ADP-02",
@@ -250,10 +263,13 @@
     "ceiling": "PLANNED/TRACKED; implementation, provider smoke, pilot behavior, and effectiveness remain separately unproven."
   },
   "handoff": {
-    "nextOwner": "Triage ADP-00 and AgentSwitchboard ADP-01 in parallel",
-    "nextCommand": "Execute the Triage neutral-capture sprint and ASB capability/readiness sprint concurrently; converge on ADP-02 only after both contracts are green.",
+    "nextOwner": "AgentSwitchboard ADP-02 full adapter implementation",
+    "nextCommand": "Build Invoke-P67OpenCodeAdapter.ps1 using verified capability contract (tooling/evals/p67-opencode-adapter/capability-contract.v1.json) and Triage adapter-contract.v2.json from PR #598. Gate: both ADP-00 (Triage) and ADP-01 (ASB) must be green.",
     "notes": [
-      "Triage scientific/capture plan is integrated via PR #559 / merge ce22389e10813b7ed611d56d2c19b6afe5bfcbb6.",
+      "ADP-01 COMPLETE: capability/readiness probe integrated on cursor/adp-01-opencode-probe-1cda.",
+      "ADP-00 INTEGRATED: Triage neutral capture contract via PR #598 / merge 0733897ce4a934e5e1ce7fa3ea1dedba2f4fd0f7 on EndeavorEverlasting/web-excel-repair-triage.",
+      "ADP-02 gate satisfied: verified OpenCode capability document and neutral capture contract both exist.",
+      "Next ADP-02 artifacts: Invoke-P67OpenCodeAdapter.ps1, New-P67AdapterConfig.ps1, neutral event normalizer, instrumentation plugin.",
       "Do not ask the operator to hand-author adapter JSON.",
       "Registry now synchronized after PR #309 was salvaged via #314 onto main.",
       "Do not begin the 16-run pilot before neutral-capture and observed-smoke gates pass.",
