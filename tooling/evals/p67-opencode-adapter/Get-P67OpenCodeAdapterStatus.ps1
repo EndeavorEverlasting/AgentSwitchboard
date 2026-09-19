@@ -276,7 +276,7 @@ try {
     Write-DiagnosticMessage "Instrumentation: $($instrumentationResult.Status) - $($instrumentationResult.Reason)"
     Write-DiagnosticMessage "Auth: $($authResult.Status) - $($authResult.Reason)"
 
-    $allBlocked = @($noninteractiveResult, $identityResult, $configResult, $instrumentationResult, $authResult) | Where-Object { $_.Status -eq 'BLOCKED' }
+    $allBlocked = @(@($noninteractiveResult, $identityResult, $configResult, $instrumentationResult, $authResult) | Where-Object { $_.Status -eq 'BLOCKED' })
 
     $overallStatus = 'READY'
     $blocker = $null
