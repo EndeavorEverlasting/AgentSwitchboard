@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "policyId": "agentswitchboard.triage-dispatch.v1",
+  "purpose": "Define dispatch policy for machine-executing Triage lanes via ASB adapters with receipt generation",
+  "dispatch_rules": {
+    "fail_closed_on_policy_violation": true,
+    "require_panel_ingest": true,
+    "human_scheduler_forbidden": true,
+    "emit_receipt_per_lane": true,
+    "preserve_panels": true
+  },
+  "adapter_execution_policy": {
+    "local_argv": {
+      "enabled": true,
+      "execute_when": "argv present in lane mapping",
+      "proof_level": "local execution with exit code"
+    },
+    "cursor_cloud_agent": {
+      "enabled": false,
+      "execute_when": "deferred to future phase",
+      "proof_level": "descriptor only - emit DISPATCHED or BLOCKED_UNSUPPORTED",
+      "reason": "Live CloudAgent dispatch requires integration not in this phase"
+    },
+    "runtime_tool": {
+      "enabled": false,
+      "execute_when": "deferred to future phase",
+      "proof_level": "descriptor only - emit BLOCKED_UNSUPPORTED",
+      "reason": "Runtime tool integration not in this phase"
+    },
+    "public_plan": {
+      "enabled": false,
+      "execute_when": "manual coordination",
+      "proof_level": "descriptor only",
+      "reason": "Public plan mapping informational only"
+    }
+  },
+  "receipt_schema": "tooling/harness/triage-consumer/dispatch/schemas/dispatch-receipt.schema.json",
+  "validation": {
+    "powershell": "pwsh -NoLogo -NoProfile -File scripts/Test-TriageAsbConsumerDispatch.ps1"
+  },
+  "proof_ceiling": "Local argv dispatch executes and emits receipts with exit codes. CloudAgent/runtime-tool adapters emit structured DISPATCHED/BLOCKED_UNSUPPORTED receipts without faking success. Static test proof that policy enforces fail-closed behavior."
+}

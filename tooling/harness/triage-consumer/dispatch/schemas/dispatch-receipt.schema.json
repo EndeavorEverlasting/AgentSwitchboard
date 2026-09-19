@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentswitchboard.dispatch-receipt/v1",
+  "title": "Triage Lane Dispatch Receipt",
+  "description": "Machine-readable receipt recording dispatch attempt of a Triage lane to an ASB adapter",
+  "type": "object",
+  "required": [
+    "receipt_version",
+    "lane_id",
+    "adapter_kind",
+    "dispatch_status",
+    "timestamp"
+  ],
+  "properties": {
+    "receipt_version": {
+      "type": "string",
+      "const": "v1"
+    },
+    "lane_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "lane_mission": {
+      "type": "string"
+    },
+    "adapter_kind": {
+      "type": "string",
+      "enum": ["public-plan", "cursor-cloud-agent", "local-argv", "runtime-tool", "unmapped"]
+    },
+    "dispatch_status": {
+      "type": "string",
+      "enum": [
+        "DISPATCHED",
+        "EXECUTED",
+        "BLOCKED_UNSUPPORTED",
+        "BLOCKED_MISSING_ADAPTER",
+        "BLOCKED_POLICY_VIOLATION",
+        "FAILED"
+      ]
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "exit_code": {
+      "type": "integer"
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "autonomy_gap": {
+      "type": "object",
+      "properties": {
+        "gap_detected": {"type": "boolean"},
+        "gap_reason": {"type": "string"},
+        "recommended_action": {"type": "string"}
+      }
+    },
+    "blocking_reason": {
+      "type": "string"
+    },
+    "execution_details": {
+      "type": "object",
+      "properties": {
+        "argv": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "cwd": {"type": "string"},
+        "stdout": {"type": "string"},
+        "stderr": {"type": "string"},
+        "duration_ms": {"type": "number"}
+      }
+    },
+    "descriptor": {
+      "type": "object",
+      "description": "ASB execution descriptor details"
+    }
+  }
+}

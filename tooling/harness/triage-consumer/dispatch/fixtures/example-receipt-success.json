@@ -1,0 +1,17 @@
+{
+  "receipt_version": "v1",
+  "lane_id": "lane-example",
+  "lane_mission": "Example lane mission",
+  "adapter_kind": "local-argv",
+  "dispatch_status": "EXECUTED",
+  "timestamp": "2026-09-19T21:00:00Z",
+  "exit_code": 0,
+  "artifacts": [],
+  "execution_details": {
+    "argv": ["echo", "example"],
+    "cwd": "/workspace",
+    "stdout": "example\n",
+    "stderr": "",
+    "duration_ms": 45.2
+  }
+}

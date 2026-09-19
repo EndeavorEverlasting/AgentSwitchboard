@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0",
+  "run_id": "test-dispatch-01",
+  "graph_width": 2,
+  "parallel_disposition": "safe",
+  "autonomy_gap": null,
+  "lanes": [
+    {
+      "lane_id": "lane-local-argv-success",
+      "mission": "Test local argv execution with success exit",
+      "dependencies": [],
+      "owned_mutation_surfaces": ["test-surface"],
+      "forbidden_surfaces": [],
+      "adapter": {
+        "kind": "local-argv"
+      },
+      "launch": {
+        "mode": "argv",
+        "argv": ["python3", "-c", "print('test-success')"],
+        "cwd": "."
+      },
+      "expected_artifacts": [],
+      "validation": [],
+      "convergence_owner": "test",
+      "status": "PLANNED"
+    },
+    {
+      "lane_id": "lane-cloud-agent-blocked",
+      "mission": "Test cloud agent blocked unsupported",
+      "dependencies": [],
+      "owned_mutation_surfaces": ["test-surface"],
+      "forbidden_surfaces": [],
+      "adapter": {
+        "kind": "cursor-cloud-agent"
+      },
+      "launch": {
+        "mode": "runtime_tool",
+        "tool": "cursor-cloud-agent"
+      },
+      "expected_artifacts": [],
+      "validation": [],
+      "convergence_owner": "test",
+      "status": "PLANNED"
+    }
+  ]
+}
