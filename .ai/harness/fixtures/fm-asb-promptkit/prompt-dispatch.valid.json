@@ -1,6 +1,6 @@
 {
   "schema": "asb.prompt-dispatch/v1",
-  "eventId": "evt_dispatch_20260914_task42_001",
+  "eventId": "evt_dispatch_2820dd80c2739ba60b5beefd",
   "correlationId": "corr_repo42_fix_auth_001",
   "causationId": "evt_route_dec_20260914_task42_001",
   "createdAt": "2026-09-14T18:30:03Z",
@@ -46,7 +46,7 @@
     ]
   },
   "delivery": {
-    "deliveryId": "a1b2c3d4e5f60718",
+    "deliveryId": "d42ab92ce48e511b",
     "expectsReply": true,
     "resolveKeys": []
   },
@@ -62,6 +62,6 @@
   },
   "idempotency": {
     "key": "idem_d42ab92ce48e511be15251c1e3c333dd9acdcda3137ed2db2b4a4b987e645717",
-    "semanticSha256": "8d2746f7916b1ee2a336f125498255c9292404a944099ecd9dea5e29c1b4bbc4"
+    "semanticSha256": "b68bf931492541240898bae83532aa51458a3446db7d39f777ba9ea9d3e5ff9b"
   }
 }
