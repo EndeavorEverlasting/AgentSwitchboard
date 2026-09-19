@@ -316,7 +316,7 @@ class P67OpenCodeAdapterADP02Tests(unittest.TestCase):
         self.assertIn("$Workspace", content)
         self.assertIn("$Task", content)
         self.assertIn("$Prompt", content)
-        self.assertIn("$Result", content)
+        self.assertIn("$ResultPath", content)
 
         self.assertNotIn("Invoke-Expression", content)
         self.assertNotIn("iex", content.lower())

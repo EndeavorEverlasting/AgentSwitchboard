@@ -62,7 +62,7 @@ Generated P67 config shape:
     "-Workspace", "{workspace}",
     "-Task", "{task}",
     "-Prompt", "{prompt}",
-    "-Result", "{result}"
+    "-ResultPath", "{result}"
   ],
   "timeout_seconds": 900,
   "env_allowlist": ["<credential variable names only>"]
