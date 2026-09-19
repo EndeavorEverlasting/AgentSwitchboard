@@ -203,7 +203,7 @@
     {
       "taskId": "ADP-04",
       "title": "Run bounded observed adapter smoke",
-      "status": "in_progress",
+      "status": "in-progress",
       "owner": "authorized workstation/runtime lane",
       "dependencies": [
         "ADP-03"
