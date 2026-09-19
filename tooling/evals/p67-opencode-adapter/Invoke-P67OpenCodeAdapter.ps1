@@ -23,7 +23,7 @@ Task identifier for this evaluation run.
 .PARAMETER Prompt
 Frozen prompt text for this evaluation case.
 
-.PARAMETER Result
+.PARAMETER ResultPath
 Output path for result JSON (P67 capture contract v2 schema).
 
 .PARAMETER Provider
@@ -39,7 +39,7 @@ Agent/system identifier for pairing (from config).
 Maximum execution timeout. Defaults to 600 seconds.
 
 .EXAMPLE
-./Invoke-P67OpenCodeAdapter.ps1 -Workspace /tmp/eval-workspace -Task TC01 -Prompt "Fix the bug" -Result /tmp/result.json -Provider anthropic -Model claude-sonnet-4
+./Invoke-P67OpenCodeAdapter.ps1 -Workspace /tmp/eval-workspace -Task TC01 -Prompt "Fix the bug" -ResultPath /tmp/result.json -Provider anthropic -Model claude-sonnet-4
 
 .NOTES
 ADP-02: Privacy-bounded adapter implementation.
@@ -59,7 +59,7 @@ param(
     [string]$Prompt,
 
     [Parameter(Mandatory)]
-    [string]$Result,
+    [string]$ResultPath,
 
     [Parameter(Mandatory)]
     [string]$Provider,
@@ -332,12 +332,13 @@ try {
     $workspaceCheck = Test-WorkspaceValid -Path $Workspace
     if (-not $workspaceCheck.Valid) {
         Write-DiagnosticMessage "Invalid workspace: $($workspaceCheck.Reason)" 'ERROR'
-        $result = New-InvalidRunResult `
+        $captureObject = New-InvalidRunResult `
             -Code 'WORKSPACE_INVALID' `
             -Message $workspaceCheck.Reason `
             -Identity $identity
 
-        $result | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $Result -Encoding utf8NoBOM
+        $captureJson = ConvertTo-Json -InputObject $captureObject -Depth 10
+        [IO.File]::WriteAllText($ResultPath, $captureJson)
         Remove-EphemeralState
         exit 1
     }
@@ -354,24 +355,26 @@ try {
 
     if ($execResult.TimedOut) {
         Write-DiagnosticMessage "Execution timed out" 'ERROR'
-        $result = New-InvalidRunResult `
+        $captureObject = New-InvalidRunResult `
             -Code 'EXECUTION_TIMEOUT' `
             -Message "OpenCode execution exceeded timeout of ${TimeoutSeconds}s" `
             -Identity $identity
 
-        $result | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $Result -Encoding utf8NoBOM
+        $captureJson = ConvertTo-Json -InputObject $captureObject -Depth 10
+        [IO.File]::WriteAllText($ResultPath, $captureJson)
         Remove-EphemeralState
         exit 1
     }
 
     if (-not $execResult.Success -and $null -ne $execResult.Error) {
         Write-DiagnosticMessage "Execution failed: $($execResult.Error)" 'ERROR'
-        $result = New-InvalidRunResult `
+        $captureObject = New-InvalidRunResult `
             -Code 'RUNTIME_UNAVAILABLE' `
             -Message "OpenCode execution failed: $($execResult.Error)" `
             -Identity $identity
 
-        $result | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $Result -Encoding utf8NoBOM
+        $captureJson = ConvertTo-Json -InputObject $captureObject -Depth 10
+        [IO.File]::WriteAllText($ResultPath, $captureJson)
         Remove-EphemeralState
         exit 1
     }
@@ -384,29 +387,30 @@ try {
     Write-DiagnosticMessage "Workspace changes: $($workspaceState.has_changes)"
     Write-DiagnosticMessage "Validation passed: $($validationResult.validation_passed)"
 
-    $result = New-ValidRunResult `
+    $captureObject = New-ValidRunResult `
         -WorkspaceState ($workspaceState.has_changes ? 'MODIFIED' : 'CLEAN') `
         -ExitCode $execResult.ExitCode `
         -Identity $identity `
         -ValidationResult $validationResult
 
-    $resultJson = $result | ConvertTo-Json -Depth 10
+    $captureJson = ConvertTo-Json -InputObject $captureObject -Depth 10
 
     $evaluativePattern = '"(useful|first_green|after_fixed_point|correct|effectiveness)"'
-    if ($resultJson -match $evaluativePattern) {
+    if ($captureJson -match $evaluativePattern) {
         Write-DiagnosticMessage "SECURITY: Result contains evaluative fields. This violates CAPTURE_EVALUATIVE_REJECTED." 'ERROR'
-        $invalidResult = New-InvalidRunResult `
+        $rejectedCaptureObject = New-InvalidRunResult `
             -Code 'CAPTURE_EVALUATIVE_REJECTED' `
             -Message "Adapter attempted to emit forbidden evaluative field" `
             -Identity $identity
 
-        $invalidResult | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $Result -Encoding utf8NoBOM
+        $rejectedCaptureJson = ConvertTo-Json -InputObject $rejectedCaptureObject -Depth 10
+        [IO.File]::WriteAllText($ResultPath, $rejectedCaptureJson)
         Remove-EphemeralState
         exit 1
     }
 
-    $resultJson | Set-Content -LiteralPath $Result -Encoding utf8NoBOM
-    Write-DiagnosticMessage "Result written to: $Result"
+    [IO.File]::WriteAllText($ResultPath, $captureJson)
+    Write-DiagnosticMessage "Result written to: $ResultPath"
 
     Remove-EphemeralState
 
@@ -416,7 +420,7 @@ try {
 } catch {
     Write-DiagnosticMessage "Fatal error: $($_.Exception.Message)" 'ERROR'
 
-    $result = New-InvalidRunResult `
+    $captureObject = New-InvalidRunResult `
         -Code 'ADAPTER_ERROR' `
         -Message "Adapter execution failed: $($_.Exception.Message)" `
         -Identity @{
@@ -426,7 +430,8 @@ try {
             adapter_version = 'asb-p67-opencode-adp-02/v1'
         }
 
-    $result | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $Result -Encoding utf8NoBOM -ErrorAction SilentlyContinue
+    $captureJson = ConvertTo-Json -InputObject $captureObject -Depth 10
+    [IO.File]::WriteAllText($ResultPath, $captureJson)
 
     Remove-EphemeralState
 

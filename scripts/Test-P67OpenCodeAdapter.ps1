@@ -214,7 +214,7 @@ if (Test-Path -LiteralPath $invokeScript -PathType Leaf) {
     Add-Result ($invokeContent -match '\$Workspace') 'adp02/invoke/workspace-param' 'invoke script missing Workspace parameter'
     Add-Result ($invokeContent -match '\$Task') 'adp02/invoke/task-param' 'invoke script missing Task parameter'
     Add-Result ($invokeContent -match '\$Prompt') 'adp02/invoke/prompt-param' 'invoke script missing Prompt parameter'
-    Add-Result ($invokeContent -match '\$Result') 'adp02/invoke/result-param' 'invoke script missing Result parameter'
+    Add-Result ($invokeContent -match '\$ResultPath') 'adp02/invoke/result-param' 'invoke script missing ResultPath parameter'
 
     Add-Result ($invokeContent -notmatch 'Invoke-Expression|iex') 'adp02/invoke/no-shell-composition' 'invoke script contains shell composition'
 

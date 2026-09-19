@@ -299,7 +299,7 @@
   },
   "handoff": {
     "nextOwner": "authorized workstation/runtime lane for ADP-04 live smoke",
-    "nextCommand": "Configure operator-owned OpenCode credentials (e.g., ANTHROPIC_API_KEY, OPENAI_API_KEY) and run live smoke with real provider execution using pwsh -File tooling/evals/p67-opencode-adapter/Invoke-P67OpenCodeAdapter.ps1 -Workspace <fixture-workspace> -Task TC01 -Prompt <frozen-prompt> -Result <output-path> -Provider <provider> -Model <model>",
+    "nextCommand": "Configure operator-owned OpenCode credentials (e.g., ANTHROPIC_API_KEY, OPENAI_API_KEY) and run live smoke with real provider execution using pwsh -File tooling/evals/p67-opencode-adapter/Invoke-P67OpenCodeAdapter.ps1 -Workspace <fixture-workspace> -Task TC01 -Prompt <frozen-prompt> -ResultPath <output-path> -Provider <provider> -Model <model>",
     "notes": [
       "ADP-01 COMPLETE: capability/readiness probe integrated on cursor/adp-01-opencode-probe-1cda.",
       "ADP-00 INTEGRATED: Triage neutral capture contract via PR #598 / merge 0733897ce4a934e5e1ce7fa3ea1dedba2f4fd0f7 on EndeavorEverlasting/web-excel-repair-triage.",
