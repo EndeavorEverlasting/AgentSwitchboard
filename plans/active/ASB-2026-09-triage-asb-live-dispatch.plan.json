@@ -1,0 +1,156 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-09-TRIAGE-ASB-LIVE-DISPATCH",
+  "title": "P07: Triage→ASB Live Lane Dispatch Adapter",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "active",
+  "priority": "high",
+  "createdUtc": "2026-09-19T21:55:00Z",
+  "updatedUtc": "2026-09-19T21:55:00Z",
+  "mission": "Implement machine-executable dispatch adapter for Triage lanes with receipt contracts. Close remaining AUTONOMY_GAP by executing ready lanes from ingested manifests and emitting structured receipts.",
+  "owner": {
+    "surface": "Triage→ASB dispatch adapter",
+    "role": "AgentSwitchboard harness owner",
+    "agent": null
+  },
+  "delivery": {
+    "branch": "cursor/triage-dispatch-p07-d27e",
+    "pullRequest": null,
+    "baseRef": "main",
+    "commitRequired": true
+  },
+  "wave": "Harness completion",
+  "lane": "Triage dispatch adapter",
+  "dependencies": [
+    "ASB-2026-09-TRIAGE-ASB-CONSUMER-FLOOR (PR #320)"
+  ],
+  "safeParallelWork": [
+    "Provider runtime work not touching triage-consumer",
+    "P67 OpenCode evaluation adapter work in tooling/evals/p67-opencode-adapter/**",
+    "Other harness or app work using separate branches"
+  ],
+  "ownedScope": [
+    "tooling/harness/triage-consumer/dispatch/**",
+    "scripts/Test-TriageAsbConsumerDispatch.ps1",
+    "plans/active/ASB-2026-09-triage-asb-live-dispatch.*",
+    "plans/plan-registry.json entry"
+  ],
+  "forbiddenScope": [
+    "tooling/evals/p67-opencode-adapter/**",
+    "Triage repository mutation",
+    "Claiming live CloudAgent PASS without observed execution",
+    "Deleting panels or requiring human paste/proceed"
+  ],
+  "expectedArtifacts": [
+    "Dispatch policy JSON with fail-closed enforcement",
+    "Dispatch receipt schema",
+    "Python dispatch runner (dispatch_lanes.py)",
+    "Test fixtures for dispatch",
+    "PowerShell validator (Test-TriageAsbConsumerDispatch.ps1)",
+    "Plan documentation and registry entry"
+  ],
+  "tasks": [
+    {
+      "taskId": "P07-DISPATCH-01",
+      "title": "Record upstream Triage pin in consumer policy",
+      "status": "completed",
+      "owner": "Triage dispatch adapter",
+      "dependencies": [],
+      "inputs": ["consumer.policy.json", "Triage upstream SHA 24b70c07"],
+      "outputs": ["Updated consumer.policy.json with upstream_pin"],
+      "acceptanceCriteria": [
+        "upstream_pin field added with SHA 24b70c07",
+        "human_scheduler_allowed:false preserved",
+        "panel_ingest_required:true preserved"
+      ],
+      "evidence": ["Commit ed8f8bf"]
+    },
+    {
+      "taskId": "P07-DISPATCH-02",
+      "title": "Create dispatch policy and receipt schema",
+      "status": "completed",
+      "owner": "Triage dispatch adapter",
+      "dependencies": ["P07-DISPATCH-01"],
+      "inputs": ["Consumer policy", "Receipt requirements"],
+      "outputs": ["dispatch.policy.json", "dispatch-receipt.schema.json"],
+      "acceptanceCriteria": [
+        "Dispatch policy enforces fail_closed_on_policy_violation",
+        "Receipt schema defines status enums and required fields",
+        "Both validate as JSON"
+      ],
+      "evidence": ["dispatch.policy.json created", "dispatch-receipt.schema.json created", "Commit 94bee98"]
+    },
+    {
+      "taskId": "P07-DISPATCH-03",
+      "title": "Implement durable dispatch runner",
+      "status": "completed",
+      "owner": "Triage dispatch adapter",
+      "dependencies": ["P07-DISPATCH-02"],
+      "inputs": ["triage_consumer.py", "Dispatch policy", "Receipt schema"],
+      "outputs": ["dispatch_lanes.py"],
+      "acceptanceCriteria": [
+        "Loads consumer policy and validates constraints",
+        "Maps lanes via TriageConsumer.map_lane_to_asb_descriptor",
+        "Executes local-argv lanes with subprocess and captures exit codes",
+        "Emits BLOCKED_UNSUPPORTED for cursor-cloud-agent without faking success",
+        "Emits BLOCKED_UNSUPPORTED for runtime-tool without faking success",
+        "Writes machine-readable receipt JSON per lane",
+        "Writes dispatch summary JSON",
+        "Fails closed on policy violations"
+      ],
+      "evidence": ["dispatch_lanes.py created (350+ lines)", "Local argv execution tested", "Receipt generation tested", "Commit 94bee98"]
+    },
+    {
+      "taskId": "P07-DISPATCH-04",
+      "title": "Create test fixtures and validator",
+      "status": "completed",
+      "owner": "Triage dispatch adapter",
+      "dependencies": ["P07-DISPATCH-03"],
+      "inputs": ["dispatch_lanes.py", "Receipt schema"],
+      "outputs": ["Test fixtures", "Test-TriageAsbConsumerDispatch.ps1"],
+      "acceptanceCriteria": [
+        "Test manifest with local-argv and cloud-agent lanes",
+        "Example receipt fixtures for success and blocked cases",
+        "PowerShell validator checks policy, schema, and execution",
+        "Validator performs smoke test of dispatcher"
+      ],
+      "evidence": ["3 fixture files created", "Test-TriageAsbConsumerDispatch.ps1 created (250+ lines)", "Dispatcher smoke test passes", "Commit 94bee98"]
+    },
+    {
+      "taskId": "P07-DISPATCH-05",
+      "title": "Create public plan and update registry",
+      "status": "in-progress",
+      "owner": "Triage dispatch adapter",
+      "dependencies": ["P07-DISPATCH-04"],
+      "inputs": ["Completed dispatch implementation"],
+      "outputs": ["Plan JSON and markdown", "Updated plan-registry.json"],
+      "acceptanceCriteria": [
+        "Plan JSON matches public-plan.schema.json",
+        "Plan markdown documents implementation",
+        "plan-registry.json includes new plan entry"
+      ],
+      "evidence": ["Working on plan creation"]
+    }
+  ],
+  "validation": [
+    "pwsh -NoLogo -NoProfile -File scripts/Test-TriageAsbConsumerDispatch.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-TriageAsbConsumerContract.ps1",
+    "python3 tooling/harness/triage-consumer/dispatch/dispatch_lanes.py tooling/harness/triage-consumer/dispatch/fixtures/test-dispatch-manifest.json /tmp/test-output",
+    "git diff --check"
+  ],
+  "proof": {
+    "target": "Local argv dispatch + receipt contracts",
+    "achieved": "Local argv lanes execute with exit codes. CloudAgent/runtime-tool emit structured BLOCKED_UNSUPPORTED receipts. Receipt JSON validates against schema.",
+    "ceiling": "CloudAgent path documented as BLOCKED_UNSUPPORTED until live CloudAgent adapter integrated in future phase. Does NOT prove live CloudAgent dispatch or runtime tool integration."
+  },
+  "handoff": {
+    "nextOwner": "Future CloudAgent integration owner",
+    "nextCommand": "Integrate live Cursor CloudAgent dispatch by implementing CloudAgent adapter that launches agents via API and waits for completion",
+    "notes": [
+      "Dispatch adapter provides receipt contract and local argv execution",
+      "CloudAgent integration requires API/runtime_tool integration not in this PR",
+      "Upstream pin: web-excel-repair-triage @ 24b70c07"
+    ]
+  }
+}
