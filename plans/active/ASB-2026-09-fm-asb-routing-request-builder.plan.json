@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-17T00:00:00Z",
-  "updatedUtc": "2026-09-19T17:27:00Z",
+  "updatedUtc": "2026-09-19T17:31:00Z",
   "mission": "Own the read-only asb.agent-observation/v1 to prompt-kit.routing-request/v1 translation seam (ASB cross-product-translation) so a correlated observation can be turned into a bounded routing request, without selecting prompts, consulting a registry, dispatching, rolling over, or scheduling crew.",
   "owner": {
     "surface": "FirstMate/ASB routing-request builder",
@@ -58,7 +58,7 @@
     {
       "taskId": "RRB-01",
       "title": "Implement observation→routing-request builder with fail-closed bounds",
-      "status": "in-progress",
+      "status": "completed",
       "owner": "routing-request builder lane",
       "dependencies": [],
       "inputs": [
@@ -75,14 +75,15 @@
         "RepositoryRef, evidenceRef, RFC3339 createdAt, currentPrompt, evidence state, execution surface, signal, and maxCandidates violations fail closed with ContractError"
       ],
       "evidence": [
-        "Implementation replayed onto refreshed main in tooling/firstmate/harness/routing/build_routing_request.py",
-        "Current branch validation pending"
+        "Nested repositoryRef/evidenceRef/RFC3339/promptRef validation implemented in tooling/firstmate/harness/routing/build_routing_request.py",
+        "FirstMate ASB PromptKit protocol workflow 35458217842: SUCCESS on exact head a00238e0f77ddaec88737bd2a8fde75e0895082b",
+        "Automated test floor workflow 35458218054: Windows and Ubuntu SUCCESS on the same exact head"
       ]
     },
     {
       "taskId": "RRB-02",
       "title": "Pin builder to the frozen routing-request fixture via protocol contract test",
-      "status": "pending",
+      "status": "completed",
       "owner": "routing-request builder lane",
       "dependencies": [
         "RRB-01"
@@ -100,7 +101,9 @@
         "Bad enum/override inputs are asserted to raise ContractError"
       ],
       "evidence": [
-        "Focused regression now includes malformed repository/evidence/timestamp/prompt negative cases; exact-head validation pending"
+        "Frozen valid routing-request semanticSha256/idempotency assertions retained",
+        "Negative regressions reject malformed repository branch/head/worktree/extra fields, evidence scalar/missing-ref/secret cases, invalid observation/output timestamps, and invalid/missing promptRef fields",
+        "FirstMate ASB PromptKit protocol workflow 35458217842: SUCCESS on exact head a00238e0f77ddaec88737bd2a8fde75e0895082b"
       ]
     },
     {
@@ -134,12 +137,12 @@
   ],
   "proof": {
     "target": "asb.agent-observation/v1 deterministically translated to prompt-kit.routing-request/v1 within ASB translation ownership",
-    "achieved": "IMPLEMENTED on refreshed main-based branch with schema-shaped nested input validation and focused negative regressions; exact-head validation and integration pending.",
-    "ceiling": "IMPLEMENTED_UNVALIDATED. Not yet VALIDATED or INTEGRATED. Not runtime, routing-decision/dispatch/rollover, or live prompt dispatch."
+    "achieved": "VALIDATED contract/static builder on exact head a00238e0f77ddaec88737bd2a8fde75e0895082b: FirstMate ASB PromptKit protocol, First Mate interoperability, public-plan, app-harness, app-output, runtime-event, device-profile, CodeRabbit, and Windows+Ubuntu automated floor all green. Valid frozen fixture identity preserved; malformed nested protocol refs fail closed.",
+    "ceiling": "VALIDATED_CONTRACT_STATIC. Integration to main is the next gate. Not runtime, routing-decision/dispatch/rollover, or live prompt dispatch."
   },
   "handoff": {
-    "nextOwner": "RRB-01/RRB-02 validation and integration lane",
-    "nextCommand": "python tests/test_fm_asb_promptkit_protocol_contract.py",
+    "nextOwner": "mainline integration; then Prompt Kit routing-decision lane (RRB-03)",
+    "nextCommand": "gh pr merge 314 --squash --delete-branch",
     "notes": [
       "The builder never selects prompts or consults a registry; it emits a bounded request only.",
       "requireCurrentRegistry is asserted true so downstream decision must bind to the current registry.",
