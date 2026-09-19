@@ -9,8 +9,8 @@ scheduling crew. This is ASB `cross-product-translation` ownership only.
 
 | Task | Result | Evidence |
 |---|---|---|
-| RRB-01 builder | **IMPLEMENTED — validation pending** | `tooling/firstmate/harness/routing/build_routing_request.py` — read-only `build_routing_request()` + CLI |
-| RRB-02 fixture pin | **IMPLEMENTED — validation pending** | Round-trip reproduces frozen `semanticSha256 2c483f5f…` and key `idem_7e63eb…` in the protocol contract test |
+| RRB-01 builder | **VALIDATED (contract/static)** | `tooling/firstmate/harness/routing/build_routing_request.py` — read-only `build_routing_request()` + CLI |
+| RRB-02 fixture pin | **VALIDATED (contract/static)** | Round-trip reproduces frozen `semanticSha256 2c483f5f…` and key `idem_7e63eb…` in the protocol contract test |
 
 ## What the builder copies vs. requires
 
@@ -25,7 +25,7 @@ scheduling crew. This is ASB `cross-product-translation` ownership only.
 
 ## Proof ceiling
 
-**Current:** `IMPLEMENTED_UNVALIDATED` — the frozen valid path is preserved and nested repository/evidence/timestamp/prompt inputs now fail closed; exact-head validation is pending.
+**Reached:** `VALIDATED_CONTRACT_STATIC` — the frozen valid path is preserved, nested repository/evidence/timestamp/prompt inputs fail closed, and the exact candidate passed protocol/interoperability/public-plan/harness/runtime/device-profile plus Windows+Ubuntu automated-floor proof.
 **Not reached:** runtime, routing-decision/dispatch/rollover, live prompt dispatch. Prompt selection and registry binding remain owned by Prompt Kit.
 
 ## Validation
