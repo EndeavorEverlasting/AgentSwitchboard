@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "critical",
   "createdUtc": "2026-09-20T17:20:00Z",
-  "updatedUtc": "2026-09-20T17:44:00Z",
+  "updatedUtc": "2026-09-20T17:50:00Z",
   "mission": "Turn AgentSwitchboard's dispatch seam into a provider-neutral execution-adapter layer and prove the first three native execution planes—local argv, Claude Code, and Cursor CloudAgent—without duplicating Prompt Kit semantics or FirstMate crew scheduling.",
   "owner": {
     "surface": "execution-adapter harness",
@@ -919,7 +919,8 @@
       "EAT-301 is independent and may repair PR #332 immediately; preserve its real Task launch evidence.",
       "After EAT-005, local-argv, Claude Code, and Cursor reconciliation lanes are designed for isolated concurrent writers.",
       "Final convergence owner integrates completed lanes in dependency order and reruns common conformance plus repository gates.",
-      "Portability fallback panels are tracked at plans/active/ASB-2026-09-execution-adapter-trio-v1-panels.md; they are fallback transport, not the primary scheduler."
+      "Portability fallback panels are tracked at plans/active/ASB-2026-09-execution-adapter-trio-v1-panels.md; they are fallback transport, not the primary scheduler.",
+      "Current contract-authoring runtime is provider-only and exposes no delegated-agent/task-worker execution API or local repository runner, so successor implementation dispatch is DEGRADED here despite graph width >= 2. AUTONOMY_GAP: an execution-capable worker surface must consume this plan. Do not fabricate AgentSwitchboard-local Outputs/prompt-parallel-dispatch/manifest.json: its canonical contract/validator lives in web-excel-repair-triage, while this repository's canonical coordination owner is the public-plan registry."
     ]
   }
 }
