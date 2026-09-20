@@ -38,7 +38,8 @@
         "BLOCKED_HOST",
         "BLOCKED_API",
         "FAILED"
-      ]
+      ],
+      "description": "Dispatch execution status. EXECUTED = successful completion. FAILED = non-zero exit or error. BLOCKED_* = cannot execute due to missing infrastructure. Cloud agent EXECUTED includes cloudAgentBcId in execution_details."
     },
     "timestamp": {
       "type": "string",
@@ -66,6 +67,7 @@
     },
     "execution_details": {
       "type": "object",
+      "description": "Adapter-specific execution details. For local-argv: argv, stdout, stderr, duration_ms. For cursor-cloud-agent: cloud_agent_id, dashboard_url, duration_ms, subagent_duration_seconds.",
       "properties": {
         "argv": {
           "type": "array",
@@ -74,7 +76,11 @@
         "cwd": {"type": "string"},
         "stdout": {"type": "string"},
         "stderr": {"type": "string"},
-        "duration_ms": {"type": "number"}
+        "duration_ms": {"type": "number"},
+        "cloud_agent_id": {"type": "string"},
+        "dashboard_url": {"type": "string"},
+        "subagent_duration_seconds": {"type": "number"},
+        "error": {"type": "string"}
       }
     },
     "descriptor": {

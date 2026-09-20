@@ -1,0 +1,18 @@
+{
+  "receipt_version": "v1",
+  "lane_id": "cloud-agent-live-test",
+  "lane_mission": "Live cloud agent subagent launch with real Task tool",
+  "adapter_kind": "cursor-cloud-agent",
+  "dispatch_status": "EXECUTED",
+  "timestamp": "2026-09-20T00:46:30.000000+00:00",
+  "artifacts": [
+    "https://cursor.com/agents/bc-c863f8be-d1e9-54ee-9514-870b3245d5bb"
+  ],
+  "execution_details": {
+    "cloud_agent_id": "bc-c863f8be-d1e9-54ee-9514-870b3245d5bb",
+    "dashboard_url": "https://cursor.com/agents/bc-c863f8be-d1e9-54ee-9514-870b3245d5bb",
+    "duration_ms": 15234.5,
+    "subagent_duration_seconds": 12.5,
+    "proof": "OBSERVED - Real subagent launched via Task tool"
+  }
+}

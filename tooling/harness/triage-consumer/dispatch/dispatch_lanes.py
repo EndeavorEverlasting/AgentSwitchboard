@@ -21,6 +21,11 @@ from triage_consumer import (
     TriageConsumer
 )
 
+# Import cloud agent client
+script_dir = Path(__file__).parent
+sys.path.insert(0, str(script_dir))
+from cursor_agent_client import CursorAgentClient, detect_orchestration_support
+
 
 class DispatchStatus:
     """Dispatch status constants."""
@@ -243,9 +248,9 @@ class TriageDispatcher:
         lane_obj,
         mapping_obj
     ) -> DispatchReceipt:
-        """Handle cursor-cloud-agent adapter with fail-closed observed probe."""
+        """Handle cursor-cloud-agent adapter with orchestration-layer subagent launch."""
         cloud_agent_prompt = mapping_obj.cloud_agent_prompt
-        
+
         if not cloud_agent_prompt:
             return DispatchReceipt(
                 lane_id=lane_obj.lane_id,
@@ -254,10 +259,10 @@ class TriageDispatcher:
                 dispatch_status=DispatchStatus.BLOCKED_MISSING_ADAPTER,
                 blocking_reason="cloud_agent_prompt not present in mapping"
             )
-        
+
         in_cloud_agent = os.environ.get("CURSOR_AGENT") == "1"
         agent_socket = os.environ.get("CURSOR_AGENT_SOCKET")
-        
+
         if not in_cloud_agent:
             return DispatchReceipt(
                 lane_id=lane_obj.lane_id,
@@ -274,7 +279,7 @@ class TriageDispatcher:
                     "recommended_action": "Run dispatcher from within a Cursor cloud agent execution context"
                 }
             )
-        
+
         if not agent_socket or not Path(agent_socket).exists():
             return DispatchReceipt(
                 lane_id=lane_obj.lane_id,
@@ -295,31 +300,94 @@ class TriageDispatcher:
                     )
                 }
             )
-        
-        return DispatchReceipt(
-            lane_id=lane_obj.lane_id,
-            lane_mission=lane_obj.mission,
-            adapter_kind="cursor-cloud-agent",
-            dispatch_status="BLOCKED_API",
-            blocking_reason=(
-                "Python API for Cursor cloud agent Task tool not yet implemented. "
-                "Socket available but protocol integration required."
-            ),
-            descriptor={
-                "cloud_agent_prompt": cloud_agent_prompt,
-                "environment_detected": "Cursor Cloud Agent",
-                "socket_available": True,
-                "socket_path": agent_socket,
-                "required_implementation": (
-                    "Python client for /run/cursor/api.sock to invoke Task tool, "
-                    "or orchestration-layer dispatcher that executes via cloud agent with Task access"
-                ),
-                "recommended_action": (
-                    "SUCCESSOR IMPLEMENTATION: Create Python binding to invoke Task tool via agent socket, "
-                    "enabling subagent launch with bounded wait and observed completion status"
+
+        # Detect orchestration support
+        orch_support = detect_orchestration_support()
+
+        if not orch_support['supported']:
+            return DispatchReceipt(
+                lane_id=lane_obj.lane_id,
+                lane_mission=lane_obj.mission,
+                adapter_kind="cursor-cloud-agent",
+                dispatch_status="BLOCKED_API",
+                blocking_reason=orch_support['reason'],
+                descriptor={
+                    "orchestration_detection": orch_support,
+                    "cloud_agent_prompt": cloud_agent_prompt
+                }
+            )
+
+        # Attempt to launch subagent via orchestration layer
+        start_time = datetime.now(timezone.utc)
+
+        try:
+            client = CursorAgentClient()
+            result = client.launch_subagent(
+                prompt=cloud_agent_prompt,
+                description=f"Triage lane: {lane_obj.mission[:50]}",
+                timeout_seconds=300
+            )
+
+            duration_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+
+            if result.status == "completed":
+                artifacts = []
+                if result.dashboard_url:
+                    artifacts.append(result.dashboard_url)
+
+                return DispatchReceipt(
+                    lane_id=lane_obj.lane_id,
+                    lane_mission=lane_obj.mission,
+                    adapter_kind="cursor-cloud-agent",
+                    dispatch_status=DispatchStatus.EXECUTED,
+                    artifacts=artifacts,
+                    execution_details={
+                        "cloud_agent_id": result.agent_id,
+                        "dashboard_url": result.dashboard_url,
+                        "duration_ms": duration_ms,
+                        "subagent_duration_seconds": result.duration_seconds
+                    }
                 )
-            }
-        )
+            elif result.status == "timeout":
+                return DispatchReceipt(
+                    lane_id=lane_obj.lane_id,
+                    lane_mission=lane_obj.mission,
+                    adapter_kind="cursor-cloud-agent",
+                    dispatch_status=DispatchStatus.FAILED,
+                    blocking_reason=f"Subagent launch timeout: {result.error}",
+                    execution_details={
+                        "error": result.error,
+                        "duration_ms": duration_ms
+                    }
+                )
+            else:  # failed
+                return DispatchReceipt(
+                    lane_id=lane_obj.lane_id,
+                    lane_mission=lane_obj.mission,
+                    adapter_kind="cursor-cloud-agent",
+                    dispatch_status=DispatchStatus.FAILED,
+                    blocking_reason=f"Subagent launch failed: {result.error}",
+                    execution_details={
+                        "error": result.error,
+                        "cloud_agent_id": result.agent_id,
+                        "dashboard_url": result.dashboard_url,
+                        "duration_ms": duration_ms
+                    }
+                )
+
+        except Exception as e:
+            duration_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+            return DispatchReceipt(
+                lane_id=lane_obj.lane_id,
+                lane_mission=lane_obj.mission,
+                adapter_kind="cursor-cloud-agent",
+                dispatch_status=DispatchStatus.FAILED,
+                blocking_reason=f"Orchestration error: {str(e)}",
+                execution_details={
+                    "error": str(e),
+                    "duration_ms": duration_ms
+                }
+            )
 
     def _handle_public_plan(
         self,
