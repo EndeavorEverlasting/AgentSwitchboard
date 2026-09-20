@@ -4,7 +4,7 @@
 **Repo:** EndeavorEverlasting/AgentSwitchboard
 **Floor:** `main@770c855` (product-pass wave #302-#306 complete)
 **Status:** active
-**Updated:** 2026-09-17T21:03:00Z
+**Updated:** 2026-09-20T01:05:00Z
 
 ## Mission
 
@@ -57,7 +57,7 @@ Rebase/refresh AgentSwitchboard FirstMate interop harness (PR #96 lineage) onto 
 
 ### ASQ-017 — Admin Box FM-WSL-12 physical-floor-continue live proof
 
-**Status:** ready
+**Status:** completed
 **Owner:** Windows Admin Box operator / runtime-proof lane
 **Dependencies:** none (host-isolated; may run in parallel with ASQ-015 when Admin Box available)
 
@@ -75,21 +75,24 @@ Prove FM-WSL-12 physical WSL/Ubuntu floor through harness `-Mode physical-floor-
 - FirstMate crew dispatch claims (FM-CREW-13)
 - committing local receipts/tokens/machine paths
 
+**Evidence:**
+- Reporter: ASB · local · asq017-floor
+- Checkout: AgentSwitchboard-asq017-floor @ `1f1240a390eb14d226909f8b14b1ab1c843873d0`
+- ASQ017_RESULT: PHYSICAL_FLOOR_PASS
+- CHILD_EXIT_CODE: 0
+- LIVE_RUNTIME_PROOF: OBSERVED_PHYSICAL_FLOOR_ONLY
+- Host: Windows+Ubuntu Admin Box
+- Primary harness: pi
+- FirstMate pin checkout: `$HOME/firstmate@b182d0f`
+- Evidence root: local untracked under operator AppData (not committed)
+- Proof ceiling: physical WSL floor only — no FM-CREW-13 crew dispatch; no Prompt Kit dual-path claim
+- Ledger sync landed via PR #333
+
 **Acceptance:**
 - Admin Box run reaches physical-floor PASS with exact-head readback
 - OR stops at structured BLOCKED_* (BLOCKED_MISSING_TOOLS after repair, BLOCKED_GITHUB_AUTH, BLOCKED_SUDO, BLOCKED_PRIMARY_HARNESS, BLOCKED_FIRSTMATE_DIRTY, BLOCKED_FIRSTMATE_PIN, BLOCKED_WSL_BOOTSTRAP, BLOCKED_HARNESS_CONTRACT, BLOCKED_PREREQUISITE_TIMEOUT)
 - Cloud/Linux agents emit exit 46 BLOCKED_WINDOWS_WSL_REQUIRED
 - No local evidence committed
-
-**Next action:**
-```powershell
-$ErrorActionPreference='Stop'
-if (-not (Test-Path -LiteralPath .\Invoke-Asq017AdminBoxLiveFloor.ps1)) {
-  throw 'Run from AgentSwitchboard checkout root (Invoke-Asq017AdminBoxLiveFloor.ps1 missing).'
-}
-pwsh -NoLogo -NoProfile -File .\Invoke-Asq017AdminBoxLiveFloor.ps1 -PrerequisiteTimeoutSeconds 180
-# (structured exit handling omitted for brevity — see ASQ-017 ledger entry)
-```
 
 ### LSP-01 — OpenCode LSP fresh-TUI / ASQ-005 runtime observation (Windows-only)
 
