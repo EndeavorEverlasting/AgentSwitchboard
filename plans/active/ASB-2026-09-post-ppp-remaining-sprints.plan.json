@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "high",
   "createdUtc": "2026-09-17T20:57:00Z",
-  "updatedUtc": "2026-09-20T00:57:00Z",
+  "updatedUtc": "2026-09-20T01:05:00Z",
   "mission": "Complete remaining September coordination work after product-pass posture (#302-#306): refresh FirstMate interop floor to b182d0f, prove Admin Box FM-WSL-12 physical floor, and triage stale open PRs. Encode parallelism constraints, proof ceilings, and dependency order for safe autonomous execution.",
   "owner": {
     "surface": "repository coordination and remaining September program convergence",
@@ -142,13 +142,16 @@
       ],
       "evidence": [
         "Reporter: ASB · local · asq017-floor",
-        "Result: PHYSICAL_FLOOR_PASS on Windows+Ubuntu Admin Box",
-        "HEAD: 1f1240a390eb14d226909f8b14b1ab1c843873d0",
-        "LIVE_RUNTIME_PROOF: OBSERVED_PHYSICAL_FLOOR_ONLY",
+        "Checkout: AgentSwitchboard-asq017-floor @ 1f1240a390eb14d226909f8b14b1ab1c843873d0",
+        "ASQ017_RESULT: PHYSICAL_FLOOR_PASS",
         "CHILD_EXIT_CODE: 0",
+        "LIVE_RUNTIME_PROOF: OBSERVED_PHYSICAL_FLOOR_ONLY",
+        "Host: Windows+Ubuntu Admin Box",
+        "Primary harness: pi",
+        "FirstMate pin checkout: $HOME/firstmate@b182d0f",
         "Evidence root: local untracked under AppData\\Local\\Temp\\AgentSwitchboard\\fm-wsl12-admin-box-live\\1f1240a3-20260919-205523-80168190\\ (operator observation only; not committed)",
         "Proof ceiling: physical WSL floor only — no FM-CREW-13 crew dispatch; no Prompt Kit dual-path claim",
-        "Ledger sync will land via PR after this observation record"
+        "Ledger sync landed via PR #333"
       ]
     },
     {

@@ -4,7 +4,7 @@
 **Repo:** EndeavorEverlasting/AgentSwitchboard
 **Floor:** `main@770c855` (product-pass wave #302-#306 complete)
 **Status:** active
-**Updated:** 2026-09-20T00:57:00Z
+**Updated:** 2026-09-20T01:05:00Z
 
 ## Mission
 
@@ -77,13 +77,16 @@ Prove FM-WSL-12 physical WSL/Ubuntu floor through harness `-Mode physical-floor-
 
 **Evidence:**
 - Reporter: ASB · local · asq017-floor
-- Result: PHYSICAL_FLOOR_PASS on Windows+Ubuntu Admin Box
-- HEAD: `1f1240a390eb14d226909f8b14b1ab1c843873d0`
-- LIVE_RUNTIME_PROOF: OBSERVED_PHYSICAL_FLOOR_ONLY
+- Checkout: AgentSwitchboard-asq017-floor @ `1f1240a390eb14d226909f8b14b1ab1c843873d0`
+- ASQ017_RESULT: PHYSICAL_FLOOR_PASS
 - CHILD_EXIT_CODE: 0
+- LIVE_RUNTIME_PROOF: OBSERVED_PHYSICAL_FLOOR_ONLY
+- Host: Windows+Ubuntu Admin Box
+- Primary harness: pi
+- FirstMate pin checkout: `$HOME/firstmate@b182d0f`
 - Evidence root: local untracked under operator AppData (not committed)
 - Proof ceiling: physical WSL floor only — no FM-CREW-13 crew dispatch; no Prompt Kit dual-path claim
-- Ledger sync will land via PR after this observation record
+- Ledger sync landed via PR #333
 
 **Acceptance:**
 - Admin Box run reaches physical-floor PASS with exact-head readback
