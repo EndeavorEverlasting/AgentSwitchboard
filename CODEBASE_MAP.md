@@ -113,12 +113,15 @@ The initial topology is contract-only. It does not prove live emission, observat
 - `tooling/harness/execution-adapters/schemas/execution-request.v1.schema.json` — bounded execution request with adapter-specific local argv, Claude Code, and Cursor CloudAgent inputs.
 - `tooling/harness/execution-adapters/schemas/execution-receipt.v1.schema.json` — normalized terminal receipt with native execution identity, blocker, bounded output, artifacts, and proof.
 - `tooling/harness/execution-adapters/schemas/capability-report.v1.schema.json` — read-only probe result separating host, binary, auth, transport, and dispatch readiness.
+- `tooling/harness/execution-adapters/adapter_protocol.py` — shared `probe()` / `execute(request)` adapter protocol (EAT-005).
+- `tooling/harness/execution-adapters/registry.py` — deterministic adapterKind registration/resolution; duplicate kinds fail closed.
+- `tooling/harness/execution-adapters/runner.py` — generic resolve → probe → execute runner; unknown/unready adapters emit normalized BLOCKED receipts.
 - `tooling/harness/execution-adapters/fixtures/` — public-safe positive and fail-closed contract fixtures; never live provider receipts.
-- `tests/test_execution_adapter_contract.py` and `scripts/Test-ExecutionAdapterContract.ps1` — deterministic schema/semantic/fail-closed validators.
+- `tests/test_execution_adapter_contract.py`, `tests/test_execution_adapter_registry.py`, and `scripts/Test-ExecutionAdapterContract.ps1` — deterministic schema/semantic/registry/runner validators.
 - `docs/harness/execution-adapter-contract-v1.md` — operator/developer contract guide.
 - `plans/active/ASB-2026-09-execution-adapter-trio-v1.*` — canonical 37-issue milestone backlog and multi-writer dependency map.
 
-The v1 floor is contract-only. Prompt Kit remains the semantic owner; AgentSwitchboard owns adapter selection/correlation/evidence normalization; native harnesses own execution mechanics; FirstMate remains the canonical crew/session runtime. Initial adapters are `local-argv`, `claude-code`, and `cursor-cloud-agent`. PR #332 remains the current Cursor implementation/evidence lane and must be reconciled rather than overwritten.
+The v1 contract floor is integrated on main. EAT-005 provides the executable shared spine without provider-native adapters. Prompt Kit remains the semantic owner; AgentSwitchboard owns adapter selection/correlation/evidence normalization; native harnesses own execution mechanics; FirstMate remains the canonical crew/session runtime. Initial adapters are `local-argv`, `claude-code`, and `cursor-cloud-agent`. PR #332 remains the current Cursor implementation/evidence lane and must be reconciled rather than overwritten.
 
 ## Triage→ASB consumer floor
 
