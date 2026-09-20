@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "critical",
   "createdUtc": "2026-09-20T17:20:00Z",
-  "updatedUtc": "2026-09-20T17:20:00Z",
+  "updatedUtc": "2026-09-20T17:38:00Z",
   "mission": "Turn AgentSwitchboard's dispatch seam into a provider-neutral execution-adapter layer and prove the first three native execution planes—local argv, Claude Code, and Cursor CloudAgent—without duplicating Prompt Kit semantics or FirstMate crew scheduling.",
   "owner": {
     "surface": "execution-adapter harness",
@@ -16,7 +16,11 @@
   },
   "delivery": {
     "branch": "feat/execution-adapter-trio-v1-contract-20260920",
-    "pullRequest": null,
+    "pullRequest": {
+      "number": 335,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/335",
+      "state": "open"
+    },
     "baseRef": "main@4685a6db93452880ad091bc47c69791aa0b1dbeb",
     "commitRequired": true
   },
@@ -902,7 +906,7 @@
   ],
   "proof": {
     "target": "Accepted adapter contract floor plus durable parallelizable milestone backlog for three native harness adapters.",
-    "achieved": "Contract policy, request/receipt/capability schemas, public-safe fixtures, semantic validator, and durable plan are being committed on an isolated branch; adapter runtime implementations remain successor work.",
+    "achieved": "Execution-adapter v1 policy, request/receipt/capability schemas, public-safe fixtures, semantic validator, automated-floor registration, and the complete 37-issue multi-agent milestone map are tracked in PR #335. Adapter runtime implementations remain successor work.",
     "ceiling": "CONTRACT_STATIC only until adapter-specific runtime lanes independently achieve LOCAL_RUNTIME_OBSERVED, CLAUDE_CODE_RUNTIME_OBSERVED, and CURSOR_CLOUD_AGENT_RUNTIME_OBSERVED. Planning, schemas, fixtures, CI, and PR state do not prove native execution."
   },
   "handoff": {
