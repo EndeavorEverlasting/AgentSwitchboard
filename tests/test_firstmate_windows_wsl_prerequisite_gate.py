@@ -534,40 +534,77 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         end = rest.find("\n## ", 1)
         block = rest if end < 0 else rest[:end]
         self.assertIn("`Invoke-Asq017AdminBoxLiveFloor.ps1`", block)
+
+        # Extract status to branch on DONE vs READY state
+        status_line = next(
+            (line for line in block.splitlines() if line.startswith("- **Status:**")),
+            None,
+        )
+        self.assertIsNotNone(status_line, "ASQ-017 Status missing")
+        assert status_line is not None
+        is_done = "DONE" in status_line
+
         next_line = next(
             (line for line in block.splitlines() if line.startswith("- **Next action:**")),
             None,
         )
         self.assertIsNotNone(next_line, "ASQ-017 Next action missing")
         assert next_line is not None
-        idx = next_line.find("$ErrorActionPreference")
-        self.assertGreaterEqual(idx, 0, "ASQ-017 Next action missing PowerShell body")
-        command = next_line[idx:].strip().strip("`")
-        self.assertIn("Invoke-Asq017AdminBoxLiveFloor.ps1", command)
-        self.assertIn("CHILD_EXIT_CODE=", command)
-        self.assertIn("$childExit=$LASTEXITCODE", command)
-        self.assertIn("throw", command)
-        self.assertIn("$childExit -eq 44", command)
-        self.assertIn("$childExit -eq 45", command)
-        self.assertIn("$childExit -eq 47", command)
-        self.assertIn("$childExit -eq 48", command)
-        self.assertIn("$childExit -eq 49", command)
-        self.assertIn("$childExit -eq 50", command)
-        self.assertIn("$childExit -eq 51", command)
-        self.assertIn("$childExit -eq 52", command)
-        self.assertIn("$childExit -eq 124", command)
-        self.assertIn("$childExit -eq 1", command)
-        self.assertIn("BLOCKED_WSL_BOOTSTRAP", command)
-        self.assertIn("BLOCKED_HARNESS_CONTRACT", command)
-        self.assertIn("BLOCKED_PREREQUISITE_TIMEOUT", command)
-        self.assertIn("BLOCKED_CONTINUATION_EXHAUSTED", command)
-        self.assertIn("BLOCKED_FIRSTMATE_PIN", command)
-        self.assertIn("BLOCKED_PRIMARY_HARNESS", command)
-        self.assertIn("Test-Path -LiteralPath", command)
-        self.assertIn("checkout root", command)
-        self.assertNotIn("(git rev-parse HEAD).Trim()", command)
-        self.assertIn("LIVE_RUNTIME_PROOF:UNPROVEN", block)
+
+        if is_done:
+            # DONE state: assert terminal next action and operator-proof presence
+            next_action_text = next_line.split("- **Next action:**", 1)[1].strip()
+            self.assertTrue(
+                next_action_text.startswith("none; no safe actionable work remains") or
+                next_action_text == "none; no safe actionable work remains",
+                f"DONE state must have terminal next action, got: {next_action_text}"
+            )
+            # Assert Last proof contains operator-proof and OBSERVED_PHYSICAL_FLOOR_ONLY
+            proof_line = next(
+                (line for line in block.splitlines() if line.startswith("- **Last proof:**")),
+                None,
+            )
+            self.assertIsNotNone(proof_line, "ASQ-017 Last proof missing")
+            assert proof_line is not None
+            self.assertIn("operator-proof:", proof_line)
+            self.assertIn("OBSERVED_PHYSICAL_FLOOR_ONLY", proof_line)
+            # Proof ceiling language should still be present
+            self.assertIn("physical", block.lower())
+            self.assertIn("floor only", block.lower())
+        else:
+            # READY state: assert PowerShell paste is present
+            idx = next_line.find("$ErrorActionPreference")
+            self.assertGreaterEqual(idx, 0, "ASQ-017 Next action missing PowerShell body")
+            command = next_line[idx:].strip().strip("`")
+            self.assertIn("Invoke-Asq017AdminBoxLiveFloor.ps1", command)
+            self.assertIn("CHILD_EXIT_CODE=", command)
+            self.assertIn("$childExit=$LASTEXITCODE", command)
+            self.assertIn("throw", command)
+            self.assertIn("$childExit -eq 44", command)
+            self.assertIn("$childExit -eq 45", command)
+            self.assertIn("$childExit -eq 47", command)
+            self.assertIn("$childExit -eq 48", command)
+            self.assertIn("$childExit -eq 49", command)
+            self.assertIn("$childExit -eq 50", command)
+            self.assertIn("$childExit -eq 51", command)
+            self.assertIn("$childExit -eq 52", command)
+            self.assertIn("$childExit -eq 124", command)
+            self.assertIn("$childExit -eq 1", command)
+            self.assertIn("BLOCKED_WSL_BOOTSTRAP", command)
+            self.assertIn("BLOCKED_HARNESS_CONTRACT", command)
+            self.assertIn("BLOCKED_PREREQUISITE_TIMEOUT", command)
+            self.assertIn("BLOCKED_CONTINUATION_EXHAUSTED", command)
+            self.assertIn("BLOCKED_FIRSTMATE_PIN", command)
+            self.assertIn("BLOCKED_PRIMARY_HARNESS", command)
+            self.assertIn("Test-Path -LiteralPath", command)
+            self.assertIn("checkout root", command)
+            self.assertNotIn("(git rev-parse HEAD).Trim()", command)
+            # READY state expects LIVE_RUNTIME_PROOF:UNPROVEN
+            self.assertIn("LIVE_RUNTIME_PROOF:UNPROVEN", block)
+
+        # Common assertions that apply to both states
         self.assertIn("BLOCKED_WINDOWS_WSL_REQUIRED", block)
+        # Runbook and script assertions (apply to both states)
         self.assertIn("Invoke-Asq017AdminBoxLiveFloor.ps1", self.runbook)
         self.assertIn("CHILD_EXIT_CODE", self.runbook)
         self.assertIn("$childExit -eq 44", self.runbook)
@@ -663,29 +700,31 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn('export PATH="$HOME/.local/bin:$PATH"', interop)
 
         self.assertTrue(OCD_VALIDATOR.is_file(), OCD_VALIDATOR)
-        with tempfile.TemporaryDirectory() as tmp:
-            candidate = Path(tmp) / "asq017-admin-box-next.ps1"
-            candidate.write_text(command.replace("; ", "\n") + "\n", encoding="utf-8")
-            completed = subprocess.run(
-                [
-                    "pwsh",
-                    "-NoLogo",
-                    "-NoProfile",
-                    "-File",
-                    str(OCD_VALIDATOR),
-                    "-CandidatePath",
-                    str(candidate),
-                ],
-                cwd=ROOT,
-                check=False,
-                capture_output=True,
-                text=True,
-            )
-            self.assertEqual(
-                0,
-                completed.returncode,
-                f"OCD validator failed:\n{completed.stdout}\n{completed.stderr}",
-            )
+        # OCD validator test only applies to READY state (requires PowerShell command)
+        if not is_done:
+            with tempfile.TemporaryDirectory() as tmp:
+                candidate = Path(tmp) / "asq017-admin-box-next.ps1"
+                candidate.write_text(command.replace("; ", "\n") + "\n", encoding="utf-8")
+                completed = subprocess.run(
+                    [
+                        "pwsh",
+                        "-NoLogo",
+                        "-NoProfile",
+                        "-File",
+                        str(OCD_VALIDATOR),
+                        "-CandidatePath",
+                        str(candidate),
+                    ],
+                    cwd=ROOT,
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertEqual(
+                    0,
+                    completed.returncode,
+                    f"OCD validator failed:\n{completed.stdout}\n{completed.stderr}",
+                )
             env = os.environ.copy()
             env["CANDIDATE"] = str(candidate)
             ast_probe = subprocess.run(
@@ -952,11 +991,31 @@ class FirstMateWindowsWslPrerequisiteGateTests(unittest.TestCase):
         self.assertIn("ExitCode -eq 50", oneshot)
         self.assertIn("BLOCKED_FIRSTMATE_PIN", oneshot)
 
+        # WORK_QUEUE next_action assertions - gate on ASQ-017 status
         work_queue = (ROOT / ".ai" / "WORK_QUEUE.md").read_text(encoding="utf-8")
         asq_section = work_queue.split("## ASQ-017", 1)[1].split("\n## ", 1)[0]
+        asq_status_line = next(
+            (line for line in asq_section.splitlines() if line.startswith("- **Status:**")),
+            None,
+        )
+        asq_is_done = asq_status_line is not None and "DONE" in asq_status_line
+
         next_action = asq_section.split("- **Next action:**", 1)[1].split("- **Updated:**", 1)[0]
-        self.assertIn("upstream-pin.json", next_action)
-        self.assertIn("$childExit -eq 50", next_action)
+
+        if asq_is_done:
+            # DONE state: assert terminal next action
+            next_action_clean = next_action.strip()
+            self.assertTrue(
+                next_action_clean.startswith("none; no safe actionable work remains") or
+                next_action_clean == "none; no safe actionable work remains",
+                f"DONE state must have terminal next action in test_admin_box_floor_surfaces_operator_next_on_fail_closed"
+            )
+        else:
+            # READY state: assert upstream-pin.json and $childExit -eq 50 in next_action
+            self.assertIn("upstream-pin.json", next_action)
+            self.assertIn("$childExit -eq 50", next_action)
+
+        # Script body assertions (apply regardless of DONE/READY status)
         self.assertNotIn("git checkout b182d0f908b78d08c7ccb8dce3775bdca8c5d657", next_action)
         # Exit-50 NEXT fallbacks must load pin from upstream-pin.json (same source as PhysicalFloor).
         self.assertIn("upstream-pin.json", asq)
