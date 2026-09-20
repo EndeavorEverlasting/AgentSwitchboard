@@ -244,16 +244,24 @@ def main() -> None:
     bad["executionPolicy"]["interactiveAuthAllowed"] = True
     assert_negative(lambda: validate_json_schema(bad, request_schema), "interactive authentication was accepted")
 
+    bad = copy.deepcopy(requests[0])
+    bad["executionPolicy"]["profile"] = "READ_ONLY"
+    bad["mutation"]["allowed"] = True
+    assert_negative(lambda: validate_json_schema(bad, request_schema), "READ_ONLY mutation was accepted by schema")
+
     bad = copy.deepcopy(receipts[0])
     bad["executionIdentity"] = None
+    assert_negative(lambda: validate_json_schema(bad, receipt_schema), "EXECUTED without identity was accepted by schema")
     assert_negative(lambda: validate_receipt_semantics(bad), "EXECUTED without identity was accepted")
 
     bad = copy.deepcopy(receipts[1])
     bad["blocker"] = None
+    assert_negative(lambda: validate_json_schema(bad, receipt_schema), "BLOCKED without blocker was accepted by schema")
     assert_negative(lambda: validate_receipt_semantics(bad), "BLOCKED without blocker was accepted")
 
     ready = copy.deepcopy(capability)
     ready["status"] = "READY"
+    assert_negative(lambda: validate_json_schema(ready, capability_schema), "READY with blocker was accepted by schema")
     assert_negative(lambda: validate_capability_semantics(ready), "READY with blocker was accepted")
 
     registry = load_json(ROOT / "plans" / "plan-registry.json")
