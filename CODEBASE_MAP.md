@@ -107,6 +107,19 @@ This engine reads supplied output only. It does not launch apps or providers, st
 
 The initial topology is contract-only. It does not prove live emission, observation, handling, successor delivery, or sink recording. The scout demonstrates routing-decision → prompt-dispatch translation with proof ceiling SCOUT_CONTRACT_STATIC; it does not prove live FirstMate delivery, Admin Box runtime, or crew execution.
 
+## Execution adapter contract
+
+- `tooling/harness/execution-adapters/execution-adapter-contract.v1.json` — provider-neutral ownership, readiness, terminal-status, proof, migration, and minimum end-to-end rules.
+- `tooling/harness/execution-adapters/schemas/execution-request.v1.schema.json` — bounded execution request with adapter-specific local argv, Claude Code, and Cursor CloudAgent inputs.
+- `tooling/harness/execution-adapters/schemas/execution-receipt.v1.schema.json` — normalized terminal receipt with native execution identity, blocker, bounded output, artifacts, and proof.
+- `tooling/harness/execution-adapters/schemas/capability-report.v1.schema.json` — read-only probe result separating host, binary, auth, transport, and dispatch readiness.
+- `tooling/harness/execution-adapters/fixtures/` — public-safe positive and fail-closed contract fixtures; never live provider receipts.
+- `tests/test_execution_adapter_contract.py` and `scripts/Test-ExecutionAdapterContract.ps1` — deterministic schema/semantic/fail-closed validators.
+- `docs/harness/execution-adapter-contract-v1.md` — operator/developer contract guide.
+- `plans/active/ASB-2026-09-execution-adapter-trio-v1.*` — canonical 37-issue milestone backlog and multi-writer dependency map.
+
+The v1 floor is contract-only. Prompt Kit remains the semantic owner; AgentSwitchboard owns adapter selection/correlation/evidence normalization; native harnesses own execution mechanics; FirstMate remains the canonical crew/session runtime. Initial adapters are `local-argv`, `claude-code`, and `cursor-cloud-agent`. PR #332 remains the current Cursor implementation/evidence lane and must be reconciled rather than overwritten.
+
 ## Triage→ASB consumer floor
 
 - `tooling/harness/triage-consumer/consumer.policy.json` — consumer policy with `human_scheduler_allowed:false` and `panel_ingest_required:true`.
