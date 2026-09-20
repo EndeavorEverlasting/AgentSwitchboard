@@ -1,0 +1,330 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/harness/execution-adapters/schemas/execution-request.v1.schema.json",
+  "title": "AgentSwitchboard Execution Request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "requestId",
+    "correlationId",
+    "causationId",
+    "adapterKind",
+    "mission",
+    "workingDirectory",
+    "timeoutSeconds",
+    "mutation",
+    "executionPolicy",
+    "input",
+    "provenance"
+  ],
+  "properties": {
+    "schema": {
+      "const": "agentswitchboard.execution-request/v1"
+    },
+    "requestId": {
+      "type": "string",
+      "pattern": "^req_[A-Za-z0-9._-]{8,128}$"
+    },
+    "correlationId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "causationId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 200
+    },
+    "adapterKind": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{2,63}$"
+    },
+    "mission": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "workingDirectory": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 4096
+    },
+    "timeoutSeconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3600
+    },
+    "mutation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowed",
+        "allowedScopes",
+        "forbiddenScopes"
+      ],
+      "properties": {
+        "allowed": {
+          "type": "boolean"
+        },
+        "allowedScopes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "maxItems": 100
+        },
+        "forbiddenScopes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "maxItems": 100
+        }
+      }
+    },
+    "executionPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "networkAllowed",
+        "interactiveAuthAllowed",
+        "maxOutputBytes"
+      ],
+      "properties": {
+        "profile": {
+          "enum": [
+            "READ_ONLY",
+            "REPO_EDIT",
+            "VALIDATION",
+            "CUSTOM"
+          ]
+        },
+        "networkAllowed": {
+          "type": "boolean"
+        },
+        "interactiveAuthAllowed": {
+          "const": false
+        },
+        "maxOutputBytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 1048576
+        }
+      }
+    },
+    "input": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/localArgvInput"
+        },
+        {
+          "$ref": "#/$defs/claudeCodeInput"
+        },
+        {
+          "$ref": "#/$defs/cursorCloudAgentInput"
+        }
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "planId",
+        "laneId",
+        "promptRef"
+      ],
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "planId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 200
+        },
+        "laneId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 200
+        },
+        "promptRef": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 500
+        }
+      }
+    }
+  },
+  "$defs": {
+    "localArgvInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "argv",
+        "environment",
+        "inheritEnvironment"
+      ],
+      "properties": {
+        "kind": {
+          "const": "local-argv"
+        },
+        "argv": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 200,
+          "items": {
+            "type": "string",
+            "maxLength": 8192
+          }
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "inheritEnvironment": {
+          "type": "boolean"
+        }
+      }
+    },
+    "claudeCodeInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "prompt",
+        "model",
+        "resumeSessionId",
+        "structuredOutputRequired"
+      ],
+      "properties": {
+        "kind": {
+          "const": "claude-code"
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200000
+        },
+        "model": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 200
+        },
+        "resumeSessionId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 500
+        },
+        "structuredOutputRequired": {
+          "const": true
+        }
+      }
+    },
+    "cursorCloudAgentInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "prompt",
+        "description",
+        "repositoryRef"
+      ],
+      "properties": {
+        "kind": {
+          "const": "cursor-cloud-agent"
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200000
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "repositoryRef": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 500
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "adapterKind": {
+            "const": "local-argv"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "input": {
+            "$ref": "#/$defs/localArgvInput"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "adapterKind": {
+            "const": "claude-code"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "input": {
+            "$ref": "#/$defs/claudeCodeInput"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "adapterKind": {
+            "const": "cursor-cloud-agent"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "input": {
+            "$ref": "#/$defs/cursorCloudAgentInput"
+          }
+        }
+      }
+    }
+  ]
+}
