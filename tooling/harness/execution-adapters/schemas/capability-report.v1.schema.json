@@ -182,5 +182,48 @@
     "proofCeiling": {
       "const": "CAPABILITY_PROBE_ONLY"
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "READY"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "blocker": {
+            "const": null
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "BLOCKED",
+              "UNSUPPORTED"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "blocker": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  ]
 }
