@@ -325,6 +325,39 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "executionPolicy": {
+            "properties": {
+              "profile": {
+                "const": "READ_ONLY"
+              }
+            },
+            "required": [
+              "profile"
+            ]
+          }
+        },
+        "required": [
+          "executionPolicy"
+        ]
+      },
+      "then": {
+        "properties": {
+          "mutation": {
+            "properties": {
+              "allowed": {
+                "const": false
+              }
+            },
+            "required": [
+              "allowed"
+            ]
+          }
+        }
+      }
     }
   ]
 }
