@@ -110,6 +110,6 @@ pwsh -NoLogo -NoProfile -File scripts/Test-FmAsbPromptKitProtocolContract.ps1
 
 1. Phase 1 observation adapter consuming FirstMate task state without becoming a second watcher.
 2. Headless Prompt Kit routing API/CLI sharing the browser classifier.
-3. Durable prompt injection via `fm-send` for a read-only/scout workflow.
+3. Durable prompt injection via `fm-send` for a read-only/scout workflow — demonstrated by `tooling/firstmate/harness/dispatch/scout_prompt_dispatch.py` (contract-only translation with proof ceiling SCOUT_CONTRACT_STATIC; live delivery blocked on Linux/cloud, unimplemented on Windows).
 4. Outcome feedback into Prompt Kit outcome-receipt contracts.
 5. One harness-specific verified context-pressure observer, then crew-task rollover.

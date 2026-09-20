@@ -78,6 +78,14 @@
       "architectureDecision": "docs/architecture/fm-asb-promptkit-protocol-v1.md"
     },
     {
+      "planId": "ASB-2026-09-FM-ASB-PROMPT-DISPATCH-SCOUT",
+      "path": "plans/active/ASB-2026-09-fm-asb-prompt-dispatch-scout.plan.json",
+      "status": "completed",
+      "priority": "medium",
+      "dependencies": ["ASB-2026-09-FM-ASB-PROMPTKIT-PROTOCOL-V1"],
+      "architectureDecision": "docs/architecture/fm-asb-promptkit-protocol-v1.md"
+    },
+    {
       "planId": "ASB-2026-09-FM-ASB-OBSERVATION-ADAPTER",
       "path": "plans/active/ASB-2026-09-fm-asb-observation-adapter.plan.json",
       "summaryPath": "plans/active/ASB-2026-09-fm-asb-observation-adapter.md",

@@ -1,0 +1,168 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-09-FM-ASB-PROMPT-DISPATCH-SCOUT",
+  "title": "FirstMate prompt-dispatch scout (remote-safe RRB-03 seam)",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "completed",
+  "priority": "medium",
+  "createdUtc": "2026-09-20T01:00:00Z",
+  "updatedUtc": "2026-09-20T01:30:00Z",
+  "mission": "Implement a remote-safe durable-inbox prompt-dispatch scout that uses build_prompt_dispatch (RRB-03) to demonstrate routing-decision → prompt-dispatch translation without claiming live crew delivery or dual-path vision complete.",
+  "owner": {
+    "surface": "FirstMate↔ASB protocol scout seam",
+    "role": "contract-only translation demonstration",
+    "agent": "Cursor Cloud Agent"
+  },
+  "delivery": {
+    "branch": "cursor/fm-asb-prompt-dispatch-scout-8400",
+    "pullRequest": null,
+    "baseRef": "main",
+    "commitRequired": true
+  },
+  "wave": "FirstMate↔ASB↔PromptKit boundary",
+  "lane": "prompt-dispatch scout implementation",
+  "dependencies": [
+    "ASB-2026-09-FM-ASB-PROMPTKIT-PROTOCOL-V1"
+  ],
+  "safeParallelWork": [
+    "FM-WSL-12 Admin Box physical-floor observation",
+    "Prompt Kit routing adapter implementation (separate lane)",
+    "Unrelated Windows profile or OpenCode work"
+  ],
+  "ownedScope": [
+    "tooling/firstmate/harness/dispatch/scout_prompt_dispatch.py",
+    "tooling/firstmate/harness/dispatch/Invoke-PromptDispatchScout.ps1",
+    "tests/test_fm_asb_prompt_dispatch_scout.py",
+    "plans/active/ASB-2026-09-fm-asb-prompt-dispatch-scout.plan.json",
+    "plans/plan-registry.json membership for this plan",
+    "CODEBASE_MAP.md scout references",
+    "docs/architecture/fm-asb-promptkit-protocol-v1.md next-owner notes"
+  ],
+  "forbiddenScope": [
+    "live fm-send / tmux / FirstMate lifecycle invocation on Linux/cloud",
+    "claiming FM-CREW-13, dual-path vision, or live delivery complete",
+    "ASQ-017 ledger DONE sync collision",
+    "committing machine-local evidence or receipts",
+    "modification to build_prompt_dispatch.py (read-only reuse)",
+    "automatic merge or live-target mutation"
+  ],
+  "expectedArtifacts": [
+    "Python scout entrypoint with dry-run and fail-closed live-delivery modes",
+    "PowerShell scout wrapper",
+    "Unit/contract tests covering dry-run PASS and live-delivery blocked on non-Admin",
+    "Public plan documenting this scout implementation",
+    "Updated CODEBASE_MAP and protocol next-owner notes"
+  ],
+  "tasks": [
+    {
+      "taskId": "PDS-01",
+      "title": "Implement Python scout entrypoint with fail-closed modes",
+      "status": "completed",
+      "owner": "prompt-dispatch scout lane",
+      "dependencies": [],
+      "inputs": [
+        "build_prompt_dispatch.py from RRB-03 (ee4b746)",
+        "routing-decision.valid.json fixture"
+      ],
+      "outputs": [
+        "scout_prompt_dispatch.py",
+        "Invoke-PromptDispatchScout.ps1"
+      ],
+      "acceptanceCriteria": [
+        "Default mode is dry-run (contract-only translation)",
+        "Dry-run loads decision, calls build_prompt_dispatch, writes artifact",
+        "Live-delivery mode fails-closed on Linux with BLOCKED_LINUX_WSL_REQUIRED",
+        "Live-delivery mode returns UNIMPLEMENTED on Windows (future work)",
+        "No subprocess invocations of fm-send, fm-control, or tmux",
+        "Artifacts written to local untracked evidence root"
+      ],
+      "evidence": [
+        "tooling/firstmate/harness/dispatch/scout_prompt_dispatch.py",
+        "tooling/firstmate/harness/dispatch/Invoke-PromptDispatchScout.ps1"
+      ]
+    },
+    {
+      "taskId": "PDS-02",
+      "title": "Implement comprehensive unit and contract tests",
+      "status": "completed",
+      "owner": "prompt-dispatch scout lane",
+      "dependencies": [
+        "PDS-01"
+      ],
+      "inputs": [
+        "scout_prompt_dispatch.py",
+        "routing-decision.valid.json fixture"
+      ],
+      "outputs": [
+        "test_fm_asb_prompt_dispatch_scout.py"
+      ],
+      "acceptanceCriteria": [
+        "Test dry-run mode succeeds and writes artifacts",
+        "Test live-delivery blocked on Linux",
+        "Test resolved variables are passed through",
+        "Test authority configuration is honored",
+        "Test contract errors are propagated",
+        "Test deterministic deliveryId and idempotency key",
+        "Test proof ceiling is always SCOUT_CONTRACT_STATIC"
+      ],
+      "evidence": [
+        "python3 tests/test_fm_asb_prompt_dispatch_scout.py: 12 tests PASS"
+      ]
+    },
+    {
+      "taskId": "PDS-03",
+      "title": "Update documentation and plan registry",
+      "status": "completed",
+      "owner": "prompt-dispatch scout lane",
+      "dependencies": [
+        "PDS-01",
+        "PDS-02"
+      ],
+      "inputs": [
+        "CODEBASE_MAP.md",
+        "plans/plan-registry.json",
+        "docs/architecture/fm-asb-promptkit-protocol-v1.md"
+      ],
+      "outputs": [
+        "Updated CODEBASE_MAP.md with scout references",
+        "Updated plans/plan-registry.json",
+        "Updated protocol doc next-owner notes",
+        "This public plan"
+      ],
+      "acceptanceCriteria": [
+        "CODEBASE_MAP.md includes scout entrypoints and proof ceiling",
+        "Plan registry includes this plan",
+        "Protocol doc next-owner section updated with scout handoff",
+        "Public plan contracts pass"
+      ],
+      "evidence": [
+        "Updated documentation files",
+        "pwsh scripts/Test-PublicPlanContracts.ps1 PASS"
+      ]
+    }
+  ],
+  "validation": [
+    "python3 tests/test_fm_asb_prompt_dispatch_scout.py",
+    "python3 tests/test_fm_asb_promptkit_protocol_contract.py",
+    "python3 tests/test_fm_asb_prompt_dispatch_builder.py",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-FmAsbPromptKitProtocolContract.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
+    "git diff --check origin/main...HEAD"
+  ],
+  "proof": {
+    "target": "Remote-safe prompt-dispatch scout demonstrating contract-only translation",
+    "achieved": "Python and PowerShell scout entrypoints implemented. Dry-run mode builds dispatch artifacts from routing decisions. Live-delivery mode fails-closed on Linux with BLOCKED_LINUX_WSL_REQUIRED and returns UNIMPLEMENTED on Windows. All tests pass (12 scout tests, protocol and builder tests unchanged). Proof ceiling explicitly SCOUT_CONTRACT_STATIC.",
+    "ceiling": "SCOUT_CONTRACT_STATIC — proves contract-only translation from routing-decision to prompt-dispatch with fail-closed host blocking. Does NOT prove live FirstMate delivery, Admin Box runtime, crew execution, or dual-path vision complete."
+  },
+  "handoff": {
+    "nextOwner": "Prompt Kit routing adapter lane or Admin Box live-delivery implementation",
+    "nextCommand": "python3 tests/test_fm_asb_prompt_dispatch_scout.py && python3 tests/test_fm_asb_promptkit_protocol_contract.py",
+    "notes": [
+      "This scout demonstrates the dispatch-building seam only.",
+      "Live delivery (fm-send invocation) is future work requiring Admin Box.",
+      "Do not claim FM-CREW-13 or dual-path vision from this scout.",
+      "Machine-local evidence stays under LocalAppData; never commit receipts."
+    ]
+  }
+}
