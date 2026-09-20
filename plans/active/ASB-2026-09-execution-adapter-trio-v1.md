@@ -1,9 +1,9 @@
 # EXECUTION_ADAPTER_TRIO_V1
 
-**Plan ID:** ASB-2026-09-EXECUTION-ADAPTER-TRIO-V1  
-**Status:** Active  
-**Priority:** Critical  
-**Canonical machine plan:** plans/active/ASB-2026-09-execution-adapter-trio-v1.plan.json  
+**Plan ID:** ASB-2026-09-EXECUTION-ADAPTER-TRIO-V1
+**Status:** Active
+**Priority:** Critical
+**Canonical machine plan:** plans/active/ASB-2026-09-execution-adapter-trio-v1.plan.json
 **Contract:** tooling/harness/execution-adapters/execution-adapter-contract.v1.json
 
 ## Mission
