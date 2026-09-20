@@ -386,4 +386,3 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** contract/static artifacts and 37-issue milestone map tracked on the contract-plan branch; local/Claude/Cursor runtime proof remains UNPROVEN.
 - **Next action:** after PR #335 merges, run `pwsh -NoLogo -NoProfile -File scripts/Test-ExecutionAdapterContract.ps1`; then implement EAT-005 from refreshed main and prove registry resolution plus fail-closed unavailable-adapter output.
 - **Updated:** 2026-09-20T17:20:00Z
-
