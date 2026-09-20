@@ -165,7 +165,7 @@
     {
       "taskId": "EAT-005",
       "title": "Implement generic adapter interface and registry",
-      "status": "ready",
+      "status": "in-progress",
       "owner": "shared-spine",
       "dependencies": [
         "EAT-001",
@@ -188,7 +188,13 @@
         "Generic runner resolves adapter through registry rather than native-harness if/elif execution branches.",
         "Unknown/unready adapter fails closed with normalized receipt."
       ],
-      "evidence": []
+      "evidence": [
+        "tooling/harness/execution-adapters/adapter_protocol.py",
+        "tooling/harness/execution-adapters/registry.py",
+        "tooling/harness/execution-adapters/runner.py",
+        "tests/test_execution_adapter_registry.py",
+        "PR #335 integrated on main@59649d776bf3db8e73f0401f13a2b32b760892fa"
+      ]
     },
     {
       "taskId": "EAT-006",

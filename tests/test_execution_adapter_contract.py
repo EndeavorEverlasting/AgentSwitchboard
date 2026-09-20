@@ -371,10 +371,15 @@ def main() -> None:
     gates = {gate["id"]: gate for gate in floor["gates"]}
     assert gates["execution-adapter-contract-script"]["path"] == "tests/test_execution_adapter_contract.py"
     assert gates["execution-adapter-contract-script"]["required"] is True
+    assert gates["execution-adapter-registry-script"]["path"] == "tests/test_execution_adapter_registry.py"
+    assert gates["execution-adapter-registry-script"]["required"] is True
 
     codebase_map = (ROOT / "CODEBASE_MAP.md").read_text(encoding="utf-8")
     assert "## Execution adapter contract" in codebase_map
     assert "execution-adapter-contract.v1.json" in codebase_map
+    assert "adapter_protocol.py" in codebase_map
+    assert "registry.py" in codebase_map
+    assert "runner.py" in codebase_map
 
     work_queue = (ROOT / ".ai" / "WORK_QUEUE.md").read_text(encoding="utf-8")
     assert "ASQ-022 — Execute adapter trio v1 implementation waves" in work_queue

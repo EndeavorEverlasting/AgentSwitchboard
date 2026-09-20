@@ -56,6 +56,21 @@
       "proof": "execution-adapter v1 schema, semantic, plan, and fail-closed contract"
     },
     {
+      "id": "execution-adapter-registry-script",
+      "runner": "python-script",
+      "path": "tests/test_execution_adapter_registry.py",
+      "required": true,
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "expectStdoutContains": [
+        "PASS"
+      ],
+      "proof": "execution-adapter generic registry/runner resolve-probe-execute fail-closed spine"
+    },
+    {
       "id": "runtime-event-script",
       "runner": "python-script",
       "path": "tests/test_runtime_event_contract.py",

@@ -175,8 +175,15 @@ if (Test-Path $TestManifestPath) {
         }
         New-Item -ItemType Directory -Path $TestOutputDir -Force | Out-Null
 
-        # Run dispatcher
-        $result = & python3 $DispatcherPath $TestManifestPath $TestOutputDir 2>&1
+        # Run dispatcher (prefer python3, fall back to python on Windows hosts)
+        $python = Get-Command python3 -ErrorAction SilentlyContinue
+        if (-not $python) {
+            $python = Get-Command python -ErrorAction SilentlyContinue
+        }
+        if (-not $python) {
+            throw 'Python 3 is required for Triage dispatch smoke (python3/python not found).'
+        }
+        $result = & $python.Source $DispatcherPath $TestManifestPath $TestOutputDir 2>&1
         $exitCode = $LASTEXITCODE
 
         Test-Condition "Dispatcher executes without crash" ($exitCode -in @(0, 1))

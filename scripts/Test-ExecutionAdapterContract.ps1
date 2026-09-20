@@ -8,11 +8,16 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $PSScriptRoot
-$testPath = Join-Path $root 'tests/test_execution_adapter_contract.py'
+$testPaths = @(
+    (Join-Path $root 'tests/test_execution_adapter_contract.py'),
+    (Join-Path $root 'tests/test_execution_adapter_registry.py')
+)
 
-if (-not (Test-Path -LiteralPath $testPath -PathType Leaf)) {
-    Write-Error "Execution adapter contract test not found: $testPath" -ErrorAction Continue
-    exit 2
+foreach ($testPath in $testPaths) {
+    if (-not (Test-Path -LiteralPath $testPath -PathType Leaf)) {
+        Write-Error "Execution adapter test not found: $testPath" -ErrorAction Continue
+        exit 2
+    }
 }
 
 $python = Get-Command python3 -ErrorAction SilentlyContinue
@@ -24,12 +29,15 @@ if (-not $python) {
     exit 2
 }
 
-& $python.Source $testPath
-$code = $LASTEXITCODE
-if ($code -ne 0) {
-    Write-Error "Execution adapter contract validation failed with exit code $code." -ErrorAction Continue
-    exit $code
+foreach ($testPath in $testPaths) {
+    & $python.Source $testPath
+    $code = $LASTEXITCODE
+    if ($code -ne 0) {
+        Write-Error "Execution adapter validation failed ($testPath) with exit code $code." -ErrorAction Continue
+        exit $code
+    }
 }
 
 Write-Host 'PASS: execution adapter contract v1' -ForegroundColor Green
+Write-Host 'PASS: execution adapter registry/runner v1' -ForegroundColor Green
 exit 0
