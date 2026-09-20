@@ -82,7 +82,7 @@
       "path": "plans/active/ASB-2026-09-fm-asb-prompt-dispatch-scout.plan.json",
       "summaryPath": "plans/active/ASB-2026-09-fm-asb-prompt-dispatch-scout.md",
       "status": "completed",
-      "priority": "medium",
+      "priority": "normal",
       "dependencies": ["ASB-2026-09-FM-ASB-PROMPTKIT-PROTOCOL-V1"],
       "architectureDecision": "docs/architecture/fm-asb-promptkit-protocol-v1.md"
     },
