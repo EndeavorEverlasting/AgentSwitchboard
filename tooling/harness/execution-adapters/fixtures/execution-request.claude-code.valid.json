@@ -1,0 +1,39 @@
+{
+  "schema": "agentswitchboard.execution-request/v1",
+  "requestId": "req_claude_20260920_001",
+  "correlationId": "corr-trio-v1-demo",
+  "causationId": "lane-claude-code",
+  "adapterKind": "claude-code",
+  "mission": "Apply a bounded change to a disposable fixture repository and report a structured result.",
+  "workingDirectory": "fixtures/disposable-repo",
+  "timeoutSeconds": 300,
+  "mutation": {
+    "allowed": true,
+    "allowedScopes": [
+      "fixtures/disposable-repo/**"
+    ],
+    "forbiddenScopes": [
+      ".git/**",
+      "../**"
+    ]
+  },
+  "executionPolicy": {
+    "profile": "REPO_EDIT",
+    "networkAllowed": true,
+    "interactiveAuthAllowed": false,
+    "maxOutputBytes": 16384
+  },
+  "input": {
+    "kind": "claude-code",
+    "prompt": "Read input.txt, create result.txt with the required transformed value, run the supplied validator, and return a structured result.",
+    "model": null,
+    "resumeSessionId": null,
+    "structuredOutputRequired": true
+  },
+  "provenance": {
+    "source": "EXECUTION_ADAPTER_TRIO_V1",
+    "planId": "ASB-2026-09-EXECUTION-ADAPTER-TRIO-V1",
+    "laneId": "EAT-207",
+    "promptRef": "resolved-task-packet"
+  }
+}
