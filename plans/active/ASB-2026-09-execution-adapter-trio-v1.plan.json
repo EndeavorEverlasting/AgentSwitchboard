@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "critical",
   "createdUtc": "2026-09-20T17:20:00Z",
-  "updatedUtc": "2026-09-20T17:38:00Z",
+  "updatedUtc": "2026-09-20T17:44:00Z",
   "mission": "Turn AgentSwitchboard's dispatch seam into a provider-neutral execution-adapter layer and prove the first three native execution planes—local argv, Claude Code, and Cursor CloudAgent—without duplicating Prompt Kit semantics or FirstMate crew scheduling.",
   "owner": {
     "surface": "execution-adapter harness",
@@ -46,7 +46,8 @@
     "plans/active/ASB-2026-09-execution-adapter-trio-v1.md",
     "plans/plan-registry.json membership for this plan",
     ".ai/WORK_QUEUE.md ASQ-022 continuity index",
-    "CODEBASE_MAP.md execution-adapter map"
+    "CODEBASE_MAP.md execution-adapter map",
+    "plans/active/ASB-2026-09-execution-adapter-trio-v1-panels.md"
   ],
   "forbiddenScope": [
     "Do not mutate PR #332-owned tooling/harness/triage-consumer/dispatch/** files from the shared-contract lane before EAT-302 reconciliation.",
@@ -69,7 +70,8 @@
     "Claude Code adapter with CLAUDE_CODE_RUNTIME_OBSERVED proof",
     "Cursor CloudAgent adapter with CURSOR_CLOUD_AGENT_RUNTIME_OBSERVED proof",
     "Common conformance/failure-isolation suite",
-    "Three-plane observed proof packet and extension documentation"
+    "Three-plane observed proof packet and extension documentation",
+    "Seven self-contained portability fallback sprint panels bound to the canonical issue IDs"
   ],
   "tasks": [
     {
@@ -916,7 +918,8 @@
       "First shared successor after contract integration is EAT-005: implement generic adapter interface + registry + runner.",
       "EAT-301 is independent and may repair PR #332 immediately; preserve its real Task launch evidence.",
       "After EAT-005, local-argv, Claude Code, and Cursor reconciliation lanes are designed for isolated concurrent writers.",
-      "Final convergence owner integrates completed lanes in dependency order and reruns common conformance plus repository gates."
+      "Final convergence owner integrates completed lanes in dependency order and reruns common conformance plus repository gates.",
+      "Portability fallback panels are tracked at plans/active/ASB-2026-09-execution-adapter-trio-v1-panels.md; they are fallback transport, not the primary scheduler."
     ]
   }
 }
