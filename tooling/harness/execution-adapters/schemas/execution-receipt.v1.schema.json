@@ -147,14 +147,7 @@
           "maxLength": 8192
         },
         "structuredResult": {
-          "type": [
-            "object",
-            "array",
-            "string",
-            "number",
-            "boolean",
-            "null"
-          ]
+          "$ref": "#/$defs/boundedStructuredResult"
         }
       }
     },
@@ -294,5 +287,45 @@
         }
       }
     }
-  ]
+  ],
+  "$defs": {
+    "boundedScalar": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string",
+          "maxLength": 8192
+        }
+      ]
+    },
+    "boundedStructuredResult": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/boundedScalar"
+        },
+        {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "$ref": "#/$defs/boundedScalar"
+          }
+        },
+        {
+          "type": "object",
+          "maxProperties": 256,
+          "additionalProperties": {
+            "$ref": "#/$defs/boundedScalar"
+          }
+        }
+      ]
+    }
+  }
 }

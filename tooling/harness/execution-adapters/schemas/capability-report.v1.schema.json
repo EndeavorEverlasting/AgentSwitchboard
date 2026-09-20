@@ -199,6 +199,41 @@
         "properties": {
           "blocker": {
             "const": null
+          },
+          "readiness": {
+            "type": "object",
+            "properties": {
+              "host": {
+                "enum": [
+                  "READY",
+                  "NOT_APPLICABLE"
+                ]
+              },
+              "binary": {
+                "enum": [
+                  "READY",
+                  "NOT_APPLICABLE"
+                ]
+              },
+              "auth": {
+                "enum": [
+                  "READY",
+                  "NOT_APPLICABLE"
+                ]
+              },
+              "transport": {
+                "enum": [
+                  "READY",
+                  "NOT_APPLICABLE"
+                ]
+              },
+              "dispatch": {
+                "enum": [
+                  "READY",
+                  "NOT_APPLICABLE"
+                ]
+              }
+            }
           }
         }
       }

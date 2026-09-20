@@ -97,6 +97,10 @@ def validate_json_schema(value, schema: dict, root_schema: dict | None = None, p
             raise ContractError(f"{path}: expected {allowed}, got {type(value).__name__}")
 
     if isinstance(value, dict):
+        if "minProperties" in schema and len(value) < schema["minProperties"]:
+            raise ContractError(f"{path}: too few properties")
+        if "maxProperties" in schema and len(value) > schema["maxProperties"]:
+            raise ContractError(f"{path}: too many properties")
         required = schema.get("required", [])
         missing = [name for name in required if name not in value]
         if missing:
@@ -165,13 +169,18 @@ def validate_capability_semantics(report: dict) -> None:
     if report["status"] == "READY":
         if report["blocker"] is not None:
             raise ContractError("READY report cannot carry blocker")
-        if "BLOCKED" in report["readiness"].values():
-            raise ContractError("READY report cannot contain blocked dimension")
+        invalid = {
+            name: state
+            for name, state in report["readiness"].items()
+            if state not in {"READY", "NOT_APPLICABLE"}
+        }
+        if invalid:
+            raise ContractError(f"READY report has unproven readiness dimensions: {invalid}")
     elif report["blocker"] is None:
         raise ContractError("blocked/unsupported report requires blocker")
 
 
-def validate_receipt_semantics(receipt: dict) -> None:
+def validate_receipt_semantics(receipt: dict, request: dict | None = None) -> None:
     status = receipt["status"]
     if status == "EXECUTED":
         if receipt["executionIdentity"] is None:
@@ -180,8 +189,41 @@ def validate_receipt_semantics(receipt: dict) -> None:
             raise ContractError("EXECUTED cannot carry blocker")
     elif receipt["blocker"] is None:
         raise ContractError(f"{status} requires explicit blocker")
-    if receipt["durationMs"] < 0:
-        raise ContractError("duration cannot be negative")
+
+    started = dt.datetime.fromisoformat(receipt["startedAt"].replace("Z", "+00:00"))
+    completed = dt.datetime.fromisoformat(receipt["completedAt"].replace("Z", "+00:00"))
+    elapsed_ms = (completed - started).total_seconds() * 1000
+    if elapsed_ms < 0:
+        raise ContractError("completedAt cannot precede startedAt")
+    tolerance_ms = max(1.0, elapsed_ms * 0.01)
+    if abs(float(receipt["durationMs"]) - elapsed_ms) > tolerance_ms:
+        raise ContractError("durationMs is inconsistent with startedAt/completedAt")
+
+    runtime_proof = {
+        "LOCAL_RUNTIME_OBSERVED": ("local-argv", "PROCESS"),
+        "CLAUDE_CODE_RUNTIME_OBSERVED": ("claude-code", "CLAUDE_SESSION"),
+        "CURSOR_CLOUD_AGENT_RUNTIME_OBSERVED": ("cursor-cloud-agent", "CURSOR_CLOUD_AGENT"),
+    }
+    proof = receipt["proof"]
+    if proof["level"] in runtime_proof:
+        expected_adapter, expected_identity = runtime_proof[proof["level"]]
+        if receipt["adapterKind"] != expected_adapter:
+            raise ContractError("runtime proof level does not match adapterKind")
+        identity = receipt["executionIdentity"]
+        if not isinstance(identity, dict) or identity.get("kind") != expected_identity:
+            raise ContractError("runtime proof level does not match execution identity")
+        if proof["independentValidationRequired"] is not True or not proof["validationArtifact"]:
+            raise ContractError("runtime proof requires independent validation artifact")
+
+    if request is not None:
+        for field in ("requestId", "correlationId", "adapterKind"):
+            if receipt[field] != request[field]:
+                raise ContractError(f"receipt/request {field} mismatch")
+        output_bytes = len(
+            json.dumps(receipt["output"], ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+        )
+        if output_bytes > request["executionPolicy"]["maxOutputBytes"]:
+            raise ContractError("receipt output exceeds request maxOutputBytes")
 
 
 def assert_negative(fn, message: str) -> None:
@@ -232,9 +274,10 @@ def main() -> None:
         load_json(FIXTURE_DIR / "execution-receipt.local-argv.valid.json"),
         load_json(FIXTURE_DIR / "execution-receipt.blocked.valid.json"),
     ]
+    requests_by_id = {request["requestId"]: request for request in requests}
     for receipt in receipts:
         validate_json_schema(receipt, receipt_schema)
-        validate_receipt_semantics(receipt)
+        validate_receipt_semantics(receipt, requests_by_id.get(receipt["requestId"]))
 
     bad = copy.deepcopy(requests[0])
     bad["input"]["kind"] = "claude-code"
@@ -264,16 +307,63 @@ def main() -> None:
     assert_negative(lambda: validate_json_schema(ready, capability_schema), "READY with blocker was accepted by schema")
     assert_negative(lambda: validate_capability_semantics(ready), "READY with blocker was accepted")
 
+    ready = copy.deepcopy(capability)
+    ready["status"] = "READY"
+    ready["blocker"] = None
+    ready["readiness"] = {name: "READY" for name in ready["readiness"]}
+    validate_json_schema(ready, capability_schema)
+    validate_capability_semantics(ready)
+    unknown = copy.deepcopy(ready)
+    unknown["readiness"]["dispatch"] = "UNKNOWN"
+    assert_negative(lambda: validate_json_schema(unknown, capability_schema), "READY with UNKNOWN was accepted by schema")
+    assert_negative(lambda: validate_capability_semantics(unknown), "READY with UNKNOWN was accepted")
+
+    reversed_time = copy.deepcopy(receipts[0])
+    reversed_time["completedAt"] = "2026-09-20T16:59:59Z"
+    assert_negative(lambda: validate_receipt_semantics(reversed_time), "reversed receipt timing was accepted")
+
+    wrong_duration = copy.deepcopy(receipts[0])
+    wrong_duration["durationMs"] = 999
+    assert_negative(lambda: validate_receipt_semantics(wrong_duration), "inconsistent durationMs was accepted")
+
+    promoted = copy.deepcopy(receipts[0])
+    promoted["proof"]["level"] = "CURSOR_CLOUD_AGENT_RUNTIME_OBSERVED"
+    promoted["proof"]["independentValidationRequired"] = False
+    promoted["proof"]["validationArtifact"] = None
+    assert_negative(lambda: validate_receipt_semantics(promoted), "cross-adapter self-promoted runtime proof was accepted")
+
+    over_budget_request = copy.deepcopy(requests[0])
+    over_budget_request["executionPolicy"]["maxOutputBytes"] = 1024
+    over_budget_receipt = copy.deepcopy(receipts[0])
+    over_budget_receipt["output"]["stdoutExcerpt"] = "x" * 1024
+    assert_negative(
+        lambda: validate_receipt_semantics(over_budget_receipt, over_budget_request),
+        "receipt output exceeding request maxOutputBytes was accepted",
+    )
+
+    nested = copy.deepcopy(receipts[0])
+    nested["output"]["structuredResult"] = {"nested": {"not": "bounded-v1"}}
+    assert_negative(
+        lambda: validate_json_schema(nested, receipt_schema),
+        "nested unbounded structuredResult was accepted by schema",
+    )
+
     registry = load_json(ROOT / "plans" / "plan-registry.json")
     entry = next(item for item in registry["plans"] if item["planId"] == PLAN_ID)
     assert entry["path"] == "plans/active/ASB-2026-09-execution-adapter-trio-v1.plan.json"
     assert entry["summaryPath"] == "plans/active/ASB-2026-09-execution-adapter-trio-v1.md"
 
     plan = load_json(ROOT / entry["path"])
-    task_ids = {task["taskId"] for task in plan["tasks"]}
-    for required in ("EAT-001", "EAT-005", "EAT-101", "EAT-201", "EAT-301", "EAT-401", "EAT-407"):
-        assert required in task_ids, required
-    assert len(plan["tasks"]) >= 37
+    expected_task_ids = [
+        "EAT-001", "EAT-002", "EAT-003", "EAT-004", "EAT-005", "EAT-006",
+        "EAT-101", "EAT-102", "EAT-103", "EAT-104", "EAT-105", "EAT-106", "EAT-107",
+        "EAT-201", "EAT-202", "EAT-203", "EAT-204", "EAT-205", "EAT-206", "EAT-207", "EAT-208",
+        "EAT-301", "EAT-302", "EAT-303", "EAT-304", "EAT-305", "EAT-306", "EAT-307", "EAT-308", "EAT-309",
+        "EAT-401", "EAT-402", "EAT-403", "EAT-404", "EAT-405", "EAT-406", "EAT-407",
+    ]
+    actual_task_ids = [task["taskId"] for task in plan["tasks"]]
+    assert actual_task_ids == expected_task_ids, actual_task_ids
+    assert len(actual_task_ids) == len(set(actual_task_ids))
     assert "PR #332" in "\n".join(plan["forbiddenScope"] + plan["dependencies"] + plan["safeParallelWork"])
     assert "CONTRACT_STATIC" in plan["proof"]["ceiling"]
 
