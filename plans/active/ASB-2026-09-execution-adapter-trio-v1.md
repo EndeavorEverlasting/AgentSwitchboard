@@ -190,6 +190,12 @@ This milestone is harness spine + agent-harness adapter + integration seam + val
 
 Later runtime lanes add their adapter-specific observed gates before claiming the corresponding runtime proof level.
 
+## Parallel execution disposition
+
+The successor graph has width three after EAT-005: local-argv, Claude Code, and Cursor reconciliation are independent writers. In the contract-authoring runtime used to create this plan, no delegated-agent/task-worker API or local repository runner is exposed, so autonomous implementation dispatch is **DEGRADED** rather than falsely reported as parallel execution.
+
+**AUTONOMY_GAP:** an execution-capable worker surface must consume this durable plan after the contract floor integrates. AgentSwitchboard does not own the Prompt Kit parallel-dispatch CLI/contract locally; that transport is canonical in web-excel-repair-triage. This repository therefore does not fabricate an unvalidated Outputs/prompt-parallel-dispatch/manifest.json or a duplicate scripts/prompt_parallel_dispatch.py. The public-plan registry is the canonical ASB coordination surface.
+
 ## Portability fallback
 
 Seven self-contained lane prompts are tracked in plans/active/ASB-2026-09-execution-adapter-trio-v1-panels.md. They map exactly to the launch order above and exist only for recovery/portability when an autonomous execution adapter cannot consume the canonical machine plan.
