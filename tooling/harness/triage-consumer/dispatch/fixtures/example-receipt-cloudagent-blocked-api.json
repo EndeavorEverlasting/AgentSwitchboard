@@ -1,0 +1,17 @@
+{
+  "receipt_version": "v1",
+  "lane_id": "lane-cloud-agent-example",
+  "lane_mission": "Example cloud agent lane with API blocker",
+  "adapter_kind": "cursor-cloud-agent",
+  "dispatch_status": "BLOCKED_API",
+  "timestamp": "2026-09-20T00:00:00.000000+00:00",
+  "blocking_reason": "Python API for Cursor cloud agent Task tool not yet implemented. Socket available but protocol integration required.",
+  "descriptor": {
+    "cloud_agent_prompt": "Example cloud agent prompt for demonstration",
+    "environment_detected": "Cursor Cloud Agent",
+    "socket_available": true,
+    "socket_path": "/run/cursor/api.sock",
+    "required_implementation": "Python client for /run/cursor/api.sock to invoke Task tool, or orchestration-layer dispatcher that executes via cloud agent with Task access",
+    "recommended_action": "SUCCESSOR IMPLEMENTATION: Create Python binding to invoke Task tool via agent socket, enabling subagent launch with bounded wait and observed completion status"
+  }
+}

@@ -111,7 +111,9 @@ python3 tooling/harness/triage-consumer/dispatch/dispatch_lanes.py \
 - [x] Dispatch policy enforces fail_closed_on_policy_violation
 - [x] Receipt schema validates against fixtures
 - [x] Local argv lanes execute with exit codes
-- [x] CloudAgent lanes emit BLOCKED_UNSUPPORTED without faking success
+- [x] CloudAgent lanes emit fail-closed observed probe (BLOCKED_API) with precise blocker documentation
+- [x] CloudAgent adapter detects execution environment and socket availability
+- [x] No fake CloudAgent success - fail-closed until Python API implemented
 - [x] Runtime tool lanes emit BLOCKED_UNSUPPORTED without faking success
 - [x] Receipts are machine-readable JSON
 - [x] Dispatcher smoke test passes
@@ -121,11 +123,14 @@ python3 tooling/harness/triage-consumer/dispatch/dispatch_lanes.py \
 
 ## Proof Ceiling
 
-**Achieved**: Local argv dispatch + receipt contracts
+**Achieved**: Local argv dispatch + fail-closed CloudAgent probe with precise blocker
 
 - Local argv lanes execute via subprocess with captured exit codes
-- CloudAgent/runtime-tool adapters emit structured BLOCKED_UNSUPPORTED receipts
-- Receipt JSON validates against schema
+- CloudAgent adapter detects Cursor cloud agent environment (CURSOR_AGENT=1, /run/cursor/api.sock)
+- CloudAgent lanes emit BLOCKED_API (not BLOCKED_UNSUPPORTED) with diagnostic descriptor
+- Descriptor documents exact blocker: Python API for Task tool not yet implemented
+- Descriptor provides successor implementation path: Python binding to agent socket or orchestration-layer dispatch
+- Receipt JSON validates against extended schema (added BLOCKED_HOST, BLOCKED_API statuses)
 - Policy enforcement prevents execution of unsafe lanes
 
 **Ceiling**: CloudAgent path may be descriptor+BLOCKED_UNSUPPORTED until later phase
@@ -137,13 +142,18 @@ Does NOT prove:
 
 ## Remaining Gap
 
-**Live CloudAgent Adapter**: Future phase to integrate live Cursor CloudAgent dispatch by:
-- Implementing CloudAgent API/runtime_tool integration
-- Launching agents and waiting for completion
-- Capturing agent artifacts and outcomes
-- Emitting EXECUTED/FAILED receipts with evidence
+**CloudAgent API Integration**: Successor phase to implement Python binding for Task tool:
+- Python client for /run/cursor/api.sock to invoke Task tool from dispatch_lanes.py
+- OR orchestration-layer dispatcher that executes via cloud agent with direct Task access
+- Bounded wait with timeout for subagent completion
+- Observed completion status (EXECUTED/FAILED) with artifacts and execution details
+- Receipt generation with cloudAgentBcId and dashboard URL
 
-Until then, CloudAgent lanes emit BLOCKED_UNSUPPORTED with descriptors ready for future integration.
+**Current Proof Level**: Fail-closed observed probe with BLOCKED_API status when CloudAgent lane encountered. 
+- Environment detection: Detects CURSOR_AGENT=1 and validates socket availability
+- Precise blocker documentation: Returns BLOCKED_API (not BLOCKED_UNSUPPORTED) with exact required implementation
+- Protected control maintained: local-argv lanes still execute with observed exit codes
+- No fake success: Does not claim EXECUTED without observed completion evidence
 
 ## Validation Commands
 
