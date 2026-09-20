@@ -1,0 +1,13 @@
+{
+  "receipt_version": "v1",
+  "lane_id": "lane-cloud-agent-example",
+  "lane_mission": "Example cloud agent lane",
+  "adapter_kind": "cursor-cloud-agent",
+  "dispatch_status": "BLOCKED_UNSUPPORTED",
+  "timestamp": "2026-09-19T21:00:00Z",
+  "blocking_reason": "Live CloudAgent dispatch deferred to future phase",
+  "descriptor": {
+    "cloud_agent_prompt": "Execute the lane mission",
+    "ready_for_future_integration": true
+  }
+}
