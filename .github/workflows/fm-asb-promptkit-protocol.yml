@@ -12,10 +12,15 @@ on:
       - 'docs/harness/context-rollover-ux.md'
       - 'CODEBASE_MAP.md'
       - 'tooling/firstmate/harness/observation/**'
+      - 'tooling/firstmate/harness/routing/**'
+      - 'tooling/firstmate/harness/dispatch/**'
       - 'scripts/Test-FmAsbPromptKitProtocolContract.ps1'
       - 'tests/test_fm_asb_promptkit_protocol_contract.py'
       - 'tests/test_firstmate_agent_observation_adapter.py'
+      - 'tests/test_fm_asb_prompt_dispatch_builder.py'
       - 'plans/active/ASB-2026-09-fm-asb-promptkit-protocol-v1.*'
+      - 'plans/active/ASB-2026-09-fm-asb-routing-request-builder.*'
+      - 'plans/active/ASB-2026-09-fm-asb-prompt-dispatch-builder.*'
       - 'plans/plan-registry.json'
       - '.github/workflows/fm-asb-promptkit-protocol.yml'
   workflow_dispatch:
@@ -55,6 +60,10 @@ jobs:
         shell: pwsh
         run: python ./tests/test_firstmate_agent_observation_adapter.py
 
+      - name: Run prompt-dispatch builder tests
+        shell: pwsh
+        run: python ./tests/test_fm_asb_prompt_dispatch_builder.py
+
       - name: Verify checkout remains clean
         shell: pwsh
         run: |
@@ -73,6 +82,9 @@ jobs:
 
       - name: Run FirstMate observation adapter tests
         run: python tests/test_firstmate_agent_observation_adapter.py
+
+      - name: Run prompt-dispatch builder tests
+        run: python tests/test_fm_asb_prompt_dispatch_builder.py
 
       - name: Run PowerShell contract
         shell: pwsh

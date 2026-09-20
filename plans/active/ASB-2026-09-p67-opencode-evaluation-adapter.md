@@ -62,7 +62,7 @@ Generated P67 config shape:
     "-Workspace", "{workspace}",
     "-Task", "{task}",
     "-Prompt", "{prompt}",
-    "-Result", "{result}"
+    "-ResultPath", "{result}"
   ],
   "timeout_seconds": 900,
   "env_allowlist": ["<credential variable names only>"]
@@ -100,7 +100,7 @@ Adapter may **not** decide usefulness, first-green semantic sufficiency, true fi
 - **ADP-01 — Capability/readiness (ASB):** ✓ COMPLETE. Exact capabilities and provider identity proven or one typed blocker.
 - **ADP-02 — Adapter + instrumentation (ASB):** ✓ COMPLETE. P67 placeholder invocation produces privacy-bounded neutral JSON; timeout/nonzero/missing-result fail closed.
 - **ADP-03 — Synthetic interoperability:** ✓ COMPLETE. Fake structured events exercise action, validation, subagent/parallel, timeout, malformed-result, privacy, and mutation-boundary paths. 8 synthetic fixtures + durable runner + machine-readable receipt. Proof: SYNTHETIC_INTEROPERABILITY only.
-- **ADP-04 — Observed adapter smoke:** one TC01 control/treatment pair. If real worker capacity >=2, add one TC06 pair. Smoke proves adapter runtime only, not effectiveness.
+- **ADP-04 — Observed adapter smoke:** IN PROGRESS. Adapter fixes landed: #325 CLI, #326/#327 status JSON/case, #328 StrictMode Count, #329 ResultPath. Field blocker LPW003ASI173 resolved on cursor/adp-04-opencode-cli-alignment-23a4 @ 37bb257. Real OpenCode CLI now aligned: 'run [message] --format json -m provider/model --dir <workspace> --agent <agent>'. Fictional 'execute --workspace --prompt-file' removed. JSON serialization bug fixed on Windows pwsh. **OBSERVED_FAIL_CLOSED_TIMEOUT** on LPW003ASI173 @ 7714cd5: paired TC01 control/treatment both INVALID EXECUTION_TIMEOUT, capture v2 receipts with pair identity match (opencode/big-pickle/opencode-v2), ResultPath writes fixed. Machine-local receipts: `%TEMP%\adp04-smoke\tc01-control-result.json`, `tc01-treatment-result.json`, `adp04-status-after-329.json`. Proof ceiling: OBSERVED_FAIL_CLOSED_TIMEOUT on LPW003ASI173/opencode/big-pickle — not VALID capture, not effectiveness. UNPROVEN: VALID provider completion with stored credentials (providers list still 0).
 - **ADP-05 — Gen2 16-run pilot:** 16 classified paired runs, stable pair identity, zero forbidden escape/gold leakage, pilot aggregate and fixture-validity disposition.
 - **ADP-06 — P67 Sprint 3:** only after valid pilot; keep Gen2 treatment and thresholds frozen.
 
@@ -129,9 +129,9 @@ Adapter may **not** decide usefulness, first-green semantic sufficiency, true fi
 
 ## Proof ceiling
 
-Current: **SYNTHETIC INTEROPERABILITY (ADP-03)**.
+Current: **OBSERVED_FAIL_CLOSED_TIMEOUT (ADP-04 in progress)**.
 
-ADP-00 through ADP-03 are COMPLETE: neutral capture contract integrated, capability/readiness probe validated, adapter implementation complete, synthetic interoperability proven via 8-path fixture coverage with machine-readable receipt. Live OpenCode smoke (ADP-04) remains pending. Only the P67 pilot can promote the tested Gen2 population to observed pilot behavior; the final effectiveness verdict remains Sprint 3.
+ADP-00 through ADP-03 are COMPLETE: neutral capture contract integrated, capability/readiness probe validated, adapter implementation complete, synthetic interoperability proven via 8-path fixture coverage with machine-readable receipt. ADP-04 adapter fixes landed: #325 CLI, #326/#327 status JSON/case, #328 StrictMode Count, #329 ResultPath. CLI alignment fix committed @ 37bb257: real OpenCode 'run' command now used, fictional 'execute' removed, JSON serialization bug fixed. **OBSERVED_FAIL_CLOSED_TIMEOUT** on LPW003ASI173 @ 7714cd5: paired TC01 both INVALID EXECUTION_TIMEOUT with capture v2 receipts, pair identity match (opencode/big-pickle/opencode-v2), ResultPath writes operational. Machine-local receipts: `%TEMP%\adp04-smoke\tc01-control-result.json`, `tc01-treatment-result.json`, `adp04-status-after-329.json`. Proof ceiling: OBSERVED_FAIL_CLOSED_TIMEOUT on LPW003ASI173/opencode/big-pickle — not VALID capture, not effectiveness. VALID provider completion with stored credentials remains unproven (providers list still 0). Only the P67 pilot can promote the tested Gen2 population to observed pilot behavior; the final effectiveness verdict remains Sprint 3.
 
 ## Cross-repository coordination
 
@@ -139,4 +139,4 @@ Triage scientific/capture authority is integrated via PR #559 / merge `ce22389e1
 
 ## Immediate next action
 
-ADP-03 COMPLETE. Next: **ADP-04 bounded observed adapter smoke** with real OpenCode provider auth/quota on authorized workstation/runtime. One TC01 paired smoke (control/treatment), conditional TC06 paired parallel smoke only when >=2 real worker slots exist. Smoke proves adapter runtime only, not effectiveness. No live smoke until operator confirms provider readiness and machine-local config.
+ADP-04 adapter fixes: ✓ LANDED — #325 CLI, #326/#327 status JSON/case, #328 StrictMode Count, #329 ResultPath. CLI alignment: ✓ COMPLETE @ 37bb257 on cursor/adp-04-opencode-cli-alignment-23a4. Real OpenCode interface aligned, fictional CLI removed, JSON serialization fixed. **OBSERVED_FAIL_CLOSED_TIMEOUT**: ✓ PROVEN @ 7714cd5 on LPW003ASI173 — paired TC01 both INVALID EXECUTION_TIMEOUT, capture v2 receipts with pair identity match (opencode/big-pickle/opencode-v2), ResultPath writes operational. Machine-local receipts: `%TEMP%\adp04-smoke\tc01-control-result.json`, `tc01-treatment-result.json`, `adp04-status-after-329.json`. Next: **ADP-04 VALID capture** with stored credentials and successful provider completion. Proof ceiling: OBSERVED_FAIL_CLOSED_TIMEOUT on LPW003ASI173/opencode/big-pickle — not VALID capture (providers list still 0), not effectiveness. Conditional TC06 paired parallel smoke only when >=2 real worker slots exist. Smoke proves adapter runtime only, not effectiveness. Do not start ADP-05 before VALID capture gate passes.

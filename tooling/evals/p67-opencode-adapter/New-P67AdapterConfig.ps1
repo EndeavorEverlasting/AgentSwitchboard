@@ -122,7 +122,7 @@ function New-AdapterConfig {
             '-Workspace', '{workspace}',
             '-Task', '{task}',
             '-Prompt', '{prompt}',
-            '-Result', '{result}',
+            '-ResultPath', '{result}',
             '-Provider', $ProviderName,
             '-Model', $ModelName,
             '-Agent', $AgentName

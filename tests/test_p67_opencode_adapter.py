@@ -218,6 +218,36 @@ class P67OpenCodeAdapterTests(unittest.TestCase):
         self.assertEqual(status["schema_version"], "p67-opencode-readiness-status/v1")
         self.assertIn(status["status"], ["READY", "BLOCKED"])
 
+    def test_probe_json_serialization_regression(self) -> None:
+        """Regression test: Verify probe writes valid JSON, not OrderedDictionary type string (LPW003ASI173)."""
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            output_path = f.name
+
+        try:
+            exit_code, stdout = run_probe(output_path)
+
+            self.assertIn(exit_code, [0, 1], "Probe should exit 0 or 1, not crash")
+
+            with open(output_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            self.assertGreater(len(content), 5, "Output file should not be empty")
+            self.assertTrue(content.strip().startswith('{'),
+                          f"Output must start with '{{', got: {content[:100]}")
+            self.assertNotIn("OrderedDictionary", content,
+                           "Output must not contain 'OrderedDictionary' type string")
+            self.assertNotIn("System.Collections", content,
+                           "Output must not contain System.Collections namespace")
+
+            status = json.loads(content)
+            self.assertEqual(status["schema_version"], "p67-opencode-readiness-status/v1")
+            self.assertIn(status["status"], ["READY", "BLOCKED"])
+            self.assertIn("capabilities_verified", status)
+            self.assertIn("opencode_found", status)
+
+        finally:
+            Path(output_path).unlink(missing_ok=True)
+
     def test_no_evaluative_fields_in_status_schema(self) -> None:
         """Verify status schema rejects evaluative fields per CAPTURE_EVALUATIVE_REJECTED rule."""
         contract = load_json(CAPABILITY_CONTRACT)
@@ -286,10 +316,27 @@ class P67OpenCodeAdapterADP02Tests(unittest.TestCase):
         self.assertIn("$Workspace", content)
         self.assertIn("$Task", content)
         self.assertIn("$Prompt", content)
-        self.assertIn("$Result", content)
+        self.assertIn("$ResultPath", content)
 
         self.assertNotIn("Invoke-Expression", content)
         self.assertNotIn("iex", content.lower())
+
+    def test_invoke_script_uses_real_opencode_cli(self) -> None:
+        """Verify Invoke script uses real OpenCode CLI (run command, not fictional execute)."""
+        content = INVOKE_SCRIPT.read_text(encoding="utf-8")
+
+        self.assertNotIn("'execute'", content, "Invoke script must not use fictional 'execute' command")
+        self.assertNotIn('"execute"', content, "Invoke script must not use fictional 'execute' command")
+        self.assertNotIn("--workspace", content, "Invoke script must not use fictional --workspace flag")
+        self.assertNotIn("--prompt-file", content, "Invoke script must not use fictional --prompt-file flag")
+        self.assertNotIn("--non-interactive", content, "Invoke script must not use fictional --non-interactive flag")
+        self.assertNotIn("--output", content, "Invoke script must not use fictional --output flag (should be --format)")
+
+        self.assertIn("'run'", content, "Invoke script must use 'run' command")
+        self.assertIn("'--format'", content, "Invoke script must use --format flag")
+        self.assertIn("'-m'", content, "Invoke script must use -m flag for model")
+        self.assertIn("'--dir'", content, "Invoke script must use --dir flag for workspace")
+        self.assertIn("provider/model", content.lower(), "Invoke script must build provider/model spec")
 
     def test_invoke_script_privacy_bounded(self) -> None:
         """Verify Invoke script maintains privacy boundaries."""

@@ -70,14 +70,29 @@ function Test-NoninteractiveExecution {
     }
 
     try {
-        $helpOutput = & opencode --help 2>&1
-        $hasHelpFlag = $LASTEXITCODE -eq 0 -or $helpOutput -match '--help'
+        $runHelpOutput = & opencode run --help 2>&1
+        $runHelpExitCode = $LASTEXITCODE
 
-        if ($hasHelpFlag -and $helpOutput -match '(--config|--prompt|--task|--model)') {
-            return @{ Status = 'VERIFIED'; Reason = 'CLI with structured arguments detected' }
+        $hasRunCommand = $runHelpExitCode -eq 0 -or $runHelpOutput -match 'run'
+
+        if (-not $hasRunCommand) {
+            $helpOutput = & opencode --help 2>&1
+            $hasRunCommand = $helpOutput -match '\s+run\s+'
         }
 
-        return @{ Status = 'UNVERIFIED'; Reason = 'Structured argument interface not clearly documented' }
+        if ($hasRunCommand) {
+            $hasFormatFlag = $runHelpOutput -match '--format'
+            $hasModelFlag = $runHelpOutput -match '-m|--model'
+            $hasDirFlag = $runHelpOutput -match '--dir'
+
+            if ($hasFormatFlag -and $hasModelFlag -and $hasDirFlag) {
+                return @{ Status = 'VERIFIED'; Reason = 'CLI with structured run command detected' }
+            }
+
+            return @{ Status = 'UNVERIFIED'; Reason = 'run command exists but required flags not clearly documented' }
+        }
+
+        return @{ Status = 'UNVERIFIED'; Reason = 'run command interface not clearly documented' }
     } catch {
         return @{ Status = 'BLOCKED'; Reason = "Help invocation failed: $($_.Exception.Message)" }
     }
@@ -91,17 +106,16 @@ function Test-ExplicitIdentity {
     }
 
     try {
-        $helpOutput = & opencode --help 2>&1
+        $runHelpOutput = & opencode run --help 2>&1
 
-        $hasModelFlag = $helpOutput -match '--model'
-        $hasProviderFlag = $helpOutput -match '--provider'
-        $hasAgentFlag = $helpOutput -match '--agent'
+        $hasModelFlag = $runHelpOutput -match '-m|--model'
+        $hasAgentFlag = $runHelpOutput -match '--agent'
 
         if ($hasModelFlag) {
             return @{ Status = 'VERIFIED'; Reason = 'Model identity flag found' }
         }
 
-        return @{ Status = 'UNVERIFIED'; Reason = 'Provider/model/agent identity flags not clearly documented' }
+        return @{ Status = 'UNVERIFIED'; Reason = 'Model identity flags not clearly documented' }
     } catch {
         return @{ Status = 'BLOCKED'; Reason = "Identity verification failed: $($_.Exception.Message)" }
     }
@@ -138,13 +152,13 @@ function Test-InstrumentationFeasibility {
     }
 
     try {
-        $helpOutput = & opencode --help 2>&1
+        $runHelpOutput = & opencode run --help 2>&1
 
-        $hasJsonOutput = $helpOutput -match '--output.*json' -or $helpOutput -match '--format.*json'
-        $hasVerboseLogging = $helpOutput -match '--verbose' -or $helpOutput -match '--debug'
-        $hasLogFile = $helpOutput -match '--log'
+        $hasJsonFormat = $runHelpOutput -match '--format.*json'
+        $hasVerboseLogging = $runHelpOutput -match '--verbose' -or $runHelpOutput -match '--debug'
+        $hasLogFile = $runHelpOutput -match '--log'
 
-        if ($hasJsonOutput -or $hasVerboseLogging -or $hasLogFile) {
+        if ($hasJsonFormat -or $hasVerboseLogging -or $hasLogFile) {
             return @{ Status = 'VERIFIED'; Reason = 'Structured output or logging detected' }
         }
 
@@ -187,16 +201,16 @@ function Test-AuthReadiness {
 
 function New-ReadinessStatus {
     param(
-        [string]$Status,
+        [string]$OverallStatus,
         [bool]$OpenCodeFound,
         [string]$OpenCodeVersion,
         [hashtable]$Capabilities,
-        [hashtable]$Blocker
+        [AllowNull()][object]$Blocker
     )
 
-    $status = [ordered]@{
+    $resultObject = [ordered]@{
         schema_version = 'p67-opencode-readiness-status/v1'
-        status = $Status
+        status = $OverallStatus
         opencode_found = $OpenCodeFound
         opencode_version = $OpenCodeVersion
         capabilities_verified = [ordered]@{
@@ -210,12 +224,12 @@ function New-ReadinessStatus {
         probe_timestamp_utc = (Get-Date).ToUniversalTime().ToString('o')
     }
 
-    return $status
+    return ,$resultObject
 }
 
 function ConvertTo-BlockerObject {
     param([string]$Code, [string]$Message)
-    return [ordered]@{ code = $Code; message = $Message }
+    return ,[ordered]@{ code = $Code; message = $Message }
 }
 
 try {
@@ -225,26 +239,26 @@ try {
     Write-DiagnosticMessage "OpenCode found: $($versionInfo.Found), Version: $($versionInfo.Version)"
 
     if (-not $versionInfo.Found) {
-        $status = New-ReadinessStatus `
-            -Status 'BLOCKED' `
-            -OpenCodeFound $false `
-            -OpenCodeVersion $null `
-            -Capabilities @{
-                noninteractive_execution = 'BLOCKED'
-                explicit_identity = 'BLOCKED'
-                isolated_config = 'BLOCKED'
-                instrumentation_feasibility = 'BLOCKED'
-                auth_readiness = 'BLOCKED'
-            } `
-            -Blocker (ConvertTo-BlockerObject 'OPENCODE_NOT_FOUND' 'OpenCode CLI not found in PATH. Install OpenCode or ensure it is available.')
+    $status = New-ReadinessStatus `
+        -OverallStatus 'BLOCKED' `
+        -OpenCodeFound $false `
+        -OpenCodeVersion $null `
+        -Capabilities @{
+            noninteractive_execution = 'BLOCKED'
+            explicit_identity = 'BLOCKED'
+            isolated_config = 'BLOCKED'
+            instrumentation_feasibility = 'BLOCKED'
+            auth_readiness = 'BLOCKED'
+        } `
+        -Blocker (ConvertTo-BlockerObject 'OPENCODE_NOT_FOUND' 'OpenCode CLI not found in PATH. Install OpenCode or ensure it is available.')
 
-        $json = $status | ConvertTo-Json -Depth 10
+        $jsonText = ConvertTo-Json -InputObject $status -Depth 10
 
         if ($OutputPath) {
-            $json | Set-Content -LiteralPath $OutputPath -Encoding utf8NoBOM
+            [System.IO.File]::WriteAllText($OutputPath, $jsonText)
             Write-DiagnosticMessage "Status written to: $OutputPath"
         } else {
-            Write-Output $json
+            Write-Output $jsonText
         }
 
         exit 0
@@ -262,7 +276,7 @@ try {
     Write-DiagnosticMessage "Instrumentation: $($instrumentationResult.Status) - $($instrumentationResult.Reason)"
     Write-DiagnosticMessage "Auth: $($authResult.Status) - $($authResult.Reason)"
 
-    $allBlocked = @($noninteractiveResult, $identityResult, $configResult, $instrumentationResult, $authResult) | Where-Object { $_.Status -eq 'BLOCKED' }
+    $allBlocked = @(@($noninteractiveResult, $identityResult, $configResult, $instrumentationResult, $authResult) | Where-Object { $_.Status -eq 'BLOCKED' })
 
     $overallStatus = 'READY'
     $blocker = $null
@@ -291,7 +305,7 @@ try {
     }
 
     $status = New-ReadinessStatus `
-        -Status $overallStatus `
+        -OverallStatus $overallStatus `
         -OpenCodeFound $true `
         -OpenCodeVersion $versionInfo.Version `
         -Capabilities @{
@@ -303,13 +317,13 @@ try {
         } `
         -Blocker $blocker
 
-    $json = $status | ConvertTo-Json -Depth 10
+    $jsonText = ConvertTo-Json -InputObject $status -Depth 10
 
     if ($OutputPath) {
-        $json | Set-Content -LiteralPath $OutputPath -Encoding utf8NoBOM
+        [System.IO.File]::WriteAllText($OutputPath, $jsonText)
         Write-DiagnosticMessage "Status written to: $OutputPath"
     } else {
-        Write-Output $json
+        Write-Output $jsonText
     }
 
     Write-DiagnosticMessage "Probe complete: $overallStatus"
@@ -317,7 +331,7 @@ try {
 
 } catch {
     $errorStatus = New-ReadinessStatus `
-        -Status 'BLOCKED' `
+        -OverallStatus 'BLOCKED' `
         -OpenCodeFound $false `
         -OpenCodeVersion $null `
         -Capabilities @{
@@ -329,12 +343,12 @@ try {
         } `
         -Blocker (ConvertTo-BlockerObject 'CAPABILITY_PROBE_ERROR' "Probe execution failed: $($_.Exception.Message)")
 
-    $json = $errorStatus | ConvertTo-Json -Depth 10
+    $jsonText = ConvertTo-Json -InputObject $errorStatus -Depth 10
 
     if ($OutputPath) {
-        $json | Set-Content -LiteralPath $OutputPath -Encoding utf8NoBOM
+        [System.IO.File]::WriteAllText($OutputPath, $jsonText)
     } else {
-        Write-Output $json
+        Write-Output $jsonText
     }
 
     exit 1
