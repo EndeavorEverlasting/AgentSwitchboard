@@ -175,15 +175,15 @@ try {
     Write-Host "  Status: $($resultObj.status)"
     Write-Host "  Mode: $($resultObj.mode)"
     Write-Host "  Proof Ceiling: $($resultObj.proofCeiling)"
-    
+
     if ($resultObj.artifactPath) {
         Write-Host "  Artifact: $($resultObj.artifactPath)" -ForegroundColor Green
     }
-    
+
     if ($resultObj.reason) {
         Write-Host "  Reason: $($resultObj.reason)" -ForegroundColor Yellow
     }
-    
+
     if ($resultObj.notes) {
         Write-Host "  Notes:"
         foreach ($note in $resultObj.notes) {

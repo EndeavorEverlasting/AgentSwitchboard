@@ -50,7 +50,7 @@ def get_evidence_root() -> Path:
     else:
         # Linux/macOS
         local_app_data = Path.home() / ".local" / "share"
-    
+
     return local_app_data / "AgentSwitchboard" / "runtime-proof" / "fm-asb-prompt-dispatch-scout"
 
 
@@ -59,10 +59,10 @@ def write_dispatch_artifact(dispatch: dict[str, Any], evidence_root: Path) -> Pa
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_dir = evidence_root / timestamp
     run_dir.mkdir(parents=True, exist_ok=True)
-    
+
     artifact_path = run_dir / "prompt-dispatch.json"
     artifact_path.write_text(json.dumps(dispatch, indent=2, sort_keys=True), encoding="utf-8")
-    
+
     # Write summary receipt
     receipt = {
         "scoutVersion": SCOUT_VERSION,
@@ -80,7 +80,7 @@ def write_dispatch_artifact(dispatch: dict[str, Any], evidence_root: Path) -> Pa
     }
     receipt_path = run_dir / "scout-receipt.json"
     receipt_path.write_text(json.dumps(receipt, indent=2), encoding="utf-8")
-    
+
     return artifact_path
 
 
@@ -98,7 +98,7 @@ def scout_dry_run(
     evidence_root: Path | None = None,
 ) -> dict[str, Any]:
     """Execute dry-run scout: load decision, build dispatch, write artifact.
-    
+
     Returns:
         Scout result with artifact path and receipt.
     """
@@ -107,10 +107,10 @@ def scout_dry_run(
         decision = json.loads(decision_path.read_text(encoding="utf-8-sig"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ScoutError(f"Cannot load decision from {decision_path}: {exc}") from exc
-    
+
     if not isinstance(decision, dict):
         raise ScoutError(f"Decision root must be an object, got {type(decision).__name__}")
-    
+
     # Build dispatch
     try:
         dispatch = build_prompt_dispatch(
@@ -126,13 +126,13 @@ def scout_dry_run(
         )
     except ContractError as exc:
         raise ScoutError(f"Cannot build dispatch: {exc}") from exc
-    
+
     # Write artifact
     if evidence_root is None:
         evidence_root = get_evidence_root()
-    
+
     artifact_path = write_dispatch_artifact(dispatch, evidence_root)
-    
+
     return {
         "status": "DRY_RUN_PASS",
         "mode": "dry-run",
@@ -157,15 +157,15 @@ def scout_live_delivery(
     evidence_root: Path | None = None,
 ) -> dict[str, Any]:
     """Execute live-delivery mode: BLOCKED on Linux/cloud, UNIMPLEMENTED otherwise.
-    
+
     This scout implementation does not implement actual FirstMate delivery.
     Future work: Admin Box detection and fm-send invocation.
-    
+
     Returns:
         Scout result with blocked/unimplemented status.
     """
     system = platform.system()
-    
+
     # Fail-closed on Linux (cloud agent environment)
     if system == "Linux":
         return {
@@ -180,7 +180,7 @@ def scout_live_delivery(
                 "Use --mode dry-run for contract-only translation.",
             ],
         }
-    
+
     # Even on Windows, this implementation leaves live delivery unimplemented
     return {
         "status": "UNIMPLEMENTED",
@@ -204,7 +204,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "Live-delivery mode is blocked on Linux and unimplemented elsewhere."
         )
     )
-    
+
     parser.add_argument(
         "--decision",
         type=Path,
@@ -269,14 +269,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=Path,
         help="Custom evidence root (default: platform-specific LocalAppData equivalent)",
     )
-    
+
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     """Main scout entrypoint."""
     args = parse_args(argv)
-    
+
     # Parse variables from key=value pairs
     resolved_variables = {}
     for var in args.variables:
@@ -290,7 +290,7 @@ def main(argv: list[str] | None = None) -> int:
         except json.JSONDecodeError:
             # Treat as string
             resolved_variables[key] = value
-    
+
     # Execute scout
     try:
         if args.mode == "dry-run":
@@ -322,11 +322,11 @@ def main(argv: list[str] | None = None) -> int:
     except ScoutError as exc:
         print(f"scout: {exc}", file=sys.stderr)
         return 2
-    
+
     # Output result
     json.dump(result, sys.stdout, indent=2)
     sys.stdout.write("\n")
-    
+
     # Exit codes:
     # 0 = DRY_RUN_PASS or successful live delivery
     # 1 = BLOCKED or UNIMPLEMENTED

@@ -40,17 +40,17 @@ class PromptDispatchScoutTests(unittest.TestCase):
         # Create a persistent temp directory that won't be cleaned up automatically
         tmp_path = Path(tempfile.mkdtemp())
         self._temp_dirs.append(tmp_path)
-        
+
         # Write decision fixture
         decision_path = tmp_path / "decision.json"
         decision_path.write_text(
             json.dumps(decision if decision is not None else self.decision),
             encoding="utf-8",
         )
-        
+
         # Use temp evidence root
         evidence_root = tmp_path / "evidence"
-        
+
         command = [
             sys.executable,
             str(SCOUT),
@@ -66,23 +66,23 @@ class PromptDispatchScoutTests(unittest.TestCase):
             str(evidence_root),
         ]
         command.extend(args)
-        
+
         result = subprocess.run(command, text=True, capture_output=True, check=False)
-        
+
         # Attach evidence root and temp path for inspection
         result.evidence_root = evidence_root
         result.tmp_path = tmp_path
-        
+
         return result
 
     def test_scout_exists_and_is_read_only(self):
         """Scout module exists and contains no live FirstMate invocation."""
         self.assertTrue(SCOUT.is_file())
         source = SCOUT.read_text(encoding="utf-8")
-        
+
         # Scout should import build_prompt_dispatch
         self.assertIn("from build_prompt_dispatch import", source)
-        
+
         # Scout should not contain subprocess invocations of FirstMate commands
         # (Check for actual invocation patterns, not documentation mentions)
         for forbidden in ("subprocess.run", "subprocess.Popen", "os.system"):
@@ -95,9 +95,9 @@ class PromptDispatchScoutTests(unittest.TestCase):
     def test_dry_run_mode_succeeds_and_writes_artifact(self):
         """Dry-run mode builds dispatch and writes artifact to evidence root."""
         result = self.run_scout(["--mode", "dry-run"])
-        
+
         self.assertEqual(result.returncode, 0, result.stderr)
-        
+
         # Parse result
         scout_result = json.loads(result.stdout)
         self.assertEqual(scout_result["status"], "DRY_RUN_PASS")
@@ -106,11 +106,11 @@ class PromptDispatchScoutTests(unittest.TestCase):
         self.assertIn("artifactPath", scout_result)
         self.assertIn("dispatchEventId", scout_result)
         self.assertIn("deliveryId", scout_result)
-        
+
         # Check artifact exists
         artifact_path = Path(scout_result["artifactPath"])
         self.assertTrue(artifact_path.exists(), f"Artifact not found: {artifact_path}")
-        
+
         # Validate artifact structure
         dispatch = json.loads(artifact_path.read_text(encoding="utf-8"))
         self.assertEqual(dispatch["schema"], "asb.prompt-dispatch/v1")
@@ -118,7 +118,7 @@ class PromptDispatchScoutTests(unittest.TestCase):
         self.assertEqual(dispatch["target"]["deliveryPlane"], "durable-inbox")
         self.assertEqual(dispatch["prompt"]["deliveryMode"], "reference")
         self.assertIsNone(dispatch["prompt"]["inlineText"])
-        
+
         # Check receipt exists
         receipt_path = artifact_path.parent / "scout-receipt.json"
         self.assertTrue(receipt_path.exists())
@@ -130,7 +130,7 @@ class PromptDispatchScoutTests(unittest.TestCase):
     def test_dry_run_default_mode_when_not_specified(self):
         """Dry-run is the default mode when --mode is omitted."""
         result = self.run_scout([])
-        
+
         self.assertEqual(result.returncode, 0, result.stderr)
         scout_result = json.loads(result.stdout)
         self.assertEqual(scout_result["mode"], "dry-run")
@@ -138,14 +138,14 @@ class PromptDispatchScoutTests(unittest.TestCase):
     def test_live_delivery_blocked_on_linux(self):
         """Live-delivery mode is blocked on Linux with BLOCKED_LINUX_WSL_REQUIRED."""
         result = self.run_scout(["--mode", "live-delivery"])
-        
+
         # Exit code 1 for blocked/unimplemented
         self.assertEqual(result.returncode, 1, result.stderr)
-        
+
         scout_result = json.loads(result.stdout)
         self.assertEqual(scout_result["mode"], "live-delivery")
         self.assertEqual(scout_result["proofCeiling"], "SCOUT_CONTRACT_STATIC")
-        
+
         # On Linux, expect BLOCKED_LINUX_WSL_REQUIRED
         # On other platforms, expect UNIMPLEMENTED
         if platform.system() == "Linux":
@@ -164,10 +164,10 @@ class PromptDispatchScoutTests(unittest.TestCase):
             "--var", "branch=main",
             "--var", "generation=1",
         ])
-        
+
         self.assertEqual(result.returncode, 0, result.stderr)
         scout_result = json.loads(result.stdout)
-        
+
         # Check artifact contains variables
         artifact_path = Path(scout_result["artifactPath"])
         dispatch = json.loads(artifact_path.read_text(encoding="utf-8"))
@@ -183,10 +183,10 @@ class PromptDispatchScoutTests(unittest.TestCase):
             "--forbidden-scope", "main",
             "--forbidden-scope", "protected/**",
         ])
-        
+
         self.assertEqual(result.returncode, 0, result.stderr)
         scout_result = json.loads(result.stdout)
-        
+
         # Check artifact contains authority fields
         artifact_path = Path(scout_result["artifactPath"])
         dispatch = json.loads(artifact_path.read_text(encoding="utf-8"))
@@ -201,7 +201,7 @@ class PromptDispatchScoutTests(unittest.TestCase):
             tmp_path = Path(tmp)
             bad_decision = tmp_path / "bad-decision.json"
             bad_decision.write_text("{invalid json", encoding="utf-8")
-            
+
             result = subprocess.run(
                 [
                     sys.executable,
@@ -219,7 +219,7 @@ class PromptDispatchScoutTests(unittest.TestCase):
                 capture_output=True,
                 check=False,
             )
-            
+
             self.assertEqual(result.returncode, 2)
             self.assertIn("Cannot load decision", result.stderr)
 
@@ -234,9 +234,9 @@ class PromptDispatchScoutTests(unittest.TestCase):
                 "primaryPrompt": None,
             },
         }
-        
+
         result = self.run_scout(["--mode", "dry-run"], decision=bad_decision)
-        
+
         self.assertEqual(result.returncode, 2)
         self.assertIn("Cannot build dispatch", result.stderr)
         self.assertIn("NO_ROUTE", result.stderr)
@@ -245,20 +245,20 @@ class PromptDispatchScoutTests(unittest.TestCase):
         """Scout produces same deliveryId and idempotency key for same inputs."""
         result1 = self.run_scout(["--mode", "dry-run"])
         result2 = self.run_scout(["--mode", "dry-run"])
-        
+
         self.assertEqual(result1.returncode, 0)
         self.assertEqual(result2.returncode, 0)
-        
+
         scout1 = json.loads(result1.stdout)
         scout2 = json.loads(result2.stdout)
-        
+
         # Same deliveryId
         self.assertEqual(scout1["deliveryId"], scout2["deliveryId"])
-        
+
         # Load artifacts and check idempotency keys
         dispatch1 = json.loads(Path(scout1["artifactPath"]).read_text())
         dispatch2 = json.loads(Path(scout2["artifactPath"]).read_text())
-        
+
         self.assertEqual(
             dispatch1["idempotency"]["key"],
             dispatch2["idempotency"]["key"],
@@ -271,18 +271,18 @@ class PromptDispatchScoutTests(unittest.TestCase):
     def test_scout_writes_artifacts_to_timestamped_directory(self):
         """Scout writes artifacts to timestamped evidence directory."""
         result = self.run_scout(["--mode", "dry-run"])
-        
+
         self.assertEqual(result.returncode, 0)
         scout_result = json.loads(result.stdout)
-        
+
         artifact_path = Path(scout_result["artifactPath"])
-        
+
         # Check directory structure: evidence_root / YYYYMMDDTHHMMSSZ / prompt-dispatch.json
         self.assertEqual(artifact_path.name, "prompt-dispatch.json")
-        
+
         timestamp_dir = artifact_path.parent
         self.assertRegex(timestamp_dir.name, r"^\d{8}T\d{6}Z$")
-        
+
         # Check both artifacts exist
         self.assertTrue((timestamp_dir / "prompt-dispatch.json").exists())
         self.assertTrue((timestamp_dir / "scout-receipt.json").exists())
@@ -292,10 +292,10 @@ class PromptDispatchScoutTests(unittest.TestCase):
         for mode in ["dry-run", "live-delivery"]:
             with self.subTest(mode=mode):
                 result = self.run_scout(["--mode", mode])
-                
+
                 # Both modes should complete (exit 0 or 1)
                 self.assertIn(result.returncode, (0, 1), result.stderr)
-                
+
                 scout_result = json.loads(result.stdout)
                 self.assertEqual(scout_result["proofCeiling"], "SCOUT_CONTRACT_STATIC")
 
@@ -303,9 +303,9 @@ class PromptDispatchScoutTests(unittest.TestCase):
         """Scout reports blockerType=HOST_CAPABILITY when blocked on Linux."""
         if platform.system() != "Linux":
             self.skipTest("This test only runs on Linux")
-        
+
         result = self.run_scout(["--mode", "live-delivery"])
-        
+
         self.assertEqual(result.returncode, 1)
         scout_result = json.loads(result.stdout)
         self.assertEqual(scout_result["status"], "BLOCKED_LINUX_WSL_REQUIRED")
