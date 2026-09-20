@@ -1,0 +1,38 @@
+{
+  "schema": "agentswitchboard.execution-request/v1",
+  "requestId": "req_cursor_20260920_001",
+  "correlationId": "corr-trio-v1-demo",
+  "causationId": "lane-cursor-cloud-agent",
+  "adapterKind": "cursor-cloud-agent",
+  "mission": "Launch one bounded Cursor CloudAgent task and observe its terminal result without a human bridge.",
+  "workingDirectory": ".",
+  "timeoutSeconds": 300,
+  "mutation": {
+    "allowed": true,
+    "allowedScopes": [
+      "fixtures/cursor-cloud-agent/**"
+    ],
+    "forbiddenScopes": [
+      ".git/**",
+      "../**"
+    ]
+  },
+  "executionPolicy": {
+    "profile": "REPO_EDIT",
+    "networkAllowed": true,
+    "interactiveAuthAllowed": false,
+    "maxOutputBytes": 16384
+  },
+  "input": {
+    "kind": "cursor-cloud-agent",
+    "prompt": "Create the deterministic fixture artifact requested by this lane and report completion.",
+    "description": "Execution adapter E2E fixture",
+    "repositoryRef": "EndeavorEverlasting/AgentSwitchboard"
+  },
+  "provenance": {
+    "source": "EXECUTION_ADAPTER_TRIO_V1",
+    "planId": "ASB-2026-09-EXECUTION-ADAPTER-TRIO-V1",
+    "laneId": "EAT-308",
+    "promptRef": "resolved-task-packet"
+  }
+}

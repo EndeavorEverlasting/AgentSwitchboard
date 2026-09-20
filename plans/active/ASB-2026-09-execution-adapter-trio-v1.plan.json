@@ -1,0 +1,926 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-09-EXECUTION-ADAPTER-TRIO-V1",
+  "title": "EXECUTION_ADAPTER_TRIO_V1 — local argv, Claude Code, and Cursor CloudAgent",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "active",
+  "priority": "critical",
+  "createdUtc": "2026-09-20T17:20:00Z",
+  "updatedUtc": "2026-09-20T17:50:00Z",
+  "mission": "Turn AgentSwitchboard's dispatch seam into a provider-neutral execution-adapter layer and prove the first three native execution planes—local argv, Claude Code, and Cursor CloudAgent—without duplicating Prompt Kit semantics or FirstMate crew scheduling.",
+  "owner": {
+    "surface": "execution-adapter harness",
+    "role": "shared contract and convergence coordinator",
+    "agent": null
+  },
+  "delivery": {
+    "branch": "feat/execution-adapter-trio-v1-contract-20260920",
+    "pullRequest": {
+      "number": 335,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/335",
+      "state": "open"
+    },
+    "baseRef": "main@4685a6db93452880ad091bc47c69791aa0b1dbeb",
+    "commitRequired": true
+  },
+  "wave": "Execution adapter trio v1",
+  "lane": "shared contract, three isolated adapter lanes, then convergence",
+  "dependencies": [
+    "ASB-2026-09-TRIAGE-ASB-LIVE-DISPATCH",
+    "ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME",
+    "PR #332 is the current Cursor implementation/evidence source and must be reconciled, not overwritten"
+  ],
+  "safeParallelWork": [
+    "EAT-301 may repair PR #332 immediately because it owns existing Cursor dispatch files and does not touch the new shared contract paths.",
+    "After EAT-005 lands, EAT-101 local-argv, EAT-201 Claude Code, and EAT-302 Cursor reconciliation are dependency-ready in separate isolated branches/worktrees.",
+    "Runtime proof lanes may proceed in parallel only with separate authorized host/provider resources and no shared fixture/evidence roots.",
+    "Documentation for later adapters may begin after EAT-402 without implementing a fourth runtime."
+  ],
+  "ownedScope": [
+    "tooling/harness/execution-adapters/**",
+    "tests/test_execution_adapter_contract.py and later execution-adapter focused tests",
+    "scripts/Test-ExecutionAdapterContract.ps1 and later execution-adapter focused validators",
+    ".ai/harness/automated-test-floor.manifest.json execution-adapter gate only",
+    "plans/active/ASB-2026-09-execution-adapter-trio-v1.plan.json",
+    "plans/active/ASB-2026-09-execution-adapter-trio-v1.md",
+    "plans/plan-registry.json membership for this plan",
+    ".ai/WORK_QUEUE.md ASQ-022 continuity index",
+    "CODEBASE_MAP.md execution-adapter map",
+    "plans/active/ASB-2026-09-execution-adapter-trio-v1-panels.md"
+  ],
+  "forbiddenScope": [
+    "Do not mutate PR #332-owned tooling/harness/triage-consumer/dispatch/** files from the shared-contract lane before EAT-302 reconciliation.",
+    "Do not move Prompt Kit prompt selection, semantic routing, recovery doctrine, or workflow meaning into adapters.",
+    "Do not create another crew/session scheduler or weaken the FirstMate canonical crew-runtime boundary.",
+    "Do not redesign tooling/evals/p67-opencode-adapter/** as part of this milestone.",
+    "Do not invent scripts/prompt_parallel_dispatch.py or a duplicate Prompt Kit orchestration subsystem in AgentSwitchboard.",
+    "Do not start interactive provider authentication from adapter probes.",
+    "Do not commit secrets, private host paths, tokens, raw provider transcripts, or machine-local runtime receipts.",
+    "Do not claim adapter runtime, provider delivery, deployment, or operator acceptance from contract/static CI proof."
+  ],
+  "expectedArtifacts": [
+    "Accepted machine-readable execution-adapter v1 policy",
+    "Closed execution request, receipt, and capability-report schemas",
+    "Public-safe positive and fail-closed fixtures",
+    "Deterministic semantic validator registered in the automated test floor",
+    "Generic adapter interface, registry, and runner",
+    "Legacy Triage receipt compatibility bridge",
+    "local-argv adapter with LOCAL_RUNTIME_OBSERVED proof",
+    "Claude Code adapter with CLAUDE_CODE_RUNTIME_OBSERVED proof",
+    "Cursor CloudAgent adapter with CURSOR_CLOUD_AGENT_RUNTIME_OBSERVED proof",
+    "Common conformance/failure-isolation suite",
+    "Three-plane observed proof packet and extension documentation",
+    "Seven self-contained portability fallback sprint panels bound to the canonical issue IDs"
+  ],
+  "tasks": [
+    {
+      "taskId": "EAT-001",
+      "title": "Freeze execution-adapter v1 vocabulary",
+      "status": "completed",
+      "owner": "contract-floor",
+      "dependencies": [],
+      "inputs": [
+        "Existing Triage dispatch statuses",
+        "FirstMate/ASB ownership ADR",
+        "PR #332 evidence"
+      ],
+      "outputs": [
+        "tooling/harness/execution-adapters/execution-adapter-contract.v1.json"
+      ],
+      "acceptanceCriteria": [
+        "Adapter kinds, readiness dimensions, terminal statuses, blocker codes, proof levels, and ownership boundaries are explicit.",
+        "Prompt Kit semantic ownership and FirstMate crew-runtime authority remain outside adapters."
+      ],
+      "evidence": [
+        "execution-adapter-contract.v1.json committed on plan branch"
+      ]
+    },
+    {
+      "taskId": "EAT-002",
+      "title": "Define execution-request/v1",
+      "status": "completed",
+      "owner": "contract-floor",
+      "dependencies": [
+        "EAT-001"
+      ],
+      "inputs": [
+        "EAT-001 vocabulary"
+      ],
+      "outputs": [
+        "execution-request.v1.schema.json"
+      ],
+      "acceptanceCriteria": [
+        "Closed request schema carries immutable identity, adapter kind, mission, cwd, timeout, mutation scopes, execution policy, adapter-specific input, and provenance.",
+        "Interactive authentication is forbidden by schema."
+      ],
+      "evidence": [
+        "execution-request.v1.schema.json committed on plan branch"
+      ]
+    },
+    {
+      "taskId": "EAT-003",
+      "title": "Define execution-receipt/v1",
+      "status": "completed",
+      "owner": "contract-floor",
+      "dependencies": [
+        "EAT-001"
+      ],
+      "inputs": [
+        "EAT-001 vocabulary"
+      ],
+      "outputs": [
+        "execution-receipt.v1.schema.json"
+      ],
+      "acceptanceCriteria": [
+        "Closed receipt schema normalizes status, native execution identity, exit code, timing, artifacts, bounded output, blocker, and proof.",
+        "EXECUTED can be semantically required to carry native execution identity."
+      ],
+      "evidence": [
+        "execution-receipt.v1.schema.json committed on plan branch"
+      ]
+    },
+    {
+      "taskId": "EAT-004",
+      "title": "Define capability-report/v1",
+      "status": "completed",
+      "owner": "contract-floor",
+      "dependencies": [
+        "EAT-001"
+      ],
+      "inputs": [
+        "EAT-001 vocabulary"
+      ],
+      "outputs": [
+        "capability-report.v1.schema.json"
+      ],
+      "acceptanceCriteria": [
+        "Probe contract distinguishes host, binary, auth, transport, and dispatch readiness.",
+        "Probe proof ceiling remains CAPABILITY_PROBE_ONLY and cannot silently promote runtime proof."
+      ],
+      "evidence": [
+        "capability-report.v1.schema.json committed on plan branch"
+      ]
+    },
+    {
+      "taskId": "EAT-005",
+      "title": "Implement generic adapter interface and registry",
+      "status": "ready",
+      "owner": "shared-spine",
+      "dependencies": [
+        "EAT-001",
+        "EAT-002",
+        "EAT-003",
+        "EAT-004"
+      ],
+      "inputs": [
+        "execution-adapter-contract.v1.json",
+        "three schemas"
+      ],
+      "outputs": [
+        "adapter interface module",
+        "adapter registry",
+        "generic execution runner",
+        "focused tests"
+      ],
+      "acceptanceCriteria": [
+        "Adapters expose probe() and execute(request).",
+        "Generic runner resolves adapter through registry rather than native-harness if/elif execution branches.",
+        "Unknown/unready adapter fails closed with normalized receipt."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-006",
+      "title": "Implement legacy Triage receipt compatibility bridge",
+      "status": "pending",
+      "owner": "shared-spine",
+      "dependencies": [
+        "EAT-003",
+        "EAT-005"
+      ],
+      "inputs": [
+        "execution-receipt/v1",
+        "legacy Triage dispatch-receipt/v1"
+      ],
+      "outputs": [
+        "generic-receipt to legacy-lane-receipt translator",
+        "compatibility tests"
+      ],
+      "acceptanceCriteria": [
+        "Existing Triage consumers continue receiving their current lane receipt shape during migration.",
+        "Translation does not raise proof level or convert BLOCKED/FAILED/TIMED_OUT into EXECUTED."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-101",
+      "title": "Extract local-argv reference adapter",
+      "status": "pending",
+      "owner": "local-argv-lane",
+      "dependencies": [
+        "EAT-005"
+      ],
+      "inputs": [
+        "dispatch_lanes.py::_execute_local_argv",
+        "generic adapter interface"
+      ],
+      "outputs": [
+        "adapters/local_argv.py",
+        "local adapter tests"
+      ],
+      "acceptanceCriteria": [
+        "Existing subprocess semantics move behind the generic interface without shell=True.",
+        "Generic dispatcher no longer owns local subprocess mechanics after convergence."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-102",
+      "title": "Implement local-argv capability probe",
+      "status": "pending",
+      "owner": "local-argv-lane",
+      "dependencies": [
+        "EAT-101"
+      ],
+      "inputs": [
+        "local_argv.py",
+        "capability-report/v1"
+      ],
+      "outputs": [
+        "local probe implementation",
+        "probe fixtures/tests"
+      ],
+      "acceptanceCriteria": [
+        "Executable resolution and cwd readiness are reported precisely.",
+        "Missing executable/cwd is BLOCKED rather than an uncaught exception."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-103",
+      "title": "Bound local process timeout and output",
+      "status": "pending",
+      "owner": "local-argv-lane",
+      "dependencies": [
+        "EAT-101"
+      ],
+      "inputs": [
+        "execution request timeout",
+        "maxOutputBytes"
+      ],
+      "outputs": [
+        "bounded process execution behavior",
+        "timeout/output tests"
+      ],
+      "acceptanceCriteria": [
+        "Timeout is enforced and terminally classified.",
+        "stdout/stderr excerpts obey deterministic request/contract bounds."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-104",
+      "title": "Prove local runtime success path",
+      "status": "pending",
+      "owner": "local-argv-runtime-proof",
+      "dependencies": [
+        "EAT-102",
+        "EAT-103"
+      ],
+      "inputs": [
+        "real child-process success fixture"
+      ],
+      "outputs": [
+        "LOCAL_RUNTIME_OBSERVED success receipt"
+      ],
+      "acceptanceCriteria": [
+        "Real child process emits expected marker and exits 0.",
+        "Receipt records expected cwd, exit code, timing, identity, and validates."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-105",
+      "title": "Prove local runtime nonzero path",
+      "status": "pending",
+      "owner": "local-argv-runtime-proof",
+      "dependencies": [
+        "EAT-102",
+        "EAT-103"
+      ],
+      "inputs": [
+        "real child-process failure fixture"
+      ],
+      "outputs": [
+        "LOCAL_RUNTIME_OBSERVED exit-42 receipt"
+      ],
+      "acceptanceCriteria": [
+        "Real child process emits known stdout/stderr and exits 42.",
+        "Receipt is FAILED and preserves exact exit code 42."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-106",
+      "title": "Prove local runtime timeout path",
+      "status": "pending",
+      "owner": "local-argv-runtime-proof",
+      "dependencies": [
+        "EAT-102",
+        "EAT-103"
+      ],
+      "inputs": [
+        "bounded hang fixture"
+      ],
+      "outputs": [
+        "LOCAL_RUNTIME_OBSERVED timeout receipt"
+      ],
+      "acceptanceCriteria": [
+        "Bounded hang is terminated/classified TIMED_OUT.",
+        "Timeout can never be reported EXECUTED."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-107",
+      "title": "Prove legacy Triage dispatch regression safety",
+      "status": "pending",
+      "owner": "local-argv-lane",
+      "dependencies": [
+        "EAT-006",
+        "EAT-104",
+        "EAT-105",
+        "EAT-106"
+      ],
+      "inputs": [
+        "existing Triage dispatch tests",
+        "compatibility bridge"
+      ],
+      "outputs": [
+        "regression proof"
+      ],
+      "acceptanceCriteria": [
+        "Existing Triage dispatch validator remains green after extraction.",
+        "Protected local-argv control still captures exit code and output through the compatibility layer."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-201",
+      "title": "Implement Claude Code capability probe",
+      "status": "pending",
+      "owner": "claude-code-lane",
+      "dependencies": [
+        "EAT-005"
+      ],
+      "inputs": [
+        "Claude Code CLI",
+        "capability-report/v1"
+      ],
+      "outputs": [
+        "adapters/claude_code.py probe",
+        "probe tests"
+      ],
+      "acceptanceCriteria": [
+        "Probe detects binary/version/headless structured execution and auth readiness without interactive login.",
+        "Unavailable binary/auth returns exact BLOCKED state."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-202",
+      "title": "Map generic requests to Claude Code invocation",
+      "status": "pending",
+      "owner": "claude-code-lane",
+      "dependencies": [
+        "EAT-201"
+      ],
+      "inputs": [
+        "execution-request/v1 Claude input",
+        "Claude CLI contract"
+      ],
+      "outputs": [
+        "bounded native invocation builder",
+        "mapping tests"
+      ],
+      "acceptanceCriteria": [
+        "cwd, timeout, resolved prompt, model/session choice, and execution policy are deterministic.",
+        "Adapter does not select or reinterpret Prompt Kit prompts."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-203",
+      "title": "Implement Claude execution permission profiles",
+      "status": "pending",
+      "owner": "claude-code-lane",
+      "dependencies": [
+        "EAT-202"
+      ],
+      "inputs": [
+        "READ_ONLY",
+        "REPO_EDIT",
+        "VALIDATION profiles"
+      ],
+      "outputs": [
+        "Claude tool/permission mapping",
+        "policy tests"
+      ],
+      "acceptanceCriteria": [
+        "Unrestricted permission bypass is not the default.",
+        "Effective profile and relevant native restrictions are included in execution evidence."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-204",
+      "title": "Implement Claude structured result parser",
+      "status": "pending",
+      "owner": "claude-code-lane",
+      "dependencies": [
+        "EAT-202"
+      ],
+      "inputs": [
+        "Claude machine-readable output",
+        "execution-receipt/v1"
+      ],
+      "outputs": [
+        "structured parser",
+        "receipt tests"
+      ],
+      "acceptanceCriteria": [
+        "Native process result maps to normalized receipt without inventing session/model fields.",
+        "Available native session/runtime identity is captured."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-205",
+      "title": "Implement Claude negative-path fixtures",
+      "status": "pending",
+      "owner": "claude-code-lane",
+      "dependencies": [
+        "EAT-201",
+        "EAT-204"
+      ],
+      "inputs": [
+        "missing binary/auth",
+        "nonzero CLI",
+        "timeout",
+        "malformed structured output"
+      ],
+      "outputs": [
+        "negative fixtures/tests"
+      ],
+      "acceptanceCriteria": [
+        "Each failure is deterministically BLOCKED/FAILED/TIMED_OUT.",
+        "No negative path can become false EXECUTED."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-206",
+      "title": "Build disposable Claude E2E fixture repository",
+      "status": "pending",
+      "owner": "claude-code-lane",
+      "dependencies": [
+        "EAT-203",
+        "EAT-204"
+      ],
+      "inputs": [
+        "public-safe input fixture",
+        "independent validator"
+      ],
+      "outputs": [
+        "disposable fixture tree",
+        "deterministic validator"
+      ],
+      "acceptanceCriteria": [
+        "Fixture allows one bounded expected file mutation.",
+        "Independent validator can prove result without trusting Claude self-report."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-207",
+      "title": "Prove Claude Code runtime end to end",
+      "status": "pending",
+      "owner": "claude-code-runtime-proof",
+      "dependencies": [
+        "EAT-205",
+        "EAT-206"
+      ],
+      "inputs": [
+        "real authenticated Claude Code CLI",
+        "disposable fixture"
+      ],
+      "outputs": [
+        "CLAUDE_CODE_RUNTIME_OBSERVED receipt",
+        "independent validator artifact"
+      ],
+      "acceptanceCriteria": [
+        "ASB request launches real Claude CLI noninteractively.",
+        "Expected mutation occurs and external validator passes after Claude exits.",
+        "Normalized receipt validates with honest runtime identity/evidence."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-208",
+      "title": "Re-run local protected control after Claude integration",
+      "status": "pending",
+      "owner": "claude-code-lane",
+      "dependencies": [
+        "EAT-207",
+        "EAT-107"
+      ],
+      "inputs": [
+        "local adapter proof suite"
+      ],
+      "outputs": [
+        "cross-adapter regression proof"
+      ],
+      "acceptanceCriteria": [
+        "Local success, exit-42, and timeout controls remain green after Claude integration."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-301",
+      "title": "Repair PR #332 deterministic test-floor hygiene",
+      "status": "ready",
+      "owner": "cursor-pr332-owner",
+      "dependencies": [],
+      "inputs": [
+        "PR #332 head 0896bd7861f9ade9a246b3fde2b90925c22ecf0b",
+        "failed automated floor run 35480100574"
+      ],
+      "outputs": [
+        "green exact-head #332 floor or exact new blocker"
+      ],
+      "acceptanceCriteria": [
+        "Remove trailing whitespace defect family from #332 candidate without architecture churn.",
+        "Windows and Ubuntu automated floor rerun on exact repaired head.",
+        "Do not treat prior real Task launch as proof of a machine-closed production bridge."
+      ],
+      "evidence": [
+        "Current failure evidence: test_cloud_agent_orchestration.py trailing whitespace on Windows and Ubuntu"
+      ]
+    },
+    {
+      "taskId": "EAT-302",
+      "title": "Reconcile PR #332 with execution-adapter v1",
+      "status": "pending",
+      "owner": "cursor-cloud-agent-lane",
+      "dependencies": [
+        "EAT-005",
+        "EAT-301"
+      ],
+      "inputs": [
+        "PR #332 implementation/evidence",
+        "execution-adapter v1"
+      ],
+      "outputs": [
+        "collision/reuse map",
+        "Cursor adapter migration patch"
+      ],
+      "acceptanceCriteria": [
+        "Useful request/result and real Task evidence from #332 is preserved.",
+        "Generic shared contract remains owner of common fields; #332 transport details remain Cursor-private."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-303",
+      "title": "Implement Cursor capability probe v1",
+      "status": "pending",
+      "owner": "cursor-cloud-agent-lane",
+      "dependencies": [
+        "EAT-302"
+      ],
+      "inputs": [
+        "CURSOR_AGENT",
+        "CURSOR_AGENT_SOCKET",
+        "Task bridge evidence"
+      ],
+      "outputs": [
+        "Cursor probe implementation",
+        "probe tests"
+      ],
+      "acceptanceCriteria": [
+        "Probe separately reports host, transport, and Task dispatch readiness.",
+        "Socket existence alone cannot report dispatch READY."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-304",
+      "title": "Port #332 request/result transport behind Cursor adapter",
+      "status": "pending",
+      "owner": "cursor-cloud-agent-lane",
+      "dependencies": [
+        "EAT-302",
+        "EAT-303"
+      ],
+      "inputs": [
+        "#332 IPC/client implementation"
+      ],
+      "outputs": [
+        "adapter-private transport module",
+        "transport tests"
+      ],
+      "acceptanceCriteria": [
+        "Generic runner does not know filesystem/socket/provider details.",
+        "Request/result correlation is deterministic and bounded."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-305",
+      "title": "Machine-close Cursor Task dispatch bridge",
+      "status": "pending",
+      "owner": "cursor-cloud-agent-lane",
+      "dependencies": [
+        "EAT-304"
+      ],
+      "inputs": [
+        "authorized Cursor-native Task capability"
+      ],
+      "outputs": [
+        "machine-executable Task bridge"
+      ],
+      "acceptanceCriteria": [
+        "No operator notices a marker/request or manually performs Task invocation.",
+        "One adapter request can cause Task launch or return a precise BLOCKED_API result."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-306",
+      "title": "Implement Cursor terminal result observer",
+      "status": "pending",
+      "owner": "cursor-cloud-agent-lane",
+      "dependencies": [
+        "EAT-305"
+      ],
+      "inputs": [
+        "real Task launch identity",
+        "Cursor completion state"
+      ],
+      "outputs": [
+        "terminal observer",
+        "normalized receipt mapping"
+      ],
+      "acceptanceCriteria": [
+        "Fresh CloudAgent identity and terminal completed/failed/timeout state return machine-readably.",
+        "Timeout is bounded and cannot become EXECUTED."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-307",
+      "title": "Implement Cursor negative-path coverage",
+      "status": "pending",
+      "owner": "cursor-cloud-agent-lane",
+      "dependencies": [
+        "EAT-303",
+        "EAT-306"
+      ],
+      "inputs": [
+        "wrong host",
+        "missing socket/bridge",
+        "timeout",
+        "subagent failure"
+      ],
+      "outputs": [
+        "negative fixtures/tests"
+      ],
+      "acceptanceCriteria": [
+        "Each unavailable layer maps to precise blocker/failure.",
+        "No simulated/mock completion is promoted to live proof."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-308",
+      "title": "Prove Cursor CloudAgent runtime end to end",
+      "status": "pending",
+      "owner": "cursor-cloud-agent-runtime-proof",
+      "dependencies": [
+        "EAT-305",
+        "EAT-306",
+        "EAT-307"
+      ],
+      "inputs": [
+        "real Cursor Task capability",
+        "bounded deterministic task"
+      ],
+      "outputs": [
+        "CURSOR_CLOUD_AGENT_RUNTIME_OBSERVED receipt",
+        "independent artifact validation"
+      ],
+      "acceptanceCriteria": [
+        "One ASB dispatch launches a fresh real CloudAgent without human bridge.",
+        "Terminal state and cloudAgentBcId are captured automatically.",
+        "Independent expected artifact/result is verified."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-309",
+      "title": "Re-run local and Claude protected controls after Cursor integration",
+      "status": "pending",
+      "owner": "cursor-cloud-agent-lane",
+      "dependencies": [
+        "EAT-308",
+        "EAT-208"
+      ],
+      "inputs": [
+        "local runtime suite",
+        "Claude runtime/contract suite"
+      ],
+      "outputs": [
+        "cross-adapter regression proof"
+      ],
+      "acceptanceCriteria": [
+        "Cursor integration does not regress local or Claude adapter contracts/proofs."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-401",
+      "title": "Create common adapter conformance suite",
+      "status": "pending",
+      "owner": "convergence-owner",
+      "dependencies": [
+        "EAT-107",
+        "EAT-208",
+        "EAT-309"
+      ],
+      "inputs": [
+        "three adapters",
+        "v1 schemas/policy"
+      ],
+      "outputs": [
+        "shared conformance tests"
+      ],
+      "acceptanceCriteria": [
+        "All adapters satisfy one common probe/request/receipt/blocker/timeout contract.",
+        "Adapter-specific tests may extend but cannot weaken common semantics."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-402",
+      "title": "Remove native-harness branching from generic dispatcher",
+      "status": "pending",
+      "owner": "convergence-owner",
+      "dependencies": [
+        "EAT-401"
+      ],
+      "inputs": [
+        "adapter registry",
+        "legacy Triage dispatcher"
+      ],
+      "outputs": [
+        "registry-based dispatch integration"
+      ],
+      "acceptanceCriteria": [
+        "Generic dispatch resolves adapter by registry and calls probe/execute.",
+        "No local/Claude/Cursor native execution implementation remains embedded in generic dispatch branching."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-403",
+      "title": "Create cross-adapter bounded task fixture",
+      "status": "pending",
+      "owner": "convergence-owner",
+      "dependencies": [
+        "EAT-401"
+      ],
+      "inputs": [
+        "three ready adapters"
+      ],
+      "outputs": [
+        "equivalent cross-adapter fixture"
+      ],
+      "acceptanceCriteria": [
+        "A common high-level bounded task can be expressed through each compatible adapter without changing receipt semantics."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-404",
+      "title": "Produce three-plane observed proof packet",
+      "status": "pending",
+      "owner": "convergence-owner",
+      "dependencies": [
+        "EAT-403"
+      ],
+      "inputs": [
+        "local/Claude/Cursor runtime proofs"
+      ],
+      "outputs": [
+        "deterministic three-adapter proof manifest/receipts"
+      ],
+      "acceptanceCriteria": [
+        "Packet links exact adapter identities and independent validator results.",
+        "Each adapter retains its own runtime proof ceiling; packet does not homogenize or inflate evidence."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-405",
+      "title": "Prove adapter failure isolation",
+      "status": "pending",
+      "owner": "convergence-owner",
+      "dependencies": [
+        "EAT-401"
+      ],
+      "inputs": [
+        "controlled unavailable-adapter case"
+      ],
+      "outputs": [
+        "failure-isolation proof"
+      ],
+      "acceptanceCriteria": [
+        "Blocking one adapter does not poison registry or falsely block unrelated ready adapters."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-406",
+      "title": "Document extension contract for later harnesses",
+      "status": "pending",
+      "owner": "docs-owner",
+      "dependencies": [
+        "EAT-402"
+      ],
+      "inputs": [
+        "proven trio extension surface"
+      ],
+      "outputs": [
+        "extension documentation for OpenCode/Codex/Augment"
+      ],
+      "acceptanceCriteria": [
+        "A fourth adapter requires implementation plus registry registration, not dispatcher architecture redesign.",
+        "No fourth adapter runtime is claimed or implemented by this task."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "EAT-407",
+      "title": "Run milestone acceptance and convergence gate",
+      "status": "pending",
+      "owner": "convergence-owner",
+      "dependencies": [
+        "EAT-402",
+        "EAT-404",
+        "EAT-405",
+        "EAT-406"
+      ],
+      "inputs": [
+        "all repository-owned validators",
+        "three adapter proofs",
+        "current main"
+      ],
+      "outputs": [
+        "EXECUTION_ADAPTER_TRIO_V1 acceptance report"
+      ],
+      "acceptanceCriteria": [
+        "Required focused and repository gates pass on exact candidate.",
+        "Three adapters satisfy minimum independent E2E proof.",
+        "Milestone state and remaining deferred adapters are durably recorded without proof promotion."
+      ],
+      "evidence": []
+    }
+  ],
+  "validation": [
+    "python3 tests/test_execution_adapter_contract.py",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-ExecutionAdapterContract.ps1",
+    "python3 tests/test_public_plan_contracts.py",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-AutomatedTestFloor.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-RepositoryWorkLedgerContract.ps1",
+    "git diff --check"
+  ],
+  "proof": {
+    "target": "Accepted adapter contract floor plus durable parallelizable milestone backlog for three native harness adapters.",
+    "achieved": "Execution-adapter v1 policy, request/receipt/capability schemas, public-safe fixtures, semantic validator, automated-floor registration, and the complete 37-issue multi-agent milestone map are tracked in PR #335. Adapter runtime implementations remain successor work.",
+    "ceiling": "CONTRACT_STATIC only until adapter-specific runtime lanes independently achieve LOCAL_RUNTIME_OBSERVED, CLAUDE_CODE_RUNTIME_OBSERVED, and CURSOR_CLOUD_AGENT_RUNTIME_OBSERVED. Planning, schemas, fixtures, CI, and PR state do not prove native execution."
+  },
+  "handoff": {
+    "nextOwner": "execution-adapter shared-spine owner, with PR #332 owner proceeding independently on EAT-301",
+    "nextCommand": "pwsh -NoLogo -NoProfile -File scripts/Test-ExecutionAdapterContract.ps1",
+    "notes": [
+      "First shared successor after contract integration is EAT-005: implement generic adapter interface + registry + runner.",
+      "EAT-301 is independent and may repair PR #332 immediately; preserve its real Task launch evidence.",
+      "After EAT-005, local-argv, Claude Code, and Cursor reconciliation lanes are designed for isolated concurrent writers.",
+      "Final convergence owner integrates completed lanes in dependency order and reruns common conformance plus repository gates.",
+      "Portability fallback panels are tracked at plans/active/ASB-2026-09-execution-adapter-trio-v1-panels.md; they are fallback transport, not the primary scheduler.",
+      "Current contract-authoring runtime is provider-only and exposes no delegated-agent/task-worker execution API or local repository runner, so successor implementation dispatch is DEGRADED here despite graph width >= 2. AUTONOMY_GAP: an execution-capable worker surface must consume this plan. Do not fabricate AgentSwitchboard-local Outputs/prompt-parallel-dispatch/manifest.json: its canonical contract/validator lives in web-excel-repair-triage, while this repository's canonical coordination owner is the public-plan registry."
+    ]
+  }
+}

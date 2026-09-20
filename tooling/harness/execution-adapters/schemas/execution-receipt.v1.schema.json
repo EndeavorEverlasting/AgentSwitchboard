@@ -1,0 +1,331 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/harness/execution-adapters/schemas/execution-receipt.v1.schema.json",
+  "title": "AgentSwitchboard Execution Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "requestId",
+    "correlationId",
+    "adapterKind",
+    "status",
+    "startedAt",
+    "completedAt",
+    "durationMs",
+    "executionIdentity",
+    "exitCode",
+    "artifacts",
+    "output",
+    "blocker",
+    "proof"
+  ],
+  "properties": {
+    "schema": {
+      "const": "agentswitchboard.execution-receipt/v1"
+    },
+    "requestId": {
+      "type": "string",
+      "pattern": "^req_[A-Za-z0-9._-]{8,128}$"
+    },
+    "correlationId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "adapterKind": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{2,63}$"
+    },
+    "status": {
+      "enum": [
+        "EXECUTED",
+        "FAILED",
+        "TIMED_OUT",
+        "BLOCKED"
+      ]
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "durationMs": {
+      "type": "number",
+      "minimum": 0
+    },
+    "executionIdentity": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "PROCESS",
+                "CLAUDE_SESSION",
+                "CURSOR_CLOUD_AGENT",
+                "OTHER"
+              ]
+            },
+            "value": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000
+            }
+          }
+        }
+      ]
+    },
+    "exitCode": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "artifacts": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "locator",
+          "sha256"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "FILE",
+              "URL",
+              "RECEIPT",
+              "LOG",
+              "OTHER"
+            ]
+          },
+          "locator": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "sha256": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stdoutExcerpt",
+        "stderrExcerpt",
+        "structuredResult"
+      ],
+      "properties": {
+        "stdoutExcerpt": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "stderrExcerpt": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "structuredResult": {
+          "$ref": "#/$defs/boundedStructuredResult"
+        }
+      }
+    },
+    "blocker": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "code",
+            "message",
+            "stage",
+            "retryable"
+          ],
+          "properties": {
+            "code": {
+              "enum": [
+                "BLOCKED_HOST",
+                "BLOCKED_BINARY",
+                "BLOCKED_AUTH",
+                "BLOCKED_API",
+                "BLOCKED_POLICY",
+                "BLOCKED_INPUT",
+                "BLOCKED_UNSUPPORTED",
+                "EXECUTION_ERROR",
+                "TIMEOUT"
+              ]
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4000
+            },
+            "stage": {
+              "enum": [
+                "probe",
+                "prepare",
+                "launch",
+                "observe",
+                "collect",
+                "validate"
+              ]
+            },
+            "retryable": {
+              "type": "boolean"
+            }
+          }
+        }
+      ]
+    },
+    "proof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "level",
+        "independentValidationRequired",
+        "validationArtifact",
+        "notes"
+      ],
+      "properties": {
+        "level": {
+          "enum": [
+            "CONTRACT_STATIC",
+            "CAPABILITY_PROBE_ONLY",
+            "LOCAL_RUNTIME_OBSERVED",
+            "CLAUDE_CODE_RUNTIME_OBSERVED",
+            "CURSOR_CLOUD_AGENT_RUNTIME_OBSERVED"
+          ]
+        },
+        "independentValidationRequired": {
+          "type": "boolean"
+        },
+        "validationArtifact": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 4096
+        },
+        "notes": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "EXECUTED"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "executionIdentity": {
+            "type": "object"
+          },
+          "blocker": {
+            "const": null
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "FAILED",
+              "TIMED_OUT",
+              "BLOCKED"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "blocker": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "boundedScalar": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string",
+          "maxLength": 8192
+        }
+      ]
+    },
+    "boundedStructuredResult": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/boundedScalar"
+        },
+        {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "$ref": "#/$defs/boundedScalar"
+          }
+        },
+        {
+          "type": "object",
+          "maxProperties": 256,
+          "additionalProperties": {
+            "$ref": "#/$defs/boundedScalar"
+          }
+        }
+      ]
+    }
+  }
+}

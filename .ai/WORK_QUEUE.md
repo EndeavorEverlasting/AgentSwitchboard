@@ -369,3 +369,20 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** merge:ce78fc5 pr:#302 PPP-01+02; merge:16fc141 pr:#303 PPP-03; merge:64c8350 pr:#304 PPP-04; merge:684672f pr:#305 PPP-05; all tasks integrated on main@684672f
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-17T20:47:16Z
+
+## ASQ-022 — Execute adapter trio v1 implementation waves
+
+- **Status:** READY
+- **Priority:** P0
+- **Work class:** BOUNDED
+- **Owner:** execution-adapter shared-spine / convergence coordinator
+- **Branch / PR:** contract floor PR #335 / `feat/execution-adapter-trio-v1-contract-20260920`; successor implementation lanes pending
+- **Scope:** advance the frozen execution-adapter v1 contract into the executable generic adapter interface/registry/runner (EAT-005), preserve the legacy Triage receipt bridge, then open isolated local-argv, Claude Code, and Cursor CloudAgent implementation lanes according to the canonical public plan; EAT-301 PR #332 floor repair may proceed independently.
+- **Forbidden:** overwriting PR #332-owned dispatch files before EAT-302 reconciliation; moving Prompt Kit semantics into adapters; creating a second crew scheduler; weakening the FirstMate crew-runtime ADR; inventing `scripts/prompt_parallel_dispatch.py`; interactive provider login; secrets/private runtime receipts; claiming runtime proof from contract/static CI.
+- **Dependencies:** execution-adapter contract floor integrated on main for EAT-005; EAT-301 independently depends only on PR #332 exact-head ownership.
+- **References:** plan-id ASB-2026-09-EXECUTION-ADAPTER-TRIO-V1; `plans/active/ASB-2026-09-execution-adapter-trio-v1.plan.json`; `plans/active/ASB-2026-09-execution-adapter-trio-v1.md`; `tooling/harness/execution-adapters/execution-adapter-contract.v1.json`; `docs/harness/execution-adapter-contract-v1.md`; `scripts/Test-ExecutionAdapterContract.ps1`; PR #332
+- **Acceptance gate:** EAT-005 generic interface/registry/runner is integrated against the frozen request/receipt/capability contracts with focused tests; unknown/unready adapters fail closed; plan coordination advances local/Claude/Cursor tasks to dependency-ready states without shared-file collisions.
+- **Gate:** contract floor must first be integrated to main; PR #332 remains a separate writer until EAT-302.
+- **Last proof:** contract/static artifacts and 37-issue milestone map tracked on the contract-plan branch; local/Claude/Cursor runtime proof remains UNPROVEN.
+- **Next action:** after PR #335 merges, run `pwsh -NoLogo -NoProfile -File scripts/Test-ExecutionAdapterContract.ps1`; then implement EAT-005 from refreshed main and prove registry resolution plus fail-closed unavailable-adapter output.
+- **Updated:** 2026-09-20T17:20:00Z
