@@ -190,6 +190,10 @@ This milestone is harness spine + agent-harness adapter + integration seam + val
 
 Later runtime lanes add their adapter-specific observed gates before claiming the corresponding runtime proof level.
 
+## Portability fallback
+
+Seven self-contained lane prompts are tracked in plans/active/ASB-2026-09-execution-adapter-trio-v1-panels.md. They map exactly to the launch order above and exist only for recovery/portability when an autonomous execution adapter cannot consume the canonical machine plan.
+
 ## Evidence state
 
 The contract floor may reach **INTEGRATED CONTRACT_STATIC** after merge. That state deliberately leaves the adapter implementations and runtime proofs as REQUIRED SUCCESSOR WORK. Schema validation, CI, a PR, or merge cannot prove native Claude or Cursor execution.
