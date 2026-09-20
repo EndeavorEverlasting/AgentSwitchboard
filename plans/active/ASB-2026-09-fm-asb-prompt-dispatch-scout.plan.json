@@ -16,7 +16,11 @@
   },
   "delivery": {
     "branch": "cursor/fm-asb-prompt-dispatch-scout-8400",
-    "pullRequest": null,
+    "pullRequest": {
+      "number": 334,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/334",
+      "state": "open"
+    },
     "baseRef": "main",
     "commitRequired": true
   },
@@ -35,6 +39,7 @@
     "tooling/firstmate/harness/dispatch/Invoke-PromptDispatchScout.ps1",
     "tests/test_fm_asb_prompt_dispatch_scout.py",
     "plans/active/ASB-2026-09-fm-asb-prompt-dispatch-scout.plan.json",
+    "plans/active/ASB-2026-09-fm-asb-prompt-dispatch-scout.md",
     "plans/plan-registry.json membership for this plan",
     "CODEBASE_MAP.md scout references",
     "docs/architecture/fm-asb-promptkit-protocol-v1.md next-owner notes"
@@ -51,7 +56,7 @@
     "Python scout entrypoint with dry-run and fail-closed live-delivery modes",
     "PowerShell scout wrapper",
     "Unit/contract tests covering dry-run PASS and live-delivery blocked on non-Admin",
-    "Public plan documenting this scout implementation",
+    "Public plan JSON and summary markdown",
     "Updated CODEBASE_MAP and protocol next-owner notes"
   ],
   "tasks": [
