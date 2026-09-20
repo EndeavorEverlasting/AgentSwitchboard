@@ -99,10 +99,13 @@ This engine reads supplied output only. It does not launch apps or providers, st
 - `tooling/firstmate/harness/observation/emit_agent_observation.py` — read-only FirstMate fleet-snapshot → asb.agent-observation/v1 adapter (no watcher/subprocess).
 - `tooling/firstmate/harness/routing/build_routing_request.py` — read-only asb.agent-observation/v1 → prompt-kit.routing-request/v1 builder.
 - `tooling/firstmate/harness/dispatch/build_prompt_dispatch.py` — read-only prompt-kit.routing-decision/v1 → asb.prompt-dispatch/v1 builder with fail-closed bounds (NO_ROUTE/BLOCKED/null-primary rejection).
+- `tooling/firstmate/harness/dispatch/scout_prompt_dispatch.py` — remote-safe prompt-dispatch scout: dry-run (contract-only translation) and live-delivery (blocked on Linux/cloud, unimplemented on Windows).
+- `tooling/firstmate/harness/dispatch/Invoke-PromptDispatchScout.ps1` — PowerShell wrapper for the prompt-dispatch scout.
 - `tests/test_firstmate_agent_observation_adapter.py` — observation adapter behavior tests.
 - `tests/test_fm_asb_prompt_dispatch_builder.py` — prompt-dispatch builder behavior tests (19 tests covering fail-closed cases, idempotency, and deterministic deliveryId).
+- `tests/test_fm_asb_prompt_dispatch_scout.py` — prompt-dispatch scout tests (12 tests covering dry-run PASS, live-delivery blocked, authority configuration, and proof ceiling).
 
-The initial topology is contract-only. It does not prove live emission, observation, handling, successor delivery, or sink recording.
+The initial topology is contract-only. It does not prove live emission, observation, handling, successor delivery, or sink recording. The scout demonstrates routing-decision → prompt-dispatch translation with proof ceiling SCOUT_CONTRACT_STATIC; it does not prove live FirstMate delivery, Admin Box runtime, or crew execution.
 
 ## Triage→ASB consumer floor
 
