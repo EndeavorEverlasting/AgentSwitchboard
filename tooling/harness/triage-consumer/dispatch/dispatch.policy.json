@@ -16,10 +16,10 @@
       "proof_level": "local execution with exit code"
     },
     "cursor_cloud_agent": {
-      "enabled": false,
-      "execute_when": "deferred to future phase",
-      "proof_level": "descriptor only - emit DISPATCHED or BLOCKED_UNSUPPORTED",
-      "reason": "Live CloudAgent dispatch requires integration not in this phase"
+      "enabled": true,
+      "execute_when": "running in Cursor cloud agent context with Task tool API available",
+      "proof_level": "fail-closed observed probe with BLOCKED_HOST / BLOCKED_API when infrastructure unavailable",
+      "reason": "CloudAgent dispatch requires Python API binding to Task tool; fail-closed until implemented"
     },
     "runtime_tool": {
       "enabled": false,

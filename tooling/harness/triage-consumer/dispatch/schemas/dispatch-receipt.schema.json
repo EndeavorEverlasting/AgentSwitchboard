@@ -35,6 +35,8 @@
         "BLOCKED_UNSUPPORTED",
         "BLOCKED_MISSING_ADAPTER",
         "BLOCKED_POLICY_VIOLATION",
+        "BLOCKED_HOST",
+        "BLOCKED_API",
         "FAILED"
       ]
     },

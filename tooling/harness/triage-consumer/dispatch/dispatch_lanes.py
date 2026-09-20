@@ -29,6 +29,8 @@ class DispatchStatus:
     BLOCKED_UNSUPPORTED = "BLOCKED_UNSUPPORTED"
     BLOCKED_MISSING_ADAPTER = "BLOCKED_MISSING_ADAPTER"
     BLOCKED_POLICY_VIOLATION = "BLOCKED_POLICY_VIOLATION"
+    BLOCKED_HOST = "BLOCKED_HOST"
+    BLOCKED_API = "BLOCKED_API"
     FAILED = "FAILED"
 
 
@@ -241,16 +243,81 @@ class TriageDispatcher:
         lane_obj,
         mapping_obj
     ) -> DispatchReceipt:
-        """Handle cursor-cloud-agent adapter (structured BLOCKED_UNSUPPORTED for now)."""
+        """Handle cursor-cloud-agent adapter with fail-closed observed probe."""
+        cloud_agent_prompt = mapping_obj.cloud_agent_prompt
+        
+        if not cloud_agent_prompt:
+            return DispatchReceipt(
+                lane_id=lane_obj.lane_id,
+                lane_mission=lane_obj.mission,
+                adapter_kind="cursor-cloud-agent",
+                dispatch_status=DispatchStatus.BLOCKED_MISSING_ADAPTER,
+                blocking_reason="cloud_agent_prompt not present in mapping"
+            )
+        
+        in_cloud_agent = os.environ.get("CURSOR_AGENT") == "1"
+        agent_socket = os.environ.get("CURSOR_AGENT_SOCKET")
+        
+        if not in_cloud_agent:
+            return DispatchReceipt(
+                lane_id=lane_obj.lane_id,
+                lane_mission=lane_obj.mission,
+                adapter_kind="cursor-cloud-agent",
+                dispatch_status="BLOCKED_HOST",
+                blocking_reason=(
+                    "CloudAgent dispatch requires execution within Cursor cloud agent context. "
+                    "CURSOR_AGENT environment variable not set."
+                ),
+                descriptor={
+                    "required_environment": "Cursor Cloud Agent",
+                    "required_capability": "Task tool for subagent dispatch",
+                    "recommended_action": "Run dispatcher from within a Cursor cloud agent execution context"
+                }
+            )
+        
+        if not agent_socket or not Path(agent_socket).exists():
+            return DispatchReceipt(
+                lane_id=lane_obj.lane_id,
+                lane_mission=lane_obj.mission,
+                adapter_kind="cursor-cloud-agent",
+                dispatch_status="BLOCKED_API",
+                blocking_reason=(
+                    f"CloudAgent dispatch API socket unavailable. "
+                    f"Expected socket: {agent_socket or 'not set'}"
+                ),
+                descriptor={
+                    "required_api": "Cursor Agent API socket",
+                    "socket_path": agent_socket,
+                    "socket_exists": Path(agent_socket).exists() if agent_socket else False,
+                    "recommended_action": (
+                        "Implement Python binding for Cursor cloud agent Task tool, "
+                        "or run dispatcher via cloud agent orchestration layer with Task access"
+                    )
+                }
+            )
+        
         return DispatchReceipt(
             lane_id=lane_obj.lane_id,
             lane_mission=lane_obj.mission,
             adapter_kind="cursor-cloud-agent",
-            dispatch_status=DispatchStatus.BLOCKED_UNSUPPORTED,
-            blocking_reason="Live CloudAgent dispatch deferred to future phase",
+            dispatch_status="BLOCKED_API",
+            blocking_reason=(
+                "Python API for Cursor cloud agent Task tool not yet implemented. "
+                "Socket available but protocol integration required."
+            ),
             descriptor={
-                "cloud_agent_prompt": mapping_obj.cloud_agent_prompt,
-                "ready_for_future_integration": True
+                "cloud_agent_prompt": cloud_agent_prompt,
+                "environment_detected": "Cursor Cloud Agent",
+                "socket_available": True,
+                "socket_path": agent_socket,
+                "required_implementation": (
+                    "Python client for /run/cursor/api.sock to invoke Task tool, "
+                    "or orchestration-layer dispatcher that executes via cloud agent with Task access"
+                ),
+                "recommended_action": (
+                    "SUCCESSOR IMPLEMENTATION: Create Python binding to invoke Task tool via agent socket, "
+                    "enabling subagent launch with bounded wait and observed completion status"
+                )
             }
         )
 
@@ -312,6 +379,8 @@ class TriageDispatcher:
             "failed": sum(1 for r in receipts if r.dispatch_status == DispatchStatus.FAILED),
             "blocked_unsupported": sum(1 for r in receipts if r.dispatch_status == DispatchStatus.BLOCKED_UNSUPPORTED),
             "blocked_missing": sum(1 for r in receipts if r.dispatch_status == DispatchStatus.BLOCKED_MISSING_ADAPTER),
+            "blocked_host": sum(1 for r in receipts if r.dispatch_status == "BLOCKED_HOST"),
+            "blocked_api": sum(1 for r in receipts if r.dispatch_status == "BLOCKED_API"),
             "receipts": [r.to_dict() for r in receipts]
         }
         with open(summary_path, 'w') as f:

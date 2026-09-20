@@ -123,7 +123,7 @@ try {
     Test-Condition "Schema has dispatch_status enum" `
         ($null -ne $Schema.properties.dispatch_status.enum)
 
-    $Statuses = @("DISPATCHED", "EXECUTED", "BLOCKED_UNSUPPORTED", "BLOCKED_MISSING_ADAPTER", "BLOCKED_POLICY_VIOLATION", "FAILED")
+    $Statuses = @("DISPATCHED", "EXECUTED", "BLOCKED_UNSUPPORTED", "BLOCKED_MISSING_ADAPTER", "BLOCKED_POLICY_VIOLATION", "BLOCKED_HOST", "BLOCKED_API", "FAILED")
     foreach ($status in $Statuses) {
         Test-Condition "Schema defines status $status" `
             ($Schema.properties.dispatch_status.enum -contains $status)
