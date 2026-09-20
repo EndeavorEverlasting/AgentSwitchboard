@@ -1,0 +1,32 @@
+{
+  "schema": "agentswitchboard.execution-receipt/v1",
+  "requestId": "req_cursor_20260920_001",
+  "correlationId": "corr-trio-v1-demo",
+  "adapterKind": "cursor-cloud-agent",
+  "status": "BLOCKED",
+  "startedAt": "2026-09-20T17:00:00Z",
+  "completedAt": "2026-09-20T17:00:00.010000Z",
+  "durationMs": 10,
+  "executionIdentity": null,
+  "exitCode": null,
+  "artifacts": [],
+  "output": {
+    "stdoutExcerpt": "",
+    "stderrExcerpt": "",
+    "structuredResult": null
+  },
+  "blocker": {
+    "code": "BLOCKED_API",
+    "message": "Cursor Task dispatch bridge is not available in this fixture.",
+    "stage": "probe",
+    "retryable": true
+  },
+  "proof": {
+    "level": "CONTRACT_STATIC",
+    "independentValidationRequired": true,
+    "validationArtifact": "synthetic-fixture-only",
+    "notes": [
+      "Fixture demonstrates fail-closed shape only."
+    ]
+  }
+}
