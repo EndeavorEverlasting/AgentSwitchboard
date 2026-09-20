@@ -372,17 +372,17 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## ASQ-022 — Execute adapter trio v1 implementation waves
 
-- **Status:** IN_PROGRESS
+- **Status:** CLAIMED
 - **Priority:** P0
 - **Work class:** BOUNDED
 - **Owner:** execution-adapter shared-spine / convergence coordinator
-- **Branch / PR:** main@59649d776bf3db8e73f0401f13a2b32b760892fa contains PR #335 contract floor; active writer `feat/eat-005-execution-adapter-registry-20260920` for EAT-005
+- **Branch / PR:** main@59649d776bf3db8e73f0401f13a2b32b760892fa contains PR #335 contract floor; active writer PR #336 / `feat/eat-005-execution-adapter-registry-20260920` for EAT-005
 - **Scope:** advance the frozen execution-adapter v1 contract into the executable generic adapter interface/registry/runner (EAT-005), preserve the legacy Triage receipt bridge, then open isolated local-argv, Claude Code, and Cursor CloudAgent implementation lanes according to the canonical public plan; EAT-301 PR #332 floor repair may proceed independently.
 - **Forbidden:** overwriting PR #332-owned dispatch files before EAT-302 reconciliation; moving Prompt Kit semantics into adapters; creating a second crew scheduler; weakening the FirstMate crew-runtime ADR; inventing `scripts/prompt_parallel_dispatch.py`; interactive provider login; secrets/private runtime receipts; claiming native adapter runtime proof from registry/static CI alone.
 - **Dependencies:** execution-adapter contract floor integrated on main (PR #335 / 59649d77…); EAT-301 independently depends only on PR #332 exact-head ownership.
-- **References:** plan-id ASB-2026-09-EXECUTION-ADAPTER-TRIO-V1; `plans/active/ASB-2026-09-execution-adapter-trio-v1.plan.json`; `plans/active/ASB-2026-09-execution-adapter-trio-v1.md`; `tooling/harness/execution-adapters/execution-adapter-contract.v1.json`; `tooling/harness/execution-adapters/{adapter_protocol,registry,runner}.py`; `docs/harness/execution-adapter-contract-v1.md`; `scripts/Test-ExecutionAdapterContract.ps1`; PR #332
+- **References:** plan-id ASB-2026-09-EXECUTION-ADAPTER-TRIO-V1; `plans/active/ASB-2026-09-execution-adapter-trio-v1.plan.json`; `plans/active/ASB-2026-09-execution-adapter-trio-v1.md`; `tooling/harness/execution-adapters/execution-adapter-contract.v1.json`; `tooling/harness/execution-adapters/adapter_protocol.py`; `tooling/harness/execution-adapters/registry.py`; `tooling/harness/execution-adapters/runner.py`; `docs/harness/execution-adapter-contract-v1.md`; `scripts/Test-ExecutionAdapterContract.ps1`; PR #332; PR #336
 - **Acceptance gate:** EAT-005 generic interface/registry/runner is integrated against the frozen request/receipt/capability contracts with focused tests; unknown/unready adapters fail closed; plan coordination advances local/Claude/Cursor tasks to dependency-ready states without shared-file collisions.
-- **Gate:** none for EAT-005 start — contract floor is on main; PR #332 remains a separate writer until EAT-302.
-- **Last proof:** PR #335 merged to main@59649d77…; `Test-ExecutionAdapterContract.ps1` PASS on exact main worktree; legacy `dispatch_lanes.py` local-argv live protected-control observed (exit 0 marker + exit 42) under `%TEMP%/asb-runtime-proof-59649d77`; DeepSeek harness path BLOCKED (empty nested reparse, `dsh` not on PATH).
-- **Next action:** finish validating/pushing EAT-005 exact-head; then open EAT-006 + isolated EAT-101/EAT-201/EAT-302 lanes from refreshed main containing EAT-005.
-- **Updated:** 2026-09-20T22:35:00Z
+- **Gate:** none for EAT-005 start — contract floor is on main; PR #332 remains a separate writer until EAT-302; PR #336 must pass exact-head required checks before merge.
+- **Last proof:** PR #335 merged to main@59649d77…; `Test-ExecutionAdapterContract.ps1` PASS on exact main worktree; legacy `dispatch_lanes.py` local-argv live protected-control observed (exit 0 marker + exit 42) under disposable `%TEMP%/asb-runtime-proof-59649d77`; DeepSeek harness path BLOCKED (empty nested reparse, `dsh` not on PATH); EAT-005 implementation pushed as PR #336 head 40bee8ee….
+- **Next action:** repair PR #336 ledger/plan enum and path-reference contract failures, then merge #336 when exact-head gates are green and open EAT-006 + isolated EAT-101/EAT-201/EAT-302 lanes from refreshed main.
+- **Updated:** 2026-09-20T22:40:00Z

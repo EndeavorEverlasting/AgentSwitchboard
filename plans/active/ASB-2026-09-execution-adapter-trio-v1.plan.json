@@ -165,7 +165,7 @@
     {
       "taskId": "EAT-005",
       "title": "Implement generic adapter interface and registry",
-      "status": "in_progress",
+      "status": "in-progress",
       "owner": "shared-spine",
       "dependencies": [
         "EAT-001",
