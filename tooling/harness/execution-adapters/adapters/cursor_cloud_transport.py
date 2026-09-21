@@ -201,23 +201,47 @@ class CursorTaskTransport:
         _validate_request_id(request_id)
         request_path = self.paths.requests_dir / f"{request_id}.json"
         result_path = self.paths.results_dir / f"{request_id}.json"
-        if request_path.exists() or result_path.exists():
-            raise CursorTransportError(
-                f"requestId already has transport state: {request_id}"
-            )
+        claim_path = self.paths.requests_dir / f".{request_id}.claim"
 
-        submitted = _utc_now()
-        expires = submitted + timedelta(seconds=timeout_seconds)
-        atomic_write_json(
-            request_path,
-            {
-                "protocol": REQUEST_PROTOCOL,
-                "requestId": request_id,
-                "submittedAt": _iso(submitted),
-                "expiresAt": _iso(expires),
-                "executionRequest": dict(execution_request),
-            },
-        )
+        claim_descriptor: Optional[int] = None
+        try:
+            claim_descriptor = os.open(
+                claim_path,
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                0o600,
+            )
+            os.close(claim_descriptor)
+            claim_descriptor = None
+        except FileExistsError as exc:
+            raise CursorTransportError(
+                f"requestId is already claimed: {request_id}"
+            ) from exc
+        finally:
+            if claim_descriptor is not None:
+                os.close(claim_descriptor)
+
+        try:
+            if request_path.exists() or result_path.exists():
+                raise CursorTransportError(
+                    f"requestId already has transport state: {request_id}"
+                )
+
+            submitted = _utc_now()
+            expires = submitted + timedelta(seconds=timeout_seconds)
+            atomic_write_json(
+                request_path,
+                {
+                    "protocol": REQUEST_PROTOCOL,
+                    "requestId": request_id,
+                    "submittedAt": _iso(submitted),
+                    "expiresAt": _iso(expires),
+                    "executionRequest": dict(execution_request),
+                },
+            )
+        except Exception:
+            claim_path.unlink(missing_ok=True)
+            raise
+
         return request_path
 
     def wait_for_result(
@@ -229,7 +253,13 @@ class CursorTaskTransport:
         _validate_request_id(request_id)
         request_path = self.paths.requests_dir / f"{request_id}.json"
         result_path = self.paths.results_dir / f"{request_id}.json"
+        claim_path = self.paths.requests_dir / f".{request_id}.claim"
         deadline = time.monotonic() + timeout_seconds
+
+        def cleanup() -> None:
+            request_path.unlink(missing_ok=True)
+            result_path.unlink(missing_ok=True)
+            claim_path.unlink(missing_ok=True)
 
         while time.monotonic() <= deadline:
             if result_path.exists():
@@ -244,14 +274,14 @@ class CursorTaskTransport:
                             "Task bridge result requestId does not match request"
                         )
                 except CursorTransportError:
-                    request_path.unlink(missing_ok=True)
+                    cleanup()
                     raise
 
-                request_path.unlink(missing_ok=True)
+                cleanup()
                 return payload
             time.sleep(poll_interval)
 
-        request_path.unlink(missing_ok=True)
+        cleanup()
         return {
             "protocol": RESULT_PROTOCOL,
             "requestId": request_id,
