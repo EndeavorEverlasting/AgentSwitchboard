@@ -121,12 +121,14 @@ Dispatch complete: 1 executed, 0 failed, 1 total
 - Request written to `/tmp/cursor-agent-requests/`
 - Mock orchestrator processed request
 - Result written to `/tmp/cursor-agent-results/`
-- Receipt contains cloudAgentBcId
+- Receipt contains `execution_details.cloud_agent_id`
 - Receipt contains dashboard URL in artifacts
 
-### Real Task Tool Launch
+### Real Task Tool Launch — Historical Observation Only
 
-**Observed**: Real subagent launch via Task tool during implementation
+**EAT-301 disposition**: preserved as an unpromoted historical observation for EAT-302..308 reconciliation. It is not current proof that #332 provides an unattended ASB→Task→terminal-result bridge.
+
+**Observed historically**: real subagent launch via Task tool during implementation
 
 **Agent ID**: `bc-c863f8be-d1e9-54ee-9514-870b3245d5bb`
 
@@ -146,12 +148,10 @@ Task complete. I've printed the test message, verified I'm running as a cloud ag
 and made no changes to the workspace as requested.
 ```
 
-**Verdict**: ✅ PASS (Real Subagent Launch)
-- Task tool successfully invoked from cloud agent
-- Subagent received prompt and executed
-- Agent ID captured (bc-c863f8be-d1e9-54ee-9514-870b3245d5bb)
-- Dashboard URL constructed
-- Proof level: OBSERVED (not mocked)
+**Verdict**: HISTORICAL OBSERVATION — UNPROMOTED IN EAT-301
+- A Task-tool launch was observed during the earlier implementation session.
+- The observation is retained as successor evidence, not as proof of the repository path under EAT-301.
+- Machine-closed ASB→Task dispatch and terminal-result capture remain required successor proof.
 
 ## Architecture
 
@@ -200,7 +200,7 @@ and made no changes to the workspace as requested.
 ### EXECUTED
 - Orchestration active
 - Subagent launched via Task tool
-- Receipt includes cloudAgentBcId
+- Receipt includes `execution_details.cloud_agent_id`
 - Receipt includes dashboard URL
 - **NEW in P07 Successor**
 
@@ -212,20 +212,22 @@ and made no changes to the workspace as requested.
 
 ## Proof Ceiling
 
-**Achieved**: Orchestration proof + observed Task tool launch
+**EAT-301 active proof ceiling**: deterministic integration hygiene only.
 
-**Proves**:
-1. ✅ Protected control: local-argv EXECUTED with exit code (no regression)
-2. ✅ Orchestration protocol: request/result filesystem IPC works
-3. ✅ Mock orchestrator: test harness validates protocol end-to-end
-4. ✅ Real Task tool: observed subagent launch bc-c863f8be-d1e9-54ee-9514-870b3245d5bb
-5. ✅ Receipt generation: cloudAgentBcId and dashboard URL captured
-6. ✅ Fail-closed: BLOCKED_HOST / BLOCKED_API when orchestration unavailable
+This report preserves older implementation and runtime observations as historical inputs, but EAT-301 does not promote them into current runtime proof. Current branch/CI integration state must be read from refreshed provider evidence.
+
+**Historical implementation evidence retained for successor reconciliation**:
+1. Protected control behavior was previously exercised for local-argv exit-code capture.
+2. The request/result filesystem protocol was previously exercised with a mock orchestrator.
+3. Synthetic receipts use the serialized field `execution_details.cloud_agent_id` plus dashboard URL.
+4. A real Task-tool launch was observed separately during implementation, but not through a machine-closed #332 production bridge.
 
 **Does NOT Prove**:
-- ❌ End-to-end production dispatch (requires orchestrator deployment)
-- ❌ Concurrent subagent launches (single test only)
-- ❌ Error handling for subagent failures (mock always succeeds)
+- Unattended ASB→Task→terminal-result runtime
+- CURSOR_CLOUD_AGENT_RUNTIME_OBSERVED
+- Production orchestrator deployment
+- Concurrent subagent launches
+- Complete failure-path handling
 
 ## Usage
 
