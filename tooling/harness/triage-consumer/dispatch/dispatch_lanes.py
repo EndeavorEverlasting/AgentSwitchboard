@@ -127,6 +127,35 @@ class TriageDispatcher:
         if not dispatch_rules.get("fail_closed_on_policy_violation", False):
             raise ValueError("Policy violation: fail_closed_on_policy_violation must be true")
 
+    @staticmethod
+    def _lane_ready_for_execution(lane_obj) -> bool:
+        """Match the consumer's canonical executable-lane readiness predicate."""
+        return lane_obj.status == "PLANNED" and not lane_obj.dependencies
+
+    @staticmethod
+    def _build_cloud_agent_prompt(lane_obj, mapping_obj) -> str:
+        """Preserve the complete bounded lane contract in the launched prompt."""
+        lane_contract = {
+            "lane_id": lane_obj.lane_id,
+            "mission": lane_obj.mission,
+            "mapped_prompt": mapping_obj.cloud_agent_prompt,
+            "status": lane_obj.status,
+            "dependencies": lane_obj.dependencies,
+            "owned_mutation_surfaces": lane_obj.owned_mutation_surfaces,
+            "forbidden_surfaces": lane_obj.forbidden_surfaces,
+            "expected_artifacts": lane_obj.expected_artifacts,
+            "validation": lane_obj.validation,
+            "convergence_owner": lane_obj.convergence_owner,
+            "launch": lane_obj.launch,
+        }
+        return (
+            "Execute exactly the bounded Triage lane contract below. "
+            "Do not mutate forbidden surfaces or widen scope. "
+            "Produce the expected artifacts, run the declared validation, "
+            "and return evidence to the convergence owner.\n\n"
+            + json.dumps(lane_contract, indent=2, sort_keys=True)
+        )
+
     def dispatch_lane(
         self,
         lane_obj,
@@ -147,6 +176,26 @@ class TriageDispatcher:
         lane_id = lane_obj.lane_id
         lane_mission = lane_obj.mission
         adapter_kind = mapping_obj.asb_descriptor_kind.value
+
+        mutation_capable = mapping_obj.asb_descriptor_kind in {
+            AsbDescriptorKind.LOCAL_ARGV,
+            AsbDescriptorKind.CURSOR_CLOUD_AGENT,
+        }
+        if mutation_capable and not self._lane_ready_for_execution(lane_obj):
+            return DispatchReceipt(
+                lane_id=lane_id,
+                lane_mission=lane_mission,
+                adapter_kind=adapter_kind,
+                dispatch_status=DispatchStatus.BLOCKED_POLICY_VIOLATION,
+                blocking_reason=(
+                    "Lane is not dependency-ready for executable dispatch"
+                ),
+                descriptor={
+                    "required_status": "PLANNED",
+                    "observed_status": lane_obj.status,
+                    "blocking_dependencies": lane_obj.dependencies,
+                },
+            )
 
         if mapping_obj.asb_descriptor_kind == AsbDescriptorKind.LOCAL_ARGV:
             return self._execute_local_argv(lane_obj, mapping_obj, cwd)
@@ -249,9 +298,9 @@ class TriageDispatcher:
         mapping_obj
     ) -> DispatchReceipt:
         """Handle cursor-cloud-agent adapter with orchestration-layer subagent launch."""
-        cloud_agent_prompt = mapping_obj.cloud_agent_prompt
+        mapped_prompt = mapping_obj.cloud_agent_prompt
 
-        if not cloud_agent_prompt:
+        if not mapped_prompt:
             return DispatchReceipt(
                 lane_id=lane_obj.lane_id,
                 lane_mission=lane_obj.mission,
@@ -259,6 +308,11 @@ class TriageDispatcher:
                 dispatch_status=DispatchStatus.BLOCKED_MISSING_ADAPTER,
                 blocking_reason="cloud_agent_prompt not present in mapping"
             )
+
+        cloud_agent_prompt = self._build_cloud_agent_prompt(
+            lane_obj,
+            mapping_obj,
+        )
 
         in_cloud_agent = os.environ.get("CURSOR_AGENT") == "1"
         agent_socket = os.environ.get("CURSOR_AGENT_SOCKET")
