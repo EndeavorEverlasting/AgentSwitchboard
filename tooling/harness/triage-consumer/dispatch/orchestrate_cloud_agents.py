@@ -20,7 +20,7 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, Dict, Any\n\nfrom cursor_agent_client import atomic_write_json, get_orchestration_paths
+from typing import Optional, Dict, Any
 
 
 class OrchestrationError(Exception):

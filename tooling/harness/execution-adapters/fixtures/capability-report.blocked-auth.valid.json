@@ -1,0 +1,31 @@
+{
+  "schema": "agentswitchboard.execution-capability-report/v1",
+  "probeId": "probe_claude_20260920_001",
+  "adapterKind": "claude-code",
+  "status": "BLOCKED",
+  "observedAt": "2026-09-20T17:00:00Z",
+  "nativeHarness": {
+    "name": "Claude Code CLI",
+    "version": null
+  },
+  "readiness": {
+    "host": "READY",
+    "binary": "READY",
+    "auth": "BLOCKED",
+    "transport": "NOT_APPLICABLE",
+    "dispatch": "BLOCKED"
+  },
+  "capabilities": {
+    "mutation": true,
+    "structuredOutput": true,
+    "executionIdentity": true,
+    "remoteExecution": false,
+    "timeoutControl": true
+  },
+  "blocker": {
+    "code": "BLOCKED_AUTH",
+    "message": "Authentication is unavailable; interactive login is forbidden during probe.",
+    "retryable": true
+  },
+  "proofCeiling": "CAPABILITY_PROBE_ONLY"
+}

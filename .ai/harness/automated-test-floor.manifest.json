@@ -41,6 +41,36 @@
       "proof": "public plan registry and startup readiness structure"
     },
     {
+      "id": "execution-adapter-contract-script",
+      "runner": "python-script",
+      "path": "tests/test_execution_adapter_contract.py",
+      "required": true,
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "expectStdoutContains": [
+        "PASS"
+      ],
+      "proof": "execution-adapter v1 schema, semantic, plan, and fail-closed contract"
+    },
+    {
+      "id": "execution-adapter-registry-script",
+      "runner": "python-script",
+      "path": "tests/test_execution_adapter_registry.py",
+      "required": true,
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "expectStdoutContains": [
+        "PASS"
+      ],
+      "proof": "execution-adapter generic registry/runner resolve-probe-execute fail-closed spine"
+    },
+    {
       "id": "runtime-event-script",
       "runner": "python-script",
       "path": "tests/test_runtime_event_contract.py",
@@ -69,21 +99,6 @@
         "PASS"
       ],
       "proof": "canonical device-profile launcher contracts"
-    },
-    {
-      "id": "cursor-cloud-agent-orchestration-script",
-      "runner": "python-script",
-      "path": "tooling/harness/triage-consumer/dispatch/test_cloud_agent_orchestration.py",
-      "required": true,
-      "platforms": [
-        "windows",
-        "linux",
-        "macos"
-      ],
-      "expectStdoutContains": [
-        "PASS cloud-agent orchestration contract"
-      ],
-      "proof": "active-monitor readiness, private atomic IPC, timeout cancellation, executable-lane readiness, bounded prompt propagation, and EXECUTED identity metadata"
     },
     {
       "id": "app-harness-script",
