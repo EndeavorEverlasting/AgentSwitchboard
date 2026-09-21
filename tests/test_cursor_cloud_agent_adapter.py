@@ -212,6 +212,34 @@ def test_transport_timeout_cancels_pending_request():
         assert not (paths.requests_dir / f"{request['requestId']}.json").exists()
 
 
+def test_transport_malformed_result_cancels_pending_request():
+    with tempfile.TemporaryDirectory(prefix="asb-cursor-malformed-") as root:
+        environment = {
+            transport_mod.SESSION_ENV: str(Path(root) / "session")
+        }
+        paths = transport_mod.resolve_session_paths(environment)
+        assert paths is not None
+        transport = transport_mod.CursorTaskTransport(paths)
+        request = _cursor_request()
+        transport.publish_request(request, timeout_seconds=1)
+        result_path = paths.results_dir / f"{request['requestId']}.json"
+        result_path.write_text("{broken", encoding="utf-8")
+
+        try:
+            transport.wait_for_result(
+                request["requestId"],
+                timeout_seconds=0.1,
+                poll_interval=0.01,
+            )
+            raise AssertionError("expected CursorTransportError")
+        except transport_mod.CursorTransportError:
+            pass
+
+        assert not (
+            paths.requests_dir / f"{request['requestId']}.json"
+        ).exists()
+
+
 def test_transport_rejects_mismatched_result_identity():
     with tempfile.TemporaryDirectory(prefix="asb-cursor-mismatch-") as root:
         environment = {
@@ -324,6 +352,7 @@ def main() -> None:
     test_stale_bridge_readiness_fails_closed()
     test_relative_session_path_fails_closed()
     test_transport_timeout_cancels_pending_request()
+    test_transport_malformed_result_cancels_pending_request()
     test_transport_rejects_mismatched_result_identity()
     test_runner_blocks_when_task_bridge_is_not_ready()
     test_synthetic_bridge_executes_without_runtime_proof_promotion()
