@@ -7,8 +7,10 @@ Support is fail-closed: cloud-agent/socket presence is necessary but not suffici
 a fresh readiness heartbeat from the active monitor is also required.
 """
 
+import getpass
 import json
 import os
+import re
 import tempfile
 import time
 from dataclasses import dataclass
