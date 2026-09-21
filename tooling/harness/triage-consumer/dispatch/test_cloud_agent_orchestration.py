@@ -46,6 +46,7 @@ def monitor_and_respond_to_requests(
     results_dir,
     readiness_file,
     stop_event,
+    observed_prompts,
 ):
     """Act as an active mock parent monitor with the production readiness contract."""
 
@@ -71,6 +72,7 @@ def monitor_and_respond_to_requests(
                         continue
 
                     request_id = request["request_id"]
+                    observed_prompts.append(request["prompt"])
                     result_file = results_dir / f"{request_id}.json"
                     atomic_write_json(
                         result_file,
@@ -98,60 +100,150 @@ def monitor_and_respond_to_requests(
         readiness_file.unlink(missing_ok=True)
 
 
+def cloud_lane(
+    lane_id,
+    mission,
+    *,
+    dependencies=None,
+    status="PLANNED",
+    owned=None,
+    forbidden=None,
+    artifacts=None,
+    validation=None,
+    convergence_owner="triage-coordinator",
+):
+    return {
+        "lane_id": lane_id,
+        "mission": mission,
+        "dependencies": dependencies or [],
+        "owned_mutation_surfaces": owned or [],
+        "forbidden_surfaces": forbidden or [],
+        "adapter": {"kind": "cursor-cloud-agent"},
+        "launch": {
+            "mode": "runtime_tool",
+            "tool": "cursor-cloud-agent",
+        },
+        "expected_artifacts": artifacts or [],
+        "validation": validation or [],
+        "convergence_owner": convergence_owner,
+        "status": status,
+    }
+
+
 def write_synthetic_manifest(path):
     manifest = {
         "schema_version": "1.0",
         "run_id": "cloud-agent-orchestration-contract",
-        "graph_width": 1,
+        "graph_width": 3,
         "parallel_disposition": "safe",
         "autonomy_gap": None,
         "lanes": [
-            {
-                "lane_id": "lane-cloud-agent-executed",
-                "mission": "Prove active-monitor cloud-agent execution receipt",
-                "dependencies": [],
-                "owned_mutation_surfaces": ["synthetic-test"],
-                "forbidden_surfaces": [],
-                "adapter": {"kind": "cursor-cloud-agent"},
-                "launch": {
-                    "mode": "runtime_tool",
-                    "tool": "cursor-cloud-agent",
-                },
-                "expected_artifacts": [],
-                "validation": [],
-                "convergence_owner": "test",
-                "status": "PLANNED",
-            }
+            cloud_lane(
+                "lane-cloud-agent-executed",
+                "Prove bounded active-monitor cloud-agent execution",
+                owned=["src/ready.py"],
+                forbidden=["secrets/"],
+                artifacts=["reports/ready.json"],
+                validation=["python validate_ready.py"],
+            ),
+            cloud_lane(
+                "lane-cloud-agent-dependency-blocked",
+                "Must not launch before prerequisite completion",
+                dependencies=["lane-prerequisite"],
+                owned=["src/dependency-blocked.py"],
+            ),
+            cloud_lane(
+                "lane-cloud-agent-status-blocked",
+                "Must not relaunch a non-PLANNED lane",
+                status="COMPLETE",
+                owned=["src/status-blocked.py"],
+            ),
         ],
     }
     atomic_write_json(path, manifest)
 
 
-def assert_cloud_receipt(output_dir):
+def load_receipt(output_dir, lane_id):
+    path = Path(output_dir) / f"receipt-{lane_id}.json"
+    with open(path, "r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def assert_executed_receipt(receipt):
+    if receipt.get("dispatch_status") != "EXECUTED":
+        raise AssertionError(
+            "cloud-agent receipt was not EXECUTED: "
+            f"{receipt.get('dispatch_status')}"
+        )
+    details = receipt.get("execution_details") or {}
+    if not details.get("cloud_agent_id"):
+        raise AssertionError("EXECUTED receipt missing cloud_agent_id")
+    if not details.get("dashboard_url"):
+        raise AssertionError("EXECUTED receipt missing dashboard_url")
+
+
+def assert_synthetic_regressions(output_dir, observed_prompts):
+    ready = load_receipt(output_dir, "lane-cloud-agent-executed")
+    assert_executed_receipt(ready)
+
+    for lane_id in (
+        "lane-cloud-agent-dependency-blocked",
+        "lane-cloud-agent-status-blocked",
+    ):
+        receipt = load_receipt(output_dir, lane_id)
+        if receipt.get("dispatch_status") != "BLOCKED_POLICY_VIOLATION":
+            raise AssertionError(
+                f"{lane_id} unexpectedly dispatched: "
+                f"{receipt.get('dispatch_status')}"
+            )
+
+    if len(observed_prompts) != 1:
+        raise AssertionError(
+            "only the dependency-ready PLANNED lane may reach the monitor; "
+            f"observed {len(observed_prompts)} requests"
+        )
+
+    prompt = observed_prompts[0]
+    required_fragments = (
+        '"owned_mutation_surfaces"',
+        '"src/ready.py"',
+        '"forbidden_surfaces"',
+        '"secrets/"',
+        '"expected_artifacts"',
+        '"reports/ready.json"',
+        '"validation"',
+        '"python validate_ready.py"',
+        '"dependencies"',
+        '"convergence_owner"',
+        '"triage-coordinator"',
+        '"launch"',
+    )
+    missing = [fragment for fragment in required_fragments if fragment not in prompt]
+    if missing:
+        raise AssertionError(
+            "bounded cloud-agent prompt omitted contract fields: "
+            + ", ".join(missing)
+        )
+
+
+def assert_supplied_manifest_has_executed_cloud_receipt(output_dir):
     receipts = []
-    for path in Path(output_dir).glob("*.json"):
-        try:
-            with open(path, "r", encoding="utf-8") as handle:
-                payload = json.load(handle)
-        except (OSError, json.JSONDecodeError):
-            continue
+    for path in Path(output_dir).glob("receipt-*.json"):
+        with open(path, "r", encoding="utf-8") as handle:
+            payload = json.load(handle)
         if payload.get("adapter_kind") == "cursor-cloud-agent":
             receipts.append(payload)
 
     if not receipts:
         raise AssertionError("no cursor-cloud-agent receipt was generated")
-
-    for receipt in receipts:
-        if receipt.get("dispatch_status") != "EXECUTED":
-            raise AssertionError(
-                "cloud-agent receipt was not EXECUTED: "
-                f"{receipt.get('dispatch_status')}"
-            )
-        details = receipt.get("execution_details") or {}
-        if not details.get("cloud_agent_id"):
-            raise AssertionError("EXECUTED receipt missing cloud_agent_id")
-        if not details.get("dashboard_url"):
-            raise AssertionError("EXECUTED receipt missing dashboard_url")
+    executed = [
+        receipt for receipt in receipts
+        if receipt.get("dispatch_status") == "EXECUTED"
+    ]
+    if not executed:
+        raise AssertionError("no cursor-cloud-agent lane executed")
+    for receipt in executed:
+        assert_executed_receipt(receipt)
 
 
 def main():
@@ -166,8 +258,9 @@ def main():
         results_dir = root / "results"
         readiness_file = root / "orchestrator-ready.json"
         socket_file = root / "agent.sock"
+        supplied_manifest = len(sys.argv) > 1
         manifest_path = (
-            Path(sys.argv[1]) if len(sys.argv) > 1 else root / "manifest.json"
+            Path(sys.argv[1]) if supplied_manifest else root / "manifest.json"
         )
         output_dir = (
             Path(sys.argv[2]) if len(sys.argv) > 2 else root / "receipts"
@@ -178,7 +271,7 @@ def main():
         output_dir.mkdir(parents=True, exist_ok=True)
         socket_file.touch()
 
-        if len(sys.argv) <= 1:
+        if not supplied_manifest:
             write_synthetic_manifest(manifest_path)
 
         env_values = {
@@ -214,6 +307,7 @@ def main():
                 raise AssertionError("timed-out request remained launchable")
 
             stop_event = threading.Event()
+            observed_prompts = []
             monitor = threading.Thread(
                 target=monitor_and_respond_to_requests,
                 args=(
@@ -221,6 +315,7 @@ def main():
                     results_dir,
                     readiness_file,
                     stop_event,
+                    observed_prompts,
                 ),
                 daemon=True,
             )
@@ -257,7 +352,13 @@ def main():
                     f"dispatch exited with code {result.returncode}"
                 )
 
-            assert_cloud_receipt(output_dir)
+            if supplied_manifest:
+                assert_supplied_manifest_has_executed_cloud_receipt(output_dir)
+            else:
+                assert_synthetic_regressions(
+                    output_dir,
+                    observed_prompts,
+                )
 
     print("PASS cloud-agent orchestration contract")
 
