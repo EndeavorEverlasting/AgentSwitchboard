@@ -181,7 +181,10 @@ class CursorCloudAgentAdapter:
         agent_id = raw.get("cloudAgentBcId")
         dashboard_url = raw.get("dashboardUrl")
         execution_identity = None
-        if isinstance(agent_id, str) and agent_id:
+        if (
+            isinstance(agent_id, str)
+            and 0 < len(agent_id) <= 1000
+        ):
             execution_identity = {
                 "kind": "CURSOR_CLOUD_AGENT",
                 "value": agent_id,
@@ -272,9 +275,6 @@ class CursorCloudAgentAdapter:
                 "stderrExcerpt": "",
                 "structuredResult": {
                     "providerStatus": "COMPLETED",
-                    "dashboardUrl": (
-                        safe_dashboard_url
-                    ),
                 },
             },
             "blocker": None,
