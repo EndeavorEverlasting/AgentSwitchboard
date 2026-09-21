@@ -235,10 +235,20 @@ class CursorCloudAgentAdapter:
                 execution_identity=execution_identity,
             )
 
+        safe_dashboard_url = (
+            dashboard_url
+            if isinstance(dashboard_url, str)
+            and 0 < len(dashboard_url) <= 4096
+            else None
+        )
         artifacts = []
-        if isinstance(dashboard_url, str) and dashboard_url:
+        if safe_dashboard_url is not None:
             artifacts.append(
-                {"kind": "URL", "locator": dashboard_url, "sha256": None}
+                {
+                    "kind": "URL",
+                    "locator": safe_dashboard_url,
+                    "sha256": None,
+                }
             )
 
         completed_wall = _utc_now()
@@ -263,9 +273,7 @@ class CursorCloudAgentAdapter:
                 "structuredResult": {
                     "providerStatus": "COMPLETED",
                     "dashboardUrl": (
-                        dashboard_url
-                        if isinstance(dashboard_url, str)
-                        else None
+                        safe_dashboard_url
                     ),
                 },
             },
