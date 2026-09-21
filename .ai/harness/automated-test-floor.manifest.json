@@ -30,8 +30,14 @@
       "runner": "python-script",
       "path": "tests/test_public_plan_contracts.py",
       "required": true,
-      "platforms": ["windows", "linux", "macos"],
-      "expectStdoutContains": ["PASS"],
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "expectStdoutContains": [
+        "PASS"
+      ],
       "proof": "public plan registry and startup readiness structure"
     },
     {
@@ -39,8 +45,14 @@
       "runner": "python-script",
       "path": "tests/test_runtime_event_contract.py",
       "required": true,
-      "platforms": ["windows", "linux", "macos"],
-      "expectStdoutContains": ["PASS"],
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "expectStdoutContains": [
+        "PASS"
+      ],
       "proof": "runtime-event static topology and synthetic causality fixtures"
     },
     {
@@ -48,17 +60,44 @@
       "runner": "python-script",
       "path": "tests/test_device_profile_launcher_contract.py",
       "required": true,
-      "platforms": ["windows", "linux", "macos"],
-      "expectStdoutContains": ["PASS"],
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "expectStdoutContains": [
+        "PASS"
+      ],
       "proof": "canonical device-profile launcher contracts"
+    },
+    {
+      "id": "cursor-cloud-agent-orchestration-script",
+      "runner": "python-script",
+      "path": "tooling/harness/triage-consumer/dispatch/test_cloud_agent_orchestration.py",
+      "required": true,
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "expectStdoutContains": [
+        "PASS cloud-agent orchestration contract"
+      ],
+      "proof": "active-monitor readiness, atomic request/result publication, timeout cancellation, and EXECUTED identity metadata"
     },
     {
       "id": "app-harness-script",
       "runner": "python-script",
       "path": "tests/test_app_harness_validator.py",
       "required": true,
-      "platforms": ["windows", "linux", "macos"],
-      "expectStdoutContains": ["PASS"],
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "expectStdoutContains": [
+        "PASS"
+      ],
       "proof": "one-command offline app harness validator contracts"
     },
     {
@@ -66,8 +105,14 @@
       "runner": "python-script",
       "path": "tests/test_exact_grounding_gate.py",
       "required": true,
-      "platforms": ["windows", "linux", "macos"],
-      "expectStdoutContains": ["PASS"],
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "expectStdoutContains": [
+        "PASS"
+      ],
       "proof": "fail-closed exact-output grounding fixtures"
     },
     {
@@ -75,8 +120,14 @@
       "runner": "python-script",
       "path": "tests/test_harness_infrastructure_completeness.py",
       "required": true,
-      "platforms": ["windows", "linux", "macos"],
-      "expectStdoutContains": ["PASS"],
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "expectStdoutContains": [
+        "PASS"
+      ],
       "proof": "tracked harness infrastructure completeness"
     },
     {
@@ -84,16 +135,28 @@
       "runner": "python-script",
       "path": "tests/test_operational_harness.py",
       "required": true,
-      "platforms": ["windows", "linux", "macos"],
-      "expectStdoutContains": ["PASS"],
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "expectStdoutContains": [
+        "PASS"
+      ],
       "proof": "operational harness completeness and routing contracts"
     },
     {
       "id": "progressive-disclosure-unittest",
       "runner": "python-unittest",
-      "modules": ["tests.test_progressive_disclosure_harness"],
+      "modules": [
+        "tests.test_progressive_disclosure_harness"
+      ],
       "required": true,
-      "platforms": ["windows", "linux", "macos"],
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
       "minTests": 1,
       "proof": "progressive disclosure context routing contracts"
     },
@@ -105,7 +168,11 @@
         "tests.test_repository_work_ledger_frontier"
       ],
       "required": true,
-      "platforms": ["windows", "linux", "macos"],
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
       "minTests": 1,
       "proof": "repository work ledger contract and frontier"
     },
@@ -114,7 +181,10 @@
       "runner": "pwsh-file",
       "path": "scripts/Test-AgentDocumentationContract.ps1",
       "required": true,
-      "platforms": ["windows", "linux"],
+      "platforms": [
+        "windows",
+        "linux"
+      ],
       "proof": "agent documentation and adapter contract"
     },
     {
@@ -122,7 +192,10 @@
       "runner": "pwsh-file",
       "path": "scripts/Test-PublicPlanContracts.ps1",
       "required": true,
-      "platforms": ["windows", "linux"],
+      "platforms": [
+        "windows",
+        "linux"
+      ],
       "proof": "PowerShell public-plan validator"
     },
     {
@@ -130,7 +203,10 @@
       "runner": "pwsh-file",
       "path": "scripts/Test-RuntimeEventContract.ps1",
       "required": true,
-      "platforms": ["windows", "linux"],
+      "platforms": [
+        "windows",
+        "linux"
+      ],
       "proof": "PowerShell runtime-event validator"
     },
     {
@@ -138,7 +214,10 @@
       "runner": "pwsh-file",
       "path": "scripts/Test-HarnessDoctrineContract.ps1",
       "required": true,
-      "platforms": ["windows", "linux"],
+      "platforms": [
+        "windows",
+        "linux"
+      ],
       "proof": "harness doctrine contract"
     }
   ]
