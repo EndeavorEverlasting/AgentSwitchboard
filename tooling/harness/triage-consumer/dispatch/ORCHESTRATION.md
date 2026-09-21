@@ -230,6 +230,16 @@ orchestration readiness.
 - `orchestrate_cloud_agents.py` is an instruction/marker producer only. It exits
   blocked and never writes the readiness signal; only the process that is
   actually monitoring requests may publish readiness.
+- Mutation-capable dispatch is permitted only for lanes whose status is `PLANNED`
+  and whose dependency list is empty, matching the Triage consumer readiness
+  predicate. Blocked lanes produce `BLOCKED_POLICY_VIOLATION` and never publish
+  launch requests.
+- The launched prompt carries the full bounded lane contract: mission,
+  dependencies, owned and forbidden surfaces, expected artifacts, validation,
+  convergence owner, status, and launch descriptor.
+- Default IPC state is isolated under a per-user temporary root. Request/result
+  directories are hardened toward owner-only access and JSON documents toward
+  owner read/write access where the host exposes POSIX permissions.
 - `test_cloud_agent_orchestration.py` is a dependency-free synthetic proof that
   covers the negative readiness control, timeout cancellation, active-monitor
   heartbeat, atomic mock result publication, and final receipt identity.
