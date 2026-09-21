@@ -10,7 +10,7 @@ import sys
 import tempfile
 import threading
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import ModuleType
 
@@ -157,6 +157,42 @@ def test_fresh_private_bridge_readiness_is_ready():
         _validate_capability(report)
 
 
+def test_stale_bridge_readiness_fails_closed():
+    with tempfile.TemporaryDirectory(prefix="asb-cursor-stale-") as root:
+        root_path = Path(root)
+        socket_path = root_path / "agent.sock"
+        socket_path.touch()
+        session = root_path / "session"
+        environment = _env(socket_path, session)
+        paths = transport_mod.resolve_session_paths(environment)
+        assert paths is not None
+        transport_mod.write_bridge_readiness(
+            paths,
+            "synthetic-monitor",
+            datetime.now(timezone.utc) - timedelta(seconds=60),
+        )
+        report = CursorCloudAgentAdapter(environment=environment).probe()
+        assert report["status"] == "BLOCKED"
+        assert report["readiness"]["transport"] == "READY"
+        assert report["readiness"]["dispatch"] == "BLOCKED"
+        assert report["blocker"]["code"] == "BLOCKED_API"
+        _validate_capability(report)
+
+
+def test_relative_session_path_fails_closed():
+    with tempfile.TemporaryDirectory(prefix="asb-cursor-relative-") as root:
+        socket_path = Path(root) / "agent.sock"
+        socket_path.touch()
+        environment = _env(socket_path)
+        environment[transport_mod.SESSION_ENV] = "relative/session"
+        report = CursorCloudAgentAdapter(environment=environment).probe()
+        assert report["status"] == "BLOCKED"
+        assert report["readiness"]["transport"] == "READY"
+        assert report["readiness"]["dispatch"] == "BLOCKED"
+        assert report["blocker"]["code"] == "BLOCKED_API"
+        _validate_capability(report)
+
+
 def test_transport_timeout_cancels_pending_request():
     with tempfile.TemporaryDirectory(prefix="asb-cursor-timeout-") as root:
         environment = {
@@ -285,6 +321,8 @@ def main() -> None:
     test_probe_wrong_host_blocks_host_dimension()
     test_probe_socket_presence_does_not_imply_dispatch_ready()
     test_fresh_private_bridge_readiness_is_ready()
+    test_stale_bridge_readiness_fails_closed()
+    test_relative_session_path_fails_closed()
     test_transport_timeout_cancels_pending_request()
     test_transport_rejects_mismatched_result_identity()
     test_runner_blocks_when_task_bridge_is_not_ready()
