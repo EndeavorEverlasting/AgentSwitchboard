@@ -430,7 +430,60 @@ def test_oversized_dashboard_url_is_not_copied_into_receipt():
 
         assert receipt["status"] == "EXECUTED"
         assert receipt["artifacts"] == []
-        assert receipt["output"]["structuredResult"]["dashboardUrl"] is None
+        assert receipt["output"]["structuredResult"] == {
+            "providerStatus": "COMPLETED"
+        }
+        _validate_receipt(receipt, request)
+
+
+def test_oversized_execution_identity_fails_closed():
+    with tempfile.TemporaryDirectory(prefix="asb-cursor-id-bound-") as root:
+        root_path = Path(root)
+        socket_path = root_path / "agent.sock"
+        socket_path.touch()
+        session = root_path / "session"
+        environment = _env(socket_path, session)
+        paths = transport_mod.resolve_session_paths(environment)
+        assert paths is not None
+        transport_mod.write_bridge_readiness(paths, "synthetic-monitor")
+
+        stop = threading.Event()
+
+        def bridge():
+            deadline = time.monotonic() + 2
+            while time.monotonic() < deadline and not stop.is_set():
+                for request_path in paths.requests_dir.glob("req_*.json"):
+                    envelope = transport_mod.load_json(request_path)
+                    request_id = envelope["requestId"]
+                    transport_mod.atomic_write_json(
+                        paths.results_dir / f"{request_id}.json",
+                        {
+                            "protocol": transport_mod.RESULT_PROTOCOL,
+                            "requestId": request_id,
+                            "status": "COMPLETED",
+                            "cloudAgentBcId": "x" * 1001,
+                            "completedAt": datetime.now(timezone.utc)
+                            .isoformat()
+                            .replace("+00:00", "Z"),
+                        },
+                    )
+                    return
+                time.sleep(0.01)
+
+        worker = threading.Thread(target=bridge, daemon=True)
+        worker.start()
+        try:
+            registry = AdapterRegistry()
+            registry.register(CursorCloudAgentAdapter(environment=environment))
+            request = _cursor_request()
+            receipt = ExecutionAdapterRunner(registry).execute(request)
+        finally:
+            stop.set()
+            worker.join(timeout=2)
+
+        assert receipt["status"] == "FAILED"
+        assert receipt["executionIdentity"] is None
+        assert receipt["blocker"]["code"] == "EXECUTION_ERROR"
         _validate_receipt(receipt, request)
 
 
@@ -448,6 +501,7 @@ def main() -> None:
     test_runner_blocks_when_task_bridge_is_not_ready()
     test_synthetic_bridge_executes_without_runtime_proof_promotion()
     test_oversized_dashboard_url_is_not_copied_into_receipt()
+    test_oversized_execution_identity_fails_closed()
     print("PASS: Cursor CloudAgent adapter EAT-302..304 synthetic contract")
 
 
