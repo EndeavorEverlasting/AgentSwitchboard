@@ -25,7 +25,13 @@
     },
     "adapter_kind": {
       "type": "string",
-      "enum": ["public-plan", "cursor-cloud-agent", "local-argv", "runtime-tool", "unmapped"]
+      "enum": [
+        "public-plan",
+        "cursor-cloud-agent",
+        "local-argv",
+        "runtime-tool",
+        "unmapped"
+      ]
     },
     "dispatch_status": {
       "type": "string",
@@ -57,9 +63,15 @@
     "autonomy_gap": {
       "type": "object",
       "properties": {
-        "gap_detected": {"type": "boolean"},
-        "gap_reason": {"type": "string"},
-        "recommended_action": {"type": "string"}
+        "gap_detected": {
+          "type": "boolean"
+        },
+        "gap_reason": {
+          "type": "string"
+        },
+        "recommended_action": {
+          "type": "string"
+        }
       }
     },
     "blocking_reason": {
@@ -71,21 +83,81 @@
       "properties": {
         "argv": {
           "type": "array",
-          "items": {"type": "string"}
+          "items": {
+            "type": "string"
+          }
         },
-        "cwd": {"type": "string"},
-        "stdout": {"type": "string"},
-        "stderr": {"type": "string"},
-        "duration_ms": {"type": "number"},
-        "cloud_agent_id": {"type": "string"},
-        "dashboard_url": {"type": "string"},
-        "subagent_duration_seconds": {"type": "number"},
-        "error": {"type": "string"}
+        "cwd": {
+          "type": "string"
+        },
+        "stdout": {
+          "type": "string"
+        },
+        "stderr": {
+          "type": "string"
+        },
+        "duration_ms": {
+          "type": "number"
+        },
+        "cloud_agent_id": {
+          "type": "string"
+        },
+        "dashboard_url": {
+          "type": "string"
+        },
+        "subagent_duration_seconds": {
+          "type": "number"
+        },
+        "error": {
+          "type": "string"
+        }
       }
     },
     "descriptor": {
       "type": "object",
       "description": "ASB execution descriptor details"
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "adapter_kind": {
+            "const": "cursor-cloud-agent"
+          },
+          "dispatch_status": {
+            "const": "EXECUTED"
+          }
+        },
+        "required": [
+          "adapter_kind",
+          "dispatch_status"
+        ]
+      },
+      "then": {
+        "required": [
+          "execution_details"
+        ],
+        "properties": {
+          "execution_details": {
+            "type": "object",
+            "required": [
+              "cloud_agent_id",
+              "dashboard_url"
+            ],
+            "properties": {
+              "cloud_agent_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "dashboard_url": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }
