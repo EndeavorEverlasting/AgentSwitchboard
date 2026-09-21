@@ -204,3 +204,32 @@ The following real subagent launch was observed during implementation:
 
 This demonstrates the complete orchestration flow from dispatch_lanes.py through the
 cloud agent orchestrator to actual subagent launch and completion.
+
+
+## Readiness and lifecycle contract (authoritative hardening)
+
+This section supersedes any earlier wording that treats `CURSOR_AGENT=1`, socket
+presence, marker creation, or a successful marker-script exit as sufficient
+orchestration readiness.
+
+- The active parent-agent request monitor owns
+  `cursor-agent-orchestrator-ready.json` using protocol
+  `cursor-agent-orchestrator-ready/v1`.
+- The readiness document MUST name the exact request/result directories,
+  a non-empty monitor identity, and a fresh UTC heartbeat. Dispatch fails closed
+  when the document is missing, malformed, stale, or bound to different paths.
+- Request and result JSON documents are published with same-directory temporary
+  files plus atomic replacement; readers must never consume partially written
+  documents.
+- Every request carries `expires_at`. The active monitor MUST reject expired
+  requests, and the client removes a still-pending request when its wait times
+  out so a later monitor cannot launch stale work.
+- A completed cloud-agent result is publishable as `EXECUTED` only when both
+  `cloud_agent_id` and `dashboard_url` are non-empty. The receipt schema
+  enforces the same condition.
+- `orchestrate_cloud_agents.py` is an instruction/marker producer only. It exits
+  blocked and never writes the readiness signal; only the process that is
+  actually monitoring requests may publish readiness.
+- `test_cloud_agent_orchestration.py` is a dependency-free synthetic proof that
+  covers the negative readiness control, timeout cancellation, active-monitor
+  heartbeat, atomic mock result publication, and final receipt identity.
