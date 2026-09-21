@@ -251,7 +251,8 @@ class CursorCloudAgentAdapter:
             "startedAt": _iso(started_wall),
             "completedAt": _iso(completed_wall),
             "durationMs": max(
-                0.0, (time.monotonic() - started_mono) * 1000.0
+                0.0,
+                (completed_wall - started_wall).total_seconds() * 1000.0,
             ),
             "executionIdentity": execution_identity,
             "exitCode": None,
@@ -303,7 +304,8 @@ class CursorCloudAgentAdapter:
             "startedAt": _iso(started_wall),
             "completedAt": _iso(completed),
             "durationMs": max(
-                0.0, (time.monotonic() - started_mono) * 1000.0
+                0.0,
+                (completed - started_wall).total_seconds() * 1000.0,
             ),
             "executionIdentity": (
                 dict(execution_identity)
