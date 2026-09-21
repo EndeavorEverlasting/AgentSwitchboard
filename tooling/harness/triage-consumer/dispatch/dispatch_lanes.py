@@ -331,16 +331,30 @@ class TriageDispatcher:
             duration_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
 
             if result.status == "completed":
-                artifacts = []
-                if result.dashboard_url:
-                    artifacts.append(result.dashboard_url)
+                if not result.agent_id or not result.dashboard_url:
+                    return DispatchReceipt(
+                        lane_id=lane_obj.lane_id,
+                        lane_mission=lane_obj.mission,
+                        adapter_kind="cursor-cloud-agent",
+                        dispatch_status=DispatchStatus.FAILED,
+                        blocking_reason=(
+                            "Subagent completed without required identity metadata"
+                        ),
+                        execution_details={
+                            "error": "missing cloud_agent_id or dashboard_url",
+                            "cloud_agent_id": result.agent_id,
+                            "dashboard_url": result.dashboard_url,
+                            "duration_ms": duration_ms,
+                            "subagent_duration_seconds": result.duration_seconds
+                        }
+                    )
 
                 return DispatchReceipt(
                     lane_id=lane_obj.lane_id,
                     lane_mission=lane_obj.mission,
                     adapter_kind="cursor-cloud-agent",
                     dispatch_status=DispatchStatus.EXECUTED,
-                    artifacts=artifacts,
+                    artifacts=[result.dashboard_url],
                     execution_details={
                         "cloud_agent_id": result.agent_id,
                         "dashboard_url": result.dashboard_url,
