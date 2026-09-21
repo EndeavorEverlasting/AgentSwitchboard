@@ -83,7 +83,7 @@
       "expectStdoutContains": [
         "PASS cloud-agent orchestration contract"
       ],
-      "proof": "active-monitor readiness, atomic request/result publication, timeout cancellation, and EXECUTED identity metadata"
+      "proof": "active-monitor readiness, private atomic IPC, timeout cancellation, executable-lane readiness, bounded prompt propagation, and EXECUTED identity metadata"
     },
     {
       "id": "app-harness-script",
