@@ -94,13 +94,15 @@ def _validate_capability(report):
         report,
         load_json(SCHEMA_DIR / "capability-report.v1.schema.json"),
     )
+    contract_tests.validate_capability_semantics(report)
 
 
-def _validate_receipt(receipt):
+def _validate_receipt(receipt, request=None):
     contract_tests.validate_json_schema(
         receipt,
         load_json(SCHEMA_DIR / "execution-receipt.v1.schema.json"),
     )
+    contract_tests.validate_receipt_semantics(receipt, request)
 
 
 def test_reuse_map_preserves_common_ownership_and_pr332_lineage():
@@ -212,12 +214,13 @@ def test_runner_blocks_when_task_bridge_is_not_ready():
         adapter = CursorCloudAgentAdapter(environment=_env(socket_path))
         registry = AdapterRegistry()
         registry.register(adapter)
-        receipt = ExecutionAdapterRunner(registry).execute(_cursor_request())
+        request = _cursor_request()
+        receipt = ExecutionAdapterRunner(registry).execute(request)
         assert receipt["status"] == "BLOCKED"
         assert receipt["blocker"]["code"] == "BLOCKED_API"
         assert receipt["executionIdentity"] is None
         assert receipt["proof"]["level"] == "CAPABILITY_PROBE_ONLY"
-        _validate_receipt(receipt)
+        _validate_receipt(receipt, request)
 
 
 def test_synthetic_bridge_executes_without_runtime_proof_promotion():
@@ -260,7 +263,8 @@ def test_synthetic_bridge_executes_without_runtime_proof_promotion():
         try:
             registry = AdapterRegistry()
             registry.register(CursorCloudAgentAdapter(environment=environment))
-            receipt = ExecutionAdapterRunner(registry).execute(_cursor_request())
+            request = _cursor_request()
+            receipt = ExecutionAdapterRunner(registry).execute(request)
         finally:
             stop.set()
             worker.join(timeout=2)
@@ -273,7 +277,7 @@ def test_synthetic_bridge_executes_without_runtime_proof_promotion():
         assert receipt["proof"]["level"] == "CONTRACT_STATIC"
         assert receipt["proof"]["independentValidationRequired"] is True
         assert receipt["proof"]["validationArtifact"] is None
-        _validate_receipt(receipt)
+        _validate_receipt(receipt, request)
 
 
 def main() -> None:
