@@ -210,6 +210,10 @@ def test_transport_timeout_cancels_pending_request():
         )
         assert result["status"] == "TIMED_OUT"
         assert not (paths.requests_dir / f"{request['requestId']}.json").exists()
+        assert not (paths.results_dir / f"{request['requestId']}.json").exists()
+        assert not (
+            paths.requests_dir / f".{request['requestId']}.claim"
+        ).exists()
 
 
 def test_transport_malformed_result_cancels_pending_request():
@@ -238,6 +242,35 @@ def test_transport_malformed_result_cancels_pending_request():
         assert not (
             paths.requests_dir / f"{request['requestId']}.json"
         ).exists()
+        assert not result_path.exists()
+        assert not (
+            paths.requests_dir / f".{request['requestId']}.claim"
+        ).exists()
+
+
+def test_transport_duplicate_request_id_is_atomically_rejected():
+    with tempfile.TemporaryDirectory(prefix="asb-cursor-duplicate-") as root:
+        environment = {
+            transport_mod.SESSION_ENV: str(Path(root) / "session")
+        }
+        paths = transport_mod.resolve_session_paths(environment)
+        assert paths is not None
+        first = transport_mod.CursorTaskTransport(paths)
+        second = transport_mod.CursorTaskTransport(paths)
+        request = _cursor_request()
+        first.publish_request(request, timeout_seconds=1)
+
+        try:
+            second.publish_request(request, timeout_seconds=1)
+            raise AssertionError("expected CursorTransportError")
+        except transport_mod.CursorTransportError:
+            pass
+
+        first.wait_for_result(
+            request["requestId"],
+            timeout_seconds=0.01,
+            poll_interval=0.005,
+        )
 
 
 def test_transport_rejects_mismatched_result_identity():
@@ -269,6 +302,11 @@ def test_transport_rejects_mismatched_result_identity():
             raise AssertionError("expected CursorTransportError")
         except transport_mod.CursorTransportError:
             pass
+
+        assert not result_path.exists()
+        assert not (
+            paths.requests_dir / f".{request['requestId']}.claim"
+        ).exists()
 
 
 def test_runner_blocks_when_task_bridge_is_not_ready():
@@ -344,6 +382,58 @@ def test_synthetic_bridge_executes_without_runtime_proof_promotion():
         _validate_receipt(receipt, request)
 
 
+def test_oversized_dashboard_url_is_not_copied_into_receipt():
+    with tempfile.TemporaryDirectory(prefix="asb-cursor-url-bound-") as root:
+        root_path = Path(root)
+        socket_path = root_path / "agent.sock"
+        socket_path.touch()
+        session = root_path / "session"
+        environment = _env(socket_path, session)
+        paths = transport_mod.resolve_session_paths(environment)
+        assert paths is not None
+        transport_mod.write_bridge_readiness(paths, "synthetic-monitor")
+
+        stop = threading.Event()
+
+        def bridge():
+            deadline = time.monotonic() + 2
+            while time.monotonic() < deadline and not stop.is_set():
+                for request_path in paths.requests_dir.glob("req_*.json"):
+                    envelope = transport_mod.load_json(request_path)
+                    request_id = envelope["requestId"]
+                    transport_mod.atomic_write_json(
+                        paths.results_dir / f"{request_id}.json",
+                        {
+                            "protocol": transport_mod.RESULT_PROTOCOL,
+                            "requestId": request_id,
+                            "status": "COMPLETED",
+                            "cloudAgentBcId": "bc-synthetic-url-bound",
+                            "dashboardUrl": "https://cursor.invalid/" + ("x" * 5000),
+                            "completedAt": datetime.now(timezone.utc)
+                            .isoformat()
+                            .replace("+00:00", "Z"),
+                        },
+                    )
+                    return
+                time.sleep(0.01)
+
+        worker = threading.Thread(target=bridge, daemon=True)
+        worker.start()
+        try:
+            registry = AdapterRegistry()
+            registry.register(CursorCloudAgentAdapter(environment=environment))
+            request = _cursor_request()
+            receipt = ExecutionAdapterRunner(registry).execute(request)
+        finally:
+            stop.set()
+            worker.join(timeout=2)
+
+        assert receipt["status"] == "EXECUTED"
+        assert receipt["artifacts"] == []
+        assert receipt["output"]["structuredResult"]["dashboardUrl"] is None
+        _validate_receipt(receipt, request)
+
+
 def main() -> None:
     test_reuse_map_preserves_common_ownership_and_pr332_lineage()
     test_probe_wrong_host_blocks_host_dimension()
@@ -353,9 +443,11 @@ def main() -> None:
     test_relative_session_path_fails_closed()
     test_transport_timeout_cancels_pending_request()
     test_transport_malformed_result_cancels_pending_request()
+    test_transport_duplicate_request_id_is_atomically_rejected()
     test_transport_rejects_mismatched_result_identity()
     test_runner_blocks_when_task_bridge_is_not_ready()
     test_synthetic_bridge_executes_without_runtime_proof_promotion()
+    test_oversized_dashboard_url_is_not_copied_into_receipt()
     print("PASS: Cursor CloudAgent adapter EAT-302..304 synthetic contract")
 
 
