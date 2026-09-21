@@ -4,15 +4,15 @@
 EXECUTE P07 SUCCESSOR — CloudAgent Task-tool binding for Triage→ASB dispatch
 
 ## Mission
-Implement the smallest durable Python (or PowerShell) client that can invoke Cursor cloud-agent Task launches via the observed agent surface, wire it into `tooling/harness/triage-consumer/dispatch/dispatch_lanes.py` `_handle_cloud_agent()`, and produce receipts with observed EXECUTED/FAILED plus cloudAgentBcId/dashboard URL when a launch completes.
+Implement the smallest durable Python (or PowerShell) client that can invoke Cursor cloud-agent Task launches via the observed agent surface, wire it into `tooling/harness/triage-consumer/dispatch/dispatch_lanes.py` `_handle_cloud_agent()`, and produce receipts with observed EXECUTED/FAILED plus cloud_agent_id/dashboard URL when a launch completes.
 
 ## Status
-✅ COMPLETE
+EAT-301 hygiene candidate. Historical successor implementation is preserved, but this report does not prove current merge, production readiness, or CURSOR_CLOUD_AGENT_RUNTIME_OBSERVED.
 
 ## Merge Information
 - **Branch**: `cursor/p07-successor-cloudagent-binding-1db0`
-- **Commit SHA**: `3d4bd22`
-- **PR**: #332 (https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/332)
+- **Historical implementation SHA**: `3d4bd22`
+- **PR**: #332 (provider state is authoritative for current head/merge status)
 - **Base**: `main`
 
 ## Implementation
@@ -28,7 +28,7 @@ Implement the smallest durable Python (or PowerShell) client that can invoke Cur
 2. **`dispatch_lanes.py`** (MODIFIED)
    - Integrated `cursor_agent_client` import
    - Updated `_handle_cloud_agent()` to use orchestration
-   - Returns EXECUTED with cloudAgentBcId when successful
+   - Returns EXECUTED with cloud_agent_id when successful
    - Returns FAILED with error details when unsuccessful
    - Preserves fail-closed: BLOCKED_HOST/BLOCKED_API when unavailable
 
@@ -45,7 +45,7 @@ Implement the smallest durable Python (or PowerShell) client that can invoke Cur
 5. **`test_cloud_agent_orchestration.py`** (NEW - 137 lines)
    - Test harness with mock orchestrator
    - Background thread monitors requests
-   - Writes mock results with cloudAgentBcId
+   - Writes mock results with cloud_agent_id
 
 ### Documentation Created
 
@@ -66,7 +66,7 @@ Implement the smallest durable Python (or PowerShell) client that can invoke Cur
 ### Fixtures & Schema
 
 8. **`example-receipt-cloudagent-executed.json`** (NEW)
-   - Receipt example with cloudAgentBcId
+   - Receipt example with cloud_agent_id
    - Dashboard URL in artifacts
    - execution_details with subagent metadata
 
@@ -113,15 +113,17 @@ Dispatch complete: 1 executed, 0 failed, 1 total
 
 Receipt:
 - Status: `EXECUTED`
-- cloudAgentBcId: `bc-mock-req-1789865174065-3196`
+- cloud_agent_id: `bc-mock-req-1789865174065-3196`
 - Dashboard URL: `https://cursor.com/agents/bc-mock-req-1789865174065-3196`
 - Duration: `2000.5ms`
 
 **Verdict**: ✅ PASS - Orchestration protocol works
 
-### Real Task Tool Launch
+### Real Task Tool Launch — Historical Observation Only
 
-✅ **Observed subagent launch via Task tool**
+**EAT-301 disposition**: preserved for EAT-302..308 reconciliation; not promoted as current #332 runtime proof.
+
+**Observed historically**: subagent launch via Task tool
 
 During implementation, launched real subagent to validate Task tool integration:
 
@@ -130,7 +132,7 @@ During implementation, launched real subagent to validate Task tool integration:
 - **Task**: Print test message and verify CURSOR_AGENT=1
 - **Result**: Subagent executed successfully, confirmed cloud agent context
 
-**Verdict**: ✅ PASS - Real Task tool launch observed (not mocked)
+**Verdict**: HISTORICAL OBSERVATION — UNPROMOTED IN EAT-301
 
 ## Architecture
 
@@ -165,7 +167,7 @@ During implementation, launched real subagent to validate Task tool integration:
            ▼
 ┌─────────────────────┐
 │ /tmp/cursor-agent-  │  ← Result queue
-│   results/          │     JSON with cloudAgentBcId
+│   results/          │     JSON with cloud_agent_id
 └──────────┬──────────┘
            │
            │ read by
@@ -173,7 +175,7 @@ During implementation, launched real subagent to validate Task tool integration:
 ┌─────────────────────┐
 │ dispatch_lanes.py   │  ← Generates receipt with:
 │ returns receipt     │     - EXECUTED status
-└─────────────────────┘     - cloudAgentBcId
+└─────────────────────┘     - cloud_agent_id
                             - dashboard URL
 ```
 
@@ -193,7 +195,7 @@ During implementation, launched real subagent to validate Task tool integration:
 - Orchestration active
 - Subagent launched successfully
 - Receipt includes:
-  - `cloudAgentBcId` (e.g., `bc-c863f8be-d1e9-54ee-9514-870b3245d5bb`)
+  - `cloud_agent_id` (e.g., `bc-c863f8be-d1e9-54ee-9514-870b3245d5bb`)
   - `dashboard_url` in artifacts
   - `duration_ms` and `subagent_duration_seconds`
 
@@ -249,22 +251,23 @@ python3 tooling/harness/triage-consumer/dispatch/dispatch_lanes.py \
 
 ## Proof Ceiling
 
-**Achieved**: Orchestration proof + observed Task tool launch
+**EAT-301 active proof ceiling**: deterministic integration hygiene only.
 
-**Proves**:
-1. ✅ Protected control: local-argv unchanged (exit code 42 captured)
-2. ✅ Orchestration protocol: filesystem IPC request/result flow works
-3. ✅ Mock orchestrator: test harness validates protocol end-to-end
-4. ✅ Real Task tool: observed subagent launch (bc-c863f8be-...)
-5. ✅ Receipt generation: cloudAgentBcId and dashboard URL captured
-6. ✅ Fail-closed: BLOCKED_HOST/BLOCKED_API preserved when unavailable
-7. ✅ Socket API: discovered HTTP-based metadata API at /v1/meta-data/
+The implementation notes below retain historical observations for successor work, but they are not promoted to current runtime proof by this report. Current branch/check/merge state is provider truth.
+
+**Historical evidence retained for EAT-302..308**:
+1. local-argv protected-control behavior was previously observed.
+2. request/result filesystem IPC was previously exercised with a mock orchestrator.
+3. synthetic receipt generation uses `execution_details.cloud_agent_id` plus dashboard URL.
+4. a real Task-tool launch was separately observed during implementation.
+5. the Cursor socket metadata API was inspected.
 
 **Does NOT Prove**:
-- ❌ Production orchestrator deployment (requires separate service)
-- ❌ Concurrent subagent launches (single test only)
-- ❌ Error handling for failed subagents (mock always succeeds)
-- ❌ Socket-based Task tool API (Task tool access is agent-native, not socket-based)
+- unattended ASB→Task→terminal-result execution
+- CURSOR_CLOUD_AGENT_RUNTIME_OBSERVED
+- production orchestrator deployment
+- concurrent subagent launches
+- complete failed-subagent handling
 
 ## Files Changed
 
@@ -307,7 +310,7 @@ Task tool access is agent-native (available at the cloud agent layer, not via so
 - ✅ Protected control verified (local-argv exit code capture)
 - ✅ Mock orchestrator test passes
 - ✅ Real Task tool launch observed (bc-c863f8be-...)
-- ✅ Receipts include cloudAgentBcId
+- ✅ Receipts include cloud_agent_id
 - ✅ Receipts include dashboard URL in artifacts
 - ✅ Fail-closed behavior preserved (BLOCKED_HOST/BLOCKED_API)
 - ✅ Schema updated with cloud agent fields
@@ -317,11 +320,9 @@ Task tool access is agent-native (available at the cloud agent layer, not via so
 - ✅ Branch pushed to remote
 - ✅ PR created (#332)
 
-## Next Command
+## Continuation
 
-Task complete. Changes committed to `cursor/p07-successor-cloudagent-binding-1db0` @ `3d4bd22`.
-
-PR ready for review: https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/332
+EAT-301 closes only after the refreshed PR head passes its exact-head hygiene/integration gates and is integrated according to repository policy. EAT-302 then reconciles the useful #332 transport/evidence behind execution-adapter v1.
 
 **For production deployment**, implement persistent orchestrator service that:
 1. Monitors `/tmp/cursor-agent-requests/` continuously
@@ -334,4 +335,4 @@ PR ready for review: https://github.com/EndeavorEverlasting/AgentSwitchboard/pul
 
 **Completed**: 2026-09-20T00:54:00+00:00
 **Agent**: bc-c869879b-be8f-548f-9b89-c0611c691db0
-**Proof Level**: Orchestration proof + observed Task tool launch
+**Proof Level**: EAT-301 deterministic integration hygiene; historical Task-tool observation retained but unpromoted
