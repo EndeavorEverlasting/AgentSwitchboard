@@ -43,13 +43,28 @@ class SubagentLaunchResult:
     duration_seconds: Optional[float] = None
 
 
-def get_orchestration_paths() -> Tuple[Path, Path, Path]:
-    """Resolve request/result/readiness paths from environment or safe temp root."""
+def _private_default_root() -> Path:
+    identity = re.sub(r"[^A-Za-z0-9_.-]", "_", getpass.getuser()) or "user"
+    return Path(tempfile.gettempdir()) / f"agentswitchboard-cursor-{identity}"
 
-    root = Path(
-        os.environ.get("CURSOR_AGENT_ORCHESTRATION_ROOT")
-        or tempfile.gettempdir()
-    )
+
+def _ensure_private_dir(path: Path) -> None:
+    path.mkdir(parents=True, exist_ok=True, mode=0o700)
+    try:
+        path.chmod(0o700)
+    except OSError:
+        # Windows and some mounted filesystems do not expose POSIX mode semantics.
+        pass
+
+
+def get_orchestration_paths() -> Tuple[Path, Path, Path]:
+    """Resolve request/result/readiness paths from environment or private temp root."""
+
+    configured_root = os.environ.get("CURSOR_AGENT_ORCHESTRATION_ROOT")
+    root = Path(configured_root) if configured_root else _private_default_root()
+    if not configured_root:
+        _ensure_private_dir(root)
+
     requests_dir = Path(
         os.environ.get("CURSOR_AGENT_REQUESTS_DIR")
         or (root / "cursor-agent-requests")
@@ -66,20 +81,33 @@ def get_orchestration_paths() -> Tuple[Path, Path, Path]:
 
 
 def atomic_write_json(path: Path, payload: Dict[str, Any]) -> None:
-    """Publish JSON atomically so readers never observe a partial document."""
+    """Publish private JSON atomically so readers never observe a partial document."""
 
-    path.parent.mkdir(parents=True, exist_ok=True)
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     temp_path = path.with_name(
         f".{path.name}.{os.getpid()}.{time.time_ns()}.tmp"
     )
+    descriptor = None
     try:
-        with open(temp_path, "x", encoding="utf-8") as handle:
+        descriptor = os.open(
+            temp_path,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+            0o600,
+        )
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            descriptor = None
             json.dump(payload, handle, indent=2)
             handle.write("\n")
             handle.flush()
             os.fsync(handle.fileno())
         os.replace(temp_path, path)
+        try:
+            path.chmod(0o600)
+        except OSError:
+            pass
     finally:
+        if descriptor is not None:
+            os.close(descriptor)
         temp_path.unlink(missing_ok=True)
 
 
@@ -115,8 +143,8 @@ class CursorAgentClient:
         default_requests, default_results, _ = get_orchestration_paths()
         self.requests_dir = requests_dir or default_requests
         self.results_dir = results_dir or default_results
-        self.requests_dir.mkdir(parents=True, exist_ok=True)
-        self.results_dir.mkdir(parents=True, exist_ok=True)
+        _ensure_private_dir(self.requests_dir)
+        _ensure_private_dir(self.results_dir)
 
     def launch_subagent(
         self,
