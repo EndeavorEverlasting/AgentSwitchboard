@@ -1,167 +1,115 @@
 #!/usr/bin/env python3
 """
-Dispatcher orchestration wrapper for Cursor cloud agents.
+Cursor cloud-agent dispatch wrapper.
 
-This script is designed to be called by a Cursor cloud agent that has Task tool access.
-It runs dispatch_lanes.py as a subprocess and orchestrates any cloud agent launches
-that dispatch_lanes.py requests via the cursor_agent_client.
-
-The orchestration happens at this layer (with Task tool access) rather than within
-dispatch_lanes.py (which runs as a subprocess without Task tool access).
-
-Usage:
-    python3 dispatch_with_orchestration.py <manifest_path> [output_dir] [cwd]
-
-This wrapper should be called by cloud agents. It will:
-1. Start monitoring for subagent launch requests
-2. Run dispatch_lanes.py as a subprocess
-3. When dispatch_lanes.py requests a subagent launch, handle it with Task tool
-4. Write results back for dispatch_lanes.py to consume
-5. Exit when dispatch_lanes.py completes
+This wrapper does not itself have Task-tool access. It may run dispatch_lanes.py
+only after an active parent-agent request monitor has published a fresh readiness
+heartbeat for the same request/result paths.
 """
 
-import json
 import os
-import sys
 import subprocess
-import threading
-import time
-from datetime import datetime, timezone
+import sys
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict
 
-
-# This is a marker script that documents the orchestration interface.
-# Actual Task tool invocation happens at the agent level (not directly from Python).
-# A cloud agent running this script should:
-# 1. Monitor /tmp/cursor-agent-requests/ for *.json request files
-# 2. For each request, use the Task tool to launch a subagent
-# 3. Write results to /tmp/cursor-agent-results/<request_id>.json
+from cursor_agent_client import (
+    READINESS_PROTOCOL,
+    atomic_write_json,
+    detect_orchestration_support,
+    get_orchestration_paths,
+)
 
 
 def create_orchestration_instructions() -> Dict[str, Any]:
-    """
-    Create instructions for the cloud agent orchestrator.
-    
-    Returns:
-        Orchestration instructions and metadata
-    """
+    """Return the parent-monitor protocol for Cursor Task-tool dispatch."""
+
+    requests_dir, results_dir, readiness_file = get_orchestration_paths()
     return {
         "orchestration_protocol": {
             "version": "v1",
-            "description": "Protocol for cloud agent orchestration of subagent launches",
-            "requests_dir": "/tmp/cursor-agent-requests",
-            "results_dir": "/tmp/cursor-agent-results",
+            "description": (
+                "Parent cloud agent monitors launch requests and uses the Cursor "
+                "Task tool to execute them."
+            ),
+            "requests_dir": str(requests_dir),
+            "results_dir": str(results_dir),
+            "readiness_file": str(readiness_file),
+            "readiness_protocol": READINESS_PROTOCOL,
             "workflow": [
-                "1. Cloud agent monitors requests_dir for *.json files",
-                "2. Each file is a SubagentLaunchRequest (see request_schema)",
-                "3. Cloud agent uses Task tool to launch subagent with request.prompt and request.description",
-                "4. Cloud agent waits for subagent completion (bounded by request.timeout_seconds)",
-                "5. Cloud agent writes SubagentLaunchResult to results_dir/<request_id>.json",
-                "6. Cloud agent deletes the request file after processing"
-            ]
+                "1. Parent agent starts an active request monitor.",
+                "2. Monitor writes and refreshes the readiness heartbeat.",
+                "3. Dispatcher atomically publishes a request JSON document.",
+                "4. Monitor rejects expired requests using expires_at.",
+                "5. Monitor uses Task tool to launch the requested subagent.",
+                "6. Monitor atomically publishes the result JSON document.",
+                "7. Monitor removes the processed request.",
+            ],
         },
         "request_schema": {
             "request_id": "string - unique identifier",
             "prompt": "string - task prompt for subagent",
             "description": "string - short description for subagent",
             "timeout_seconds": "integer - max wait time",
-            "submitted_at": "string - ISO timestamp"
+            "submitted_at": "string - ISO timestamp",
+            "expires_at": "string - absolute ISO deadline; monitor must enforce",
         },
         "result_schema": {
             "request_id": "string - matches request",
             "status": "string - 'completed', 'failed', or 'timeout'",
-            "agent_id": "string - cloudAgentBcId (optional)",
-            "dashboard_url": "string - agent dashboard URL (optional)",
+            "agent_id": "string - required when status is completed",
+            "dashboard_url": "string - required when status is completed",
             "error": "string - error message if failed (optional)",
             "duration_seconds": "number - subagent execution time (optional)",
-            "completed_at": "string - ISO timestamp"
+            "completed_at": "string - ISO timestamp",
         },
-        "task_tool_parameters": {
-            "subagent_type": "generalPurpose",
-            "description": "<from request.description>",
-            "prompt": "<from request.prompt>",
-            "run_in_background": False,
-            "note": "Wait for completion to get cloudAgentBcId and status"
-        },
-        "example_task_tool_usage": {
-            "explanation": "Cloud agent should use Task tool like this",
-            "pseudo_code": [
-                "request = read_json(request_file)",
-                "result = Task(",
-                "    subagent_type='generalPurpose',",
-                "    description=request['description'],",
-                "    prompt=request['prompt'],",
-                "    run_in_background=False",
-                ")",
-                "write_json(result_file, {",
-                "    'request_id': request['request_id'],",
-                "    'status': 'completed' if result.success else 'failed',",
-                "    'agent_id': result.agent_id,",
-                "    'dashboard_url': f'https://cursor.com/agents/{result.agent_id}',",
-                "    'error': result.error if not result.success else None,",
-                "    'duration_seconds': result.duration",
-                "})"
-            ]
-        }
     }
 
 
-def main():
-    """Main entry point."""
+def main() -> None:
     if len(sys.argv) < 2:
-        print("Usage: dispatch_with_orchestration.py <manifest_path> [output_dir] [cwd]")
-        sys.exit(1)
-    
-    # Check if we're in a cloud agent
-    in_cloud_agent = os.environ.get("CURSOR_AGENT") == "1"
-    
-    if not in_cloud_agent:
-        print("ERROR: This wrapper requires CURSOR_AGENT=1", file=sys.stderr)
-        print("Run this script from within a Cursor cloud agent that has Task tool access", file=sys.stderr)
-        sys.exit(1)
-    
-    # Write orchestration instructions
-    instructions = create_orchestration_instructions()
-    instructions_file = Path("/tmp/cursor-agent-orchestration-instructions.json")
-    with open(instructions_file, 'w') as f:
-        json.dump(instructions, f, indent=2)
-    
-    print("=" * 80)
-    print("CLOUD AGENT ORCHESTRATION WRAPPER")
-    print("=" * 80)
-    print()
-    print("This wrapper runs dispatch_lanes.py and orchestrates subagent launches.")
-    print()
-    print(f"Orchestration instructions written to: {instructions_file}")
-    print()
-    print("The cloud agent running this wrapper should:")
-    print("  1. Monitor /tmp/cursor-agent-requests/ for subagent launch requests")
-    print("  2. Use the Task tool to launch subagents as requested")
-    print("  3. Write results to /tmp/cursor-agent-results/")
-    print()
-    print("dispatch_lanes.py will handle the orchestration client side automatically.")
-    print()
-    print("=" * 80)
-    print()
-    
-    # Run dispatch_lanes.py
+        print(
+            "Usage: dispatch_with_orchestration.py "
+            "<manifest_path> [output_dir] [cwd]"
+        )
+        raise SystemExit(1)
+
+    if os.environ.get("CURSOR_AGENT") != "1":
+        print(
+            "ERROR: This wrapper requires CURSOR_AGENT=1",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
+
+    _, _, readiness_file = get_orchestration_paths()
+    instructions_file = Path(
+        os.environ.get("CURSOR_AGENT_ORCHESTRATION_INSTRUCTIONS")
+        or (readiness_file.parent / "cursor-agent-orchestration-instructions.json")
+    )
+    atomic_write_json(instructions_file, create_orchestration_instructions())
+
+    support = detect_orchestration_support()
+    if not support["supported"]:
+        print(
+            "BLOCKED_API: active parent-agent request monitor is not ready: "
+            f"{support['reason']}",
+            file=sys.stderr,
+        )
+        print(f"DETAILS: {support['details']}", file=sys.stderr)
+        raise SystemExit(2)
+
     script_dir = Path(__file__).parent
     dispatch_script = script_dir / "dispatch_lanes.py"
-    
     manifest_path = sys.argv[1]
     output_dir = sys.argv[2] if len(sys.argv) > 2 else "./dispatch-receipts"
     cwd = sys.argv[3] if len(sys.argv) > 3 else None
-    
-    cmd = ["python3", str(dispatch_script), manifest_path, output_dir]
+
+    cmd = [sys.executable, str(dispatch_script), manifest_path, output_dir]
     if cwd:
         cmd.append(cwd)
-    
-    print(f"Running: {' '.join(cmd)}")
-    print()
-    
-    result = subprocess.run(cmd)
-    sys.exit(result.returncode)
+
+    result = subprocess.run(cmd, check=False)
+    raise SystemExit(result.returncode)
 
 
 if __name__ == "__main__":
