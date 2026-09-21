@@ -233,15 +233,20 @@ class CursorTaskTransport:
 
         while time.monotonic() <= deadline:
             if result_path.exists():
-                payload = load_json(result_path)
-                if payload.get("protocol") != RESULT_PROTOCOL:
+                try:
+                    payload = load_json(result_path)
+                    if payload.get("protocol") != RESULT_PROTOCOL:
+                        raise CursorTransportError(
+                            "Task bridge result protocol mismatch"
+                        )
+                    if payload.get("requestId") != request_id:
+                        raise CursorTransportError(
+                            "Task bridge result requestId does not match request"
+                        )
+                except CursorTransportError:
                     request_path.unlink(missing_ok=True)
-                    raise CursorTransportError("Task bridge result protocol mismatch")
-                if payload.get("requestId") != request_id:
-                    request_path.unlink(missing_ok=True)
-                    raise CursorTransportError(
-                        "Task bridge result requestId does not match request"
-                    )
+                    raise
+
                 request_path.unlink(missing_ok=True)
                 return payload
             time.sleep(poll_interval)
