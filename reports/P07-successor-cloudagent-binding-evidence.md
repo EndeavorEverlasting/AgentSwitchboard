@@ -134,15 +134,15 @@ Dispatch complete: 1 executed, 0 failed, 1 total
 
 **Task**:
 ```
-Print "Hello from P07 test subagent" and confirm you're running as a cloud agent 
-by checking CURSOR_AGENT environment variable. Then exit successfully without 
+Print "Hello from P07 test subagent" and confirm you're running as a cloud agent
+by checking CURSOR_AGENT environment variable. Then exit successfully without
 making any changes.
 ```
 
 **Subagent Output**:
 ```
 ✓ Confirmed: Running as a cloud agent (`CURSOR_AGENT=1`)
-Task complete. I've printed the test message, verified I'm running as a cloud agent, 
+Task complete. I've printed the test message, verified I'm running as a cloud agent,
 and made no changes to the workspace as requested.
 ```
 
@@ -192,7 +192,7 @@ and made no changes to the workspace as requested.
 - CURSOR_AGENT != 1
 - Fail-closed (preserved from P07)
 
-### BLOCKED_API  
+### BLOCKED_API
 - In cloud agent but no orchestrator active
 - Orchestration support detected but requests timeout
 - Fail-closed (preserved from P07)
@@ -268,3 +268,18 @@ For full production deployment:
 - ✅ Real Task tool launch observed
 - ✅ Receipts include cloudAgentBcId and dashboard URL
 - ✅ Fail-closed behavior preserved
+
+
+## Review-hardening addendum
+
+Subsequent review invalidated the earlier assumption that cloud-agent context plus
+socket presence was enough to declare orchestration support. The hardened
+contract now requires a fresh active-monitor readiness heartbeat bound to the
+same request/result directories. Request/result publication is atomic, queued
+requests carry absolute expiry, pending requests are cancelled on client timeout,
+and `EXECUTED` cloud-agent receipts require non-empty agent/dashboard identity.
+
+The dependency-free synthetic contract test is registered in the canonical
+automated test floor so these conditions are part of future exact-candidate
+static/synthetic proof. Live Cursor Task-tool execution remains a separate
+runtime proof surface and is not promoted from the synthetic test.
