@@ -39,13 +39,14 @@ Until that owner exists, `ASB-2026-09-stale-pr-triage-01-panels.md` is the durab
 
 ## 3. COMPACT COORDINATION PREAMBLE
 
-- Repo floor: `main@72d71a74279c5cf1b0c029b68d03c76634d50ea1`; open PRs: **0** at refresh.
+- Repo floor: `main@72d71a74279c5cf1b0c029b68d03c76634d50ea1`; open PRs: **0** at initial salvage-plan refresh.
+- Local worker path authority: resolve `temporaryWorktreeRoot` from `tooling/harness/operational/canonical-path.contract.json`; the Windows technician binding is `%LOCALAPPDATA%\\AgentSwitchboard\\worktrees`. Never derive a sibling directory from whichever checkout invoked the panel.
 - Proven completed floor: PR #94 Wayfinder core semantic salvage merged as #338 / `72d71a74279c5cf1b0c029b68d03c76634d50ea1`.
 - Preserve historical source branches until final preservation checks; do not bulk merge or bulk cherry-pick.
 - Workers own leaf behavior and focused proof. Shared `SKILLS.md`, `TRIGGERS.md`, `CODEBASE_MAP.md`, `HARNESS.md`, plans, ledger, and shared operational registries are convergence-owner surfaces.
 - Hard collision families:
   - #113 ↔ current OpenCode LSP + P67 + execution-adapter v1.
-  - #92 ↔ current execution-adapter v1 and operational harness.
+  - #92 ↔ current execution-adapter v1 and operational harness. **Hard gate:** ASQ-022 must be terminal or explicitly hand off disjoint execution-adapter paths before #92 mutation.
   - #64 ↔ current machine-profile/bootstrap/device-profile contracts.
   - #79 ↔ #64/current machine-profile + Windows profile ownership.
   - #118 ↔ shared operational registries.
@@ -111,7 +112,7 @@ Application/product behavior must remain in deterministic code/contracts, never 
 | #112 | Clean leaf, absent on main | `tooling/lua/**`, focused tests/docs | shared routing docs | #94 floor | Medium | static/synthetic |
 | #118 | Small leaf and easy to delegate | external-agent-tooling leaf/tests/docs | shared operational registries | #94 floor | Medium | static/synthetic |
 | #64 | Deep Windows owner debt; historical non-main base | current machine-profile owner only | blind commit replay / duplicate launcher | #94 floor | High | static/synthetic; runtime separate |
-| #92 | Old actor router collides with modern adapter v1 | missing invariants/fixtures in adapter v1 | restore competing router | #118 disposition | High | static/synthetic |
+| #92 | Old actor router collides with modern adapter v1 | missing invariants/fixtures in adapter v1 | restore competing router | #118 disposition + ASQ-022 ownership release/handoff | High | static/synthetic |
 | #79 | Fleet semantics depend on current machine-profile truth | leaf readiness behavior/tests | duplicate profile/bootstrap lifecycle | #64 disposition | High | static/synthetic |
 | Convergence | Shared wiring must be written once | shared skills/triggers/maps/registries + plan/ledger | unrelated features | all lanes | High | integration proof |
 
