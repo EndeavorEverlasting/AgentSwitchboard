@@ -309,6 +309,42 @@ def test_transport_rejects_mismatched_result_identity():
         ).exists()
 
 
+def test_invalid_timeout_blocks_before_dispatch():
+    adapter = CursorCloudAgentAdapter(environment={})
+    invalid_values = (None, True, False, 0, -1, 3601, "30", 30.0)
+
+    missing = _cursor_request()
+    missing.pop("timeoutSeconds", None)
+    receipt = adapter.execute(missing)
+    assert receipt["status"] == "BLOCKED"
+    assert receipt["blocker"]["code"] == "BLOCKED_INPUT"
+    assert receipt["blocker"]["stage"] == "prepare"
+    assert receipt["blocker"]["retryable"] is False
+    _validate_receipt(receipt)
+
+    for value in invalid_values:
+        request = _cursor_request()
+        request["timeoutSeconds"] = value
+        receipt = adapter.execute(request)
+        assert receipt["status"] == "BLOCKED"
+        assert receipt["blocker"]["code"] == "BLOCKED_INPUT"
+        assert receipt["blocker"]["stage"] == "prepare"
+        assert receipt["blocker"]["retryable"] is False
+        _validate_receipt(receipt)
+
+
+def test_timeout_boundaries_pass_input_validation():
+    adapter = CursorCloudAgentAdapter(environment={})
+    for value in (1, 3600):
+        request = _cursor_request()
+        request["timeoutSeconds"] = value
+        receipt = adapter.execute(request)
+        assert receipt["status"] == "BLOCKED"
+        assert receipt["blocker"]["code"] == "BLOCKED_HOST"
+        assert receipt["blocker"]["stage"] == "probe"
+        _validate_receipt(receipt, request)
+
+
 def test_runner_blocks_when_task_bridge_is_not_ready():
     with tempfile.TemporaryDirectory(prefix="asb-cursor-blocked-") as root:
         socket_path = Path(root) / "agent.sock"
@@ -498,6 +534,8 @@ def main() -> None:
     test_transport_malformed_result_cancels_pending_request()
     test_transport_duplicate_request_id_is_atomically_rejected()
     test_transport_rejects_mismatched_result_identity()
+    test_invalid_timeout_blocks_before_dispatch()
+    test_timeout_boundaries_pass_input_validation()
     test_runner_blocks_when_task_bridge_is_not_ready()
     test_synthetic_bridge_executes_without_runtime_proof_promotion()
     test_oversized_dashboard_url_is_not_copied_into_receipt()
