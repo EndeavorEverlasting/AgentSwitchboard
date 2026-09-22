@@ -1,6 +1,6 @@
 {
   "schema": "agentswitchboard.opencode-runtime-resolution-fixture.v1",
-  "caseId": "valid-native-windows",
+  "caseId": "invalid-empty-path-snapshot",
   "requestedSurface": "native-windows",
   "parentResolution": {
     "resolvedPath": "C:\\Users\\Example\\AppData\\Roaming\\npm\\opencode.ps1",
@@ -18,10 +18,7 @@
     "integration": "native"
   },
   "processPathCaptured": true,
-  "processPath": [
-    "C:\\Users\\Example\\AppData\\Roaming\\npm",
-    "C:\\Windows\\System32"
-  ],
-  "expectedClassification": "native-consistent",
-  "expectedPass": true
+  "processPath": [],
+  "expectedClassification": "unresolved-runtime-identity",
+  "expectedPass": false
 }

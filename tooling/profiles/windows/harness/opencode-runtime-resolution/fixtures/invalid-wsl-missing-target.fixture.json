@@ -18,6 +18,10 @@
     "integration": "wsl-shim"
   },
   "processPathCaptured": true,
+  "processPath": [
+    "C:\\Users\\Example\\AppData\\Local\\AgentSwitchboard\\bin",
+    "C:\\Users\\Example\\AppData\\Roaming\\npm"
+  ],
   "expectedClassification": "unresolved-runtime-identity",
   "expectedPass": false
 }

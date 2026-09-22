@@ -19,6 +19,10 @@
     "integration": "native"
   },
   "processPathCaptured": true,
+  "processPath": [
+    "C:\\Users\\Example\\AppData\\Local\\AgentSwitchboard\\bin",
+    "C:\\Users\\Example\\AppData\\Roaming\\npm"
+  ],
   "expectedClassification": "shim-shadowing-native",
   "expectedPass": false
 }

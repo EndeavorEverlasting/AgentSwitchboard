@@ -1,6 +1,6 @@
 {
   "schema": "agentswitchboard.opencode-runtime-resolution-fixture.v1",
-  "caseId": "valid-native-windows",
+  "caseId": "invalid-unknown-state-command",
   "requestedSurface": "native-windows",
   "parentResolution": {
     "resolvedPath": "C:\\Users\\Example\\AppData\\Roaming\\npm\\opencode.ps1",
@@ -14,7 +14,7 @@
     "targetPlatform": "windows"
   },
   "stateResolution": {
-    "commandPath": "C:\\Users\\Example\\AppData\\Roaming\\npm\\opencode.cmd",
+    "commandPath": "C:\\Tools\\opencode.cmd",
     "integration": "native"
   },
   "processPathCaptured": true,
@@ -22,6 +22,6 @@
     "C:\\Users\\Example\\AppData\\Roaming\\npm",
     "C:\\Windows\\System32"
   ],
-  "expectedClassification": "native-consistent",
-  "expectedPass": true
+  "expectedClassification": "unresolved-runtime-identity",
+  "expectedPass": false
 }

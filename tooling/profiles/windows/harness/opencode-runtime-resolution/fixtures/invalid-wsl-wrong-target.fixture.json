@@ -1,6 +1,6 @@
 {
   "schema": "agentswitchboard.opencode-runtime-resolution-fixture.v1",
-  "caseId": "valid-declared-wsl",
+  "caseId": "invalid-wsl-wrong-target",
   "requestedSurface": "wsl-ubuntu",
   "parentResolution": {
     "resolvedPath": "C:\\Users\\Example\\AppData\\Local\\AgentSwitchboard\\bin\\opencode.cmd",
@@ -11,7 +11,7 @@
     "resolvedPath": "C:\\Users\\Example\\AppData\\Local\\AgentSwitchboard\\bin\\opencode.cmd",
     "runtimePlatform": "windows-wrapper",
     "wrapperKind": "agentswitchboard-wsl-shim",
-    "targetPath": "/home/example/.opencode/bin/opencode",
+    "targetPath": "/usr/local/bin/opencode",
     "targetPlatform": "wsl-ubuntu"
   },
   "stateResolution": {
@@ -23,6 +23,6 @@
     "C:\\Users\\Example\\AppData\\Local\\AgentSwitchboard\\bin",
     "C:\\Users\\Example\\AppData\\Roaming\\npm"
   ],
-  "expectedClassification": "declared-wsl-consistent",
-  "expectedPass": true
+  "expectedClassification": "unresolved-runtime-identity",
+  "expectedPass": false
 }
