@@ -1,227 +1,365 @@
 {
   "schema": "agentswitchboard.public-plan.v1",
   "planId": "ASB-2026-09-STALE-PR-TRIAGE-01",
-  "title": "Stale open PR triage disposition plan (POST-PPP TRIAGE-01)",
+  "title": "Closed-PR semantic salvage and porting convergence plan",
   "repository": "EndeavorEverlasting/AgentSwitchboard",
   "visibility": "public",
   "status": "active",
-  "priority": "high",
+  "priority": "critical",
   "createdUtc": "2026-09-19T16:30:00Z",
-  "updatedUtc": "2026-09-19T17:18:00Z",
-  "mission": "Systematically analyze 47 open PRs from July-September 2026 era, assign evidence-based dispositions (keep/rebase/superseded/close-candidate), document containment proof for superseded PRs, and produce actionable triage guidance for repository operator. Does NOT close, merge, or comment on PRs.",
+  "updatedUtc": "2026-09-22T17:04:00Z",
+  "mission": "Convert the remaining high-value closed-unmerged historical pull requests into bounded semantic-salvage sprints on current main, preserving unique behavior while refusing wholesale replay of stale shared governance, skills, registries, workflows, or launch logic. The program exists to leave AgentSwitchboard clean and portable without requiring successor agents to reconstruct the September 22 forensic analysis from chat.",
   "owner": {
-    "surface": "coordination",
-    "role": "PR triage lane",
-    "agent": "cloud-agent-triage-01"
+    "surface": "public coordination / stale-PR semantic salvage",
+    "role": "convergence coordinator",
+    "agent": "strong-agent-required-for-hard-lanes"
   },
   "delivery": {
-    "branch": "cursor/triage-01-stale-pr-dispositions-1bb2",
-    "pullRequest": {
-      "number": 312,
-      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/312",
-      "state": "merged"
-    },
-    "baseRef": "main@8e96082",
+    "branch": "plan/stale-pr-salvage-convergence-20260922",
+    "pullRequest": null,
+    "baseRef": "main@72d71a74279c5cf1b0c029b68d03c76634d50ea1",
     "commitRequired": true
   },
-  "wave": "POST-PPP",
-  "lane": "coordination-triage",
+  "wave": "PORT-CLEANUP",
+  "lane": "closed-pr-semantic-salvage",
   "dependencies": [
     "ASB-2026-09-POST-PPP-REMAINING-SPRINTS"
   ],
   "safeParallelWork": [
-    "ASQ-017 Admin Box physical floor (host-isolated)"
+    "Wave 1: PR #113 OpenCode runtime-resolution, PR #112 Lua embedding, PR #118 external-agent tooling, and PR #64 machine-profile harness may run concurrently only in isolated branches/worktrees; worker lanes must not edit shared SKILLS.md, TRIGGERS.md, CODEBASE_MAP.md, HARNESS.md, plans, WORK_QUEUE, or shared operational registries.",
+    "Wave 2: PR #92 execution-actor routing starts after PR #118 leaf disposition because both overlap the operational harness namespace; PR #79 fleet readiness starts after PR #64 machine-profile disposition.",
+    "Final convergence is single-writer and owns all shared documentation/registry/trigger/skill wiring plus combined validation."
   ],
   "ownedScope": [
     "plans/active/ASB-2026-09-stale-pr-triage-01.plan.json",
     "plans/active/ASB-2026-09-stale-pr-triage-01.md",
-    "plans/plan-registry.json (if main owns registry)"
+    "plans/active/ASB-2026-09-stale-pr-triage-01-panels.md",
+    ".ai/WORK_QUEUE.md ASQ-023 index item"
   ],
   "forbiddenScope": [
-    "PR closes, merges, comments, rebases, force-pushes",
-    "Auto-merge enabling",
-    "GitHub write operations via gh CLI",
-    "Secrets, credentials, machine paths",
-    "Live system mutations",
-    "Claiming merge authority"
+    "Direct mutation of historical source branches or their pull requests from this coordination sprint",
+    "Bulk merge, bulk cherry-pick, force-reset, force-push, destructive cleanup, or deletion of historical source branches",
+    "Implementation changes under tooling/, scripts/, tests/, .ai/skills/, shared registries, workflows, launchers, or product/runtime code",
+    "Inventing prompt-parallel-dispatch contracts, scripts, runtime tools, or agent execution proof that current main does not contain",
+    "Secrets, credentials, private machine paths, customer data, provider tokens, or raw local runtime evidence",
+    "Claiming runtime, Windows workstation, provider, deployment, or user-acceptance proof from this plan"
   ],
   "expectedArtifacts": [
-    "ASB-2026-09-stale-pr-triage-01.plan.json (schema-compliant, no prDispositions)",
-    "ASB-2026-09-stale-pr-triage-01.md (human summary with full per-PR disposition detail)",
-    "plan-registry.json update"
+    "Refreshed schema-valid TRIAGE-01 machine-readable plan with current main and exact historical branch identities",
+    "Human-readable launch order, dependency graph, collision ledger, factoring ledger, proof ceilings, and successor phases",
+    "Self-contained portability sprint panels for PR #113, #112, #118, #64, #92, #79, and final convergence",
+    "Repository work-ledger ASQ-023 index pointing to this canonical plan and first executable continuation"
   ],
   "tasks": [
     {
-      "taskId": "TRIAGE-PR-ANALYSIS",
-      "title": "Analyze all 47 open PRs and assign evidence-based dispositions",
+      "taskId": "TRIAGE-HISTORICAL",
+      "title": "Preserve historical 47-PR triage as superseded evidence",
       "status": "completed",
-      "owner": "triage-lane",
+      "owner": "historical TRIAGE-01",
       "dependencies": [],
       "inputs": [
-        "gh pr list open output",
-        "git log origin/main commits since 2026-07-14",
-        "PR #308 body (FirstMate supersession evidence)",
-        "main@8e96082 file tree inspection"
+        "TRIAGE-01 floor main@8e96082",
+        "PR #312 merged historical disposition plan"
       ],
       "outputs": [
-        "Per-PR disposition assignments (47 PRs)",
-        "Containment proof for superseded PRs",
-        "Cluster analysis (July GNHF, Aug harness/Android, Sept floor, current)"
+        "Historical disposition rationale retained as provenance inside refreshed plan summary"
       ],
       "acceptanceCriteria": [
-        "All 47 PRs analyzed",
-        "Dispositions evidence-based (not guessed)",
-        "Superseded PRs cite containment commits/PRs",
-        "Close-candidates cite obsolescence rationale",
-        "Rebase candidates cite merge conflicts",
-        "Full detail recorded in ASB-2026-09-stale-pr-triage-01.md"
+        "Historical analysis is not treated as current provider truth",
+        "Current work derives from refreshed main and current closed-branch comparisons"
       ],
       "evidence": [
-        "PR #308 faac296 explicitly supersedes #96, notes #96-#101 for closure",
-        "main@8e96082 contains FirstMate harness, Android Termux harness, WSL bootstrap, GNHF skill",
-        "DeepSeek work on main via PR #21 (4c5c902), #145 (d2bafc7/d1f2a90)",
-        "Android Herdr abandoned per commit 7c7f2da",
-        "PRs #154, #159 merge status: CONFLICTING",
-        "July GNHF PRs predate ASQ-004 Sept floor + FirstMate boundary",
-        "Aug harness PRs: none merged, work evolved differently on main",
-        "Disposition counts: keep=2, rebase=2, superseded=6, close-candidate=37, blocked=0"
+        "Original TRIAGE-01 analyzed 47 open PRs on 2026-09-19",
+        "Those PR-open-state conclusions are stale after repository convergence"
       ]
     },
     {
-      "taskId": "CREATE-DISPOSITION-PLAN",
-      "title": "Create machine-readable plan.json (schema-compliant)",
+      "taskId": "SALVAGE-WF94",
+      "title": "Salvage Wayfinder core from closed PR #94",
       "status": "completed",
-      "owner": "triage-lane",
+      "owner": "Wayfinder salvage coordinator",
       "dependencies": [
-        "TRIAGE-PR-ANALYSIS"
+        "TRIAGE-HISTORICAL"
       ],
       "inputs": [
-        "Per-PR disposition analysis",
-        "public-plan.schema.json requirements (additionalProperties: false)"
+        "PR #94 head 540f98b51ec6fe9e5d091d938c1b04399d3c4143",
+        "current-main contracts and automated floor"
       ],
       "outputs": [
-        "ASB-2026-09-stale-pr-triage-01.plan.json (no prDispositions top-level field)",
-        "Disposition summary in handoff.notes"
+        "Wayfinder core, pinned donor lineage, experimental skills, focused deterministic regression"
       ],
       "acceptanceCriteria": [
-        "Schema-valid per public-plan.schema.json",
-        "No additionalProperties violations",
-        "Disposition summary with counts in handoff.notes",
-        "Full per-PR detail preserved in markdown"
+        "No wholesale replay of August shared plan/governance/registry edits",
+        "Review findings repaired before merge",
+        "Windows and Ubuntu automated floors pass on exact head",
+        "Merged tree equals validated candidate tree"
       ],
       "evidence": [
-        "plan.json omits plan-specific prDispositions from the closed public-plan root; full per-PR detail remains in the markdown summary",
-        "Public plan and startup readiness contracts workflow 35457635946 succeeded on head d0e175c4545f2a76331f08c606429da5c4711d41"
+        "PR #338 squash-merged as 72d71a74279c5cf1b0c029b68d03c76634d50ea1",
+        "Final validated candidate ca15406bb1b9e5ae1db597b125f6b4b7b5b18d89 had identical tree to merge",
+        "Windows and Ubuntu automated floor run #220 passed",
+        "No open PRs after merge"
       ]
     },
     {
-      "taskId": "CREATE-SUMMARY-MD",
-      "title": "Create human-readable markdown summary with full PR detail",
-      "status": "completed",
-      "owner": "triage-lane",
+      "taskId": "SALVAGE-113",
+      "title": "Semantic salvage of PR #113 OpenCode runtime-resolution harness",
+      "status": "ready",
+      "owner": "strong salvage agent / OpenCode-Windows profile lane",
       "dependencies": [
-        "CREATE-DISPOSITION-PLAN"
+        "SALVAGE-WF94"
       ],
       "inputs": [
-        "Per-PR disposition analysis (47 rows)"
+        "closed PR #113 head 2ff3d81ab806b54dceccf593cd0f39b2c17e8bc9",
+        "13 unique commits / 23 changed files / 608 commits behind current main",
+        "current tooling/harness/operational/opencode-lsp-setup/",
+        "current tooling/harness/execution-adapters/",
+        "current P67 OpenCode evaluation-adapter plan and implementation"
       ],
       "outputs": [
-        "ASB-2026-09-stale-pr-triage-01.md with full detail"
+        "Isolated salvage branch from refreshed main",
+        "Preserve/merge/retire matrix for every #113 changed file",
+        "Only still-unique runtime-resolution behavior transplanted into current canonical owners",
+        "Focused regression and exact-head proof"
       ],
       "acceptanceCriteria": [
-        "Counts by disposition",
-        "Cluster summaries (July GNHF, Aug harness, Sept floor, current)",
-        "Full per-PR rows with number/title/disposition/rationale/containmentProof/nextAction",
-        "Top 5 operator actions",
-        "Proof ceiling stated",
-        "No secrets/machine paths",
-        "No trailing whitespace (git diff --check clean)"
+        "No wholesale replay of old SKILLS.md, TRIGGERS.md, CODEBASE_MAP.md, or workflow wiring",
+        "Runtime-resolution behavior is reconciled against current OpenCode LSP, P67, and execution-adapter contracts",
+        "Existing current-main behavior remains green",
+        "Any new leaf skill/capability/trigger has deterministic activation, inputs, outputs, guardrails, owner, tests, and proof ceiling",
+        "Validated branch integrates only after current-main refresh and review"
       ],
       "evidence": [
-        "summary.md created with 47 PR disposition rows",
-        "Trailing whitespace stripped"
+        "Source branch feat/harness-opencode-runtime-resolution-20260809 is closed-unmerged and diverged from main"
       ]
     },
     {
-      "taskId": "UPDATE-REGISTRY",
-      "title": "Update plan-registry.json to register triage plan",
-      "status": "completed",
-      "owner": "triage-lane",
+      "taskId": "SALVAGE-112",
+      "title": "Leaf-first salvage of PR #112 Lua embedding integration",
+      "status": "ready",
+      "owner": "bounded lower-capability agent / Lua leaf lane",
       "dependencies": [
-        "CREATE-SUMMARY-MD"
+        "SALVAGE-WF94"
       ],
       "inputs": [
-        "plans/plan-registry.json current state",
-        "TRIAGE-01 plan metadata"
+        "closed PR #112 head 3053e1898c1de351faf2215d72947f5bd5d880de",
+        "6 unique commits / 26 files / 608 behind",
+        "tooling/lua absent on current main"
       ],
       "outputs": [
-        "Updated plan-registry.json"
+        "Isolated tooling/lua leaf candidate",
+        "Focused Lua harness tests/fixtures/contracts",
+        "Shared-doc wiring request for convergence owner"
       ],
       "acceptanceCriteria": [
-        "TRIAGE-01 entry added",
-        "Dependencies: POST-PPP-REMAINING-SPRINTS",
-        "Status: active",
-        "Sole-writer discipline honored"
+        "Worker owns tooling/lua/** plus its focused tests/docs only",
+        "Worker does not edit shared SKILLS.md, TRIGGERS.md, CODEBASE_MAP.md, plan, ledger, or global registries",
+        "Unsafe Lua sandbox fixture remains negative control",
+        "Static/synthetic proof is not promoted to embedded-runtime proof"
       ],
       "evidence": [
-        "plans/plan-registry.json contains active ASB-2026-09-STALE-PR-TRIAGE-01 entry on head d0e175c4545f2a76331f08c606429da5c4711d41",
-        "Public plan and startup readiness contracts workflow 35457635946 succeeded on that head"
+        "Current main has no tooling/lua subtree; historical branch is largely leaf-isolated"
       ]
     },
     {
-      "taskId": "VALIDATE-PLAN",
-      "title": "Run public plan contract validation",
-      "status": "completed",
-      "owner": "triage-lane",
+      "taskId": "SALVAGE-118",
+      "title": "Leaf-first salvage of PR #118 external-agent tooling catalog",
+      "status": "ready",
+      "owner": "bounded lower-capability agent / external-tooling leaf lane",
       "dependencies": [
-        "UPDATE-REGISTRY"
+        "SALVAGE-WF94"
       ],
       "inputs": [
-        "Plan artifacts",
-        "tests/test_public_plan_contracts.py"
+        "closed PR #118 head 87abb4546ee1ef440897dfd86a49e58dab827ee6",
+        "1 unique commit / 15 files / 608 behind",
+        "current operational harness registries and execution-adapter architecture"
       ],
       "outputs": [
-        "Validation PASS or structured failure"
+        "Isolated external-agent-tooling leaf candidate",
+        "Registry/schema/workflow tests",
+        "Explicit shared-registry delta for convergence owner"
       ],
       "acceptanceCriteria": [
-        "tests/test_public_plan_contracts.py PASS",
-        "git diff --check clean",
-        "No secrets in tracked files",
-        "Schema compliance verified (no additionalProperties)"
+        "Leaf registry/catalog behavior is separated from shared operational manifest/validator/workflow registry wiring",
+        "No tool is treated as installed, trusted, private, or executable merely because it is catalogued",
+        "Shared operational registries remain convergence-owner files",
+        "Focused validator and negative/positive fixtures pass"
       ],
       "evidence": [
-        "Public plan and startup readiness contracts workflow 35457635946: SUCCESS",
-        "Automated test floor workflow 35457635944: SUCCESS",
-        "App harness validation workflow 35457635906: SUCCESS",
-        "All seven observed exact-head workflow runs for d0e175c4545f2a76331f08c606429da5c4711d41 completed successfully"
+        "Historical implementation is small but overlaps current operational registry namespace"
       ]
+    },
+    {
+      "taskId": "SALVAGE-64",
+      "title": "Forensic salvage of PR #64 Windows machine-profile operational harness",
+      "status": "ready",
+      "owner": "strong salvage agent / Windows machine-profile lane",
+      "dependencies": [
+        "SALVAGE-WF94"
+      ],
+      "inputs": [
+        "closed PR #64 head 45b44b158d7f44e18dfbc6c24120a0c02924f48b",
+        "22 commits / 20 files / 732 behind current main",
+        "historical PR base feat/harness-operator-command-envelope-20260805 rather than main",
+        "current tooling/profiles/windows/harness/machine-profile/",
+        "current machine-profile-bootstrap and device-profile launcher contracts"
+      ],
+      "outputs": [
+        "PR-intended-change reconstruction separate from inherited base history",
+        "Preserve/merge/retire matrix",
+        "Bounded current-owner patches only",
+        "Focused machine-profile regression"
+      ],
+      "acceptanceCriteria": [
+        "Do not cherry-pick the 22 commits blindly",
+        "Prove which behavior is absent from current machine-profile owner before mutation",
+        "Existing canonical launcher/profile ownership is not duplicated",
+        "Current machine-profile/bootstrap/device-profile validators remain green"
+      ],
+      "evidence": [
+        "Historical branch is the stalest high-value candidate and has a non-main base"
+      ]
+    },
+    {
+      "taskId": "SALVAGE-92",
+      "title": "Reconcile PR #92 execution-actor routing against execution-adapter v1",
+      "status": "pending",
+      "owner": "strong salvage agent / execution-adapter reconciliation lane",
+      "dependencies": [
+        "SALVAGE-118"
+      ],
+      "inputs": [
+        "closed PR #92 head acc652d5dc7599b18d76983fb96dbd628d2bd759",
+        "5 unique commits / 19 files / 638 behind current main",
+        "current tooling/harness/execution-adapters/ adapter_protocol.py, registry.py, runner.py",
+        "ASQ-022 execution-adapter plan and current adapter implementations"
+      ],
+      "outputs": [
+        "Semantic comparison of old actor binding against current adapter request/receipt/capability model",
+        "Retire/merge/preserve decision",
+        "Only missing invariants/negative fixtures implemented"
+      ],
+      "acceptanceCriteria": [
+        "Do not restore a competing execution actor router if execution-adapter v1 owns the lifecycle",
+        "Old operational manifest/validator/workflow registry edits are not replayed wholesale",
+        "Any preserved actor-binding invariant becomes a current execution-adapter contract/test or an explicitly separate leaf with one owner",
+        "Execution-adapter focused tests and automated floor pass"
+      ],
+      "evidence": [
+        "Current main has a dedicated execution-adapter v1 spine absent from the August branch"
+      ]
+    },
+    {
+      "taskId": "SALVAGE-79",
+      "title": "Reconcile PR #79 agent-fleet readiness after machine-profile salvage",
+      "status": "pending",
+      "owner": "strong salvage agent / fleet-readiness lane",
+      "dependencies": [
+        "SALVAGE-64"
+      ],
+      "inputs": [
+        "closed PR #79 head b3560cd56e98f7b91dfff2e060c8a27d1c76e76a",
+        "36 unique commits / 17 files / 701 behind",
+        "current machine-profile and Windows profile ownership after SALVAGE-64"
+      ],
+      "outputs": [
+        "Readiness semantic matrix",
+        "Leaf readiness implementation only where current owners lack it",
+        "Focused readiness fixtures/tests",
+        "Shared-doc wiring request"
+      ],
+      "acceptanceCriteria": [
+        "Readiness inspection does not become a second machine-profile/bootstrap lifecycle owner",
+        "Blocked Windows CMD shim handling reuses canonical launcher/profile contracts",
+        "Skill guidance and reusable operations are separated: judgment in skill, deterministic readiness logic in code/registries",
+        "Current Windows profile and machine-profile gates remain green"
+      ],
+      "evidence": [
+        "Historical branch is large and predates current Windows profile contract"
+      ]
+    },
+    {
+      "taskId": "AUTONOMY-GAP",
+      "title": "Route missing prompt-parallel dispatch subsystem to execution-adapter owner",
+      "status": "blocked",
+      "owner": "ASQ-022 execution-adapter shared-spine owner",
+      "dependencies": [],
+      "inputs": [
+        "prompt requested harness/contracts/prompt-parallel-dispatch.v1.json",
+        "prompt requested scripts/prompt_parallel_dispatch.py",
+        "prompt requested Outputs/prompt-parallel-dispatch/manifest.json"
+      ],
+      "outputs": [
+        "Future typed prompt/lane dispatch contract and runner only if ASQ-022 determines it belongs in AgentSwitchboard"
+      ],
+      "acceptanceCriteria": [
+        "Do not invent the requested contract/CLI in TRIAGE-01",
+        "A future implementation must compose with execution-adapter v1 rather than create a second scheduler",
+        "Parallel receipt must prove actual overlap when width >= 2"
+      ],
+      "evidence": [
+        "Repository search on main@72d71a74279c5cf1b0c029b68d03c76634d50ea1 found no prompt-parallel-dispatch contract, script, or Outputs path",
+        "Current chat runtime exposes GitHub provider mutation but no local AgentSwitchboard/OpenCode/FirstMate worker execution adapter"
+      ]
+    },
+    {
+      "taskId": "CONVERGE-PORT",
+      "title": "Single-writer convergence and repository cleanup",
+      "status": "pending",
+      "owner": "salvage convergence coordinator",
+      "dependencies": [
+        "SALVAGE-113",
+        "SALVAGE-112",
+        "SALVAGE-118",
+        "SALVAGE-64",
+        "SALVAGE-92",
+        "SALVAGE-79"
+      ],
+      "inputs": [
+        "All validated isolated salvage candidates",
+        "refreshed main",
+        "current public plan and ledger",
+        "shared skills/triggers/maps/registries"
+      ],
+      "outputs": [
+        "One dependency-ordered convergence candidate",
+        "Shared wiring updated once",
+        "Combined validation receipts",
+        "Integrated main with preserved historical source branches until cleanup proof"
+      ],
+      "acceptanceCriteria": [
+        "Re-fetch main before each integration transition",
+        "Integrate leaf candidates in dependency order and resolve shared wiring once",
+        "Run focused validators, automated floor, public-plan and work-ledger contracts, diff hygiene, and merge-gate proof where executable",
+        "No historical branch deletion until preservation check proves no unique required work remains",
+        "Update TRIAGE-01 and ASQ-023 with exact integrated SHAs and residual gaps"
+      ],
+      "evidence": []
     }
   ],
   "validation": [
-    "python tests/test_public_plan_contracts.py",
-    "git diff --check origin/main...HEAD"
+    "pwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-RepositoryWorkLedgerContract.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-AgentDocumentationContract.ps1",
+    "pwsh -NoLogo -NoProfile -File scripts/Test-AutomatedTestFloor.ps1",
+    "git diff --check",
+    "git status --short"
   ],
   "proof": {
-    "target": "Static triage plan artifact with evidence-based PR dispositions",
-    "achieved": "Per-PR disposition assignments (47/47) with containment evidence; closed-schema plan shape; exact-head public-plan, automated-floor, app-harness, protocol, launcher, context-engine, and runtime-event workflows green on d0e175c4545f2a76331f08c606429da5c4711d41; initial plan merged to main as 067efa298953d8454f1eaf31c07dd8f4098bfc3c",
-    "ceiling": "Static/provider-validated coordination plan only. Does NOT prove PR close authority or operator approval, actual stale-PR closure, rebase execution, merge of #309/#311, live system state, or runtime behavior."
+    "target": "Durable repository-owned dependency map and agent-ready sprint factoring for semantic salvage of the six high-value closed-unmerged PRs.",
+    "achieved": "Current provider floor main@72d71a74279c5cf1b0c029b68d03c76634d50ea1; no open PRs; Wayfinder PR #94 core integrated through #338; exact current source heads and divergence for #113/#92/#79/#112/#64/#118 refreshed; collision and dependency graph factored; prompt-parallel-dispatch subsystem absence proven by repository search.",
+    "ceiling": "Coordination-plan and provider-repository proof only. This plan does not prove any successor salvage implementation, local worktree cleanliness, local validator execution, parallel worker dispatch, Windows/runtime behavior, provider authentication, deployment, or user acceptance."
   },
   "handoff": {
-    "nextOwner": "Repository operator",
-    "nextCommand": "Review ASB-2026-09-stale-pr-triage-01.md; approve close-candidates; execute recommended actions",
+    "nextOwner": "Wave 1 isolated salvage writers; Panel 01 requires the strongest available agent",
+    "nextCommand": "$ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true; $root=(git rev-parse --show-toplevel).Trim(); Set-Location -LiteralPath $root; git fetch --all --prune --tags; $main=(git rev-parse origin/main).Trim(); if($main -ne '72d71a74279c5cf1b0c029b68d03c76634d50ea1'){throw \"main moved from planned floor $main; refresh TRIAGE-01 before mutation\"}; $source=(git rev-parse origin/feat/harness-opencode-runtime-resolution-20260809).Trim(); if($source -ne '2ff3d81ab806b54dceccf593cd0f39b2c17e8bc9'){throw \"PR #113 source moved: $source\"}; $wt=Join-Path (Split-Path $root -Parent) 'AgentSwitchboard-salvage-pr113-20260922'; if(Test-Path -LiteralPath $wt){throw \"worktree path already exists: $wt\"}; git worktree add -b salvage/pr113-opencode-runtime-20260922 $wt origin/main",
     "notes": [
-      "Disposition counts: keep=2, rebase=2, superseded=6, close-candidate=37, blocked=0",
-      "KEEP: #309 (FM-ASB routing builder - active Phase 3), #311 (P67 OpenCode plan draft - waits on #309)",
-      "REBASE: #154 (operational harness - CONFLICTING), #159 (coordination floor - CONFLICTING)",
-      "SUPERSEDED with containment: #96-#101 (FirstMate - absorbed by PR #308 faac296; PR body explicitly marks for closure)",
-      "CLOSE-CANDIDATE: 17 July GNHF era (#5,#7,#10-#18,#20,#23-#24,#28-#29,#41 - roughly two months old at the Sept 19 floor; predate ASQ-004 Sept floor) + 20 Aug harness/Android era (#59-#60,#62,#64,#70-#71,#73,#79,#92,#94-#95,#102-#104,#106,#112-#114,#117-#118 - Herdr abandoned per 7c7f2da, harness evolved)",
-      "Full per-PR disposition detail with number/title/rationale/containmentProof/nextAction in ASB-2026-09-stale-pr-triage-01.md",
-      "Containment evidence: PR #308 body (FirstMate #96-#101), PR #288 ecea397 (WSL #11/#17), PRs #21/4c5c902 + #145/d2bafc7 (DeepSeek #13), PR #144/5ea7ce4 (Codex #117), commit 7c7f2da (Herdr #95/#102-#104)",
-      "Operator approval required before closing any PR",
-      "Superseded PRs have containment commits cited",
-      "Close-candidates have obsolescence rationale",
-      "Rebase-needed PRs have conflict evidence (gh pr view shows CONFLICTING)",
-      "No PRs closed, merged, commented, or rebased by this plan - advisory only"
+      "Launch order: Wave 1 Panels 01-04 (#113, #112, #118, #64) in isolated worktrees; Wave 2 Panel 05 #92 after #118 and Panel 06 #79 after #64; Panel 07 single-writer convergence last.",
+      "Current graph width is 4, but this chat environment cannot execute AgentSwitchboard local workers. Parallel execution is DEGRADED for this planning session, not NOT_APPLICABLE.",
+      "The portability panels are tracked fallback instructions, not proof of dispatch.",
+      "Shared SKILLS.md, TRIGGERS.md, CODEBASE_MAP.md, HARNESS.md, plan/ledger, and shared registry wiring belong to the final convergence owner unless a later refreshed plan explicitly reallocates them.",
+      "Historical source branches are evidence sources; preserve them until final convergence proves no unique required work remains.",
+      "PR #94 core is integrated; remaining #94 public-plan/runtime-binding history is deferred forensic evidence and must not be bulk replayed."
     ]
   }
 }
