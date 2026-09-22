@@ -79,8 +79,8 @@ try {
     $map = $text['tooling/profiles/windows/harness/opencode-runtime-resolution/codebase-map.json'] | ConvertFrom-Json
     Check ([int]$map.salvage.sourcePullRequest -eq 113) 'salvage/source-pr' 'source PR provenance is missing'
     Check ([string]$map.salvage.sourceHead -eq '2ff3d81ab806b54dceccf593cd0f39b2c17e8bc9') 'salvage/source-head' 'source head provenance drifted'
-    Check ($null -eq $map.entrypoints.skill) 'salvage/no-skill-registration' 'stale skill routing was restored'
-    Check ($null -eq $map.entrypoints.hook) 'salvage/no-hook-registration' 'stale hook ownership was restored'
+    Check ($null -eq $map.entrypoints.PSObject.Properties['skill']) 'salvage/no-skill-registration' 'stale skill routing was restored'
+    Check ($null -eq $map.entrypoints.PSObject.Properties['hook']) 'salvage/no-hook-registration' 'stale hook ownership was restored'
 } catch { [void]$failures.Add("salvage/provenance: $($_.Exception.Message)") }
 
 $guide = $text['docs/harness/opencode-runtime-resolution-harness.md']
