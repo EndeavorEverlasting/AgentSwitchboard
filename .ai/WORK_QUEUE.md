@@ -400,7 +400,7 @@ Canonical terminal action: none; no safe actionable work remains
 - **References:** `plans/active/ASB-2026-09-stale-pr-triage-01.plan.json`, `plans/active/ASB-2026-09-stale-pr-triage-01.md`, `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md`
 - **Acceptance gate:** TRIAGE-01 current floor and exact historical source SHAs refreshed; bounded children ASQ-024..ASQ-030 created with dependency/collision ownership; ASQ-031 routes the missing autonomous prompt-dispatch seam; plan/ledger validation green
 - **Gate:** none
-- **Last proof:** plan branch plan/stale-pr-salvage-convergence-20260922; PR #339; main@72d71a74279c5cf1b0c029b68d03c76634d50ea1; #338 Wayfinder salvage integrated; current source heads and divergence recorded in TRIAGE-01
+- **Last proof:** commit:5dfbed32db9e606873195d6a404e614ae6f26bb9 artifact:plans/active/ASB-2026-09-stale-pr-triage-01.plan.json artifact:plans/active/ASB-2026-09-stale-pr-triage-01-panels.md; pr:#339; main floor 72d71a74279c5cf1b0c029b68d03c76634d50ea1 contains #338 Wayfinder salvage; current source heads and divergence recorded in TRIAGE-01
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-22T17:16:30Z
 
