@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "critical",
   "createdUtc": "2026-09-19T16:30:00Z",
-  "updatedUtc": "2026-09-22T17:12:30Z",
+  "updatedUtc": "2026-09-22T17:16:30Z",
   "mission": "Convert the remaining high-value closed-unmerged historical pull requests into bounded semantic-salvage sprints on current main, preserving unique behavior while refusing wholesale replay of stale shared governance, skills, registries, workflows, or launch logic. The program exists to leave AgentSwitchboard clean and portable without requiring successor agents to reconstruct the September 22 forensic analysis from chat.",
   "owner": {
     "surface": "public coordination / stale-PR semantic salvage",
@@ -351,13 +351,14 @@
   ],
   "proof": {
     "target": "Durable repository-owned dependency map and agent-ready sprint factoring for semantic salvage of the six high-value closed-unmerged PRs.",
-    "achieved": "Current provider floor main@72d71a74279c5cf1b0c029b68d03c76634d50ea1; no open PRs; Wayfinder PR #94 core integrated through #338; exact current source heads and divergence for #113/#92/#79/#112/#64/#118 refreshed; collision and dependency graph factored; prompt-parallel-dispatch subsystem absence proven by repository search.; durable plan branch opened as PR #339.",
+    "achieved": "Current provider floor main@72d71a74279c5cf1b0c029b68d03c76634d50ea1; no open PRs; Wayfinder PR #94 core integrated through #338; exact current source heads and divergence for #113/#92/#79/#112/#64/#118 refreshed; collision and dependency graph factored; prompt-parallel-dispatch subsystem absence proven by repository search.; durable plan branch opened as PR #339. Repository ledger decomposition strengthened into bounded children ASQ-024 through ASQ-030 plus autonomy-routing child ASQ-031 after validator rejected prose-only UNBOUNDED continuation.",
     "ceiling": "Coordination-plan and provider-repository proof only. This plan does not prove any successor salvage implementation, local worktree cleanliness, local validator execution, parallel worker dispatch, Windows/runtime behavior, provider authentication, deployment, or user acceptance."
   },
   "handoff": {
     "nextOwner": "Wave 1 isolated salvage writers; Panel 01 requires the strongest available agent",
     "nextCommand": "$ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true; $root=(git rev-parse --show-toplevel).Trim(); Set-Location -LiteralPath $root; git fetch --all --prune --tags; $main=(git rev-parse origin/main).Trim(); if($main -ne '72d71a74279c5cf1b0c029b68d03c76634d50ea1'){throw \"main moved from planned floor $main; refresh TRIAGE-01 before mutation\"}; $source=(git rev-parse origin/feat/harness-opencode-runtime-resolution-20260809).Trim(); if($source -ne '2ff3d81ab806b54dceccf593cd0f39b2c17e8bc9'){throw \"PR #113 source moved: $source\"}; $wt=Join-Path (Split-Path $root -Parent) 'AgentSwitchboard-salvage-pr113-20260922'; if(Test-Path -LiteralPath $wt){throw \"worktree path already exists: $wt\"}; git worktree add -b salvage/pr113-opencode-runtime-20260922 $wt origin/main",
     "notes": [
+      "Repository-work-ledger bounded decomposition: ASQ-023 is decomposition-complete; ASQ-024..ASQ-027 are dependency-ready; ASQ-028/029/030/031 are dependency-gated.",
       "Launch order: Wave 1 Panels 01-04 (#113, #112, #118, #64) in isolated worktrees; Wave 2 Panel 05 #92 after #118 and Panel 06 #79 after #64; Panel 07 single-writer convergence last.",
       "Current graph width is 4, but this chat environment cannot execute AgentSwitchboard local workers. Parallel execution is DEGRADED for this planning session, not NOT_APPLICABLE.",
       "The portability panels are tracked fallback instructions, not proof of dispatch.",

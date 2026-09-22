@@ -387,21 +387,157 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** repair PR #336 ledger/plan enum and path-reference contract failures, then merge #336 when exact-head gates are green and open EAT-006 + isolated EAT-101/EAT-201/EAT-302 lanes from refreshed main.
 - **Updated:** 2026-09-20T22:40:00Z
 
+## ASQ-023 — Factor closed-PR semantic salvage into bounded child work
 
-## ASQ-023 — Closed-PR semantic salvage and porting convergence
-
-- **Status:** READY
+- **Status:** DONE
 - **Priority:** P0
 - **Work class:** UNBOUNDED
 - **Owner:** stale-PR salvage convergence coordinator
 - **Branch / PR:** plan/stale-pr-salvage-convergence-20260922 / #339 open
-- **Scope:** execute the durable TRIAGE-01 successor map for semantic salvage of closed-unmerged PRs #113, #112, #118, #64, #92, and #79; preserve the #94 Wayfinder salvage floor; use isolated worktrees and leaf ownership; converge shared skills/triggers/maps/registries once; keep historical branches until preservation proof
-- **Forbidden:** bulk merge/cherry-pick of historical branches; destructive Git; deleting source branches before preservation proof; inventing prompt-parallel-dispatch runtime/CLI; secrets/private paths; live runtime/provider claims from static salvage; allowing worker lanes to collide on shared docs/registries
-- **Dependencies:** PR #338 / main@72d71a74279c5cf1b0c029b68d03c76634d50ea1; ASQ-022 is the collision owner for execution-adapter semantics and the separate autonomy-gap owner
-- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01.plan.json`, `plans/active/ASB-2026-09-stale-pr-triage-01.md`, `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md`, `tooling/harness/execution-adapters/`
-- **Acceptance gate:** Wave 1 isolated lanes #113/#112/#118/#64 each produce validated integrated or no-change dispositions; #92 follows #118 and reconciles against execution-adapter v1; #79 follows #64 and reconciles against current machine-profile; final single-writer convergence runs focused validators + public-plan/work-ledger/agent-doc/automated-floor/diff-hygiene gates and updates TRIAGE-01 with exact integration evidence
-- **Gate:** parallel execution is DEGRADED in the current chat runtime because no AgentSwitchboard/OpenCode/FirstMate worker adapter is exposed; graph width remains 4 and portability panels are tracked fallback transport, not dispatch proof
-- **Last proof:** main@72d71a74279c5cf1b0c029b68d03c76634d50ea1; PR #338 Wayfinder semantic salvage integrated; open PR count 0; refreshed source heads: #113 2ff3d81ab806b54dceccf593cd0f39b2c17e8bc9, #112 3053e1898c1de351faf2215d72947f5bd5d880de, #118 87abb4546ee1ef440897dfd86a49e58dab827ee6, #64 45b44b158d7f44e18dfbc6c24120a0c02924f48b, #92 acc652d5dc7599b18d76983fb96dbd628d2bd759, #79 b3560cd56e98f7b91dfff2e060c8a27d1c76e76a; prompt-parallel-dispatch contract/CLI/Outputs path absent on current main
-- **Next action:** launch Panel 01 from the tracked panel pack with the strongest available agent and launch Panels 02-04 concurrently when an isolated worker adapter is available; otherwise continue serially without changing dependency ownership
-- **Updated:** 2026-09-22T17:12:30Z
+- **Scope:** refresh TRIAGE-01 against main@72d71a74279c5cf1b0c029b68d03c76634d50ea1, preserve #94/#338 proof, build the dependency/collision graph for #113/#112/#118/#64/#92/#79, and create bounded ledger children plus self-contained portability panels
+- **Forbidden:** executing successor implementation inside this decomposition item; bulk merge/cherry-pick; destructive Git; inventing prompt-parallel-dispatch runtime/CLI; secrets/private paths; live runtime/provider claims
+- **Dependencies:** PR #338 / main@72d71a74279c5cf1b0c029b68d03c76634d50ea1
+- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01.plan.json`, `plans/active/ASB-2026-09-stale-pr-triage-01.md`, `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md`
+- **Acceptance gate:** TRIAGE-01 current floor and exact historical source SHAs refreshed; bounded children ASQ-024..ASQ-030 created with dependency/collision ownership; ASQ-031 routes the missing autonomous prompt-dispatch seam; plan/ledger validation green
+- **Gate:** none
+- **Last proof:** plan branch plan/stale-pr-salvage-convergence-20260922; PR #339; main@72d71a74279c5cf1b0c029b68d03c76634d50ea1; #338 Wayfinder salvage integrated; current source heads and divergence recorded in TRIAGE-01
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-22T17:16:30Z
+
+## ASQ-024 — Salvage PR #113 OpenCode runtime-resolution
+
+- **Status:** READY
+- **Priority:** P0
+- **Work class:** BOUNDED
+- **Owner:** strong salvage agent / OpenCode-Windows profile lane
+- **Branch / PR:** none yet; create isolated branch/worktree from refreshed main when this item becomes executable
+- **Scope:** execute Panel 01: semantically reconcile PR #113 head 2ff3d81ab806b54dceccf593cd0f39b2c17e8bc9 with current opencode-lsp-setup, P67 evaluation adapter, and execution-adapter v1; implement only unique current-owner behavior and focused regressions
+- **Forbidden:** wholesale SKILLS/TRIGGERS/CODEBASE_MAP/workflow replay; P67 or OpenCode LSP redesign; provider login; live proof promotion
+- **Dependencies:** ASQ-023 DONE; PR #338/main floor integrated
+- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 01; `tooling/harness/operational/opencode-lsp-setup/`; `tooling/harness/execution-adapters/`; `plans/active/ASB-2026-09-p67-opencode-evaluation-adapter.plan.json`
+- **Acceptance gate:** preserve/merge/retire matrix complete; unique behavior tested; current OpenCode/execution-adapter gates + automated floor + diff hygiene green; exact validated head integrated or exact blocker recorded
+- **Gate:** none — dependency-ready on the recorded floor; refresh before mutation
+- **Last proof:** PR #113 closed-unmerged; 13 unique commits / 23 files / 608 behind at main@72d71a7
+- **Next action:** launch Panel 01 in an isolated worktree from refreshed main and verify source SHA 2ff3d81ab806b54dceccf593cd0f39b2c17e8bc9 before mutation
+- **Updated:** 2026-09-22T17:16:30Z
+
+## ASQ-025 — Salvage PR #112 Lua embedding leaf
+
+- **Status:** READY
+- **Priority:** P1
+- **Work class:** BOUNDED
+- **Owner:** bounded lower-capability agent / Lua leaf lane
+- **Branch / PR:** none yet; create isolated branch/worktree from refreshed main when this item becomes executable
+- **Scope:** execute Panel 02: reconstruct the isolated tooling/lua harness, focused tests/docs, sandbox-safe positive fixture, and unsafe-OS-access negative fixture
+- **Forbidden:** shared SKILLS/TRIGGERS/CODEBASE_MAP/global registries; claiming a Lua runtime/embedder exists or ran
+- **Dependencies:** ASQ-023 DONE
+- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 02
+- **Acceptance gate:** leaf validator/tests + automated floor + diff hygiene green; shared wiring left for ASQ-030
+- **Gate:** none — dependency-ready on the recorded floor; refresh before mutation
+- **Last proof:** PR #112 closed-unmerged head 3053e1898c1de351faf2215d72947f5bd5d880de; tooling/lua absent on main
+- **Next action:** launch Panel 02 in an isolated worktree from refreshed main and verify source SHA 3053e1898c1de351faf2215d72947f5bd5d880de before mutation
+- **Updated:** 2026-09-22T17:16:30Z
+
+## ASQ-026 — Salvage PR #118 external-agent tooling leaf
+
+- **Status:** READY
+- **Priority:** P1
+- **Work class:** BOUNDED
+- **Owner:** bounded lower-capability agent / external-tooling leaf lane
+- **Branch / PR:** none yet; create isolated branch/worktree from refreshed main when this item becomes executable
+- **Scope:** execute Panel 03: salvage only the external-agent-tooling evidence catalog leaf, closed schema, intake workflow, report, and focused regressions
+- **Forbidden:** shared operational manifest/validator/workflow registries; treating catalogue presence as install/trust/privacy/execution proof
+- **Dependencies:** ASQ-023 DONE
+- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 03; `tooling/harness/operational/`
+- **Acceptance gate:** leaf tests/validator green; proof-promotion negatives retained; exact shared-registry delta handed to ASQ-030
+- **Gate:** none — dependency-ready on the recorded floor; refresh before mutation
+- **Last proof:** PR #118 closed-unmerged head 87abb4546ee1ef440897dfd86a49e58dab827ee6; 1 unique commit / 15 files / 608 behind
+- **Next action:** launch Panel 03 in an isolated worktree from refreshed main and verify source SHA 87abb4546ee1ef440897dfd86a49e58dab827ee6 before mutation
+- **Updated:** 2026-09-22T17:16:30Z
+
+## ASQ-027 — Forensically salvage PR #64 Windows machine-profile harness
+
+- **Status:** READY
+- **Priority:** P0
+- **Work class:** BOUNDED
+- **Owner:** strong salvage agent / Windows machine-profile lane
+- **Branch / PR:** none yet; create isolated branch/worktree from refreshed main when this item becomes executable
+- **Scope:** execute Panel 04: separate PR-intended changes from inherited non-main base history, reconcile with current machine-profile/bootstrap/device-profile owners, and implement only unique current-owner behavior
+- **Forbidden:** blind replay of 22 commits; duplicate machine-profile skill/launcher; operator-command-delivery rewrite; live workstation claims
+- **Dependencies:** ASQ-023 DONE
+- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 04; `.ai/skills/machine-profile-bootstrap/SKILL.md`; `tooling/profiles/windows/harness/machine-profile/`
+- **Acceptance gate:** merge-base/intended-vs-inherited matrix proven; current machine-profile/device-profile/Windows-profile gates green; exact candidate integrated or blocked with evidence
+- **Gate:** none — dependency-ready on the recorded floor; refresh before mutation
+- **Last proof:** PR #64 closed-unmerged head 45b44b158d7f44e18dfbc6c24120a0c02924f48b; historical base feat/harness-operator-command-envelope-20260805; 732 behind
+- **Next action:** launch Panel 04 in an isolated worktree from refreshed main and reconstruct the PR-intended delta before any cherry-pick or code copy
+- **Updated:** 2026-09-22T17:16:30Z
+
+## ASQ-028 — Reconcile PR #92 execution-actor routing with adapter v1
+
+- **Status:** BLOCKED
+- **Priority:** P0
+- **Work class:** BOUNDED
+- **Owner:** strong salvage agent / execution-adapter reconciliation lane
+- **Branch / PR:** none yet; create isolated branch/worktree from refreshed main when this item becomes executable
+- **Scope:** execute Panel 05 after ASQ-026: compare old actor-binding/router invariants to current execution-adapter request/receipt/capability model; retire superseded lifecycle and preserve only missing current-owner invariants/tests
+- **Forbidden:** restoring a competing execution router/scheduler; wholesale operational registry/HARNESS replay; provider dispatch claims
+- **Dependencies:** ASQ-026 integrated or proved no-change; refresh ASQ-022 execution-adapter truth
+- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 05; `plans/active/ASB-2026-09-execution-adapter-trio-v1.plan.json`; `tooling/harness/execution-adapters/`
+- **Acceptance gate:** explicit superseded/preserve matrix; any preserved invariant lands in current owner with focused negative/positive tests; adapter floor green
+- **Gate:** dependency-gated; do not mutate until named dependency is proven
+- **Last proof:** PR #92 closed-unmerged head acc652d5dc7599b18d76983fb96dbd628d2bd759; current main has execution-adapter v1 absent from August branch
+- **Next action:** launch Panel 05 only after ASQ-026 is integrated or no-change and current ASQ-022/execution-adapter owners are refreshed
+- **Updated:** 2026-09-22T17:16:30Z
+
+## ASQ-029 — Reconcile PR #79 agent-fleet readiness after machine-profile salvage
+
+- **Status:** BLOCKED
+- **Priority:** P0
+- **Work class:** BOUNDED
+- **Owner:** strong salvage agent / fleet-readiness lane
+- **Branch / PR:** none yet; create isolated branch/worktree from refreshed main when this item becomes executable
+- **Scope:** execute Panel 06 after ASQ-027: compare fleet-readiness semantics with the post-#64 current machine-profile, Windows profile, launcher, and adapter readiness owners; preserve only unique leaf readiness logic/tests
+- **Forbidden:** second machine-profile/bootstrap lifecycle; independent CMD lifecycle/fallback logic; shared CODEBASE_MAP writes; live fleet claims
+- **Dependencies:** ASQ-027 integrated or proved no-change
+- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 06
+- **Acceptance gate:** readiness semantic matrix complete; unique behavior tested; current machine-profile and Windows-profile gates remain green; integrated/no-change disposition recorded
+- **Gate:** dependency-gated; do not mutate until named dependency is proven
+- **Last proof:** PR #79 closed-unmerged head b3560cd56e98f7b91dfff2e060c8a27d1c76e76a; 36 unique commits / 701 behind
+- **Next action:** launch Panel 06 only after ASQ-027 establishes the current machine-profile owner and refresh the source/main SHAs before mutation
+- **Updated:** 2026-09-22T17:16:30Z
+
+## ASQ-030 — Converge closed-PR salvage lanes and shared wiring
+
+- **Status:** BLOCKED
+- **Priority:** P0
+- **Work class:** BOUNDED
+- **Owner:** salvage convergence coordinator / single writer
+- **Branch / PR:** none yet; create isolated branch/worktree from refreshed main when this item becomes executable
+- **Scope:** execute Panel 07 after ASQ-024..ASQ-029: rejoin validated candidates in dependency order, apply shared skill/trigger/map/registry wiring once, run combined proof, merge exact heads, and update TRIAGE-01/ledger with terminal dispositions
+- **Forbidden:** overwriting unfinished workers; shared-file parallel writes; deleting historical branches before preservation proof; unrelated features; gate weakening
+- **Dependencies:** ASQ-024, ASQ-025, ASQ-026, ASQ-027, ASQ-028, ASQ-029 each integrated, no-change, or exactly blocked
+- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 07; `plans/active/ASB-2026-09-stale-pr-triage-01.plan.json`; `scripts/Prove-MergeGateLocal.ps1`
+- **Acceptance gate:** refreshed-main dependency-order convergence; focused validators + public plan/work ledger/agent docs/automated floor/merge-gate where executable + diff hygiene green; containment/content proof on main; preserved branch state reported
+- **Gate:** dependency-gated; do not mutate until named dependency is proven
+- **Last proof:** not executable yet; dependencies are intentionally isolated to prevent shared-wiring collisions
+- **Next action:** launch Panel 07 after all six salvage children have supported terminal dispositions and re-fetch main before integration
+- **Updated:** 2026-09-22T17:16:30Z
+
+## ASQ-031 — Decide and route typed prompt-parallel dispatch ownership
+
+- **Status:** BLOCKED
+- **Priority:** P1
+- **Work class:** BOUNDED
+- **Owner:** execution-adapter shared-spine successor / ASQ-022 owner
+- **Branch / PR:** none yet; create isolated branch/worktree from refreshed main when this item becomes executable
+- **Scope:** inspect whether AgentSwitchboard should own the prompt-parallel-dispatch manifest/runner requested by orchestration prompts; if yes, design it as an execution-adapter v1 consumer/adapter rather than a second scheduler; if no, record the canonical external owner
+- **Forbidden:** implementing a second FirstMate crew scheduler; inventing runtime_tool proof; creating Outputs/prompt-parallel-dispatch/manifest.json without a canonical contract/validator; making TRIAGE-01 depend on this enhancement
+- **Dependencies:** ASQ-022 current execution-adapter state reconciled by its owner
+- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01.plan.json`; `tooling/harness/execution-adapters/`; `plans/active/ASB-2026-09-execution-adapter-trio-v1.plan.json`
+- **Acceptance gate:** one canonical ownership decision; if kept, typed schema/validator/runner/receipt semantics compose with adapter v1 and prove observed parallelism; if rejected, durable route points to the actual owner
+- **Gate:** dependency-gated; do not mutate until named dependency is proven
+- **Last proof:** repository search on main@72d71a7 found no harness/contracts/prompt-parallel-dispatch.v1.json, scripts/prompt_parallel_dispatch.py, or Outputs/prompt-parallel-dispatch owner; current chat exposes no local worker runtime
+- **Next action:** inspect ASQ-022 and execution-adapter v1 current main, then record KEEP-IN-ASB or ROUTE-ELSEWHERE before any prompt-parallel-dispatch implementation
+- **Updated:** 2026-09-22T17:16:30Z
+
 
