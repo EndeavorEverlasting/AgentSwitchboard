@@ -133,4 +133,3 @@ The durable panel sequence is exactly: **01 #113, 02 #112, 03 #118, 04 #64, 05 #
 ## Proof boundary
 
 This plan proves the current provider floor, current source identities, dependency/collision factoring, and the durable successor map once merged. It does **not** prove any successor implementation, local worktree state, actual parallel dispatch, runtime behavior, or deployment.
-

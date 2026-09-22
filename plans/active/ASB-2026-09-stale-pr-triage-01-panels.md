@@ -361,4 +361,3 @@ Completed/Proven; remaining gaps; risks; blockers; proof ceiling; integration st
 NEXT COMMAND
 $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true; $root=(git rev-parse --show-toplevel).Trim(); Set-Location $root; git fetch --all --prune --tags; pwsh -NoLogo -NoProfile -File scripts/Get-RepositoryWorkLedgerFrontier.ps1 -Json; if($LASTEXITCODE){exit $LASTEXITCODE}; git status --short
 ```
-
