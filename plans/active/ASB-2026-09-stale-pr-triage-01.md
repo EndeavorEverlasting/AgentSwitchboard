@@ -4,6 +4,7 @@
 **Repository:** `EndeavorEverlasting/AgentSwitchboard`
 **Current floor:** `main@72d71a74279c5cf1b0c029b68d03c76634d50ea1`
 **Status:** active / critical
+**Plan integration:** PR #339 merged as `67df85da2026104e00ff6bd7c926db0139ca4f63`
 **Canonical machine owner:** `plans/active/ASB-2026-09-stale-pr-triage-01.plan.json`
 **Portability panel pack:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md`
 

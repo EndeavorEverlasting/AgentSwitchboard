@@ -393,16 +393,16 @@ Canonical terminal action: none; no safe actionable work remains
 - **Priority:** P0
 - **Work class:** UNBOUNDED
 - **Owner:** stale-PR salvage convergence coordinator
-- **Branch / PR:** plan/stale-pr-salvage-convergence-20260922 / #339 open
+- **Branch / PR:** main / #339 merged
 - **Scope:** refresh TRIAGE-01 against main@72d71a74279c5cf1b0c029b68d03c76634d50ea1, preserve #94/#338 proof, build the dependency/collision graph for #113/#112/#118/#64/#92/#79, and create bounded ledger children plus self-contained portability panels
 - **Forbidden:** executing successor implementation inside this decomposition item; bulk merge/cherry-pick; destructive Git; inventing prompt-parallel-dispatch runtime/CLI; secrets/private paths; live runtime/provider claims
 - **Dependencies:** PR #338 / main@72d71a74279c5cf1b0c029b68d03c76634d50ea1
 - **References:** `plans/active/ASB-2026-09-stale-pr-triage-01.plan.json`, `plans/active/ASB-2026-09-stale-pr-triage-01.md`, `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md`
 - **Acceptance gate:** TRIAGE-01 current floor and exact historical source SHAs refreshed; bounded children ASQ-024..ASQ-030 created with dependency/collision ownership; ASQ-031 routes the missing autonomous prompt-dispatch seam; plan/ledger validation green
 - **Gate:** none
-- **Last proof:** commit:5dfbed32db9e606873195d6a404e614ae6f26bb9 artifact:plans/active/ASB-2026-09-stale-pr-triage-01.plan.json artifact:plans/active/ASB-2026-09-stale-pr-triage-01-panels.md; pr:#339; main floor 72d71a74279c5cf1b0c029b68d03c76634d50ea1 contains #338 Wayfinder salvage; current source heads and divergence recorded in TRIAGE-01
+- **Last proof:** merge:67df85da2026104e00ff6bd7c926db0139ca4f63 pr:#339; exact validated candidate e2cebd81f0a928274e3b21df54a7f2fa0cde5869 had identical tree; artifact:plans/active/ASB-2026-09-stale-pr-triage-01.plan.json artifact:plans/active/ASB-2026-09-stale-pr-triage-01-panels.md; repository work-ledger contract and automated test floor passed on Windows and Ubuntu
 - **Next action:** none; no safe actionable work remains
-- **Updated:** 2026-09-22T17:16:30Z
+- **Updated:** 2026-09-22T17:27:00Z
 
 ## ASQ-024 — Salvage PR #113 OpenCode runtime-resolution
 

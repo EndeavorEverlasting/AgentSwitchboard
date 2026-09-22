@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "critical",
   "createdUtc": "2026-09-19T16:30:00Z",
-  "updatedUtc": "2026-09-22T17:23:00Z",
+  "updatedUtc": "2026-09-22T18:19:00Z",
   "mission": "Convert the remaining high-value closed-unmerged historical pull requests into bounded semantic-salvage sprints on current main, preserving unique behavior while refusing wholesale replay of stale shared governance, skills, registries, workflows, or launch logic. The program exists to leave AgentSwitchboard clean and portable without requiring successor agents to reconstruct the September 22 forensic analysis from chat.",
   "owner": {
     "surface": "public coordination / stale-PR semantic salvage",
@@ -19,7 +19,7 @@
     "pullRequest": {
       "number": 339,
       "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/339",
-      "state": "open"
+      "state": "merged"
     },
     "baseRef": "main@72d71a74279c5cf1b0c029b68d03c76634d50ea1",
     "commitRequired": true
@@ -377,13 +377,14 @@
   ],
   "proof": {
     "target": "Durable repository-owned dependency map and agent-ready sprint factoring for semantic salvage of the six high-value closed-unmerged PRs.",
-    "achieved": "Current provider floor main@72d71a74279c5cf1b0c029b68d03c76634d50ea1; no open PRs; Wayfinder PR #94 core integrated through #338; exact current source heads and divergence for #113/#92/#79/#112/#64/#118 refreshed; collision and dependency graph factored; prompt-parallel-dispatch subsystem absence proven by repository search.; durable plan branch opened as PR #339. Repository ledger decomposition strengthened into bounded children ASQ-024 through ASQ-030 plus autonomy-routing child ASQ-031 after validator rejected prose-only UNBOUNDED continuation. PR review hardened all worker bootstraps against stale local branch reuse as well as stale worktree paths. Successor bootstrap freshness now uses containment of the proven #338 floor in refreshed origin/main instead of stale head equality. Review reconciliation added an explicit ASQ-022 ownership-release gate before #92 and rewired local worktree launchers to the tracked canonical temporaryWorktreeRoot owner.",
+    "achieved": "Planning evidence floor main@72d71a74279c5cf1b0c029b68d03c76634d50ea1; no open PRs; Wayfinder PR #94 core integrated through #338; exact current source heads and divergence for #113/#92/#79/#112/#64/#118 refreshed; collision and dependency graph factored; prompt-parallel-dispatch subsystem absence proven by repository search.; durable plan branch opened as PR #339. Repository ledger decomposition strengthened into bounded children ASQ-024 through ASQ-030 plus autonomy-routing child ASQ-031 after validator rejected prose-only UNBOUNDED continuation. PR review hardened all worker bootstraps against stale local branch reuse as well as stale worktree paths. Successor bootstrap freshness now uses containment of the proven #338 floor in refreshed origin/main instead of stale head equality. Review reconciliation added an explicit ASQ-022 ownership-release gate before #92 and rewired local worktree launchers to the tracked canonical temporaryWorktreeRoot owner. PR #339 squash-merged as 67df85da2026104e00ff6bd7c926db0139ca4f63, which became the durable plan integration floor; merged tree equals exact validated candidate e2cebd81f0a928274e3b21df54a7f2fa0cde5869.",
     "ceiling": "Coordination-plan and provider-repository proof only. This plan does not prove any successor salvage implementation, local worktree cleanliness, local validator execution, parallel worker dispatch, Windows/runtime behavior, provider authentication, deployment, or user acceptance."
   },
   "handoff": {
     "nextOwner": "Wave 1 isolated salvage writers; Panel 01 requires the strongest available agent",
     "nextCommand": "$ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true; $root=(git rev-parse --show-toplevel).Trim(); Set-Location -LiteralPath $root; git fetch --all --prune --tags; git merge-base --is-ancestor 72d71a74279c5cf1b0c029b68d03c76634d50ea1 origin/main; $source=(git rev-parse origin/feat/harness-opencode-runtime-resolution-20260809).Trim(); if($source -ne '2ff3d81ab806b54dceccf593cd0f39b2c17e8bc9'){throw \"PR #113 source moved: $source\"}; $pathContract=Get-Content -LiteralPath (Join-Path $root 'tooling/harness/operational/canonical-path.contract.json') -Raw | ConvertFrom-Json; $wtTemplate=$pathContract.currentBindings.windowsTechnicianProfile.temporaryWorktreeRoot; if(-not $wtTemplate -or -not $env:LOCALAPPDATA){throw 'temporaryWorktreeRoot is not resolvable for this profile'}; $wtRoot=[Environment]::ExpandEnvironmentVariables($wtTemplate); New-Item -ItemType Directory -Path $wtRoot -Force | Out-Null; $wt=Join-Path $wtRoot 'pr113-opencode-runtime-20260922'; if(Test-Path -LiteralPath $wt){throw \"worktree path already exists: $wt\"}; if((git branch --list 'salvage/pr113-opencode-runtime-20260922').Trim()){throw \"local branch already exists: salvage/pr113-opencode-runtime-20260922\"}; git worktree add -b salvage/pr113-opencode-runtime-20260922 $wt origin/main",
     "notes": [
+      "TRIAGE-01 durable program is integrated on main via PR #339 / merge 67df85da2026104e00ff6bd7c926db0139ca4f63; 72d71a74279c5cf1b0c029b68d03c76634d50ea1 remains the planning evidence floor, not the current main tip; successor lanes must refresh current main before mutation.",
       "Execution-adapter collision gate: SALVAGE-92 remains BLOCKED until EAT-OWNERSHIP-GATE proves ASQ-022 terminal state or explicit disjoint ownership handoff.",
       "Canonical-path gate: local worker panels resolve temporaryWorktreeRoot from tooling/harness/operational/canonical-path.contract.json; they must not invent sibling worktree directories.",
       "Repository-work-ledger bounded decomposition: ASQ-023 is decomposition-complete; ASQ-024..ASQ-027 are dependency-ready; ASQ-028/029/030/031 are dependency-gated.",
