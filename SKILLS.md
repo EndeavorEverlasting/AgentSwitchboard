@@ -39,9 +39,10 @@ Every canonical skill must define:
 10. A request for a desktop shortcut or CMD installer that must create one genuinely separate tmux/WezTerm instance selects `tmux-new-instance-shortcut`. It preserves the one-launcher boundary and routes live acceptance through `end-to-end-runtime-validation`.
 11. An Android/Termux repository bootstrap, mobile command-delivery recovery, multi-pane native-selection problem, or unclear tmux scrollback selects `android-termux-repo-bootstrap`; terminal selection/scrollback recovery additionally selects `android-termux-terminal-recovery` before asking the operator to fight native selection or provide screenshots.
 12. A Windows OpenCode LSP inspection, enablement, verification, low-capability-agent setup, or per-launch free-model configuration request selects `opencode-lsp-workstation-setup`; configuration proof remains below active LSP runtime proof.
-13. Large or ambiguous destinations with unresolved decisions select the experimental `wayfinder` skill; typed Wayfinder tickets route through `research`, `prototype`, `grilling` + `domain-modeling`, then `to-spec` / `to-tickets` only after clarity.\n14. `TRIGGERS.md` maps repository evidence to a skill.
-14. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
-15. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
+13. Large or ambiguous destinations with unresolved decisions select the experimental `wayfinder` skill; typed Wayfinder tickets route through `research`, `prototype`, `grilling` + `domain-modeling`, then `to-spec` / `to-tickets` only after clarity.
+14. `TRIGGERS.md` maps repository evidence to a skill.
+15. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
+16. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
 
 ## Canonical skills
 
