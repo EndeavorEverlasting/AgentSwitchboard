@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "harnessId": "agentswitchboard.external-agent-tooling-catalog.v1",
+  "title": "External agent tooling evidence catalog",
+  "authority": {
+    "governance": "AGENTS.md",
+    "harnessDoctrine": "docs/governance/harness-doctrine.md",
+    "parentHarness": "tooling/harness/operational/manifest.json",
+    "capabilityContract": "CAPABILITIES.md",
+    "executionAdapterContract": "tooling/harness/execution-adapters/execution-adapter-contract.v1.json"
+  },
+  "entrypoints": {
+    "registry": "tooling/harness/operational/external-agent-tooling/external-agent-tooling.registry.json",
+    "schema": "tooling/harness/operational/external-agent-tooling/schemas/external-agent-tooling-registry.schema.json",
+    "codebaseMap": "tooling/harness/operational/external-agent-tooling/codebase-map.json",
+    "artifactRegistry": "tooling/harness/operational/external-agent-tooling/artifact-registry.json",
+    "intakeWorkflow": "tooling/harness/operational/external-agent-tooling/workflows/tool-intake.workflow.json",
+    "operatorGuide": "docs/harness/external-agent-tooling-catalog.md",
+    "currentState": "tooling/harness/operational/external-agent-tooling/reports/CURRENT_STATE.md",
+    "pythonValidator": "tests/test_external_agent_tooling_catalog.py",
+    "powershellValidator": "scripts/Test-ExternalAgentToolingCatalog.ps1",
+    "ci": ".github/workflows/external-agent-tooling-catalog.yml"
+  },
+  "catalogCount": 45,
+  "salvage": {
+    "sourcePullRequest": 118,
+    "sourceBranch": "feat/external-agent-tooling-catalog-20260816",
+    "sourceHead": "87abb4546ee1ef440897dfd86a49e58dab827ee6",
+    "integratedAgainst": "main@d90e5ed457c0657b6016c3ead0c976bf679a8de1",
+    "preserved": "leaf evidence catalog, schema, intake workflow, reports, validators, and proof-boundary fixtures",
+    "retiredOrDeferred": [
+      "historical .ai skill registration",
+      "shared operational manifest registration",
+      "shared validator registry registration",
+      "shared workflow routing registration"
+    ],
+    "deferredSharedRegistration": {
+      "manifest": {
+        "owner": "tooling/harness/operational/manifest.json",
+        "action": "add-entrypoint-after-convergence",
+        "key": "externalAgentToolingManifest",
+        "value": "tooling/harness/operational/external-agent-tooling/manifest.json"
+      },
+      "validators": {
+        "owner": "tooling/harness/operational/validator-registry.json",
+        "action": "add-after-convergence",
+        "entries": [
+          {
+            "id": "external-agent-tooling-python",
+            "command": "python3 tests/test_external_agent_tooling_catalog.py",
+            "platforms": [
+              "linux",
+              "windows",
+              "macos"
+            ],
+            "tier": "domain",
+            "mutatesTarget": false,
+            "proof": "external tooling source-only catalog and anti-proof-promotion contract"
+          },
+          {
+            "id": "external-agent-tooling-powershell",
+            "command": "pwsh -NoLogo -NoProfile -File scripts/Test-ExternalAgentToolingCatalog.ps1",
+            "platforms": [
+              "windows",
+              "linux"
+            ],
+            "tier": "domain",
+            "mutatesTarget": false,
+            "proof": "external tooling catalog completeness and source-only proof boundary"
+          }
+        ]
+      },
+      "workflowRegistry": {
+        "owner": "tooling/harness/operational/workflow-registry.json",
+        "action": "no-change-in-leaf; convergence must decide canonical skill/routing owner before registration",
+        "requestedWorkflowRoot": "tooling/harness/operational/external-agent-tooling/workflows/",
+        "skill": null
+      }
+    }
+  },
+  "generatedEvidence": {
+    "tracked": false,
+    "defaultRoot": "operating-system temporary directory/AgentSwitchboard/external-agent-tooling/<run-id>",
+    "artifacts": [
+      "external-agent-tooling-evaluation.json",
+      "external-agent-tooling-operator-report.md"
+    ]
+  },
+  "safety": {
+    "catalogGrantsInstallAuthority": false,
+    "catalogGrantsNetworkAuthority": false,
+    "catalogGrantsProviderCallAuthority": false,
+    "catalogGrantsLiveTargetMutationAuthority": false,
+    "catalogProvesInstalled": false,
+    "catalogProvesExecutable": false,
+    "catalogProvesTrusted": false,
+    "catalogProvesPrivate": false,
+    "catalogProvesRuntimeReady": false,
+    "implicitHookInstallationAllowed": false,
+    "proofCeiling": "Tracked source-only catalog completeness, provenance labels, dispositions, unknown capability state, unproved runtime/trust/privacy state, and offline/static validation only."
+  }
+}
