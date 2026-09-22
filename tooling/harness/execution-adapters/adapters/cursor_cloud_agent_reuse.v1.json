@@ -1,0 +1,92 @@
+{
+  "schema": "agentswitchboard.cursor-pr332-reuse-map/v1",
+  "source": {
+    "pullRequest": 332,
+    "mergeSha": "bcf32b832856242aae33e4c36af7248152a5dc84",
+    "historicalImplementationHead": "0896bd7861f9ade9a246b3fde2b90925c22ecf0b",
+    "evidence": [
+      "reports/P07-successor-cloudagent-binding-evidence.md",
+      "reports/P07-SUCCESSOR-COMPLETION.md"
+    ]
+  },
+  "commonOwners": {
+    "request": "tooling/harness/execution-adapters/schemas/execution-request.v1.schema.json",
+    "receipt": "tooling/harness/execution-adapters/schemas/execution-receipt.v1.schema.json",
+    "capability": "tooling/harness/execution-adapters/schemas/capability-report.v1.schema.json",
+    "runner": "tooling/harness/execution-adapters/runner.py"
+  },
+  "target": {
+    "adapter": "tooling/harness/execution-adapters/adapters/cursor_cloud_agent.py",
+    "transport": "tooling/harness/execution-adapters/adapters/cursor_cloud_transport.py"
+  },
+  "dispositions": [
+    {
+      "source": "tooling/harness/triage-consumer/dispatch/cursor_agent_client.py",
+      "disposition": "REIMPLEMENT_PRIVATE_TRANSPORT",
+      "preserve": [
+        "request/result correlation concept",
+        "bounded timeout concept"
+      ],
+      "reject": [
+        "predictable shared /tmp queues",
+        "socket presence as dispatch readiness",
+        "unvalidated result correlation"
+      ]
+    },
+    {
+      "source": "tooling/harness/triage-consumer/dispatch/dispatch_lanes.py::_handle_cloud_agent",
+      "disposition": "DO_NOT_COPY_PROVIDER_BRANCH",
+      "preserve": [
+        "fail-closed unavailable-host intent"
+      ],
+      "reject": [
+        "provider-specific branching in generic dispatch",
+        "mission-only task envelope"
+      ]
+    },
+    {
+      "source": "tooling/harness/triage-consumer/dispatch/test_cloud_agent_orchestration.py",
+      "disposition": "REUSE_AS_SYNTHETIC_PATTERN_ONLY",
+      "preserve": [
+        "mock request/result handshake"
+      ],
+      "reject": [
+        "mock completion as live runtime proof",
+        "exit-code-only success assertion"
+      ]
+    },
+    {
+      "source": "tooling/harness/triage-consumer/dispatch/dispatch_with_orchestration.py + orchestrate_cloud_agents.py",
+      "disposition": "SUPERSEDE_WITH_EAT_305_MACHINE_BRIDGE",
+      "preserve": [
+        "parent Task-capable runtime is required"
+      ],
+      "reject": [
+        "marker/instruction creation as readiness",
+        "human monitoring hop as production automation"
+      ]
+    },
+    {
+      "source": "tooling/harness/triage-consumer/dispatch/schemas/dispatch-receipt.schema.json",
+      "disposition": "LEGACY_COMPATIBILITY_ONLY",
+      "preserve": [
+        "legacy consumer compatibility until EAT-006 bridge"
+      ],
+      "reject": [
+        "duplicate ownership of common execution receipt fields"
+      ]
+    },
+    {
+      "source": "reports/P07-successor-cloudagent-binding-evidence.md",
+      "disposition": "HISTORICAL_EVIDENCE_INPUT",
+      "preserve": [
+        "historical real Task observation",
+        "known proof gaps"
+      ],
+      "reject": [
+        "historical observation as current machine-closed runtime proof"
+      ]
+    }
+  ],
+  "proofCeiling": "CONTRACT_STATIC until EAT-305 provides an authorized machine Task bridge and EAT-308 independently validates a fresh real CloudAgent effect"
+}
