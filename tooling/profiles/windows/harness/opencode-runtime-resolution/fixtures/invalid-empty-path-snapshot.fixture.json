@@ -1,0 +1,24 @@
+{
+  "schema": "agentswitchboard.opencode-runtime-resolution-fixture.v1",
+  "caseId": "invalid-empty-path-snapshot",
+  "requestedSurface": "native-windows",
+  "parentResolution": {
+    "resolvedPath": "C:\\Users\\Example\\AppData\\Roaming\\npm\\opencode.ps1",
+    "runtimePlatform": "windows",
+    "wrapperKind": "native-package-shim"
+  },
+  "effectiveLaunchResolution": {
+    "resolvedPath": "C:\\Users\\Example\\AppData\\Roaming\\npm\\opencode.cmd",
+    "runtimePlatform": "windows",
+    "wrapperKind": "native-package-shim",
+    "targetPlatform": "windows"
+  },
+  "stateResolution": {
+    "commandPath": "C:\\Users\\Example\\AppData\\Roaming\\npm\\opencode.cmd",
+    "integration": "native"
+  },
+  "processPathCaptured": true,
+  "processPath": [],
+  "expectedClassification": "unresolved-runtime-identity",
+  "expectedPass": false
+}

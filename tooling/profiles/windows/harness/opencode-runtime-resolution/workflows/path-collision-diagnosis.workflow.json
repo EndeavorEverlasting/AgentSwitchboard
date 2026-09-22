@@ -1,0 +1,69 @@
+{
+  "schema": "agentswitchboard.opencode-runtime-resolution-workflow.v1",
+  "workflowId": "opencode-path-collision-diagnosis",
+  "trigger": "runtime-resolution-intake produced enough parent, launch, shim, or fleet-state evidence to compare runtime identity",
+  "classificationOrder": [
+    "shim-shadowing-native",
+    "parent-child-divergence",
+    "state-command-drift",
+    "native-consistent",
+    "declared-wsl-consistent",
+    "unresolved-runtime-identity"
+  ],
+  "steps": [
+    {
+      "stepId": "requested-surface",
+      "action": "Require an explicit requested surface. Unknown remains unresolved."
+    },
+    {
+      "stepId": "normalize-parent",
+      "action": "Normalize parent command identity through classifier.py; unknown or sibling-prefix lookalikes remain unresolved. .ps1 versus .cmd in the registered npm directory are the same native package family."
+    },
+    {
+      "stepId": "normalize-launch",
+      "action": "Resolve the effective launch through classifier.py. Require a recognized registered resolver path; metadata alone cannot produce a passing family."
+    },
+    {
+      "stepId": "native-shadow-check",
+      "action": "For native-windows requests, fail as shim-shadowing-native when the effective launch uses agentswitchboard-wsl-shim or targets wsl-ubuntu."
+    },
+    {
+      "stepId": "boundary-divergence-check",
+      "action": "Fail as parent-child-divergence when parent and launch runtime families differ without a declared WSL transition."
+    },
+    {
+      "stepId": "state-drift-check",
+      "action": "If fleet state supplies commandPath, require a recognized command family. Unknown state paths are unresolved; recognized disagreement with effective launch is state-command-drift."
+    },
+    {
+      "stepId": "positive-native",
+      "action": "Pass native-consistent only when native-windows was requested, parent and effective launch both match the registered native npm OpenCode family, PATH evidence is non-empty, and supplied fleet state is recognized/consistent."
+    },
+    {
+      "stepId": "positive-wsl",
+      "action": "Pass declared-wsl-consistent only when wsl-ubuntu was requested and the effective launch is the registered WSL OpenCode or the registered AgentSwitchboard shim targeting the registered WSL OpenCode path, with non-empty PATH evidence and recognized/consistent supplied state."
+    },
+    {
+      "stepId": "unresolved",
+      "action": "Use unresolved-runtime-identity for missing parent/effective launch, empty or missing PATH snapshot, unknown requested surface, unrecognized resolver/state path, missing wrapper target, or a WSL target outside the registered OpenCode path."
+    },
+    {
+      "stepId": "route-repair",
+      "action": "Do not mutate the machine. Route native repair, WSL repair, or end-to-end proof to the owning existing surface named in runtime-resolution.registry.json."
+    }
+  ],
+  "outputs": [
+    "classificationId",
+    "pass",
+    "firstDivergentBoundary",
+    "requestedSurface",
+    "parentResolver",
+    "effectiveResolver",
+    "stateResolver",
+    "repairOwner",
+    "proofCeiling",
+    "nextCommand"
+  ],
+  "proofCeiling": "Deterministic diagnosis from supplied evidence only.",
+  "implementation": "tooling/profiles/windows/harness/opencode-runtime-resolution/classifier.py"
+}

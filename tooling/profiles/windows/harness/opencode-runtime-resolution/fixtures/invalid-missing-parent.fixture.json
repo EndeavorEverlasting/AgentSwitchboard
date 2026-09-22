@@ -1,0 +1,22 @@
+{
+  "schema": "agentswitchboard.opencode-runtime-resolution-fixture.v1",
+  "caseId": "invalid-missing-parent",
+  "requestedSurface": "native-windows",
+  "effectiveLaunchResolution": {
+    "resolvedPath": "C:\\Users\\Example\\AppData\\Roaming\\npm\\opencode.cmd",
+    "runtimePlatform": "windows",
+    "wrapperKind": "native-package-shim",
+    "targetPlatform": "windows"
+  },
+  "stateResolution": {
+    "commandPath": "C:\\Users\\Example\\AppData\\Roaming\\npm\\opencode.cmd",
+    "integration": "native"
+  },
+  "processPathCaptured": true,
+  "processPath": [
+    "C:\\Users\\Example\\AppData\\Roaming\\npm",
+    "C:\\Windows\\System32"
+  ],
+  "expectedClassification": "unresolved-runtime-identity",
+  "expectedPass": false
+}

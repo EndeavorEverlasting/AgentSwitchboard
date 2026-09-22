@@ -1,0 +1,53 @@
+name: OpenCode runtime resolution harness
+
+on:
+  pull_request:
+    paths:
+      - 'tooling/profiles/windows/harness/opencode-runtime-resolution/**'
+      - 'tooling/profiles/windows/Get-OpenCodeRuntimeResolutionStatus.ps1'
+      - 'scripts/Test-OpenCodeRuntimeResolutionHarness.ps1'
+      - 'tests/test_opencode_runtime_resolution_harness.py'
+      - 'docs/harness/opencode-runtime-resolution-harness.md'
+      - '.github/workflows/opencode-runtime-resolution-harness.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tooling/profiles/windows/harness/opencode-runtime-resolution/**'
+      - 'tooling/profiles/windows/Get-OpenCodeRuntimeResolutionStatus.ps1'
+      - 'scripts/Test-OpenCodeRuntimeResolutionHarness.ps1'
+      - 'tests/test_opencode_runtime_resolution_harness.py'
+      - 'docs/harness/opencode-runtime-resolution-harness.md'
+      - '.github/workflows/opencode-runtime-resolution-harness.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Repository-only status
+        shell: pwsh
+        run: ./tooling/profiles/windows/Get-OpenCodeRuntimeResolutionStatus.ps1
+      - name: Focused completeness and semantics
+        shell: pwsh
+        run: ./scripts/Test-OpenCodeRuntimeResolutionHarness.ps1
+      - name: Existing OpenCode LSP harness
+        shell: pwsh
+        run: ./scripts/Test-OpenCodeLspHarness.ps1
+      - name: Execution-adapter contract
+        shell: pwsh
+        run: ./scripts/Test-ExecutionAdapterContract.ps1
+      - name: Existing agent documentation contract
+        shell: pwsh
+        run: ./scripts/Test-AgentDocumentationContract.ps1
+      - name: Diff hygiene
+        shell: pwsh
+        run: git diff --check ${{ github.event.pull_request.base.sha || 'HEAD^' }} ${{ github.sha }}

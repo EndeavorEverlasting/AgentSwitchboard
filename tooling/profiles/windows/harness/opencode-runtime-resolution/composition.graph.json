@@ -1,0 +1,94 @@
+{
+  "schema": "agentswitchboard.opencode-runtime-resolution-composition.v1",
+  "graphId": "agentswitchboard.opencode-runtime-resolution-harness.v1",
+  "nodes": [
+    {
+      "id": "entrypoint.opencode-runtime-status",
+      "kind": "entrypoint",
+      "path": "tooling/profiles/windows/Get-OpenCodeRuntimeResolutionStatus.ps1"
+    },
+    {
+      "id": "registry.opencode-runtime-resolution",
+      "kind": "registry",
+      "path": "tooling/profiles/windows/harness/opencode-runtime-resolution/runtime-resolution.registry.json"
+    },
+    {
+      "id": "workflow.opencode-runtime-intake",
+      "kind": "workflow",
+      "path": "tooling/profiles/windows/harness/opencode-runtime-resolution/workflows/runtime-resolution-intake.workflow.json"
+    },
+    {
+      "id": "workflow.opencode-path-collision",
+      "kind": "workflow",
+      "path": "tooling/profiles/windows/harness/opencode-runtime-resolution/workflows/path-collision-diagnosis.workflow.json"
+    },
+    {
+      "id": "classifier.opencode-runtime-resolution",
+      "kind": "classifier",
+      "path": "tooling/profiles/windows/harness/opencode-runtime-resolution/classifier.py"
+    },
+    {
+      "id": "validator.opencode-runtime-resolution",
+      "kind": "validator",
+      "path": "scripts/Test-OpenCodeRuntimeResolutionHarness.ps1"
+    },
+    {
+      "id": "artifact.opencode-runtime-classification",
+      "kind": "artifact",
+      "path": "tooling/profiles/windows/harness/opencode-runtime-resolution/artifact-registry.json"
+    },
+    {
+      "id": "report.opencode-runtime-operator",
+      "kind": "report",
+      "path": "tooling/profiles/windows/harness/opencode-runtime-resolution/operator-report.template.md"
+    },
+    {
+      "id": "handoff.opencode-runtime",
+      "kind": "handoff",
+      "path": "tooling/profiles/windows/harness/opencode-runtime-resolution/artifact-registry.json"
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge.entrypoint-registry",
+      "from": "entrypoint.opencode-runtime-status",
+      "to": "registry.opencode-runtime-resolution"
+    },
+    {
+      "id": "edge.entrypoint-intake",
+      "from": "entrypoint.opencode-runtime-status",
+      "to": "workflow.opencode-runtime-intake"
+    },
+    {
+      "id": "edge.intake-collision",
+      "from": "workflow.opencode-runtime-intake",
+      "to": "workflow.opencode-path-collision"
+    },
+    {
+      "id": "edge.registry-validator",
+      "from": "registry.opencode-runtime-resolution",
+      "to": "validator.opencode-runtime-resolution"
+    },
+    {
+      "id": "edge.collision-classifier",
+      "from": "workflow.opencode-path-collision",
+      "to": "classifier.opencode-runtime-resolution"
+    },
+    {
+      "id": "edge.classifier-classification",
+      "from": "classifier.opencode-runtime-resolution",
+      "to": "artifact.opencode-runtime-classification"
+    },
+    {
+      "id": "edge.classification-report",
+      "from": "artifact.opencode-runtime-classification",
+      "to": "report.opencode-runtime-operator"
+    },
+    {
+      "id": "edge.report-handoff",
+      "from": "report.opencode-runtime-operator",
+      "to": "handoff.opencode-runtime"
+    }
+  ],
+  "proofCeiling": "Registered leaf diagnostic topology only; no live OpenCode child-process execution is proven. Shared skill/trigger routing is deferred to TRIAGE-01 convergence."
+}
