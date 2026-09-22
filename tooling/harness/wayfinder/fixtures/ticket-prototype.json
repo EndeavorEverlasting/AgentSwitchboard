@@ -1,0 +1,23 @@
+{
+  "schema": "agentswitchboard.wayfinder-ticket.v1",
+  "ticketId": "WF-P1",
+  "title": "Prototype the operator frontier view",
+  "type": "prototype",
+  "label": "wayfinder:prototype",
+  "interaction": "hitl",
+  "status": "resolved",
+  "assignee": "agent-prototype",
+  "question": "Which concrete frontier presentation lets the operator recognize takeable, blocked, and claimed decisions without reading every ticket?",
+  "blockedBy": ["WF-R1"],
+  "trackerUrl": "https://github.com/EndeavorEverlasting/AgentSwitchboard/issues/103",
+  "assets": ["https://github.com/EndeavorEverlasting/AgentSwitchboard/tree/prototype/frontier-view"],
+  "resolution": {
+    "commentUrl": "https://github.com/EndeavorEverlasting/AgentSwitchboard/issues/103#issuecomment-3",
+    "gist": "The human selected a tracker-first view driven by native blockers and assignee state.",
+    "invokedSkills": ["prototype"],
+    "primarySourceCount": 0,
+    "humanResponseCount": 1,
+    "humanVerdictObserved": true,
+    "taskCompleted": false
+  }
+}

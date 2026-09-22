@@ -1,0 +1,49 @@
+{
+  "schema": "agentswitchboard.wayfinder-map.v1",
+  "mapId": "WF-EXAMPLE",
+  "title": "Choose a safe cross-session operator workflow",
+  "destination": "An implementation-ready specification whose required product and interaction decisions are resolved.",
+  "tracker": {
+    "provider": "github",
+    "mapRef": "#100",
+    "mapUrl": "https://github.com/EndeavorEverlasting/AgentSwitchboard/issues/100",
+    "decisionAuthority": "tracker-child-tickets"
+  },
+  "planningOnly": true,
+  "notes": [
+    "Research facts from primary sources.",
+    "Prototype and grilling tickets require real human reactions/answers."
+  ],
+  "decisionsSoFar": [
+    {
+      "title": "Choose the decision source of truth",
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/issues/101#issuecomment-1",
+      "gist": "Tracker child tickets own detailed decision resolutions; the map is an index."
+    },
+    {
+      "title": "Research the authoritative dependency API",
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/issues/102#issuecomment-2",
+      "gist": "Use GitHub native issue dependencies with the blocking issue database id."
+    },
+    {
+      "title": "Prototype the operator frontier view",
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/issues/103#issuecomment-3",
+      "gist": "The human selected a tracker-first view driven by native blockers and assignee state."
+    },
+    {
+      "title": "Choose the operator approval boundary",
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/issues/104#issuecomment-4",
+      "gist": "Prototype verdicts and grilling decisions require observed human input; silence never satisfies HITL."
+    }
+  ],
+  "notYetSpecified": [],
+  "outOfScope": [
+    "Destination implementation before the decision route is clear."
+  ],
+  "spec": {
+    "status": "published",
+    "lifecycle": "temporary-until-implementation",
+    "ref": "tooling/harness/wayfinder/fixtures/spec.json"
+  },
+  "sourceContribution": "third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/README.md"
+}

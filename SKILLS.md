@@ -39,9 +39,10 @@ Every canonical skill must define:
 10. A request for a desktop shortcut or CMD installer that must create one genuinely separate tmux/WezTerm instance selects `tmux-new-instance-shortcut`. It preserves the one-launcher boundary and routes live acceptance through `end-to-end-runtime-validation`.
 11. An Android/Termux repository bootstrap, mobile command-delivery recovery, multi-pane native-selection problem, or unclear tmux scrollback selects `android-termux-repo-bootstrap`; terminal selection/scrollback recovery additionally selects `android-termux-terminal-recovery` before asking the operator to fight native selection or provide screenshots.
 12. A Windows OpenCode LSP inspection, enablement, verification, low-capability-agent setup, or per-launch free-model configuration request selects `opencode-lsp-workstation-setup`; configuration proof remains below active LSP runtime proof.
-13. `TRIGGERS.md` maps repository evidence to a skill.
-14. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
-15. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
+13. Large or ambiguous destinations with unresolved decisions select the experimental `wayfinder` skill; typed Wayfinder tickets route through `research`, `prototype`, `grilling` + `domain-modeling`, then `to-spec` / `to-tickets` only after clarity.
+14. `TRIGGERS.md` maps repository evidence to a skill.
+15. The nearest nested `SKILLS.md` may specialize the catalog for a subtree.
+16. When no skill fits, use `repo-intake` to collect evidence and propose a new bounded skill rather than improvising unlimited authority.
 
 ## Canonical skills
 
@@ -51,6 +52,13 @@ Every canonical skill must define:
 | [`bounded-sprint`](.ai/skills/bounded-sprint/SKILL.md) | Execute one scoped tracked change through commit/PR | explicit implementation request, ranked sprint selected |
 | [`machine-profile-bootstrap`](.ai/skills/machine-profile-bootstrap/SKILL.md) | Detect Windows identity/path conventions and deterministically acquire AgentSwitchboard at an inferred or explicitly chosen root | new box, new username, missing repo, corporate hostname, redirected Desktop/Documents, OneDrive variation, explicit Dev directory |
 | [`public-plan-coordination`](.ai/skills/public-plan-coordination/SKILL.md) | Coordinate public machine-readable work across agents, sessions, waves, branches, and PRs | plan request, sprint map, material ownership/dependency/handoff change |
+| [`wayfinder`](.ai/skills/wayfinder/SKILL.md) | Experimental typed decision-map workflow for ambiguous multi-session destinations | unresolved decisions, research/prototype/HITL frontier |
+| [`research`](.ai/skills/research/SKILL.md) | Experimental primary-source decision research gate | `wayfinder:research`, externally grounded decision fact |
+| [`prototype`](.ai/skills/prototype/SKILL.md) | Experimental throwaway artifact + human verdict gate | `wayfinder:prototype`, low-fidelity decision uncertainty |
+| [`grilling`](.ai/skills/grilling/SKILL.md) | Experimental human-owned decision interview gate | `wayfinder:grilling`, unresolved human trade-off |
+| [`domain-modeling`](.ai/skills/domain-modeling/SKILL.md) | Experimental durable domain-language / ADR companion | settled terminology or architectural trade-off |
+| [`to-spec`](.ai/skills/to-spec/SKILL.md) | Experimental synthesis after decision clarity | clear map -> implementation-ready temporary spec |
+| [`to-tickets`](.ai/skills/to-tickets/SKILL.md) | Experimental bounded implementation decomposition after clarity | clear plan/spec -> executable build tickets |
 | [`gnhf-prompt-compilation`](.ai/skills/gnhf-prompt-compilation/SKILL.md) | Compile one copy-ready bounded `gnhf` PowerShell launch command | “GNHF prompt,” “Good Night, Have Fun prompt,” compile sprint for GNHF |
 | [`powershell-interactive-execution`](.ai/skills/powershell-interactive-execution/SKILL.md) | Produce directory-first PowerShell safe for interactive submission | PowerShell snippet, console steps, interactive command |
 | [`operator-command-delivery`](.ai/skills/operator-command-delivery/SKILL.md) | Verify exact source identity, candidate command text, child executable launchability, parent-shell safety, and evidence routing before publishing operator commands | copy-paste command, HTTP 404, malformed PowerShell transport, blocked child launch, lost diagnostics |

@@ -41,6 +41,21 @@
       "proof": "public plan registry and startup readiness structure"
     },
     {
+      "id": "wayfinder-core-script",
+      "runner": "python-script",
+      "path": "tests/test_wayfinder_core.py",
+      "required": true,
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "expectStdoutContains": [
+        "PASS"
+      ],
+      "proof": "Wayfinder pinned donor lineage, ticket/HITL gates, frontier/spec lifecycle, and tracker command construction"
+    },
+    {
       "id": "execution-adapter-contract-script",
       "runner": "python-script",
       "path": "tests/test_execution_adapter_contract.py",
