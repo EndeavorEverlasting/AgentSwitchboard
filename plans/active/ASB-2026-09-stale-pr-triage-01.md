@@ -2,7 +2,9 @@
 
 **Plan ID:** `ASB-2026-09-STALE-PR-TRIAGE-01`
 **Repository:** `EndeavorEverlasting/AgentSwitchboard`
-**Current floor:** `main@72d71a74279c5cf1b0c029b68d03c76634d50ea1`
+**Planning evidence floor:** `main@72d71a74279c5cf1b0c029b68d03c76634d50ea1`
+**Current execution floor:** `main@dd344b339ffc9fa2d417a785f6b17d493fcb2659`
+**Completed slices:** Panel 01 / PR #341 -> `7e637307de01116069b4067b351b96188d12e989`; Panel 02 / PR #342 -> `31d57167330e85fb7b8fc52ab47ceef348771b04`; Lua review recovery PR #343 -> `dd344b339ffc9fa2d417a785f6b17d493fcb2659`
 **Status:** active / critical
 **Plan integration:** PR #339 merged as `67df85da2026104e00ff6bd7c926db0139ca4f63`
 **Canonical machine owner:** `plans/active/ASB-2026-09-stale-pr-triage-01.plan.json`
@@ -10,16 +12,16 @@
 
 ## 1. LAUNCH ORDER
 
-1. **Panel 01 — PR #113 OpenCode runtime-resolution semantic salvage** — Wave 1, strong agent.
-2. **Panel 02 — PR #112 Lua embedding leaf salvage** — Wave 1, bounded lower-capability agent.
+1. **DONE — Panel 01 / PR #113 OpenCode runtime-resolution semantic salvage** — integrated by PR #341 / `7e637307de01116069b4067b351b96188d12e989`.
+2. **DONE — Panel 02 / PR #112 Lua embedding leaf salvage** — integrated by PR #342 / `31d57167330e85fb7b8fc52ab47ceef348771b04`; post-merge review repair integrated by PR #343 / `dd344b339ffc9fa2d417a785f6b17d493fcb2659`.
 3. **Panel 03 — PR #118 external-agent tooling leaf salvage** — Wave 1, bounded lower-capability agent.
 4. **Panel 04 — PR #64 Windows machine-profile forensic salvage** — Wave 1, strong agent.
 5. **Panel 05 — PR #92 execution-actor routing reconciliation** — Wave 2; wait for Panel 03 **and** for ASQ-022 to become terminal or durably hand off disjoint execution-adapter paths.
 6. **Panel 06 — PR #79 agent-fleet readiness reconciliation** — Wave 2; wait for Panel 04 because fleet readiness depends on the current machine-profile owner.
 7. **Panel 07 — Final convergence and cleanup** — single writer after Panels 01-06 are validated or explicitly dispositioned.
 
-**First chat / strongest-agent lane:** Panel 01.
-**Parallel group 1:** Panels 01-04.
+**Next executable lane:** Panel 03 / PR #118. **Strongest remaining lane:** Panel 04 / PR #64.
+**Remaining parallel group:** Panels 03-04; Panels 01-02 are integrated.
 **Waiting lanes:** Panel 05 waits on Panel 03 + the ASQ-022 ownership-release gate; Panel 06 waits on Panel 04.
 **Final convergence:** Panel 07.
 
@@ -40,7 +42,7 @@ Until that owner exists, `ASB-2026-09-stale-pr-triage-01-panels.md` is the durab
 
 ## 3. COMPACT COORDINATION PREAMBLE
 
-- Repo floor: `main@72d71a74279c5cf1b0c029b68d03c76634d50ea1`; open PRs: **0** at initial salvage-plan refresh.
+- Planning evidence floor: `main@72d71a74279c5cf1b0c029b68d03c76634d50ea1`; current execution floor at this progress checkpoint: `main@dd344b339ffc9fa2d417a785f6b17d493fcb2659`; open PRs: **0** after PR #343 merge.
 - Local worker path authority: resolve `temporaryWorktreeRoot` from `tooling/harness/operational/canonical-path.contract.json`; the Windows technician binding is `%LOCALAPPDATA%\\AgentSwitchboard\\worktrees`. Never derive a sibling directory from whichever checkout invoked the panel.
 - Proven completed floor: PR #94 Wayfinder core semantic salvage merged as #338 / `72d71a74279c5cf1b0c029b68d03c76634d50ea1`.
 - Preserve historical source branches until final preservation checks; do not bulk merge or bulk cherry-pick.
