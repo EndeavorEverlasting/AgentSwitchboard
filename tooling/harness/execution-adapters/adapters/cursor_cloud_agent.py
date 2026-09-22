@@ -114,10 +114,20 @@ class CursorCloudAgentAdapter:
         started_wall = _utc_now()
         started_mono = time.monotonic()
 
+        raw_timeout = request.get("timeoutSeconds")
+        timeout_seconds = (
+            raw_timeout
+            if isinstance(raw_timeout, int)
+            and not isinstance(raw_timeout, bool)
+            and 1 <= raw_timeout <= 3600
+            else None
+        )
+
         if (
             request.get("adapterKind") != self.adapter_kind
             or not isinstance(request.get("input"), Mapping)
             or request["input"].get("kind") != self.adapter_kind
+            or timeout_seconds is None
         ):
             return self._terminal_receipt(
                 request=request,
@@ -125,7 +135,10 @@ class CursorCloudAgentAdapter:
                 started_wall=started_wall,
                 started_mono=started_mono,
                 blocker_code="BLOCKED_INPUT",
-                blocker_message="Execution request is not a cursor-cloud-agent request.",
+                blocker_message=(
+                    "Execution request is not a valid cursor-cloud-agent request "
+                    "with timeoutSeconds between 1 and 3600."
+                ),
                 blocker_stage="prepare",
                 retryable=False,
             )
@@ -163,7 +176,7 @@ class CursorCloudAgentAdapter:
         try:
             raw = CursorTaskTransport(paths).execute_request(
                 execution_request=request,
-                timeout_seconds=int(request["timeoutSeconds"]),
+                timeout_seconds=timeout_seconds,
             )
         except (CursorTransportError, OSError, ValueError) as exc:
             return self._terminal_receipt(
