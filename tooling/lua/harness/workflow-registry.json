@@ -1,0 +1,10 @@
+{
+  "schema": "agentswitchboard.lua-workflow-registry.v1",
+  "workflows": [
+    {"id": "lua-task-intake", "spec": "tooling/lua/harness/workflows/task-intake.workflow.json", "purpose": "classify Lua request and select an owned workflow"},
+    {"id": "lua-embedding-design-validation", "spec": "tooling/lua/harness/workflows/embedding-design-validation.workflow.json", "purpose": "validate host ownership, VM lifecycle, errors, execution, and type discipline"},
+    {"id": "lua-sandbox-validation", "spec": "tooling/lua/harness/workflows/sandbox-validation.workflow.json", "purpose": "validate deny-by-default capability exposure for untrusted or AI-generated scripts"},
+    {"id": "lua-failure-recovery", "spec": "tooling/lua/harness/workflows/failure-recovery.workflow.json", "purpose": "repair the failing owner without weakening the gate"},
+    {"id": "lua-handoff", "spec": "tooling/lua/harness/workflows/handoff.workflow.json", "purpose": "emit exact readiness, proof ceiling, and downstream runtime gate"}
+  ]
+}

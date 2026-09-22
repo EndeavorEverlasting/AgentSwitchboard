@@ -1,0 +1,17 @@
+{
+  "schema": "agentswitchboard.lua-workflow.v1",
+  "id": "lua-sandbox-validation",
+  "trigger": "Lua code may be AI-generated, user-authored, untrusted, or request host, filesystem, process, package, debug, or hardware capabilities.",
+  "inputs": ["script trust classification", "requested host functions", "capability manifest", "library exposure list", "resource-limit plan"],
+  "steps": [
+    "Start from default deny.",
+    "Reject ambient os, io, package, and debug exposure.",
+    "Require every script-visible host function to appear in an explicit allow-list/capability manifest.",
+    "Reject ambient global mutation and implicit capability acquisition.",
+    "Require resource limits to be defined before untrusted or AI-generated runtime execution.",
+    "Use synthetic fixtures only for contract validation; do not execute the unsafe fixture."
+  ],
+  "outputs": ["sandbox allow-list decision", "denied capability list", "resource-limit blockers", "safe/unsafe fixture contract result"],
+  "failureHandling": ["Fail closed on unknown libraries, implicit globals, missing capability manifest, or undefined resource limits for untrusted runtime work."],
+  "proofCeiling": "sandbox policy and fixture classification only; no runtime enforcement proof"
+}
