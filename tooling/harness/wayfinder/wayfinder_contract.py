@@ -217,10 +217,27 @@ class WayfinderMap:
         return frontier
 
     def add_ticket(self, ticket: DecisionTicket) -> None:
-        if ticket.ticket_id in self.tickets:
-            raise WayfinderContractError(f"duplicate ticket id: {ticket.ticket_id}")
-        self.tickets[ticket.ticket_id] = ticket
         self.validate()
+        ticket.validate_identity()
+        if ticket.ticket_id in self.tickets:
+            raise WayfinderContractError(
+                f"duplicate ticket id: {ticket.ticket_id}"
+            )
+        if any(existing.order == ticket.order for existing in self.tickets.values()):
+            raise WayfinderContractError(
+                f"duplicate ticket order: {ticket.order}"
+            )
+        for blocker in ticket.blocked_by:
+            if blocker not in self.tickets:
+                raise WayfinderContractError(
+                    f"{ticket.ticket_id}: unknown blocker {blocker}"
+                )
+            if blocker == ticket.ticket_id:
+                raise WayfinderContractError(
+                    f"{ticket.ticket_id}: ticket cannot block itself"
+                )
+
+        self.tickets[ticket.ticket_id] = ticket
 
     def record_resolution(self, ticket_id: str) -> DecisionPointer:
         ticket = self.tickets[ticket_id]

@@ -75,10 +75,24 @@ def test_schema_and_fixture_floor() -> None:
     prototype = json.loads((FIXTURES / "ticket-prototype.json").read_text(encoding="utf-8"))
     grilling = json.loads((FIXTURES / "ticket-grilling.json").read_text(encoding="utf-8"))
     task = json.loads((FIXTURES / "ticket-task.json").read_text(encoding="utf-8"))
+    map_fixture = json.loads((FIXTURES / "map.json").read_text(encoding="utf-8"))
+    ticket_schema = json.loads(
+        (SCHEMAS / "decision-ticket.schema.json").read_text(encoding="utf-8")
+    )
     assert research["type"] == "research" and research["interaction"] == "afk"
     assert prototype["type"] == "prototype" and prototype["interaction"] == "hitl"
     assert grilling["type"] == "grilling" and grilling["interaction"] == "hitl"
     assert task["type"] == "task"
+    assert map_fixture["notYetSpecified"] == []
+    assert map_fixture["spec"]["status"] == "published"
+    assert (ROOT / map_fixture["sourceContribution"]).is_file()
+    open_rules = [
+        rule for rule in ticket_schema["allOf"]
+        if rule.get("if", {}).get("properties", {}).get("status", {}).get("const")
+        == "open"
+    ]
+    assert len(open_rules) == 1
+    assert open_rules[0]["then"]["properties"]["assignee"]["const"] is None
 
 
 def test_ticket_gates_and_human_boundaries() -> None:
@@ -132,6 +146,32 @@ def test_ticket_gates_and_human_boundaries() -> None:
             "agent guessed",
         )
     )
+
+
+def test_add_ticket_failure_does_not_mutate_map() -> None:
+    TicketType = contract.TicketType
+    existing = contract.DecisionTicket(
+        "R1", "Research", TicketType.RESEARCH, "What is true?", 1,
+        label="wayfinder:research",
+    )
+    mapping = contract.WayfinderMap(
+        map_id="M1",
+        title="Map",
+        destination="Destination",
+        tickets={"R1": existing},
+    )
+    invalid = contract.DecisionTicket(
+        "G1",
+        "Invalid",
+        TicketType.GRILLING,
+        "Blocked by missing ticket?",
+        2,
+        blocked_by=("MISSING",),
+        label="wayfinder:grilling",
+    )
+    _expect_contract_error(lambda: mapping.add_ticket(invalid))
+    assert set(mapping.tickets) == {"R1"}
+    assert [item.ticket_id for item in mapping.frontier()] == ["R1"]
 
 
 def test_frontier_and_spec_lifecycle() -> None:
@@ -235,6 +275,15 @@ def test_tracker_command_construction_without_live_mutation() -> None:
             return tracker_mod.CommandResult(0, "9002\n", "")
         if "dependencies/blocked_by" in joined:
             return tracker_mod.CommandResult(0, "{}\n", "")
+        if "/sub_issues?per_page=100" in joined:
+            return tracker_mod.CommandResult(
+                0,
+                json.dumps([
+                    [{"number": 301, "state": "open", "assignees": []}],
+                    [{"number": 302, "state": "open", "assignees": []}],
+                ]),
+                "",
+            )
         return tracker_mod.CommandResult(0, "https://example.test/result\n", "")
 
     tracker = tracker_mod.GitHubWayfinderTracker(
@@ -253,14 +302,22 @@ def test_tracker_command_construction_without_live_mutation() -> None:
     )
     assert ticket_number == 201
     tracker.add_blocker(child_number=201, blocker_number=202)
+    children = tracker.map_children(200)
+    assert [item["number"] for item in children] == [301, 302]
     assert any("--parent" in argv and "200" in argv for argv, _ in calls)
     assert any("issue_id=9002" in argv for argv, _ in calls)
+    assert any(
+        "--paginate" in argv and "--slurp" in argv
+        for argv, _ in calls
+        if "/sub_issues?per_page=100" in " ".join(argv)
+    )
 
 
 def main() -> None:
     test_pinned_donor_lineage()
     test_schema_and_fixture_floor()
     test_ticket_gates_and_human_boundaries()
+    test_add_ticket_failure_does_not_mutate_map()
     test_frontier_and_spec_lifecycle()
     test_tracker_command_construction_without_live_mutation()
     print("PASS: Wayfinder core salvage contracts")

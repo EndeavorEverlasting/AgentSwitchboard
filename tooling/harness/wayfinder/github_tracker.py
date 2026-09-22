@@ -211,16 +211,27 @@ class GitHubWayfinderTracker:
             [
                 "gh",
                 "api",
+                "--paginate",
+                "--slurp",
                 "-H",
                 f"X-GitHub-Api-Version: {API_VERSION}",
                 f"repos/{self.repository}/issues/{map_number}/sub_issues?per_page=100",
             ],
             operation="list Wayfinder sub-issues",
         )
-        data = json.loads(raw)
-        if not isinstance(data, list):
-            raise WayfinderContractError("GitHub sub-issue response was not a list")
-        return data
+        pages = json.loads(raw)
+        if not isinstance(pages, list) or any(
+            not isinstance(page, list) for page in pages
+        ):
+            raise WayfinderContractError(
+                "GitHub paginated sub-issue response was not a list of pages"
+            )
+        return [
+            child
+            for page in pages
+            for child in page
+            if isinstance(child, dict)
+        ]
 
     def frontier(self, map_number: int) -> list[dict]:
         frontier: list[dict] = []
