@@ -42,6 +42,8 @@ if ($Manifest.catalogCount -ne 45) { throw 'Manifest catalogCount drifted.' }
 $Ids = @($Registry.entries | ForEach-Object { $_.id })
 if (@($Ids | Sort-Object -Unique).Count -ne $Ids.Count) { throw 'Catalog entry ids must be unique.' }
 foreach ($Entry in @($Registry.entries)) {
+    if ($Entry.id -notmatch '^[a-z0-9][a-z0-9-]*$') { throw "Entry id fails schema pattern: $($Entry.id)" }
+    if (@('primary','compatibility','supporting','comparison') -notcontains $Entry.mentionClass) { throw "Entry $($Entry.id) has invalid mentionClass: $($Entry.mentionClass)" }
     if ($Entry.verificationRequiredBeforeAdoption -ne $true) { throw "Entry $($Entry.id) bypasses the verification gate." }
     if ($Entry.integrationAuthority -ne 'none') { throw "Entry $($Entry.id) grants integration authority." }
     if ($Entry.capabilityState -ne 'unknown') { throw "Entry $($Entry.id) promotes capability without owning proof." }
@@ -74,6 +76,7 @@ foreach ($Name in @('capabilityState','runtimeProof','trustProof','privacyProof'
 }
 if ($Valid.capabilityState -ne 'unknown' -or $Valid.runtimeProof -ne 'unproved' -or $Valid.trustProof -ne 'unproved' -or $Valid.privacyProof -ne 'unproved') { throw 'Positive fixture violates source-only proof boundary.' }
 if ($Invalid.capabilityState -eq 'unknown' -and $Invalid.runtimeProof -eq 'unproved' -and $Invalid.trustProof -eq 'unproved' -and $Invalid.privacyProof -eq 'unproved') { throw 'Negative proof-promotion fixture no longer reproduces the defect.' }
+if ("$($Invalid.summary)".ToLowerInvariant() -notmatch 'negative') { throw 'Negative fixture summary must identify itself as a negative control.' }
 
 if ($Manifest.entrypoints.PSObject.Properties['skill']) { throw 'Leaf salvage must not revive historical skill ownership.' }
 if ($Manifest.salvage.sourcePullRequest -ne 118 -or $Manifest.salvage.sourceHead -ne '87abb4546ee1ef440897dfd86a49e58dab827ee6') { throw 'PR #118 salvage provenance drifted.' }
