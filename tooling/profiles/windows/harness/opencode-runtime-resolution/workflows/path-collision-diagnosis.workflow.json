@@ -1,0 +1,38 @@
+{
+  "schema": "agentswitchboard.opencode-runtime-resolution-workflow.v1",
+  "workflowId": "opencode-path-collision-diagnosis",
+  "trigger": "runtime-resolution-intake produced enough parent, launch, shim, or fleet-state evidence to compare runtime identity",
+  "classificationOrder": [
+    "shim-shadowing-native",
+    "parent-child-divergence",
+    "state-command-drift",
+    "native-consistent",
+    "declared-wsl-consistent",
+    "unresolved-runtime-identity"
+  ],
+  "steps": [
+    {"stepId": "requested-surface", "action": "Require an explicit requested surface. Unknown remains unresolved."},
+    {"stepId": "normalize-parent", "action": "Normalize parent command identity by runtime family and directory; .ps1 versus .cmd launch shims in the same npm prefix may represent the same native package family."},
+    {"stepId": "normalize-launch", "action": "Resolve wrapperKind, wrapper path, target command path, and target platform for the effective launch."},
+    {"stepId": "native-shadow-check", "action": "For native-windows requests, fail as shim-shadowing-native when the effective launch uses agentswitchboard-wsl-shim or targets wsl-ubuntu."},
+    {"stepId": "boundary-divergence-check", "action": "Fail as parent-child-divergence when parent and launch runtime families differ without a declared WSL transition."},
+    {"stepId": "state-drift-check", "action": "Fail as state-command-drift when fleet state identifies a different command family than the effective launch after normalization."},
+    {"stepId": "positive-native", "action": "Pass native-consistent only when native-windows was requested and the effective target is Windows native/npm OpenCode."},
+    {"stepId": "positive-wsl", "action": "Pass declared-wsl-consistent only when wsl-ubuntu was explicitly requested and the effective target is the registered WSL OpenCode surface."},
+    {"stepId": "unresolved", "action": "Use unresolved-runtime-identity for missing effective launch identity, missing wrapper target, unknown requested surface, or incomplete PATH evidence."},
+    {"stepId": "route-repair", "action": "Do not mutate the machine. Route native repair, WSL repair, or end-to-end proof to the owning existing surface named in runtime-resolution.registry.json."}
+  ],
+  "outputs": [
+    "classificationId",
+    "pass",
+    "firstDivergentBoundary",
+    "requestedSurface",
+    "parentResolver",
+    "effectiveResolver",
+    "stateResolver",
+    "repairOwner",
+    "proofCeiling",
+    "nextCommand"
+  ],
+  "proofCeiling": "Deterministic diagnosis from supplied evidence only."
+}

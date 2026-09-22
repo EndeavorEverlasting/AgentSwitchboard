@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentswitchboard.opencode-runtime-resolution.schema.v1",
+  "title": "AgentSwitchboard OpenCode runtime resolution evidence",
+  "type": "object",
+  "oneOf": [
+    {"$ref": "#/$defs/runContext"},
+    {"$ref": "#/$defs/resolutionSnapshot"},
+    {"$ref": "#/$defs/classification"},
+    {"$ref": "#/$defs/finalHandoff"}
+  ],
+  "$defs": {
+    "resolver": {
+      "type": "object",
+      "required": ["commandName", "resolvedPath", "runtimePlatform"],
+      "properties": {
+        "commandName": {"const": "opencode"},
+        "resolvedPath": {"type": "string", "minLength": 1},
+        "runtimePlatform": {"enum": ["windows", "windows-wrapper", "wsl-ubuntu", "unknown"]},
+        "wrapperKind": {"enum": ["native-package-shim", "agentswitchboard-wsl-shim", "native-linux-binary", "unknown"]},
+        "targetPath": {"type": ["string", "null"]},
+        "targetPlatform": {"enum": ["windows", "wsl-ubuntu", "unknown"]}
+      },
+      "additionalProperties": false
+    },
+    "runContext": {
+      "type": "object",
+      "required": ["schema", "runId", "repository", "commit", "requestedSurface", "tracked"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.opencode-runtime-run-context.v1"},
+        "runId": {"type": "string", "minLength": 1},
+        "repository": {"const": "EndeavorEverlasting/AgentSwitchboard"},
+        "commit": {"type": "string", "minLength": 7},
+        "requestedSurface": {"enum": ["native-windows", "wsl-ubuntu", "unknown"]},
+        "tracked": {"const": false}
+      },
+      "additionalProperties": true
+    },
+    "resolutionSnapshot": {
+      "type": "object",
+      "required": ["schema", "requestedSurface", "parentResolution", "effectiveLaunchResolution", "processPathCaptured", "tracked"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.opencode-runtime-resolution-snapshot.v1"},
+        "requestedSurface": {"enum": ["native-windows", "wsl-ubuntu", "unknown"]},
+        "parentResolution": {"anyOf": [{"$ref": "#/$defs/resolver"}, {"type": "null"}]},
+        "effectiveLaunchResolution": {"anyOf": [{"$ref": "#/$defs/resolver"}, {"type": "null"}]},
+        "processPathCaptured": {"type": "boolean"},
+        "tracked": {"const": false}
+      },
+      "additionalProperties": true
+    },
+    "classification": {
+      "type": "object",
+      "required": ["schema", "classificationId", "pass", "proofCeiling", "tracked"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.opencode-runtime-classification.v1"},
+        "classificationId": {"enum": ["native-consistent", "declared-wsl-consistent", "shim-shadowing-native", "parent-child-divergence", "state-command-drift", "unresolved-runtime-identity"]},
+        "pass": {"type": "boolean"},
+        "proofCeiling": {"type": "string", "minLength": 1},
+        "tracked": {"const": false}
+      },
+      "additionalProperties": true
+    },
+    "finalHandoff": {
+      "type": "object",
+      "required": ["schema", "classificationId", "firstDivergentBoundary", "nextCommand", "tracked"],
+      "properties": {
+        "schema": {"const": "agentswitchboard.opencode-runtime-final-handoff.v1"},
+        "classificationId": {"type": "string", "minLength": 1},
+        "firstDivergentBoundary": {"type": "string", "minLength": 1},
+        "nextCommand": {"type": "string", "minLength": 1},
+        "tracked": {"const": false}
+      },
+      "additionalProperties": true
+    }
+  }
+}

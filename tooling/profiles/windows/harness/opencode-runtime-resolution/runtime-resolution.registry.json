@@ -1,0 +1,116 @@
+{
+  "schema": "agentswitchboard.opencode-runtime-resolution-registry.v1",
+  "registryId": "agentswitchboard.opencode-runtime-resolution.v1",
+  "canonicalOwner": "EndeavorEverlasting/AgentSwitchboard",
+  "status": "tracked-diagnostic-contract",
+  "requestedSurfaces": [
+    "native-windows",
+    "wsl-ubuntu",
+    "unknown"
+  ],
+  "knownResolvers": [
+    {
+      "resolverId": "native-windows-npm",
+      "commandName": "opencode",
+      "pathPattern": "%APPDATA%\\npm\\opencode.(cmd|ps1)",
+      "runtimePlatform": "windows",
+      "wrapperKind": "native-package-shim",
+      "maySatisfy": ["native-windows"]
+    },
+    {
+      "resolverId": "agentswitchboard-wsl-shim",
+      "commandName": "opencode",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\bin\\opencode.cmd",
+      "runtimePlatform": "windows-wrapper",
+      "wrapperKind": "agentswitchboard-wsl-shim",
+      "targetPlatform": "wsl-ubuntu",
+      "maySatisfy": ["wsl-ubuntu"]
+    },
+    {
+      "resolverId": "wsl-ubuntu-opencode",
+      "commandName": "opencode",
+      "pathPattern": "$HOME/.opencode/bin/opencode",
+      "runtimePlatform": "wsl-ubuntu",
+      "wrapperKind": "native-linux-binary",
+      "maySatisfy": ["wsl-ubuntu"]
+    }
+  ],
+  "knownPathContributors": [
+    {
+      "path": "%LOCALAPPDATA%\\AgentSwitchboard\\bin",
+      "owner": "tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1",
+      "behavior": "prepended to user PATH by Ensure-UserPathEntry and injected first into refreshed process PATH"
+    },
+    {
+      "path": "%LOCALAPPDATA%\\agy\\bin",
+      "owner": "tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1",
+      "behavior": "added to refreshed process PATH"
+    },
+    {
+      "path": "%LOCALAPPDATA%\\hermes\\bin",
+      "owner": "tooling/profiles/windows/Invoke-TechnicianAgentSwitchboardReady.ps1 and tooling/gnhf/Setup-AgentSwitchboard.ps1",
+      "behavior": "added to refreshed process PATH; Hermes installer ownership remains separate"
+    },
+    {
+      "path": "%APPDATA%\\npm",
+      "owner": "Node/npm user installation",
+      "behavior": "added to refreshed process PATH and used for native OpenCode package installation"
+    }
+  ],
+  "evidenceRules": {
+    "resolvedConfigProvesExecutableIdentity": false,
+    "parentGetCommandProvesChildIdentity": false,
+    "stateCommandPathProvesChildIdentity": false,
+    "exactRequestedSurfaceRequired": true,
+    "exactOperatorOrAgentLaunchChainRequiredForRuntimeProof": true,
+    "parentResolutionRequired": true,
+    "effectiveLaunchResolutionRequired": true,
+    "processPathSnapshotRequired": true,
+    "wrapperTargetRequiredWhenWrapperSelected": true,
+    "declaredPlatformTransitionRequired": true,
+    "childStdoutStderrRequiredForFailurePromotion": true,
+    "generatedEvidenceTracked": false
+  },
+  "classifications": [
+    {
+      "classificationId": "native-consistent",
+      "pass": true,
+      "condition": "native-windows requested and effective launch remains on a Windows native/npm resolver"
+    },
+    {
+      "classificationId": "declared-wsl-consistent",
+      "pass": true,
+      "condition": "wsl-ubuntu requested and any Windows shim explicitly delegates to the registered WSL OpenCode"
+    },
+    {
+      "classificationId": "shim-shadowing-native",
+      "pass": false,
+      "condition": "native-windows requested but the effective launch selects the AgentSwitchboard WSL shim or a WSL target"
+    },
+    {
+      "classificationId": "parent-child-divergence",
+      "pass": false,
+      "condition": "parent and effective launch resolve different runtime surfaces without an explicitly declared platform transition"
+    },
+    {
+      "classificationId": "state-command-drift",
+      "pass": false,
+      "condition": "fleet state declares one command identity while the effective launch resolves a different command family"
+    },
+    {
+      "classificationId": "unresolved-runtime-identity",
+      "pass": false,
+      "condition": "the exact requested surface, wrapper target, PATH snapshot, or effective launch identity is unavailable"
+    }
+  ],
+  "repairBoundary": {
+    "harnessMayMutatePath": false,
+    "harnessMayInstallPackages": false,
+    "harnessMayDeleteShims": false,
+    "harnessMayModifyLauncherProductCode": false,
+    "routeNativeRepairTo": "separate bounded runtime/product sprint owning tooling/gnhf/Install-AgentSwitchboardGnhf.ps1 and launcher behavior",
+    "routeWslRepairTo": "tooling/profiles/windows/technician-live-cert/stages/Repair-Technician-OpenCode.ps1 under explicit runtime authority",
+    "routeEndToEndProofTo": ".ai/skills/end-to-end-runtime-validation/SKILL.md"
+  },
+  "proofCeiling": "Resolution-surface ownership and deterministic classification only; live child identity requires exact-chain runtime evidence."
+}
