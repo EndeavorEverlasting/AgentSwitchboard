@@ -1,0 +1,36 @@
+{
+  "schema": "agentswitchboard.wayfinder-map.v1",
+  "mapId": "WF-EXAMPLE",
+  "title": "Choose a safe cross-session operator workflow",
+  "destination": "An implementation-ready specification whose required product and interaction decisions are resolved.",
+  "tracker": {
+    "provider": "github",
+    "mapRef": "#100",
+    "mapUrl": "https://github.com/EndeavorEverlasting/AgentSwitchboard/issues/100",
+    "decisionAuthority": "tracker-child-tickets"
+  },
+  "planningOnly": true,
+  "notes": [
+    "Research facts from primary sources.",
+    "Prototype and grilling tickets require real human reactions/answers."
+  ],
+  "decisionsSoFar": [
+    {
+      "title": "Choose the decision source of truth",
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/issues/101#issuecomment-1",
+      "gist": "Tracker child tickets own detailed decision resolutions; the map is an index."
+    }
+  ],
+  "notYetSpecified": [
+    "Implementation ticket granularity cannot be chosen until the prototype interaction verdict is known."
+  ],
+  "outOfScope": [
+    "Destination implementation before the decision route is clear."
+  ],
+  "spec": {
+    "status": "not-ready",
+    "lifecycle": "temporary-until-implementation",
+    "ref": null
+  },
+  "sourceContribution": "tooling/harness/operational/contributions/wayfinder-public-plan.contribution.json"
+}

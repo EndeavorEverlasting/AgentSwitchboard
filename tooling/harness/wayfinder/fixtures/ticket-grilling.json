@@ -1,0 +1,23 @@
+{
+  "schema": "agentswitchboard.wayfinder-ticket.v1",
+  "ticketId": "WF-G1",
+  "title": "Choose the operator approval boundary",
+  "type": "grilling",
+  "label": "wayfinder:grilling",
+  "interaction": "hitl",
+  "status": "resolved",
+  "assignee": "agent-grilling",
+  "question": "Which Wayfinder decisions require explicit operator answers rather than agent recommendations or inference?",
+  "blockedBy": [],
+  "trackerUrl": "https://github.com/EndeavorEverlasting/AgentSwitchboard/issues/104",
+  "assets": [],
+  "resolution": {
+    "commentUrl": "https://github.com/EndeavorEverlasting/AgentSwitchboard/issues/104#issuecomment-4",
+    "gist": "Prototype verdicts and grilling decisions require observed human input; silence never satisfies HITL.",
+    "invokedSkills": ["grilling", "domain-modeling"],
+    "primarySourceCount": 0,
+    "humanResponseCount": 3,
+    "humanVerdictObserved": false,
+    "taskCompleted": false
+  }
+}

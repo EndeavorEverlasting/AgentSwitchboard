@@ -1,0 +1,23 @@
+{
+  "schema": "agentswitchboard.wayfinder-ticket.v1",
+  "ticketId": "WF-T1",
+  "title": "Provision the prerequisite test account",
+  "type": "task",
+  "label": "wayfinder:task",
+  "interaction": "either",
+  "status": "resolved",
+  "assignee": "operator",
+  "question": "Provision the non-production account required before the service API can be evaluated.",
+  "blockedBy": [],
+  "trackerUrl": "https://github.com/EndeavorEverlasting/AgentSwitchboard/issues/105",
+  "assets": [],
+  "resolution": {
+    "commentUrl": "https://github.com/EndeavorEverlasting/AgentSwitchboard/issues/105#issuecomment-5",
+    "gist": "The prerequisite non-production account exists and later research may evaluate its API.",
+    "invokedSkills": [],
+    "primarySourceCount": 0,
+    "humanResponseCount": 1,
+    "humanVerdictObserved": false,
+    "taskCompleted": true
+  }
+}

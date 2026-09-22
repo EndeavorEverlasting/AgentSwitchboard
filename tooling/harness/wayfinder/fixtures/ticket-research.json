@@ -1,0 +1,23 @@
+{
+  "schema": "agentswitchboard.wayfinder-ticket.v1",
+  "ticketId": "WF-R1",
+  "title": "Research the authoritative dependency API",
+  "type": "research",
+  "label": "wayfinder:research",
+  "interaction": "afk",
+  "status": "resolved",
+  "assignee": "agent-research",
+  "question": "Which first-party API and identifier shape should the tracker adapter use for blocked-by relationships?",
+  "blockedBy": [],
+  "trackerUrl": "https://github.com/EndeavorEverlasting/AgentSwitchboard/issues/102",
+  "assets": ["https://github.com/EndeavorEverlasting/AgentSwitchboard/tree/research/dependency-api"],
+  "resolution": {
+    "commentUrl": "https://github.com/EndeavorEverlasting/AgentSwitchboard/issues/102#issuecomment-2",
+    "gist": "Use GitHub native issue dependencies with the blocking issue database id.",
+    "invokedSkills": ["research"],
+    "primarySourceCount": 2,
+    "humanResponseCount": 0,
+    "humanVerdictObserved": false,
+    "taskCompleted": false
+  }
+}
