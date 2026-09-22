@@ -102,8 +102,11 @@ def main():
     readiness_path = out / names["readiness"]
     report_path.write_text(report, encoding="utf-8")
     readiness_path.write_text(json.dumps(readiness, indent=2) + "\n", encoding="utf-8")
-    print(str(report_path.resolve()))
-    print(str(readiness_path.resolve()))
+    if args.json:
+        print(json.dumps(readiness, indent=2))
+    else:
+        print(str(report_path.resolve()))
+        print(str(readiness_path.resolve()))
     return 0
 
 

@@ -23,6 +23,14 @@ foreach ($relative in $required) {
     }
 }
 
+$generatedEvidence = @($Manifest.generatedEvidence.artifacts)
+$trackedGeneratedEvidence = @(git -C $Root ls-files | Where-Object {
+    $generatedEvidence -contains [System.IO.Path]::GetFileName($_)
+})
+if ($trackedGeneratedEvidence.Count -gt 0) {
+    throw "Generated Lua evidence must remain untracked: $($trackedGeneratedEvidence -join ', ')"
+}
+
 $jsonFiles = @(
     'tooling/lua/harness/manifest.json',
     'tooling/lua/harness/codebase-map.json',
@@ -33,7 +41,7 @@ $jsonFiles = @(
     'tooling/lua/harness/schemas/lua-harness.schema.json'
 ) + @(
     Get-ChildItem -LiteralPath (Join-Path $Root 'tooling\lua\harness\workflows') -Filter '*.json' |
-    ForEach-Object { Resolve-Path -Relative $_.FullName }
+    ForEach-Object { $_.FullName }
 )
 
 foreach ($relative in $jsonFiles) {
