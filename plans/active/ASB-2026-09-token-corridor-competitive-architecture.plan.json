@@ -7,7 +7,7 @@
   "status": "proposed",
   "priority": "high",
   "createdUtc": "2026-09-22T22:12:00Z",
-  "updatedUtc": "2026-09-22T22:18:54Z",
+  "updatedUtc": "2026-09-22T22:24:00Z",
   "mission": "Define and prove a provider-neutral bounded-decision control plane (working name Token Corridor) inside the AgentSwitchboard software factory: compile messy repository/runtime evidence into typed decision requests, select the cheapest adequate judgment engine, preserve calibrated uncertainty and authority provenance, compose decisions with deterministic code, and route execution without duplicating Jev, Prompt Kit, FirstMate, or AgentSwitchboard execution adapters.",
   "owner": {
     "surface": "AgentSwitchboard factory decision-control plane",
@@ -81,7 +81,8 @@
         "Agent-Field/SWE-AF implementation documentation",
         "Erik-Koning/agentfactory implementation documentation",
         "OpenHands automation + software-agent-sdk repository boundaries",
-        "Pydantic AI durable-execution documentation"
+        "Pydantic AI durable-execution documentation",
+        "Pydantic AI TypeSafe/Jev provider integration documentation"
       ],
       "outputs": [
         "plans/active/ASB-2026-09-token-corridor-competitive-architecture.md",
@@ -104,7 +105,8 @@
         "https://pydantic.dev/docs/ai/capabilities/durable_execution/overview/",
         "repo:EndeavorEverlasting/AgentSwitchboard@d90e5ed457c0657b6016c3ead0c976bf679a8de1",
         "repo:EndeavorEverlasting/NodeWeaver@add0fd24cb213afdad4cb082db9ba8af947cc228",
-        "repo:EndeavorEverlasting/web-excel-repair-triage@c97718247e7b14544d198035dd3cdc07725545a8"
+        "repo:EndeavorEverlasting/web-excel-repair-triage@c97718247e7b14544d198035dd3cdc07725545a8",
+        "https://pydantic.dev/docs/ai/models/typesafe/"
       ]
     },
     {
