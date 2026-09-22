@@ -481,12 +481,12 @@ Canonical terminal action: none; no safe actionable work remains
 - **Branch / PR:** none yet; create isolated branch/worktree from refreshed main when this item becomes executable
 - **Scope:** execute Panel 05 after ASQ-026: compare old actor-binding/router invariants to current execution-adapter request/receipt/capability model; retire superseded lifecycle and preserve only missing current-owner invariants/tests
 - **Forbidden:** restoring a competing execution router/scheduler; wholesale operational registry/HARNESS replay; provider dispatch claims
-- **Dependencies:** ASQ-026 integrated or proved no-change; refresh ASQ-022 execution-adapter truth
+- **Dependencies:** ASQ-026 integrated or proved no-change; ASQ-022 is terminal OR has durably handed off disjoint execution-adapter file ownership to ASQ-028
 - **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 05; `plans/active/ASB-2026-09-execution-adapter-trio-v1.plan.json`; `tooling/harness/execution-adapters/`
 - **Acceptance gate:** explicit superseded/preserve matrix; any preserved invariant lands in current owner with focused negative/positive tests; adapter floor green
-- **Gate:** dependency-gated; do not mutate until named dependency is proven
+- **Gate:** BLOCKED_OWNERSHIP — do not mutate execution-adapter paths while ASQ-022 remains an overlapping active writer; require terminal state or explicit durable disjoint-file handoff
 - **Last proof:** PR #92 closed-unmerged head acc652d5dc7599b18d76983fb96dbd628d2bd759; current main has execution-adapter v1 absent from August branch
-- **Next action:** launch Panel 05 only after ASQ-026 is integrated or no-change and current ASQ-022/execution-adapter owners are refreshed
+- **Next action:** verify ASQ-026 terminal disposition and inspect ASQ-022; launch Panel 05 only after ASQ-022 is terminal or explicitly hands off disjoint execution-adapter paths
 - **Updated:** 2026-09-22T17:16:30Z
 
 ## ASQ-029 — Reconcile PR #79 agent-fleet readiness after machine-profile salvage

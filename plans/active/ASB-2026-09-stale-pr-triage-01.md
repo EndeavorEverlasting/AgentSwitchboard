@@ -13,13 +13,13 @@
 2. **Panel 02 — PR #112 Lua embedding leaf salvage** — Wave 1, bounded lower-capability agent.
 3. **Panel 03 — PR #118 external-agent tooling leaf salvage** — Wave 1, bounded lower-capability agent.
 4. **Panel 04 — PR #64 Windows machine-profile forensic salvage** — Wave 1, strong agent.
-5. **Panel 05 — PR #92 execution-actor routing reconciliation** — Wave 2; wait for Panel 03 because both occupy the operational harness namespace.
+5. **Panel 05 — PR #92 execution-actor routing reconciliation** — Wave 2; wait for Panel 03 **and** for ASQ-022 to become terminal or durably hand off disjoint execution-adapter paths.
 6. **Panel 06 — PR #79 agent-fleet readiness reconciliation** — Wave 2; wait for Panel 04 because fleet readiness depends on the current machine-profile owner.
 7. **Panel 07 — Final convergence and cleanup** — single writer after Panels 01-06 are validated or explicitly dispositioned.
 
 **First chat / strongest-agent lane:** Panel 01.
 **Parallel group 1:** Panels 01-04.
-**Waiting lanes:** Panel 05 waits on Panel 03; Panel 06 waits on Panel 04.
+**Waiting lanes:** Panel 05 waits on Panel 03 + the ASQ-022 ownership-release gate; Panel 06 waits on Panel 04.
 **Final convergence:** Panel 07.
 
 ## 2. PARALLEL DISPATCH MANIFEST
