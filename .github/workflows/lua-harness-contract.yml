@@ -25,6 +25,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Run dependency-free Lua contracts
         run: python tests/test_lua_harness_contracts.py
       - name: Run Lua completeness contract
@@ -48,6 +49,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Parse Lua PowerShell surfaces
         shell: pwsh
         run: |

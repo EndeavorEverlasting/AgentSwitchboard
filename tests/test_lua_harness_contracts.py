@@ -1,6 +1,7 @@
 import json
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -11,6 +12,7 @@ CONTRACT = HARNESS / "lua-embedding.contract.json"
 WORKFLOWS = HARNESS / "workflow-registry.json"
 ARTIFACTS = HARNESS / "artifact-registry.json"
 VALIDATORS = HARNESS / "validator-registry.json"
+SCHEMA = HARNESS / "schemas" / "lua-harness.schema.json"
 STATUS = ROOT / "tooling" / "lua" / "Get-LuaHarnessStatus.py"
 SKILL = ROOT / ".ai" / "skills" / "lua-embedding-integration" / "SKILL.md"
 GUIDE = ROOT / "docs" / "harness" / "lua-embedding-harness.md"
@@ -29,6 +31,7 @@ class LuaHarnessContracts(unittest.TestCase):
         cls.workflows = load(WORKFLOWS)
         cls.artifacts = load(ARTIFACTS)
         cls.validators = load(VALIDATORS)
+        cls.schema = load(SCHEMA)
 
     def test_manifest_components_exist(self):
         for name, relative in self.manifest["components"].items():
@@ -114,6 +117,71 @@ class LuaHarnessContracts(unittest.TestCase):
         self.assertFalse(payload["sandboxRuntimeProved"])
         self.assertFalse(payload["stateIsolationRuntimeProved"])
         self.assertIn("separately authorized", payload["nextAction"])
+
+    def _assert_object_matches_schema_branch(self, payload, branch):
+        self.assertEqual(branch.get("type"), "object")
+        required = set(branch.get("required", []))
+        self.assertTrue(required <= set(payload), f"missing required fields: {sorted(required - set(payload))}")
+        properties = branch.get("properties", {})
+        if branch.get("additionalProperties") is False:
+            self.assertFalse(set(payload) - set(properties), f"undeclared fields: {sorted(set(payload) - set(properties))}")
+        for key, value in payload.items():
+            spec = properties[key]
+            if "const" in spec:
+                self.assertEqual(value, spec["const"], key)
+            if "enum" in spec:
+                self.assertIn(value, spec["enum"], key)
+            expected_type = spec.get("type")
+            if expected_type == "boolean":
+                self.assertIsInstance(value, bool, key)
+            elif expected_type == "string":
+                self.assertIsInstance(value, str, key)
+                self.assertGreaterEqual(len(value), spec.get("minLength", 0), key)
+            elif expected_type == "array":
+                self.assertIsInstance(value, list, key)
+                self.assertGreaterEqual(len(value), spec.get("minItems", 0), key)
+                item_spec = spec.get("items", {})
+                for item in value:
+                    if item_spec.get("type") == "string":
+                        self.assertIsInstance(item, str, key)
+                        self.assertGreaterEqual(len(item), item_spec.get("minLength", 0), key)
+
+    def test_status_readiness_matches_declared_schema(self):
+        completed = subprocess.run(
+            [sys.executable, str(STATUS), "--no-write", "--json"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        payload = json.loads(completed.stdout)
+        self._assert_object_matches_schema_branch(payload, self.schema["oneOf"][0])
+        self.assertEqual(payload["requiredRuntimeGates"], self.contract["runtimePromotionGates"])
+
+    def test_json_output_remains_json_when_writing_artifacts(self):
+        with tempfile.TemporaryDirectory() as temp_root:
+            completed = subprocess.run(
+                [sys.executable, str(STATUS), "--json", "--output-root", temp_root],
+                cwd=ROOT,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            payload = json.loads(completed.stdout)
+            self._assert_object_matches_schema_branch(payload, self.schema["oneOf"][0])
+            self.assertTrue((Path(temp_root) / "lua-harness-report.md").is_file())
+            self.assertTrue((Path(temp_root) / "lua-readiness.json").is_file())
+
+    def test_generated_evidence_is_not_tracked(self):
+        generated = set(self.manifest["generatedEvidence"]["artifacts"])
+        completed = subprocess.run(
+            ["git", "-C", str(ROOT), "ls-files"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        tracked_names = {Path(line).name for line in completed.stdout.splitlines() if line}
+        self.assertFalse(generated & tracked_names, f"tracked generated evidence: {sorted(generated & tracked_names)}")
 
     def test_skill_and_operator_docs_expose_boundaries(self):
         skill = SKILL.read_text(encoding="utf-8")
