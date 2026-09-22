@@ -179,7 +179,26 @@ def test_frontier_and_spec_lifecycle() -> None:
     assert mapping.spec_ready() is False
     mapping.not_yet_specified.clear()
     assert mapping.spec_ready() is True
-    packet = mapping.build_spec_packet()
+    packet = mapping.build_spec_packet(
+        title="Clear implementation route",
+        problem_statement="The implementation route must preserve settled decisions.",
+        solution="Synthesize the settled decision map into one temporary specification.",
+        user_stories=["As an implementer, I can trace the spec to settled decisions."],
+        implementation_decisions=["Decision tickets remain the rationale authority."],
+        testing_decisions=["Validate the generated packet against the spec contract."],
+        further_notes=["The temporary spec retires after accepted implementation."],
+        status="ready-for-agent",
+    )
+    schema = json.loads((SCHEMAS / "spec.schema.json").read_text(encoding="utf-8"))
+    required = set(schema["required"])
+    assert set(packet) == set(schema["properties"])
+    assert required <= set(packet)
+    assert packet["schema"] == "agentswitchboard.wayfinder-spec.v1"
+    assert packet["sourceMap"]["ref"] == "M1"
+    assert packet["decisionSources"] == [
+        {"title": "Research", "ref": "https://example.test/r1"},
+        {"title": "Choose", "ref": "https://example.test/g1"},
+    ]
     assert packet["lifecycle"] == "temporary-until-implementation"
     assert packet["primaryDecisionAuthority"] == "tracker-decision-tickets"
 
