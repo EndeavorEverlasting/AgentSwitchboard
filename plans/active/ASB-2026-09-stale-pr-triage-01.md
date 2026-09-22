@@ -27,7 +27,7 @@
 
 ## 2. PARALLEL DISPATCH MANIFEST
 
-**PARALLEL EXECUTION: DEGRADED — graph width is 4, but the current planning runtime does not expose an AgentSwitchboard/OpenCode/FirstMate worker-execution adapter.**
+**PARALLEL EXECUTION: DEGRADED — remaining graph width is 2 (Panels 03 and 04), but the current planning runtime does not expose an AgentSwitchboard/OpenCode/FirstMate worker-execution adapter.**
 
 The prompt-assumed artifacts do not exist on current main:
 - `harness/contracts/prompt-parallel-dispatch.v1.json`
