@@ -1,1 +1,136 @@
-# Stale Open PR Triage Plan (TRIAGE-01)**Plan ID:** `ASB-2026-09-STALE-PR-TRIAGE-01`**Repository:** EndeavorEverlasting/AgentSwitchboard**Floor:** `main@8e96082` (2026-09-19)**Status:** active**Priority:** high## MissionSystematically analyze 47 open PRs from July-September 2026 era, assign evidence-based dispositions, document containment proof for superseded PRs, and produce actionable triage guidance for repository operator.**Hard constraints:**- ❌ NO PR closes, merges, comments, rebases, or force-pushes- ❌ NO auto-merge enabling- ❌ NO GitHub write operations- ✅ Plan artifacts ONLY## Executive Summary### Disposition Counts| Disposition | Count | Action Required ||------------|-------|-----------------|| **KEEP** | 2 | Review and land when ready || **REBASE** | 2 | Resolve conflicts, re-review || **SUPERSEDED** | 6 | Close with containment proof cited || **CLOSE-CANDIDATE** | 37 | Operator approval then close || **BLOCKED** | 0 | N/A || **TOTAL** | 47 | |### Top 5 Operator Actions (Priority Order)1. **Close superseded PRs #96-#101** — FirstMate work salvaged via PR #308 (faac296). Containment proof: PR #308 body explicitly marks #96 as salvage source and notes #96-#101 for closure.2. **Rebase PR #154** (operational harness) and **PR #159** (coordination floor) — Both have merge conflicts (CONFLICTING status). Needed work but requires rebase onto main@8e96082.3. **Review and land PR #309** (FM-ASB routing builder) — Active current work, clean diff, Phase 3 seam. Blocks PR #311.4. **Batch-close July GNHF era PRs #5, #7, #10-#18, #20, #23-#24, #28-#29, #41** (17 PRs) — roughly two months old at the Sept 19 floor, predate ASQ-004 September floor and FirstMate boundary, GNHF architecture changed. Many superseded by WSL bootstrap #288, DeepSeek #21/#145, GNHF work on main.5. **Batch-close August harness/Android era PRs #59-#60, #62, #64, #70-#71, #73, #79, #92, #94-#95, #102-#104, #106, #112-#114, #117-#118** (20 PRs) — 1-2 months stale, Android Herdr abandoned (commit 7c7f2da), harness work evolved differently on main, not implemented.## Detailed Analysis by Cluster### Current Active Work (2 PRs) — KEEP**#309: feat(routing) fm-asb routing-request builder**- Created: 2026-09-17- Status: Open (not draft)- Diff: +485/-0 (clean)- **Disposition:** KEEP- **Rationale:** Active Phase 3 FM-ASB routing work. Not merged. Clean diff.- **Next action:** Review and land when ready**#311: plan(runtime) P67 OpenCode evaluation adapter**- Created: 2026-09-18- Status: Draft- Diff: +407/-0- **Disposition:** KEEP- **Rationale:** Active P67 plan work. Waits on #309 for plan-registry sole-writer discipline.- **Next action:** Wait for #309 merge, then review### September Floor PRs (2 PRs) — REBASE**#154: feat(harness) operational harness infrastructure**- Created: 2026-09-12- Merge status: **CONFLICTING**- Diff: +681/-93- **Disposition:** REBASE- **Rationale:** Operational harness work appears needed but has merge conflicts with main.- **Next action:** Rebase onto main@8e96082, resolve conflicts, re-review**#159: fix(coordination) September floor public-safe**- Created: 2026-09-12- Merge status: **CONFLICTING**- Diff: +452/-214- **Disposition:** REBASE- **Rationale:** Public-safety floor cleanup needed but has merge conflicts with main.- **Next action:** Rebase onto main@8e96082, resolve conflicts, re-review### August FirstMate PRs (6 PRs) — SUPERSEDEDAll explicitly superseded by PR #308 (merged faac296). PR #308 body states:- "Supersedes: Stale PR #96 (salvage source only)"- "After merge: Close/supersede stale PR #96–#101 with containment proof"**#96: FirstMate crew orchestration** (+2356/-0)**#97: Profile boundary routing** (+1287/-0)**#98: FirstMate Ubuntu runtime** (+229/-26)**#99: FirstMate Windows-native** (+570/-153)**#100: Python portability** (+74/-31)**#101: WSL prerequisite gate** (+307/-9)**Containment proof:** PR #308 merged faac296 on 2026-09-17. FirstMate interop harness exists on main at `tooling/firstmate/harness/` with integration contracts, operational manifest, hooks, tests. #308 salvaged hooks and wiring from #96 stack onto refreshed main@3dc2fe3.**Next action:** Operator closes #96-#101 as superseded by #308.### July GNHF/WSL Era (17 PRs) — CLOSE-CANDIDATEAll created July 14-20, 2026 (roughly two months old at the Sept 19 floor). Predate ASQ-004 September floor, FirstMate runtime boundary, and product-pass wave. GNHF architecture evolved; WSL bootstrap superseded.**Worker/coordination:**- **#5:** worker interoperability (+708/-2) — superseded by harness work- **#7:** nap sprints (+1269/-0) — approach obsolete**GNHF routing:**- **#10:** multi-domain routing (+4082/-1) — architecture changed- **#12:** bimodal token scheduler (+2634/-9) — architecture changed- **#13:** DeepSeek proof lane (+595/-0) — **superseded by PR #21, #145** (commits 4c5c902, d2bafc7, d1f2a90)- **#14:** model catalog handoffs (+2364/-0) — approach changed- **#15:** AGY-first routing (+1477/-4, DRAFT) — obsolete- **#16:** quota fallthrough (+335/-5, DRAFT) — obsolete- **#18:** GNHF runtime guard (+219/-6) — posture changed- **#20:** multi-prompt orchestrator (+2681/-1) — approach changed**WSL:**- **#11:** tmux/GNHF workspace (+3066/-3) — **superseded by PR #288** (merged ecea397, commits 4f46690/520afcd/b4f9f31)- **#17:** Windows workstation deployment (+7020/-13) — **superseded by PR #288****Harness (bot-authored):**- **#23:** P00/P01/P02 gap register (+557/-0, bot) — harness evolved- **#24:** Python validator BOM (+738/-15, bot) — harness evolved- **#28:** P00 orchestration spine (+1144/-0, DRAFT, bot) — obsolete**Prompts:**- **#29:** V38 prompt registry (+809/-17) — app-output work evolved- **#41:** prompt convergence (+867/-4) — work evolved**Next action:** Operator batch-closes after review.### August Harness/Android Era (20 PRs) — CLOSE-CANDIDATEAll created Aug 2026 (1-2 months stale). Android Herdr explicitly abandoned (commit 7c7f2da: "preserve explicit Herdr deferral contract wording"). Harness work evolved differently on main. None merged.**Harness infrastructure:**- **#59:** agent admission (+1824/-12) — harness evolved- **#60:** typed gates events (+1469/-10) — harness evolved- **#62:** Android scope (+7638/-211) — **Termux harness exists** (different approach)- **#64:** Windows profile harness (+1008/-40, DRAFT) — not implemented- **#70:** WezTerm/tmux order (+591/-1) — approach changed- **#71:** technician bootstrap (+1247/-5) — harness evolved- **#73:** Git launch proof (+798/-171) — acquisition changed- **#79:** fleet readiness shims (+1691/-2) — Windows approach changed- **#92:** execution actor (+992/-15) — harness/ledger evolved- **#94:** Wayfinder maps (+4697/-133) — approach changed- **#112:** Lua embedding (+1088/-7) — not implemented- **#113:** OpenCode resolution (+1499/-12) — OpenCode work evolved (ASQ-005 done differently)- **#114:** code search routing (+704/-0) — not implemented- **#118:** agent tooling catalog (+633/-1) — not implemented**Android Herdr (abandoned):**- **#95:** Herdr migration probe (+2023/-7) — **Herdr abandoned** (7c7f2da)- **#102:** Herdr state isolation (+214/-102) — **Herdr abandoned**- **#103:** Herdr server start (+1072/-476) — **Herdr abandoned**- **#104:** Herdr client attach (+784/-0) — **Herdr abandoned****Android Codex:**- **#117:** Android Codex (+466/-185) — **superseded by PR #144** (5ea7ce4) + Termux harness**Ledger:**- **#106:** cross-repo adoption (+7/-7) — minor update, stale**Next action:** Operator batch-closes after review.## Containment Proof Summary### Explicit supersession (6 PRs):- **#96-#101:** PR #308 merged faac296 explicitly supersedes and salvages### Additional containment evidence for close-candidates:- **#11, #17:** PR #288 merged ecea397 (WSL bootstrap)- **#13:** PR #21 (4c5c902), PR #145 (d2bafc7, d1f2a90) (DeepSeek)- **#62, #117:** Termux harness + PR #144 (5ea7ce4) (Android)- **#95, #102-#104:** Commit 7c7f2da (Herdr deferral)### Architecture evolution (31 PRs):- July GNHF PRs: GNHF architecture changed, predates Sept floor- Aug harness PRs: Harness work evolved differently on main, not merged## Proof CeilingThis plan proves:- ✅ Per-PR disposition assignments (47/47 PRs analyzed)- ✅ Containment evidence for superseded PRs- ✅ Obsolescence rationale for close-candidates- ✅ Conflict evidence for rebase-needed PRsThis plan does NOT prove:- ❌ PR merge authority- ❌ PR close authority or operator approval- ❌ GitHub write capability- ❌ Forge CI pass- ❌ Live system state- ❌ Actual PR closure- ❌ Rebase execution**Plan is advisory only.** Operator approval required before closing any PR.## Validation```bashpwsh -NoLogo -NoProfile -File scripts/Test-PublicPlanContracts.ps1git diff --check```## Next Command```bash# After operator review and approval:# 1. Close superseded PRs #96-#101 with comment citing PR #308 faac296# 2. Batch-close July GNHF PRs after review# 3. Batch-close Aug harness/Android PRs after review# 4. Rebase #154 and #159# 5. Review and land #309, then #311```## References- Task: TRIAGE-01 in `plans/active/ASB-2026-09-post-ppp-remaining-sprints.md`- Floor: `main@8e96082` (2026-09-19)- PR #308: https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/308- PR #288: WSL bootstrap (merged ecea397)- Commit 7c7f2da: Herdr deferral- Plan JSON: `plans/active/ASB-2026-09-stale-pr-triage-01.plan.json`
+# Closed-PR Semantic Salvage and Porting Convergence Plan
+
+**Plan ID:** `ASB-2026-09-STALE-PR-TRIAGE-01`
+**Repository:** `EndeavorEverlasting/AgentSwitchboard`
+**Current floor:** `main@72d71a74279c5cf1b0c029b68d03c76634d50ea1`
+**Status:** active / critical
+**Canonical machine owner:** `plans/active/ASB-2026-09-stale-pr-triage-01.plan.json`
+**Portability panel pack:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md`
+
+## 1. LAUNCH ORDER
+
+1. **Panel 01 — PR #113 OpenCode runtime-resolution semantic salvage** — Wave 1, strong agent.
+2. **Panel 02 — PR #112 Lua embedding leaf salvage** — Wave 1, bounded lower-capability agent.
+3. **Panel 03 — PR #118 external-agent tooling leaf salvage** — Wave 1, bounded lower-capability agent.
+4. **Panel 04 — PR #64 Windows machine-profile forensic salvage** — Wave 1, strong agent.
+5. **Panel 05 — PR #92 execution-actor routing reconciliation** — Wave 2; wait for Panel 03 **and** for ASQ-022 to become terminal or durably hand off disjoint execution-adapter paths.
+6. **Panel 06 — PR #79 agent-fleet readiness reconciliation** — Wave 2; wait for Panel 04 because fleet readiness depends on the current machine-profile owner.
+7. **Panel 07 — Final convergence and cleanup** — single writer after Panels 01-06 are validated or explicitly dispositioned.
+
+**First chat / strongest-agent lane:** Panel 01.
+**Parallel group 1:** Panels 01-04.
+**Waiting lanes:** Panel 05 waits on Panel 03 + the ASQ-022 ownership-release gate; Panel 06 waits on Panel 04.
+**Final convergence:** Panel 07.
+
+## 2. PARALLEL DISPATCH MANIFEST
+
+**PARALLEL EXECUTION: DEGRADED — graph width is 4, but the current planning runtime does not expose an AgentSwitchboard/OpenCode/FirstMate worker-execution adapter.**
+
+The prompt-assumed artifacts do not exist on current main:
+- `harness/contracts/prompt-parallel-dispatch.v1.json`
+- `scripts/prompt_parallel_dispatch.py`
+- `Outputs/prompt-parallel-dispatch/manifest.json`
+
+Repository search also found no equivalent `prompt-parallel-dispatch` owner. Creating an ad-hoc manifest would invent a second scheduler and violate current execution-adapter ownership.
+
+**AUTONOMY_GAP:** route a typed prompt/lane dispatch contract to **ASQ-022 / execution-adapter shared-spine** if AgentSwitchboard should own this feature. It must compose with `tooling/harness/execution-adapters/`, prove real overlap in receipts, and must not become a competing FirstMate crew scheduler.
+
+Until that owner exists, `ASB-2026-09-stale-pr-triage-01-panels.md` is the durable machine-ingestible portability/recovery transport.
+
+## 3. COMPACT COORDINATION PREAMBLE
+
+- Repo floor: `main@72d71a74279c5cf1b0c029b68d03c76634d50ea1`; open PRs: **0** at initial salvage-plan refresh.
+- Local worker path authority: resolve `temporaryWorktreeRoot` from `tooling/harness/operational/canonical-path.contract.json`; the Windows technician binding is `%LOCALAPPDATA%\\AgentSwitchboard\\worktrees`. Never derive a sibling directory from whichever checkout invoked the panel.
+- Proven completed floor: PR #94 Wayfinder core semantic salvage merged as #338 / `72d71a74279c5cf1b0c029b68d03c76634d50ea1`.
+- Preserve historical source branches until final preservation checks; do not bulk merge or bulk cherry-pick.
+- Workers own leaf behavior and focused proof. Shared `SKILLS.md`, `TRIGGERS.md`, `CODEBASE_MAP.md`, `HARNESS.md`, plans, ledger, and shared operational registries are convergence-owner surfaces.
+- Hard collision families:
+  - #113 ↔ current OpenCode LSP + P67 + execution-adapter v1.
+  - #92 ↔ current execution-adapter v1 and operational harness. **Hard gate:** ASQ-022 must be terminal or explicitly hand off disjoint execution-adapter paths before #92 mutation.
+  - #64 ↔ current machine-profile/bootstrap/device-profile contracts.
+  - #79 ↔ #64/current machine-profile + Windows profile ownership.
+  - #118 ↔ shared operational registries.
+  - #112 is leaf-isolated because `tooling/lua` is absent on current main.
+- Proof ceiling: static/synthetic repository proof unless a later authorized runtime lane observes more.
+
+## 4. PORTABILITY FALLBACK SPRINT PANELS
+
+The complete panels live in `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` in exactly the launch order above. They are fallback transport, not dispatch proof.
+
+## 5. SUPPORTING FACTORING LEDGER
+
+### TOPICS FOUND
+
+| Topic | Primary ownership | Disposition |
+|---|---|---|
+| Historical 47-PR triage | docs/reporting / coordination | Preserve as superseded provenance; no longer current truth |
+| PR #94 Wayfinder core | harness spine + agent harness | **Integrated** via #338; residual August shared wiring remains forensic-only |
+| PR #113 runtime resolution | Windows/OpenCode harness + integration seam | **Salvage first; strong agent** |
+| PR #112 Lua embedding | isolated harness spine | **Leaf salvage; safe lower-capability lane** |
+| PR #118 external tooling catalog | operational harness leaf + validation | **Leaf salvage; safe lower-capability lane** |
+| PR #64 machine-profile harness | Windows profile harness | **Forensic salvage; strong agent; non-main historical base** |
+| PR #92 execution actor routing | execution-adapter / operational integration | **Reconcile, probably merge/retire concepts rather than restore router** |
+| PR #79 fleet readiness | Windows agent harness + profile integration | **Reconcile after #64** |
+| Shared skills/triggers/maps/registries | integration seam | **Final convergence owner only** |
+| Live runtime proof | runtime proof | Deferred; not implied by static salvage |
+| Branch deletion/cleanup | release/PR hygiene | Last only after preservation proof |
+
+### HARNESS FACTORING
+
+- **Run context / evidence:** current `AGENTS.md`, public plan, WORK_QUEUE, exact source branch SHA, refreshed main, focused validator output, exact candidate SHA.
+- **Artifact registries:** leaf registries may be salvaged; shared operational registries are convergence-owned.
+- **Schemas / fixtures:** preserve negative fixtures when they still test a current invariant; reject stale schema duplicates.
+- **Validators:** focused historical validator is evidence to inspect, not automatic authority; current-main owning validator wins after reconciliation.
+- **Workflows:** historical GitHub Actions are adapters, not semantic owners; recreate only if current contract still needs a hosted adapter.
+- **Skills / capabilities / triggers:**
+  - #113 `opencode-runtime-resolution`: **merge or create only after comparison** with current `opencode-lsp-workstation-setup` and execution-adapter ownership.
+  - #92 `execution-actor-routing`: **prefer retire/merge into execution-adapter v1** unless a unique reusable judgment workflow remains.
+  - #79 `agent-fleet-readiness`: **split** reusable judgment into skill and deterministic readiness operation into code/registry; no second bootstrap lifecycle.
+  - #112 `lua-embedding-integration`: **keep/create as isolated explicit-trigger skill** if the leaf implementation survives proof.
+  - #64 old machine-profile changes: **merge into existing machine-profile-bootstrap owner**, never duplicate the canonical skill/launcher.
+  - #118 `external-agent-tooling-intake`: **keep only as evidence-intake workflow**; catalog presence never grants install/trust/execution authority.
+- **MCP/tools/hooks:** no successor lane may claim a tool/runtime exists from old files. Hooks are leaf-local unless current repository registration explicitly adopts them.
+
+### APPLICATION LOGIC FACTORING
+
+These six candidates are primarily harness/integration work. No conventional domain service, persistence store, UI, business-state machine, or deployment owner should be created merely to salvage them.
+
+Runtime-facing logic is limited to:
+- #113 OpenCode runtime/path resolution readback and diagnosis.
+- #64/#79 Windows machine/profile readiness and launcher-adjacent contracts.
+- #92 execution-request actor binding relative to current adapter v1.
+- #112 Lua embedding sandbox contract.
+- #118 external tooling evidence catalogue.
+
+Application/product behavior must remain in deterministic code/contracts, never only in the sprint prompts.
+
+### SPRINT CANDIDATES
+
+| Lane | Why now | Likely owned changes | Forbidden | Dependency | Risk | Proof ceiling |
+|---|---|---|---|---|---|---|
+| #113 | Highest semantic value + collision complexity | Leaf runtime-resolution contracts/tests/docs after reconciliation | wholesale shared docs/workflows | #94 floor | High | static/synthetic unless Windows lane added |
+| #112 | Clean leaf, absent on main | `tooling/lua/**`, focused tests/docs | shared routing docs | #94 floor | Medium | static/synthetic |
+| #118 | Small leaf and easy to delegate | external-agent-tooling leaf/tests/docs | shared operational registries | #94 floor | Medium | static/synthetic |
+| #64 | Deep Windows owner debt; historical non-main base | current machine-profile owner only | blind commit replay / duplicate launcher | #94 floor | High | static/synthetic; runtime separate |
+| #92 | Old actor router collides with modern adapter v1 | missing invariants/fixtures in adapter v1 | restore competing router | #118 disposition + ASQ-022 ownership release/handoff | High | static/synthetic |
+| #79 | Fleet semantics depend on current machine-profile truth | leaf readiness behavior/tests | duplicate profile/bootstrap lifecycle | #64 disposition | High | static/synthetic |
+| Convergence | Shared wiring must be written once | shared skills/triggers/maps/registries + plan/ledger | unrelated features | all lanes | High | integration proof |
+
+## RECOMMENDED EXECUTION ORDER
+
+The durable panel sequence is exactly: **01 #113, 02 #112, 03 #118, 04 #64, 05 #92, 06 #79, 07 convergence**. Panels 01-04 are dependency-ready in parallel; Panel 05 waits on 03; Panel 06 waits on 04.
+
+## Current exact source identities
+
+| PR | Head | Ahead / behind main | Key collision |
+|---|---|---:|---|
+| #113 | `2ff3d81ab806b54dceccf593cd0f39b2c17e8bc9` | 13 / 608 | OpenCode LSP, P67, execution adapters |
+| #112 | `3053e1898c1de351faf2215d72947f5bd5d880de` | 6 / 608 | shared docs only; `tooling/lua` absent on main |
+| #118 | `87abb4546ee1ef440897dfd86a49e58dab827ee6` | 1 / 608 | operational registries |
+| #64 | `45b44b158d7f44e18dfbc6c24120a0c02924f48b` | 22 / 732 | machine-profile/bootstrap; historical base is not main |
+| #92 | `acc652d5dc7599b18d76983fb96dbd628d2bd759` | 5 / 638 | execution-adapter v1 / operational harness |
+| #79 | `b3560cd56e98f7b91dfff2e060c8a27d1c76e76a` | 36 / 701 | machine-profile / Windows profile |
+
+## Proof boundary
+
+This plan proves the current provider floor, current source identities, dependency/collision factoring, and the durable successor map once merged. It does **not** prove any successor implementation, local worktree state, actual parallel dispatch, runtime behavior, or deployment.
