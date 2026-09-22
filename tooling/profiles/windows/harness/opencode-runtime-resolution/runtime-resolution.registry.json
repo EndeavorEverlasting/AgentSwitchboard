@@ -15,7 +15,9 @@
       "pathPattern": "%APPDATA%\\npm\\opencode.(cmd|ps1)",
       "runtimePlatform": "windows",
       "wrapperKind": "native-package-shim",
-      "maySatisfy": ["native-windows"]
+      "maySatisfy": [
+        "native-windows"
+      ]
     },
     {
       "resolverId": "agentswitchboard-wsl-shim",
@@ -24,7 +26,9 @@
       "runtimePlatform": "windows-wrapper",
       "wrapperKind": "agentswitchboard-wsl-shim",
       "targetPlatform": "wsl-ubuntu",
-      "maySatisfy": ["wsl-ubuntu"]
+      "maySatisfy": [
+        "wsl-ubuntu"
+      ]
     },
     {
       "resolverId": "wsl-ubuntu-opencode",
@@ -32,7 +36,9 @@
       "pathPattern": "$HOME/.opencode/bin/opencode",
       "runtimePlatform": "wsl-ubuntu",
       "wrapperKind": "native-linux-binary",
-      "maySatisfy": ["wsl-ubuntu"]
+      "maySatisfy": [
+        "wsl-ubuntu"
+      ]
     }
   ],
   "knownPathContributors": [
@@ -69,18 +75,21 @@
     "wrapperTargetRequiredWhenWrapperSelected": true,
     "declaredPlatformTransitionRequired": true,
     "childStdoutStderrRequiredForFailurePromotion": true,
-    "generatedEvidenceTracked": false
+    "generatedEvidenceTracked": false,
+    "recognizedResolverPathRequiredForPassingClassification": true,
+    "recognizedStateCommandRequiredWhenStatePresent": true,
+    "nonEmptyProcessPathRequiredForPassingClassification": true
   },
   "classifications": [
     {
       "classificationId": "native-consistent",
       "pass": true,
-      "condition": "native-windows requested and effective launch remains on a Windows native/npm resolver"
+      "condition": "native-windows requested; parent and effective launch both resolve the registered native Windows npm OpenCode family; PATH snapshot is non-empty; any supplied fleet-state command is recognized and consistent"
     },
     {
       "classificationId": "declared-wsl-consistent",
       "pass": true,
-      "condition": "wsl-ubuntu requested and any Windows shim explicitly delegates to the registered WSL OpenCode"
+      "condition": "wsl-ubuntu requested; parent/effective launch are the registered WSL runtime or AgentSwitchboard WSL shim; shim target resolves the registered WSL OpenCode executable; PATH snapshot is non-empty; any supplied fleet-state command is recognized and consistent"
     },
     {
       "classificationId": "shim-shadowing-native",
@@ -100,7 +109,7 @@
     {
       "classificationId": "unresolved-runtime-identity",
       "pass": false,
-      "condition": "the exact requested surface, wrapper target, PATH snapshot, or effective launch identity is unavailable"
+      "condition": "requested surface, parent resolution, effective launch, non-empty PATH snapshot, recognized resolver path, required wrapper target, or a supplied fleet-state command identity is unavailable/unrecognized"
     }
   ],
   "repairBoundary": {

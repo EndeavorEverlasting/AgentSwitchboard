@@ -18,6 +18,7 @@ if (-not (Test-Path -LiteralPath $reportTemplatePath -PathType Leaf)) { throw "O
 
 $registry = Get-Content -LiteralPath $registryPath -Raw | ConvertFrom-Json
 $requiredTracked = @(
+    'tooling/profiles/windows/harness/opencode-runtime-resolution/classifier.py',
     'tooling/profiles/windows/harness/opencode-runtime-resolution/codebase-map.json',
     'tooling/profiles/windows/harness/opencode-runtime-resolution/runtime-resolution.registry.json',
     'tooling/profiles/windows/harness/opencode-runtime-resolution/artifact-registry.json',
@@ -30,6 +31,11 @@ $requiredTracked = @(
     'tooling/profiles/windows/harness/opencode-runtime-resolution/fixtures/invalid-shim-shadowing.fixture.json',
     'tooling/profiles/windows/harness/opencode-runtime-resolution/fixtures/invalid-wsl-missing-target.fixture.json',
     'tooling/profiles/windows/harness/opencode-runtime-resolution/fixtures/invalid-wsl-state-drift.fixture.json',
+    'tooling/profiles/windows/harness/opencode-runtime-resolution/fixtures/invalid-missing-parent.fixture.json',
+    'tooling/profiles/windows/harness/opencode-runtime-resolution/fixtures/invalid-empty-path-snapshot.fixture.json',
+    'tooling/profiles/windows/harness/opencode-runtime-resolution/fixtures/invalid-unknown-state-command.fixture.json',
+    'tooling/profiles/windows/harness/opencode-runtime-resolution/fixtures/invalid-arbitrary-native-path.fixture.json',
+    'tooling/profiles/windows/harness/opencode-runtime-resolution/fixtures/invalid-wsl-wrong-target.fixture.json',
     'tooling/profiles/windows/harness/opencode-runtime-resolution/operator-report.template.md',
     'tooling/profiles/windows/Get-OpenCodeRuntimeResolutionStatus.ps1',
     'scripts/Test-OpenCodeRuntimeResolutionHarness.ps1',
@@ -51,6 +57,20 @@ foreach ($relativePath in $requiredTracked) {
     if ($LASTEXITCODE -ne 0) { [void]$untracked.Add($relativePath) }
 }
 
+function Test-PathWithinRoot {
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Root,
+        [switch]$AllowEqual
+    )
+    $trimChars = [char[]]@([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+    $normalizedPath = [IO.Path]::GetFullPath($Path).TrimEnd($trimChars)
+    $normalizedRoot = [IO.Path]::GetFullPath($Root).TrimEnd($trimChars)
+    if ($AllowEqual -and $normalizedPath.Equals($normalizedRoot, [StringComparison]::OrdinalIgnoreCase)) { return $true }
+    $prefix = $normalizedRoot + [IO.Path]::DirectorySeparatorChar
+    return $normalizedPath.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)
+}
+
 function ConvertTo-ResolverRecord {
     param([AllowNull()]$Command)
 
@@ -62,7 +82,7 @@ function ConvertTo-ResolverRecord {
 
     $asbShimRoot = Join-Path $env:LOCALAPPDATA 'AgentSwitchboard\bin'
     $npmRoot = Join-Path $env:APPDATA 'npm'
-    if ($resolvedPath.StartsWith($asbShimRoot, [StringComparison]::OrdinalIgnoreCase)) {
+    if (Test-PathWithinRoot -Path $resolvedPath -Root $asbShimRoot) {
         return [ordered]@{
             commandName = 'opencode'
             resolvedPath = $resolvedPath
@@ -72,7 +92,7 @@ function ConvertTo-ResolverRecord {
             targetPlatform = 'wsl-ubuntu'
         }
     }
-    if ($resolvedPath.StartsWith($npmRoot, [StringComparison]::OrdinalIgnoreCase)) {
+    if (Test-PathWithinRoot -Path $resolvedPath -Root $npmRoot) {
         return [ordered]@{
             commandName = 'opencode'
             resolvedPath = $resolvedPath
@@ -96,6 +116,7 @@ function ConvertTo-ResolverRecord {
 $observation = $null
 $parentResolution = $null
 $processPathCaptured = $false
+$processPathSnapshot = @()
 if ($ObserveCurrentProcess) {
     if ($env:OS -ne 'Windows_NT') { throw '-ObserveCurrentProcess is a Windows-only local observation.' }
 
@@ -110,6 +131,7 @@ if ($ObserveCurrentProcess) {
     $selected = if ($allOpenCode.Count -gt 0) { $allOpenCode[0] } else { $null }
     $parentResolution = ConvertTo-ResolverRecord -Command $selected
     $processPathCaptured = $true
+    $processPathSnapshot = @($env:Path -split ';' | Where-Object { $_ })
 
     $shimPath = Join-Path $env:LOCALAPPDATA 'AgentSwitchboard\bin\opencode.cmd'
     $statePath = Join-Path $env:LOCALAPPDATA 'AgentSwitchboard\GnhfFleet\state.json'
@@ -135,7 +157,7 @@ if ($ObserveCurrentProcess) {
     $observation = [ordered]@{
         capturedAt = (Get-Date).ToUniversalTime().ToString('o')
         allOpenCodeCommands = $allOpenCode
-        processPath = @($env:Path -split ';' | Where-Object { $_ })
+        processPath = @($processPathSnapshot)
         userPath = @(([Environment]::GetEnvironmentVariable('Path', 'User')) -split ';' | Where-Object { $_ })
         machinePath = @(([Environment]::GetEnvironmentVariable('Path', 'Machine')) -split ';' | Where-Object { $_ })
         agentSwitchboardShimPath = $shimPath
@@ -164,7 +186,7 @@ if ($ObserveCurrentProcess) {
 if ($OutputRoot) {
     $fullOutputRoot = [IO.Path]::GetFullPath($OutputRoot)
     $fullRepoRoot = [IO.Path]::GetFullPath($RootPath)
-    if ($fullOutputRoot.StartsWith($fullRepoRoot, [StringComparison]::OrdinalIgnoreCase)) {
+    if (Test-PathWithinRoot -Path $fullOutputRoot -Root $fullRepoRoot -AllowEqual) {
         throw 'Runtime-resolution reports must be written outside the repository.'
     }
     $null = New-Item -ItemType Directory -Path $fullOutputRoot -Force
@@ -176,6 +198,7 @@ if ($OutputRoot) {
         parentResolution = $parentResolution
         effectiveLaunchResolution = $null
         processPathCaptured = $processPathCaptured
+        processPath = @($processPathSnapshot)
         tracked = $false
         repositoryHarnessStatus = $status
         missingTrackedComponents = @($missing)
