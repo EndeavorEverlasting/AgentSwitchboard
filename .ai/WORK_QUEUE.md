@@ -394,7 +394,7 @@ Canonical terminal action: none; no safe actionable work remains
 - **Priority:** P0
 - **Work class:** UNBOUNDED
 - **Owner:** stale-PR salvage convergence coordinator
-- **Branch / PR:** plan/stale-pr-salvage-convergence-20260922 / planning PR pending
+- **Branch / PR:** plan/stale-pr-salvage-convergence-20260922 / #339 open
 - **Scope:** execute the durable TRIAGE-01 successor map for semantic salvage of closed-unmerged PRs #113, #112, #118, #64, #92, and #79; preserve the #94 Wayfinder salvage floor; use isolated worktrees and leaf ownership; converge shared skills/triggers/maps/registries once; keep historical branches until preservation proof
 - **Forbidden:** bulk merge/cherry-pick of historical branches; destructive Git; deleting source branches before preservation proof; inventing prompt-parallel-dispatch runtime/CLI; secrets/private paths; live runtime/provider claims from static salvage; allowing worker lanes to collide on shared docs/registries
 - **Dependencies:** PR #338 / main@72d71a74279c5cf1b0c029b68d03c76634d50ea1; ASQ-022 is the collision owner for execution-adapter semantics and the separate autonomy-gap owner
@@ -403,5 +403,5 @@ Canonical terminal action: none; no safe actionable work remains
 - **Gate:** parallel execution is DEGRADED in the current chat runtime because no AgentSwitchboard/OpenCode/FirstMate worker adapter is exposed; graph width remains 4 and portability panels are tracked fallback transport, not dispatch proof
 - **Last proof:** main@72d71a74279c5cf1b0c029b68d03c76634d50ea1; PR #338 Wayfinder semantic salvage integrated; open PR count 0; refreshed source heads: #113 2ff3d81ab806b54dceccf593cd0f39b2c17e8bc9, #112 3053e1898c1de351faf2215d72947f5bd5d880de, #118 87abb4546ee1ef440897dfd86a49e58dab827ee6, #64 45b44b158d7f44e18dfbc6c24120a0c02924f48b, #92 acc652d5dc7599b18d76983fb96dbd628d2bd759, #79 b3560cd56e98f7b91dfff2e060c8a27d1c76e76a; prompt-parallel-dispatch contract/CLI/Outputs path absent on current main
 - **Next action:** launch Panel 01 from the tracked panel pack with the strongest available agent and launch Panels 02-04 concurrently when an isolated worker adapter is available; otherwise continue serially without changing dependency ownership
-- **Updated:** 2026-09-22T17:04:00Z
+- **Updated:** 2026-09-22T17:12:30Z
 

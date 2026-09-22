@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "critical",
   "createdUtc": "2026-09-19T16:30:00Z",
-  "updatedUtc": "2026-09-22T17:04:00Z",
+  "updatedUtc": "2026-09-22T17:12:30Z",
   "mission": "Convert the remaining high-value closed-unmerged historical pull requests into bounded semantic-salvage sprints on current main, preserving unique behavior while refusing wholesale replay of stale shared governance, skills, registries, workflows, or launch logic. The program exists to leave AgentSwitchboard clean and portable without requiring successor agents to reconstruct the September 22 forensic analysis from chat.",
   "owner": {
     "surface": "public coordination / stale-PR semantic salvage",
@@ -16,7 +16,11 @@
   },
   "delivery": {
     "branch": "plan/stale-pr-salvage-convergence-20260922",
-    "pullRequest": null,
+    "pullRequest": {
+      "number": 339,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/339",
+      "state": "open"
+    },
     "baseRef": "main@72d71a74279c5cf1b0c029b68d03c76634d50ea1",
     "commitRequired": true
   },
@@ -347,7 +351,7 @@
   ],
   "proof": {
     "target": "Durable repository-owned dependency map and agent-ready sprint factoring for semantic salvage of the six high-value closed-unmerged PRs.",
-    "achieved": "Current provider floor main@72d71a74279c5cf1b0c029b68d03c76634d50ea1; no open PRs; Wayfinder PR #94 core integrated through #338; exact current source heads and divergence for #113/#92/#79/#112/#64/#118 refreshed; collision and dependency graph factored; prompt-parallel-dispatch subsystem absence proven by repository search.",
+    "achieved": "Current provider floor main@72d71a74279c5cf1b0c029b68d03c76634d50ea1; no open PRs; Wayfinder PR #94 core integrated through #338; exact current source heads and divergence for #113/#92/#79/#112/#64/#118 refreshed; collision and dependency graph factored; prompt-parallel-dispatch subsystem absence proven by repository search.; durable plan branch opened as PR #339.",
     "ceiling": "Coordination-plan and provider-repository proof only. This plan does not prove any successor salvage implementation, local worktree cleanliness, local validator execution, parallel worker dispatch, Windows/runtime behavior, provider authentication, deployment, or user acceptance."
   },
   "handoff": {
