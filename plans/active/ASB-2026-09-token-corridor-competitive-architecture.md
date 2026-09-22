@@ -1,4 +1,4 @@
-# Token Corridor Competitive Decision-Control Plane
+# Token Corridor Competitive Decision-Control Plane — OSS-First Revision
 
 **Plan ID:** `ASB-2026-09-TOKEN-CORRIDOR-COMPETITIVE-ARCHITECTURE`
 **Status:** Proposed
@@ -6,99 +6,369 @@
 **Pull request:** #346 (draft)
 **Planning floor:** AgentSwitchboard `main@d90e5ed457c0657b6016c3ead0c976bf679a8de1`
 **Local evidence floor:** NodeWeaver `main@add0fd24cb213afdad4cb082db9ba8af947cc228`; Prompt Kit/Triage `main@c97718247e7b14544d198035dd3cdc07725545a8`
-**Working name only:** **Token Corridor** is an architectural/product hypothesis in this plan. This plan does not create or reserve a standalone repository.
+**Working name only:** **Token Corridor** remains a product/architecture hypothesis. This plan does not create or reserve a standalone repository.
+
+## Reconciliation: the first research pass was incomplete
+
+The first revision of this plan correctly separated bounded judgment from execution authority, but it made a material research error: it treated TypeSafe Jev as the primary decision primitive and surveyed only a few factory-level references. That was insufficient for an OSS-first software-factory decision.
+
+This revision supersedes that baseline.
+
+Before Token Corridor implements commodity infrastructure, the project must compare **open/self-hosted implementations and managed/private comparators at every relevant layer**:
+
+1. typed probabilistic decision engines;
+2. model/intelligence routing and gateways;
+3. structured generation and constrained decoding;
+4. durable workflow / crash-resume execution;
+5. agent runtime and software-factory orchestration;
+6. sandbox / workspace execution;
+7. evaluation, calibration, observability, and tracing.
+
+### OSS-first dependency rule
+
+**A commercial component may be a benchmark comparator or optional adapter, but it must not become required infrastructure unless an exact workload benchmark proves that adequately licensed open/self-hosted candidates fail a named acceptance gate.**
+
+“Provider-neutral” alone is not sufficient. A provider-neutral abstraction can still hide an unnecessarily paid default.
+
+License class must remain explicit:
+
+- **OPEN-PERMISSIVE** — e.g. Apache-2.0, MIT;
+- **OPEN-COPYLEFT** — e.g. AGPL;
+- **SOURCE-AVAILABLE** — code visible but not OSI open source, e.g. ELv2 or BSL;
+- **CLOSED/MANAGED** — proprietary service/runtime.
 
 ## Competitive question
 
-TypeSafe publicly introduced Jev on 2026-09-15 as a System One model: unstructured program state enters; typed probabilistic decisions leave. The competitive question is therefore not “can AgentSwitchboard train a Jev clone faster?” It is:
+TypeSafe introduced Jev publicly on 2026-09-15 after roughly two years in stealth. Jev is a System One decision model: structured/unstructured state plus typed questions in; Choice/Score/Noul probabilities out; all outputs scored in parallel rather than text generated token-by-token.
 
-> What software-factory layer remains distinctive and valuable when fast typed probabilistic judgment is available as a commodity/provider primitive?
+That release matters. It does **not** establish that TypeSafe is the only available implementation, nor that a paid decision API is necessary.
 
-This plan answers: **the durable decision-control plane around the primitive**.
+The corrected question is:
 
-## Product boundary
+> Which layers of an AFK software factory are already available as credible open/self-hosted infrastructure, which managed systems merely package those layers, and what remaining integration/control seam is genuinely worth building?
 
-| Surface | Canonical role in the target factory | Explicit non-role |
+## Corrected architecture boundary
+
+| Surface | Canonical role | Must not become |
 |---|---|---|
-| **Prompt Kit / Evidence Spine** | semantic/workflow policy; acceptance/proof contracts; continuation requirements; reusable prompt/workflow meaning | not live worker runtime; not probabilistic model provider |
-| **Token Corridor** *(working name)* | bounded judgment compilation and control: state→typed questions→engine selection→calibrated decision→authority check→decision receipt | not a foundation model; not a scheduler; not an execution runtime; cannot create authorization |
-| **AgentSwitchboard** | factory/execution control plane: readiness, execution-adapter selection, dispatch, evidence normalization, durable public coordination | not a second FirstMate crew runtime |
-| **FirstMate** | canonical live multi-agent crew/session runtime | not Prompt Kit semantic owner; not Token Corridor decision semantics |
-| **NodeWeaver** | candidate semantic-state/topic/recurrence feature provider if refreshed evidence proves unique value | not the universal factory decision engine by assumption |
-| **Deterministic code** | calculations, exact policy, permissions, schemas, validators, state transitions, merge/deploy gates | must not be replaced by probabilistic judgment when code can decide exactly |
+| **Prompt Kit / Evidence Spine** | semantic/workflow policy; acceptance/proof contracts; continuation requirements | model runtime or crew scheduler |
+| **Token Corridor** *(working name)* | compile unresolved state into bounded judgments; select a decision/router backend; apply thresholds and authority rules; emit typed decision receipts | a Jev clone, generic gateway, workflow engine, sandbox service, or permission oracle |
+| **AgentSwitchboard** | readiness, provider/execution-adapter selection, dispatch, public plans, evidence normalization, integration governance | a second FirstMate crew runtime or a duplicate generic orchestration platform |
+| **FirstMate** | live crew/session runtime and multi-agent execution | semantic policy or decision-model owner |
+| **NodeWeaver** | optional semantic recurrence/topic/similarity signal source if benchmarked value exists | universal decision model by assumption |
+| **Open substrates** | routing, constrained decoding, durable execution, sandboxing, evaluation/observability where adequate | hidden proprietary dependencies |
+| **Deterministic code** | permission, schemas, exact policy, tests, arithmetic, state transitions, merge/deploy gates | probabilistic guesswork |
 
-## Reference matrix
+## Layer 1 — typed probabilistic decision engines
 
-Evidence date: 2026-09-22. Status labels describe the inspected scope only.
+### Closed comparator: TypeSafe Jev
 
-| Reference | Relevant mechanism | Evidence state | Disposition |
+**TypeSafe Jev**
+- Source: https://typesafe.ai/blog/introducing-system-one-models-and-jev
+- License/deployment: **CLOSED/MANAGED**
+- Shape: one request contains program state plus multiple Choice/Score/Noul questions; outputs are typed probability distributions.
+- Claimed price at launch: $0.042 / MTok input; output too cheap to meter.
+- Claimed advantages: parallel outputs, calibrated probabilities, low latency, no schema/type errors.
+- Important caveat: TypeSafe's workflow evaluations and calibration claims are vendor-produced until reproduced on our corpus.
+
+**Disposition:** COMPARE, OPTIONAL ADAPTER. Never a prerequisite.
+
+### Open candidate: Laya
+
+**Laya — artificial-intelligence-works/laya-jev**
+- Source: https://github.com/artificial-intelligence-works/laya-jev
+- License: **OPEN-PERMISSIVE — Apache-2.0**
+- Architecture: non-autoregressive encoder decision engine; Choice/Score/Noul.
+- Published checkpoints include ModernBERT-large and multilingual mmBERT variants; local/self-hosted.
+- Built-in router selects language/checkpoint before inference.
+- Important self-reported finding: the base checkpoints are weak zero-shot on the typed-decisions benchmark; the specialized fine-tuned checkpoint is materially better. Treat specialization as part of the deployment design, not a footnote.
+- The repo publishes a fine-tuning notebook and calibration workflow.
+
+**Disposition:** ADOPT AS FIRST OSS GENERAL CANDIDATE FOR BAKEOFF, not automatic production winner.
+
+### Open candidate: Mapika/decider
+
+**decider**
+- Source: https://github.com/Mapika/decider
+- License/model card: **OPEN-PERMISSIVE — Apache-2.0**
+- Models: ~0.8B, 2B, 35B-A3B plus vision variant.
+- Main 2B path: state/JSON up to 32k tokens, Choice with up to 255 options, Score, Noul, abstention, TypeSafe-compatible `/v1/systemone`.
+- Uses one-pass readouts instead of text generation and includes calibration-aware training/RL experiments.
+- Its own JevBench table shows an important limitation: the 2B model is strong on some routing/trap families but weak on long policy, multihop, and temporal/numeric reasoning; hard-tier calibration is also imperfect.
+
+**Disposition:** ADOPT AS BROADER/HEAVIER OPEN CHALLENGER. Useful when Laya's context/task limits matter.
+
+### Open candidate: OpenDecision
+
+**OpenDecision**
+- Source: https://github.com/deepanwadhwa/OpenDecision
+- License: **OPEN-PERMISSIVE — Apache-2.0**
+- Default backend: ModernBERT large zero-shot NLI/classification; local, no text generation.
+- Supports Choice/Noul/Score plus Relation; can retrieve evidence passages from documents.
+- Provides Python, FastAPI, and TypeSafe-compatible `/v1/systemone`.
+- Explicit repo caveat: current model scores are **uncalibrated** and thresholds must be validated on the user's own data.
+
+**Disposition:** ADOPT AS LOW-COMPLEXITY NLI/EVIDENCE BASELINE. Do not promote its raw scores to calibrated automation confidence.
+
+### Open candidate: Shalimov04/open-jev
+
+**open-jev — task distillation**
+- Source: https://github.com/Shalimov04/open-jev
+- License: **OPEN-PERMISSIVE — MIT**
+- Mechanism: define one stable decision task; a local teacher produces soft labels; distill into ~140M mmBERT-small; fit temperature/bias calibration on held-out rows; serve a TypeSafe-compatible endpoint.
+- This is a fundamentally different strategy from one universal Jev: **compile a recurring prompt/decision into a tiny classifier**.
+
+**Disposition:** HIGH-VALUE ADAPT for stable repeated factory decisions such as known route families, defect classification, or evidence-sufficiency gates. Not a universal dynamic-question replacement.
+
+### Open candidate: Verdict / OpenJev
+
+**Verdict-open-jev**
+- Source: https://github.com/Heman10x-NGU/Verdict-open-jev
+- License: **OPEN-PERMISSIVE — Apache-2.0**
+- Architecture: ~151M ModernBERT/GLiClass family, non-autoregressive typed decisions, local/browser WebGPU surfaces, calibration artifacts and tests.
+- Published accuracy/calibration/latency numbers are author-produced and must be reproduced before they can drive an autonomy threshold.
+
+**Disposition:** ADOPT AS LOW-FOOTPRINT CHALLENGER.
+
+### Open compatibility baseline: openjev-sglang
+
+**openjev-sglang**
+- Source: https://github.com/ekzhang/openjev-sglang
+- Shape: TypeSafe/Jev HTTP surface over a large open Qwen model using prefill/candidate scoring.
+- Default example is GPU-heavy (B200-class in its Modal deployment) and is not a cheap-local default.
+- Useful because it demonstrates that a Jev-shaped API does not imply Jev-specific weights or training.
+
+**Disposition:** ADAPT AS API/ARCHITECTURE REFERENCE; REJECT as initial low-cost deployment default.
+
+### Structured local LLM baseline
+
+A local open model can be constrained to finite/typed output without a closed structured-output API:
+
+- **XGrammar** — https://github.com/mlc-ai/xgrammar — open constrained decoding for JSON, regex, CFG; integrated into vLLM/SGLang/MLC/TensorRT-LLM.
+- **Outlines** — https://github.com/dottxt-ai/outlines — provider-independent structured generation including local vLLM/MLX paths.
+- **Guidance** — https://github.com/guidance-ai/guidance — regex/CFG constraints and finite `select()`.
+- **Instructor** — schema/validation/retry wrapper useful at the application edge.
+
+These solve **output admissibility**, not calibrated epistemic confidence. They are a baseline/challenger, not equivalent evidence to a calibrated decision model.
+
+### Existing independent evidence
+
+**sysone-bench**
+- Source: https://github.com/instax-dutta/sysone-bench
+- Current evidence uses byte-identical states/questions across Laya and Jev.
+- Results are mixed by task family: Jev leads several triage/moderation/multi-class/multilingual sets; Laya leads AG News and MNLI; some score tasks remain weak/miscalibrated for both.
+- This independently demonstrates why “Jev wins” and “open wins” are both too coarse.
+
+**Token Corridor rule:** benchmark on our exact factory decisions.
+
+## Layer 2 — model / intelligence routing
+
+### Open routing mechanisms
+
+| Project | License / posture | Mechanism | Token Corridor disposition |
 |---|---|---|---|
-| **TypeSafe Jev** — https://typesafe.ai/blog/introducing-system-one-models-and-jev | Typed Choice/Score/Noul-style probabilistic decisions over unstructured state; no text generation; parallel outputs; calibrated confidence intended for software branching | **DOCUMENTED_UNVERIFIED for our workload** — official product docs; no local benchmark yet | **ADAPT** as one decision backend/API shape; **REJECT** racing TypeSafe by training a competing model as the near-term factory strategy |
-| **Brainwires/jevwire** — https://github.com/Brainwires/jevwire | Provider-facing DecisionModel abstraction, pure run functions, thresholds, harness hooks, deterministic prefilters; critically, probabilistic judgment cannot emit permission “allow” by default | **OBSERVED_IMPLEMENTED from published repo/spec surfaces** | **ADOPT mechanism**: engine interface, code-before-model, advisory/block/escalate semantics, “model cannot mint authority” invariant |
-| **Open-Jev reconstructions** — e.g. https://github.com/kyegomez/open-jev | Shared state encoding + batched typed readout heads; demonstrates Jev-like interface can be reproduced independently without proprietary TypeSafe weights/data | **OBSERVED_IMPLEMENTED / research preview**; not TypeSafe-equivalent | **ADAPT for local/open fallback experiments**, not a production assumption |
-| **Agent-Field/SWE-AF** — https://github.com/Agent-Field/SWE-AF | Issue DAG, parallel isolated worktrees, coder/QA/reviewer passes, inner retry loop, issue advisor, outer replanner, integration verifier, runtime/model selection | **OBSERVED/DOCUMENTED_IMPLEMENTED on current public repo surfaces** | **ADAPT** factory-control loops and tiered intelligence; do not duplicate FirstMate crew scheduling |
-| **Erik-Koning/agentfactory** — https://github.com/Erik-Koning/agentfactory | Work-order lifecycle, provider abstraction, isolated worktrees, Redis workers, heartbeat/inactivity, crash resume, QA/acceptance stations, cost tracking | **DOCUMENTED_IMPLEMENTED from current public repo** | **ADAPT** recovery/cost/accounting patterns where ASB lacks them; reject mandatory tracker/Redis coupling |
-| **OpenHands automation + software-agent-sdk** — https://github.com/OpenHands/automation and https://github.com/OpenHands/software-agent-sdk | Strong ownership split: automation owns **when** (schedule/webhook/run history/dispatch/sandbox lifecycle); Agent Server/SDK owns **what** executes (agents/tools/workspaces/events/API) | **OBSERVED_IMPLEMENTED from current repository boundaries and service docs** | **ADOPT boundary principle**: scheduling, decision, and execution are different owners |
-| **Pydantic AI durable execution** — https://pydantic.dev/docs/ai/capabilities/durable_execution/overview/ | Durable runs survive API/application failure and restart; multiple workflow backends; explicitly separates durable run continuation from ordinary conversation storage | **OBSERVED/DOCUMENTED current docs** | **ADAPT** durable transition/resume/idempotency contract; do not build a workflow engine if an existing backend fits |
-| **Pydantic AI TypeSafe/Jev provider surface** — https://pydantic.dev/docs/ai/models/typesafe/ | Jev is already exposed through a general agent framework's model/provider layer, with guidance around confidence/threshold usage | **OBSERVED current integration documentation** | **ADOPT strategic signal**: keep Token Corridor provider-neutral; Jev integration should be an adapter, not the product identity |
+| **Semantic Router** — https://github.com/aurelio-labs/semantic-router | MIT; can run fully local | embedding/vector semantic routes; optional local HuggingFace + llama.cpp | **ADOPT/ADAPT** for cheap high-confidence intent/tool routes |
+| **RouteLLM** — https://github.com/lm-sys/RouteLLM | Apache-2.0 | learned strong-vs-weak routing; OpenAI-compatible server; evaluation framework | **ADAPT** for model-tier routing experiments |
+| **UIUC LLMRouter** — https://github.com/ulab-uiuc/LLMRouter | MIT | 16+ router families: KNN/SVM/MLP/MF/Elo/graph/BERT/hybrid, plus benchmark/training pipeline | **ADOPT AS ROUTER RESEARCH/EVAL SUBSTRATE**, not reimplement its research stack |
+| **LiteLLM Router** — https://github.com/BerriAI/litellm | open gateway ecosystem | weighted, cost, latency, usage, least-busy, retries/fallbacks, session affinity | **ADAPT AS GATEWAY/RELIABILITY MECHANICS**; not the semantic decision owner |
 
-## What external systems already solve
+### Managed comparators
 
-### Available to emulate externally
+**Not Diamond**
+- https://www.notdiamond.ai/
+- https://www.notdiamond.ai/pricing
+- **CLOSED/MANAGED**
+- Focuses directly on coding-agent model selection using payload semantics, session outcomes, cache/compaction/subagent signals; current list price is a fixed router fee per routed token volume.
+- Useful comparator for the specific “which coding model/reasoning effort now?” problem.
 
-- Cheap typed probabilistic judgment over messy state.
-- Provider-neutral decision interfaces.
-- Confidence thresholds and explicit abstain/escalate policies.
-- Factory issue/DAG decomposition and adaptive retry/replan loops.
-- Isolated worker worktrees and staged QA/review/verification.
-- Scheduler/runtime ownership separation.
-- Durable crash/restart continuation.
-- Provider/model selection by role or task class.
+**OpenRouter Auto Router**
+- https://openrouter.ai/blog/announcements/introducing-the-new-auto-router/
+- **CLOSED/MANAGED SERVICE**
+- Current 2026 Auto Router uses recent OpenRouter market/spend behavior and task classification to choose models.
+- Useful as a market-driven baseline, not a canonical policy owner.
 
-These are **not** a moat by themselves.
+### Routing conclusion
 
-## What AgentSwitchboard already solves internally
+Do **not** build a router research framework inside Token Corridor.
 
-- A documented agentic-software-factory architecture with engineer / agent / deterministic-code boundaries.
-- Prompt Kit machine inputs, continuation/evidence semantics, and no-human-scheduler policy.
-- Triage→ASB consumer and dispatch contracts.
-- Provider-neutral execution adapter request/receipt/registry/runner floor.
-- FirstMate boundary: ASB deliberately does not become a second live crew scheduler.
-- Deterministic validation/test/merge proof surfaces.
-- Public machine-readable plans and execution evidence.
-- P143 Repository Convergence Planner now exists as an open Prompt Kit implementation lane for multi-repo A+B→C planning.
+Token Corridor should own the policy question and typed route receipt. It may call a deterministic route, Semantic Router, RouteLLM/LLMRouter model, or a managed router. AgentSwitchboard remains the execution-adapter owner.
 
-Therefore the competitive response must reuse those owners rather than launch another orchestration framework.
+## Layer 3 — durable execution and crash/restart continuation
 
-## Project-specific gap: judgment compilation
+The first plan incorrectly treated “durable AFK continuation” as mostly a local architecture problem. Mature open infrastructure exists.
 
-The missing product seam is a **decision compiler/control plane** between evidence and execution.
+| Project | License / posture | Useful mechanism | Disposition |
+|---|---|---|---|
+| **DBOS** — https://github.com/dbos-inc/dbos-transact-py | MIT | lightweight Python durable workflows/queues backed by Postgres; checkpoint/recovery without separate orchestration service | **FIRST EVALUATION TARGET** for ASB because Python + Postgres is a low-infrastructure fit |
+| **Hatchet** — https://github.com/hatchet-dev/hatchet | MIT | Postgres-backed durable task/agent orchestration, retries, queues, DAGs, events, monitoring | **ESCALATION CANDIDATE** when distributed worker scheduling is needed |
+| **Temporal** — https://github.com/temporalio/temporal | MIT | mature durable workflow/service model, retries/event history/workers/task queues | **ESCALATION CANDIDATE** for stronger distributed durability at higher operational cost |
+| **Trigger.dev** — https://github.com/triggerdotdev/trigger.dev | open/self-hosted platform | long-running AI tasks, retries, queues, pause/resume, tracing | **ADAPT** if TS/application deployment posture fits |
+| **Inngest** — https://github.com/inngest/inngest | open/self-host path | event/cron/webhook durable functions and step orchestration | **ADAPT/DEFER** |
+| **LangGraph checkpoints** | OSS libraries | per-superstep persistence, pending-write recovery, durability modes | **ADAPT** only if graph runtime becomes a chosen application owner |
+| **Restate** — https://github.com/restatedev/restate | **SOURCE-AVAILABLE BSL 1.1**, not OSI open source | durable RPC/state/workflows | **COMPARE**, do not label OSS |
 
-Target flow:
+**Rule:** Token Corridor/ASB should define idempotency, correlation, and proof contracts; the persistence/replay engine should be an adopted substrate unless a concrete incompatibility is proven.
+
+## Layer 4 — agent execution, factory orchestration, and worker control
+
+### Open systems already occupying the “software factory” lane
+
+**SWE-AF**
+- https://github.com/Agent-Field/SWE-AF
+- Issue DAG rather than agent DAG; parallel work by dependency level; coder → QA/reviewer → synthesizer; inner retry, middle advisor/split, outer replanning; crash resume endpoint.
+- **ADAPT the adaptive-control mechanisms.** Do not duplicate FirstMate crew execution.
+
+**AgentFactory**
+- https://github.com/Erik-Koning/agentfactory
+- MIT.
+- Backlog → development → QA → acceptance; distributed worker pool; Git worktrees; heartbeat/inactivity; crash recovery/session resume; per-session cost.
+- **ADAPT fleet accounting/recovery patterns; do not rebuild the whole product inside ASB.**
+
+**OpenHands**
+- https://github.com/OpenHands/OpenHands
+- Self-hostable agent/canvas/runtime ecosystem.
+- Strong architectural precedent for separating automation/scheduling from agent server/runtime.
+- **ADOPT boundary principle.**
+
+**SWE-agent / SWE-ReX**
+- SWE-agent focuses the coding worker; SWE-ReX abstracts the execution environment.
+- **ADOPT separation of agent logic from runtime infrastructure.**
+
+**goose / Aider**
+- Useful open worker implementations/provider abstractions, not software-factory control planes.
+- **KEEP AS PLUGGABLE WORKER OPTIONS**, not local reinvention targets.
+
+### Managed/private comparators
+
+**Factory**
+- https://factory.ai/product/software-factory
+- Explicitly sells model-independent full-SDLC software-factory automation: triage, planning, execution, review, release, model routing.
+
+**Cursor Cloud Agents**
+- https://cursor.com/docs/cloud-agent
+- Isolated cloud VMs/branches, parallel agents, multi-repo environments, event/schedule subscriptions, PR babysitting, environment builds/snapshots.
+
+**GitHub Copilot cloud/third-party coding agents**
+- GitHub-native asynchronous issue/prompt → branch/PR workers in protected cloud environments.
+
+These are meaningful competitive products, but their headline mechanics — parallel workers, isolated branches, cloud environments, PR iteration — already have open analogues.
+
+**Token Corridor moat cannot be “we run multiple coding agents.”**
+
+## Layer 5 — sandbox / workspace infrastructure
+
+### Open/self-hosted
+
+**SWE-ReX**
+- https://github.com/SWE-agent/SWE-ReX
+- MIT.
+- One runtime interface across local shell, Docker, AWS/Fargate, Modal and other environments; many parallel sessions.
+- **ADOPT/ADAPT as runtime abstraction reference.**
+
+**E2B runtime**
+- https://github.com/e2b-dev/runtime
+- Apache-2.0.
+- Firecracker microVM runtime/control-plane stack; public cloud, enterprise deployment, and self-host/single-machine runtime share the open implementation.
+- **ADOPT/ADAPT if microVM isolation is required.**
+
+**Existing FirstMate/worktrees**
+- Already own a lighter isolation path for many repository-writing tasks.
+- Do not introduce a VM merely because one is available.
+
+### Managed/source-history comparators
+
+**Vercel Sandbox**
+- Managed Firecracker microVM service; SDK/CLI available, infrastructure managed.
+- **OPTIONAL COMPARATOR**, not required.
+
+**Daytona**
+- Current core development moved private in June 2026.
+- Historical AGPL code remains public; community fork **Nightona** continues that last open line.
+- This is a concrete vendor-governance risk to consider when choosing foundational infrastructure.
+
+## Layer 6 — evaluation, calibration, tracing, and observability
+
+### Open/self-hosted candidates
+
+**Opik**
+- https://github.com/comet-ml/opik
+- Apache-2.0 full platform.
+- Traces, datasets, experiments, code/LLM evaluation, production monitoring; self-hostable backend/UI.
+- **FIRST FULL-OPEN EVAL/TRACE CANDIDATE.**
+
+**Langfuse**
+- https://github.com/langfuse/langfuse
+- MIT core; explicit commercially licensed `ee/` modules.
+- Tracing, datasets, experiments, evaluations, prompt management; self-hostable core.
+- **ADOPT/ADAPT** if its core feature split fits.
+
+**Phoenix**
+- https://github.com/Arize-ai/phoenix
+- Current license is **Elastic License 2.0 — SOURCE-AVAILABLE, not OSI open source**.
+- Strong tracing/eval/dataset/experiment implementation, but license class matters.
+- **COMPARE/ADAPT only with explicit license acceptance.**
+
+### Managed comparator
+
+**LangSmith**
+- Managed commercial platform; self-host/hybrid is an Enterprise-tier capability.
+- Strong benchmark for polished tracing/evaluation/deployment UX.
+- **COMPARE**, not required.
+
+### Observability ownership rule
+
+Token Corridor owns **decision/evidence semantics and receipts**. An observability platform stores/displays traces and experiments. It must never become the only source of proof or workflow authority.
+
+## Full stack: open-first default vs managed comparator
+
+| Layer | Open/self-hosted default evaluation set | Managed/private comparator | Current plan |
+|---|---|---|---|
+| typed decision | Laya; OpenDecision; decider; task-distilled open-jev; Verdict; constrained local LLM | TypeSafe Jev | **open bakeoff first** |
+| semantic/model routing | Semantic Router; RouteLLM; LLMRouter; LiteLLM mechanics | Not Diamond; OpenRouter Auto | **do not build router research from scratch** |
+| structured output | XGrammar; Outlines; Guidance; Instructor validation | vendor structured-output APIs | **reuse open constraints** |
+| durable continuation | DBOS first; Hatchet/Temporal escalation; Trigger/Inngest/LangGraph as fit warrants | managed workflow clouds | **adopt substrate** |
+| coding/factory | SWE-AF; AgentFactory; OpenHands; FirstMate; worker adapters | Factory; Cursor; GitHub cloud agents | **ASB/FirstMate integrate, do not clone** |
+| sandbox | worktrees; SWE-ReX; E2B | Vercel Sandbox; current Daytona | **reuse open runtime abstraction** |
+| eval/observability | Opik; Langfuse core | LangSmith; enterprise platforms | **open self-host first** |
+
+## What is actually left to build
+
+After subtracting the open ecosystem, Token Corridor becomes **smaller and more defensible**.
+
+### Project-specific gap: evidence/authority-aware judgment composition
+
+The likely unique seam is not the classifier, router, workflow engine, sandbox, or dashboard.
+
+It is the compiled control contract connecting them:
 
 ```text
 repository/runtime evidence
         ↓
-deterministic prefilters / exact policy
+exact deterministic policy
         ↓
-bounded unresolved judgment
+identify the smallest unresolved judgment
         ↓
-Token Corridor decision request
+decision request + state/action fingerprint
         ↓
-engine selection
-(rule | Jev | open/local system-one | structured LLM | specialist signal service)
+select engine by measured policy
+  ├─ deterministic rule
+  ├─ semantic router / NLI
+  ├─ Laya / decider / Verdict / distilled task model
+  ├─ constrained local LLM
+  ├─ optional managed Jev/router
+  └─ expensive reasoning agent
         ↓
-typed probability / abstain / escalation
+typed probability / abstain / recommendation
         ↓
-AUTHORITY CHECK  ← separate typed grants/policy only
+AUTHORITY CHECK — independent evidence only
         ↓
-deterministic workflow transition
+durable workflow transition
         ↓
 AgentSwitchboard execution adapter
         ↓
-FirstMate / single-agent / deterministic job
+FirstMate / worker / deterministic process
         ↓
-typed execution + validation receipt
+execution + validator receipts
         ↓
 Prompt Kit Evidence Spine continuation
 ```
@@ -107,99 +377,134 @@ Prompt Kit Evidence Spine continuation
 
 **Probability is evidence, not permission.**
 
-A decision engine may recommend, rank, classify, block, abstain, or escalate. It may never manufacture:
-
+No open or closed model can manufacture:
 - user authorization;
 - destructive authority;
-- repository merge authority;
+- merge authority;
 - deployment/release authority;
 - credential scope;
-- external publication/spend authority.
+- spend/publication authority.
 
-This directly prevents the known defect family where an inferred value becomes an operator-frozen or executable decision merely because a downstream step needs a concrete value.
+A probability can influence a policy that already has authority. It cannot create that authority.
 
-## Competitive moat hypothesis
+## Revised competitive moat hypothesis
 
-If TC-01 through TC-05 prove out, Token Corridor's differentiated value is not “typed output.” It is:
+If the implementation proves useful, Token Corridor's defensible value is the combination of:
 
-1. **Judgment compilation** — convert large messy factory state into the smallest decision questions needed now.
-2. **Intelligence routing** — choose deterministic code, cheap System-One judgment, structured LLM, specialist classifier, or expensive agent according to risk/cost/latency/proof needs.
-3. **Authority-aware decisions** — evidence/confidence and permission are independent contracts.
-4. **Receipt-linked continuation** — every judgment is correlated with the action/proof it influenced; no giant prose handoff.
-5. **Adaptive control loops** — retry/replan/split/escalate can use cheap bounded judgments instead of another full agent turn.
-6. **Durable AFK state** — crash/restart/user-only gates resume from stable transition identity without the human reconstructing context.
-7. **Provider portability** — Jev can improve the factory without owning the factory.
+1. **Judgment compilation** — automatically identify the minimum fuzzy questions remaining after deterministic evidence is exhausted.
+2. **Evidence-aware engine selection** — choose rule/NLI/tiny specialized model/System-One/router/frontier model based on measured task family, cost, latency, privacy, hardware, and proof requirements.
+3. **Authority separation** — confidence and permission are orthogonal contracts.
+4. **Receipt-linked composition** — each decision records state/action fingerprint, model/version, calibration provenance, and the downstream transition it influenced.
+5. **Factory-specific adaptive control** — use cheap judgment at retry/replan/split/escalate and proof-sufficiency boundaries without another giant agent turn.
+6. **Durable AFK continuation** — selected open durability substrate resumes the exact workflow without operator context shuttling.
+7. **Backend commoditization as an advantage** — Laya/decider/Jev/router vendors can improve without changing the surrounding factory contract.
+8. **Regression-backed autonomy policy** — autonomy thresholds are derived from versioned factory corpora and negative authorization fixtures, not vibes.
 
-That is compatible with Jev succeeding commercially.
+## NodeWeaver: narrower question
 
-## NodeWeaver disposition
+Do not turn NodeWeaver into a Jev clone.
 
-Current provider truth is `NodeWeaver main@add0fd24cb213afdad4cb082db9ba8af947cc228`. Its README still describes a RAG classifier/topic-emergence product. Historical gap analysis documents substantial unimplemented intelligence work at that point, while later learning docs add correction/training behavior. That does **not** currently establish NodeWeaver as a Jev-equivalent decision model.
+Evaluate whether it contributes factory-specific signals that the open decision candidates do not cheaply recover:
+- recurrence/topic-cluster state;
+- semantic neighborhood history;
+- cross-run drift/emergence signals;
+- correction-derived long-horizon features.
 
-**Provisional disposition: NARROW + EVALUATE.**
+If those features do not improve the Token Corridor benchmark, keep NodeWeaver independent.
 
-Do not race Jev by expanding NodeWeaver into a foundation decision model. Instead test whether NodeWeaver contributes **unique semantic features** to factory decisions:
+## Revised execution sequence
 
-- topic/recurrence clustering;
-- similarity/neighborhood evidence;
-- long-horizon semantic state;
-- correction-derived feature signals.
+### TC-00 — full reference floor — COMPLETED
+Open and managed alternatives are now mapped across all major layers. The prior Jev-centric research floor is superseded.
 
-If those signals do not improve TC-02 benchmark outcomes versus simpler baselines, retire that factory integration idea without harming NodeWeaver's independent product identity.
+### TC-00A — OSS decision-engine compatibility spike — READY
+Create a small versioned factory-decision corpus. Run byte-identical fixtures through:
+1. deterministic baseline;
+2. Laya;
+3. OpenDecision;
+4. at least one of decider or Verdict;
+5. task-distilled open-jev for one stable decision family;
+6. constrained local LLM baseline.
 
-## Development sequence
+Jev is optional only if a credential already exists.
 
-### TC-01 — Decision protocol floor
-Build the provider-neutral request/receipt and engine interface. Negative fixture: a model confidently says an action is safe/allowed, but no authority grant exists; dispatch must remain forbidden.
+Collect:
+- accuracy/agreement;
+- Brier/ECE where probabilities are meaningful;
+- abstention/coverage;
+- p50/p95;
+- model/load memory and hardware;
+- cold-start;
+- failure cases;
+- exact model/revision/config.
 
-### TC-02 — Competitive benchmark
-Use real sanitized factory decisions. Compare deterministic rules, structured generative baseline, and Jev-compatible backend where available. Measure correctness, calibration, latency, cost, false-autonomy, and unnecessary-escalation.
+### TC-00B — open support-substrate selection — READY
+Do targeted compatibility spikes instead of building commodity infrastructure:
+- routing: Semantic Router / RouteLLM / LLMRouter / LiteLLM mechanics;
+- durability: DBOS baseline, Hatchet/Temporal escalation;
+- runtime: SWE-ReX abstraction + current FirstMate/worktree path; E2B only if VM isolation is required;
+- eval/trace: Opik or Langfuse core.
 
-### TC-03 — Vertical factory-router slice
-Use the decision plane to choose one reviewed ADW/next owner from real ASB/Prompt Kit evidence, then hand execution to existing ASB adapters.
+### TC-01 — decision protocol floor
+Only after TC-00A/B evidence. The first proven backend must be open/local. A Jev adapter may exist but cannot be required.
 
-### TC-04 — Adaptive control loops
-Insert cheap bounded judgment into ambiguous retry/replan/split/escalate points. Keep exact validator failures deterministic.
+### TC-02 — workload-specific competitive benchmark
+Expand the same corpus. Managed backends may enter only as comparators. Select per-decision-family winners, not one global “best model.”
 
-### TC-05 — Durable AFK continuation
-Prove decision → dispatch → receipt → continuation survives restart and user-only gates without human context shuttling.
+### TC-03 — vertical factory-router slice
+Evidence → deterministic prefilter → open bounded judgment → authority gate → existing ASB dispatch → execution receipt.
 
-### TC-06 — NodeWeaver integration scout
-Prototype only semantic-signal value; KEEP/NARROW/ADAPT/RETIRE from measured evidence.
+### TC-04 — adaptive control loops
+Apply bounded judgment to ambiguous retry/replan/split/escalate/next-owner transitions while keeping deterministic failures deterministic.
 
-### TC-07 — Product extraction gate
-Only then decide whether Token Corridor should become its own repository/product boundary.
+### TC-05 — durable AFK continuation
+Use the selected open durability substrate. Prove interruption/restart and user-only quiescence without reconstructing context.
 
-## Standalone repository gate
+### TC-06 — NodeWeaver signal scout
+Measure whether its semantic-history features improve TC-02 results.
 
-Do **not** create TokenCorridor yet.
+### TC-07 — standalone product extraction gate
+Only extract Token Corridor from ASB after two independent real consumers or a genuinely independent runtime/release/security boundary proves the separation.
 
-Extract from ASB only when one of these is proven:
+## What we explicitly will not build unless evidence reverses the decision
 
-1. at least two independent real consumers need the same stable decision protocol; **or**
-2. it has an independent deployment/runtime/release/security boundary that makes ASB ownership harmful.
+- another generic semantic router;
+- another LLM gateway;
+- another grammar-constrained JSON engine;
+- another durable workflow runtime;
+- another sandbox platform;
+- another generic coding agent;
+- another multi-agent crew scheduler;
+- another LLM observability dashboard;
+- a general System-One foundation model merely because Jev exists.
 
-Then use Prompt Kit P143 Repository Convergence Planner for any donor→destination migration plan.
+Those are solved or crowded layers.
 
-## What would invalidate this strategy
+## What would invalidate the current Token Corridor thesis
 
-Revisit the thesis if:
-
-- factory benchmarks show bounded decisions do not materially reduce cost/latency/agent turns at acceptable error rates;
-- calibration under our real distribution is too unstable to set useful thresholds;
-- existing ASB deterministic routing already resolves nearly all target decisions;
-- a mature external system provides the entire authority-aware decision→execution→receipt→continuation seam with acceptable ownership and portability;
-- Token Corridor requires duplicating FirstMate or ASB execution rather than remaining a thin decision plane.
+Revisit the plan if:
+- open decision engines and constrained local models already provide the full evidence→authority→transition contract with no meaningful local seam;
+- the factory decision corpus shows nearly all useful routing is deterministic;
+- bounded judgments do not materially reduce expensive model calls or human interventions;
+- calibration is unstable enough that confidence-based automation is unsafe;
+- existing AgentSwitchboard/Prompt Kit contracts already encode the proposed “decision compiler” without a missing executable owner;
+- a mature open project implements the entire seam more cleanly and can be adopted instead.
 
 ## Proof ceiling
 
-This artifact is a **TRACKED competitive architecture proposal** once committed. It does not prove:
+This document is a **TRACKED OSS-first competitive architecture proposal**.
 
-- Jev performance on our factory corpus;
-- Token Corridor implementation or runtime value;
-- independent commercial differentiation;
-- NodeWeaver usefulness to factory decisions;
-- live AFK software-factory execution;
-- that Token Corridor warrants a separate repository.
+It proves:
+- the prior Jev-centric research pass was corrected;
+- credible open alternatives exist in every major software-factory substrate layer;
+- paid Jev and managed software-factory services are not architectural prerequisites;
+- specific adoption/bakeoff work is defined before local reinvention.
 
-Those are the explicit gates in TC-01 through TC-07.
+It does **not** prove:
+- any open engine wins our factory corpus;
+- Jev loses our factory corpus;
+- a selected router/durable engine/sandbox/eval stack is production-ready on our hardware;
+- Token Corridor runtime value;
+- NodeWeaver integration value;
+- live AFK operation;
+- a standalone Token Corridor repository boundary.
