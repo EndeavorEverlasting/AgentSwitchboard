@@ -406,37 +406,37 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## ASQ-024 — Salvage PR #113 OpenCode runtime-resolution
 
-- **Status:** READY
+- **Status:** DONE
 - **Priority:** P0
 - **Work class:** BOUNDED
 - **Owner:** strong salvage agent / OpenCode-Windows profile lane
-- **Branch / PR:** none yet; create isolated branch/worktree from refreshed main when this item becomes executable
+- **Branch / PR:** `salvage/pr113-opencode-runtime-20260922` / #341 merged
 - **Scope:** execute Panel 01: semantically reconcile PR #113 head 2ff3d81ab806b54dceccf593cd0f39b2c17e8bc9 with current opencode-lsp-setup, P67 evaluation adapter, and execution-adapter v1; implement only unique current-owner behavior and focused regressions
 - **Forbidden:** wholesale SKILLS/TRIGGERS/CODEBASE_MAP/workflow replay; P67 or OpenCode LSP redesign; provider login; live proof promotion
 - **Dependencies:** ASQ-023 DONE; PR #338/main floor integrated
-- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 01; `tooling/harness/operational/opencode-lsp-setup/`; `tooling/harness/execution-adapters/`; `plans/active/ASB-2026-09-p67-opencode-evaluation-adapter.plan.json`
+- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 01; `tooling/profiles/windows/harness/opencode-runtime-resolution/`; `tooling/harness/operational/opencode-lsp-setup/`; `tooling/harness/execution-adapters/`
 - **Acceptance gate:** preserve/merge/retire matrix complete; unique behavior tested; current OpenCode/execution-adapter gates + automated floor + diff hygiene green; exact validated head integrated or exact blocker recorded
-- **Gate:** none — dependency-ready on the recorded floor; refresh before mutation
-- **Last proof:** PR #113 closed-unmerged; 13 unique commits / 23 files / 608 behind at main@72d71a7
-- **Next action:** launch Panel 01 in an isolated worktree from refreshed main and verify source SHA 2ff3d81ab806b54dceccf593cd0f39b2c17e8bc9 before mutation
-- **Updated:** 2026-09-22T17:16:30Z
+- **Gate:** none
+- **Last proof:** merge:7e637307de01116069b4067b351b96188d12e989 workflow:#18 workflow:#239; final validated head c05ebe5a4c9b3d701dfd34af98595fbc8ede47e4; merge tree identical; shared historical routing was not replayed
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-22T21:22:10Z
 
 ## ASQ-025 — Salvage PR #112 Lua embedding leaf
 
-- **Status:** READY
+- **Status:** DONE
 - **Priority:** P1
 - **Work class:** BOUNDED
 - **Owner:** bounded lower-capability agent / Lua leaf lane
-- **Branch / PR:** none yet; create isolated branch/worktree from refreshed main when this item becomes executable
+- **Branch / PR:** `salvage/pr112-lua-20260922` / #342 merged; review recovery `fix/lua-harness-review-20260922` / #343 merged
 - **Scope:** execute Panel 02: reconstruct the isolated tooling/lua harness, focused tests/docs, sandbox-safe positive fixture, and unsafe-OS-access negative fixture
 - **Forbidden:** shared SKILLS/TRIGGERS/CODEBASE_MAP/global registries; claiming a Lua runtime/embedder exists or ran
 - **Dependencies:** ASQ-023 DONE
-- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 02
+- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 02; `tooling/lua/`
 - **Acceptance gate:** leaf validator/tests + automated floor + diff hygiene green; shared wiring left for ASQ-030
-- **Gate:** none — dependency-ready on the recorded floor; refresh before mutation
-- **Last proof:** PR #112 closed-unmerged head 3053e1898c1de351faf2215d72947f5bd5d880de; tooling/lua absent on main
-- **Next action:** launch Panel 02 in an isolated worktree from refreshed main and verify source SHA 3053e1898c1de351faf2215d72947f5bd5d880de before mutation
-- **Updated:** 2026-09-22T17:16:30Z
+- **Gate:** none
+- **Last proof:** merge:31d57167330e85fb7b8fc52ab47ceef348771b04 merge:dd344b339ffc9fa2d417a785f6b17d493fcb2659 workflow:#7 workflow:#775 workflow:#241 workflow:#8 workflow:#243; PR #342 final head ec7421c5918ac27afc395f5d9554ada59b24a656 and PR #343 repair head 629bec1ad43169bb9c9d9adffdea44ecb3cda686 each merged with identical validated tree
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-22T21:22:10Z
 
 ## ASQ-026 — Salvage PR #118 external-agent tooling leaf
 

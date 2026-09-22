@@ -1,6 +1,8 @@
 # TRIAGE-01 Portability Sprint Panels
 
-## Panel 01 — PR #113 OpenCode runtime-resolution semantic salvage
+> Progress checkpoint: current execution floor `main@dd344b339ffc9fa2d417a785f6b17d493fcb2659`. Panels 01/#113 and 02/#112 are integrated; do not relaunch them. Remaining dependency-ready Wave 1 panels are 03/#118 and 04/#64.
+
+## Panel 01 — PR #113 OpenCode runtime-resolution semantic salvage — COMPLETED / DO NOT RELAUNCH
 
 ```text
 BANNER: HARD SALVAGE / STRONG AGENT REQUIRED
@@ -56,10 +58,10 @@ FINAL RESPONSE CONTRACT
 Report source SHA; current base SHA; preserve/merge/retire matrix; files changed; tests/validators and exact results; review repairs; commit/PR/integration state; gaps; proof ceiling; final git status; next command.
 
 NEXT COMMAND
-$ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true; $root=(git rev-parse --show-toplevel).Trim(); Set-Location -LiteralPath $root; git fetch --all --prune --tags; git merge-base --is-ancestor 72d71a74279c5cf1b0c029b68d03c76634d50ea1 origin/main; $src=(git rev-parse origin/feat/harness-opencode-runtime-resolution-20260809).Trim(); if($src -ne '2ff3d81ab806b54dceccf593cd0f39b2c17e8bc9'){throw "source moved: $src"}; $pathContract=Get-Content -LiteralPath (Join-Path $root 'tooling/harness/operational/canonical-path.contract.json') -Raw | ConvertFrom-Json; $wtTemplate=$pathContract.currentBindings.windowsTechnicianProfile.temporaryWorktreeRoot; if(-not $wtTemplate -or -not $env:LOCALAPPDATA){throw 'temporaryWorktreeRoot is not resolvable for this profile'}; $wtRoot=[Environment]::ExpandEnvironmentVariables($wtTemplate); New-Item -ItemType Directory -Path $wtRoot -Force | Out-Null; $wt=Join-Path $wtRoot 'pr113-opencode-runtime-20260922'; if(Test-Path $wt){throw "worktree exists: $wt"}; if((git branch --list 'salvage/pr113-opencode-runtime-20260922').Trim()){throw "local branch already exists: salvage/pr113-opencode-runtime-20260922"}; git worktree add -b salvage/pr113-opencode-runtime-20260922 $wt origin/main
+none; completed by PR #341 / merge 7e637307de01116069b4067b351b96188d12e989
 ```
 
-## Panel 02 — PR #112 Lua embedding leaf salvage
+## Panel 02 — PR #112 Lua embedding leaf salvage — COMPLETED / DO NOT RELAUNCH
 
 ```text
 BANNER: LEAF SALVAGE / SUITABLE FOR BOUNDED LOWER-CAPABILITY AGENT
@@ -107,7 +109,7 @@ FINAL RESPONSE CONTRACT
 Exact source/base; changed files; focused validation; skipped runtime checks; commit/PR state; requested convergence wiring; final status; next command.
 
 NEXT COMMAND
-$ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true; $root=(git rev-parse --show-toplevel).Trim(); Set-Location $root; git fetch --all --prune --tags; git merge-base --is-ancestor 72d71a74279c5cf1b0c029b68d03c76634d50ea1 origin/main; $src=(git rev-parse origin/feat/harness-lua-embedding-20260809).Trim(); if($src -ne '3053e1898c1de351faf2215d72947f5bd5d880de'){throw "source moved: $src"}; $pathContract=Get-Content -LiteralPath (Join-Path $root 'tooling/harness/operational/canonical-path.contract.json') -Raw | ConvertFrom-Json; $wtTemplate=$pathContract.currentBindings.windowsTechnicianProfile.temporaryWorktreeRoot; if(-not $wtTemplate -or -not $env:LOCALAPPDATA){throw 'temporaryWorktreeRoot is not resolvable for this profile'}; $wtRoot=[Environment]::ExpandEnvironmentVariables($wtTemplate); New-Item -ItemType Directory -Path $wtRoot -Force | Out-Null; $wt=Join-Path $wtRoot 'pr112-lua-20260922'; if(Test-Path $wt){throw "worktree exists: $wt"}; if((git branch --list 'salvage/pr112-lua-20260922').Trim()){throw "local branch already exists: salvage/pr112-lua-20260922"}; git worktree add -b salvage/pr112-lua-20260922 $wt origin/main
+none; completed by PR #342 / merge 31d57167330e85fb7b8fc52ab47ceef348771b04 with post-merge review recovery PR #343 / merge dd344b339ffc9fa2d417a785f6b17d493fcb2659
 ```
 
 ## Panel 03 — PR #118 external-agent tooling leaf salvage
@@ -115,12 +117,12 @@ $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true; $
 ```text
 BANNER: LEAF SALVAGE / SUITABLE FOR BOUNDED LOWER-CAPABILITY AGENT
 Repo: EndeavorEverlasting/AgentSwitchboard
-Planned floor: main@72d71a74279c5cf1b0c029b68d03c76634d50ea1
+Current execution floor: main@dd344b339ffc9fa2d417a785f6b17d493fcb2659
 Historical source: PR #118, feat/external-agent-tooling-catalog-20260816@87abb4546ee1ef440897dfd86a49e58dab827ee6
 Wave: 1
 Lane: operational external-tooling evidence catalog
 Dependencies: #94 floor only.
-Safe parallel work: Panels 01, 02, 04.
+Safe parallel work: Panel 04 only; Panels 01 and 02 are integrated.
 Owned mutation: tooling/harness/operational/external-agent-tooling/** plus focused tests/docs.
 Forbidden: tooling/harness/operational/{manifest.json,validator-registry.json,workflow-registry.json}; shared SKILLS/CODEBASE_MAP; tool installation/execution.
 Expected artifacts: leaf registry/schema/workflow/report; focused validation; explicit shared-registry delta for Panel 07.
@@ -158,7 +160,7 @@ FINAL RESPONSE CONTRACT
 Source/base; preserve/retire matrix; files; validator results; shared-registry delta; commit/PR; proof ceiling; final status; next command.
 
 NEXT COMMAND
-$ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true; $root=(git rev-parse --show-toplevel).Trim(); Set-Location $root; git fetch --all --prune --tags; git merge-base --is-ancestor 72d71a74279c5cf1b0c029b68d03c76634d50ea1 origin/main; $src=(git rev-parse origin/feat/external-agent-tooling-catalog-20260816).Trim(); if($src -ne '87abb4546ee1ef440897dfd86a49e58dab827ee6'){throw "source moved: $src"}; $pathContract=Get-Content -LiteralPath (Join-Path $root 'tooling/harness/operational/canonical-path.contract.json') -Raw | ConvertFrom-Json; $wtTemplate=$pathContract.currentBindings.windowsTechnicianProfile.temporaryWorktreeRoot; if(-not $wtTemplate -or -not $env:LOCALAPPDATA){throw 'temporaryWorktreeRoot is not resolvable for this profile'}; $wtRoot=[Environment]::ExpandEnvironmentVariables($wtTemplate); New-Item -ItemType Directory -Path $wtRoot -Force | Out-Null; $wt=Join-Path $wtRoot 'pr118-external-tooling-20260922'; if(Test-Path $wt){throw "worktree exists: $wt"}; if((git branch --list 'salvage/pr118-external-tooling-20260922').Trim()){throw "local branch already exists: salvage/pr118-external-tooling-20260922"}; git worktree add -b salvage/pr118-external-tooling-20260922 $wt origin/main
+$ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true; $root=(git rev-parse --show-toplevel).Trim(); Set-Location $root; git fetch --all --prune --tags; git merge-base --is-ancestor dd344b339ffc9fa2d417a785f6b17d493fcb2659 origin/main; $src=(git rev-parse origin/feat/external-agent-tooling-catalog-20260816).Trim(); if($src -ne '87abb4546ee1ef440897dfd86a49e58dab827ee6'){throw "source moved: $src"}; $pathContract=Get-Content -LiteralPath (Join-Path $root 'tooling/harness/operational/canonical-path.contract.json') -Raw | ConvertFrom-Json; $wtTemplate=$pathContract.currentBindings.windowsTechnicianProfile.temporaryWorktreeRoot; if(-not $wtTemplate -or -not $env:LOCALAPPDATA){throw 'temporaryWorktreeRoot is not resolvable for this profile'}; $wtRoot=[Environment]::ExpandEnvironmentVariables($wtTemplate); New-Item -ItemType Directory -Path $wtRoot -Force | Out-Null; $wt=Join-Path $wtRoot 'pr118-external-tooling-20260922'; if(Test-Path $wt){throw "worktree exists: $wt"}; if((git branch --list 'salvage/pr118-external-tooling-20260922').Trim()){throw "local branch already exists: salvage/pr118-external-tooling-20260922"}; git worktree add -b salvage/pr118-external-tooling-20260922 $wt origin/main
 ```
 
 ## Panel 04 — PR #64 Windows machine-profile forensic salvage
@@ -166,13 +168,13 @@ $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true; $
 ```text
 BANNER: HARD FORENSIC SALVAGE / STRONG AGENT REQUIRED
 Repo: EndeavorEverlasting/AgentSwitchboard
-Planned floor: main@72d71a74279c5cf1b0c029b68d03c76634d50ea1
+Current execution floor: main@dd344b339ffc9fa2d417a785f6b17d493fcb2659
 Historical source: PR #64, feat/windows-profile-harness-infrastructure-20260805@45b44b158d7f44e18dfbc6c24120a0c02924f48b
 Historical PR base: feat/harness-operator-command-envelope-20260805 (NOT main)
 Wave: 1
 Lane: Windows machine-profile harness
 Dependencies: #94 floor only.
-Safe parallel work: Panels 01, 02, 03.
+Safe parallel work: Panel 03 only; Panels 01 and 02 are integrated.
 Owned mutation: current machine-profile owner and its focused tests only after forensic comparison.
 Forbidden: blind cherry-pick of 22 commits; duplicate machine-profile skill/launcher; shared docs; operator-command-delivery rewrite.
 Expected artifacts: PR-intended-vs-inherited matrix; current-owner patches; focused regression.
@@ -211,7 +213,7 @@ FINAL RESPONSE CONTRACT
 Merge-base evidence; intended-vs-inherited matrix; files; validation; commit/PR; residual risks; proof ceiling; final status; next command.
 
 NEXT COMMAND
-$ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true; $root=(git rev-parse --show-toplevel).Trim(); Set-Location $root; git fetch --all --prune --tags; git merge-base --is-ancestor 72d71a74279c5cf1b0c029b68d03c76634d50ea1 origin/main; $src=(git rev-parse origin/feat/windows-profile-harness-infrastructure-20260805).Trim(); if($src -ne '45b44b158d7f44e18dfbc6c24120a0c02924f48b'){throw "source moved: $src"}; $pathContract=Get-Content -LiteralPath (Join-Path $root 'tooling/harness/operational/canonical-path.contract.json') -Raw | ConvertFrom-Json; $wtTemplate=$pathContract.currentBindings.windowsTechnicianProfile.temporaryWorktreeRoot; if(-not $wtTemplate -or -not $env:LOCALAPPDATA){throw 'temporaryWorktreeRoot is not resolvable for this profile'}; $wtRoot=[Environment]::ExpandEnvironmentVariables($wtTemplate); New-Item -ItemType Directory -Path $wtRoot -Force | Out-Null; $wt=Join-Path $wtRoot 'pr64-machine-profile-20260922'; if(Test-Path $wt){throw "worktree exists: $wt"}; if((git branch --list 'salvage/pr64-machine-profile-20260922').Trim()){throw "local branch already exists: salvage/pr64-machine-profile-20260922"}; git worktree add -b salvage/pr64-machine-profile-20260922 $wt origin/main
+$ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true; $root=(git rev-parse --show-toplevel).Trim(); Set-Location $root; git fetch --all --prune --tags; git merge-base --is-ancestor dd344b339ffc9fa2d417a785f6b17d493fcb2659 origin/main; $src=(git rev-parse origin/feat/windows-profile-harness-infrastructure-20260805).Trim(); if($src -ne '45b44b158d7f44e18dfbc6c24120a0c02924f48b'){throw "source moved: $src"}; $pathContract=Get-Content -LiteralPath (Join-Path $root 'tooling/harness/operational/canonical-path.contract.json') -Raw | ConvertFrom-Json; $wtTemplate=$pathContract.currentBindings.windowsTechnicianProfile.temporaryWorktreeRoot; if(-not $wtTemplate -or -not $env:LOCALAPPDATA){throw 'temporaryWorktreeRoot is not resolvable for this profile'}; $wtRoot=[Environment]::ExpandEnvironmentVariables($wtTemplate); New-Item -ItemType Directory -Path $wtRoot -Force | Out-Null; $wt=Join-Path $wtRoot 'pr64-machine-profile-20260922'; if(Test-Path $wt){throw "worktree exists: $wt"}; if((git branch --list 'salvage/pr64-machine-profile-20260922').Trim()){throw "local branch already exists: salvage/pr64-machine-profile-20260922"}; git worktree add -b salvage/pr64-machine-profile-20260922 $wt origin/main
 ```
 
 ## Panel 05 — PR #92 execution-actor routing reconciliation
@@ -262,7 +264,7 @@ FINAL RESPONSE CONTRACT
 Comparison matrix; implemented or retire verdict with evidence; files/tests; commit/PR if changed; proof ceiling; final status; next command.
 
 NEXT COMMAND
-$ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true; $root=(git rev-parse --show-toplevel).Trim(); Set-Location $root; git fetch --all --prune --tags; git merge-base --is-ancestor 72d71a74279c5cf1b0c029b68d03c76634d50ea1 origin/main; $src=(git rev-parse origin/feat/harness-execution-actor-routing-20260808).Trim(); if($src -ne 'acc652d5dc7599b18d76983fb96dbd628d2bd759'){throw "source moved: $src"}; $pathContract=Get-Content -LiteralPath (Join-Path $root 'tooling/harness/operational/canonical-path.contract.json') -Raw | ConvertFrom-Json; $wtTemplate=$pathContract.currentBindings.windowsTechnicianProfile.temporaryWorktreeRoot; if(-not $wtTemplate -or -not $env:LOCALAPPDATA){throw 'temporaryWorktreeRoot is not resolvable for this profile'}; $wtRoot=[Environment]::ExpandEnvironmentVariables($wtTemplate); New-Item -ItemType Directory -Path $wtRoot -Force | Out-Null; $wt=Join-Path $wtRoot 'pr92-execution-actor-20260922'; if(Test-Path $wt){throw "worktree exists: $wt"}; if((git branch --list 'salvage/pr92-execution-actor-20260922').Trim()){throw "local branch already exists: salvage/pr92-execution-actor-20260922"}; git worktree add -b salvage/pr92-execution-actor-20260922 $wt origin/main
+$ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true; $root=(git rev-parse --show-toplevel).Trim(); Set-Location $root; git fetch --all --prune --tags; git merge-base --is-ancestor dd344b339ffc9fa2d417a785f6b17d493fcb2659 origin/main; $src=(git rev-parse origin/feat/harness-execution-actor-routing-20260808).Trim(); if($src -ne 'acc652d5dc7599b18d76983fb96dbd628d2bd759'){throw "source moved: $src"}; $pathContract=Get-Content -LiteralPath (Join-Path $root 'tooling/harness/operational/canonical-path.contract.json') -Raw | ConvertFrom-Json; $wtTemplate=$pathContract.currentBindings.windowsTechnicianProfile.temporaryWorktreeRoot; if(-not $wtTemplate -or -not $env:LOCALAPPDATA){throw 'temporaryWorktreeRoot is not resolvable for this profile'}; $wtRoot=[Environment]::ExpandEnvironmentVariables($wtTemplate); New-Item -ItemType Directory -Path $wtRoot -Force | Out-Null; $wt=Join-Path $wtRoot 'pr92-execution-actor-20260922'; if(Test-Path $wt){throw "worktree exists: $wt"}; if((git branch --list 'salvage/pr92-execution-actor-20260922').Trim()){throw "local branch already exists: salvage/pr92-execution-actor-20260922"}; git worktree add -b salvage/pr92-execution-actor-20260922 $wt origin/main
 ```
 
 ## Panel 06 — PR #79 agent-fleet readiness reconciliation
@@ -310,7 +312,7 @@ FINAL RESPONSE CONTRACT
 Comparison; preserved/retired semantics; files/tests; commit/PR or no-change proof; proof ceiling; final status; next command.
 
 NEXT COMMAND
-$ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true; $root=(git rev-parse --show-toplevel).Trim(); Set-Location $root; git fetch --all --prune --tags; git merge-base --is-ancestor 72d71a74279c5cf1b0c029b68d03c76634d50ea1 origin/main; $src=(git rev-parse origin/feat/harness-agent-fleet-readiness-20260807).Trim(); if($src -ne 'b3560cd56e98f7b91dfff2e060c8a27d1c76e76a'){throw "source moved: $src"}; $pathContract=Get-Content -LiteralPath (Join-Path $root 'tooling/harness/operational/canonical-path.contract.json') -Raw | ConvertFrom-Json; $wtTemplate=$pathContract.currentBindings.windowsTechnicianProfile.temporaryWorktreeRoot; if(-not $wtTemplate -or -not $env:LOCALAPPDATA){throw 'temporaryWorktreeRoot is not resolvable for this profile'}; $wtRoot=[Environment]::ExpandEnvironmentVariables($wtTemplate); New-Item -ItemType Directory -Path $wtRoot -Force | Out-Null; $wt=Join-Path $wtRoot 'pr79-fleet-readiness-20260922'; if(Test-Path $wt){throw "worktree exists: $wt"}; if((git branch --list 'salvage/pr79-fleet-readiness-20260922').Trim()){throw "local branch already exists: salvage/pr79-fleet-readiness-20260922"}; git worktree add -b salvage/pr79-fleet-readiness-20260922 $wt origin/main
+$ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true; $root=(git rev-parse --show-toplevel).Trim(); Set-Location $root; git fetch --all --prune --tags; git merge-base --is-ancestor dd344b339ffc9fa2d417a785f6b17d493fcb2659 origin/main; $src=(git rev-parse origin/feat/harness-agent-fleet-readiness-20260807).Trim(); if($src -ne 'b3560cd56e98f7b91dfff2e060c8a27d1c76e76a'){throw "source moved: $src"}; $pathContract=Get-Content -LiteralPath (Join-Path $root 'tooling/harness/operational/canonical-path.contract.json') -Raw | ConvertFrom-Json; $wtTemplate=$pathContract.currentBindings.windowsTechnicianProfile.temporaryWorktreeRoot; if(-not $wtTemplate -or -not $env:LOCALAPPDATA){throw 'temporaryWorktreeRoot is not resolvable for this profile'}; $wtRoot=[Environment]::ExpandEnvironmentVariables($wtTemplate); New-Item -ItemType Directory -Path $wtRoot -Force | Out-Null; $wt=Join-Path $wtRoot 'pr79-fleet-readiness-20260922'; if(Test-Path $wt){throw "worktree exists: $wt"}; if((git branch --list 'salvage/pr79-fleet-readiness-20260922').Trim()){throw "local branch already exists: salvage/pr79-fleet-readiness-20260922"}; git worktree add -b salvage/pr79-fleet-readiness-20260922 $wt origin/main
 ```
 
 ## Panel 07 — Final convergence and cleanup
