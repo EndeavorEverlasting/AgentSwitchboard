@@ -23,6 +23,11 @@
       "path": "tooling/profiles/windows/harness/opencode-runtime-resolution/workflows/path-collision-diagnosis.workflow.json"
     },
     {
+      "id": "classifier.opencode-runtime-resolution",
+      "kind": "classifier",
+      "path": "tooling/profiles/windows/harness/opencode-runtime-resolution/classifier.py"
+    },
+    {
       "id": "validator.opencode-runtime-resolution",
       "kind": "validator",
       "path": "scripts/Test-OpenCodeRuntimeResolutionHarness.ps1"
@@ -65,8 +70,13 @@
       "to": "validator.opencode-runtime-resolution"
     },
     {
-      "id": "edge.collision-classification",
+      "id": "edge.collision-classifier",
       "from": "workflow.opencode-path-collision",
+      "to": "classifier.opencode-runtime-resolution"
+    },
+    {
+      "id": "edge.classifier-classification",
+      "from": "classifier.opencode-runtime-resolution",
       "to": "artifact.opencode-runtime-classification"
     },
     {

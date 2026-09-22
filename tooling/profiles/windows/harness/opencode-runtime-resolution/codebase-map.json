@@ -18,6 +18,7 @@
     "intakeWorkflow": "tooling/profiles/windows/harness/opencode-runtime-resolution/workflows/runtime-resolution-intake.workflow.json",
     "collisionWorkflow": "tooling/profiles/windows/harness/opencode-runtime-resolution/workflows/path-collision-diagnosis.workflow.json",
     "schema": "tooling/profiles/windows/harness/opencode-runtime-resolution/schemas/opencode-runtime-resolution.schema.json",
+    "classifier": "tooling/profiles/windows/harness/opencode-runtime-resolution/classifier.py",
     "status": "tooling/profiles/windows/Get-OpenCodeRuntimeResolutionStatus.ps1",
     "validator": "scripts/Test-OpenCodeRuntimeResolutionHarness.ps1",
     "pythonContracts": "tests/test_opencode_runtime_resolution_harness.py",

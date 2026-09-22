@@ -67,10 +67,10 @@ try {
     $graph = $text['tooling/profiles/windows/harness/opencode-runtime-resolution/composition.graph.json'] | ConvertFrom-Json
     $nodeIds = @($graph.nodes | ForEach-Object { [string]$_.id })
     $edgePairs = @($graph.edges | ForEach-Object { "$($_.from)->$($_.to)" })
-    foreach ($id in @('entrypoint.opencode-runtime-status','registry.opencode-runtime-resolution','workflow.opencode-runtime-intake','workflow.opencode-path-collision','validator.opencode-runtime-resolution','artifact.opencode-runtime-classification','report.opencode-runtime-operator','handoff.opencode-runtime')) {
+    foreach ($id in @('entrypoint.opencode-runtime-status','registry.opencode-runtime-resolution','workflow.opencode-runtime-intake','workflow.opencode-path-collision','classifier.opencode-runtime-resolution','validator.opencode-runtime-resolution','artifact.opencode-runtime-classification','report.opencode-runtime-operator','handoff.opencode-runtime')) {
         Check ($nodeIds -contains $id) "graph/node/$id" 'node is missing'
     }
-    foreach ($pair in @('entrypoint.opencode-runtime-status->workflow.opencode-runtime-intake','workflow.opencode-runtime-intake->workflow.opencode-path-collision','workflow.opencode-path-collision->artifact.opencode-runtime-classification','artifact.opencode-runtime-classification->report.opencode-runtime-operator','report.opencode-runtime-operator->handoff.opencode-runtime')) {
+    foreach ($pair in @('entrypoint.opencode-runtime-status->workflow.opencode-runtime-intake','workflow.opencode-runtime-intake->workflow.opencode-path-collision','workflow.opencode-path-collision->classifier.opencode-runtime-resolution','classifier.opencode-runtime-resolution->artifact.opencode-runtime-classification','artifact.opencode-runtime-classification->report.opencode-runtime-operator','report.opencode-runtime-operator->handoff.opencode-runtime')) {
         Check ($edgePairs -contains $pair) "graph/edge/$pair" 'edge is missing'
     }
 } catch { [void]$failures.Add("graph/semantic: $($_.Exception.Message)") }
