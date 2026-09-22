@@ -3,6 +3,7 @@
 **Plan ID:** `ASB-2026-09-TOKEN-CORRIDOR-COMPETITIVE-ARCHITECTURE`  
 **Status:** Proposed  
 **Priority:** High  
+**Pull request:** #346 (draft)  
 **Planning floor:** AgentSwitchboard `main@d90e5ed457c0657b6016c3ead0c976bf679a8de1`  
 **Local evidence floor:** NodeWeaver `main@add0fd24cb213afdad4cb082db9ba8af947cc228`; Prompt Kit/Triage `main@c97718247e7b14544d198035dd3cdc07725545a8`  
 **Working name only:** **Token Corridor** is an architectural/product hypothesis in this plan. This plan does not create or reserve a standalone repository.
