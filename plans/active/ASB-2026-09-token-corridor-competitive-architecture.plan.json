@@ -7,7 +7,7 @@
   "status": "proposed",
   "priority": "high",
   "createdUtc": "2026-09-22T22:12:00Z",
-  "updatedUtc": "2026-09-22T22:12:00Z",
+  "updatedUtc": "2026-09-22T22:18:54Z",
   "mission": "Define and prove a provider-neutral bounded-decision control plane (working name Token Corridor) inside the AgentSwitchboard software factory: compile messy repository/runtime evidence into typed decision requests, select the cheapest adequate judgment engine, preserve calibrated uncertainty and authority provenance, compose decisions with deterministic code, and route execution without duplicating Jev, Prompt Kit, FirstMate, or AgentSwitchboard execution adapters.",
   "owner": {
     "surface": "AgentSwitchboard factory decision-control plane",
@@ -16,7 +16,11 @@
   },
   "delivery": {
     "branch": "plan/token-corridor-competitive-architecture-20260922",
-    "pullRequest": null,
+    "pullRequest": {
+      "number": 346,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/346",
+      "state": "draft"
+    },
     "baseRef": "main@d90e5ed457c0657b6016c3ead0c976bf679a8de1",
     "commitRequired": true
   },
