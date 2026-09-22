@@ -416,8 +416,8 @@ Canonical terminal action: none; no safe actionable work remains
 - **Dependencies:** ASQ-023 DONE; PR #338/main floor integrated
 - **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 01; `tooling/profiles/windows/harness/opencode-runtime-resolution/`; `tooling/harness/operational/opencode-lsp-setup/`; `tooling/harness/execution-adapters/`
 - **Acceptance gate:** preserve/merge/retire matrix complete; unique behavior tested; current OpenCode/execution-adapter gates + automated floor + diff hygiene green; exact validated head integrated or exact blocker recorded
-- **Gate:** none — terminal
-- **Last proof:** PR #341 final head c05ebe5a4c9b3d701dfd34af98595fbc8ede47e4 passed OpenCode runtime resolution harness run #18 and automated floor run #239 on Windows and Ubuntu; squash merge 7e637307de01116069b4067b351b96188d12e989 has identical tree; shared historical routing was not replayed
+- **Gate:** none
+- **Last proof:** merge:7e637307de01116069b4067b351b96188d12e989 workflow:#18 workflow:#239; final validated head c05ebe5a4c9b3d701dfd34af98595fbc8ede47e4; merge tree identical; shared historical routing was not replayed
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-22T21:22:10Z
 
@@ -433,8 +433,8 @@ Canonical terminal action: none; no safe actionable work remains
 - **Dependencies:** ASQ-023 DONE
 - **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 02; `tooling/lua/`
 - **Acceptance gate:** leaf validator/tests + automated floor + diff hygiene green; shared wiring left for ASQ-030
-- **Gate:** none — terminal
-- **Last proof:** PR #342 final head ec7421c5918ac27afc395f5d9554ada59b24a656 passed Lua harness run #7, agent-doc run #775, and automated floor run #241 and merged as 31d57167330e85fb7b8fc52ab47ceef348771b04 with identical tree; post-merge review recovery PR #343 head 629bec1ad43169bb9c9d9adffdea44ecb3cda686 passed Lua harness run #8 and automated floor run #243 on Windows and Ubuntu and merged as dd344b339ffc9fa2d417a785f6b17d493fcb2659 with identical tree
+- **Gate:** none
+- **Last proof:** merge:31d57167330e85fb7b8fc52ab47ceef348771b04 merge:dd344b339ffc9fa2d417a785f6b17d493fcb2659 workflow:#7 workflow:#775 workflow:#241 workflow:#8 workflow:#243; PR #342 final head ec7421c5918ac27afc395f5d9554ada59b24a656 and PR #343 repair head 629bec1ad43169bb9c9d9adffdea44ecb3cda686 each merged with identical validated tree
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-22T21:22:10Z
 
