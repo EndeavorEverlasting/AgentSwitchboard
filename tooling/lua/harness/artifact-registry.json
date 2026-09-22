@@ -1,0 +1,12 @@
+{
+  "schema": "agentswitchboard.lua-artifact-registry.v1",
+  "naming": "lua-<artifact-role>[-<run-id>].<ext>",
+  "defaultRoot": "operating-system temporary directory/AgentSwitchboard/LuaHarness/<run-id>",
+  "generatedEvidenceTracked": false,
+  "artifacts": [
+    {"id": "operator-report", "filename": "lua-harness-report.md", "generator": "python tooling/lua/Get-LuaHarnessStatus.py", "contains": "English contract state, working surfaces, blockers, promotion gates, and proof ceiling", "proofCeiling": "repository harness state only"},
+    {"id": "readiness", "filename": "lua-readiness.json", "generator": "python tooling/lua/Get-LuaHarnessStatus.py", "contains": "machine-readable contract readiness and unresolved runtime gates", "proofCeiling": "repository readiness only"},
+    {"id": "runtime-handoff", "filename": "lua-runtime-handoff.json", "generator": "future explicitly authorized runtime sprint after contract gate", "contains": "pinned Lua implementation/version/API, host wrapper owner, resource limits, runtime validators, exact product paths", "proofCeiling": "handoff metadata only until runtime evidence exists"}
+  ],
+  "forbiddenEvidence": ["credentials", "tokens", "passwords", "private keys", "raw untrusted script corpora", "customer data", "unbounded runtime dumps"]
+}

@@ -1,0 +1,17 @@
+{
+  "schema": "agentswitchboard.lua-workflow.v1",
+  "id": "lua-embedding-design-validation",
+  "trigger": "A Lua integration design changes host ownership, VM lifecycle, error handling, execution model, performance partition, or type discipline.",
+  "inputs": ["proposed host interface", "state lifecycle", "error boundary", "performance partition", "Lua implementation/version if known"],
+  "steps": [
+    "Require runtimeForm=embedded-library and hostOwnsMainLoop=true.",
+    "Require independent VM states for declared isolation boundaries and explicit create-run-close ownership.",
+    "Require script errors to terminate at a protected host catch boundary with host-owned rollback and cleanup.",
+    "Keep interpreter-first semantics; treat JIT as optional and separately gated.",
+    "Require dynamic boundary checks plus documented internal type discipline.",
+    "Record any unpinned Lua implementation/version or undefined resource limit as a runtime blocker, not a reason to weaken the contract."
+  ],
+  "outputs": ["embedding design decision", "lifecycle checklist", "error-boundary checklist", "runtime-promotion blockers"],
+  "failureHandling": ["Reject designs where Lua owns the application loop, cleanup is script-owned, state isolation is shared by default, or JIT is assumed as a prerequisite."],
+  "proofCeiling": "embedding design contract only"
+}
