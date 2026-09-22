@@ -181,20 +181,60 @@ class WayfinderMap:
     out_of_scope: list[str] = field(default_factory=list)
     decisions: list[DecisionPointer] = field(default_factory=list)
 
-    def validate(self) -> None:
-        if not self.map_id.strip() or not self.title.strip() or not self.destination.strip():
-            raise WayfinderContractError("map id, title, and destination are required")
+    @staticmethod
+    def _validate_ticket_graph(tickets: Mapping[str, DecisionTicket]) -> None:
         orders: set[int] = set()
-        for ticket in self.tickets.values():
+        for ticket_id, ticket in tickets.items():
+            if ticket_id != ticket.ticket_id:
+                raise WayfinderContractError(
+                    f"ticket map key {ticket_id!r} disagrees with ticket id "
+                    f"{ticket.ticket_id!r}"
+                )
             ticket.validate_identity()
             if ticket.order in orders:
-                raise WayfinderContractError(f"duplicate ticket order: {ticket.order}")
+                raise WayfinderContractError(
+                    f"duplicate ticket order: {ticket.order}"
+                )
             orders.add(ticket.order)
             for blocker in ticket.blocked_by:
-                if blocker not in self.tickets:
-                    raise WayfinderContractError(f"{ticket.ticket_id}: unknown blocker {blocker}")
+                if blocker not in tickets:
+                    raise WayfinderContractError(
+                        f"{ticket.ticket_id}: unknown blocker {blocker}"
+                    )
                 if blocker == ticket.ticket_id:
-                    raise WayfinderContractError(f"{ticket.ticket_id}: ticket cannot block itself")
+                    raise WayfinderContractError(
+                        f"{ticket.ticket_id}: ticket cannot block itself"
+                    )
+
+        visiting: set[str] = set()
+        visited: set[str] = set()
+
+        def visit(ticket_id: str) -> None:
+            if ticket_id in visited:
+                return
+            if ticket_id in visiting:
+                raise WayfinderContractError(
+                    f"cyclic blocker graph detected at {ticket_id}"
+                )
+            visiting.add(ticket_id)
+            for blocker in tickets[ticket_id].blocked_by:
+                visit(blocker)
+            visiting.remove(ticket_id)
+            visited.add(ticket_id)
+
+        for ticket_id in tickets:
+            visit(ticket_id)
+
+    def validate(self) -> None:
+        if (
+            not self.map_id.strip()
+            or not self.title.strip()
+            or not self.destination.strip()
+        ):
+            raise WayfinderContractError(
+                "map id, title, and destination are required"
+            )
+        self._validate_ticket_graph(self.tickets)
 
     def _blocker_is_open(self, blocker_id: str) -> bool:
         blocker = self.tickets[blocker_id]
@@ -218,25 +258,13 @@ class WayfinderMap:
 
     def add_ticket(self, ticket: DecisionTicket) -> None:
         self.validate()
-        ticket.validate_identity()
         if ticket.ticket_id in self.tickets:
             raise WayfinderContractError(
                 f"duplicate ticket id: {ticket.ticket_id}"
             )
-        if any(existing.order == ticket.order for existing in self.tickets.values()):
-            raise WayfinderContractError(
-                f"duplicate ticket order: {ticket.order}"
-            )
-        for blocker in ticket.blocked_by:
-            if blocker not in self.tickets:
-                raise WayfinderContractError(
-                    f"{ticket.ticket_id}: unknown blocker {blocker}"
-                )
-            if blocker == ticket.ticket_id:
-                raise WayfinderContractError(
-                    f"{ticket.ticket_id}: ticket cannot block itself"
-                )
-
+        candidate = dict(self.tickets)
+        candidate[ticket.ticket_id] = ticket
+        self._validate_ticket_graph(candidate)
         self.tickets[ticket.ticket_id] = ticket
 
     def record_resolution(self, ticket_id: str) -> DecisionPointer:
@@ -249,13 +277,31 @@ class WayfinderMap:
         self.decisions.append(pointer)
         return pointer
 
-    def graduate_fog(self, fog_entry: str, new_tickets: Sequence[DecisionTicket]) -> None:
+    def graduate_fog(
+        self,
+        fog_entry: str,
+        new_tickets: Sequence[DecisionTicket],
+    ) -> None:
+        self.validate()
         if fog_entry not in self.not_yet_specified:
-            raise WayfinderContractError("fog entry must exist before it can graduate")
+            raise WayfinderContractError(
+                "fog entry must exist before it can graduate"
+            )
         if not new_tickets:
-            raise WayfinderContractError("graduating fog requires at least one newly precise ticket")
+            raise WayfinderContractError(
+                "graduating fog requires at least one newly precise ticket"
+            )
+
+        candidate = dict(self.tickets)
         for ticket in new_tickets:
-            self.add_ticket(ticket)
+            if ticket.ticket_id in candidate:
+                raise WayfinderContractError(
+                    f"duplicate ticket id: {ticket.ticket_id}"
+                )
+            candidate[ticket.ticket_id] = ticket
+
+        self._validate_ticket_graph(candidate)
+        self.tickets = candidate
         self.not_yet_specified.remove(fog_entry)
 
     def spec_ready(self) -> bool:

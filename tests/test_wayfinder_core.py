@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import copy
 import importlib.util
 import json
 import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
+from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 HARNESS = ROOT / "tooling" / "harness" / "wayfinder"
@@ -58,6 +60,113 @@ def _expect_contract_error(callback) -> None:
     raise AssertionError("expected WayfinderContractError")
 
 
+class SchemaViolation(AssertionError):
+    pass
+
+
+def _matches_type(value, expected: str) -> bool:
+    if expected == "null":
+        return value is None
+    if expected == "object":
+        return isinstance(value, dict)
+    if expected == "array":
+        return isinstance(value, list)
+    if expected == "string":
+        return isinstance(value, str)
+    if expected == "boolean":
+        return isinstance(value, bool)
+    if expected == "integer":
+        return isinstance(value, int) and not isinstance(value, bool)
+    if expected == "number":
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+    raise SchemaViolation(f"unsupported schema type: {expected}")
+
+
+def _validate_schema(value, schema: dict, path: str = "$") -> None:
+    if "oneOf" in schema:
+        matches = 0
+        for option in schema["oneOf"]:
+            try:
+                _validate_schema(value, option, path)
+                matches += 1
+            except SchemaViolation:
+                pass
+        if matches != 1:
+            raise SchemaViolation(
+                f"{path}: expected exactly one oneOf match, got {matches}"
+            )
+        return
+
+    for item in schema.get("allOf", []):
+        condition = item.get("if")
+        consequence = item.get("then")
+        if condition is not None and consequence is not None:
+            try:
+                _validate_schema(value, condition, path)
+            except SchemaViolation:
+                continue
+            _validate_schema(value, consequence, path)
+        else:
+            _validate_schema(value, item, path)
+
+    if "const" in schema and value != schema["const"]:
+        raise SchemaViolation(f"{path}: const mismatch")
+    if "enum" in schema and value not in schema["enum"]:
+        raise SchemaViolation(f"{path}: value not in enum")
+
+    expected = schema.get("type")
+    if expected is not None:
+        allowed = expected if isinstance(expected, list) else [expected]
+        if not any(_matches_type(value, item) for item in allowed):
+            raise SchemaViolation(
+                f"{path}: expected {allowed}, got {type(value).__name__}"
+            )
+
+    if isinstance(value, dict):
+        required = schema.get("required", [])
+        missing = [key for key in required if key not in value]
+        if missing:
+            raise SchemaViolation(f"{path}: missing required {missing}")
+        properties = schema.get("properties", {})
+        if schema.get("additionalProperties") is False:
+            extras = sorted(set(value) - set(properties))
+            if extras:
+                raise SchemaViolation(f"{path}: unexpected properties {extras}")
+        for key, child in value.items():
+            if key in properties:
+                _validate_schema(child, properties[key], f"{path}.{key}")
+
+    if isinstance(value, list):
+        if "minItems" in schema and len(value) < schema["minItems"]:
+            raise SchemaViolation(f"{path}: too few items")
+        if schema.get("uniqueItems"):
+            normalized = [
+                json.dumps(item, sort_keys=True, separators=(",", ":"))
+                for item in value
+            ]
+            if len(normalized) != len(set(normalized)):
+                raise SchemaViolation(f"{path}: duplicate items")
+        if "items" in schema:
+            for index, child in enumerate(value):
+                _validate_schema(child, schema["items"], f"{path}[{index}]")
+
+    if isinstance(value, str):
+        if "minLength" in schema and len(value) < schema["minLength"]:
+            raise SchemaViolation(f"{path}: string too short")
+        if schema.get("format") == "uri":
+            parsed = urlparse(value)
+            if not parsed.scheme:
+                raise SchemaViolation(f"{path}: invalid URI")
+
+
+def _expect_schema_error(value, schema: dict) -> None:
+    try:
+        _validate_schema(value, schema)
+    except SchemaViolation:
+        return
+    raise AssertionError("expected schema validation failure")
+
+
 def test_pinned_donor_lineage() -> None:
     for rel, expected in EXPECTED_BLOBS.items():
         path = VENDOR / rel
@@ -66,33 +175,65 @@ def test_pinned_donor_lineage() -> None:
 
 
 def test_schema_and_fixture_floor() -> None:
-    for name in ("decision-ticket.schema.json", "map.schema.json", "spec.schema.json"):
-        schema = json.loads((SCHEMAS / name).read_text(encoding="utf-8"))
-        assert schema["type"] == "object"
-        assert schema.get("additionalProperties") is False
-
-    research = json.loads((FIXTURES / "ticket-research.json").read_text(encoding="utf-8"))
-    prototype = json.loads((FIXTURES / "ticket-prototype.json").read_text(encoding="utf-8"))
-    grilling = json.loads((FIXTURES / "ticket-grilling.json").read_text(encoding="utf-8"))
-    task = json.loads((FIXTURES / "ticket-task.json").read_text(encoding="utf-8"))
-    map_fixture = json.loads((FIXTURES / "map.json").read_text(encoding="utf-8"))
     ticket_schema = json.loads(
         (SCHEMAS / "decision-ticket.schema.json").read_text(encoding="utf-8")
     )
-    assert research["type"] == "research" and research["interaction"] == "afk"
-    assert prototype["type"] == "prototype" and prototype["interaction"] == "hitl"
-    assert grilling["type"] == "grilling" and grilling["interaction"] == "hitl"
-    assert task["type"] == "task"
+    map_schema = json.loads(
+        (SCHEMAS / "map.schema.json").read_text(encoding="utf-8")
+    )
+    spec_schema = json.loads(
+        (SCHEMAS / "spec.schema.json").read_text(encoding="utf-8")
+    )
+    for schema in (ticket_schema, map_schema, spec_schema):
+        assert schema["type"] == "object"
+        assert schema.get("additionalProperties") is False
+
+    tickets = [
+        json.loads((FIXTURES / name).read_text(encoding="utf-8"))
+        for name in (
+            "ticket-research.json",
+            "ticket-prototype.json",
+            "ticket-grilling.json",
+            "ticket-task.json",
+        )
+    ]
+    map_fixture = json.loads(
+        (FIXTURES / "map.json").read_text(encoding="utf-8")
+    )
+    spec_fixture = json.loads(
+        (FIXTURES / "spec.json").read_text(encoding="utf-8")
+    )
+
+    for fixture in tickets:
+        _validate_schema(fixture, ticket_schema)
+    _validate_schema(map_fixture, map_schema)
+    _validate_schema(spec_fixture, spec_schema)
+
     assert map_fixture["notYetSpecified"] == []
     assert map_fixture["spec"]["status"] == "published"
+    assert map_fixture["spec"]["ref"] == (
+        "tooling/harness/wayfinder/fixtures/spec.json"
+    )
+    assert spec_fixture["sourceMap"]["ref"] == map_fixture["tracker"]["mapRef"]
     assert (ROOT / map_fixture["sourceContribution"]).is_file()
-    open_rules = [
-        rule for rule in ticket_schema["allOf"]
-        if rule.get("if", {}).get("properties", {}).get("status", {}).get("const")
-        == "open"
-    ]
-    assert len(open_rules) == 1
-    assert open_rules[0]["then"]["properties"]["assignee"]["const"] is None
+
+    missing = copy.deepcopy(tickets[0])
+    missing.pop("question")
+    _expect_schema_error(missing, ticket_schema)
+
+    extra = copy.deepcopy(tickets[0])
+    extra["unexpected"] = True
+    _expect_schema_error(extra, ticket_schema)
+
+    wrong_gate = copy.deepcopy(tickets[0])
+    wrong_gate["type"] = "prototype"
+    _expect_schema_error(wrong_gate, ticket_schema)
+
+    open_assigned = copy.deepcopy(tickets[0])
+    open_assigned["status"] = "open"
+    open_assigned["assignee"] = "agent"
+    open_assigned["resolution"] = None
+    _expect_schema_error(open_assigned, ticket_schema)
 
 
 def test_ticket_gates_and_human_boundaries() -> None:
@@ -174,6 +315,55 @@ def test_add_ticket_failure_does_not_mutate_map() -> None:
     assert [item.ticket_id for item in mapping.frontier()] == ["R1"]
 
 
+def test_cycle_and_fog_batch_fail_without_partial_mutation() -> None:
+    TicketType = contract.TicketType
+    a = contract.DecisionTicket(
+        "A", "Alpha", TicketType.TASK, "Alpha task?", 1,
+        blocked_by=("B",), label="wayfinder:task",
+    )
+    b = contract.DecisionTicket(
+        "B", "Beta", TicketType.TASK, "Beta task?", 2,
+        blocked_by=("A",), label="wayfinder:task",
+    )
+    cyclic = contract.WayfinderMap(
+        map_id="CYCLE",
+        title="Cycle",
+        destination="Reject cycles",
+        tickets={"A": a, "B": b},
+    )
+    _expect_contract_error(cyclic.validate)
+
+    root = contract.DecisionTicket(
+        "R1", "Root", TicketType.RESEARCH, "Root fact?", 1,
+        label="wayfinder:research",
+    )
+    mapping = contract.WayfinderMap(
+        map_id="M2",
+        title="Fog map",
+        destination="Atomic graduation",
+        tickets={"R1": root},
+        not_yet_specified=["two tickets become precise together"],
+    )
+    valid = contract.DecisionTicket(
+        "T2", "Valid", TicketType.TASK, "First new task?", 2,
+        blocked_by=("R1",), label="wayfinder:task",
+    )
+    invalid = contract.DecisionTicket(
+        "T3", "Invalid", TicketType.TASK, "Second new task?", 3,
+        blocked_by=("MISSING",), label="wayfinder:task",
+    )
+    _expect_contract_error(
+        lambda: mapping.graduate_fog(
+            "two tickets become precise together",
+            [valid, invalid],
+        )
+    )
+    assert set(mapping.tickets) == {"R1"}
+    assert mapping.not_yet_specified == [
+        "two tickets become precise together"
+    ]
+
+
 def test_frontier_and_spec_lifecycle() -> None:
     TicketType = contract.TicketType
     research = contract.DecisionTicket(
@@ -229,10 +419,10 @@ def test_frontier_and_spec_lifecycle() -> None:
         further_notes=["The temporary spec retires after accepted implementation."],
         status="ready-for-agent",
     )
-    schema = json.loads((SCHEMAS / "spec.schema.json").read_text(encoding="utf-8"))
-    required = set(schema["required"])
-    assert set(packet) == set(schema["properties"])
-    assert required <= set(packet)
+    schema = json.loads(
+        (SCHEMAS / "spec.schema.json").read_text(encoding="utf-8")
+    )
+    _validate_schema(packet, schema)
     assert packet["schema"] == "agentswitchboard.wayfinder-spec.v1"
     assert packet["sourceMap"]["ref"] == "M1"
     assert packet["decisionSources"] == [
@@ -318,6 +508,7 @@ def main() -> None:
     test_schema_and_fixture_floor()
     test_ticket_gates_and_human_boundaries()
     test_add_ticket_failure_does_not_mutate_map()
+    test_cycle_and_fog_batch_fail_without_partial_mutation()
     test_frontier_and_spec_lifecycle()
     test_tracker_command_construction_without_live_mutation()
     print("PASS: Wayfinder core salvage contracts")
