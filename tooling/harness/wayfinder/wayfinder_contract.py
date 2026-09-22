@@ -250,18 +250,64 @@ class WayfinderMap:
         ]
         return not unresolved and not self.not_yet_specified
 
-    def build_spec_packet(self) -> dict[str, object]:
+    def build_spec_packet(
+        self,
+        *,
+        title: str,
+        problem_statement: str,
+        solution: str,
+        user_stories: Sequence[str],
+        implementation_decisions: Sequence[str],
+        testing_decisions: Sequence[str],
+        further_notes: Sequence[str] = (),
+        status: str = "draft",
+    ) -> dict[str, object]:
+        """Build one schema-shaped temporary specification after decision clarity."""
+
         if not self.spec_ready():
-            raise WayfinderContractError("spec cannot be synthesized while decision tickets or fog remain")
+            raise WayfinderContractError(
+                "spec cannot be synthesized while decision tickets or fog remain"
+            )
+        if not self.decisions:
+            raise WayfinderContractError(
+                "spec requires at least one durable decision source"
+            )
+        if not title.strip() or not problem_statement.strip() or not solution.strip():
+            raise WayfinderContractError(
+                "spec title, problem statement, and solution are required"
+            )
+        if not user_stories or not testing_decisions:
+            raise WayfinderContractError(
+                "spec requires at least one user story and testing decision"
+            )
+        if status not in {"draft", "ready-for-agent", "implemented", "retired"}:
+            raise WayfinderContractError(f"unsupported spec status: {status}")
+
+        source_ref = self.tracker_url or self.map_id
         return {
-            "map": {"id": self.map_id, "title": self.title, "url": self.tracker_url},
-            "destination": self.destination,
+            "schema": "agentswitchboard.wayfinder-spec.v1",
+            "title": title.strip(),
+            "sourceMap": {
+                "title": self.title,
+                "ref": source_ref,
+            },
             "decisionSources": [
-                {"title": pointer.title, "url": pointer.url, "gist": pointer.gist}
+                {"title": pointer.title, "ref": pointer.url}
                 for pointer in self.decisions
             ],
+            "problemStatement": problem_statement.strip(),
+            "solution": solution.strip(),
+            "userStories": [item.strip() for item in user_stories if item.strip()],
+            "implementationDecisions": [
+                item.strip() for item in implementation_decisions if item.strip()
+            ],
+            "testingDecisions": [
+                item.strip() for item in testing_decisions if item.strip()
+            ],
             "outOfScope": list(self.out_of_scope),
+            "furtherNotes": [item.strip() for item in further_notes if item.strip()],
             "lifecycle": "temporary-until-implementation",
+            "status": status,
             "primaryDecisionAuthority": "tracker-decision-tickets",
         }
 
