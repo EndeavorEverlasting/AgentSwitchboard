@@ -44,6 +44,18 @@ Load only the smallest surface required by the selected skill, workflow, public 
 
 Plans coordinate work; branches and pull requests transport and review implementation. Application behavior remains in deterministic code and domain contracts.
 
+## Wayfinder decision-map core
+
+- `.ai/skills/wayfinder/SKILL.md` — experimental ambiguity-resolution procedure; human HITL choices cannot be inferred by agents.
+- `.ai/skills/{research,prototype,grilling,domain-modeling,to-spec,to-tickets}/SKILL.md` — typed companion gates.
+- `tooling/harness/wayfinder/wayfinder_contract.py` — ticket rules, claim/resolve transitions, frontier calculation, and temporary-spec lifecycle.
+- `tooling/harness/wayfinder/github_tracker.py` — GitHub issue/sub-issue/dependency command adapter; live mutation requires separate authorization/runtime proof.
+- `tooling/harness/wayfinder/schemas/` and `fixtures/` — typed map/ticket/spec contract surfaces.
+- `third_party/mattpocock-skills/84fdeffd12f2ee307994d1eb6feb48173b6e0502/` — immutable donor lineage snapshot from salvaged PR #94.
+- `tests/test_wayfinder_core.py` — dependency-free static/synthetic floor gate.
+
+This salvage intentionally does not restore PR #94's August public-plan schema, governance-doctrine, or shared operational-registry edits. Current main remains authoritative for those shared surfaces. Static proof does not establish live GitHub tracker permissions, actual HITL participation, or destination execution.
+
 ## End-to-end runtime validation
 
 - `.ai/skills/end-to-end-runtime-validation/SKILL.md` — exact operator-path runtime procedure across shell, process, platform, terminal, TUI, and GUI boundaries.
