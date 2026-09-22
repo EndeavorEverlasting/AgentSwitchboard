@@ -1,0 +1,18 @@
+{
+  "id": "invalid-proof-promotion",
+  "name": "Invalid Proof Promotion",
+  "aliases": [],
+  "kind": "tool",
+  "mentionClass": "primary",
+  "sourceBucket": "covered-prior",
+  "category": "example",
+  "summary": "Synthetic negative fixture proving unsupported capability/runtime/trust/privacy promotion is rejected.",
+  "evidenceState": "reported",
+  "verificationRequiredBeforeAdoption": true,
+  "disposition": "evaluate",
+  "integrationAuthority": "none",
+  "capabilityState": "verified",
+  "runtimeProof": "observed",
+  "trustProof": "proved",
+  "privacyProof": "proved"
+}

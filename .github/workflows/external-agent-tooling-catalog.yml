@@ -1,0 +1,59 @@
+name: External Agent Tooling Catalog
+
+on:
+  pull_request:
+    paths:
+      - 'tooling/harness/operational/external-agent-tooling/**'
+      - 'docs/harness/external-agent-tooling-catalog.md'
+      - 'scripts/Test-ExternalAgentToolingCatalog.ps1'
+      - 'tests/test_external_agent_tooling_catalog.py'
+      - '.github/workflows/external-agent-tooling-catalog.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tooling/harness/operational/external-agent-tooling/**'
+      - 'docs/harness/external-agent-tooling-catalog.md'
+      - 'scripts/Test-ExternalAgentToolingCatalog.ps1'
+      - 'tests/test_external_agent_tooling_catalog.py'
+      - '.github/workflows/external-agent-tooling-catalog.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Portable source-only contract
+        run: python tests/test_external_agent_tooling_catalog.py
+      - name: PowerShell source-only contract
+        shell: pwsh
+        run: ./scripts/Test-ExternalAgentToolingCatalog.ps1
+      - name: Current operational harness
+        shell: pwsh
+        run: ./scripts/Test-OperationalHarness.ps1
+      - name: Diff hygiene and clean checkout
+        shell: pwsh
+        run: |
+          if ('${{ github.event_name }}' -eq 'pull_request') {
+            git diff --check "${{ github.event.pull_request.base.sha }}...HEAD"
+          } else {
+            $before = '${{ github.event.before }}'
+            if ([string]::IsNullOrWhiteSpace($before) -or $before -match '^0+$') {
+              git diff --check HEAD^
+            } else {
+              git diff --check "$before..${{ github.sha }}"
+            }
+          }
+          if (git status --short) { throw 'Checkout is dirty after external-agent-tooling validation.' }

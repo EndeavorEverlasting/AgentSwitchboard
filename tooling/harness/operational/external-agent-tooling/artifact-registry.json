@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "registryId": "agentswitchboard.external-agent-tooling-artifacts.v1",
+  "artifacts": [
+    {
+      "artifactId": "external-agent-tooling-registry",
+      "path": "tooling/harness/operational/external-agent-tooling/external-agent-tooling.registry.json",
+      "tracked": true,
+      "type": "evidence-catalog",
+      "generator": "maintained through external-agent-tooling-intake workflow",
+      "proofCeiling": "cataloged source claims and routing metadata only"
+    },
+    {
+      "artifactId": "external-agent-tooling-current-state",
+      "path": "tooling/harness/operational/external-agent-tooling/reports/CURRENT_STATE.md",
+      "tracked": true,
+      "type": "operator-report",
+      "generator": "maintained with catalog changes",
+      "proofCeiling": "English rendering of catalog state only"
+    },
+    {
+      "artifactId": "external-agent-tooling-evaluation",
+      "path": "<run-root>/external-agent-tooling-evaluation.json",
+      "tracked": false,
+      "type": "evaluation",
+      "generator": "external-agent-tooling-intake workflow",
+      "proofCeiling": "one bounded evaluation; not installation or runtime proof"
+    },
+    {
+      "artifactId": "external-agent-tooling-operator-report",
+      "path": "<run-root>/external-agent-tooling-operator-report.md",
+      "tracked": false,
+      "type": "operator-report",
+      "generator": "external-agent-tooling-intake workflow",
+      "proofCeiling": "English rendering of one evaluation only"
+    }
+  ],
+  "retention": "Tracked source catalog stays in Git; generated evaluation evidence remains operator-controlled outside the repository unless a later sprint explicitly promotes sanitized evidence."
+}

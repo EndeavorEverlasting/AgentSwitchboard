@@ -1,0 +1,18 @@
+{
+  "id": "example-source-only",
+  "name": "Example Source-Only Tool",
+  "aliases": [],
+  "kind": "tool",
+  "mentionClass": "primary",
+  "sourceBucket": "covered-prior",
+  "category": "example",
+  "summary": "Synthetic positive fixture proving source-only catalog semantics.",
+  "evidenceState": "reported",
+  "verificationRequiredBeforeAdoption": true,
+  "disposition": "evaluate",
+  "integrationAuthority": "none",
+  "capabilityState": "unknown",
+  "runtimeProof": "unproved",
+  "trustProof": "unproved",
+  "privacyProof": "unproved"
+}
