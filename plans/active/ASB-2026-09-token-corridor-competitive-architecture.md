@@ -563,11 +563,12 @@ FrontierAgent already supplies several pieces that AgentSwitchboard should stop 
 
 ### Integration order
 
-1. **TC-FA0 — source/license boundary (done at planning level).** Pin the exact upstream commit and preserve Apache-2.0 obligations; no source copy.
+1. **TC-FA0 — source/license boundary (tracked; integration pending).** Pin the exact upstream commit and preserve Apache-2.0 obligations; no source copy. Mark complete only after the owning plan is integrated.
 2. **TC-FA1 — vanilla runtime proof.** Clone/fork the pin, run frozen install + upstream pytest/ruff, then one ReAct and one Agent Team smoke and retain checkpoint/trace/output identities.
-3. **TC-FA2 — ASB adapter.** Prefer the stable `frontier_agent` import/plugin seam for long-term integration; use CLI/TUI black-box execution first where that shortens proof. Add observer bridges for authority/boundary/receipt shaping, explicit tool mapping, and ASB→SpawnGuard budgets.
-4. **TC-FA3 — correlated tracer.** Dispatch one TokenCorridor successor through ASB into FrontierAgent and normalize the result back into factory proof/continuation.
-5. **Prompt Kit binding.** Keep backend-specific details diagnostic; present generic execution/proof state and later project run/task data into Factory Topology.
+3. **TC-FAC — execution-contract extension.** The current v1 request/receipt carries neither worker/token ceilings nor an action fingerprint. Add a versioned authority-binding + execution-envelope contract with compatibility and fail-closed negative fixtures before the FrontierAgent adapter can claim either invariant.
+4. **TC-FA2 — ASB adapter.** Prefer the stable `frontier_agent` import/plugin seam for long-term integration; use CLI/TUI black-box execution first where that shortens proof. Add observer bridges for authority/boundary/receipt shaping, explicit tool mapping, and ASB→SpawnGuard budgets.
+5. **TC-FA3 — correlated tracer.** Dispatch one TokenCorridor successor through ASB into FrontierAgent and normalize the result back into factory proof/continuation.
+6. **Prompt Kit binding.** Keep backend-specific details diagnostic; present generic execution/proof state and later project run/task data into Factory Topology.
 
 ### Hard guards
 
