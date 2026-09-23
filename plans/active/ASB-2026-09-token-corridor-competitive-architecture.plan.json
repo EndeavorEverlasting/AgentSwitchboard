@@ -83,7 +83,9 @@
     "AgentSwitchboard FrontierAgent execution-adapter contract and manifest",
     "Typed ASB-to-FrontierAgent invocation mapping and normalized receipt mapping",
     "Authority-observer, tool-allowlist, and SpawnGuard/budget bridge fixtures",
-    "One correlated TokenCorridor -> ASB -> FrontierAgent -> normalized receipt tracer"
+    "One correlated TokenCorridor -> ASB -> FrontierAgent -> normalized receipt tracer",
+    "Versioned execution-adapter authority-binding/action-fingerprint extension",
+    "Typed execution-envelope budget contract for FrontierAgent worker/parallelism and token/time ceilings"
   ],
   "tasks": [
     {
@@ -484,7 +486,7 @@
     {
       "taskId": "TC-FA0",
       "title": "Pin FrontierAgent donor runtime and license boundary",
-      "status": "completed",
+      "status": "in-progress",
       "owner": "AgentSwitchboard architecture/convergence lane",
       "dependencies": [
         "TC-00"
@@ -506,10 +508,10 @@
         "AgentSwitchboard owns admission, cross-run budgets, authority and normalized proof; FrontierAgent may own only intra-run scheduling inside that envelope."
       ],
       "evidence": [
-        "ApodexAI/FrontierAgent@9e533db6f6c34d16037ee5ec964c479d0eb51cde",
-        "FrontierAgent LICENSE: Apache-2.0",
-        "FrontierAgent docs/framework.md: PipelineSpec, observers, AgentBus, SpawnGuard, sandbox boundaries",
-        "FrontierAgent workflows/agent_team/README.md: bounded parallel sub-agents and structured reports"
+        "ApodexAI/FrontierAgent@9e533db6f6c34d16037ee5ec964c479d0eb51cde inspected as the exact donor source floor",
+        "FrontierAgent root LICENSE at the pinned donor floor declares Apache License 2.0",
+        "FrontierAgent docs/framework.md and workflows/agent_team/README.md at the pinned donor floor establish the runtime / AgentBus / SpawnGuard / sandbox boundaries used by this plan",
+        "AgentSwitchboard PR #347 carries the canonical ASB plan artifacts; TC-FA0 remains in-progress until that planning change is integrated on main"
       ]
     },
     {
@@ -544,11 +546,47 @@
       "evidence": []
     },
     {
+      "taskId": "TC-FAC",
+      "title": "Extend execution-adapter contract for authority fingerprint and bounded fan-out",
+      "status": "ready",
+      "owner": "execution-adapter contract owner",
+      "dependencies": [
+        "TC-FA0"
+      ],
+      "inputs": [
+        "tooling/harness/execution-adapters/execution-adapter-contract.v1.json",
+        "tooling/harness/execution-adapters/schemas/execution-request.v1.schema.json",
+        "tooling/harness/execution-adapters/schemas/execution-receipt.v1.schema.json",
+        "TC-FA1 FrontierAgent runtime/profile mapping when available"
+      ],
+      "outputs": [
+        "Versioned execution request/receipt contract extension for action fingerprint preservation",
+        "Typed execution-envelope budget fields covering worker/parallelism and token/time ceilings",
+        "Backward-compatibility or explicit version-transition fixtures",
+        "Negative fixtures for missing/mismatched fingerprint and over-budget fan-out"
+      ],
+      "acceptanceCriteria": [
+        "Do not claim ASB can enforce FrontierAgent fan-out ceilings through the current v1 request: the current executionPolicy carries profile/network/interactiveAuth/maxOutputBytes but no worker-count or token-budget fields.",
+        "Define a versioned request/receipt path that carries and preserves an immutable action fingerprint or equivalent authority-binding identity end to end.",
+        "Define typed execution-envelope limits sufficient to constrain FrontierAgent SpawnGuard worker/parallelism plus model-token/time budgets; exact field names follow the measured TC-FA1 runtime/profile mapping.",
+        "A receipt echoes the authority-binding identity needed to detect mismatched retry/replay execution.",
+        "Old v1 consumers either remain valid through a tested compatible extension or fail into an explicit version migration; no silent schema widening.",
+        "Negative fixtures prove a missing/mismatched authority binding and an attempted budget overrun fail closed before runtime proof can be promoted."
+      ],
+      "evidence": [
+        "Current main execution-request/v1 required fields: requestId, correlationId, causationId, adapterKind, mission, workingDirectory, timeoutSeconds, mutation, executionPolicy, input, provenance.",
+        "Current main executionPolicy fields: profile, networkAllowed, interactiveAuthAllowed, maxOutputBytes.",
+        "Current main execution-receipt/v1 has requestId/correlationId but no action fingerprint field.",
+        "PR #347 review identified both gaps before adapter implementation."
+      ]
+    },
+    {
       "taskId": "TC-FA2",
       "title": "Implement FrontierAgent as an AgentSwitchboard execution adapter",
       "status": "pending",
       "owner": "AgentSwitchboard execution-adapter lane",
       "dependencies": [
+        "TC-FAC",
         "TC-FA1",
         "ASB-2026-09-EXECUTION-ADAPTER-TRIO-V1"
       ],
@@ -569,7 +607,7 @@
       ],
       "acceptanceCriteria": [
         "ASB admission chooses the adapter and fixes the execution envelope before FrontierAgent starts.",
-        "FrontierAgent Agent Team fan-out cannot exceed ASB-declared worker/token/time ceilings.",
+        "FrontierAgent Agent Team fan-out cannot exceed the typed execution-envelope worker/parallelism and model-token/time ceilings established by TC-FAC.",
         "FrontierAgent interactive approvals or --yes cannot create or broaden authorization; a mismatched action fingerprint pauses or fails closed.",
         "Only explicitly mapped tools/capabilities become reachable; module presence does not imply capability admission.",
         "Checkpoint, trace, outputs, cancellation, failure and boundary events normalize into existing ASB proof semantics without proof promotion.",
@@ -583,6 +621,7 @@
       "status": "pending",
       "owner": "AgentSwitchboard + TokenCorridor integration lane",
       "dependencies": [
+        "TC-FAC",
         "TC-FA2",
         "TC-03"
       ],
@@ -600,7 +639,7 @@
       ],
       "acceptanceCriteria": [
         "One non-user-only TokenCorridor successor reaches FrontierAgent through ASB without human prompt/chat/payload shuttling.",
-        "The same stable correlation identity is present in transition, ASB request, FrontierAgent run evidence and normalized receipt.",
+        "The same stable correlation identity and TC-FAC authority-binding/action fingerprint are preserved across the TokenCorridor transition, ASB request, FrontierAgent run evidence, and normalized receipt.",
         "Execution result returns through ASB proof semantics; FrontierAgent task-board state is treated as runtime telemetry only.",
         "Failure/retry/cancellation paths preserve the last proven state and do not silently manufacture completion."
       ],
@@ -617,7 +656,8 @@
     "For TC-FA1: in the exact pinned FrontierAgent checkout run `uv sync --frozen --extra sandbox --extra document-readers --extra dev`, `uv run pytest -q`, and `uv run ruff check .` before any local modification.",
     "For TC-FA1: run one `frontier-agent --mode react` and one `frontier-agent --mode agent_team` smoke in an isolated supported environment and retain the exact run directory identities without committing secrets.",
     "For TC-FA2+: add focused negative fixtures proving --yes/approval cannot mint ASB authority, SpawnGuard cannot exceed ASB budgets, and unregistered FrontierAgent tools remain unreachable.",
-    "For TC-FA3: require observed correlation across TokenCorridor transition, ASB request, FrontierAgent run evidence, normalized receipt, and returned continuation before claiming runtime integration."
+    "For TC-FA3: require observed correlation across TokenCorridor transition, ASB request, FrontierAgent run evidence, normalized receipt, and returned continuation before claiming runtime integration.",
+    "For TC-FAC: run the owning execution-adapter contract validator and focused compatibility/negative fixtures proving action-fingerprint preservation and fail-closed budget enforcement before TC-FA2 begins."
   ],
   "proof": {
     "target": "Durable OSS-first competitive architecture plan narrowing the open and managed decision/software-factory ecosystem into evidence-gated Token Corridor and AgentSwitchboard development.",
@@ -625,8 +665,8 @@
     "ceiling": "This plan proves a source-backed open-vs-managed architecture and selection program only. It does not prove any candidate's performance on the user's factory corpus, production readiness on the user's hardware, Token Corridor runtime behavior, live AFK execution, or a standalone product/repository boundary. No FrontierAgent clone/fork runtime, smoke run, ASB adapter, or TokenCorridor execution tracer is proven by this planning update."
   },
   "handoff": {
-    "nextOwner": "TC-FA1 FrontierAgent runtime-substrate evaluation lane",
-    "nextCommand": "git fetch --all --prune --tags && test -d ../FrontierAgent/.git || git clone https://github.com/ApodexAI/FrontierAgent.git ../FrontierAgent && git -C ../FrontierAgent fetch --all --prune --tags && git -C ../FrontierAgent checkout --detach 9e533db6f6c34d16037ee5ec964c479d0eb51cde",
+    "nextOwner": "TC-FA1 FrontierAgent runtime-substrate evaluation lane, in parallel with TC-FAC execution-contract extension where write ownership is isolated",
+    "nextCommand": "set -eu; target=../FrontierAgent-bootstrap-9e533db6; if [ -e \"$target\" ]; then git -C \"$target\" rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo \"BLOCKED: $target exists and is not a Git worktree\" >&2; exit 2; }; test -z \"$(git -C \"$target\" status --porcelain)\" || { echo \"BLOCKED: $target has uncommitted work\" >&2; exit 3; }; test \"$(git -C \"$target\" remote get-url origin)\" = \"https://github.com/ApodexAI/FrontierAgent.git\" || { echo \"BLOCKED: unexpected origin\" >&2; exit 4; }; else git clone https://github.com/ApodexAI/FrontierAgent.git \"$target\"; fi; git -C \"$target\" fetch --all --prune --tags; git -C \"$target\" checkout --detach 9e533db6f6c34d16037ee5ec964c479d0eb51cde; test \"$(git -C \"$target\" rev-parse HEAD)\" = 9e533db6f6c34d16037ee5ec964c479d0eb51cde",
     "notes": [
       "Read this corrected plan before implementing the decision protocol; the earlier Jev-centric baseline is superseded by the OSS-first substrate survey.",
       "The bakeoff must complete with zero paid API credentials. TypeSafe Jev is optional comparison evidence only.",
