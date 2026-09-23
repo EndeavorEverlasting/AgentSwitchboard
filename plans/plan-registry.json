@@ -215,6 +215,14 @@
       "dependencies": [
         "ASB-2026-09-TRIAGE-ASB-LIVE-DISPATCH"
       ]
+    },
+    {
+      "planId": "ASB-2026-09-TOKEN-CORRIDOR-COMPETITIVE-ARCHITECTURE",
+      "path": "plans/active/ASB-2026-09-token-corridor-competitive-architecture.plan.json",
+      "summaryPath": "plans/active/ASB-2026-09-token-corridor-competitive-architecture.md",
+      "status": "proposed",
+      "priority": "high",
+      "dependencies": []
     }
   ]
 }
