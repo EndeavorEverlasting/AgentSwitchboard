@@ -7,7 +7,7 @@
   "status": "proposed",
   "priority": "high",
   "createdUtc": "2026-09-22T22:12:00Z",
-  "updatedUtc": "2026-09-23T00:08:30Z",
+  "updatedUtc": "2026-09-23T00:12:00Z",
   "mission": "Define and prove an OSS-first, provider-neutral bounded-decision control plane (working name Token Corridor) inside the AgentSwitchboard software factory. Before inventing infrastructure, evaluate real open/self-hosted decision engines, routers, structured-output runtimes, durable workflow engines, agent runtimes, sandboxes, and eval/observability platforms against commercial comparators. Compile repository/runtime evidence into typed decision requests, choose the cheapest adequate open or commercial engine by measured policy, preserve calibrated uncertainty and authority provenance, and route execution without duplicating Prompt Kit, FirstMate, AgentSwitchboard execution adapters, or already-solved open-source infrastructure.",
   "owner": {
     "surface": "AgentSwitchboard factory decision-control plane",
@@ -45,7 +45,9 @@
     "NodeWeaver role evaluation as an optional signal/provider, not automatic expansion",
     "Standalone Token Corridor extraction gate after multi-consumer/runtime evidence",
     "Open/self-hosted substrate evaluation across decision engines, model routing, structured generation, durability, sandboxes, agent-factory orchestration, and observability/evaluation",
-    "Commercial products are benchmark comparators or optional adapters; no paid service becomes a required dependency without exact-workload evidence that open/self-hosted candidates miss a named acceptance gate"
+    "Commercial products are benchmark comparators or optional adapters; no paid service becomes a required dependency without exact-workload evidence that open/self-hosted candidates miss a named acceptance gate",
+    "Shared convergence `AFK-FACTORY-CONVERGENCE-2026-09-22`: AgentSwitchboard owns the execution/proof plane; Prompt Kit PR #633 owns human↔AFK interface planning; TokenCorridor PR #1 owns cross-repository decision/transition convergence.",
+    "Factory Topology successor may consume ASB typed execution/proof artifacts through a read-only projection adapter; ASB does not own renderer semantics."
   ],
   "forbiddenScope": [
     "Training or cloning a Jev-class foundation/system-one model as the near-term competitive response",
@@ -73,7 +75,9 @@
     "Standalone-repository extraction decision based on at least two real consumers or a proven independent deployment/runtime boundary",
     "Open-vs-managed substrate matrix covering decision engines, routing/gateway, structured output, durability, sandbox/runtime, agent-factory orchestration, and eval/observability",
     "OSS-first adoption manifest with license class, runtime footprint, integration surface, proof state, rejection reason, and commercial comparator per layer",
-    "Decision-engine bakeoff that does not require any paid API credential to complete"
+    "Decision-engine bakeoff that does not require any paid API credential to complete",
+    "Cross-repository convergence references to TokenCorridor PR #1 and Prompt Kit PR #633 with exact local ownership boundaries",
+    "Factory Topology execution/proof-plane adapter contract as a post-runtime successor, not a new canonical state owner"
   ],
   "tasks": [
     {
@@ -415,6 +419,61 @@
         "A standalone repo must have a stable contract, independent validation/release need, and no duplicate ASB/Prompt Kit/FirstMate authority."
       ],
       "evidence": []
+    },
+    {
+      "taskId": "TC-XR",
+      "title": "Bind AgentSwitchboard to shared AFK cross-repository convergence",
+      "status": "completed",
+      "owner": "AgentSwitchboard architecture/convergence lane",
+      "dependencies": [],
+      "inputs": [
+        "TokenCorridor PR #1: plans/active/AFK-FACTORY-CONVERGENCE.plan.json",
+        "Prompt Kit PR #633: docs/plans/AFK_FACTORY_INTERFACE_CONVERGENCE_SPRINT_MAP.md",
+        "AgentSwitchboard PR #346: this plan",
+        "Shared convergence ID AFK-FACTORY-CONVERGENCE-2026-09-22"
+      ],
+      "outputs": [
+        "Explicit ownership boundary: Prompt Kit = human↔AFK interface; TokenCorridor = decision/transition seam; AgentSwitchboard = execution/proof control plane",
+        "Independent closeout rule and refreshed-main handoff requirement"
+      ],
+      "acceptanceCriteria": [
+        "AgentSwitchboard does not invent a competing operator-facing workflow language.",
+        "PR #346 may close independently of Prompt Kit closeout/runtime implementation.",
+        "After merge, exact AgentSwitchboard main SHA is written back to the canonical TokenCorridor convergence plan.",
+        "Cross-repository runtime integration uses typed artifacts/correlation IDs rather than shared mutable branch history."
+      ],
+      "evidence": [
+        "EndeavorEverlasting/TokenCorridor#1",
+        "EndeavorEverlasting/web-excel-repair-triage#633",
+        "EndeavorEverlasting/AgentSwitchboard#346"
+      ]
+    },
+    {
+      "taskId": "TC-VIS",
+      "title": "Expose AgentSwitchboard execution/proof state to Factory Topology",
+      "status": "pending",
+      "owner": "AgentSwitchboard evidence adapter lane",
+      "dependencies": [
+        "TC-03",
+        "TC-05"
+      ],
+      "inputs": [
+        "Prompt Kit integrated Prompt Topology Phase A/B/C doctrine",
+        "TokenCorridor cross-repository correlation/transition contract",
+        "AgentSwitchboard execution request/receipt, adapter, run, validation, and integration evidence"
+      ],
+      "outputs": [
+        "Renderer-neutral execution/proof-plane view-model adapter",
+        "Stable correlation identities joining ASB runs/receipts to Prompt Kit/TokenCorridor entities",
+        "Focused fixture proving visualization cannot mutate execution/proof truth"
+      ],
+      "acceptanceCriteria": [
+        "Viewer consumes typed ASB artifacts rather than agent prose.",
+        "Coordinates/color/proximity never create execution state, authorization, proof, or ownership.",
+        "One cross-repository work item can be traced from dispatch through execution receipt and validation/integration evidence.",
+        "Accessible non-3D output remains possible from the same renderer-neutral view model."
+      ],
+      "evidence": []
     }
   ],
   "validation": [
@@ -442,68 +501,11 @@
       "Probe open PRs/worktrees immediately before creating the writer; do not collide with a newly opened canonical owner.",
       "After PR #346 integrates, publish the exact ASB main SHA into TokenCorridor plan AFK-FACTORY-CONVERGENCE-2026-09-22.",
       "Prompt Kit is the human↔AFK interface foundation; ASB must not bypass it by inventing operator-facing workflow semantics.",
-      "Factory Topology is a read-only evidence projection successor, not a new execution or authority owner."
-    ]
-  },
-  "crossRepositoryConvergence": {
-    "planId": "AFK-FACTORY-CONVERGENCE-2026-09-22",
-    "canonicalOwner": {
-      "repository": "EndeavorEverlasting/TokenCorridor",
-      "planPath": "plans/active/AFK-FACTORY-CONVERGENCE.plan.json",
-      "pullRequest": 1,
-      "role": "cross-repository decision/transition and convergence contract"
-    },
-    "promptKit": {
-      "repository": "EndeavorEverlasting/web-excel-repair-triage",
-      "planPath": "docs/plans/AFK_FACTORY_INTERFACE_CONVERGENCE_SPRINT_MAP.md",
-      "pullRequest": 633,
-      "role": "human↔AFK interface foundation and visual interaction semantics",
-      "floor": "main@c97718247e7b14544d198035dd3cdc07725545a8"
-    },
-    "agentSwitchboard": {
-      "repository": "EndeavorEverlasting/AgentSwitchboard",
-      "planPath": "plans/active/ASB-2026-09-token-corridor-competitive-architecture.plan.json",
-      "pullRequest": 346,
-      "role": "execution/proof control plane and OSS substrate evaluation",
-      "currentMain": "170da052de065e584baa07bce35ccba8d06eebf6"
-    },
-    "convergenceRule": "Each repository closes its local floor independently, publishes exact integrated identities, then TokenCorridor refreshes pins and begins the first cross-repository tracer slice. Cross-repo convergence uses typed artifacts/correlation IDs, not shared mutable branch history.",
-    "promptKitIsFrontDoor": true
-  },
-  "factoryTopology": {
-    "status": "planned-successor",
-    "sourceDoctrine": "Prompt Kit Prompt Topology Phase A semantic graph + Phase B deterministic 3D projection + Phase C immersive read-only viewer",
-    "ownerBoundary": {
-      "promptKit": "interface-plane entities and visual interaction semantics",
-      "tokenCorridor": "cross-plane decision/transition identities and correlations",
-      "agentSwitchboard": "execution-plane entities, receipts, integration/proof evidence",
-      "renderer": "read-only projection; never canonical state"
-    },
-    "planes": [
-      "interface",
-      "decision",
-      "execution",
-      "proof"
-    ],
-    "requiredRelations": [
-      "ROUTES_TO",
-      "COMPILES_TO",
-      "AUTHORIZED_BY",
-      "DISPATCHES",
-      "EXECUTES",
-      "PRODUCES",
-      "VALIDATED_BY",
-      "CONTINUES_TO",
-      "BLOCKED_BY",
-      "SUPERSEDES",
-      "CORRELATES_WITH"
-    ],
-    "acceptance": [
-      "stable entity/correlation identity across repository boundaries",
-      "trace one work item from Prompt Kit intent through TokenCorridor transition to ASB receipt and back",
-      "visual layout/proximity never creates semantic truth, authorization, execution state, or proof",
-      "accessible non-3D representation exists",
-      "viewer consumes typed artifacts rather than parsing agent prose"
+      "Factory Topology is a read-only evidence projection successor, not a new execution or authority owner.",
+      "Shared convergence ID: AFK-FACTORY-CONVERGENCE-2026-09-22.",
+      "TokenCorridor PR #1 is the canonical cross-repository convergence owner.",
+      "Prompt Kit PR #633 owns the human↔AFK interface convergence plan.",
+      "After PR #346 integrates, refresh its exact main SHA into TokenCorridor PR #1 before cross-repository C1 begins."
     ]
   }
 }
