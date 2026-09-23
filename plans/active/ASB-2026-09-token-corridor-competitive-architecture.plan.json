@@ -7,7 +7,7 @@
   "status": "proposed",
   "priority": "high",
   "createdUtc": "2026-09-22T22:12:00Z",
-  "updatedUtc": "2026-09-22T22:44:00Z",
+  "updatedUtc": "2026-09-23T00:08:30Z",
   "mission": "Define and prove an OSS-first, provider-neutral bounded-decision control plane (working name Token Corridor) inside the AgentSwitchboard software factory. Before inventing infrastructure, evaluate real open/self-hosted decision engines, routers, structured-output runtimes, durable workflow engines, agent runtimes, sandboxes, and eval/observability platforms against commercial comparators. Compile repository/runtime evidence into typed decision requests, choose the cheapest adequate open or commercial engine by measured policy, preserve calibrated uncertainty and authority provenance, and route execution without duplicating Prompt Kit, FirstMate, AgentSwitchboard execution adapters, or already-solved open-source infrastructure.",
   "owner": {
     "surface": "AgentSwitchboard factory decision-control plane",
@@ -32,7 +32,9 @@
     "Execution-adapter trio work may continue; Token Corridor selects or recommends an engine/route but does not replace execution adapters.",
     "Prompt Kit P143/P55/P07 convergence work may continue in web-excel-repair-triage; Prompt Kit remains semantic/workflow policy authority.",
     "FirstMate crew/runtime work may continue; FirstMate remains canonical live crew/session runtime.",
-    "NodeWeaver can be evaluated read-only as a future semantic-signal provider without expanding its production scope."
+    "NodeWeaver can be evaluated read-only as a future semantic-signal provider without expanding its production scope.",
+    "Prompt Kit PR #633 may close its interface/routing floor independently; ASB does not wait on that merge to close PR #346.",
+    "TokenCorridor PR #1 may establish the canonical cross-repository plan independently; runtime C1 begins only after refreshed Prompt Kit and ASB integrated floors are pinned."
   ],
   "ownedScope": [
     "Competitive reference architecture and product-boundary plan under plans/active/",
@@ -437,7 +439,71 @@
       "Start with byte-identical factory decision fixtures and preserve exact engine/model/version/config/hardware identities in receipts.",
       "Do not let a probabilistic output create authorization; probability is evidence, not permission.",
       "Keep Token Corridor as a working name until TC-07.",
-      "Probe open PRs/worktrees immediately before creating the writer; do not collide with a newly opened canonical owner."
+      "Probe open PRs/worktrees immediately before creating the writer; do not collide with a newly opened canonical owner.",
+      "After PR #346 integrates, publish the exact ASB main SHA into TokenCorridor plan AFK-FACTORY-CONVERGENCE-2026-09-22.",
+      "Prompt Kit is the human↔AFK interface foundation; ASB must not bypass it by inventing operator-facing workflow semantics.",
+      "Factory Topology is a read-only evidence projection successor, not a new execution or authority owner."
+    ]
+  },
+  "crossRepositoryConvergence": {
+    "planId": "AFK-FACTORY-CONVERGENCE-2026-09-22",
+    "canonicalOwner": {
+      "repository": "EndeavorEverlasting/TokenCorridor",
+      "planPath": "plans/active/AFK-FACTORY-CONVERGENCE.plan.json",
+      "pullRequest": 1,
+      "role": "cross-repository decision/transition and convergence contract"
+    },
+    "promptKit": {
+      "repository": "EndeavorEverlasting/web-excel-repair-triage",
+      "planPath": "docs/plans/AFK_FACTORY_INTERFACE_CONVERGENCE_SPRINT_MAP.md",
+      "pullRequest": 633,
+      "role": "human↔AFK interface foundation and visual interaction semantics",
+      "floor": "main@c97718247e7b14544d198035dd3cdc07725545a8"
+    },
+    "agentSwitchboard": {
+      "repository": "EndeavorEverlasting/AgentSwitchboard",
+      "planPath": "plans/active/ASB-2026-09-token-corridor-competitive-architecture.plan.json",
+      "pullRequest": 346,
+      "role": "execution/proof control plane and OSS substrate evaluation",
+      "currentMain": "170da052de065e584baa07bce35ccba8d06eebf6"
+    },
+    "convergenceRule": "Each repository closes its local floor independently, publishes exact integrated identities, then TokenCorridor refreshes pins and begins the first cross-repository tracer slice. Cross-repo convergence uses typed artifacts/correlation IDs, not shared mutable branch history.",
+    "promptKitIsFrontDoor": true
+  },
+  "factoryTopology": {
+    "status": "planned-successor",
+    "sourceDoctrine": "Prompt Kit Prompt Topology Phase A semantic graph + Phase B deterministic 3D projection + Phase C immersive read-only viewer",
+    "ownerBoundary": {
+      "promptKit": "interface-plane entities and visual interaction semantics",
+      "tokenCorridor": "cross-plane decision/transition identities and correlations",
+      "agentSwitchboard": "execution-plane entities, receipts, integration/proof evidence",
+      "renderer": "read-only projection; never canonical state"
+    },
+    "planes": [
+      "interface",
+      "decision",
+      "execution",
+      "proof"
+    ],
+    "requiredRelations": [
+      "ROUTES_TO",
+      "COMPILES_TO",
+      "AUTHORIZED_BY",
+      "DISPATCHES",
+      "EXECUTES",
+      "PRODUCES",
+      "VALIDATED_BY",
+      "CONTINUES_TO",
+      "BLOCKED_BY",
+      "SUPERSEDES",
+      "CORRELATES_WITH"
+    ],
+    "acceptance": [
+      "stable entity/correlation identity across repository boundaries",
+      "trace one work item from Prompt Kit intent through TokenCorridor transition to ASB receipt and back",
+      "visual layout/proximity never creates semantic truth, authorization, execution state, or proof",
+      "accessible non-3D representation exists",
+      "viewer consumes typed artifacts rather than parsing agent prose"
     ]
   }
 }
