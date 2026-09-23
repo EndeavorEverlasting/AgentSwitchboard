@@ -548,8 +548,8 @@ It does **not** prove:
 
 ## FrontierAgent runtime substrate — clone/fork and wrap first
 
-**Pinned donor:** `ApodexAI/FrontierAgent@9e533db6f6c34d16037ee5ec964c479d0eb51cde`  
-**License:** Apache-2.0  
+**Pinned donor:** `ApodexAI/FrontierAgent@9e533db6f6c34d16037ee5ec964c479d0eb51cde`
+**License:** Apache-2.0
 **Disposition:** ADAPT as an AgentSwitchboard execution runtime; keep it independently pinned/forked until evidence justifies selective extraction.
 
 FrontierAgent already supplies several pieces that AgentSwitchboard should stop trying to reinvent: workflow graphs (`PipelineSpec`), a domain-neutral ReAct loop, observer/intervention hooks, explicit tool registration, AgentBus, bounded Agent Team fan-out through `SpawnGuard`, sandboxed inputs/workspace/outputs, checkpoint/trace/resume/revert, a task board, and a usable TUI.
