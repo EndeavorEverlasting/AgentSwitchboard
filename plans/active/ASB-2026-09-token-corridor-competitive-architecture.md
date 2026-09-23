@@ -544,3 +544,44 @@ It does **not** prove:
 - NodeWeaver integration value;
 - live AFK operation;
 - a standalone Token Corridor repository boundary.
+
+
+## FrontierAgent runtime substrate — clone/fork and wrap first
+
+**Pinned donor:** `ApodexAI/FrontierAgent@9e533db6f6c34d16037ee5ec964c479d0eb51cde`  
+**License:** Apache-2.0  
+**Disposition:** ADAPT as an AgentSwitchboard execution runtime; keep it independently pinned/forked until evidence justifies selective extraction.
+
+FrontierAgent already supplies several pieces that AgentSwitchboard should stop trying to reinvent: workflow graphs (`PipelineSpec`), a domain-neutral ReAct loop, observer/intervention hooks, explicit tool registration, AgentBus, bounded Agent Team fan-out through `SpawnGuard`, sandboxed inputs/workspace/outputs, checkpoint/trace/resume/revert, a task board, and a usable TUI.
+
+### Ownership boundary
+
+- **AgentSwitchboard remains outer control plane:** admission, adapter choice, authority, cross-run worker/token/time budgets, tool/capability eligibility, normalized receipts, integration/proof state.
+- **FrontierAgent becomes an inner execution runtime:** one admitted run may use ReAct or Agent Team and may schedule bounded sub-agents inside the ASB envelope.
+- **TokenCorridor remains decision/transition owner:** FrontierAgent does not decide whether an action is permitted.
+- **Prompt Kit remains semantic/UI owner:** FrontierAgent task-board/TUI state may be projected, but it does not replace P66/work-ledger or Evidence Spine truth.
+
+### Integration order
+
+1. **TC-FA0 — source/license boundary (done at planning level).** Pin the exact upstream commit and preserve Apache-2.0 obligations; no source copy.
+2. **TC-FA1 — vanilla runtime proof.** Clone/fork the pin, run frozen install + upstream pytest/ruff, then one ReAct and one Agent Team smoke and retain checkpoint/trace/output identities.
+3. **TC-FA2 — ASB adapter.** Prefer the stable `frontier_agent` import/plugin seam for long-term integration; use CLI/TUI black-box execution first where that shortens proof. Add observer bridges for authority/boundary/receipt shaping, explicit tool mapping, and ASB→SpawnGuard budgets.
+4. **TC-FA3 — correlated tracer.** Dispatch one TokenCorridor successor through ASB into FrontierAgent and normalize the result back into factory proof/continuation.
+5. **Prompt Kit binding.** Keep backend-specific details diagnostic; present generic execution/proof state and later project run/task data into Factory Topology.
+
+### Hard guards
+
+- `--yes` is **not** blanket AFK authority. Typed ASB authority + action fingerprint must still match.
+- Never let both ASB and FrontierAgent independently multiply worker fan-out without a shared declared budget.
+- FrontierAgent tool-module presence does not imply admission; map only explicit ASB capabilities.
+- Preserve fail-closed sandboxing; do not fall back to unisolated host execution.
+- Do not solve Git/GitHub access by exposing the operator's entire home/SSH/config tree to the runtime.
+- Keep benchmark/eval code optional; production runtime must not depend on benchmark packages.
+
+### Extraction rule
+
+The target is one **product experience**, not necessarily one physical codebase on day one. Keep the fork/wrapper boundary while it works. Extract or upstream-modify only the specific runtime surfaces that measured latency, packaging, observability, or UX evidence proves cannot be handled through adapters/plugins.
+
+### Proof ceiling
+
+This update proves the source pin, licensing posture, and planned runtime boundary only. It does not prove a local FrontierAgent runtime, adapter compatibility, or end-to-end AFK execution.
