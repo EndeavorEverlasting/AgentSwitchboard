@@ -47,6 +47,42 @@ The corrected question is:
 
 > Which layers of an AFK software factory are already available as credible open/self-hosted infrastructure, which managed systems merely package those layers, and what remaining integration/control seam is genuinely worth building?
 
+## Cross-repository convergence binding
+
+This AgentSwitchboard plan now participates in shared convergence identity:
+
+`AFK-FACTORY-CONVERGENCE-2026-09-22`
+
+- **Canonical convergence owner:** `EndeavorEverlasting/TokenCorridor`, TokenCorridor PR #1, `plans/active/AFK-FACTORY-CONVERGENCE.plan.json`.
+- **Prompt Kit interface owner:** `EndeavorEverlasting/web-excel-repair-triage`, Prompt Kit PR #633, `docs/plans/AFK_FACTORY_INTERFACE_CONVERGENCE_SPRINT_MAP.md`.
+- **AgentSwitchboard execution owner:** this plan / PR #346.
+
+### Ownership correction
+
+Prompt Kit is the **human↔AFK interface foundation**. AgentSwitchboard must not bypass it by inventing a competing operator-facing workflow language. ASB consumes machine-addressable interface/continuation state and owns execution readiness, adapter selection, dispatch, receipts, validation/integration evidence, and proof ceilings.
+
+TokenCorridor owns the typed cross-repository bounded-decision/successor-transition seam. It does not replace ASB execution ownership.
+
+### Parallel closeout
+
+PR #346 may close independently of Prompt Kit's current P55/P66/P143/routing convergence. After each repository integrates its local closeout, TokenCorridor refreshes exact main SHAs and begins the first cross-repository tracer slice.
+
+### Factory Topology successor
+
+The visual frontier is not a new dashboard. It extends Prompt Kit's already-integrated Prompt Topology doctrine:
+
+`renderer-neutral semantic truth → deterministic projection → immersive read-only presentation`
+
+Factory Topology will project:
+
+- Prompt Kit **interface** state;
+- TokenCorridor **decision/transition** state;
+- AgentSwitchboard **execution** state;
+- shared **proof** state.
+
+Stable correlation identity joins the planes. Coordinates, color, proximity, camera position, and visual grouping never create authorization, execution state, or proof.
+
+
 ## Corrected architecture boundary
 
 | Surface | Canonical role | Must not become |
