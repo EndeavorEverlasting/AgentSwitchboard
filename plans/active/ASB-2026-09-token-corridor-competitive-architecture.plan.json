@@ -7,7 +7,7 @@
   "status": "proposed",
   "priority": "high",
   "createdUtc": "2026-09-22T22:12:00Z",
-  "updatedUtc": "2026-09-23T00:12:00Z",
+  "updatedUtc": "2026-09-23T14:46:00Z",
   "mission": "Define and prove an OSS-first, provider-neutral bounded-decision control plane (working name Token Corridor) inside the AgentSwitchboard software factory. Before inventing infrastructure, evaluate real open/self-hosted decision engines, routers, structured-output runtimes, durable workflow engines, agent runtimes, sandboxes, and eval/observability platforms against commercial comparators. Compile repository/runtime evidence into typed decision requests, choose the cheapest adequate open or commercial engine by measured policy, preserve calibrated uncertainty and authority provenance, and route execution without duplicating Prompt Kit, FirstMate, AgentSwitchboard execution adapters, or already-solved open-source infrastructure.",
   "owner": {
     "surface": "AgentSwitchboard factory decision-control plane",
@@ -77,7 +77,13 @@
     "OSS-first adoption manifest with license class, runtime footprint, integration surface, proof state, rejection reason, and commercial comparator per layer",
     "Decision-engine bakeoff that does not require any paid API credential to complete",
     "Cross-repository convergence references to TokenCorridor PR #1 and Prompt Kit PR #633 with exact local ownership boundaries",
-    "Factory Topology execution/proof-plane adapter contract as a post-runtime successor, not a new canonical state owner"
+    "Factory Topology execution/proof-plane adapter contract as a post-runtime successor, not a new canonical state owner",
+    "Pinned FrontierAgent upstream/fork identity and Apache-2.0 compliance record",
+    "Vanilla FrontierAgent runtime proof receipt with pytest, ruff, ReAct, Agent Team, and run-artifact identities",
+    "AgentSwitchboard FrontierAgent execution-adapter contract and manifest",
+    "Typed ASB-to-FrontierAgent invocation mapping and normalized receipt mapping",
+    "Authority-observer, tool-allowlist, and SpawnGuard/budget bridge fixtures",
+    "One correlated TokenCorridor -> ASB -> FrontierAgent -> normalized receipt tracer"
   ],
   "tasks": [
     {
@@ -474,6 +480,131 @@
         "Accessible non-3D output remains possible from the same renderer-neutral view model."
       ],
       "evidence": []
+    },
+    {
+      "taskId": "TC-FA0",
+      "title": "Pin FrontierAgent donor runtime and license boundary",
+      "status": "completed",
+      "owner": "AgentSwitchboard architecture/convergence lane",
+      "dependencies": [
+        "TC-00"
+      ],
+      "inputs": [
+        "ApodexAI/FrontierAgent main",
+        "FrontierAgent LICENSE",
+        "FrontierAgent framework / Agent Team / sandbox documentation"
+      ],
+      "outputs": [
+        "Pinned donor commit 9e533db6f6c34d16037ee5ec964c479d0eb51cde",
+        "Apache-2.0 attribution/modification/trademark boundary",
+        "Outer-ASB / inner-FrontierAgent scheduler and authority ownership decision"
+      ],
+      "acceptanceCriteria": [
+        "FrontierAgent is classified as an execution-runtime substrate behind AgentSwitchboard, not as Prompt Kit semantic truth or TokenCorridor authorization.",
+        "Fork/clone-and-wrap is the default adoption mode; bulk source copy into TokenCorridor is rejected unless later measured integration evidence requires selective extraction.",
+        "Apache-2.0 redistribution obligations and the no-trademark-grant boundary are recorded.",
+        "AgentSwitchboard owns admission, cross-run budgets, authority and normalized proof; FrontierAgent may own only intra-run scheduling inside that envelope."
+      ],
+      "evidence": [
+        "ApodexAI/FrontierAgent@9e533db6f6c34d16037ee5ec964c479d0eb51cde",
+        "FrontierAgent LICENSE: Apache-2.0",
+        "FrontierAgent docs/framework.md: PipelineSpec, observers, AgentBus, SpawnGuard, sandbox boundaries",
+        "FrontierAgent workflows/agent_team/README.md: bounded parallel sub-agents and structured reports"
+      ]
+    },
+    {
+      "taskId": "TC-FA1",
+      "title": "Bootstrap vanilla FrontierAgent runtime and preserve upstream proof",
+      "status": "ready",
+      "owner": "AgentSwitchboard runtime-substrate evaluation lane",
+      "dependencies": [
+        "TC-FA0"
+      ],
+      "inputs": [
+        "Pinned FrontierAgent commit",
+        "Python 3.12 + uv",
+        "OpenAI-compatible endpoint for smoke only",
+        "Isolated Linux/WSL2/container execution environment"
+      ],
+      "outputs": [
+        "Pinned clone/fork identity",
+        "Frozen dependency install receipt",
+        "pytest + ruff receipt",
+        "one ReAct smoke receipt",
+        "one Agent Team smoke receipt",
+        "run-artifact inventory: checkpoint/trace/engine log/trajectories/outputs"
+      ],
+      "acceptanceCriteria": [
+        "No FrontierAgent source is copied into AgentSwitchboard or TokenCorridor during the vanilla proof.",
+        "The exact pinned upstream head installs using the repository lockfile and passes upstream pytest and ruff checks before local modification.",
+        "A ReAct run and an Agent Team run complete or fail with diagnosed, preserved evidence; failures are not relabeled as runtime proof.",
+        "Sandbox/authorization remains fail-closed with no unisolated host fallback.",
+        "Credentials and private workstation state are not committed or copied into tracked evidence."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "TC-FA2",
+      "title": "Implement FrontierAgent as an AgentSwitchboard execution adapter",
+      "status": "pending",
+      "owner": "AgentSwitchboard execution-adapter lane",
+      "dependencies": [
+        "TC-FA1",
+        "ASB-2026-09-EXECUTION-ADAPTER-TRIO-V1"
+      ],
+      "inputs": [
+        "Existing ASB execution-request / receipt contracts",
+        "FrontierAgent workflow/plugin surfaces",
+        "FrontierAgent observer/Intervention hooks",
+        "FrontierAgent tool registry and SpawnGuard"
+      ],
+      "outputs": [
+        "FrontierAgent adapter manifest",
+        "Typed ASB->FrontierAgent invocation mapping",
+        "FrontierAgent->ASB normalized receipt mapping",
+        "Authority observer bridge",
+        "budget/parallelism mapping",
+        "tool allowlist mapping",
+        "focused fixtures/tests"
+      ],
+      "acceptanceCriteria": [
+        "ASB admission chooses the adapter and fixes the execution envelope before FrontierAgent starts.",
+        "FrontierAgent Agent Team fan-out cannot exceed ASB-declared worker/token/time ceilings.",
+        "FrontierAgent interactive approvals or --yes cannot create or broaden authorization; a mismatched action fingerprint pauses or fails closed.",
+        "Only explicitly mapped tools/capabilities become reachable; module presence does not imply capability admission.",
+        "Checkpoint, trace, outputs, cancellation, failure and boundary events normalize into existing ASB proof semantics without proof promotion.",
+        "The adapter can be disabled or replaced without changing Prompt Kit semantic identities or TokenCorridor decision contracts."
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "TC-FA3",
+      "title": "Run TokenCorridor-to-FrontierAgent correlated execution tracer",
+      "status": "pending",
+      "owner": "AgentSwitchboard + TokenCorridor integration lane",
+      "dependencies": [
+        "TC-FA2",
+        "TC-03"
+      ],
+      "inputs": [
+        "TokenCorridor typed successor transition",
+        "ASB FrontierAgent adapter",
+        "stable correlation/action fingerprint",
+        "Prompt Kit/TokenCorridor authority provenance"
+      ],
+      "outputs": [
+        "One correlated execution request",
+        "FrontierAgent run identity",
+        "normalized execution/validation receipt",
+        "Factory Topology-ready execution/proof projection record"
+      ],
+      "acceptanceCriteria": [
+        "One non-user-only TokenCorridor successor reaches FrontierAgent through ASB without human prompt/chat/payload shuttling.",
+        "The same stable correlation identity is present in transition, ASB request, FrontierAgent run evidence and normalized receipt.",
+        "Execution result returns through ASB proof semantics; FrontierAgent task-board state is treated as runtime telemetry only.",
+        "Failure/retry/cancellation paths preserve the last proven state and do not silently manufacture completion."
+      ],
+      "evidence": []
     }
   ],
   "validation": [
@@ -482,16 +613,20 @@
     "git diff --check",
     "For TC-01+: run the focused decision-corridor contract/tests plus the automated test floor before integration.",
     "For TC-02+: retain benchmark receipts tied to exact engine/version/config and corpus revision.",
-    "For TC-05: require observed runtime receipt; static contracts cannot promote to AFK runtime proof."
+    "For TC-05: require observed runtime receipt; static contracts cannot promote to AFK runtime proof.",
+    "For TC-FA1: in the exact pinned FrontierAgent checkout run `uv sync --frozen --extra sandbox --extra document-readers --extra dev`, `uv run pytest -q`, and `uv run ruff check .` before any local modification.",
+    "For TC-FA1: run one `frontier-agent --mode react` and one `frontier-agent --mode agent_team` smoke in an isolated supported environment and retain the exact run directory identities without committing secrets.",
+    "For TC-FA2+: add focused negative fixtures proving --yes/approval cannot mint ASB authority, SpawnGuard cannot exceed ASB budgets, and unregistered FrontierAgent tools remain unreachable.",
+    "For TC-FA3: require observed correlation across TokenCorridor transition, ASB request, FrontierAgent run evidence, normalized receipt, and returned continuation before claiming runtime integration."
   ],
   "proof": {
     "target": "Durable OSS-first competitive architecture plan narrowing the open and managed decision/software-factory ecosystem into evidence-gated Token Corridor and AgentSwitchboard development.",
-    "achieved": "The initial Jev-centric research floor was found incomplete and corrected. Current plan now inventories open/self-hosted and managed alternatives across decision engines, model routing, structured generation, durability, sandbox/runtime, software-factory orchestration, and eval/observability; exact local runtime bakeoffs remain unproven.",
-    "ceiling": "This plan proves a source-backed open-vs-managed architecture and selection program only. It does not prove any candidate's performance on the user's factory corpus, production readiness on the user's hardware, Token Corridor runtime behavior, live AFK execution, or a standalone product/repository boundary."
+    "achieved": "The initial Jev-centric research floor was found incomplete and corrected. Current plan now inventories open/self-hosted and managed alternatives across decision engines, model routing, structured generation, durability, sandbox/runtime, software-factory orchestration, and eval/observability; exact local runtime bakeoffs remain unproven. FrontierAgent is now source-pinned at ApodexAI/FrontierAgent@9e533db6f6c34d16037ee5ec964c479d0eb51cde and classified as an Apache-2.0 execution-runtime donor with explicit scheduler, authority, artifact, and integration boundaries.",
+    "ceiling": "This plan proves a source-backed open-vs-managed architecture and selection program only. It does not prove any candidate's performance on the user's factory corpus, production readiness on the user's hardware, Token Corridor runtime behavior, live AFK execution, or a standalone product/repository boundary. No FrontierAgent clone/fork runtime, smoke run, ASB adapter, or TokenCorridor execution tracer is proven by this planning update."
   },
   "handoff": {
-    "nextOwner": "TC-00A OSS decision substrate evaluation lane",
-    "nextCommand": "git fetch --all --prune --tags && git worktree add ../AgentSwitchboard-token-corridor-oss-bakeoff -b eval/token-corridor-oss-decision-bakeoff origin/main",
+    "nextOwner": "TC-FA1 FrontierAgent runtime-substrate evaluation lane",
+    "nextCommand": "git fetch --all --prune --tags && test -d ../FrontierAgent/.git || git clone https://github.com/ApodexAI/FrontierAgent.git ../FrontierAgent && git -C ../FrontierAgent fetch --all --prune --tags && git -C ../FrontierAgent checkout --detach 9e533db6f6c34d16037ee5ec964c479d0eb51cde",
     "notes": [
       "Read this corrected plan before implementing the decision protocol; the earlier Jev-centric baseline is superseded by the OSS-first substrate survey.",
       "The bakeoff must complete with zero paid API credentials. TypeSafe Jev is optional comparison evidence only.",
@@ -505,7 +640,12 @@
       "Shared convergence ID: AFK-FACTORY-CONVERGENCE-2026-09-22.",
       "TokenCorridor PR #1 is the canonical cross-repository convergence owner.",
       "Prompt Kit PR #633 owns the human↔AFK interface convergence plan.",
-      "After PR #346 integrates, refresh its exact main SHA into TokenCorridor PR #1 before cross-repository C1 begins."
+      "After PR #346 integrates, refresh its exact main SHA into TokenCorridor PR #1 before cross-repository C1 begins.",
+      "FrontierAgent is Apache-2.0 and is deliberately kept behind an upstream/fork boundary; preserve license/attribution and mark distributed modifications.",
+      "Treat `frontier_agent/` as the long-term import/plugin seam and the CLI/TUI as a black-box smoke/prototype seam; do not fork core until a measured adapter gap exists.",
+      "ASB is the outer scheduler/admission/authority/proof owner. FrontierAgent Agent Team is an inner per-run scheduler only.",
+      "Do not mount or copy broad operator SSH/GitHub credential state into the FrontierAgent sandbox merely to make Git work; prefer existing scoped ASB/provider actions or a separately reviewed credential bridge.",
+      "Prompt Kit must stay backend-agnostic: it presents execution/proof state but does not gain FrontierAgent-specific semantic identities unless later product evidence requires them."
     ]
   }
 }
