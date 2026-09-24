@@ -30,12 +30,6 @@ def validate_request_v2_semantics(request: dict) -> None:
 
 def validate_receipt_v2_semantics(receipt: dict, request: dict) -> None:
     validate_receipt_semantics(receipt, request)
-    if receipt["requestId"] != request["requestId"]:
-        raise ContractError("receipt/request requestId mismatch")
-    if receipt["correlationId"] != request["correlationId"]:
-        raise ContractError("receipt/request correlationId mismatch")
-    if receipt["adapterKind"] != request["adapterKind"]:
-        raise ContractError("receipt/request adapterKind mismatch")
     if receipt["actionFingerprint"] != request["actionFingerprint"]:
         raise ContractError("receipt/request actionFingerprint mismatch")
 
@@ -116,12 +110,19 @@ def main() -> None:
         "mismatched actionFingerprint was accepted",
     )
 
-    over_budget = load_json(FIXTURE_DIR / "execution-receipt.v2.over-budget.invalid.json")
-    validate_json_schema(over_budget, receipt_v2_schema)
-    assert_negative(
-        lambda: validate_receipt_v2_semantics(over_budget, request_v2),
-        "over-budget execution usage was accepted",
-    )
+    independent_budget_fixtures = [
+        ("over-workers", "execution-receipt.v2.over-workers.invalid.json"),
+        ("over-parallel", "execution-receipt.v2.over-parallel.invalid.json"),
+        ("over-tokens", "execution-receipt.v2.over-tokens.invalid.json"),
+        ("over-time", "execution-receipt.v2.over-time.invalid.json"),
+    ]
+    for label, fixture_name in independent_budget_fixtures:
+        mutated = load_json(FIXTURE_DIR / fixture_name)
+        validate_json_schema(mutated, receipt_v2_schema)
+        assert_negative(
+            lambda value=mutated: validate_receipt_v2_semantics(value, request_v2),
+            f"{label} execution usage was accepted",
+        )
 
     invalid_parallel = copy.deepcopy(request_v2)
     invalid_parallel["executionEnvelope"]["maxParallelWorkers"] = (
