@@ -503,7 +503,7 @@ Canonical terminal action: none; no safe actionable work remains
 - **Acceptance gate:** readiness semantic matrix complete; unique behavior tested; current machine-profile and Windows-profile gates remain green; integrated/no-change disposition recorded
 - **Gate:** none — PR #348 / merge 212e2cf3fb31b675fda7205b01f8760046371818 satisfies the machine-profile dependency
 - **Last proof:** current post-#64 floor contains the reconciled role/trap/workflow/status layer without changing detector/path/launcher ownership; historical PR #79 head remains b3560cd56e98f7b91dfff2e060c8a27d1c76e76a pending fresh divergence analysis
-- **Next action:** refresh current main and PR #79 provider truth, reconstruct old-vs-current readiness semantics, then create an isolated branch only if still-unique behavior exists
+- **Next action:** inspect refreshed main and PR #79 provider truth, reconstruct old-vs-current readiness semantics, then create an isolated branch only if still-unique behavior exists
 - **Updated:** 2026-09-24T15:36:00Z
 
 ## ASQ-030 — Converge closed-PR salvage lanes and shared wiring
