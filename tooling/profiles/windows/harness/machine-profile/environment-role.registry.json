@@ -1,0 +1,59 @@
+{
+  "schema": "agentswitchboard.windows-environment-role-registry.v2",
+  "registryId": "operator-windows-environment-roles",
+  "assignmentPolicy": "Select the operator/environment role explicitly or from a local machine binding. Never infer role identity from username, hostname, tenant, OneDrive label, detected profileId, or remembered path.",
+  "pathPolicyOwner": "tooling/profiles/windows/harness/machine-profile/machine-profile.registry.json",
+  "detectorOwner": "tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1",
+  "roles": [
+    {
+      "roleId": "personal-windows-laptop",
+      "displayName": "Personal Windows laptop",
+      "selectionMode": "explicit-or-local-binding",
+      "repositoryPathSource": "machine-profile:pathRoles.developmentCheckout",
+      "bootstrapEntrypoint": "AgentSwitchboard-Technician-Bootstrap.cmd",
+      "committedResolvedPathAllowed": false
+    },
+    {
+      "roleId": "desktop-workstation",
+      "displayName": "Desktop workstation",
+      "selectionMode": "explicit-or-local-binding",
+      "repositoryPathSource": "machine-profile:pathRoles.developmentCheckout",
+      "bootstrapEntrypoint": "AgentSwitchboard-Technician-Bootstrap.cmd",
+      "committedResolvedPathAllowed": false
+    },
+    {
+      "roleId": "admin-box-1",
+      "displayName": "Admin box 1",
+      "selectionMode": "explicit-or-local-binding",
+      "repositoryPathSource": "machine-profile:pathRoles.developmentCheckout",
+      "bootstrapEntrypoint": "AgentSwitchboard-Technician-Bootstrap.cmd",
+      "committedResolvedPathAllowed": false
+    },
+    {
+      "roleId": "admin-box-2",
+      "displayName": "Admin box 2",
+      "selectionMode": "explicit-or-local-binding",
+      "repositoryPathSource": "machine-profile:pathRoles.developmentCheckout",
+      "bootstrapEntrypoint": "AgentSwitchboard-Technician-Bootstrap.cmd",
+      "committedResolvedPathAllowed": false
+    }
+  ],
+  "sharedRules": [
+    "Role identity and detected machine profile are separate facts.",
+    "Repository path selection is owned by the current machine-profile detector and registry, not this role registry.",
+    "Capture resolved repository root only in local evidence.",
+    "Verify origin, branch, HEAD, and dirty state before mutation.",
+    "A failed prerequisite blocks downstream execution.",
+    "Do not commit usernames, hostnames, tenant labels, or resolved local paths."
+  ],
+  "localBindingFields": [
+    "environmentRoleId",
+    "repositoryRoot",
+    "origin",
+    "branch",
+    "head",
+    "capturedAt",
+    "evidenceRoot"
+  ],
+  "proofCeiling": "Explicit role taxonomy and role-to-current-path-policy routing only. No live machine binding, workstation readiness, package, provider, or runtime proof."
+}

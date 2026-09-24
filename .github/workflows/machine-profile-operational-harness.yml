@@ -1,0 +1,62 @@
+name: Machine profile operational harness
+
+on:
+  pull_request:
+    paths:
+      - 'tooling/profiles/windows/harness/machine-profile/**'
+      - 'tooling/profiles/windows/Get-MachineProfileOperationalStatus.ps1'
+      - 'scripts/Test-MachineProfileOperationalHarness.ps1'
+      - 'tests/test_machine_profile_operational_harness.py'
+      - 'docs/workstation/machine-profile-bootstrap.md'
+      - '.github/workflows/machine-profile-operational-harness.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tooling/profiles/windows/harness/machine-profile/**'
+      - 'tooling/profiles/windows/Get-MachineProfileOperationalStatus.ps1'
+      - 'scripts/Test-MachineProfileOperationalHarness.ps1'
+      - 'tests/test_machine_profile_operational_harness.py'
+      - 'docs/workstation/machine-profile-bootstrap.md'
+      - '.github/workflows/machine-profile-operational-harness.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Portable operational contract
+        run: python tests/test_machine_profile_operational_harness.py
+      - name: PowerShell operational contract
+        shell: pwsh
+        run: ./scripts/Test-MachineProfileOperationalHarness.ps1
+      - name: Current machine-profile Python contract
+        run: python -m unittest tests.test_machine_profile_bootstrap
+      - name: Current machine-profile Windows contract
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/Test-MachineProfileBootstrap.ps1
+      - name: Agent documentation contract
+        shell: pwsh
+        run: ./scripts/Test-AgentDocumentationContract.ps1
+      - name: Diff hygiene and clean checkout
+        shell: pwsh
+        run: |
+          if ('${{ github.event_name }}' -eq 'pull_request') {
+            git diff --check "${{ github.event.pull_request.base.sha }}...HEAD"
+          } else {
+            git diff --check HEAD^
+          }
+          if (git status --short) { throw 'Checkout is dirty after machine-profile operational validation.' }

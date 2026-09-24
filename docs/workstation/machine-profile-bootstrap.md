@@ -82,3 +82,32 @@ The wrapper creates the workspace directory when absent, computes the explicit r
 The technician bootstrap runs profile detection before repository acquisition using Windows PowerShell, so PowerShell 7 is no longer a prerequisite for cloning the missing repository. PowerShell 7 remains required before WSL repair, workstation setup, and live certification.
 
 Observed usernames, hostnames, tenant names, and paths are never committed. Synthetic fixtures are the only profile identities tracked by the repository.
+
+## Operational role and handoff layer
+
+The detected machine `profileId` and the operator/environment role are different facts. The operational harness preserves four explicit role identities—`personal-windows-laptop`, `desktop-workstation`, `admin-box-1`, and `admin-box-2`—without giving any role its own repository-path policy.
+
+Role selection must be explicit or come from a local machine binding. Every role consumes the current detector's `pathRoles.developmentCheckout`; none may revive the historical `%USERPROFILE%\Desktop\Dev` default or infer a path from a username, hostname, tenant, or OneDrive label.
+
+Repository-only operational status:
+
+```powershell
+pwsh -NoLogo -NoProfile -File tooling/profiles/windows/Get-MachineProfileOperationalStatus.ps1
+```
+
+Select a role for the local handoff artifact without changing machine state:
+
+```powershell
+pwsh -NoLogo -NoProfile -File tooling/profiles/windows/Get-MachineProfileOperationalStatus.ps1 -EnvironmentRoleId admin-box-1
+```
+
+Generated status artifacts stay under `%TEMP%\AgentSwitchboard\machine-profile-harness\<run-id>` and are untracked because they may contain a resolved repository path. The tracked role/trap/workflow contracts contain no real machine identity.
+
+Focused validation:
+
+```powershell
+python tests/test_machine_profile_operational_harness.py
+pwsh -NoLogo -NoProfile -File scripts/Test-MachineProfileOperationalHarness.ps1
+```
+
+The operational layer does not replace `Get-AgentSwitchboardMachineProfile.ps1`, the current machine-profile registry/schema, the canonical skill, bootstrap launchers, or live-certification owners. PR #64's historical candidate-validator wrappers, pre-commit hook, duplicate skill rewrite, standalone manifest, and Desktop-default role path policy are intentionally retired.

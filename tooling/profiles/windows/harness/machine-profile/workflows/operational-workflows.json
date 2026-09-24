@@ -1,0 +1,92 @@
+{
+  "schema": "agentswitchboard.machine-profile-operational-workflows.v1",
+  "workflows": [
+    {
+      "workflowId": "machine-profile-task-intake",
+      "trigger": "Windows bootstrap, repair, relocation, or path-sensitive troubleshooting.",
+      "steps": [
+        "Read the current machine-profile codebase map and detector output.",
+        "Select environmentRoleId explicitly or from a local binding; do not infer it from profileId.",
+        "Consume repository.recommendedRoot/pathRoles.developmentCheckout from current machine-profile evidence.",
+        "Verify origin, branch, HEAD, and dirty state before mutation.",
+        "Use isolated ownership for separately owned work.",
+        "Choose validation or failure recovery before issuing a next command."
+      ],
+      "outputs": [
+        "environmentRoleId",
+        "profileId",
+        "repositoryRootSource",
+        "verified repository identity",
+        "first executable action"
+      ]
+    },
+    {
+      "workflowId": "machine-profile-validation",
+      "trigger": "Operational role, trap, workflow, report, detector integration, or path-policy change.",
+      "steps": [
+        "Run the operational Python contract.",
+        "Run the operational PowerShell contract.",
+        "Run the current machine-profile bootstrap contracts.",
+        "Run affected broader Windows-profile/device-profile gates when registered.",
+        "Run git diff --check and preserve exact-head evidence."
+      ],
+      "outputs": [
+        "focused results",
+        "current-owner results",
+        "proof ceiling"
+      ]
+    },
+    {
+      "workflowId": "machine-profile-failure-recovery",
+      "trigger": "Any nonzero detector, bootstrap, setup, certification, or operational-harness command.",
+      "steps": [
+        "Stop downstream execution.",
+        "Checkpoint command, shell, exit code, role, profileId, repository-root source, branch, HEAD, and dirty state.",
+        "Classify path, Git, prerequisite, deterministic defect, protected-runtime, or external dependency.",
+        "Search known traps and current owner tests.",
+        "Repair only the owning surface.",
+        "Rerun the failed stage, owning validator, then broader safe gate."
+      ],
+      "forbidden": [
+        "continuing after a failed prerequisite",
+        "destructive cleanup",
+        "runtime claims from static validation"
+      ]
+    },
+    {
+      "workflowId": "machine-profile-handoff",
+      "trigger": "Sprint end, review boundary, reboot boundary, runtime stop, or chat transfer.",
+      "requiredFields": [
+        "repo",
+        "branch",
+        "PR or sprint",
+        "environmentRoleId",
+        "profileId",
+        "repositoryRootSource",
+        "owned scope",
+        "forbidden scope",
+        "changes",
+        "validation",
+        "gaps",
+        "risks",
+        "proof ceiling",
+        "next action owner",
+        "next action dependency",
+        "exact next command"
+      ],
+      "steps": [
+        "Resolve branch and HEAD from Git.",
+        "Name the repository-root source without committing the resolved private path.",
+        "Order next work by dependency and owner.",
+        "Emit a location-independent exact next command.",
+        "Advance to the next unproven gate instead of rerunning completed proof."
+      ],
+      "outputs": [
+        "local operational status",
+        "next action owner",
+        "next action dependency",
+        "exact next command"
+      ]
+    }
+  ]
+}

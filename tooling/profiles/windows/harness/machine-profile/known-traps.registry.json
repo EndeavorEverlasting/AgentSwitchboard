@@ -1,0 +1,35 @@
+{
+  "schema": "agentswitchboard.machine-profile-operational-traps.v1",
+  "traps": [
+    {
+      "id": "remembered-path",
+      "signal": "A previous machine's username, Desktop, OneDrive label, or checkout root is reused.",
+      "avoid": "Resolve the current machine profile and role; consume pathRoles.developmentCheckout instead of remembered paths."
+    },
+    {
+      "id": "role-profile-conflation",
+      "signal": "A detected profileId is treated as the operator/environment role.",
+      "avoid": "Keep machine profile classification separate from explicit environmentRoleId."
+    },
+    {
+      "id": "path-role-collapse",
+      "signal": "Machines sharing a path convention are treated as the same operational role.",
+      "avoid": "Preserve personal-windows-laptop, desktop-workstation, admin-box-1, and admin-box-2 as distinct bindings."
+    },
+    {
+      "id": "downstream-after-failure",
+      "signal": "Setup, repair, or live certification continues after a nonzero prerequisite.",
+      "avoid": "Stop at the first failed dependency and preserve the last proven state."
+    },
+    {
+      "id": "cwd-relative-next-command",
+      "signal": "A handoff emits a bare repository command that fails from another working directory.",
+      "avoid": "Emit a command with the resolved repository-root path and propagate the child exit code."
+    },
+    {
+      "id": "pull-over-local-patch",
+      "signal": "A local emergency patch is followed by pull-and-run against the same checkout.",
+      "avoid": "Commit/push isolated work, refresh remote truth, verify the exact SHA, then execute."
+    }
+  ]
+}

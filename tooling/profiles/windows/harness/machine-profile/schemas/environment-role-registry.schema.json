@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentswitchboard.windows-environment-role-registry.v2.schema.json",
+  "title": "AgentSwitchboard Windows environment-role registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "registryId",
+    "assignmentPolicy",
+    "pathPolicyOwner",
+    "detectorOwner",
+    "roles",
+    "sharedRules",
+    "localBindingFields",
+    "proofCeiling"
+  ],
+  "properties": {
+    "schema": {
+      "const": "agentswitchboard.windows-environment-role-registry.v2"
+    },
+    "registryId": {
+      "const": "operator-windows-environment-roles"
+    },
+    "assignmentPolicy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pathPolicyOwner": {
+      "const": "tooling/profiles/windows/harness/machine-profile/machine-profile.registry.json"
+    },
+    "detectorOwner": {
+      "const": "tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1"
+    },
+    "roles": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "roleId",
+          "displayName",
+          "selectionMode",
+          "repositoryPathSource",
+          "bootstrapEntrypoint",
+          "committedResolvedPathAllowed"
+        ],
+        "properties": {
+          "roleId": {
+            "enum": [
+              "personal-windows-laptop",
+              "desktop-workstation",
+              "admin-box-1",
+              "admin-box-2"
+            ]
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "selectionMode": {
+            "const": "explicit-or-local-binding"
+          },
+          "repositoryPathSource": {
+            "const": "machine-profile:pathRoles.developmentCheckout"
+          },
+          "bootstrapEntrypoint": {
+            "const": "AgentSwitchboard-Technician-Bootstrap.cmd"
+          },
+          "committedResolvedPathAllowed": {
+            "const": false
+          }
+        }
+      }
+    },
+    "sharedRules": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "localBindingFields": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "proofCeiling": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}
