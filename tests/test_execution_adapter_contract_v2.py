@@ -29,7 +29,7 @@ def validate_request_v2_semantics(request: dict) -> None:
 
 
 def validate_receipt_v2_semantics(receipt: dict, request: dict) -> None:
-    validate_receipt_semantics(receipt)
+    validate_receipt_semantics(receipt, request)
     if receipt["requestId"] != request["requestId"]:
         raise ContractError("receipt/request requestId mismatch")
     if receipt["correlationId"] != request["correlationId"]:
@@ -45,10 +45,16 @@ def validate_receipt_v2_semantics(receipt: dict, request: dict) -> None:
         raise ContractError("workersStarted exceeds maxWorkers")
     if usage["peakParallelWorkers"] > envelope["maxParallelWorkers"]:
         raise ContractError("peakParallelWorkers exceeds maxParallelWorkers")
+    if usage["peakParallelWorkers"] > usage["workersStarted"]:
+        raise ContractError("peakParallelWorkers cannot exceed workersStarted")
     if usage["modelTokensUsed"] > envelope["maxModelTokens"]:
         raise ContractError("modelTokensUsed exceeds maxModelTokens")
     if usage["wallClockMs"] > envelope["maxWallClockSeconds"] * 1000:
         raise ContractError("wallClockMs exceeds maxWallClockSeconds")
+    duration_ms = float(receipt["durationMs"])
+    tolerance_ms = max(1.0, duration_ms * 0.01)
+    if abs(float(usage["wallClockMs"]) - duration_ms) > tolerance_ms:
+        raise ContractError("wallClockMs is inconsistent with receipt durationMs")
 
 
 def main() -> None:
@@ -144,6 +150,29 @@ def main() -> None:
     assert_negative(
         lambda: validate_receipt_v2_semantics(wrong_workers, request_v2),
         "worker usage exceeding request ceiling was accepted",
+    )
+
+    contradictory_peak = copy.deepcopy(receipt_v2)
+    contradictory_peak["executionUsage"]["peakParallelWorkers"] = 2
+    contradictory_peak["executionUsage"]["workersStarted"] = 1
+    assert_negative(
+        lambda: validate_receipt_v2_semantics(contradictory_peak, request_v2),
+        "peak parallelism exceeding workersStarted was accepted",
+    )
+
+    contradictory_wall = copy.deepcopy(receipt_v2)
+    contradictory_wall["executionUsage"]["wallClockMs"] = 1000
+    assert_negative(
+        lambda: validate_receipt_v2_semantics(contradictory_wall, request_v2),
+        "wallClockMs contradicting receipt duration was accepted",
+    )
+
+    oversized_output = copy.deepcopy(receipt_v2)
+    oversized_output["output"]["stdoutExcerpt"] = "x" * 8192
+    validate_json_schema(oversized_output, receipt_v2_schema)
+    assert_negative(
+        lambda: validate_receipt_v2_semantics(oversized_output, request_v2),
+        "v2 receipt exceeding request maxOutputBytes was accepted",
     )
 
     # Every v2 action identity is a stable digest, not agent prose or mutable authority.
