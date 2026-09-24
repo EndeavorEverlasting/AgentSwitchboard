@@ -1,0 +1,46 @@
+{
+  "schema": "agentswitchboard.execution-request/v2",
+  "requestId": "req_local_20260920_001",
+  "correlationId": "corr-trio-v1-demo",
+  "causationId": "lane-local-argv",
+  "adapterKind": "local-argv",
+  "mission": "Run deterministic local protected-control fixture.",
+  "workingDirectory": ".",
+  "timeoutSeconds": 30,
+  "mutation": {
+    "allowed": false,
+    "allowedScopes": [],
+    "forbiddenScopes": [
+      "**"
+    ]
+  },
+  "executionPolicy": {
+    "profile": "VALIDATION",
+    "networkAllowed": false,
+    "interactiveAuthAllowed": false,
+    "maxOutputBytes": 8192
+  },
+  "input": {
+    "kind": "local-argv",
+    "argv": [
+      "python3",
+      "-c",
+      "print('LOCAL_ARGV_CONTRACT_FIXTURE')"
+    ],
+    "environment": {},
+    "inheritEnvironment": true
+  },
+  "provenance": {
+    "source": "EXECUTION_ADAPTER_TRIO_V1",
+    "planId": "ASB-2026-09-EXECUTION-ADAPTER-TRIO-V1",
+    "laneId": "EAT-104",
+    "promptRef": null
+  },
+  "actionFingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "executionEnvelope": {
+    "maxWorkers": 4,
+    "maxParallelWorkers": 2,
+    "maxModelTokens": 50000,
+    "maxWallClockSeconds": 60
+  }
+}
