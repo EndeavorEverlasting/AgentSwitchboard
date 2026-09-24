@@ -8,7 +8,12 @@
   ],
   "contracts": [
     "tooling/profiles/windows/harness/machine-profile/machine-profile.registry.json",
-    "tooling/profiles/windows/harness/machine-profile/schemas/machine-profile.schema.json"
+    "tooling/profiles/windows/harness/machine-profile/schemas/machine-profile.schema.json",
+    "tooling/profiles/windows/harness/machine-profile/environment-role.registry.json",
+    "tooling/profiles/windows/harness/machine-profile/schemas/environment-role-registry.schema.json",
+    "tooling/profiles/windows/harness/machine-profile/known-traps.registry.json",
+    "tooling/profiles/windows/harness/machine-profile/artifact-registry.json",
+    "tooling/profiles/windows/harness/machine-profile/workflows/operational-workflows.json"
   ],
   "fixtures": [
     "tooling/profiles/windows/harness/machine-profile/fixtures/enterprise-onedrive.fixture.json",
@@ -17,16 +22,76 @@
   "validators": [
     "scripts/Test-MachineProfileBootstrap.ps1",
     "tests/test_machine_profile_bootstrap.py",
-    ".github/workflows/machine-profile-bootstrap.yml"
+    ".github/workflows/machine-profile-bootstrap.yml",
+    "scripts/Test-MachineProfileOperationalHarness.ps1",
+    "tests/test_machine_profile_operational_harness.py",
+    ".github/workflows/machine-profile-operational-harness.yml"
   ],
   "operatorDocumentation": "docs/workstation/machine-profile-bootstrap.md",
   "agentSkill": ".ai/skills/machine-profile-bootstrap/SKILL.md",
   "localArtifacts": [
     "%LOCALAPPDATA%\\AgentSwitchboard\\machine-profile\\machine-profile.json",
     "%LOCALAPPDATA%\\AgentSwitchboard\\machine-profile\\machine-profile.env.cmd",
-    "%LOCALAPPDATA%\\AgentSwitchboard\\machine-profile\\machine-profile.env.ps1"
+    "%LOCALAPPDATA%\\AgentSwitchboard\\machine-profile\\machine-profile.env.ps1",
+    "%TEMP%\\AgentSwitchboard\\machine-profile-harness\\<run-id>\\machine-profile-operational-status.json",
+    "%TEMP%\\AgentSwitchboard\\machine-profile-harness\\<run-id>\\machine-profile-operational-status.md"
   ],
   "collisionBoundary": "This harness owns machine-environment detection, chosen-directory delegation, and repository-root recommendation. It does not own provider credentials, agent routing, package installation, WSL repair, launcher behavior, or live certification.",
   "privacyBoundary": "Real usernames, hostnames, tenant names, and filesystem paths remain local-only. Only synthetic fixtures may be committed.",
-  "proofCeiling": "Tracked detection logic, deterministic classification, chosen-directory delegation, path recommendation, fixture validation, and bootstrap ordering only."
+  "proofCeiling": "Tracked detection logic, deterministic classification, chosen-directory delegation, path recommendation, fixture validation, and bootstrap ordering only.",
+  "operationalHarness": {
+    "status": "salvaged-leaf",
+    "authority": "Extends the current machine-profile owner with explicit operational role, trap, workflow, artifact, status, and handoff contracts. It does not own detector classification or repository path policy.",
+    "roleRegistry": "tooling/profiles/windows/harness/machine-profile/environment-role.registry.json",
+    "roleSchema": "tooling/profiles/windows/harness/machine-profile/schemas/environment-role-registry.schema.json",
+    "knownTrapsRegistry": "tooling/profiles/windows/harness/machine-profile/known-traps.registry.json",
+    "artifactRegistry": "tooling/profiles/windows/harness/machine-profile/artifact-registry.json",
+    "workflowSpecs": "tooling/profiles/windows/harness/machine-profile/workflows/operational-workflows.json",
+    "statusReporter": "tooling/profiles/windows/Get-MachineProfileOperationalStatus.ps1",
+    "validator": "scripts/Test-MachineProfileOperationalHarness.ps1",
+    "pythonValidator": "tests/test_machine_profile_operational_harness.py",
+    "ciWorkflow": ".github/workflows/machine-profile-operational-harness.yml",
+    "requiredTracked": [
+      "tooling/profiles/windows/harness/machine-profile/codebase-map.json",
+      "tooling/profiles/windows/harness/machine-profile/machine-profile.registry.json",
+      "tooling/profiles/windows/harness/machine-profile/schemas/machine-profile.schema.json",
+      "tooling/profiles/windows/harness/machine-profile/environment-role.registry.json",
+      "tooling/profiles/windows/harness/machine-profile/schemas/environment-role-registry.schema.json",
+      "tooling/profiles/windows/harness/machine-profile/known-traps.registry.json",
+      "tooling/profiles/windows/harness/machine-profile/artifact-registry.json",
+      "tooling/profiles/windows/harness/machine-profile/workflows/operational-workflows.json",
+      "tooling/profiles/windows/Get-MachineProfileOperationalStatus.ps1",
+      "scripts/Test-MachineProfileOperationalHarness.ps1",
+      "tests/test_machine_profile_operational_harness.py",
+      "docs/workstation/machine-profile-bootstrap.md",
+      ".github/workflows/machine-profile-operational-harness.yml"
+    ],
+    "salvage": {
+      "sourcePullRequest": 64,
+      "sourceHead": "45b44b158d7f44e18dfbc6c24120a0c02924f48b",
+      "historicalBase": "eb91efa9674c0361925905ee6145fd7434190f53",
+      "integratedAgainst": "main@3a0f113c89018c894ed44475e26c75307a7b49a8",
+      "preserve": [
+        "explicit environment-role taxonomy",
+        "known-trap registry",
+        "operational workflows",
+        "artifact/report contract",
+        "read-only operational status surface",
+        "focused cross-platform validation"
+      ],
+      "mergeIntoCurrentOwners": [
+        "repository path policy -> current machine-profile registry",
+        "detector/profile classification -> current detector",
+        "operator documentation -> current machine-profile bootstrap guide"
+      ],
+      "retire": [
+        "historical Desktop/Dev default role path policy",
+        "historical candidate-validation wrappers",
+        "historical pre-commit hook",
+        "historical duplicate skill rewrite",
+        "historical standalone manifest"
+      ]
+    },
+    "proofCeiling": "Tracked operational-contract completeness and synthetic/static role/path-boundary validation only. No live role binding, workstation mutation, bootstrap success, provider execution, or user acceptance."
+  }
 }

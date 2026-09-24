@@ -1,0 +1,72 @@
+{
+  "schema": "agentswitchboard.machine-profile-operational-artifacts.v1",
+  "trackedArtifacts": [
+    {
+      "id": "codebase-map",
+      "path": "tooling/profiles/windows/harness/machine-profile/codebase-map.json"
+    },
+    {
+      "id": "role-registry",
+      "path": "tooling/profiles/windows/harness/machine-profile/environment-role.registry.json"
+    },
+    {
+      "id": "role-schema",
+      "path": "tooling/profiles/windows/harness/machine-profile/schemas/environment-role-registry.schema.json"
+    },
+    {
+      "id": "known-traps",
+      "path": "tooling/profiles/windows/harness/machine-profile/known-traps.registry.json"
+    },
+    {
+      "id": "workflow-specs",
+      "path": "tooling/profiles/windows/harness/machine-profile/workflows/operational-workflows.json"
+    }
+  ],
+  "generatedArtifacts": [
+    {
+      "id": "machine-profile",
+      "path": "%LOCALAPPDATA%\\AgentSwitchboard\\machine-profile\\machine-profile.json",
+      "generator": "Get-AgentSwitchboard-MachineProfile.cmd",
+      "tracked": false,
+      "containsLocalPathEvidence": true
+    },
+    {
+      "id": "machine-profile-env-cmd",
+      "path": "%LOCALAPPDATA%\\AgentSwitchboard\\machine-profile\\machine-profile.env.cmd",
+      "generator": "Get-AgentSwitchboard-MachineProfile.cmd",
+      "tracked": false,
+      "containsLocalPathEvidence": true
+    },
+    {
+      "id": "machine-profile-env-ps1",
+      "path": "%LOCALAPPDATA%\\AgentSwitchboard\\machine-profile\\machine-profile.env.ps1",
+      "generator": "Get-AgentSwitchboard-MachineProfile.cmd",
+      "tracked": false,
+      "containsLocalPathEvidence": true
+    },
+    {
+      "id": "operational-status-json",
+      "path": "%TEMP%\\AgentSwitchboard\\machine-profile-harness\\<run-id>\\machine-profile-operational-status.json",
+      "generator": "tooling/profiles/windows/Get-MachineProfileOperationalStatus.ps1",
+      "tracked": false,
+      "containsLocalPathEvidence": true
+    },
+    {
+      "id": "operational-status-markdown",
+      "path": "%TEMP%\\AgentSwitchboard\\machine-profile-harness\\<run-id>\\machine-profile-operational-status.md",
+      "generator": "tooling/profiles/windows/Get-MachineProfileOperationalStatus.ps1",
+      "tracked": false,
+      "containsLocalPathEvidence": true
+    }
+  ],
+  "forbiddenTrackedContent": [
+    "usernames",
+    "hostnames",
+    "tenant names",
+    "resolved local repository paths",
+    "raw environment dumps",
+    "credentials",
+    "tokens"
+  ],
+  "proofCeiling": "Artifact identity, generation ownership, tracked/untracked policy, and local-evidence boundary only."
+}
