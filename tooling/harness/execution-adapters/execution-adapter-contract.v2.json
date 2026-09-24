@@ -112,7 +112,10 @@
     "Every v2 request carries an immutable sha256 actionFingerprint that binds the admitted action identity before native execution begins.",
     "Every v2 receipt echoes the request actionFingerprint exactly; missing or mismatched fingerprints fail closed and cannot be promoted as runtime proof.",
     "The v2 executionEnvelope fixes maxWorkers, maxParallelWorkers, maxModelTokens, and maxWallClockSeconds before dispatch; maxParallelWorkers may not exceed maxWorkers and maxWallClockSeconds may not exceed timeoutSeconds.",
-    "The v2 executionUsage record never exceeds the admitted executionEnvelope; over-budget fan-out, model-token use, or wall-clock use is a failed contract, not successful runtime proof."
+    "The v2 executionUsage record never exceeds the admitted executionEnvelope; over-budget fan-out, model-token use, or wall-clock use is a failed contract, not successful runtime proof.",
+    "v2 executionUsage.peakParallelWorkers may not exceed workersStarted; a receipt cannot claim more simultaneous workers than were started.",
+    "v2 executionUsage.wallClockMs must remain consistent with receipt durationMs/timestamps within the deterministic receipt tolerance.",
+    "v2 receipt output remains bounded by the inherited executionPolicy.maxOutputBytes rule; the v2 semantic validator must pass the originating request into shared receipt validation."
   ],
   "adapterInputRules": {
     "local-argv": [
