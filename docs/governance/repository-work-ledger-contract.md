@@ -90,9 +90,10 @@ AgentSwitchboard treats a chat-length operator sequence as an incubation form, n
 A long `Next action` is valid only when all of these are true:
 
 1. `References` contains a backticked repository-local executable path ending in `.ps1`, `.cmd`, `.bat`, `.sh`, or `.py`.
-2. That path exists and is tracked by Git in this repository.
-3. `Next action` mentions the same referenced path or its filename, proving the durable owner is actually the instructed entrypoint rather than an unrelated reference.
-4. The executable remains subject to its own owning tests, validators, runtime proof ceiling, and safety gates; a ledger citation never promotes runtime proof.
+2. That path exists on disk and is a **tracked regular Git blob** in this repository (index mode `100644` or `100755`). Symlinks (`120000`), gitlinks/submodules (`160000`), and untracked local scripts do not qualify, even when `Test-Path` succeeds.
+3. Length is measured against the **complete multiline** `Next action` field, not only the first line, so an indented or fenced command block cannot evade the threshold.
+4. `Next action` mentions the same referenced path or its filename, proving the durable owner is actually the instructed entrypoint rather than an unrelated reference.
+5. The executable remains subject to its own owning tests, validators, runtime proof ceiling, and safety gates; a ledger citation never promotes runtime proof.
 
 This is deliberately a **local strengthening**. It does not change `RepoLedgerInteroperability.v1`, does not require other consumer repositories to adopt AgentSwitchboard's 320-character threshold or executable extensions, and does not force short one-step diagnostics into wrappers prematurely.
 
