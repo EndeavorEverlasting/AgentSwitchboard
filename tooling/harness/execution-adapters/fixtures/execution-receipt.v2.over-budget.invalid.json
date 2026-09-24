@@ -1,0 +1,37 @@
+{
+  "schema": "agentswitchboard.execution-receipt/v2",
+  "requestId": "req_local_20260920_001",
+  "correlationId": "corr-trio-v1-demo",
+  "adapterKind": "local-argv",
+  "status": "EXECUTED",
+  "startedAt": "2026-09-20T17:00:00Z",
+  "completedAt": "2026-09-20T17:00:00.250000Z",
+  "durationMs": 250,
+  "executionIdentity": {
+    "kind": "PROCESS",
+    "value": "fixture-pid-12345"
+  },
+  "exitCode": 0,
+  "artifacts": [],
+  "output": {
+    "stdoutExcerpt": "LOCAL_ARGV_CONTRACT_FIXTURE\n",
+    "stderrExcerpt": "",
+    "structuredResult": null
+  },
+  "blocker": null,
+  "proof": {
+    "level": "CONTRACT_STATIC",
+    "independentValidationRequired": true,
+    "validationArtifact": "synthetic-fixture-only",
+    "notes": [
+      "Fixture demonstrates receipt shape only; it is not runtime proof."
+    ]
+  },
+  "actionFingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "executionUsage": {
+    "workersStarted": 1,
+    "peakParallelWorkers": 3,
+    "modelTokensUsed": 50001,
+    "wallClockMs": 61000
+  }
+}
