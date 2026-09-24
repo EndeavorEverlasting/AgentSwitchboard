@@ -3,10 +3,12 @@
 **Plan ID:** `ASB-2026-09-TOKEN-CORRIDOR-COMPETITIVE-ARCHITECTURE`
 **Status:** Proposed
 **Priority:** High
-**Pull request:** #346 (draft)
-**Planning floor:** AgentSwitchboard `main@d90e5ed457c0657b6016c3ead0c976bf679a8de1`
-**Local evidence floor:** NodeWeaver `main@add0fd24cb213afdad4cb082db9ba8af947cc228`; Prompt Kit/Triage `main@c97718247e7b14544d198035dd3cdc07725545a8`
-**Working name only:** **Token Corridor** remains a product/architecture hypothesis. This plan does not create or reserve a standalone repository.
+**Pull request:** #347 — current owner of this plan file (FrontierAgent runtime bootstrap; supersedes PR #346 draft floor)
+**Planning floor:** AgentSwitchboard `main@9992f4305021a33dd5ca9916a8f33cf45d8581ff`
+**Canonical convergence plan:** `EndeavorEverlasting/TokenCorridor` → `plans/active/AFK-FACTORY-CONVERGENCE.md` + `plans/active/AFK-FACTORY-CONVERGENCE.plan.json` (TokenCorridor `main@bce957ccd8796d4b5a42827ffb67f2ba165221ab`, material floor `afbc796f6292d13888975699329ad188b86d3ee5`)
+**Local evidence floor:** NodeWeaver `main@add0fd24cb213afdad4cb082db9ba8af947cc228`; Prompt Kit/Triage `main@931b642a80d72e3fdeafa18698e60d958cedee84`
+**Destination invariant (canonical):** **TokenCorridor is the destination product and canonical convergence repository for Prompt Kit / AFKAF and AgentSwitchboard; the current three-repository split is migration topology, not permanent product boundary.** Logical ownership boundaries survive physical consolidation: Prompt Kit = human↔AFK interface; TokenCorridor = decision/transition seam; AgentSwitchboard = execution/proof control plane. Runtime substrates (FirstMate, FrontierAgent) remain adapter-bound unless measured evidence justifies extraction. The FirstMate ↔ ASB ↔ Prompt Kit protocol remains an internal contract boundary, not a repository-separation requirement.
+**Working name note:** **Token Corridor** remains the working name for the bounded-decision seam; this plan participates as the AgentSwitchboard execution/proof companion to the canonical TokenCorridor convergence program (it does not itself create a second TokenCorridor repository).
 
 ## Reconciliation: the first research pass was incomplete
 
@@ -51,11 +53,48 @@ The corrected question is:
 
 This AgentSwitchboard plan now participates in shared convergence identity:
 
-`AFK-FACTORY-CONVERGENCE-2026-09-22`
+`AFK-FACTORY-CONVERGENCE-2026-09-22` — **canonical owner is `EndeavorEverlasting/TokenCorridor` → `plans/active/AFK-FACTORY-CONVERGENCE.md` + `plans/active/AFK-FACTORY-CONVERGENCE.plan.json`** (TokenCorridor PR #1, material floor `afbc796f6292d13888975699329ad188b86d3ee5`, current `main@bce957ccd8796d4b5a42827ffb67f2ba165221ab`).
 
-- **Canonical convergence owner:** `EndeavorEverlasting/TokenCorridor`, TokenCorridor PR #1, `plans/active/AFK-FACTORY-CONVERGENCE.plan.json`.
-- **Prompt Kit interface owner:** `EndeavorEverlasting/web-excel-repair-triage`, Prompt Kit PR #633, `docs/plans/AFK_FACTORY_INTERFACE_CONVERGENCE_SPRINT_MAP.md`.
-- **AgentSwitchboard execution owner:** this plan / PR #346.
+- **Canonical convergence owner:** `EndeavorEverlasting/TokenCorridor`, TokenCorridor PR #1, `plans/active/AFK-FACTORY-CONVERGENCE.plan.json` (destination product/repository; see `destinationContract`).
+- **Prompt Kit interface owner:** `EndeavorEverlasting/web-excel-repair-triage`, `docs/plans/AFK_FACTORY_INTERFACE_CONVERGENCE_SPRINT_MAP.md` (human↔AFK interface foundation; product capabilities migrate into TokenCorridor, Excel/OOXML repair stays in Triage).
+- **AgentSwitchboard execution owner:** this plan / PR #347 — execution/proof control plane; relevant ASB product capabilities migrate into TokenCorridor behind preserved contracts; FrontierAgent/FirstMate remain runtime adapters unless measured evidence justifies extraction.
+
+### TokenCorridor destination and repository-convergence invariant (canonical)
+
+**TokenCorridor is the destination product and canonical convergence repository for Prompt Kit / AFKAF and AgentSwitchboard.** The current three-repository layout is migration topology, not permanent product boundary.
+
+Logical boundaries survive physical consolidation:
+
+- **Prompt Kit / AFKAF** — human↔AFK interface semantics, prompt/workflow meaning, continuation semantics, evidence/authority presentation, operator-facing topology behavior (remains front door; not hidden).
+- **TokenCorridor** — unified product identity, convergence program, bounded decision/successor-transition seam, destination packaging/integration boundary.
+- **AgentSwitchboard** — execution readiness, adapter selection, authority enforcement at dispatch, normalized receipts, validation/integration evidence, proof ceilings (preserved logical ownership; physical capabilities converge into TokenCorridor per M3).
+- **FirstMate / FrontierAgent / other runtimes** — runtime substrates/adapters behind pinned upstream/fork + adapter boundaries by default; selective extraction requires measured evidence (see canonical `donorDisposition.runtimes`).
+
+The accepted FirstMate ↔ AgentSwitchboard ↔ Prompt Kit protocol remains an **internal contract boundary**; it must not be interpreted as requiring Prompt Kit and AgentSwitchboard to remain separate Git repositories or separate end-user products. Repository consolidation changes packaging/authority, not semantic/module/API contracts.
+
+### Migration phases (canonical pointer) — M0–M5
+
+Canonical `repositoryConvergencePhases` lives in `EndeavorEverlasting/TokenCorridor` → `plans/active/AFK-FACTORY-CONVERGENCE.plan.json`:
+
+- **M0 — Inventory and authority map** → enumerate Prompt Kit/ASB capability owners, schemas, generators, tests, workflows, release/install surfaces, external callers with dispositions (`MIGRATE_TO_TOKENCORRIDOR` / `RETAIN_IN_DONOR` / `COMPATIBILITY_FACADE` / `ADAPTER_ONLY` / `RETIRE_AFTER_CUTOVER` / `DEFER_WITH_OWNER`).
+- **M1 — Destination package skeleton** → explicit TokenCorridor module/package boundaries for interface / decision / execution-proof without duplicated authority.
+- **M2 — Prompt Kit extraction** → non-Excel Prompt Kit/AFKAF capabilities run from TokenCorridor with parity proof; Triage retains Excel/OOXML domain.
+- **M3 — AgentSwitchboard convergence** → ASB execution/proof capabilities run from TokenCorridor with contract/adapter/installer/runtime/receipt parity; compatibility repo/package retained only while callers/installers require it.
+- **M4 — Authority cutover** → TokenCorridor canonical for migrated capabilities; donors downgraded to retained-domain/compatibility/archive.
+- **M5 — Transitional cleanup** → retire sync/mirroring/cross-repo transport only when no compatibility need remains.
+
+### Authority-transfer gate (canonical pointer)
+
+A donor capability remains authoritative until **all** of the following are proven (see canonical `destinationContract.authorityTransferGate`):
+
+1. exact capability/source inventory;
+2. explicit TokenCorridor destination module/package owner;
+3. deterministic behavior and protected regression parity;
+4. caller rewiring or compatibility facade;
+5. integration into TokenCorridor `main`;
+6. explicit donor authority downgrade.
+
+Until then: **integration by protocol is the migration mechanism; it is not the final packaging decision.**
 
 ### Ownership correction
 
@@ -65,7 +104,7 @@ TokenCorridor owns the typed cross-repository bounded-decision/successor-transit
 
 ### Parallel closeout
 
-PR #346 may close independently of Prompt Kit's current P55/P66/P143/routing convergence. After each repository integrates its local closeout, TokenCorridor refreshes exact main SHAs and begins the first cross-repository tracer slice.
+PR #347 (this branch) may close independently of Prompt Kit's current P55/P66/P143/routing convergence. After each repository integrates its local closeout, TokenCorridor refreshes exact main SHAs and begins the first cross-repository tracer slice.
 
 ### Factory Topology successor
 
