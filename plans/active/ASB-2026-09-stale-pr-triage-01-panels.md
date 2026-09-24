@@ -115,105 +115,32 @@ none; completed by PR #342 / merge 31d57167330e85fb7b8fc52ab47ceef348771b04 with
 ## Panel 03 — PR #118 external-agent tooling leaf salvage
 
 ```text
-BANNER: LEAF SALVAGE / SUITABLE FOR BOUNDED LOWER-CAPABILITY AGENT
+STATUS: DONE / INTEGRATED
 Repo: EndeavorEverlasting/AgentSwitchboard
-Current execution floor: main@dd344b339ffc9fa2d417a785f6b17d493fcb2659
-Historical source: PR #118, feat/external-agent-tooling-catalog-20260816@87abb4546ee1ef440897dfd86a49e58dab827ee6
-Wave: 1
-Lane: operational external-tooling evidence catalog
-Dependencies: #94 floor only.
-Safe parallel work: Panel 04 only; Panels 01 and 02 are integrated.
-Owned mutation: tooling/harness/operational/external-agent-tooling/** plus focused tests/docs.
-Forbidden: tooling/harness/operational/{manifest.json,validator-registry.json,workflow-registry.json}; shared SKILLS/CODEBASE_MAP; tool installation/execution.
-Expected artifacts: leaf registry/schema/workflow/report; focused validation; explicit shared-registry delta for Panel 07.
-REPOSITORY LAW
-- Read AGENTS.md first, then the nearest triggered owners. Current repository/provider truth outranks this panel if the floor moved.
-- Historical source branch is evidence, not an integration target. Never merge or cherry-pick the branch wholesale.
-- Preserve unrelated dirty work. Use an isolated worktree + dedicated branch from refreshed origin/main.
-- Worker lane must not edit SKILLS.md, TRIGGERS.md, CODEBASE_MAP.md, HARNESS.md, plans/, .ai/WORK_QUEUE.md, or shared operational registries unless this panel explicitly grants that file.
-- Reuse current contracts and names. If the historical concept is already owned by a modern subsystem, merge its missing invariant there or retire it.
-- Static/synthetic PASS never proves live runtime.
-
-MISSION
-Recover the catalog as an evidence-intake surface, not an execution authority. Keep shared operational registration out of this worker lane.
-
-READ FIRST
-AGENTS.md
-plans/active/ASB-2026-09-stale-pr-triage-01.plan.json
-CAPABILITIES.md multi-agent/local-model guardrails
-historical PR #118 diff and focused validator/tests
-current tooling/harness/operational/
-
-TASKS
-1. Compare old catalog fields with current capability/execution-adapter terminology.
-2. Salvage only evidence identity, source/version, constraints, proof state, and intake workflow that remain useful.
-3. Ensure catalog entries cannot imply installed/trusted/private/executable state without proof.
-4. Keep leaf schema closed; add negative fixture(s) for unsupported proof promotion.
-5. Do not modify shared operational registries. Emit exact requested registrations in final response for Panel 07.
-6. Run focused validator/tests + operational/app harness where relevant + automated floor + diff hygiene.
-7. Commit/push/open PR.
-
-PROOF CEILING
-Static catalog/intake contract only; no third-party runtime or privacy proof.
-
-FINAL RESPONSE CONTRACT
-Source/base; preserve/retire matrix; files; validator results; shared-registry delta; commit/PR; proof ceiling; final status; next command.
-
+Historical source: PR #118 @ 87abb4546ee1ef440897dfd86a49e58dab827ee6
+Delivery: salvage/pr118-external-tooling-20260922 / PR #345
+Final validated head: a065fe0e7a0ca9a9f85462a63262fe0943b37cb5
+Integrated main slice: 170da052de065e584baa07bce35ccba8d06eebf6
+Proof: merge tree identical; External Agent Tooling Catalog #4 and automated floor #257 green; source-only boundary/schema validation retained.
+Disposition: do not relaunch. Shared registration remains convergence-owned.
 NEXT COMMAND
-$ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true; $root=(git rev-parse --show-toplevel).Trim(); Set-Location $root; git fetch --all --prune --tags; git merge-base --is-ancestor dd344b339ffc9fa2d417a785f6b17d493fcb2659 origin/main; $src=(git rev-parse origin/feat/external-agent-tooling-catalog-20260816).Trim(); if($src -ne '87abb4546ee1ef440897dfd86a49e58dab827ee6'){throw "source moved: $src"}; $pathContract=Get-Content -LiteralPath (Join-Path $root 'tooling/harness/operational/canonical-path.contract.json') -Raw | ConvertFrom-Json; $wtTemplate=$pathContract.currentBindings.windowsTechnicianProfile.temporaryWorktreeRoot; if(-not $wtTemplate -or -not $env:LOCALAPPDATA){throw 'temporaryWorktreeRoot is not resolvable for this profile'}; $wtRoot=[Environment]::ExpandEnvironmentVariables($wtTemplate); New-Item -ItemType Directory -Path $wtRoot -Force | Out-Null; $wt=Join-Path $wtRoot 'pr118-external-tooling-20260922'; if(Test-Path $wt){throw "worktree exists: $wt"}; if((git branch --list 'salvage/pr118-external-tooling-20260922').Trim()){throw "local branch already exists: salvage/pr118-external-tooling-20260922"}; git worktree add -b salvage/pr118-external-tooling-20260922 $wt origin/main
+none; completed by PR #345 / merge 170da052de065e584baa07bce35ccba8d06eebf6
 ```
 
 ## Panel 04 — PR #64 Windows machine-profile forensic salvage
 
 ```text
-BANNER: HARD FORENSIC SALVAGE / STRONG AGENT REQUIRED
+STATUS: DONE / INTEGRATED
 Repo: EndeavorEverlasting/AgentSwitchboard
-Current execution floor: main@dd344b339ffc9fa2d417a785f6b17d493fcb2659
-Historical source: PR #64, feat/windows-profile-harness-infrastructure-20260805@45b44b158d7f44e18dfbc6c24120a0c02924f48b
-Historical PR base: feat/harness-operator-command-envelope-20260805 (NOT main)
-Wave: 1
-Lane: Windows machine-profile harness
-Dependencies: #94 floor only.
-Safe parallel work: Panel 03 only; Panels 01 and 02 are integrated.
-Owned mutation: current machine-profile owner and its focused tests only after forensic comparison.
-Forbidden: blind cherry-pick of 22 commits; duplicate machine-profile skill/launcher; shared docs; operator-command-delivery rewrite.
-Expected artifacts: PR-intended-vs-inherited matrix; current-owner patches; focused regression.
-REPOSITORY LAW
-- Read AGENTS.md first, then the nearest triggered owners. Current repository/provider truth outranks this panel if the floor moved.
-- Historical source branch is evidence, not an integration target. Never merge or cherry-pick the branch wholesale.
-- Preserve unrelated dirty work. Use an isolated worktree + dedicated branch from refreshed origin/main.
-- Worker lane must not edit SKILLS.md, TRIGGERS.md, CODEBASE_MAP.md, HARNESS.md, plans/, .ai/WORK_QUEUE.md, or shared operational registries unless this panel explicitly grants that file.
-- Reuse current contracts and names. If the historical concept is already owned by a modern subsystem, merge its missing invariant there or retire it.
-- Static/synthetic PASS never proves live runtime.
-
-MISSION
-Recover unique machine-profile behavior from a non-main historical stack without importing its inherited base or reviving obsolete launcher ownership.
-
-READ FIRST
-AGENTS.md
-current .ai/skills/machine-profile-bootstrap/SKILL.md
-current tooling/profiles/windows/harness/machine-profile/
-current docs/workstation/machine-profile-bootstrap.md
-device-profile launcher contract
-historical PR #64 diff, commit list, merge-base, base branch diff
-
-TASKS
-1. Compute merge-base and separate PR-intended changes from inherited base history.
-2. Map every historical file to current canonical owner; classify contained/obsolete/unique.
-3. Salvage only unique environment-role, known-trap, candidate-validation, report, or fixture behavior that current owner lacks.
-4. Preserve canonical Windows Profile open-or-activate and machine-profile-bootstrap ownership.
-5. Add focused negative/positive regression for each preserved invariant.
-6. Run machine-profile bootstrap, device-profile launcher, Windows profile launch-mode, automated floor, diff hygiene.
-7. Commit/push/open PR.
-
-PROOF CEILING
-Repository contract/synthetic proof; no workstation launcher/runtime observation unless separately authorized.
-
-FINAL RESPONSE CONTRACT
-Merge-base evidence; intended-vs-inherited matrix; files; validation; commit/PR; residual risks; proof ceiling; final status; next command.
-
+Historical source: PR #64 @ 45b44b158d7f44e18dfbc6c24120a0c02924f48b
+Historical base: eb91efa9674c0361925905ee6145fd7434190f53
+Delivery: salvage/pr64-machine-profile-20260924 / PR #348
+Final validated head: 9fbad5db784c25a3aa369cfadb3ef5b97ff43193
+Integrated main slice: 212e2cf3fb31b675fda7205b01f8760046371818
+Proof: intended delta reconstructed as 22 commits / 20 files; lean preserve/merge/retire matrix tracked; Machine profile operational harness #1, existing bootstrap #259, automated floor #265 green; merge tree identical.
+Disposition: current detector/path/launcher ownership preserved; stale Desktop default, candidate wrappers, hook, duplicate skill, and standalone manifest retired.
 NEXT COMMAND
-$ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true; $root=(git rev-parse --show-toplevel).Trim(); Set-Location $root; git fetch --all --prune --tags; git merge-base --is-ancestor dd344b339ffc9fa2d417a785f6b17d493fcb2659 origin/main; $src=(git rev-parse origin/feat/windows-profile-harness-infrastructure-20260805).Trim(); if($src -ne '45b44b158d7f44e18dfbc6c24120a0c02924f48b'){throw "source moved: $src"}; $pathContract=Get-Content -LiteralPath (Join-Path $root 'tooling/harness/operational/canonical-path.contract.json') -Raw | ConvertFrom-Json; $wtTemplate=$pathContract.currentBindings.windowsTechnicianProfile.temporaryWorktreeRoot; if(-not $wtTemplate -or -not $env:LOCALAPPDATA){throw 'temporaryWorktreeRoot is not resolvable for this profile'}; $wtRoot=[Environment]::ExpandEnvironmentVariables($wtTemplate); New-Item -ItemType Directory -Path $wtRoot -Force | Out-Null; $wt=Join-Path $wtRoot 'pr64-machine-profile-20260922'; if(Test-Path $wt){throw "worktree exists: $wt"}; if((git branch --list 'salvage/pr64-machine-profile-20260922').Trim()){throw "local branch already exists: salvage/pr64-machine-profile-20260922"}; git worktree add -b salvage/pr64-machine-profile-20260922 $wt origin/main
+none; completed by PR #348 / merge 212e2cf3fb31b675fda7205b01f8760046371818
 ```
 
 ## Panel 05 — PR #92 execution-actor routing reconciliation
@@ -224,8 +151,8 @@ Repo: EndeavorEverlasting/AgentSwitchboard
 Historical source: PR #92, feat/harness-execution-actor-routing-20260808@acc652d5dc7599b18d76983fb96dbd628d2bd759
 Wave: 2
 Lane: execution-adapter semantic reconciliation
-Hard dependencies: Panel 03 (#118) disposition complete AND current ASQ-022 execution-adapter writer is terminal or has explicitly handed this file ownership to the #92 lane. Refresh both before mutation.
-Safe parallel work: Panel 06 after its own #64 dependency clears.
+Hard dependencies: PR #118 dependency SATISFIED by PR #345 / 170da052de065e584baa07bce35ccba8d06eebf6. BLOCKED on ASQ-022 ownership until the execution-adapter program is terminal or durably hands off disjoint paths.
+Safe parallel work: Panel 06 may proceed independently; this lane must not mutate execution-adapter paths yet.
 Owned mutation: missing invariants/tests inside current execution-adapter owner, or one justified leaf seam.
 Forbidden: restoring old router as competing lifecycle owner; wholesale operational registry edits; HARNESS.md rewrite.
 Expected artifacts: old-vs-current contract matrix; preserve/retire decision; focused regression.
@@ -272,11 +199,13 @@ $ErrorActionPreference='Stop'; $PSNativeCommandUseErrorActionPreference=$true; $
 ```text
 BANNER: HARD RECONCILIATION / STRONG AGENT REQUIRED
 Repo: EndeavorEverlasting/AgentSwitchboard
+Current execution floor: main@212e2cf3fb31b675fda7205b01f8760046371818
+STATUS: READY / NEXT EXECUTABLE LANE
 Historical source: PR #79, feat/harness-agent-fleet-readiness-20260807@b3560cd56e98f7b91dfff2e060c8a27d1c76e76a
 Wave: 2
 Lane: Windows fleet-readiness
-Hard dependency: Panel 04 (#64) disposition integrated or proved no-change; refresh current machine-profile truth.
-Safe parallel work: Panel 05.
+Hard dependency: SATISFIED — Panel 04 / PR #348 merged as 212e2cf3fb31b675fda7205b01f8760046371818.
+Safe parallel work: none inside TRIAGE-01; Panel 05 is ownership-blocked.
 Owned mutation: unique readiness leaf behavior/tests after current-owner comparison.
 Forbidden: duplicate machine-profile/bootstrap/launcher lifecycle; shared CODEBASE_MAP; provider install/login.
 Expected artifacts: readiness semantic matrix; leaf implementation if justified; focused fixtures/tests.

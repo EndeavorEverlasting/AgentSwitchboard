@@ -12,37 +12,29 @@
 
 ## 1. LAUNCH ORDER
 
-1. **DONE — Panel 01 / PR #113 OpenCode runtime-resolution semantic salvage** — integrated by PR #341 / `7e637307de01116069b4067b351b96188d12e989`.
-2. **DONE — Panel 02 / PR #112 Lua embedding leaf salvage** — integrated by PR #342 / `31d57167330e85fb7b8fc52ab47ceef348771b04`; post-merge review repair integrated by PR #343 / `dd344b339ffc9fa2d417a785f6b17d493fcb2659`.
-3. **Panel 03 — PR #118 external-agent tooling leaf salvage** — Wave 1, bounded lower-capability agent.
-4. **Panel 04 — PR #64 Windows machine-profile forensic salvage** — Wave 1, strong agent.
-5. **Panel 05 — PR #92 execution-actor routing reconciliation** — Wave 2; wait for Panel 03 **and** for ASQ-022 to become terminal or durably hand off disjoint execution-adapter paths.
-6. **Panel 06 — PR #79 agent-fleet readiness reconciliation** — Wave 2; wait for Panel 04 because fleet readiness depends on the current machine-profile owner.
-7. **Panel 07 — Final convergence and cleanup** — single writer after Panels 01-06 are validated or explicitly dispositioned.
+1. **DONE — Panel 01 / PR #113 OpenCode runtime-resolution semantic salvage** — PR #341 / merge `7e637307de01116069b4067b351b96188d12e989`.
+2. **DONE — Panel 02 / PR #112 Lua embedding leaf salvage** — PR #342 / merge `31d57167330e85fb7b8fc52ab47ceef348771b04`; post-merge repair PR #343 / `dd344b339ffc9fa2d417a785f6b17d493fcb2659`.
+3. **DONE — Panel 03 / PR #118 external-agent tooling leaf salvage** — PR #345 / merge `170da052de065e584baa07bce35ccba8d06eebf6`.
+4. **DONE — Panel 04 / PR #64 Windows machine-profile forensic salvage** — PR #348 / merge `212e2cf3fb31b675fda7205b01f8760046371818`.
+5. **BLOCKED — Panel 05 / PR #92 execution-actor routing reconciliation** — PR #118 dependency is satisfied; ASQ-022 still owns active execution-adapter successor work and has not handed off disjoint paths.
+6. **READY / NEXT — Panel 06 / PR #79 agent-fleet readiness reconciliation** — machine-profile dependency satisfied by Panel 04.
+7. **WAIT — Panel 07 / final convergence and cleanup** — single writer after Panels 05 and 06 have supported terminal dispositions.
 
-**Next executable lane:** Panel 03 / PR #118. **Strongest remaining lane:** Panel 04 / PR #64.
-**Remaining parallel group:** Panels 03-04; Panels 01-02 are integrated.
-**Waiting lanes:** Panel 05 waits on Panel 03 + the ASQ-022 ownership-release gate; Panel 06 waits on Panel 04.
+**Next executable lane:** Panel 06 / PR #79.
+**Waiting lane:** Panel 05 / PR #92, ownership-blocked on ASQ-022.
 **Final convergence:** Panel 07.
 
 ## 2. PARALLEL DISPATCH MANIFEST
 
-**PARALLEL EXECUTION: DEGRADED — remaining graph width is 2 (Panels 03 and 04), but the current planning runtime does not expose an AgentSwitchboard/OpenCode/FirstMate worker-execution adapter.**
+**PARALLEL EXECUTION: NOT_APPLICABLE — current TRIAGE-01 dependency graph width is 1.**
 
-The prompt-assumed artifacts do not exist on current main:
-- `harness/contracts/prompt-parallel-dispatch.v1.json`
-- `scripts/prompt_parallel_dispatch.py`
-- `Outputs/prompt-parallel-dispatch/manifest.json`
+Panels 01-04 are integrated. Panel 06 / PR #79 is the only dependency-ready implementation lane. Panel 05 / PR #92 is blocked by execution-adapter ownership, not by worker capacity. Serial execution of Panel 06 is therefore correct.
 
-Repository search also found no equivalent `prompt-parallel-dispatch` owner. Creating an ad-hoc manifest would invent a second scheduler and violate current execution-adapter ownership.
-
-**AUTONOMY_GAP:** route a typed prompt/lane dispatch contract to **ASQ-022 / execution-adapter shared-spine** if AgentSwitchboard should own this feature. It must compose with `tooling/harness/execution-adapters/`, prove real overlap in receipts, and must not become a competing FirstMate crew scheduler.
-
-Until that owner exists, `ASB-2026-09-stale-pr-triage-01-panels.md` is the durable machine-ingestible portability/recovery transport.
+The previously recorded autonomy gap remains tracked by ASQ-031 for future multi-lane dispatch; TRIAGE-01 must not invent a second scheduler or claim observed parallelism without a real adapter.
 
 ## 3. COMPACT COORDINATION PREAMBLE
 
-- Planning evidence floor: `main@72d71a74279c5cf1b0c029b68d03c76634d50ea1`; current execution floor at this progress checkpoint: `main@dd344b339ffc9fa2d417a785f6b17d493fcb2659`; open PRs: **0** after PR #343 merge.
+- Planning evidence floor: `main@72d71a74279c5cf1b0c029b68d03c76634d50ea1`; current execution floor at this progress checkpoint: `main@212e2cf3fb31b675fda7205b01f8760046371818`; open overlapping TRIAGE-01 PRs: **0**; unrelated PR #347 is plan-only.
 - Local worker path authority: resolve `temporaryWorktreeRoot` from `tooling/harness/operational/canonical-path.contract.json`; the Windows technician binding is `%LOCALAPPDATA%\\AgentSwitchboard\\worktrees`. Never derive a sibling directory from whichever checkout invoked the panel.
 - Proven completed floor: PR #94 Wayfinder core semantic salvage merged as #338 / `72d71a74279c5cf1b0c029b68d03c76634d50ea1`.
 - Preserve historical source branches until final preservation checks; do not bulk merge or bulk cherry-pick.
