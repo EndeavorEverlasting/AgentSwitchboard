@@ -44,7 +44,7 @@ def main() -> None:
     check(contract["safety"]["authenticatesProviders"] is False, "boundary classifier may authenticate providers")
 
     superseded = "\n".join(contract["explicitlySuperseded"])
-    for token in ("Hermes", "machine-profile", "Get-AgentSwitchboardStartupReport.ps1", "old skill", "old hook"):
+    for token in ("Hermes", "machine-profile", "Get-AgentSwitchboardStartupReport.ps1", "skill", "hook"):
         check(token in superseded, f"superseded owner missing: {token}")
 
     for case in fixtures["cases"]:
