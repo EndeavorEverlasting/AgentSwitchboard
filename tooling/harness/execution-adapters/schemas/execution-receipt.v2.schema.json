@@ -264,7 +264,8 @@
         "peakParallelWorkers": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 256
+          "maximum": 256,
+          "description": "Observed peak simultaneous workers. Semantic validation requires this not exceed workersStarted or the request executionEnvelope.maxParallelWorkers."
         },
         "modelTokensUsed": {
           "type": "integer",
@@ -274,7 +275,8 @@
         "wallClockMs": {
           "type": "number",
           "minimum": 0,
-          "maximum": 86400000
+          "maximum": 86400000,
+          "description": "Observed wall-clock duration in milliseconds. Semantic validation requires consistency with receipt durationMs/timestamps and the request executionEnvelope.maxWallClockSeconds."
         }
       }
     }
