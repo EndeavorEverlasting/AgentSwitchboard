@@ -3,8 +3,8 @@
 **Plan ID:** `ASB-2026-09-STALE-PR-TRIAGE-01`
 **Repository:** `EndeavorEverlasting/AgentSwitchboard`
 **Planning evidence floor:** `main@72d71a74279c5cf1b0c029b68d03c76634d50ea1`
-**Current execution floor:** `main@dd344b339ffc9fa2d417a785f6b17d493fcb2659`
-**Completed slices:** Panel 01 / PR #341 -> `7e637307de01116069b4067b351b96188d12e989`; Panel 02 / PR #342 -> `31d57167330e85fb7b8fc52ab47ceef348771b04`; Lua review recovery PR #343 -> `dd344b339ffc9fa2d417a785f6b17d493fcb2659`
+**Current execution floor:** `main@212e2cf3fb31b675fda7205b01f8760046371818`
+**Completed slices:** Panel 01 / PR #341 -> `7e637307de01116069b4067b351b96188d12e989`; Panel 02 / PR #342 -> `31d57167330e85fb7b8fc52ab47ceef348771b04`; Lua review recovery PR #343 -> `dd344b339ffc9fa2d417a785f6b17d493fcb2659`; Panel 03 / PR #345 -> `170da052de065e584baa07bce35ccba8d06eebf6`; Panel 04 / PR #348 -> `212e2cf3fb31b675fda7205b01f8760046371818`
 **Status:** active / critical
 **Plan integration:** PR #339 merged as `67df85da2026104e00ff6bd7c926db0139ca4f63`
 **Canonical machine owner:** `plans/active/ASB-2026-09-stale-pr-triage-01.plan.json`
@@ -60,10 +60,10 @@ The complete panels live in `plans/active/ASB-2026-09-stale-pr-triage-01-panels.
 |---|---|---|
 | Historical 47-PR triage | docs/reporting / coordination | Preserve as superseded provenance; no longer current truth |
 | PR #94 Wayfinder core | harness spine + agent harness | **Integrated** via #338; residual August shared wiring remains forensic-only |
-| PR #113 runtime resolution | Windows/OpenCode harness + integration seam | **Salvage first; strong agent** |
-| PR #112 Lua embedding | isolated harness spine | **Leaf salvage; safe lower-capability lane** |
-| PR #118 external tooling catalog | operational harness leaf + validation | **Leaf salvage; safe lower-capability lane** |
-| PR #64 machine-profile harness | Windows profile harness | **Forensic salvage; strong agent; non-main historical base** |
+| PR #113 runtime resolution | Windows/OpenCode harness + integration seam | **Integrated via #341** |
+| PR #112 Lua embedding | isolated harness spine | **Integrated via #342 + #343 repair** |
+| PR #118 external tooling catalog | operational harness leaf + validation | **Integrated via #345** |
+| PR #64 machine-profile harness | Windows profile harness | **Integrated via #348; non-main historical base reconstructed** |
 | PR #92 execution actor routing | execution-adapter / operational integration | **Reconcile, probably merge/retire concepts rather than restore router** |
 | PR #79 fleet readiness | Windows agent harness + profile integration | **Reconcile after #64** |
 | Shared skills/triggers/maps/registries | integration seam | **Final convergence owner only** |
@@ -78,12 +78,12 @@ The complete panels live in `plans/active/ASB-2026-09-stale-pr-triage-01-panels.
 - **Validators:** focused historical validator is evidence to inspect, not automatic authority; current-main owning validator wins after reconciliation.
 - **Workflows:** historical GitHub Actions are adapters, not semantic owners; recreate only if current contract still needs a hosted adapter.
 - **Skills / capabilities / triggers:**
-  - #113 `opencode-runtime-resolution`: **merge or create only after comparison** with current `opencode-lsp-workstation-setup` and execution-adapter ownership.
+  - #113 `opencode-runtime-resolution`: **integrated as a bounded leaf via #341**; shared historical routing was not replayed.
   - #92 `execution-actor-routing`: **prefer retire/merge into execution-adapter v1** unless a unique reusable judgment workflow remains.
   - #79 `agent-fleet-readiness`: **split** reusable judgment into skill and deterministic readiness operation into code/registry; no second bootstrap lifecycle.
-  - #112 `lua-embedding-integration`: **keep/create as isolated explicit-trigger skill** if the leaf implementation survives proof.
-  - #64 old machine-profile changes: **merge into existing machine-profile-bootstrap owner**, never duplicate the canonical skill/launcher.
-  - #118 `external-agent-tooling-intake`: **keep only as evidence-intake workflow**; catalog presence never grants install/trust/execution authority.
+  - #112 `lua-embedding-integration`: **integrated as an isolated leaf via #342/#343**; runtime proof remains separately bounded.
+  - #64 old machine-profile changes: **integrated via #348 into current machine-profile ownership**; stale path/launcher duplication was retired.
+  - #118 `external-agent-tooling-intake`: **integrated via #345 as evidence intake only**; catalog presence still grants no install/trust/execution authority.
 - **MCP/tools/hooks:** no successor lane may claim a tool/runtime exists from old files. Hooks are leaf-local unless current repository registration explicitly adopts them.
 
 ### APPLICATION LOGIC FACTORING
