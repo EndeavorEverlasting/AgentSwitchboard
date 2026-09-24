@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 2,
+  "contractId": "agentswitchboard.execution-adapter.v2",
+  "status": "accepted-contract-only",
+  "purpose": "Extend the provider-neutral execution boundary with immutable action authority binding and typed worker/parallelism/token/time ceilings while preserving the v1 contract unchanged for existing consumers.",
+  "ownership": {
+    "semanticOwner": "Prompt Kit decides workflow meaning, prompt identity, routing semantics, proof gates, recovery, and next-step selection.",
+    "brokerOwner": "AgentSwitchboard owns execution-adapter selection, request/receipt correlation, fail-closed dispatch, and evidence normalization.",
+    "runtimeOwner": "Each native harness owns its own process, session, provider, or cloud-agent mechanics behind the adapter.",
+    "crewRuntimeBoundary": "FirstMate remains the canonical crew/session runtime; execution adapters must not become a second crew scheduler."
+  },
+  "schemas": {
+    "request": "tooling/harness/execution-adapters/schemas/execution-request.v2.schema.json",
+    "receipt": "tooling/harness/execution-adapters/schemas/execution-receipt.v2.schema.json",
+    "capabilityReport": "tooling/harness/execution-adapters/schemas/capability-report.v1.schema.json"
+  },
+  "operations": {
+    "probe": {
+      "mutates": false,
+      "interactiveAuthAllowed": false,
+      "output": "agentswitchboard.execution-capability-report/v1",
+      "rule": "Probe current host/harness readiness only. Missing auth, binary, host, transport, or API capability fails closed; probes never start interactive login."
+    },
+    "execute": {
+      "mutates": "request-governed",
+      "input": "agentswitchboard.execution-request/v2",
+      "output": "agentswitchboard.execution-receipt/v2",
+      "rule": "One accepted request produces exactly one terminal receipt. Adapter transport details stay inside the adapter."
+    }
+  },
+  "adapterKinds": [
+    {
+      "adapterKind": "local-argv",
+      "nativeHarness": "operating-system process",
+      "targetImplementation": "tooling/harness/execution-adapters/adapters/local_argv.py",
+      "currentSource": "tooling/harness/triage-consumer/dispatch/dispatch_lanes.py::_execute_local_argv",
+      "minimumRuntimeProof": "LOCAL_RUNTIME_OBSERVED"
+    },
+    {
+      "adapterKind": "claude-code",
+      "nativeHarness": "Claude Code CLI",
+      "targetImplementation": "tooling/harness/execution-adapters/adapters/claude_code.py",
+      "currentSource": null,
+      "minimumRuntimeProof": "CLAUDE_CODE_RUNTIME_OBSERVED"
+    },
+    {
+      "adapterKind": "cursor-cloud-agent",
+      "nativeHarness": "Cursor CloudAgent Task execution",
+      "targetImplementation": "tooling/harness/execution-adapters/adapters/cursor_cloud_agent.py",
+      "currentSource": "PR #332 lineage under tooling/harness/triage-consumer/dispatch/**",
+      "minimumRuntimeProof": "CURSOR_CLOUD_AGENT_RUNTIME_OBSERVED"
+    }
+  ],
+  "readinessStates": [
+    "READY",
+    "BLOCKED",
+    "UNSUPPORTED"
+  ],
+  "readinessDimensions": [
+    "host",
+    "binary",
+    "auth",
+    "transport",
+    "dispatch"
+  ],
+  "dimensionStates": [
+    "READY",
+    "BLOCKED",
+    "UNKNOWN",
+    "NOT_APPLICABLE"
+  ],
+  "terminalStatuses": [
+    "EXECUTED",
+    "FAILED",
+    "TIMED_OUT",
+    "BLOCKED"
+  ],
+  "blockerCodes": [
+    "BLOCKED_HOST",
+    "BLOCKED_BINARY",
+    "BLOCKED_AUTH",
+    "BLOCKED_API",
+    "BLOCKED_POLICY",
+    "BLOCKED_INPUT",
+    "BLOCKED_UNSUPPORTED",
+    "EXECUTION_ERROR",
+    "TIMEOUT"
+  ],
+  "proofLevels": [
+    "CONTRACT_STATIC",
+    "CAPABILITY_PROBE_ONLY",
+    "LOCAL_RUNTIME_OBSERVED",
+    "CLAUDE_CODE_RUNTIME_OBSERVED",
+    "CURSOR_CLOUD_AGENT_RUNTIME_OBSERVED"
+  ],
+  "invariants": [
+    "Adapters do not select Prompt Kit prompts, reinterpret workflow doctrine, or classify semantic next steps.",
+    "Adapters do not schedule crews or duplicate FirstMate task/session lifecycle authority.",
+    "No adapter requires a human scheduler or a human copy/paste hop in the production execution path.",
+    "probe is read-only and never starts interactive authentication.",
+    "execute is bounded by request timeout, mutation policy, allowed scopes, forbidden scopes, and output limits.",
+    "Requests and receipts preserve requestId and correlationId exactly; causationId is never rewritten.",
+    "An EXECUTED receipt requires observed native execution identity and no blocker.",
+    "BLOCKED, FAILED, and TIMED_OUT receipts carry an explicit blocker; no adapter invents success.",
+    "stdout/stderr excerpts are bounded and must be redacted before durable sharing if they contain sensitive data.",
+    "Provider-specific transport, sockets, CLI flags, session IDs, and orchestration mechanics remain adapter-private except for normalized execution identity and evidence fields.",
+    "Independent acceptance validation is outside the adapter self-report; runtime proof requires a deterministic external observation appropriate to the adapter.",
+    "Tracked fixtures contain synthetic/public-safe data only; runtime receipts remain untracked unless deliberately minimized and reviewed.",
+    "A READY capability report may contain only READY or explicitly NOT_APPLICABLE readiness dimensions; UNKNOWN or BLOCKED fails closed.",
+    "Runtime-observed proof levels are adapter-specific and require an independent validation artifact; an adapter cannot self-promote another runtime's proof.",
+    "Durable output is bounded by executionPolicy.maxOutputBytes across stdout, stderr, and structured result; structured results use the bounded shallow v1 shape.",
+    "Every v2 request carries an immutable sha256 actionFingerprint that binds the admitted action identity before native execution begins.",
+    "Every v2 receipt echoes the request actionFingerprint exactly; missing or mismatched fingerprints fail closed and cannot be promoted as runtime proof.",
+    "The v2 executionEnvelope fixes maxWorkers, maxParallelWorkers, maxModelTokens, and maxWallClockSeconds before dispatch; maxParallelWorkers may not exceed maxWorkers and maxWallClockSeconds may not exceed timeoutSeconds.",
+    "The v2 executionUsage record never exceeds the admitted executionEnvelope; over-budget fan-out, model-token use, or wall-clock use is a failed contract, not successful runtime proof."
+  ],
+  "adapterInputRules": {
+    "local-argv": [
+      "input.kind must equal local-argv.",
+      "input.argv must be a non-empty argv array; shell-string execution is forbidden.",
+      "workingDirectory must exist at execution time; timeout and stdout/stderr bounds are mandatory."
+    ],
+    "claude-code": [
+      "input.kind must equal claude-code.",
+      "input.prompt is the resolved bounded task packet; the adapter does not choose the prompt.",
+      "Structured machine-readable result capture is required.",
+      "Authentication failure blocks; the adapter must not launch interactive login.",
+      "The effective permission/tool profile derives from executionPolicy and is recorded as evidence."
+    ],
+    "cursor-cloud-agent": [
+      "input.kind must equal cursor-cloud-agent.",
+      "Task launch must be machine-closed: request to real Task invocation to observed terminal result without operator intervention.",
+      "A transport/socket existing is not equivalent to TASK_DISPATCH_READY.",
+      "EXECUTED requires a fresh cloudAgentBcId (or provider-equivalent stable execution identity) and observed completion."
+    ]
+  },
+  "minimumEndToEndProof": {
+    "local-argv": [
+      "Real child process exits 0 with expected stdout marker and cwd.",
+      "Real child process exits 42 with exact exit code and stdout/stderr captured.",
+      "Bounded sleep/hang produces TIMED_OUT rather than EXECUTED.",
+      "Normalized receipt validates."
+    ],
+    "claude-code": [
+      "AgentSwitchboard launches the real Claude Code CLI noninteractively.",
+      "Claude mutates a disposable fixture repository under an allowed REPO_EDIT policy.",
+      "An independent deterministic validator proves the expected filesystem/result state after Claude exits.",
+      "Missing binary/auth/timeout/structured-output failure paths fail closed.",
+      "Normalized receipt validates and records available native session/runtime identity."
+    ],
+    "cursor-cloud-agent": [
+      "One AgentSwitchboard dispatch causes a real Cursor Task launch without a human bridge.",
+      "A fresh CloudAgent execution identity is captured.",
+      "Adapter observes completed/failed/timeout terminal state machine-readably.",
+      "A deterministic external artifact/result verifies the bounded task effect.",
+      "Wrong host, unavailable API/Task bridge, and timeout paths fail closed.",
+      "Normalized receipt validates."
+    ]
+  },
+  "migration": {
+    "legacyTriageDispatchReceipt": "Keep tooling/harness/triage-consumer/dispatch/schemas/dispatch-receipt.schema.json as a compatibility surface until the generic runner can translate execution-receipt/v1 into the legacy lane receipt.",
+    "cursorPr332Collision": "PR #332 owns current Cursor dispatch implementation files. Shared contract work must not rewrite those files; Cursor adapter migration consumes/reconciles #332 after the contract floor lands.",
+    "genericDispatcherTarget": "dispatch_lanes.py becomes a consumer of the execution-adapter registry; harness-specific execution branches move behind adapters only after conformance proof."
+  },
+  "proofCeiling": "Versioned v2 contract shape, backward-compatibility boundary, and synthetic/public-safe authority/budget fixtures only. This does not prove FrontierAgent enforcement, provider delivery, runtime budget accounting, or live execution.",
+  "versioning": {
+    "v1": {
+      "request": "agentswitchboard.execution-request/v1",
+      "receipt": "agentswitchboard.execution-receipt/v1",
+      "status": "unchanged-compatible",
+      "rule": "Existing v1 consumers remain valid and are not silently widened. They do not carry actionFingerprint or executionEnvelope and therefore cannot satisfy TC-FAC-dependent runtime claims."
+    },
+    "v2": {
+      "request": "agentswitchboard.execution-request/v2",
+      "receipt": "agentswitchboard.execution-receipt/v2",
+      "status": "authority-budget-bound",
+      "rule": "TC-FAC-dependent adapters must use v2 and preserve fingerprint/budget semantics end to end."
+    },
+    "transition": "Upgrade is explicit by schema identity. A v1 request is never interpreted as v2, and a v2 request missing its new required fields fails closed."
+  }
+}
