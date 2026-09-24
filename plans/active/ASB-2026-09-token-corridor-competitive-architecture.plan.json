@@ -7,7 +7,7 @@
   "status": "proposed",
   "priority": "high",
   "createdUtc": "2026-09-22T22:12:00Z",
-  "updatedUtc": "2026-09-24T18:30:00Z",
+  "updatedUtc": "2026-09-24T19:34:00Z",
   "mission": "Define and prove an OSS-first, provider-neutral bounded-decision control plane (working name Token Corridor) inside the AgentSwitchboard software factory. Before inventing infrastructure, evaluate real open/self-hosted decision engines, routers, structured-output runtimes, durable workflow engines, agent runtimes, sandboxes, and eval/observability platforms against commercial comparators. Compile repository/runtime evidence into typed decision requests, choose the cheapest adequate open or commercial engine by measured policy, preserve calibrated uncertainty and authority provenance, and route execution without duplicating Prompt Kit, FirstMate, AgentSwitchboard execution adapters, or already-solved open-source infrastructure. This plan participates as the AgentSwitchboard companion to the canonical TokenCorridor convergence program (TokenCorridor is the destination product/repository; current three-repo split is migration topology).",
   "owner": {
     "surface": "AgentSwitchboard factory decision-control plane",
@@ -549,7 +549,7 @@
     {
       "taskId": "TC-FAC",
       "title": "Extend execution-adapter contract for authority fingerprint and bounded fan-out",
-      "status": "ready",
+      "status": "in-progress",
       "owner": "execution-adapter contract owner",
       "dependencies": [
         "TC-FA0"
@@ -561,10 +561,11 @@
         "TC-FA1 FrontierAgent runtime/profile mapping when available"
       ],
       "outputs": [
-        "Versioned execution request/receipt contract extension for action fingerprint preservation",
-        "Typed execution-envelope budget fields covering worker/parallelism and token/time ceilings",
-        "Backward-compatibility or explicit version-transition fixtures",
-        "Negative fixtures for missing/mismatched fingerprint and over-budget fan-out"
+        "tooling/harness/execution-adapters/execution-adapter-contract.v2.json",
+        "tooling/harness/execution-adapters/schemas/execution-request.v2.schema.json",
+        "tooling/harness/execution-adapters/schemas/execution-receipt.v2.schema.json",
+        "Positive and negative v2 authority/budget fixtures",
+        "tests/test_execution_adapter_contract_v2.py registered in the automated test floor"
       ],
       "acceptanceCriteria": [
         "Do not claim ASB can enforce FrontierAgent fan-out ceilings through the current v1 request: the current executionPolicy carries profile/network/interactiveAuth/maxOutputBytes but no worker-count or token-budget fields.",
@@ -575,10 +576,11 @@
         "Negative fixtures prove a missing/mismatched authority binding and an attempted budget overrun fail closed before runtime proof can be promoted."
       ],
       "evidence": [
-        "Current main execution-request/v1 required fields: requestId, correlationId, causationId, adapterKind, mission, workingDirectory, timeoutSeconds, mutation, executionPolicy, input, provenance.",
-        "Current main executionPolicy fields: profile, networkAllowed, interactiveAuthAllowed, maxOutputBytes.",
-        "Current main execution-receipt/v1 has requestId/correlationId but no action fingerprint field.",
-        "PR #347 review identified both gaps before adapter implementation."
+        "Implementation branch feat/tc-fac-execution-contract-v2-20260924 preserves v1 schemas unchanged and adds an explicit v2 schema identity.",
+        "v2 request requires sha256 actionFingerprint plus maxWorkers/maxParallelWorkers/maxModelTokens/maxWallClockSeconds.",
+        "v2 receipt echoes actionFingerprint and records workersStarted/peakParallelWorkers/modelTokensUsed/wallClockMs.",
+        "Focused regression covers v1↔v2 non-coercion, missing/mismatched fingerprint, over-budget usage, parallelism>workers, and wall-clock>timeout.",
+        "Proof remains IMPLEMENTED/UNVALIDATED until exact-head execution-adapter and automated-floor gates pass."
       ]
     },
     {
