@@ -655,7 +655,7 @@
     "For TC-02+: retain benchmark receipts tied to exact engine/version/config and corpus revision.",
     "For TC-05: require observed runtime receipt; static contracts cannot promote to AFK runtime proof.",
     "For TC-FA1: in the exact pinned FrontierAgent checkout run `uv sync --frozen --extra sandbox --extra document-readers --extra dev`, `uv run pytest -q`, and `uv run ruff check .` before any local modification.",
-    "For TC-FA1: run one `frontier-agent --mode react` and one `frontier-agent --mode agent_team` smoke in an isolated supported environment and retain the exact run directory identities without committing secrets.",
+    "For TC-FA1: run one `uv run frontier-agent --mode react` and one `uv run frontier-agent --mode agent_team` smoke in an isolated supported environment and retain the exact run directory identities without committing secrets.",
     "For TC-FA2+: add focused negative fixtures proving --yes/approval cannot mint ASB authority, SpawnGuard cannot exceed ASB budgets, and unregistered FrontierAgent tools remain unreachable.",
     "For TC-FA3: require observed correlation across TokenCorridor transition, ASB request, FrontierAgent run evidence, normalized receipt, and returned continuation before claiming runtime integration.",
     "For TC-FAC: run the owning execution-adapter contract validator and focused compatibility/negative fixtures proving action-fingerprint preservation and fail-closed budget enforcement before TC-FA2 begins."
