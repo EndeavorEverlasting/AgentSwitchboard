@@ -46,8 +46,8 @@
   ],
   "powerShellReadinessRoute": {
     "commandTemplate": "pwsh -NoLogo -NoProfile -File \"<InstallRoot>\\Start-AgentSwitchboard.ps1\" -ListAgents",
-    "canonicalFollowup": "pwsh -NoLogo -NoProfile -File tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
-    "rule": "The boundary classifier does not promote adapter/provider readiness. Execute the installed PowerShell operator and then consume the current startup-readiness reporter."
+    "canonicalFollowup": "pwsh -NoLogo -NoProfile -File tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1 -InstallRoot \"<InstallRoot>\"",
+    "rule": "The boundary classifier does not promote adapter/provider readiness. Execute the installed PowerShell operator, then run the current startup-readiness reporter against the same InstallRoot."
   },
   "explicitlySuperseded": [
     "historical stale-repository-path classification: now owned by current machine-profile operational path/trap contracts",

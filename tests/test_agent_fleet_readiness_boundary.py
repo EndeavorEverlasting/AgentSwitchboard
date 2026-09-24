@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import json
+import shutil
+import subprocess
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = ROOT / "tooling" / "profiles" / "windows" / "harness" / "agent-fleet-readiness"
+REPORTER = ROOT / "tooling" / "profiles" / "windows" / "Get-AgentFleetReadinessBoundary.ps1"
 
 class ContractFailure(RuntimeError):
     pass
@@ -16,19 +20,31 @@ def check(value: object, message: str) -> None:
 def load(path: Path):
     return json.loads(path.read_text(encoding="utf-8-sig"))
 
-def classify(case: dict) -> tuple[str, str]:
-    state = bool(case.get("fleetStateExists"))
-    operator = bool(case.get("powerShellOperatorExists"))
-    shim = bool(case.get("cmdShimExists"))
-    if not state and not operator:
-        return "not-bootstrapped", "bootstrap-or-repair"
-    if state != operator:
-        return "partial-or-inconsistent", "bootstrap-or-repair"
-    evidence = str(case.get("cmdShimEvidence", "")).lower()
-    blocked = (not shim) or case.get("cmdShimExitCode") == 5 or "access is denied" in evidence
-    if blocked:
-        return "cmd-shim-blocked", "prove-readiness-through-powershell"
-    return "installed-unclassified", "prove-readiness-through-powershell"
+def run_reporter(case: dict) -> dict:
+    pwsh = shutil.which("pwsh")
+    check(pwsh is not None, "pwsh is required for the executable boundary contract")
+    with tempfile.TemporaryDirectory(prefix="asb-fleet-boundary-") as temp:
+        root = Path(temp)
+        if case.get("fleetStateExists"):
+            (root / "state.json").write_text("{}\n", encoding="utf-8")
+        if case.get("powerShellOperatorExists"):
+            (root / "Start-AgentSwitchboard.ps1").write_text("# fixture\n", encoding="utf-8")
+        if case.get("cmdShimExists"):
+            (root / "agent-switchboard.cmd").write_text("@echo off\n", encoding="ascii")
+        out = root / "out"
+        command = [pwsh, "-NoLogo", "-NoProfile", "-File", str(REPORTER), "-InstallRoot", str(root), "-Emit", "Json", "-OutputRoot", str(out)]
+        if "cmdShimExitCode" in case:
+            command.extend(["-CmdShimExitCode", str(case["cmdShimExitCode"])])
+        if case.get("cmdShimEvidence"):
+            command.extend(["-CmdShimEvidence", str(case["cmdShimEvidence"])])
+        completed = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, check=False)
+        check(completed.returncode == 0, f"{case['name']}: reporter failed: {completed.stderr.strip()}")
+        try:
+            payload = json.loads(completed.stdout)
+        except json.JSONDecodeError as exc:
+            raise ContractFailure(f"{case['name']}: reporter emitted invalid JSON: {completed.stdout!r}") from exc
+        check(str(root) in payload["startupReadinessCommand"], f"{case['name']}: startup reporter lost InstallRoot")
+        return payload
 
 def main() -> None:
     contract = load(BASE / "readiness-boundary.contract.json")
@@ -42,22 +58,24 @@ def main() -> None:
     check(contract["safety"]["mutatesInstalledFleet"] is False, "boundary classifier may mutate installed fleet")
     check(contract["safety"]["runsCmdShim"] is False, "boundary classifier may execute the blocked shim")
     check(contract["safety"]["authenticatesProviders"] is False, "boundary classifier may authenticate providers")
+    check("-InstallRoot \"<InstallRoot>\"" in contract["powerShellReadinessRoute"]["canonicalFollowup"], "custom InstallRoot is not preserved")
 
     superseded = "\n".join(contract["explicitlySuperseded"])
     for token in ("Hermes", "machine-profile", "Get-AgentSwitchboardStartupReport.ps1", "skill", "hook"):
         check(token in superseded, f"superseded owner missing: {token}")
 
     for case in fixtures["cases"]:
-        classification, next_action = classify(case)
-        check(classification == case["expectedClassification"], f"{case['name']}: {classification}")
-        check(next_action == case["expectedNextAction"], f"{case['name']}: {next_action}")
+        payload = run_reporter(case)
+        check(payload["classification"] == case["expectedClassification"], f"{case['name']}: {payload['classification']}")
+        check(payload["nextAction"] == case["expectedNextAction"], f"{case['name']}: {payload['nextAction']}")
+        check(payload["tracked"] is False, f"{case['name']}: generated status is marked tracked")
 
     generated = artifacts["generatedArtifacts"] + artifacts["observedArtifacts"]
     for item in generated:
         check(item["tracked"] is False, f"runtime/local artifact marked tracked: {item['id']}")
 
     text = json.dumps(workflow)
-    for token in ("Start-AgentSwitchboard.ps1", "-ListAgents", "Get-AgentSwitchboardStartupReport.ps1", "Access is denied", "exit 5"):
+    for token in ("Start-AgentSwitchboard.ps1", "-ListAgents", "Get-AgentSwitchboardStartupReport.ps1", "-InstallRoot", "Access is denied", "exit 5"):
         check(token in text, f"PowerShell readiness workflow token missing: {token}")
     check("rerun setup solely" in text, "workflow does not forbid unnecessary setup retry")
 

@@ -50,6 +50,7 @@ foreach ($case in $cases) {
         if ($LASTEXITCODE -ne 0) { throw "Boundary reporter failed for $($case.Name)" }
         if ($payload.classification -ne $case.Expected) { throw "$($case.Name): expected $($case.Expected), got $($payload.classification)" }
         if ($payload.tracked -ne $false) { throw "$($case.Name): generated status is marked tracked" }
+        if (-not $payload.startupReadinessCommand.Contains($root)) { throw "$($case.Name): startup reporter lost InstallRoot" }
     } finally {
         Remove-Item -LiteralPath $root -Recurse -Force -ErrorAction SilentlyContinue
     }

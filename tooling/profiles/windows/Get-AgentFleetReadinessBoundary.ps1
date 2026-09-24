@@ -44,7 +44,7 @@ if (-not $stateExists -and -not $operatorExists) {
 }
 
 $powerShellCommand = 'pwsh -NoLogo -NoProfile -File "' + $operatorPath + '" -ListAgents'
-$startupReportCommand = 'pwsh -NoLogo -NoProfile -File tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1'
+$startupReportCommand = 'pwsh -NoLogo -NoProfile -File tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1 -InstallRoot "' + $InstallRoot + '"'
 $runId = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ') + '-' + [guid]::NewGuid().ToString('N').Substring(0,8)
 if ([string]::IsNullOrWhiteSpace($OutputRoot)) { $OutputRoot = Join-Path ([IO.Path]::GetTempPath()) "AgentSwitchboard/agent-fleet-readiness/$runId" }
 $null = New-Item -ItemType Directory -Path $OutputRoot -Force

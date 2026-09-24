@@ -21,8 +21,8 @@
     },
     {
       "order": 3,
-      "action": "Generate the current canonical startup-readiness report.",
-      "command": "pwsh -NoLogo -NoProfile -File tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1"
+      "action": "Generate the current canonical startup-readiness report against the same InstallRoot.",
+      "command": "pwsh -NoLogo -NoProfile -File tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1 -InstallRoot \"<InstallRoot>\""
     },
     {
       "order": 4,

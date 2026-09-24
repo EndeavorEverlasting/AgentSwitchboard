@@ -28,7 +28,7 @@ pwsh -NoLogo -NoProfile -File "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet\Star
 Then generate/consume the current canonical startup report:
 
 ```powershell
-pwsh -NoLogo -NoProfile -File tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1
+pwsh -NoLogo -NoProfile -File tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1 -InstallRoot "$env:LOCALAPPDATA\AgentSwitchboard\GnhfFleet"
 ```
 
 Do not retry the CMD shim after `Access is denied` / exit 5, and do not rerun setup solely to restore the compatibility shim when the installed authority is healthy.
