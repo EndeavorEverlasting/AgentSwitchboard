@@ -32,6 +32,6 @@
     "workersStarted": 1,
     "peakParallelWorkers": 1,
     "modelTokensUsed": 0,
-    "wallClockMs": 1000
+    "wallClockMs": 250
   }
 }
