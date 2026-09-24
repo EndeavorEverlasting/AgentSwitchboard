@@ -440,37 +440,37 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## ASQ-026 — Salvage PR #118 external-agent tooling leaf
 
-- **Status:** READY
+- **Status:** DONE
 - **Priority:** P1
 - **Work class:** BOUNDED
 - **Owner:** bounded lower-capability agent / external-tooling leaf lane
-- **Branch / PR:** none yet; create isolated branch/worktree from refreshed main when this item becomes executable
-- **Scope:** execute Panel 03: salvage only the external-agent-tooling evidence catalog leaf, closed schema, intake workflow, report, and focused regressions
+- **Branch / PR:** `salvage/pr118-external-tooling-20260922` / #345 merged
+- **Scope:** salvage only the external-agent-tooling evidence catalog leaf, closed schema, intake workflow, report, and focused regressions
 - **Forbidden:** shared operational manifest/validator/workflow registries; treating catalogue presence as install/trust/privacy/execution proof
 - **Dependencies:** ASQ-023 DONE
-- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 03; `tooling/harness/operational/`
-- **Acceptance gate:** leaf tests/validator green; proof-promotion negatives retained; exact shared-registry delta handed to ASQ-030
-- **Gate:** none — dependency-ready on the recorded floor; refresh before mutation
-- **Last proof:** PR #118 closed-unmerged head 87abb4546ee1ef440897dfd86a49e58dab827ee6; 1 unique commit / 15 files / 608 behind
-- **Next action:** launch Panel 03 in an isolated worktree from refreshed main and verify source SHA 87abb4546ee1ef440897dfd86a49e58dab827ee6 before mutation
-- **Updated:** 2026-09-22T17:16:30Z
+- **References:** `tooling/harness/operational/external-agent-tooling/`; PR #345
+- **Acceptance gate:** leaf tests/validator green; proof-promotion negatives retained; exact shared-registry delta preserved for convergence
+- **Gate:** none
+- **Last proof:** merge:170da052de065e584baa07bce35ccba8d06eebf6 pr:#345; final validated head a065fe0e7a0ca9a9f85462a63262fe0943b37cb5; merge tree identical; workflow External Agent Tooling Catalog #4 and automated test floor #257 green; current validator explicitly validates schema shape and uses non-assert failure guards
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-24T15:36:00Z
 
 ## ASQ-027 — Forensically salvage PR #64 Windows machine-profile harness
 
-- **Status:** READY
+- **Status:** DONE
 - **Priority:** P0
 - **Work class:** BOUNDED
 - **Owner:** strong salvage agent / Windows machine-profile lane
-- **Branch / PR:** none yet; create isolated branch/worktree from refreshed main when this item becomes executable
-- **Scope:** execute Panel 04: separate PR-intended changes from inherited non-main base history, reconcile with current machine-profile/bootstrap/device-profile owners, and implement only unique current-owner behavior
-- **Forbidden:** blind replay of 22 commits; duplicate machine-profile skill/launcher; operator-command-delivery rewrite; live workstation claims
+- **Branch / PR:** `salvage/pr64-machine-profile-20260924` / #348 merged
+- **Scope:** reconstruct PR #64 intended changes from its non-main base and preserve only unique current-owner operational role/trap/workflow/status semantics
+- **Forbidden:** blind replay of 22 commits; duplicate machine-profile skill/launcher; stale Desktop path policy; historical candidate wrappers/hook; live workstation claims
 - **Dependencies:** ASQ-023 DONE
-- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 04; `.ai/skills/machine-profile-bootstrap/SKILL.md`; `tooling/profiles/windows/harness/machine-profile/`
-- **Acceptance gate:** merge-base/intended-vs-inherited matrix proven; current machine-profile/device-profile/Windows-profile gates green; exact candidate integrated or blocked with evidence
-- **Gate:** none — dependency-ready on the recorded floor; refresh before mutation
-- **Last proof:** PR #64 closed-unmerged head 45b44b158d7f44e18dfbc6c24120a0c02924f48b; historical base feat/harness-operator-command-envelope-20260805; 732 behind
-- **Next action:** launch Panel 04 in an isolated worktree from refreshed main and reconstruct the PR-intended delta before any cherry-pick or code copy
-- **Updated:** 2026-09-22T17:16:30Z
+- **References:** `tooling/profiles/windows/harness/machine-profile/`; `docs/workstation/machine-profile-bootstrap.md`; PR #348
+- **Acceptance gate:** intended-vs-inherited matrix proven; current machine-profile ownership preserved; focused operational + existing machine-profile + automated floor gates green
+- **Gate:** none
+- **Last proof:** historical base eb91efa9674c0361925905ee6145fd7434190f53 -> PR #64 head 45b44b158d7f44e18dfbc6c24120a0c02924f48b reconstructed as 22 commits / 20 files; merge:212e2cf3fb31b675fda7205b01f8760046371818 pr:#348; final validated head 9fbad5db784c25a3aa369cfadb3ef5b97ff43193; merge tree identical; Machine profile operational harness #1, Machine profile bootstrap #259, automated floor #265 green
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-24T15:36:00Z
 
 ## ASQ-028 — Reconcile PR #92 execution-actor routing with adapter v1
 
@@ -478,33 +478,33 @@ Canonical terminal action: none; no safe actionable work remains
 - **Priority:** P0
 - **Work class:** BOUNDED
 - **Owner:** strong salvage agent / execution-adapter reconciliation lane
-- **Branch / PR:** none yet; create isolated branch/worktree from refreshed main when this item becomes executable
-- **Scope:** execute Panel 05 after ASQ-026: compare old actor-binding/router invariants to current execution-adapter request/receipt/capability model; retire superseded lifecycle and preserve only missing current-owner invariants/tests
+- **Branch / PR:** none yet; do not create while execution-adapter ownership remains active
+- **Scope:** compare old actor-binding/router invariants to current execution-adapter request/receipt/capability model; retire superseded lifecycle and preserve only missing current-owner invariants/tests
 - **Forbidden:** restoring a competing execution router/scheduler; wholesale operational registry/HARNESS replay; provider dispatch claims
-- **Dependencies:** ASQ-026 integrated or proved no-change; ASQ-022 is terminal OR has durably handed off disjoint execution-adapter file ownership to ASQ-028
-- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 05; `plans/active/ASB-2026-09-execution-adapter-trio-v1.plan.json`; `tooling/harness/execution-adapters/`
+- **Dependencies:** ASQ-026 DONE; ASQ-022 terminal OR durable disjoint-file ownership handoff
+- **References:** `plans/active/ASB-2026-09-execution-adapter-trio-v1.plan.json`; `tooling/harness/execution-adapters/`; PR #92
 - **Acceptance gate:** explicit superseded/preserve matrix; any preserved invariant lands in current owner with focused negative/positive tests; adapter floor green
-- **Gate:** BLOCKED_OWNERSHIP — do not mutate execution-adapter paths while ASQ-022 remains an overlapping active writer; require terminal state or explicit durable disjoint-file handoff
-- **Last proof:** PR #92 closed-unmerged head acc652d5dc7599b18d76983fb96dbd628d2bd759; current main has execution-adapter v1 absent from August branch
-- **Next action:** verify ASQ-026 terminal disposition and inspect ASQ-022; launch Panel 05 only after ASQ-022 is terminal or explicitly hands off disjoint execution-adapter paths
-- **Updated:** 2026-09-22T17:16:30Z
+- **Gate:** BLOCKED_OWNERSHIP — PR #336/EAT-005 and PR #332 are merged, but the canonical adapter-trio plan remains active with successor shared-spine/native-adapter work and no disjoint handoff to this lane
+- **Last proof:** PR #345 satisfies the #118 dependency; PR #336 merged eed5941576639c96c1319cfd56642c4d9e93d363; PR #332 merged bcf32b832856242aae33e4c36af7248152a5dc84; ASQ-022 broader program still active
+- **Next action:** ASQ-022 owner must either reach terminal state or durably hand off disjoint execution-adapter paths before Panel 05 mutation
+- **Updated:** 2026-09-24T15:36:00Z
 
 ## ASQ-029 — Reconcile PR #79 agent-fleet readiness after machine-profile salvage
 
-- **Status:** BLOCKED
+- **Status:** READY
 - **Priority:** P0
 - **Work class:** BOUNDED
 - **Owner:** strong salvage agent / fleet-readiness lane
-- **Branch / PR:** none yet; create isolated branch/worktree from refreshed main when this item becomes executable
-- **Scope:** execute Panel 06 after ASQ-027: compare fleet-readiness semantics with the post-#64 current machine-profile, Windows profile, launcher, and adapter readiness owners; preserve only unique leaf readiness logic/tests
+- **Branch / PR:** none yet; create isolated lane from refreshed main when execution starts
+- **Scope:** compare PR #79 readiness semantics with the post-#64 current machine-profile, Windows profile, launcher, and adapter readiness owners; preserve only unique leaf readiness logic/tests
 - **Forbidden:** second machine-profile/bootstrap lifecycle; independent CMD lifecycle/fallback logic; shared CODEBASE_MAP writes; live fleet claims
-- **Dependencies:** ASQ-027 integrated or proved no-change
-- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 06
+- **Dependencies:** ASQ-027 DONE
+- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 06; PR #79; current machine-profile operational contracts
 - **Acceptance gate:** readiness semantic matrix complete; unique behavior tested; current machine-profile and Windows-profile gates remain green; integrated/no-change disposition recorded
-- **Gate:** dependency-gated; do not mutate until named dependency is proven
-- **Last proof:** PR #79 closed-unmerged head b3560cd56e98f7b91dfff2e060c8a27d1c76e76a; 36 unique commits / 701 behind
-- **Next action:** launch Panel 06 only after ASQ-027 establishes the current machine-profile owner and refresh the source/main SHAs before mutation
-- **Updated:** 2026-09-22T17:16:30Z
+- **Gate:** none — PR #348 / merge 212e2cf3fb31b675fda7205b01f8760046371818 satisfies the machine-profile dependency
+- **Last proof:** current post-#64 floor contains the reconciled role/trap/workflow/status layer without changing detector/path/launcher ownership; historical PR #79 head remains b3560cd56e98f7b91dfff2e060c8a27d1c76e76a pending fresh divergence analysis
+- **Next action:** inspect refreshed main and PR #79 provider truth, reconstruct old-vs-current readiness semantics, then create an isolated branch only if still-unique behavior exists
+- **Updated:** 2026-09-24T15:36:00Z
 
 ## ASQ-030 — Converge closed-PR salvage lanes and shared wiring
 

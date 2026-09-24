@@ -3,8 +3,8 @@
 **Plan ID:** `ASB-2026-09-STALE-PR-TRIAGE-01`
 **Repository:** `EndeavorEverlasting/AgentSwitchboard`
 **Planning evidence floor:** `main@72d71a74279c5cf1b0c029b68d03c76634d50ea1`
-**Current execution floor:** `main@dd344b339ffc9fa2d417a785f6b17d493fcb2659`
-**Completed slices:** Panel 01 / PR #341 -> `7e637307de01116069b4067b351b96188d12e989`; Panel 02 / PR #342 -> `31d57167330e85fb7b8fc52ab47ceef348771b04`; Lua review recovery PR #343 -> `dd344b339ffc9fa2d417a785f6b17d493fcb2659`
+**Current execution floor:** `main@212e2cf3fb31b675fda7205b01f8760046371818`
+**Completed slices:** Panel 01 / PR #341 -> `7e637307de01116069b4067b351b96188d12e989`; Panel 02 / PR #342 -> `31d57167330e85fb7b8fc52ab47ceef348771b04`; Lua review recovery PR #343 -> `dd344b339ffc9fa2d417a785f6b17d493fcb2659`; Panel 03 / PR #345 -> `170da052de065e584baa07bce35ccba8d06eebf6`; Panel 04 / PR #348 -> `212e2cf3fb31b675fda7205b01f8760046371818`
 **Status:** active / critical
 **Plan integration:** PR #339 merged as `67df85da2026104e00ff6bd7c926db0139ca4f63`
 **Canonical machine owner:** `plans/active/ASB-2026-09-stale-pr-triage-01.plan.json`
@@ -12,37 +12,29 @@
 
 ## 1. LAUNCH ORDER
 
-1. **DONE — Panel 01 / PR #113 OpenCode runtime-resolution semantic salvage** — integrated by PR #341 / `7e637307de01116069b4067b351b96188d12e989`.
-2. **DONE — Panel 02 / PR #112 Lua embedding leaf salvage** — integrated by PR #342 / `31d57167330e85fb7b8fc52ab47ceef348771b04`; post-merge review repair integrated by PR #343 / `dd344b339ffc9fa2d417a785f6b17d493fcb2659`.
-3. **Panel 03 — PR #118 external-agent tooling leaf salvage** — Wave 1, bounded lower-capability agent.
-4. **Panel 04 — PR #64 Windows machine-profile forensic salvage** — Wave 1, strong agent.
-5. **Panel 05 — PR #92 execution-actor routing reconciliation** — Wave 2; wait for Panel 03 **and** for ASQ-022 to become terminal or durably hand off disjoint execution-adapter paths.
-6. **Panel 06 — PR #79 agent-fleet readiness reconciliation** — Wave 2; wait for Panel 04 because fleet readiness depends on the current machine-profile owner.
-7. **Panel 07 — Final convergence and cleanup** — single writer after Panels 01-06 are validated or explicitly dispositioned.
+1. **DONE — Panel 01 / PR #113 OpenCode runtime-resolution semantic salvage** — PR #341 / merge `7e637307de01116069b4067b351b96188d12e989`.
+2. **DONE — Panel 02 / PR #112 Lua embedding leaf salvage** — PR #342 / merge `31d57167330e85fb7b8fc52ab47ceef348771b04`; post-merge repair PR #343 / `dd344b339ffc9fa2d417a785f6b17d493fcb2659`.
+3. **DONE — Panel 03 / PR #118 external-agent tooling leaf salvage** — PR #345 / merge `170da052de065e584baa07bce35ccba8d06eebf6`.
+4. **DONE — Panel 04 / PR #64 Windows machine-profile forensic salvage** — PR #348 / merge `212e2cf3fb31b675fda7205b01f8760046371818`.
+5. **BLOCKED — Panel 05 / PR #92 execution-actor routing reconciliation** — PR #118 dependency is satisfied; ASQ-022 still owns active execution-adapter successor work and has not handed off disjoint paths.
+6. **READY / NEXT — Panel 06 / PR #79 agent-fleet readiness reconciliation** — machine-profile dependency satisfied by Panel 04.
+7. **WAIT — Panel 07 / final convergence and cleanup** — single writer after Panels 05 and 06 have supported terminal dispositions.
 
-**Next executable lane:** Panel 03 / PR #118. **Strongest remaining lane:** Panel 04 / PR #64.
-**Remaining parallel group:** Panels 03-04; Panels 01-02 are integrated.
-**Waiting lanes:** Panel 05 waits on Panel 03 + the ASQ-022 ownership-release gate; Panel 06 waits on Panel 04.
+**Next executable lane:** Panel 06 / PR #79.
+**Waiting lane:** Panel 05 / PR #92, ownership-blocked on ASQ-022.
 **Final convergence:** Panel 07.
 
 ## 2. PARALLEL DISPATCH MANIFEST
 
-**PARALLEL EXECUTION: DEGRADED — remaining graph width is 2 (Panels 03 and 04), but the current planning runtime does not expose an AgentSwitchboard/OpenCode/FirstMate worker-execution adapter.**
+**PARALLEL EXECUTION: NOT_APPLICABLE — current TRIAGE-01 dependency graph width is 1.**
 
-The prompt-assumed artifacts do not exist on current main:
-- `harness/contracts/prompt-parallel-dispatch.v1.json`
-- `scripts/prompt_parallel_dispatch.py`
-- `Outputs/prompt-parallel-dispatch/manifest.json`
+Panels 01-04 are integrated. Panel 06 / PR #79 is the only dependency-ready implementation lane. Panel 05 / PR #92 is blocked by execution-adapter ownership, not by worker capacity. Serial execution of Panel 06 is therefore correct.
 
-Repository search also found no equivalent `prompt-parallel-dispatch` owner. Creating an ad-hoc manifest would invent a second scheduler and violate current execution-adapter ownership.
-
-**AUTONOMY_GAP:** route a typed prompt/lane dispatch contract to **ASQ-022 / execution-adapter shared-spine** if AgentSwitchboard should own this feature. It must compose with `tooling/harness/execution-adapters/`, prove real overlap in receipts, and must not become a competing FirstMate crew scheduler.
-
-Until that owner exists, `ASB-2026-09-stale-pr-triage-01-panels.md` is the durable machine-ingestible portability/recovery transport.
+The previously recorded autonomy gap remains tracked by ASQ-031 for future multi-lane dispatch; TRIAGE-01 must not invent a second scheduler or claim observed parallelism without a real adapter.
 
 ## 3. COMPACT COORDINATION PREAMBLE
 
-- Planning evidence floor: `main@72d71a74279c5cf1b0c029b68d03c76634d50ea1`; current execution floor at this progress checkpoint: `main@dd344b339ffc9fa2d417a785f6b17d493fcb2659`; open PRs: **0** after PR #343 merge.
+- Planning evidence floor: `main@72d71a74279c5cf1b0c029b68d03c76634d50ea1`; current execution floor at this progress checkpoint: `main@212e2cf3fb31b675fda7205b01f8760046371818`; open overlapping TRIAGE-01 PRs: **0**; unrelated PR #347 is plan-only.
 - Local worker path authority: resolve `temporaryWorktreeRoot` from `tooling/harness/operational/canonical-path.contract.json`; the Windows technician binding is `%LOCALAPPDATA%\\AgentSwitchboard\\worktrees`. Never derive a sibling directory from whichever checkout invoked the panel.
 - Proven completed floor: PR #94 Wayfinder core semantic salvage merged as #338 / `72d71a74279c5cf1b0c029b68d03c76634d50ea1`.
 - Preserve historical source branches until final preservation checks; do not bulk merge or bulk cherry-pick.
@@ -68,10 +60,10 @@ The complete panels live in `plans/active/ASB-2026-09-stale-pr-triage-01-panels.
 |---|---|---|
 | Historical 47-PR triage | docs/reporting / coordination | Preserve as superseded provenance; no longer current truth |
 | PR #94 Wayfinder core | harness spine + agent harness | **Integrated** via #338; residual August shared wiring remains forensic-only |
-| PR #113 runtime resolution | Windows/OpenCode harness + integration seam | **Salvage first; strong agent** |
-| PR #112 Lua embedding | isolated harness spine | **Leaf salvage; safe lower-capability lane** |
-| PR #118 external tooling catalog | operational harness leaf + validation | **Leaf salvage; safe lower-capability lane** |
-| PR #64 machine-profile harness | Windows profile harness | **Forensic salvage; strong agent; non-main historical base** |
+| PR #113 runtime resolution | Windows/OpenCode harness + integration seam | **Integrated via #341** |
+| PR #112 Lua embedding | isolated harness spine | **Integrated via #342 + #343 repair** |
+| PR #118 external tooling catalog | operational harness leaf + validation | **Integrated via #345** |
+| PR #64 machine-profile harness | Windows profile harness | **Integrated via #348; non-main historical base reconstructed** |
 | PR #92 execution actor routing | execution-adapter / operational integration | **Reconcile, probably merge/retire concepts rather than restore router** |
 | PR #79 fleet readiness | Windows agent harness + profile integration | **Reconcile after #64** |
 | Shared skills/triggers/maps/registries | integration seam | **Final convergence owner only** |
@@ -86,12 +78,12 @@ The complete panels live in `plans/active/ASB-2026-09-stale-pr-triage-01-panels.
 - **Validators:** focused historical validator is evidence to inspect, not automatic authority; current-main owning validator wins after reconciliation.
 - **Workflows:** historical GitHub Actions are adapters, not semantic owners; recreate only if current contract still needs a hosted adapter.
 - **Skills / capabilities / triggers:**
-  - #113 `opencode-runtime-resolution`: **merge or create only after comparison** with current `opencode-lsp-workstation-setup` and execution-adapter ownership.
+  - #113 `opencode-runtime-resolution`: **integrated as a bounded leaf via #341**; shared historical routing was not replayed.
   - #92 `execution-actor-routing`: **prefer retire/merge into execution-adapter v1** unless a unique reusable judgment workflow remains.
   - #79 `agent-fleet-readiness`: **split** reusable judgment into skill and deterministic readiness operation into code/registry; no second bootstrap lifecycle.
-  - #112 `lua-embedding-integration`: **keep/create as isolated explicit-trigger skill** if the leaf implementation survives proof.
-  - #64 old machine-profile changes: **merge into existing machine-profile-bootstrap owner**, never duplicate the canonical skill/launcher.
-  - #118 `external-agent-tooling-intake`: **keep only as evidence-intake workflow**; catalog presence never grants install/trust/execution authority.
+  - #112 `lua-embedding-integration`: **integrated as an isolated leaf via #342/#343**; runtime proof remains separately bounded.
+  - #64 old machine-profile changes: **integrated via #348 into current machine-profile ownership**; stale path/launcher duplication was retired.
+  - #118 `external-agent-tooling-intake`: **integrated via #345 as evidence intake only**; catalog presence still grants no install/trust/execution authority.
 - **MCP/tools/hooks:** no successor lane may claim a tool/runtime exists from old files. Hooks are leaf-local unless current repository registration explicitly adopts them.
 
 ### APPLICATION LOGIC FACTORING
