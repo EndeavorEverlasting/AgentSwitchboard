@@ -41,6 +41,6 @@
     "maxWorkers": 4,
     "maxParallelWorkers": 2,
     "maxModelTokens": 50000,
-    "maxWallClockSeconds": 60
+    "maxWallClockSeconds": 20
   }
 }
