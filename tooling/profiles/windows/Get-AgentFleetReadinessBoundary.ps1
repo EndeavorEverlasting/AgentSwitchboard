@@ -32,7 +32,7 @@ if (-not $stateExists -and -not $operatorExists) {
     $nextAction = 'bootstrap-or-repair'
 } else {
     $shimBlocked = -not $shimExists
-    if ($CmdShimExitCode.HasValue -and $CmdShimExitCode.Value -eq 5) { $shimBlocked = $true }
+    if ($null -ne $CmdShimExitCode -and [int]$CmdShimExitCode -eq 5) { $shimBlocked = $true }
     if (-not [string]::IsNullOrWhiteSpace($CmdShimEvidence) -and $CmdShimEvidence -match '(?i)access\s+is\s+denied') { $shimBlocked = $true }
     if ($shimBlocked) {
         $classification = 'cmd-shim-blocked'
@@ -57,7 +57,7 @@ $result = [ordered]@{
     fleetStateExists = $stateExists
     powerShellOperatorExists = $operatorExists
     cmdShimExists = $shimExists
-    cmdShimExitCode = if ($CmdShimExitCode.HasValue) { $CmdShimExitCode.Value } else { $null }
+    cmdShimExitCode = if ($null -ne $CmdShimExitCode) { [int]$CmdShimExitCode } else { $null }
     cmdShimAccessDenied = (-not [string]::IsNullOrWhiteSpace($CmdShimEvidence) -and $CmdShimEvidence -match '(?i)access\s+is\s+denied')
     powerShellReadinessCommand = $powerShellCommand
     startupReadinessCommand = $startupReportCommand
