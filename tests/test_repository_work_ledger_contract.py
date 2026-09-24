@@ -243,16 +243,29 @@ class RepositoryWorkLedgerContractTests(unittest.TestCase):
         """Leave a working-tree leaf in place while indexing an arbitrary Git mode."""
         path = ROOT / relative
         path.parent.mkdir(parents=True, exist_ok=True)
+        # Clear any leftover index/worktree probe from a prior interrupted run.
+        subprocess.run(
+            ['git', '-C', str(ROOT), 'update-index', '--force-remove', relative],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        path.unlink(missing_ok=True)
         path.write_text("# p66 durability ownership probe\n", encoding='utf-8')
         # Prefer separate --cacheinfo <mode>,<object>,<path> args; --cacheinfo=... is rejected on some Git builds.
-        subprocess.check_call(
+        result = subprocess.run(
             [
                 'git', '-C', str(ROOT), 'update-index', '--add',
                 '--cacheinfo', f'{mode},{object_id},{relative}',
             ],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            text=True,
+            capture_output=True,
         )
+        if result.returncode != 0:
+            raise AssertionError(
+                f'update-index --cacheinfo failed for mode={mode} path={relative}: '
+                f'exit={result.returncode} stderr={result.stderr!r} stdout={result.stdout!r}'
+            )
 
     def _install_symlink_index_entry(self, relative: str, target: str) -> None:
         blob = subprocess.check_output(
