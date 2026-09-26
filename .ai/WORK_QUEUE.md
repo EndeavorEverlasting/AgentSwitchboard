@@ -491,20 +491,20 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## ASQ-029 — Reconcile PR #79 agent-fleet readiness after machine-profile salvage
 
-- **Status:** READY
+- **Status:** DONE
 - **Priority:** P0
 - **Work class:** BOUNDED
 - **Owner:** strong salvage agent / fleet-readiness lane
-- **Branch / PR:** none yet; create isolated lane from refreshed main when execution starts
+- **Branch / PR:** main / #350 merged
 - **Scope:** compare PR #79 readiness semantics with the post-#64 current machine-profile, Windows profile, launcher, and adapter readiness owners; preserve only unique leaf readiness logic/tests
 - **Forbidden:** second machine-profile/bootstrap lifecycle; independent CMD lifecycle/fallback logic; shared CODEBASE_MAP writes; live fleet claims
 - **Dependencies:** ASQ-027 DONE
-- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 06; PR #79; current machine-profile operational contracts
+- **References:** `plans/active/ASB-2026-09-stale-pr-triage-01-panels.md` Panel 06; PR #79; PR #350; `tooling/profiles/windows/harness/agent-fleet-readiness/`; current machine-profile operational contracts
 - **Acceptance gate:** readiness semantic matrix complete; unique behavior tested; current machine-profile and Windows-profile gates remain green; integrated/no-change disposition recorded
-- **Gate:** none — PR #348 / merge 212e2cf3fb31b675fda7205b01f8760046371818 satisfies the machine-profile dependency
-- **Last proof:** current post-#64 floor contains the reconciled role/trap/workflow/status layer without changing detector/path/launcher ownership; historical PR #79 head remains b3560cd56e98f7b91dfff2e060c8a27d1c76e76a pending fresh divergence analysis
-- **Next action:** inspect refreshed main and PR #79 provider truth, reconstruct old-vs-current readiness semantics, then create an isolated branch only if still-unique behavior exists
-- **Updated:** 2026-09-24T15:36:00Z
+- **Gate:** none
+- **Last proof:** merge:3348a06950368663a336fbc56bcd23982511afea pr:#350; validated head 3f782472; agent-fleet-readiness boundary + InstallRoot path-oracle integrated on main@a60bf675; historical PR #79 salvage obligation contained
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-26T11:15:00Z
 
 ## ASQ-030 — Converge closed-PR salvage lanes and shared wiring
 
@@ -539,3 +539,20 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** repository search on main@72d71a7 found no harness/contracts/prompt-parallel-dispatch.v1.json, scripts/prompt_parallel_dispatch.py, or Outputs/prompt-parallel-dispatch owner; current chat exposes no local worker runtime
 - **Next action:** inspect ASQ-022 and execution-adapter v1 current main, then record KEEP-IN-ASB or ROUTE-ELSEWHERE before any prompt-parallel-dispatch implementation
 - **Updated:** 2026-09-22T17:16:30Z
+
+## ASQ-032 — AFK-FACTORY ASB donor closeout / TokenCorridor ownership pointer
+
+- **Status:** DONE
+- **Priority:** P0
+- **Work class:** BOUNDED
+- **Owner:** ASB closeout / donor lane for AFK-FACTORY-CONVERGENCE
+- **Branch / PR:** feat/afk-asb-closeout-migration-manifest-20260926 / pending PR
+- **Scope:** refresh provider truth after #350/#351/#355; emit residual capability migration manifest; record AWG-S3 TokenCorridor ownership; repair stale companion-plan open-PR/#355 delivery language; point unfinished AFK product work at TokenCorridor
+- **Forbidden:** implementing AWG-S3 or other new ASB product work; declaring repository obsolete; rewriting historical evidence sections; inventing a second ledger; M4/M5 cutover claims
+- **Dependencies:** ASB main contains #350/#351/#355; TokenCorridor LM3-B01A via PR #29
+- **References:** `reports/afk-factory-asb-to-tokencorridor-migration-manifest.v1.json`; `plans/active/ASB-2026-09-token-corridor-competitive-architecture.md`; EndeavorEverlasting/TokenCorridor AFK-FACTORY-CONVERGENCE plan + lm3-asb-b01a transplant packet (external repo paths)
+- **Acceptance gate:** zero open ASB PRs observed; migration manifest durable under reports/; companion plan handoff routes AWG-S3 to TokenCorridor; ledger validators pass; focused plan/ledger checks green
+- **Gate:** none
+- **Last proof:** provider main@a60bf675 openPrCount=0; TokenCorridor main@9380fac7 LM3-B01A pr:#29; artifact:reports/afk-factory-asb-to-tokencorridor-migration-manifest.v1.json; AWG-S3 decision IMPLEMENT_IN_TOKENCORRIDOR
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-26T11:15:00Z

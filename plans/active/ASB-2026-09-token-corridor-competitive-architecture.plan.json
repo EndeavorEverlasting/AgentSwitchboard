@@ -7,7 +7,7 @@
   "status": "proposed",
   "priority": "high",
   "createdUtc": "2026-09-22T22:12:00Z",
-  "updatedUtc": "2026-09-26T06:33:00Z",
+  "updatedUtc": "2026-09-26T11:15:00Z",
   "mission": "Define and prove an OSS-first, provider-neutral bounded-decision control plane (working name Token Corridor) inside the AgentSwitchboard software factory. Before inventing infrastructure, evaluate real open/self-hosted decision engines, routers, structured-output runtimes, durable workflow engines, agent runtimes, sandboxes, and eval/observability platforms against commercial comparators. Compile repository/runtime evidence into typed decision requests, choose the cheapest adequate open or commercial engine by measured policy, preserve calibrated uncertainty and authority provenance, and route execution without duplicating Prompt Kit, FirstMate, AgentSwitchboard execution adapters, or already-solved open-source infrastructure. This plan participates as the AgentSwitchboard companion to the canonical TokenCorridor convergence program (TokenCorridor is the destination product/repository; current three-repo split is migration topology).",
   "owner": {
     "surface": "AgentSwitchboard factory decision-control plane",
@@ -15,13 +15,9 @@
     "agent": null
   },
   "delivery": {
-    "branch": "sync/three-repo-plan-20260926",
-    "pullRequest": {
-      "number": 355,
-      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/355",
-      "state": "open"
-    },
-    "baseRef": "main@3348a06950368663a336fbc56bcd23982511afea",
+    "branch": "feat/afk-asb-closeout-migration-manifest-20260926",
+    "pullRequest": null,
+    "baseRef": "main@a60bf6753acb2538c0347a767d42f2283272b5be",
     "commitRequired": true
   },
   "wave": "Competitive architecture → decision protocol → measured factory integration",
@@ -711,14 +707,15 @@
     "ceiling": "This plan proves a source-backed open-vs-managed architecture and selection program only. It does not prove any candidate's performance on the user's factory corpus, production readiness on the user's hardware, Token Corridor runtime behavior, live AFK execution, or a standalone product/repository boundary. No FrontierAgent clone/fork runtime, smoke run, ASB adapter, or TokenCorridor execution tracer is proven by this planning update."
   },
   "handoff": {
-    "nextOwner": "AWG-S3 Agent Work Graph execution-instance lifecycle and preservation/replacement receipt lane",
-    "nextCommand": "git fetch --all --prune --tags && git switch main && git pull --ff-only && git worktree add -b feat/awg-s3-execution-instance-lifecycle-20260926 ../AgentSwitchboard-awg-s3 origin/main",
+    "nextOwner": "TokenCorridor AWG-S3 execution-instance lifecycle lane (src/tokencorridor/execution/)",
+    "nextCommand": "git -C \"../TokenCorridor\" fetch --all --prune --tags && git -C \"../TokenCorridor\" worktree add -b feat/awg-s3-execution-instance-lifecycle-20260926 ../TokenCorridor-awg-s3 origin/main",
     "notes": [
-      "AWG-S3 is the next bounded ASB contribution. Consume merged TC-FAC v2; do not reopen execution-envelope authority.",
-      "Implement execution-instance lifecycle states plus preservation/replacement receipts with positive and negative fixtures on an isolated writer lane.",
-      "Keep fleet-readiness from #350 independent unless a concrete runtime-resource dependency is proven.",
-      "Static/CI proof must not be promoted to live multi-agent replacement proof.",
-      "TokenCorridor remains the canonical convergence repository; ASB is a migration donor/control-plane owner until M4 cutover."
+      "AWG-S3 DECISION 2026-09-26: implement in TokenCorridor, not AgentSwitchboard. Destination owner exists after LM3-B01A (PR #29).",
+      "Do not create ASB donor product implementation for execution-instance lifecycle; ASB retains compatibility/donor copies until M4.",
+      "Consume merged TC-FAC v2 / LM3-B01A contracts; do not reopen execution-envelope authority.",
+      "Residual capability census + migration packet index: reports/afk-factory-asb-to-tokencorridor-migration-manifest.v1.json",
+      "ASB open PR count is zero; #350/#351/#355 are integrated. M4/M5 own retirement — do not declare ASB obsolete here.",
+      "Static/CI proof must not be promoted to live multi-agent replacement proof."
     ]
   }
 }
