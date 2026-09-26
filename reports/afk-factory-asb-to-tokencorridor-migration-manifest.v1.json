@@ -1,0 +1,492 @@
+{
+  "schema": "agentswitchboard.afk-factory-asb-to-tokencorridor-migration-manifest/v1",
+  "manifestId": "ASB-AFK-CLOSEOUT-20260926",
+  "planId": "AFK-FACTORY-CONVERGENCE-2026-09-22",
+  "laneId": "ASB-CLOSEOUT-DONOR",
+  "createdUtc": "2026-09-26T11:10:00Z",
+  "status": "DONOR_CLOSEOUT_RECORDED",
+  "proofCeiling": "Coordination + residual capability census only. Does not prove M3 full transplant, M4 authority cutover, AWG-S3 implementation, or repository obsolescence.",
+  "providerTruth": {
+    "agentSwitchboard": {
+      "repository": "EndeavorEverlasting/AgentSwitchboard",
+      "mainSha": "a60bf6753acb2538c0347a767d42f2283272b5be",
+      "openPrCount": 0,
+      "integratedPrs": {
+        "350": {
+          "title": "fleet readiness / InstallRoot path-oracle",
+          "mergeCommit": "3348a06950368663a336fbc56bcd23982511afea",
+          "validatedHead": "3f782472"
+        },
+        "351": {
+          "title": "TC-FAC execution-adapter contract v2",
+          "mergeCommit": "1414a54659867835fa92cece19a378760ea95aeb"
+        },
+        "355": {
+          "title": "three-repo plan sync / AWG handoff",
+          "mergeCommit": "a60bf6753acb2538c0347a767d42f2283272b5be"
+        }
+      }
+    },
+    "tokenCorridor": {
+      "repository": "EndeavorEverlasting/TokenCorridor",
+      "mainSha": "9380fac7c47404667d28bbc726da1237152a52ba",
+      "lm3B01A": {
+        "pr": 29,
+        "mergeCommit": "24d1758399ce0a158df35cddfc075c13a57e1440",
+        "packet": "artifacts/p04-inventory/lm3-asb-b01a-transplant-packet.v1.json",
+        "destinationRoot": "src/tokencorridor/execution/"
+      }
+    },
+    "canonicalConvergenceOwner": "EndeavorEverlasting/TokenCorridor",
+    "canonicalPlanPaths": [
+      "plans/active/AFK-FACTORY-CONVERGENCE.md",
+      "plans/active/AFK-FACTORY-CONVERGENCE.plan.json"
+    ]
+  },
+  "awgS3Decision": {
+    "decisionId": "AWG-S3-OWNERSHIP-20260926",
+    "decision": "IMPLEMENT_IN_TOKENCORRIDOR",
+    "disposition": "MIGRATE_TO_TOKENCORRIDOR",
+    "rationale": [
+      "Destination owner already exists at src/tokencorridor/execution/ after LM3-B01A (PR #29).",
+      "TC-FAC v2 contracts are already transplanted into TokenCorridor execution contracts; donor-first AWG-S3 would create unnecessary ASB baggage requiring a second transplant.",
+      "Canonical plan names ASB as historical execution/proof plane owner during migration topology; physical new work prefers TokenCorridor when a destination owner exists."
+    ],
+    "tokenCorridorOwner": "src/tokencorridor/execution/ (contracts + instance lifecycle module under execution/)",
+    "asbRole": "COMPATIBILITY_FACADE until M4 caller rewiring; do not implement AWG-S3 product behavior in AgentSwitchboard unless an explicit superseding packet proves a donor-first contract gap.",
+    "doNotImplementInAsb": true,
+    "consumeFloor": "AgentSwitchboard main@a60bf675 TC-FAC v2 + TokenCorridor LM3-B01A execution spine"
+  },
+  "capabilities": [
+    {
+      "id": "ASB-ADAPTER-CORE",
+      "sourcePaths": [
+        "tooling/harness/execution-adapters/adapter_protocol.py",
+        "tooling/harness/execution-adapters/registry.py",
+        "tooling/harness/execution-adapters/runner.py",
+        "tooling/harness/execution-adapters/adapters/cursor_cloud_agent.py",
+        "tooling/harness/execution-adapters/adapters/cursor_cloud_transport.py"
+      ],
+      "testsValidators": [
+        "tests/test_execution_adapter_registry.py",
+        "tests/test_execution_adapter_contract.py"
+      ],
+      "schemas": [
+        "tooling/harness/execution-adapters/execution-adapter-contract.v1.json",
+        "tooling/harness/execution-adapters/execution-adapter-contract.v2.json"
+      ],
+      "installersLifecycle": [],
+      "callers": [
+        "tooling/harness/triage-consumer/dispatch/"
+      ],
+      "tokenCorridorDestinationOwner": "src/tokencorridor/execution/adapters/",
+      "migrationState": "TRANSPLANTED_LM3_B01A",
+      "parityGate": "TokenCorridor tests/test_execution_adapter_*.py adapted from ASB@a60bf675",
+      "retirementGate": "M4 after caller rewiring + zero required ASB callers for this spine",
+      "classification": "ALREADY_CONTAINED"
+    },
+    {
+      "id": "ASB-EXECUTION-CONTRACTS",
+      "sourcePaths": [
+        "tooling/harness/execution-adapters/schemas/execution-request.v1.schema.json",
+        "tooling/harness/execution-adapters/schemas/execution-receipt.v1.schema.json",
+        "tooling/harness/execution-adapters/schemas/execution-request.v2.schema.json",
+        "tooling/harness/execution-adapters/schemas/execution-receipt.v2.schema.json",
+        "tooling/harness/execution-adapters/schemas/capability-report.v1.schema.json",
+        "tooling/harness/execution-adapters/fixtures/"
+      ],
+      "testsValidators": [
+        "tests/test_execution_adapter_contract.py",
+        "tests/test_execution_adapter_contract_v2.py"
+      ],
+      "schemas": [
+        "execution-request/receipt v1+v2",
+        "capability-report.v1"
+      ],
+      "installersLifecycle": [],
+      "callers": [
+        "execution-adapters runner",
+        "FrontierAgent FA-2 (future)"
+      ],
+      "tokenCorridorDestinationOwner": "src/tokencorridor/execution/contracts/",
+      "migrationState": "TRANSPLANTED_LM3_B01A",
+      "parityGate": "v2 fingerprint/budget negative fixtures parity",
+      "retirementGate": "M4 schema-id compatibility period complete",
+      "classification": "ALREADY_CONTAINED"
+    },
+    {
+      "id": "ASB-LOCAL-ARGV-ADAPTER",
+      "sourcePaths": [
+        "tooling/harness/triage-consumer/dispatch/dispatch_lanes.py::_execute_local_argv",
+        "tooling/harness/execution-adapters/adapters/local_argv.py (MISSING target; contract points here)"
+      ],
+      "testsValidators": [
+        "tests/test_execution_adapter_registry.py",
+        "tests/test_triage_asb_consumer_contract.py"
+      ],
+      "schemas": [
+        "fixtures/execution-request.local-argv.valid.json"
+      ],
+      "installersLifecycle": [],
+      "callers": [
+        "triage-consumer dispatch lanes"
+      ],
+      "tokenCorridorDestinationOwner": "src/tokencorridor/execution/adapters/adapters/local_argv.py (LM3-B01B packet)",
+      "migrationState": "DONOR_LEGACY_SOURCE",
+      "parityGate": "extract semantic local-argv with focused process fixtures; no fabricated adapter in B01A",
+      "retirementGate": "B01B parity + triage-consumer rewire or compatibility facade",
+      "classification": "MIGRATE_TO_TOKENCORRIDOR"
+    },
+    {
+      "id": "ASB-CLAUDE-CODE-ADAPTER",
+      "sourcePaths": [
+        "tooling/harness/execution-adapters/adapters/claude_code.py (MISSING target; contract points here)",
+        "fixtures/execution-request.claude-code.valid.json"
+      ],
+      "testsValidators": [
+        "tests/test_execution_adapter_contract.py"
+      ],
+      "schemas": [
+        "execution-adapter-contract.v1/v2 adapterKinds.claude-code"
+      ],
+      "installersLifecycle": [],
+      "callers": [],
+      "tokenCorridorDestinationOwner": "src/tokencorridor/execution/adapters/adapters/",
+      "migrationState": "CONTRACT_ONLY_STUB",
+      "parityGate": "implement only when caller packet exists",
+      "retirementGate": "M4 if never enabled; else after TC owner + callers",
+      "classification": "MIGRATE_TO_TOKENCORRIDOR"
+    },
+    {
+      "id": "ASB-TRIAGE-CONSUMER",
+      "sourcePaths": [
+        "tooling/harness/triage-consumer/"
+      ],
+      "testsValidators": [
+        "tests/test_triage_asb_consumer_contract.py"
+      ],
+      "schemas": [
+        "tooling/harness/triage-consumer/schemas/"
+      ],
+      "installersLifecycle": [],
+      "callers": [
+        "Prompt Kit / Triage dispatch ingress"
+      ],
+      "tokenCorridorDestinationOwner": "src/tokencorridor/execution/ingress/",
+      "migrationState": "DONOR_AUTHORITY",
+      "parityGate": "LM3 ASB-B02 packet + ingress parity",
+      "retirementGate": "M4 after caller census",
+      "classification": "MIGRATE_TO_TOKENCORRIDOR"
+    },
+    {
+      "id": "ASB-FLEET-READINESS",
+      "sourcePaths": [
+        "tooling/profiles/windows/harness/agent-fleet-readiness/"
+      ],
+      "testsValidators": [
+        "tests/test_agent_fleet_readiness_boundary.py"
+      ],
+      "schemas": [
+        "readiness-boundary.contract.json",
+        "artifact-registry.json"
+      ],
+      "installersLifecycle": [],
+      "callers": [
+        "Windows profile readiness workflows"
+      ],
+      "tokenCorridorDestinationOwner": "tooling/runtime/windows/fleet/",
+      "migrationState": "INTEGRATED_ON_ASB_MAIN_PR350",
+      "parityGate": "ASB-B04 exact packet after product-generic split from GNHF branding",
+      "retirementGate": "M4/M5 after caller census",
+      "classification": "MIGRATE_TO_TOKENCORRIDOR"
+    },
+    {
+      "id": "ASB-GNHF-STARTUP",
+      "sourcePaths": [
+        "tooling/gnhf/"
+      ],
+      "testsValidators": [
+        "tests/test_gnhf_narrow_ownership_contract.py",
+        "scripts/Test-GnhfNarrowOwnershipContract.ps1"
+      ],
+      "schemas": [],
+      "installersLifecycle": [
+        "tooling/gnhf/Start-GnhfSprint.ps1"
+      ],
+      "callers": [
+        "workstation fleet launch"
+      ],
+      "tokenCorridorDestinationOwner": "tooling/runtime/windows/fleet/ candidate",
+      "migrationState": "NARROW_BOUNDARY_ON_ASB",
+      "parityGate": "REMOTE-STRATEGIC split of generic fleet vs ASB-branded installers",
+      "retirementGate": "M4 only after generic extraction or explicit retain decision",
+      "classification": "RETAIN_TEMPORARILY"
+    },
+    {
+      "id": "ASB-MACHINE-PROFILE",
+      "sourcePaths": [
+        "tooling/profiles/windows/Get-AgentSwitchboardMachineProfile.ps1",
+        "tooling/profiles/windows/harness/machine-profile/"
+      ],
+      "testsValidators": [
+        "tests/test_machine_profile_bootstrap.py"
+      ],
+      "schemas": [],
+      "installersLifecycle": [
+        "machine-profile Inspect/status surfaces"
+      ],
+      "callers": [
+        "technician bootstrap",
+        "LR-00 readiness"
+      ],
+      "tokenCorridorDestinationOwner": "tooling/runtime/windows/machine-profile/",
+      "migrationState": "DONOR_AUTHORITY",
+      "parityGate": "ASB-B03 + redaction/path policy parity",
+      "retirementGate": "LC2 + caller rewiring",
+      "classification": "MIGRATE_TO_TOKENCORRIDOR"
+    },
+    {
+      "id": "ASB-OPENCODE-RUNTIME",
+      "sourcePaths": [
+        "tooling/profiles/windows/Get-OpenCodeRuntimeResolutionStatus.ps1",
+        "tooling/profiles/windows/harness/opencode-runtime-resolution/",
+        "docs/harness/opencode-runtime-resolution-harness.md"
+      ],
+      "testsValidators": [
+        "scripts/Test-OpenCodeLspHarness.ps1 (related LSP; not runtime-resolution identity)"
+      ],
+      "schemas": [],
+      "installersLifecycle": [],
+      "callers": [
+        "LR-00 diagnostics"
+      ],
+      "tokenCorridorDestinationOwner": "tooling/runtime/windows/opencode/",
+      "migrationState": "DONOR_AUTHORITY",
+      "parityGate": "diagnostic-only boundary preserved",
+      "retirementGate": "M4 after TC diagnostics owner proven",
+      "classification": "MIGRATE_TO_TOKENCORRIDOR"
+    },
+    {
+      "id": "ASB-SYSTEM-BOOTSTRAP-LIFECYCLE",
+      "sourcePaths": [
+        "tooling/harness/system-bootstrap-lifecycle/",
+        "tooling/profiles/windows/Install-AgentSwitchboardOpenCode.ps1",
+        "tooling/pi/Install-AgentSwitchboardPiSystem.ps1",
+        "tooling/pi/Install-AgentSwitchboardPiWsl.ps1"
+      ],
+      "testsValidators": [
+        "tests/test_system_bootstrap_lifecycle.py",
+        "tests/test_opencode_native_system_bootstrap.py",
+        "tests/test_pi_system_bootstrap.py",
+        "tests/test_pi_wsl_bootstrap.py"
+      ],
+      "schemas": [
+        "lifecycle.contract.json",
+        "lifecycle-state.schema.json",
+        "adapters.v1.json"
+      ],
+      "installersLifecycle": [
+        "Bootstrap-OpenCode-SystemWide.cmd / Unbootstrap-OpenCode-SystemWide.cmd",
+        "Bootstrap-Pi-SystemWide.cmd (Apply-only negative)",
+        "Bootstrap-Pi-WSL.cmd (Apply-only negative)"
+      ],
+      "callers": [
+        "workstation bootstrap entrypoints"
+      ],
+      "tokenCorridorDestinationOwner": "tooling/runtime/lifecycle/",
+      "migrationState": "DONOR_PRIOR_ART",
+      "parityGate": "LC0+LC1+LC2 Apply/Remove parity; Pi host/guest Remove required before migration authority",
+      "retirementGate": "LC4 cert + M4",
+      "classification": "MIGRATE_TO_TOKENCORRIDOR"
+    },
+    {
+      "id": "ASB-INSTALLER-LAUNCHER-FACADES",
+      "sourcePaths": [
+        "Bootstrap-*.cmd",
+        "Pull-And-Run-AgentSwitchboard.cmd",
+        "AgentSwitchboard*.cmd",
+        "Setup-AgentSwitchboard*.ps1"
+      ],
+      "testsValidators": [],
+      "schemas": [],
+      "installersLifecycle": [
+        "CMD/PS1 entrypoints"
+      ],
+      "callers": [
+        "external workstation operators (census incomplete)"
+      ],
+      "tokenCorridorDestinationOwner": "compat/agentswitchboard/",
+      "migrationState": "COMPATIBILITY_REQUIRED",
+      "parityGate": "external caller census + TC Inspect/Apply/Remove replacement",
+      "retirementGate": "M5 after zero required callers",
+      "classification": "COMPATIBILITY_FACADE"
+    },
+    {
+      "id": "ASB-COMPANION-PLAN-WORKFLOWS",
+      "sourcePaths": [
+        "plans/active/ASB-2026-09-token-corridor-competitive-architecture.*",
+        ".github/workflows/public-plan-contracts.yml"
+      ],
+      "testsValidators": [
+        "scripts/Test-PublicPlanContracts.ps1"
+      ],
+      "schemas": [
+        "plans/schemas/public-plan.schema.json"
+      ],
+      "installersLifecycle": [],
+      "callers": [
+        "ASB public-plan CI"
+      ],
+      "tokenCorridorDestinationOwner": "plans/active/AFK-FACTORY-CONVERGENCE.* (canonical)",
+      "migrationState": "COMPANION_ACTIVE",
+      "parityGate": "companion remains valid until M4; must point at TokenCorridor ownership",
+      "retirementGate": "M4 authority cutover",
+      "classification": "RETIRE_AFTER_M4"
+    },
+    {
+      "id": "ASB-AWG-S3-EXECUTION-INSTANCE-LIFECYCLE",
+      "sourcePaths": [
+        "NONE_IN_ASB (do not create donor implementation)"
+      ],
+      "testsValidators": [
+        "TokenCorridor focused positive/negative fixtures (future AWG-S3 packet)"
+      ],
+      "schemas": [
+        "consume TC-FAC v2 execution-request/receipt; add execution-instance lifecycle + preservation/replacement receipts in TokenCorridor"
+      ],
+      "installersLifecycle": [],
+      "callers": [
+        "Agent Work Graph S4/S5 after S3"
+      ],
+      "tokenCorridorDestinationOwner": "src/tokencorridor/execution/",
+      "migrationState": "DECISION_RECORDED_NOT_IMPLEMENTED",
+      "parityGate": "RUNNING/STALLED/BLOCKED/HANDOFF_READY/SUPERSEDED/COMPLETE + replacement without work-item identity change",
+      "retirementGate": "n/a for ASB product path",
+      "classification": "MIGRATE_TO_TOKENCORRIDOR"
+    },
+    {
+      "id": "RUNTIME-FIRSTMATE",
+      "sourcePaths": [
+        "tooling/firstmate/",
+        "docs/architecture/asb-firstmate-runtime-boundary.md"
+      ],
+      "testsValidators": [
+        "tests/test_firstmate_asb_convergence_contract.py",
+        "Invoke-Asq017AdminBoxLiveFloor.ps1"
+      ],
+      "schemas": [
+        "tooling/firstmate/harness/upstream-pin.json",
+        "convergence-contract.json"
+      ],
+      "installersLifecycle": [
+        "WSL physical-floor continuation"
+      ],
+      "callers": [
+        "ASQ-015/ASQ-017"
+      ],
+      "tokenCorridorDestinationOwner": "external pinned/runtime adapter",
+      "migrationState": "EXTERNAL_ADAPTER",
+      "parityGate": "none unless measured extraction",
+      "retirementGate": "n/a",
+      "classification": "ADAPTER_ONLY"
+    },
+    {
+      "id": "RUNTIME-FRONTIERAGENT",
+      "sourcePaths": [
+        "ApodexAI/FrontierAgent@9e533db6f6c34d16037ee5ec964c479d0eb51cde"
+      ],
+      "testsValidators": [
+        "FA-1 isolated upstream proof (TokenCorridor/FA lane)"
+      ],
+      "schemas": [],
+      "installersLifecycle": [],
+      "callers": [
+        "FA-2 adapter after FA-1"
+      ],
+      "tokenCorridorDestinationOwner": "external pinned fork/wrapper behind execution adapter",
+      "migrationState": "PINNED_DONOR",
+      "parityGate": "FA-1 + FA-2",
+      "retirementGate": "n/a",
+      "classification": "ADAPTER_ONLY"
+    },
+    {
+      "id": "ASB-REPO-GOVERNANCE-LEDGER",
+      "sourcePaths": [
+        "AGENTS.md",
+        ".ai/WORK_QUEUE.md",
+        "docs/governance/",
+        ".ai/harness/"
+      ],
+      "testsValidators": [
+        "scripts/Test-RepositoryWorkLedgerContract.ps1",
+        "scripts/Test-AgentGovernanceDoctrine.ps1"
+      ],
+      "schemas": [
+        ".ai/harness/repository-work-ledger.policy.json"
+      ],
+      "installersLifecycle": [],
+      "callers": [
+        "ASB repository operation"
+      ],
+      "tokenCorridorDestinationOwner": "n/a — donor repo self-governance until M5 archive",
+      "migrationState": "RETAINED_FOR_DONOR_OPERATION",
+      "parityGate": "none for product migration",
+      "retirementGate": "M5 archive/deprecation after product authority cutover",
+      "classification": "RETAIN_TEMPORARILY"
+    }
+  ],
+  "compatibilitySurfaces": [
+    "tooling/harness/execution-adapters/ (donor copy until M4)",
+    "Bootstrap-*.cmd / AgentSwitchboard*.cmd launcher facades",
+    "plans/active/ASB-2026-09-token-corridor-competitive-architecture.* companion",
+    "FirstMate/FrontierAgent adapter pins"
+  ],
+  "m4RetirementGates": [
+    "M2/M3 parity complete for each migrated capability",
+    "LC4 local + LC4R remote lifecycle certificates for enabled modes",
+    "external caller census reaches zero UNKNOWN for retiring paths",
+    "TokenCorridor main owns destination modules and callers are rewired or facades remain explicit",
+    "donor authority explicitly downgraded to compatibility/archive/retained-domain — never silent duplicate",
+    "AWG-S3 implemented and proven in TokenCorridor before cutover claims execution-instance lifecycle completeness"
+  ],
+  "tokenCorridorPackets": [
+    {
+      "id": "LM3-B01A",
+      "status": "INTEGRATED",
+      "pr": 29,
+      "note": "execution-adapter contract/registry/Cursor spine transplanted"
+    },
+    {
+      "id": "LM3-B01B",
+      "status": "WAITING_PACKET",
+      "note": "local-argv semantic extraction from triage-consumer"
+    },
+    {
+      "id": "LM3-ASB-B02",
+      "status": "WAITING_PACKET",
+      "note": "triage-consumer ingress transplant"
+    },
+    {
+      "id": "LM3-ASB-B03",
+      "status": "WAITING_PACKET",
+      "note": "machine-profile + OpenCode runtime + lifecycle prior-art"
+    },
+    {
+      "id": "LM3-ASB-B04",
+      "status": "WAITING_PACKET",
+      "note": "fleet readiness / GNHF genericity split"
+    },
+    {
+      "id": "AWG-S3",
+      "status": "TOKENCORRIDOR_OWNED_NOT_STARTED",
+      "note": "execution-instance lifecycle + preservation/replacement receipts"
+    }
+  ],
+  "references": [
+    "artifacts/p04-inventory/destination-module-map.v1.json (TokenCorridor)",
+    "artifacts/p04-inventory/lm3-asb-b01a-transplant-packet.v1.json (TokenCorridor)",
+    "plans/active/ASB-2026-09-token-corridor-competitive-architecture.md",
+    "plans/active/AFK-FACTORY-CONVERGENCE.md (TokenCorridor)",
+    "plans/active/AGENT-WORK-GRAPH-UNDERWAY-RECONCILIATION.md (TokenCorridor)"
+  ]
+}
