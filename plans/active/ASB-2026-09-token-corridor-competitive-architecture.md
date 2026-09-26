@@ -1,5 +1,18 @@
 # Token Corridor Competitive Decision-Control Plane — OSS-First Revision
 
+## Provider-truth synchronization — 2026-09-26
+
+**Current ASB main:** `3348a069`.
+
+- **PR #351 / TC-FAC is integrated** at merge `1414a546`. Execution-adapter v2 is now a consumed floor, not an open sprint.
+- **PR #350 fleet readiness is integrated** at merge `3348a069`, containing validated head `3f782472` and the InstallRoot path-oracle repair.
+- There are **no open ASB PRs** at this refresh.
+- ASB's next bounded contribution to the shared TokenCorridor program is **Agent Work Graph S3 — execution-instance lifecycle + preservation/replacement receipts**. It may run in parallel with Prompt Kit/Triage S1 because the write surfaces and canonical owners are disjoint.
+- S3 must consume TC-FAC v2 rather than reopening or duplicating execution-envelope authority. Fleet readiness remains a separate capability unless S3 proves a concrete runtime-resource dependency.
+- FrontierAgent FA-2 remains gated by FA-1 even though TC-FAC is satisfied.
+
+This synchronization block overrides older historical wording below that describes #350/#351 as active.
+
 **Plan ID:** `ASB-2026-09-TOKEN-CORRIDOR-COMPETITIVE-ARCHITECTURE`
 **Status:** Proposed
 **Priority:** High
