@@ -7,7 +7,7 @@
   "status": "proposed",
   "priority": "high",
   "createdUtc": "2026-09-22T22:12:00Z",
-  "updatedUtc": "2026-09-26T06:00:00Z",
+  "updatedUtc": "2026-09-26T06:33:00Z",
   "mission": "Define and prove an OSS-first, provider-neutral bounded-decision control plane (working name Token Corridor) inside the AgentSwitchboard software factory. Before inventing infrastructure, evaluate real open/self-hosted decision engines, routers, structured-output runtimes, durable workflow engines, agent runtimes, sandboxes, and eval/observability platforms against commercial comparators. Compile repository/runtime evidence into typed decision requests, choose the cheapest adequate open or commercial engine by measured policy, preserve calibrated uncertainty and authority provenance, and route execution without duplicating Prompt Kit, FirstMate, AgentSwitchboard execution adapters, or already-solved open-source infrastructure. This plan participates as the AgentSwitchboard companion to the canonical TokenCorridor convergence program (TokenCorridor is the destination product/repository; current three-repo split is migration topology).",
   "owner": {
     "surface": "AgentSwitchboard factory decision-control plane",
@@ -15,13 +15,13 @@
     "agent": null
   },
   "delivery": {
-    "branch": "plan/frontier-agent-runtime-bootstrap-20260923",
+    "branch": "sync/three-repo-plan-20260926",
     "pullRequest": {
-      "number": 347,
-      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/347",
+      "number": 355,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/355",
       "state": "open"
     },
-    "baseRef": "main@9992f4305021a33dd5ca9916a8f33cf45d8581ff",
+    "baseRef": "main@3348a06950368663a336fbc56bcd23982511afea",
     "commitRequired": true
   },
   "wave": "Competitive architecture → decision protocol → measured factory integration",
@@ -711,30 +711,14 @@
     "ceiling": "This plan proves a source-backed open-vs-managed architecture and selection program only. It does not prove any candidate's performance on the user's factory corpus, production readiness on the user's hardware, Token Corridor runtime behavior, live AFK execution, or a standalone product/repository boundary. No FrontierAgent clone/fork runtime, smoke run, ASB adapter, or TokenCorridor execution tracer is proven by this planning update."
   },
   "handoff": {
-    "nextOwner": "TC-FA1 FrontierAgent runtime-substrate evaluation lane, in parallel with TC-FAC execution-contract extension where write ownership is isolated",
-    "nextCommand": "set -eu; target=../FrontierAgent-bootstrap-9e533db6; test ! -e \"$target\" || { echo \"BLOCKED: isolated target already exists: $target\" >&2; exit 2; }; donor=../FrontierAgent; if git -C \"$donor\" rev-parse --is-inside-work-tree >/dev/null 2>&1 && test \"$(git -C \"$donor\" remote get-url origin)\" = \"https://github.com/ApodexAI/FrontierAgent.git\"; then git -C \"$donor\" fetch --all --prune --tags; git -C \"$donor\" worktree add --detach \"$target\" 9e533db6f6c34d16037ee5ec964c479d0eb51cde; else git clone --no-checkout https://github.com/ApodexAI/FrontierAgent.git \"$target\"; git -C \"$target\" checkout --detach 9e533db6f6c34d16037ee5ec964c479d0eb51cde; fi; test \"$(git -C \"$target\" rev-parse HEAD)\" = 9e533db6f6c34d16037ee5ec964c479d0eb51cde",
+    "nextOwner": "AWG-S3 Agent Work Graph execution-instance lifecycle and preservation/replacement receipt lane",
+    "nextCommand": "git fetch --all --prune --tags && git switch main && git pull --ff-only && git worktree add -b feat/awg-s3-execution-instance-lifecycle-20260926 ../AgentSwitchboard-awg-s3 origin/main",
     "notes": [
-      "Read this corrected plan before implementing the decision protocol; the earlier Jev-centric baseline is superseded by the OSS-first substrate survey.",
-      "The bakeoff must complete with zero paid API credentials. TypeSafe Jev is optional comparison evidence only.",
-      "Start with byte-identical factory decision fixtures and preserve exact engine/model/version/config/hardware identities in receipts.",
-      "Do not let a probabilistic output create authorization; probability is evidence, not permission.",
-      "Keep Token Corridor as a working name until TC-07.",
-      "Probe open PRs/worktrees immediately before creating the writer; do not collide with a newly opened canonical owner.",
-      "After PR #347 integrates, publish the exact ASB main SHA into TokenCorridor plan AFK-FACTORY-CONVERGENCE-2026-09-22 (canonical path plans/active/AFK-FACTORY-CONVERGENCE.plan.json).",
-      "Prompt Kit is the human↔AFK interface foundation; ASB must not bypass it by inventing operator-facing workflow semantics.",
-      "Factory Topology is a read-only evidence projection successor, not a new execution or authority owner.",
-      "Shared convergence ID: AFK-FACTORY-CONVERGENCE-2026-09-22.",
-      "TokenCorridor PR #1 is the canonical cross-repository convergence owner and destination product/repository (TokenCorridor is the destination for Prompt Kit/AFKAF and ASB; current three-repo split is migration topology).",
-      "Prompt Kit PR #633 owns the human↔AFK interface convergence plan (Prompt Kit remains front door; capabilities migrate into TokenCorridor, Excel/OOXML stays in Triage).",
-      "AgentSwitchboard companion plan preserves logical execution/proof ownership; relevant ASB product capabilities converge physically into TokenCorridor per M3; runtime adapters (FrontierAgent/FirstMate) remain separate unless evidence justifies extraction.",
-      "Canonical M0–M5 phases and authority-transfer gates live in EndeavorEverlasting/TokenCorridor → plans/active/AFK-FACTORY-CONVERGENCE.plan.json (destinationContract + repositoryConvergencePhases).",
-      "After PR #347 integrates, refresh its exact main SHA into TokenCorridor PR #1 before cross-repository C1 begins.",
-      "FrontierAgent is Apache-2.0 and is deliberately kept behind an upstream/fork boundary; preserve license/attribution and mark distributed modifications.",
-      "Treat `frontier_agent/` as the long-term import/plugin seam and the CLI/TUI as a black-box smoke/prototype seam; do not fork core until a measured adapter gap exists.",
-      "ASB is the outer scheduler/admission/authority/proof owner. FrontierAgent Agent Team is an inner per-run scheduler only.",
-      "Do not mount or copy broad operator SSH/GitHub credential state into the FrontierAgent sandbox merely to make Git work; prefer existing scoped ASB/provider actions or a separately reviewed credential bridge.",
-      "Prompt Kit must stay backend-agnostic: it presents execution/proof state but does not gain FrontierAgent-specific semantic identities unless later product evidence requires them.",
-      "The bootstrap command never repurposes an occupied target path; an existing canonical donor clone may only serve as the source for a new detached worktree after origin verification."
+      "AWG-S3 is the next bounded ASB contribution. Consume merged TC-FAC v2; do not reopen execution-envelope authority.",
+      "Implement execution-instance lifecycle states plus preservation/replacement receipts with positive and negative fixtures on an isolated writer lane.",
+      "Keep fleet-readiness from #350 independent unless a concrete runtime-resource dependency is proven.",
+      "Static/CI proof must not be promoted to live multi-agent replacement proof.",
+      "TokenCorridor remains the canonical convergence repository; ASB is a migration donor/control-plane owner until M4 cutover."
     ]
   }
 }
