@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 import tempfile
@@ -9,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 BASE = ROOT / "tooling" / "profiles" / "windows" / "harness" / "agent-fleet-readiness"
 REPORTER = ROOT / "tooling" / "profiles" / "windows" / "Get-AgentFleetReadinessBoundary.ps1"
+_INSTALL_ROOT_RE = re.compile(r'-InstallRoot\s+"([^"]+)"')
 
 class ContractFailure(RuntimeError):
     pass
@@ -19,6 +21,22 @@ def check(value: object, message: str) -> None:
 
 def load(path: Path):
     return json.loads(path.read_text(encoding="utf-8-sig"))
+
+def assert_install_root_preserved(case_name: str, expected_root: Path, startup_command: str) -> None:
+    """Require InstallRoot in the follow-up command, comparing resolved paths.
+
+    Windows tempfile paths may surface as 8.3 short names in Python while
+    PowerShell GetFullPath emits the long form; substring equality is not the
+    authority for preservation.
+    """
+    match = _INSTALL_ROOT_RE.search(startup_command or "")
+    check(match is not None, f"{case_name}: startup reporter omitted -InstallRoot")
+    reported = Path(match.group(1)).resolve()
+    expected = expected_root.resolve()
+    check(
+        reported == expected,
+        f"{case_name}: startup reporter lost InstallRoot (reported={reported}, expected={expected})",
+    )
 
 def run_reporter(case: dict) -> dict:
     pwsh = shutil.which("pwsh")
@@ -43,7 +61,7 @@ def run_reporter(case: dict) -> dict:
             payload = json.loads(completed.stdout)
         except json.JSONDecodeError as exc:
             raise ContractFailure(f"{case['name']}: reporter emitted invalid JSON: {completed.stdout!r}") from exc
-        check(str(root) in payload["startupReadinessCommand"], f"{case['name']}: startup reporter lost InstallRoot")
+        assert_install_root_preserved(case["name"], root, payload["startupReadinessCommand"])
         return payload
 
 def main() -> None:

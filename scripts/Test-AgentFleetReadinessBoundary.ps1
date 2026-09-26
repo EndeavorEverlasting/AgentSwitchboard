@@ -50,7 +50,14 @@ foreach ($case in $cases) {
         if ($LASTEXITCODE -ne 0) { throw "Boundary reporter failed for $($case.Name)" }
         if ($payload.classification -ne $case.Expected) { throw "$($case.Name): expected $($case.Expected), got $($payload.classification)" }
         if ($payload.tracked -ne $false) { throw "$($case.Name): generated status is marked tracked" }
-        if (-not $payload.startupReadinessCommand.Contains($root)) { throw "$($case.Name): startup reporter lost InstallRoot" }
+        # Compare resolved InstallRoot paths; do not use raw substring equality (8.3 vs long path).
+        $match = [regex]::Match([string]$payload.startupReadinessCommand, '-InstallRoot\s+"([^"]+)"')
+        if (-not $match.Success) { throw "$($case.Name): startup reporter omitted -InstallRoot" }
+        $reportedRoot = [IO.Path]::GetFullPath($match.Groups[1].Value)
+        $expectedRoot = [IO.Path]::GetFullPath($root)
+        if (-not [string]::Equals($reportedRoot, $expectedRoot, [StringComparison]::OrdinalIgnoreCase)) {
+            throw "$($case.Name): startup reporter lost InstallRoot (reported=$reportedRoot, expected=$expectedRoot)"
+        }
     } finally {
         Remove-Item -LiteralPath $root -Recurse -Force -ErrorAction SilentlyContinue
     }
