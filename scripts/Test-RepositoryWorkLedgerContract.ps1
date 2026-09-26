@@ -34,13 +34,19 @@ function Test-ExactSequence {
 function Test-ExactCommitPin([string]$Value) {
     return $Value -cmatch '^[0-9a-f]{40}$'
 }
-function Test-TrackedRepositoryFile([string]$Candidate) {
-    if ([string]::IsNullOrWhiteSpace($Candidate)) { return $false }
+function Get-RepositoryEntrypointOwnership([string]$Candidate) {
+    # owned = tracked regular blob (100644/100755). Symlinks (120000) and gitlinks (160000) are non-regular.
+    if ([string]::IsNullOrWhiteSpace($Candidate)) { return 'missing' }
     $resolved = Join-Path $repoRoot $Candidate
-    if (-not (Test-Path -LiteralPath $resolved -PathType Leaf)) { return $false }
+    if (-not (Test-Path -LiteralPath $resolved -PathType Leaf)) { return 'missing' }
     $stageLines = @(& git -C $repoRoot ls-files --stage --error-unmatch -- $Candidate 2>$null)
-    if ($LASTEXITCODE -ne 0 -or $stageLines.Count -ne 1) { return $false }
-    return [string]$stageLines[0] -match '^(?:100644|100755)\s+[0-9a-f]{40,64}\s+\d+\t'
+    if ($LASTEXITCODE -ne 0 -or $stageLines.Count -ne 1) { return 'untracked' }
+    $stageLine = [string]$stageLines[0]
+    if ($stageLine -match '^(?:100644|100755)\s+[0-9a-f]{40,64}\s+\d+\t') { return 'owned' }
+    return 'non-regular'
+}
+function Test-TrackedRepositoryFile([string]$Candidate) {
+    return (Get-RepositoryEntrypointOwnership $Candidate) -eq 'owned'
 }
 
 foreach ($path in @($ledger, $policyPathResolved, $adoptionPath, $docPath, $frontierPath)) {
@@ -239,9 +245,24 @@ for ($i = 0; $i -lt $headingMatches.Count; $i++) {
             Add-Error "$id long Next action ($($nextDurabilityText.Length) chars > $maxInlineNextActionChars) must cite a repository executable entrypoint in References"
         }
         else {
-            $ownedEntrypoints = @($entrypointReferences | Where-Object { Test-TrackedRepositoryFile $_ })
+            $ownedEntrypoints = [System.Collections.Generic.List[string]]::new()
+            $sawNonRegular = $false
+            foreach ($candidate in $entrypointReferences) {
+                $ownership = Get-RepositoryEntrypointOwnership $candidate
+                if ($ownership -eq 'owned') {
+                    [void]$ownedEntrypoints.Add($candidate)
+                }
+                elseif ($ownership -eq 'non-regular') {
+                    $sawNonRegular = $true
+                }
+            }
             if ($ownedEntrypoints.Count -eq 0) {
-                Add-Error "$id long Next action must cite an existing tracked repository executable entrypoint"
+                if ($sawNonRegular) {
+                    Add-Error "$id long Next action must cite a tracked regular repository executable entrypoint (symlink/gitlink rejected)"
+                }
+                else {
+                    Add-Error "$id long Next action must cite an existing tracked repository executable entrypoint"
+                }
             }
             else {
                 $mentionedEntrypoint = $false

@@ -83,7 +83,7 @@
       "requireReferenceCitation": true,
       "requireNextActionMention": true,
       "portableRequirement": false,
-      "rule": "Next actions longer than the inline threshold must delegate recurring operator mechanics to an existing repository-owned executable entrypoint instead of preserving a chat-length command sequence as the primary handoff."
+      "rule": "Next actions longer than the inline threshold must delegate recurring operator mechanics to an existing tracked regular repository executable entrypoint (Git blob mode 100644 or 100755; not symlink or gitlink) instead of preserving a chat-length command sequence as the primary handoff. Durability length uses the complete multiline Next action field."
     },
     "proofCeiling": "local task granularity classification, deterministic frontier routing, and static operator-command durability only"
   },

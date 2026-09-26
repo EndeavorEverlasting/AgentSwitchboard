@@ -239,6 +239,112 @@ class RepositoryWorkLedgerContractTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('must cite an existing tracked repository executable entrypoint', result.stderr)
 
+    def _install_index_cacheinfo(self, relative: str, mode: str, object_id: str) -> None:
+        """Leave a working-tree leaf in place while indexing an arbitrary Git mode."""
+        path = ROOT / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        # Clear any leftover index/worktree probe from a prior interrupted run.
+        subprocess.run(
+            ['git', '-C', str(ROOT), 'update-index', '--force-remove', relative],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        path.unlink(missing_ok=True)
+        path.write_text("# p66 durability ownership probe\n", encoding='utf-8')
+        # Prefer separate --cacheinfo <mode>,<object>,<path> args; --cacheinfo=... is rejected on some Git builds.
+        result = subprocess.run(
+            [
+                'git', '-C', str(ROOT), 'update-index', '--add',
+                '--cacheinfo', f'{mode},{object_id},{relative}',
+            ],
+            text=True,
+            capture_output=True,
+        )
+        if result.returncode != 0:
+            raise AssertionError(
+                f'update-index --cacheinfo failed for mode={mode} path={relative}: '
+                f'exit={result.returncode} stderr={result.stderr!r} stdout={result.stdout!r}'
+            )
+
+    def _install_symlink_index_entry(self, relative: str, target: str) -> None:
+        blob = subprocess.check_output(
+            ['git', '-C', str(ROOT), 'hash-object', '-w', '--stdin'],
+            input=target.encode('utf-8'),
+        ).decode('ascii').strip()
+        self._install_index_cacheinfo(relative, '120000', blob)
+
+    def _remove_index_probe(self, relative: str) -> None:
+        subprocess.run(
+            ['git', '-C', str(ROOT), 'update-index', '--force-remove', relative],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        (ROOT / relative).unlink(missing_ok=True)
+
+    def test_long_next_action_rejects_git_symlink_entrypoint(self):
+        """Reject Git symlink mode 120000 even when a leaf exists on disk.
+
+        Uses update-index --cacheinfo so the case is portable without OS symlink privilege.
+        """
+        relative = 'scripts/_p66_audit_symlink_probe.ps1'
+        try:
+            self._install_symlink_index_entry(
+                relative,
+                'scripts/Get-RepositoryWorkLedgerFrontier.ps1',
+            )
+            stage = subprocess.check_output(
+                ['git', '-C', str(ROOT), 'ls-files', '--stage', '--', relative],
+                text=True,
+            )
+            self.assertTrue(stage.startswith('120000 '), stage)
+            long_action = (
+                'run ' + relative + ' and '
+                + ('continue only after its bounded evidence is preserved; ' * 8)
+            )
+            result = self.run_temp(task(
+                References=f'`{relative}`',
+                **{'Next action': long_action},
+            ))
+        finally:
+            self._remove_index_probe(relative)
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn(
+            'tracked regular repository executable entrypoint (symlink/gitlink rejected)',
+            result.stderr,
+        )
+
+    def test_long_next_action_rejects_gitlink_entrypoint(self):
+        """Reject Git gitlink/submodule mode 160000 even when a leaf exists on disk."""
+        relative = 'scripts/_p66_audit_gitlink_probe.ps1'
+        commit_object = subprocess.check_output(
+            ['git', '-C', str(ROOT), 'rev-parse', 'HEAD'],
+            text=True,
+        ).strip()
+        try:
+            self._install_index_cacheinfo(relative, '160000', commit_object)
+            stage = subprocess.check_output(
+                ['git', '-C', str(ROOT), 'ls-files', '--stage', '--', relative],
+                text=True,
+            )
+            self.assertTrue(stage.startswith('160000 '), stage)
+            long_action = (
+                'run ' + relative + ' and '
+                + ('continue only after its bounded evidence is preserved; ' * 8)
+            )
+            result = self.run_temp(task(
+                References=f'`{relative}`',
+                **{'Next action': long_action},
+            ))
+        finally:
+            self._remove_index_probe(relative)
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn(
+            'tracked regular repository executable entrypoint (symlink/gitlink rejected)',
+            result.stderr,
+        )
+
     def test_long_next_action_accepts_tracked_durable_entrypoint(self):
         entrypoint = 'scripts/Get-RepositoryWorkLedgerFrontier.ps1'
         long_action = 'run ' + entrypoint + ' and ' + ('use its bounded output instead of reconstructing the operator sequence; ' * 7)
