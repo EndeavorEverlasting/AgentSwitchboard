@@ -1,0 +1,66 @@
+{
+  "schema": "agentswitchboard.agent-fleet-readiness-boundary-artifacts.v1",
+  "trackedArtifacts": [
+    {
+      "id": "boundary-contract",
+      "path": "tooling/profiles/windows/harness/agent-fleet-readiness/readiness-boundary.contract.json"
+    },
+    {
+      "id": "boundary-fixtures",
+      "path": "tooling/profiles/windows/harness/agent-fleet-readiness/fixtures/readiness-boundary-cases.json"
+    },
+    {
+      "id": "powershell-workflow",
+      "path": "tooling/profiles/windows/harness/agent-fleet-readiness/workflows/prove-readiness-through-powershell.workflow.json"
+    }
+  ],
+  "observedArtifacts": [
+    {
+      "id": "fleet-state",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\state.json",
+      "producer": "tooling/gnhf/Setup-AgentSwitchboard.ps1",
+      "tracked": false
+    },
+    {
+      "id": "installed-operator-implementation",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\Start-AgentSwitchboard.ps1",
+      "producer": "tooling/gnhf/Install-AgentSwitchboardGnhf.ps1",
+      "tracked": false
+    },
+    {
+      "id": "installed-cmd-shim",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\agent-switchboard.cmd",
+      "producer": "tooling/gnhf/Start-AgentSwitchboard.ps1",
+      "tracked": false
+    },
+    {
+      "id": "startup-readiness-json",
+      "pathPattern": "%LOCALAPPDATA%\\AgentSwitchboard\\GnhfFleet\\reports\\startup\\agent-startup-readiness-<timestamp>.json",
+      "producer": "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
+      "tracked": false
+    }
+  ],
+  "generatedArtifacts": [
+    {
+      "id": "boundary-json",
+      "pathPattern": "%TEMP%\\AgentSwitchboard\\agent-fleet-readiness\\<run-id>\\agent-fleet-readiness-boundary.json",
+      "producer": "tooling/profiles/windows/Get-AgentFleetReadinessBoundary.ps1",
+      "tracked": false
+    },
+    {
+      "id": "boundary-markdown",
+      "pathPattern": "%TEMP%\\AgentSwitchboard\\agent-fleet-readiness\\<run-id>\\agent-fleet-readiness-boundary.md",
+      "producer": "tooling/profiles/windows/Get-AgentFleetReadinessBoundary.ps1",
+      "tracked": false
+    }
+  ],
+  "forbiddenTrackedContent": [
+    "usernames",
+    "hostnames",
+    "resolved local install paths",
+    "credentials",
+    "tokens",
+    "raw provider output"
+  ],
+  "proofCeiling": "Artifact identity and tracked/untracked ownership only."
+}

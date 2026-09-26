@@ -1,0 +1,55 @@
+{
+  "schema": "agentswitchboard.agent-fleet-readiness-boundary-fixtures.v1",
+  "cases": [
+    {
+      "name": "not-bootstrapped",
+      "fleetStateExists": false,
+      "powerShellOperatorExists": false,
+      "cmdShimExists": false,
+      "expectedClassification": "not-bootstrapped",
+      "expectedNextAction": "bootstrap-or-repair"
+    },
+    {
+      "name": "partial-state-only",
+      "fleetStateExists": true,
+      "powerShellOperatorExists": false,
+      "cmdShimExists": true,
+      "expectedClassification": "partial-or-inconsistent",
+      "expectedNextAction": "bootstrap-or-repair"
+    },
+    {
+      "name": "partial-operator-only",
+      "fleetStateExists": false,
+      "powerShellOperatorExists": true,
+      "cmdShimExists": true,
+      "expectedClassification": "partial-or-inconsistent",
+      "expectedNextAction": "bootstrap-or-repair"
+    },
+    {
+      "name": "installed-with-shim",
+      "fleetStateExists": true,
+      "powerShellOperatorExists": true,
+      "cmdShimExists": true,
+      "expectedClassification": "installed-unclassified",
+      "expectedNextAction": "prove-readiness-through-powershell"
+    },
+    {
+      "name": "cmd-shim-missing",
+      "fleetStateExists": true,
+      "powerShellOperatorExists": true,
+      "cmdShimExists": false,
+      "expectedClassification": "cmd-shim-blocked",
+      "expectedNextAction": "prove-readiness-through-powershell"
+    },
+    {
+      "name": "cmd-shim-exit-5",
+      "fleetStateExists": true,
+      "powerShellOperatorExists": true,
+      "cmdShimExists": true,
+      "cmdShimExitCode": 5,
+      "cmdShimEvidence": "Access is denied.",
+      "expectedClassification": "cmd-shim-blocked",
+      "expectedNextAction": "prove-readiness-through-powershell"
+    }
+  ]
+}

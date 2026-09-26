@@ -1,0 +1,62 @@
+name: Agent fleet readiness boundary
+
+on:
+  pull_request:
+    paths:
+      - 'tooling/profiles/windows/harness/agent-fleet-readiness/**'
+      - 'tooling/profiles/windows/Get-AgentFleetReadinessBoundary.ps1'
+      - 'tests/test_agent_fleet_readiness_boundary.py'
+      - 'scripts/Test-AgentFleetReadinessBoundary.ps1'
+      - 'docs/harness/agent-fleet-readiness-boundary.md'
+      - '.github/workflows/agent-fleet-readiness-boundary.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tooling/profiles/windows/harness/agent-fleet-readiness/**'
+      - 'tooling/profiles/windows/Get-AgentFleetReadinessBoundary.ps1'
+      - 'tests/test_agent_fleet_readiness_boundary.py'
+      - 'scripts/Test-AgentFleetReadinessBoundary.ps1'
+      - 'docs/harness/agent-fleet-readiness-boundary.md'
+      - '.github/workflows/agent-fleet-readiness-boundary.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Portable boundary contract
+        run: python tests/test_agent_fleet_readiness_boundary.py
+      - name: PowerShell boundary contract
+        shell: pwsh
+        run: ./scripts/Test-AgentFleetReadinessBoundary.ps1
+      - name: Current GNHF fleet contract
+        shell: pwsh
+        run: ./tooling/gnhf/Test-GnhfFleetContracts.ps1
+      - name: Current Hermes ownership contract
+        shell: pwsh
+        run: ./tooling/gnhf/Test-HermesSetupContracts.ps1
+      - name: Current machine-profile operational contract
+        shell: pwsh
+        run: ./scripts/Test-MachineProfileOperationalHarness.ps1
+      - name: Diff hygiene and clean checkout
+        shell: pwsh
+        run: |
+          if ('${{ github.event_name }}' -eq 'pull_request') {
+            git diff --check "${{ github.event.pull_request.base.sha }}...HEAD"
+          } else {
+            git diff --check HEAD^
+          }
+          if (git status --short) { throw 'Checkout is dirty after readiness-boundary validation.' }

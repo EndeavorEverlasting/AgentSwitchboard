@@ -1,0 +1,40 @@
+{
+  "schema": "agentswitchboard.agent-fleet-readiness-boundary-workflow.v1",
+  "workflowId": "prove-readiness-through-powershell",
+  "purpose": "Route an installed fleet through the current PowerShell operator when the optional CMD shim is absent or blocked, without duplicating adapter/provider readiness logic.",
+  "preconditions": [
+    "boundary classification is installed-unclassified or cmd-shim-blocked",
+    "state.json exists",
+    "Start-AgentSwitchboard.ps1 exists",
+    "pwsh is available on the observed workstation"
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "action": "Preserve any supplied CMD-shim outcome as boundary evidence. Do not retry the shim after Access is denied / exit 5."
+    },
+    {
+      "order": 2,
+      "action": "Invoke the installed Start-AgentSwitchboard.ps1 with -ListAgents through pwsh.",
+      "command": "pwsh -NoLogo -NoProfile -File \"<InstallRoot>\\Start-AgentSwitchboard.ps1\" -ListAgents",
+      "success": "exit code 0; output is local fleet readiness evidence only"
+    },
+    {
+      "order": 3,
+      "action": "Generate the current canonical startup-readiness report against the same InstallRoot.",
+      "command": "pwsh -NoLogo -NoProfile -File tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1 -InstallRoot \"<InstallRoot>\""
+    },
+    {
+      "order": 4,
+      "action": "Use current startup-readiness statuses for adapter/provider decisions; this workflow does not reinterpret them."
+    }
+  ],
+  "forbidden": [
+    "rerun setup solely because the CMD compatibility shim is missing or blocked",
+    "retry agent-switchboard.cmd after Access is denied / exit 5",
+    "claim provider authentication or hosted response from -ListAgents",
+    "install or repair Hermes as part of this compatibility-boundary workflow",
+    "create a second fleet launcher or readiness lifecycle"
+  ],
+  "proofCeiling": "An observed run can prove the installed PowerShell operator executed and emitted current local readiness. It still does not prove provider authentication, exact model availability, quota, hosted response, repository delivery, or task completion."
+}

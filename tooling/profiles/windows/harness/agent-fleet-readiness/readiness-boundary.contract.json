@@ -1,0 +1,87 @@
+{
+  "schema": "agentswitchboard.agent-fleet-readiness-boundary.v1",
+  "contractId": "agentswitchboard.agent-fleet-readiness-boundary.v1",
+  "purpose": "Classify the installed Windows fleet authority and optional CMD compatibility-shim boundary without duplicating current GNHF setup, adapter readiness, provider verification, or launcher ownership.",
+  "currentOwners": {
+    "fleetStateProducer": "tooling/gnhf/Setup-AgentSwitchboard.ps1",
+    "installedPowerShellOperator": "tooling/gnhf/Start-AgentSwitchboard.ps1",
+    "startupReadinessReporter": "tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1",
+    "gnhfContractValidator": "tooling/gnhf/Test-GnhfFleetContracts.ps1",
+    "hermesContractValidator": "tooling/gnhf/Test-HermesSetupContracts.ps1",
+    "machineProfileOperationalValidator": "scripts/Test-MachineProfileOperationalHarness.ps1"
+  },
+  "installedAuthority": {
+    "required": [
+      "state.json",
+      "Start-AgentSwitchboard.ps1"
+    ],
+    "optionalCompatibilitySurface": "agent-switchboard.cmd",
+    "rule": "state.json plus Start-AgentSwitchboard.ps1 are the installed readiness authority. The CMD shim is optional compatibility and must not become a prerequisite for core readiness."
+  },
+  "classifications": [
+    {
+      "id": "not-bootstrapped",
+      "condition": "state.json missing AND Start-AgentSwitchboard.ps1 missing",
+      "nextAction": "bootstrap-or-repair",
+      "proofCeiling": "installed authority absence only"
+    },
+    {
+      "id": "partial-or-inconsistent",
+      "condition": "exactly one of state.json or Start-AgentSwitchboard.ps1 exists",
+      "nextAction": "bootstrap-or-repair",
+      "proofCeiling": "installed authority inconsistency only"
+    },
+    {
+      "id": "cmd-shim-blocked",
+      "condition": "installed authority exists AND agent-switchboard.cmd is missing OR observed shim execution is Access is denied / exit 5",
+      "nextAction": "prove-readiness-through-powershell",
+      "proofCeiling": "compatibility-shim boundary only"
+    },
+    {
+      "id": "installed-unclassified",
+      "condition": "installed authority exists and no blocked-shim evidence is supplied",
+      "nextAction": "prove-readiness-through-powershell",
+      "proofCeiling": "installed authority presence only"
+    }
+  ],
+  "powerShellReadinessRoute": {
+    "commandTemplate": "pwsh -NoLogo -NoProfile -File \"<InstallRoot>\\Start-AgentSwitchboard.ps1\" -ListAgents",
+    "canonicalFollowup": "pwsh -NoLogo -NoProfile -File tooling/gnhf/Get-AgentSwitchboardStartupReport.ps1 -InstallRoot \"<InstallRoot>\"",
+    "rule": "The boundary classifier does not promote adapter/provider readiness. Execute the installed PowerShell operator, then run the current startup-readiness reporter against the same InstallRoot."
+  },
+  "explicitlySuperseded": [
+    "historical stale-repository-path classification: now owned by current machine-profile operational path/trap contracts",
+    "historical shell-command-mismatch classification: now owned by current operational shell/path contracts",
+    "historical core-ready-hermes-deferred workflow: current GNHF setup and Hermes contracts already own SkipHermesInstall/graceful blocking",
+    "historical adapter-ready-provider-unproved classification: current Get-AgentSwitchboardStartupReport.ps1 owns local adapter/provider-proof separation",
+    "historical task pickup/handoff launch lifecycle: current launchers and execution-adapter owners remain canonical",
+    "historical pre-push hook and experimental fleet-readiness skill: not revived by this leaf"
+  ],
+  "safety": {
+    "mutatesInstalledFleet": false,
+    "runsCmdShim": false,
+    "installsPackages": false,
+    "authenticatesProviders": false,
+    "generatedEvidenceTracked": false
+  },
+  "salvage": {
+    "sourcePullRequest": 79,
+    "sourceHead": "b3560cd56e98f7b91dfff2e060c8a27d1c76e76a",
+    "integratedAgainst": "main@9992f4305021a33dd5ca9916a8f33cf45d8581ff",
+    "preserve": [
+      "installed authority pair",
+      "cmd-shim-blocked classification",
+      "PowerShell readiness route",
+      "synthetic boundary fixtures"
+    ],
+    "retire": [
+      "old skill",
+      "old hook",
+      "old root CODEBASE_MAP edit",
+      "Hermes lifecycle duplication",
+      "task pickup/handoff lifecycle duplication",
+      "provider-readiness duplication"
+    ]
+  },
+  "proofCeiling": "Tracked contract, synthetic classification, read-only file-presence observation, and supplied shim-result classification only. No workstation readiness, adapter readiness, provider authentication, hosted response, repository delivery, or runtime task completion is proven."
+}
