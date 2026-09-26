@@ -71,6 +71,21 @@
       "proof": "execution-adapter v1 schema, semantic, plan, and fail-closed contract"
     },
     {
+      "id": "execution-adapter-contract-v2-script",
+      "runner": "python-script",
+      "path": "tests/test_execution_adapter_contract_v2.py",
+      "required": true,
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "expectStdoutContains": [
+        "PASS"
+      ],
+      "proof": "execution-adapter v2 immutable action fingerprint, explicit v1 transition, and fail-closed worker/parallelism/token/time budget semantics"
+    },
+    {
       "id": "execution-adapter-registry-script",
       "runner": "python-script",
       "path": "tests/test_execution_adapter_registry.py",
