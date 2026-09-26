@@ -7,7 +7,7 @@
   "status": "proposed",
   "priority": "high",
   "createdUtc": "2026-09-22T22:12:00Z",
-  "updatedUtc": "2026-09-26T11:36:00Z",
+  "updatedUtc": "2026-09-26T11:45:00Z",
   "mission": "Define and prove an OSS-first, provider-neutral bounded-decision control plane (working name Token Corridor) inside the AgentSwitchboard software factory. Before inventing infrastructure, evaluate real open/self-hosted decision engines, routers, structured-output runtimes, durable workflow engines, agent runtimes, sandboxes, and eval/observability platforms against commercial comparators. Compile repository/runtime evidence into typed decision requests, choose the cheapest adequate open or commercial engine by measured policy, preserve calibrated uncertainty and authority provenance, and route execution without duplicating Prompt Kit, FirstMate, AgentSwitchboard execution adapters, or already-solved open-source infrastructure. This plan participates as the AgentSwitchboard companion to the canonical TokenCorridor convergence program (TokenCorridor is the destination product/repository; current three-repo split is migration topology).",
   "owner": {
     "surface": "AgentSwitchboard factory decision-control plane",
@@ -19,9 +19,9 @@
     "pullRequest": {
       "number": 356,
       "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/356",
-      "state": "open"
+      "state": "merged"
     },
-    "baseRef": "main@a60bf6753acb2538c0347a767d42f2283272b5be",
+    "baseRef": "main@41b6275aadb60047d68b0a6e6895bc4e4597fb1e",
     "commitRequired": true
   },
   "wave": "Competitive architecture → decision protocol → measured factory integration",
