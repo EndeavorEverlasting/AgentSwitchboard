@@ -122,14 +122,16 @@ The initial topology is contract-only. It does not prove live emission, observat
 ## Execution adapter contract
 
 - `tooling/harness/execution-adapters/execution-adapter-contract.v1.json` — provider-neutral ownership, readiness, terminal-status, proof, migration, and minimum end-to-end rules.
+- `tooling/harness/execution-adapters/execution-adapter-contract.v2.json` — TC-FAC versioned authority/budget extension; preserves v1 while requiring immutable action fingerprints and bounded fan-out/token/time envelopes for v2 consumers.
 - `tooling/harness/execution-adapters/schemas/execution-request.v1.schema.json` — bounded execution request with adapter-specific local argv, Claude Code, and Cursor CloudAgent inputs.
 - `tooling/harness/execution-adapters/schemas/execution-receipt.v1.schema.json` — normalized terminal receipt with native execution identity, blocker, bounded output, artifacts, and proof.
+- `tooling/harness/execution-adapters/schemas/execution-request.v2.schema.json` / `execution-receipt.v2.schema.json` — explicit v2 request/receipt pair carrying `actionFingerprint`, `executionEnvelope`, and measured `executionUsage`; v1 schemas remain unchanged.
 - `tooling/harness/execution-adapters/schemas/capability-report.v1.schema.json` — read-only probe result separating host, binary, auth, transport, and dispatch readiness.
 - `tooling/harness/execution-adapters/adapter_protocol.py` — shared `probe()` / `execute(request)` adapter protocol (EAT-005).
 - `tooling/harness/execution-adapters/registry.py` — deterministic adapterKind registration/resolution; duplicate kinds fail closed.
 - `tooling/harness/execution-adapters/runner.py` — generic resolve → probe → execute runner; unknown/unready adapters emit normalized BLOCKED receipts.
 - `tooling/harness/execution-adapters/fixtures/` — public-safe positive and fail-closed contract fixtures; never live provider receipts.
-- `tests/test_execution_adapter_contract.py`, `tests/test_execution_adapter_registry.py`, and `scripts/Test-ExecutionAdapterContract.ps1` — deterministic schema/semantic/registry/runner validators.
+- `tests/test_execution_adapter_contract.py`, `tests/test_execution_adapter_contract_v2.py`, `tests/test_execution_adapter_registry.py`, and `scripts/Test-ExecutionAdapterContract.ps1` — deterministic v1/v2 schema, transition, authority/budget, registry, and runner validators.
 - `docs/harness/execution-adapter-contract-v1.md` — operator/developer contract guide.
 - `plans/active/ASB-2026-09-execution-adapter-trio-v1.*` — canonical 37-issue milestone backlog and multi-writer dependency map.
 

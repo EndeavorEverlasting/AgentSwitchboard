@@ -10,6 +10,7 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $testPaths = @(
     (Join-Path $root 'tests/test_execution_adapter_contract.py'),
+    (Join-Path $root 'tests/test_execution_adapter_contract_v2.py'),
     (Join-Path $root 'tests/test_execution_adapter_registry.py')
 )
 
@@ -39,5 +40,6 @@ foreach ($testPath in $testPaths) {
 }
 
 Write-Host 'PASS: execution adapter contract v1' -ForegroundColor Green
+Write-Host 'PASS: execution adapter contract v2 authority/budget envelope' -ForegroundColor Green
 Write-Host 'PASS: execution adapter registry/runner v1' -ForegroundColor Green
 exit 0
