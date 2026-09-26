@@ -546,7 +546,7 @@ Canonical terminal action: none; no safe actionable work remains
 - **Priority:** P0
 - **Work class:** BOUNDED
 - **Owner:** ASB closeout / donor lane for AFK-FACTORY-CONVERGENCE
-- **Branch / PR:** feat/afk-asb-closeout-migration-manifest-20260926 / pending PR
+- **Branch / PR:** feat/afk-asb-closeout-migration-manifest-20260926 / #356
 - **Scope:** refresh provider truth after #350/#351/#355; emit residual capability migration manifest; record AWG-S3 TokenCorridor ownership; repair stale companion-plan open-PR/#355 delivery language; point unfinished AFK product work at TokenCorridor
 - **Forbidden:** implementing AWG-S3 or other new ASB product work; declaring repository obsolete; rewriting historical evidence sections; inventing a second ledger; M4/M5 cutover claims
 - **Dependencies:** ASB main contains #350/#351/#355; TokenCorridor LM3-B01A via PR #29
