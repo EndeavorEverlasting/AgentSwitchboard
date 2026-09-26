@@ -1,12 +1,25 @@
 # Token Corridor Competitive Decision-Control Plane — OSS-First Revision
 
+## Provider-truth synchronization — 2026-09-26
+
+**Current ASB main:** `3348a069`.
+
+- **PR #351 / TC-FAC is integrated** at merge `1414a546`. Execution-adapter v2 is now a consumed floor, not an open sprint.
+- **PR #350 fleet readiness is integrated** at merge `3348a069`, containing validated head `3f782472` and the InstallRoot path-oracle repair.
+- There are **no open ASB PRs** at this refresh.
+- ASB's next bounded contribution to the shared TokenCorridor program is **Agent Work Graph S3 — execution-instance lifecycle + preservation/replacement receipts**. It may run in parallel with Prompt Kit/Triage S1 because the write surfaces and canonical owners are disjoint.
+- S3 must consume TC-FAC v2 rather than reopening or duplicating execution-envelope authority. Fleet readiness remains a separate capability unless S3 proves a concrete runtime-resource dependency.
+- FrontierAgent FA-2 remains gated by FA-1 even though TC-FAC is satisfied.
+
+This synchronization block overrides older historical wording below that describes #350/#351 as active.
+
 **Plan ID:** `ASB-2026-09-TOKEN-CORRIDOR-COMPETITIVE-ARCHITECTURE`
 **Status:** Proposed
 **Priority:** High
-**Pull request:** #347 — current owner of this plan file (FrontierAgent runtime bootstrap; supersedes PR #346 draft floor)
-**Planning floor:** AgentSwitchboard `main@9992f4305021a33dd5ca9916a8f33cf45d8581ff`
-**Canonical convergence plan:** `EndeavorEverlasting/TokenCorridor` → `plans/active/AFK-FACTORY-CONVERGENCE.md` + `plans/active/AFK-FACTORY-CONVERGENCE.plan.json` (TokenCorridor `main@bce957ccd8796d4b5a42827ffb67f2ba165221ab`, material floor `afbc796f6292d13888975699329ad188b86d3ee5`)
-**Local evidence floor:** NodeWeaver `main@add0fd24cb213afdad4cb082db9ba8af947cc228`; Prompt Kit/Triage `main@931b642a80d72e3fdeafa18698e60d958cedee84`
+**Pull request:** #355 — current synchronization owner; PR #347 is historical donor evidence, not an active writer
+**Planning floor:** AgentSwitchboard `main@3348a06950368663a336fbc56bcd23982511afea`
+**Canonical convergence plan:** `EndeavorEverlasting/TokenCorridor` → `plans/active/AFK-FACTORY-CONVERGENCE.md` + `plans/active/AFK-FACTORY-CONVERGENCE.plan.json` (TokenCorridor `main@e6872144fdfe81321cbf1d8eaa65ffa582244a12`; canonical convergence plan current at the 2026-09-26 refresh)
+**Local evidence floor:** NodeWeaver `main@add0fd24cb213afdad4cb082db9ba8af947cc228`; Prompt Kit/Triage `main@246739c95ea808ee057d39407b4afe86cf0b8643`
 **Destination invariant (canonical):** **TokenCorridor is the destination product and canonical convergence repository for Prompt Kit / AFKAF and AgentSwitchboard; the current three-repository split is migration topology, not permanent product boundary.** Logical ownership boundaries survive physical consolidation: Prompt Kit = human↔AFK interface; TokenCorridor = decision/transition seam; AgentSwitchboard = execution/proof control plane. Runtime substrates (FirstMate, FrontierAgent) remain adapter-bound unless measured evidence justifies extraction. The FirstMate ↔ ASB ↔ Prompt Kit protocol remains an internal contract boundary, not a repository-separation requirement.
 **Working name note:** **Token Corridor** remains the working name for the bounded-decision seam; this plan participates as the AgentSwitchboard execution/proof companion to the canonical TokenCorridor convergence program (it does not itself create a second TokenCorridor repository).
 
