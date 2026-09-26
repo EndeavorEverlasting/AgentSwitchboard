@@ -7,7 +7,7 @@
   "status": "proposed",
   "priority": "high",
   "createdUtc": "2026-09-22T22:12:00Z",
-  "updatedUtc": "2026-09-24T19:43:00Z",
+  "updatedUtc": "2026-09-26T03:17:16Z",
   "mission": "Define and prove an OSS-first, provider-neutral bounded-decision control plane (working name Token Corridor) inside the AgentSwitchboard software factory. Before inventing infrastructure, evaluate real open/self-hosted decision engines, routers, structured-output runtimes, durable workflow engines, agent runtimes, sandboxes, and eval/observability platforms against commercial comparators. Compile repository/runtime evidence into typed decision requests, choose the cheapest adequate open or commercial engine by measured policy, preserve calibrated uncertainty and authority provenance, and route execution without duplicating Prompt Kit, FirstMate, AgentSwitchboard execution adapters, or already-solved open-source infrastructure. This plan participates as the AgentSwitchboard companion to the canonical TokenCorridor convergence program (TokenCorridor is the destination product/repository; current three-repo split is migration topology).",
   "owner": {
     "surface": "AgentSwitchboard factory decision-control plane",
@@ -24,17 +24,17 @@
     "baseRef": "main@9992f4305021a33dd5ca9916a8f33cf45d8581ff",
     "commitRequired": true
   },
-  "wave": "Competitive architecture → decision protocol → measured factory integration",
+  "wave": "Competitive architecture \u2192 decision protocol \u2192 measured factory integration",
   "lane": "Token Corridor working-name product thesis",
   "dependencies": [],
   "safeParallelWork": [
-    "Existing Triage→ASB live-dispatch plan may continue; this plan consumes its receipts but does not rewrite its dispatcher.",
+    "Existing Triage\u2192ASB live-dispatch plan may continue; this plan consumes its receipts but does not rewrite its dispatcher.",
     "Execution-adapter trio work may continue; Token Corridor selects or recommends an engine/route but does not replace execution adapters.",
     "Prompt Kit P143/P55/P07 convergence work may continue in web-excel-repair-triage; Prompt Kit remains semantic/workflow policy authority.",
     "FirstMate crew/runtime work may continue; FirstMate remains canonical live crew/session runtime.",
     "NodeWeaver can be evaluated read-only as a future semantic-signal provider without expanding its production scope.",
     "Prompt Kit PR #633 may close its interface/routing floor independently; ASB does not wait on that merge to close PR #347.",
-    "TokenCorridor PR #1 establishes the canonical cross-repository convergence plan at EndeavorEverlasting/TokenCorridor → plans/active/AFK-FACTORY-CONVERGENCE.plan.json (material floor afbc796f6292d13888975699329ad188b86d3ee5, current main@bce957ccd8796d4b5a42827ffb67f2ba165221ab); runtime C1 begins only after refreshed Prompt Kit and ASB integrated floors are pinned."
+    "TokenCorridor PR #1 establishes the canonical cross-repository convergence plan at EndeavorEverlasting/TokenCorridor \u2192 plans/active/AFK-FACTORY-CONVERGENCE.plan.json (material floor afbc796f6292d13888975699329ad188b86d3ee5, current main@bce957ccd8796d4b5a42827ffb67f2ba165221ab); runtime C1 begins only after refreshed Prompt Kit and ASB integrated floors are pinned."
   ],
   "ownedScope": [
     "Competitive reference architecture and product-boundary plan under plans/active/",
@@ -46,9 +46,9 @@
     "Standalone Token Corridor extraction gate after multi-consumer/runtime evidence",
     "Open/self-hosted substrate evaluation across decision engines, model routing, structured generation, durability, sandboxes, agent-factory orchestration, and observability/evaluation",
     "Commercial products are benchmark comparators or optional adapters; no paid service becomes a required dependency without exact-workload evidence that open/self-hosted candidates miss a named acceptance gate",
-    "Shared convergence `AFK-FACTORY-CONVERGENCE-2026-09-22`: AgentSwitchboard owns the execution/proof plane (preserved logical ownership; physical ASB capabilities converge into TokenCorridor per M3 behind preserved contracts; FrontierAgent/FirstMate remain runtime adapters unless evidence justifies extraction); Prompt Kit PR #633 owns human↔AFK interface planning (Prompt Kit remains front door; capabilities migrate into TokenCorridor, Excel/OOXML stays in Triage); TokenCorridor PR #1 owns cross-repository decision/transition convergence and is the destination product/repository (current three-repo split is migration topology; canonical M0–M5 phases and authority-transfer gates live in plans/active/AFK-FACTORY-CONVERGENCE.plan.json).",
+    "Shared convergence `AFK-FACTORY-CONVERGENCE-2026-09-22`: AgentSwitchboard owns the execution/proof plane (preserved logical ownership; physical ASB capabilities converge into TokenCorridor per M3 behind preserved contracts; FrontierAgent/FirstMate remain runtime adapters unless evidence justifies extraction); Prompt Kit PR #633 owns human\u2194AFK interface planning (Prompt Kit remains front door; capabilities migrate into TokenCorridor, Excel/OOXML stays in Triage); TokenCorridor PR #1 owns cross-repository decision/transition convergence and is the destination product/repository (current three-repo split is migration topology; canonical M0\u2013M5 phases and authority-transfer gates live in plans/active/AFK-FACTORY-CONVERGENCE.plan.json).",
     "Factory Topology successor may consume ASB typed execution/proof artifacts through a read-only projection adapter; ASB does not own renderer semantics.",
-    "Canonical TokenCorridor convergence plan path: EndeavorEverlasting/TokenCorridor → plans/active/AFK-FACTORY-CONVERGENCE.md + plans/active/AFK-FACTORY-CONVERGENCE.plan.json"
+    "Canonical TokenCorridor convergence plan path: EndeavorEverlasting/TokenCorridor \u2192 plans/active/AFK-FACTORY-CONVERGENCE.md + plans/active/AFK-FACTORY-CONVERGENCE.plan.json"
   ],
   "forbiddenScope": [
     "Training or cloning a Jev-class foundation/system-one model as the near-term competitive response",
@@ -359,12 +359,12 @@
       ],
       "inputs": [
         "Prompt Kit continuation resolver",
-        "Triage→ASB consumer/dispatch receipts",
+        "Triage\u2192ASB consumer/dispatch receipts",
         "TC-00B durability disposition (DBOS baseline; Hatchet/Temporal escalation candidates)",
         "Existing ASB/FirstMate runtime boundaries"
       ],
       "outputs": [
-        "Crash/restart-resumable transition proof across decision → dispatch → receipt → continuation"
+        "Crash/restart-resumable transition proof across decision \u2192 dispatch \u2192 receipt \u2192 continuation"
       ],
       "acceptanceCriteria": [
         "A process interruption does not require the operator to reconstruct or repaste the workflow.",
@@ -442,7 +442,7 @@
         "Shared convergence ID AFK-FACTORY-CONVERGENCE-2026-09-22"
       ],
       "outputs": [
-        "Explicit ownership boundary: Prompt Kit = human↔AFK interface; TokenCorridor = decision/transition seam; AgentSwitchboard = execution/proof control plane",
+        "Explicit ownership boundary: Prompt Kit = human\u2194AFK interface; TokenCorridor = decision/transition seam; AgentSwitchboard = execution/proof control plane",
         "Independent closeout rule and refreshed-main handoff requirement"
       ],
       "acceptanceCriteria": [
@@ -550,7 +550,7 @@
     {
       "taskId": "TC-FAC",
       "title": "Extend execution-adapter contract for authority fingerprint and bounded fan-out",
-      "status": "in-progress",
+      "status": "completed",
       "owner": "execution-adapter contract owner",
       "dependencies": [
         "TC-FA0"
@@ -580,9 +580,12 @@
         "Implementation branch feat/tc-fac-execution-contract-v2-20260924 preserves v1 schemas unchanged and adds an explicit v2 schema identity.",
         "v2 request requires sha256 actionFingerprint plus maxWorkers/maxParallelWorkers/maxModelTokens/maxWallClockSeconds.",
         "v2 receipt echoes actionFingerprint and records workersStarted/peakParallelWorkers/modelTokensUsed/wallClockMs.",
-        "Focused regression covers v1↔v2 non-coercion, missing/mismatched fingerprint, over-budget usage, parallelism>workers, and wall-clock>timeout.",
+        "Focused regression covers v1\u2194v2 non-coercion, missing/mismatched fingerprint, over-budget usage, parallelism>workers, and wall-clock>timeout.",
         "TC-FA0 predecessor is completed on main@2b2d5dfc9aa11ca8bab44137984a97fea4bd12db.",
-        "Proof remains IMPLEMENTED/UNVALIDATED on this head until the refreshed exact-head execution-adapter and automated-floor gates pass."
+        "PR #351 MERGED to AgentSwitchboard main; mergeCommit/integratedMainSha 1414a54659867835fa92cece19a378760ea95aeb (preMain ef7797b5c935c673d8d02f5f935b5bb53806e855).",
+        "Exact-head CI CLEAN on validated head fbe25915c0eb0b83d56672bd4cdc4c11a9ac29d1; local scripts/Test-ExecutionAdapterContract.ps1 and tests/test_execution_adapter_contract_v2.py PASS on merge tip.",
+        "Proof ceiling remains static/contract + CI; live adapter runtime enforcement and FA-2 product completion are not claimed.",
+        "TokenCorridor may design LM3/LC3R/FA-2 against execution-adapter v2; v1 unchanged with no silent v1\u2194v2 coercion."
       ]
     },
     {
@@ -680,13 +683,13 @@
       "Keep Token Corridor as a working name until TC-07.",
       "Probe open PRs/worktrees immediately before creating the writer; do not collide with a newly opened canonical owner.",
       "After PR #347 integrates, publish the exact ASB main SHA into TokenCorridor plan AFK-FACTORY-CONVERGENCE-2026-09-22 (canonical path plans/active/AFK-FACTORY-CONVERGENCE.plan.json).",
-      "Prompt Kit is the human↔AFK interface foundation; ASB must not bypass it by inventing operator-facing workflow semantics.",
+      "Prompt Kit is the human\u2194AFK interface foundation; ASB must not bypass it by inventing operator-facing workflow semantics.",
       "Factory Topology is a read-only evidence projection successor, not a new execution or authority owner.",
       "Shared convergence ID: AFK-FACTORY-CONVERGENCE-2026-09-22.",
       "TokenCorridor PR #1 is the canonical cross-repository convergence owner and destination product/repository (TokenCorridor is the destination for Prompt Kit/AFKAF and ASB; current three-repo split is migration topology).",
-      "Prompt Kit PR #633 owns the human↔AFK interface convergence plan (Prompt Kit remains front door; capabilities migrate into TokenCorridor, Excel/OOXML stays in Triage).",
+      "Prompt Kit PR #633 owns the human\u2194AFK interface convergence plan (Prompt Kit remains front door; capabilities migrate into TokenCorridor, Excel/OOXML stays in Triage).",
       "AgentSwitchboard companion plan preserves logical execution/proof ownership; relevant ASB product capabilities converge physically into TokenCorridor per M3; runtime adapters (FrontierAgent/FirstMate) remain separate unless evidence justifies extraction.",
-      "Canonical M0–M5 phases and authority-transfer gates live in EndeavorEverlasting/TokenCorridor → plans/active/AFK-FACTORY-CONVERGENCE.plan.json (destinationContract + repositoryConvergencePhases).",
+      "Canonical M0\u2013M5 phases and authority-transfer gates live in EndeavorEverlasting/TokenCorridor \u2192 plans/active/AFK-FACTORY-CONVERGENCE.plan.json (destinationContract + repositoryConvergencePhases).",
       "After PR #347 integrates, refresh its exact main SHA into TokenCorridor PR #1 before cross-repository C1 begins.",
       "FrontierAgent is Apache-2.0 and is deliberately kept behind an upstream/fork boundary; preserve license/attribution and mark distributed modifications.",
       "Treat `frontier_agent/` as the long-term import/plugin seam and the CLI/TUI as a black-box smoke/prototype seam; do not fork core until a measured adapter gap exists.",
