@@ -7,7 +7,7 @@
   "status": "proposed",
   "priority": "high",
   "createdUtc": "2026-09-22T22:12:00Z",
-  "updatedUtc": "2026-09-26T03:17:16Z",
+  "updatedUtc": "2026-09-26T06:00:00Z",
   "mission": "Define and prove an OSS-first, provider-neutral bounded-decision control plane (working name Token Corridor) inside the AgentSwitchboard software factory. Before inventing infrastructure, evaluate real open/self-hosted decision engines, routers, structured-output runtimes, durable workflow engines, agent runtimes, sandboxes, and eval/observability platforms against commercial comparators. Compile repository/runtime evidence into typed decision requests, choose the cheapest adequate open or commercial engine by measured policy, preserve calibrated uncertainty and authority provenance, and route execution without duplicating Prompt Kit, FirstMate, AgentSwitchboard execution adapters, or already-solved open-source infrastructure. This plan participates as the AgentSwitchboard companion to the canonical TokenCorridor convergence program (TokenCorridor is the destination product/repository; current three-repo split is migration topology).",
   "owner": {
     "surface": "AgentSwitchboard factory decision-control plane",
@@ -686,9 +686,10 @@
         "ASB PR #351 merged as 1414a54659867835fa92cece19a378760ea95aeb.",
         "ASB PR #350 merged as 3348a06950368663a336fbc56bcd23982511afea; validated head 3f782472e1e1687577100f09ffd218159d80cfbf is contained.",
         "Current ASB main has no open PRs at the 2026-09-26 provider refresh.",
-        "TokenCorridor AWG S3 external TC-FAC gate is therefore satisfied; S3 is parallel-safe with Prompt Kit AWG S1."
-      ],
-      "proofCeiling": "Contract/static/CI until a live execution-instance replacement scenario is observed with typed receipts."
+        "TokenCorridor AWG S3 external TC-FAC gate is therefore satisfied; S3 is parallel-safe with Prompt Kit AWG S1.",
+        "Proof ceiling: Contract/static/CI until a live execution-instance replacement scenario is observed with typed receipts.",
+        "Provider refresh 2026-09-26: current ASB main 3348a06950368663a336fbc56bcd23982511afea; #351 merged as 1414a54659867835fa92cece19a378760ea95aeb; #350 merged as 3348a06950368663a336fbc56bcd23982511afea; no open ASB PRs before this synchronization PR."
+      ]
     }
   ],
   "validation": [
@@ -735,29 +736,5 @@
       "Prompt Kit must stay backend-agnostic: it presents execution/proof state but does not gain FrontierAgent-specific semantic identities unless later product evidence requires them.",
       "The bootstrap command never repurposes an occupied target path; an existing canonical donor clone may only serve as the source for a new detached worktree after origin verification."
     ]
-  },
-  "providerTruthRefresh20260926": {
-    "main": "3348a06950368663a336fbc56bcd23982511afea",
-    "integrated": {
-      "pr351": {
-        "role": "TC-FAC v2 authority/execution envelope",
-        "merge": "1414a54659867835fa92cece19a378760ea95aeb"
-      },
-      "pr350": {
-        "role": "fleet readiness boundary",
-        "merge": "3348a06950368663a336fbc56bcd23982511afea",
-        "validatedHead": "3f782472e1e1687577100f09ffd218159d80cfbf"
-      }
-    },
-    "openPrCount": 0,
-    "nextOwnedSprint": "AWG-S3",
-    "parallelWith": "Triage/Prompt Kit AWG-S1",
-    "downstream": [
-      "TokenCorridor AWG-S2 after S1",
-      "LM3-ASB-TRANSPLANT packetization",
-      "LC3R remote-runtime lifecycle",
-      "FA-2 after FA-1"
-    ],
-    "proofCeiling": "Provider/mainline + plan synchronization; no live AWG-S3 replacement behavior claimed."
   }
 }
