@@ -264,6 +264,21 @@
         "linux"
       ],
       "proof": "harness doctrine contract"
+    },
+    {
+      "id": "entire-cli-provider-boundary-script",
+      "runner": "python-script",
+      "path": "tests/test_entire_cli_provider_boundary.py",
+      "required": true,
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "expectStdoutContains": [
+        "PASS"
+      ],
+      "proof": "Entire CLI provider-neutral Git/provenance/session transport boundary and ownership contract"
     }
   ]
 }
