@@ -31,6 +31,13 @@ Load only the smallest surface required by the selected skill, workflow, public 
 - `docs/harness/context-rollover-ux.md` — context-rollover user states, events, receipts, and quiet AFK UX (contract-only).
 - `AgentSwitchboard.cmd` — readiness-first startup launcher.
 
+## Entire CLI provider / continuity adapter
+
+- `docs/architecture/entire-cli-provider-continuity-boundary.md` — accepted boundary: Entire CLI is Git/provenance/session transport and checkpoint continuity, not an LLM/executor or competing crew runtime.
+- `tests/test_entire_cli_provider_boundary.py` — static regression gate for capability discovery, OpenCode hook integration, branch-session resume, Entire Git transport examples, optional GitHub/GHA posture, and FirstMate/ASB ownership.
+- Canonical capability probe: `entire agent-help --json`; repository status readback: `entire status --json`.
+- Entire transport never replaces repository-owned validators; proof remains typed independently from forge/provider transport.
+
 ## Public plans
 
 - `plans/README.md` — plan-versus-PR boundary and lifecycle.
