@@ -279,6 +279,21 @@
         "PASS"
       ],
       "proof": "Entire CLI provider-neutral Git/provenance/session transport boundary and ownership contract"
+    },
+    {
+      "id": "comms-compiler-p82-script",
+      "runner": "python-script",
+      "path": "tests/test_comms_compiler.py",
+      "required": true,
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "expectStdoutContains": [
+        "PASS:"
+      ],
+      "proof": "CommsCompiler adapter/evidence/result contracts, synthetic H&H completeness gate, privacy boundary, and P82 fault-detection comparator"
     }
   ]
 }
