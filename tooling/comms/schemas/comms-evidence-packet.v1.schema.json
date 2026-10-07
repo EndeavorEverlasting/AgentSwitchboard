@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/comms/schemas/comms-evidence-packet.v1.schema.json",
+  "title": "CommsCompiler evidence packet v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "projectId",
+    "intent",
+    "sources",
+    "topics",
+    "expectedItemCount",
+    "expectedStatusCounts",
+    "requestedRenderFields",
+    "items"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "agentswitchboard.comms-evidence-packet/v1"
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "intent": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "topics": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "expectedItemCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "expectedStatusCounts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "requestedRenderFields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  }
+}
