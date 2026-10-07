@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "agentswitchboard.comms-project-adapter/v1",
+  "adapterId": "hh-fieldops-v1",
+  "project": {
+    "id": "hh-fieldops",
+    "displayName": "H&H Field Operations",
+    "aliases": [
+      "H&H",
+      "field operations"
+    ]
+  },
+  "authority": {
+    "entrypoint": {
+      "kind": "workspace-index",
+      "locator": "logical://hh-fieldops/workspace-index"
+    },
+    "sources": [
+      {
+        "id": "ticket_tracker",
+        "kind": "tracker",
+        "authority": "drive-authoritative-current",
+        "locator": "logical://hh-fieldops/ticket-tracker-current"
+      }
+    ]
+  },
+  "intents": {
+    "ticket_alignment": {
+      "requiredSources": [
+        "ticket_tracker"
+      ],
+      "identityField": "item_id",
+      "classificationField": "classification",
+      "statusField": "status",
+      "requiredStatuses": [
+        "OPEN",
+        "PENDING",
+        "ESCALATED",
+        "DONE"
+      ],
+      "allowedRenderFields": [
+        "item_id",
+        "classification"
+      ],
+      "groupBy": "status",
+      "forbiddenTopics": [
+        "badge_renewals"
+      ],
+      "coverage": {
+        "requireExpectedItemCount": true,
+        "requireUniqueIdentity": true,
+        "requireExpectedStatusCounts": true
+      },
+      "rules": [
+        "preserve-all-in-scope-items",
+        "do-not-manufacture-status",
+        "separate-unrelated-correspondence"
+      ]
+    }
+  },
+  "privacy": {
+    "trackedAdapterMayContainLiveIdentifiers": false,
+    "trackedFixturesMustBeSynthetic": true
+  }
+}
