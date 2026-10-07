@@ -31,6 +31,16 @@ Load only the smallest surface required by the selected skill, workflow, public 
 - `docs/harness/context-rollover-ux.md` — context-rollover user states, events, receipts, and quiet AFK UX (contract-only).
 - `AgentSwitchboard.cmd` — readiness-first startup launcher.
 
+## CommsCompiler cross-project communications
+
+- `docs/architecture/comms-compiler-mvp.md` — MVP authority and proof boundary: evidence compilation is deterministic and precedes prose generation.
+- `tooling/comms/comms_compiler.py` — dependency-free pre-render compiler/validator; emits typed PASS/FAIL compiled-facts output.
+- `tooling/comms/schemas/` — project-adapter, evidence-packet, and compiled-facts v1 schemas.
+- `tooling/comms/adapters/hh-fieldops.v1.json` — first project adapter; logical authority only, no private Drive identities.
+- `tooling/comms/fixtures/hh-ticket-alignment-54.synthetic.json` — sanitized 54-item 17/7/1/29 P82 workload.
+- `tests/test_comms_compiler.py` — measured positive/negative regression: omission, duplicate identity, status-count drift, topic leakage, deterministic repeatability, and privacy scan.
+- `docs/program/comms-compiler-p82-admission-20261007.md` — exact P82 hypothesis, baseline/comparator, bounded prototype, measurement, and decision rule.
+
 ## Entire CLI provider / continuity adapter
 
 - `docs/architecture/entire-cli-provider-continuity-boundary.md` — accepted boundary: Entire CLI is Git/provenance/session transport and checkpoint continuity, not an LLM/executor or competing crew runtime.
