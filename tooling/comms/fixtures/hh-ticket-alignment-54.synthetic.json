@@ -1,0 +1,297 @@
+{
+  "schemaVersion": "agentswitchboard.comms-evidence-packet/v1",
+  "projectId": "hh-fieldops",
+  "intent": "ticket_alignment",
+  "sources": [
+    {
+      "id": "ticket_tracker",
+      "snapshot": "synthetic-p82-fixture"
+    }
+  ],
+  "topics": [
+    "ticket_alignment"
+  ],
+  "expectedItemCount": 54,
+  "expectedStatusCounts": {
+    "OPEN": 17,
+    "PENDING": 7,
+    "ESCALATED": 1,
+    "DONE": 29
+  },
+  "requestedRenderFields": [
+    "item_id",
+    "classification"
+  ],
+  "items": [
+    {
+      "item_id": "SYN-0001",
+      "classification": "Kiosk / Troubleshoot / Repair",
+      "status": "OPEN"
+    },
+    {
+      "item_id": "SYN-0002",
+      "classification": "CC Reader / Firmware / Update",
+      "status": "OPEN"
+    },
+    {
+      "item_id": "SYN-0003",
+      "classification": "Unknown / Evidence Gap / Needs Detail",
+      "status": "OPEN"
+    },
+    {
+      "item_id": "SYN-0004",
+      "classification": "Kiosk / Troubleshoot / Repair",
+      "status": "OPEN"
+    },
+    {
+      "item_id": "SYN-0005",
+      "classification": "CC Reader / Firmware / Update",
+      "status": "OPEN"
+    },
+    {
+      "item_id": "SYN-0006",
+      "classification": "Unknown / Evidence Gap / Needs Detail",
+      "status": "OPEN"
+    },
+    {
+      "item_id": "SYN-0007",
+      "classification": "Kiosk / Troubleshoot / Repair",
+      "status": "OPEN"
+    },
+    {
+      "item_id": "SYN-0008",
+      "classification": "CC Reader / Firmware / Update",
+      "status": "OPEN"
+    },
+    {
+      "item_id": "SYN-0009",
+      "classification": "Unknown / Evidence Gap / Needs Detail",
+      "status": "OPEN"
+    },
+    {
+      "item_id": "SYN-0010",
+      "classification": "Kiosk / Troubleshoot / Repair",
+      "status": "OPEN"
+    },
+    {
+      "item_id": "SYN-0011",
+      "classification": "CC Reader / Firmware / Update",
+      "status": "OPEN"
+    },
+    {
+      "item_id": "SYN-0012",
+      "classification": "Unknown / Evidence Gap / Needs Detail",
+      "status": "OPEN"
+    },
+    {
+      "item_id": "SYN-0013",
+      "classification": "Kiosk / Troubleshoot / Repair",
+      "status": "OPEN"
+    },
+    {
+      "item_id": "SYN-0014",
+      "classification": "CC Reader / Firmware / Update",
+      "status": "OPEN"
+    },
+    {
+      "item_id": "SYN-0015",
+      "classification": "Unknown / Evidence Gap / Needs Detail",
+      "status": "OPEN"
+    },
+    {
+      "item_id": "SYN-0016",
+      "classification": "Kiosk / Troubleshoot / Repair",
+      "status": "OPEN"
+    },
+    {
+      "item_id": "SYN-0017",
+      "classification": "CC Reader / Firmware / Update",
+      "status": "OPEN"
+    },
+    {
+      "item_id": "SYN-0018",
+      "classification": "Kiosk / Troubleshoot / Repair",
+      "status": "PENDING"
+    },
+    {
+      "item_id": "SYN-0019",
+      "classification": "Workstation / Install",
+      "status": "PENDING"
+    },
+    {
+      "item_id": "SYN-0020",
+      "classification": "Kiosk / Troubleshoot / Repair",
+      "status": "PENDING"
+    },
+    {
+      "item_id": "SYN-0021",
+      "classification": "Workstation / Install",
+      "status": "PENDING"
+    },
+    {
+      "item_id": "SYN-0022",
+      "classification": "Kiosk / Troubleshoot / Repair",
+      "status": "PENDING"
+    },
+    {
+      "item_id": "SYN-0023",
+      "classification": "Workstation / Install",
+      "status": "PENDING"
+    },
+    {
+      "item_id": "SYN-0024",
+      "classification": "Kiosk / Troubleshoot / Repair",
+      "status": "PENDING"
+    },
+    {
+      "item_id": "SYN-0025",
+      "classification": "CC Reader / Firmware / Update",
+      "status": "ESCALATED"
+    },
+    {
+      "item_id": "SYN-0026",
+      "classification": "Kiosk / Troubleshoot / Repair",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0027",
+      "classification": "Workstation / Install",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0028",
+      "classification": "Display / Mount",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0029",
+      "classification": "Kiosk / Troubleshoot / Repair",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0030",
+      "classification": "Workstation / Install",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0031",
+      "classification": "Display / Mount",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0032",
+      "classification": "Kiosk / Troubleshoot / Repair",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0033",
+      "classification": "Workstation / Install",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0034",
+      "classification": "Display / Mount",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0035",
+      "classification": "Kiosk / Troubleshoot / Repair",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0036",
+      "classification": "Workstation / Install",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0037",
+      "classification": "Display / Mount",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0038",
+      "classification": "Kiosk / Troubleshoot / Repair",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0039",
+      "classification": "Workstation / Install",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0040",
+      "classification": "Display / Mount",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0041",
+      "classification": "Kiosk / Troubleshoot / Repair",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0042",
+      "classification": "Workstation / Install",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0043",
+      "classification": "Display / Mount",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0044",
+      "classification": "Kiosk / Troubleshoot / Repair",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0045",
+      "classification": "Workstation / Install",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0046",
+      "classification": "Display / Mount",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0047",
+      "classification": "Kiosk / Troubleshoot / Repair",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0048",
+      "classification": "Workstation / Install",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0049",
+      "classification": "Display / Mount",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0050",
+      "classification": "Kiosk / Troubleshoot / Repair",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0051",
+      "classification": "Workstation / Install",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0052",
+      "classification": "Display / Mount",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0053",
+      "classification": "Kiosk / Troubleshoot / Repair",
+      "status": "DONE"
+    },
+    {
+      "item_id": "SYN-0054",
+      "classification": "Workstation / Install",
+      "status": "DONE"
+    }
+  ]
+}
