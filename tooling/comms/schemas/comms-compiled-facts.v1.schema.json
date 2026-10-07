@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/AgentSwitchboard/tooling/comms/schemas/comms-compiled-facts.v1.schema.json",
+  "title": "CommsCompiler compiled facts v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "result",
+    "projectId",
+    "adapterId",
+    "intent",
+    "coverage",
+    "renderContract",
+    "violations",
+    "proofCeiling"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "agentswitchboard.comms-compiled-facts/v1"
+    },
+    "result": {
+      "enum": [
+        "PASS",
+        "FAIL"
+      ]
+    },
+    "projectId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "adapterId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "intent": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "coverage": {
+      "type": "object"
+    },
+    "renderContract": {
+      "type": "object",
+      "required": [
+        "fields",
+        "groupBy",
+        "proseGenerationAuthorized"
+      ],
+      "properties": {
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "groupBy": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "proseGenerationAuthorized": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "violations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "proofCeiling": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}
