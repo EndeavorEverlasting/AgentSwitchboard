@@ -79,13 +79,21 @@ Run `python tests/test_comms_compiler.py`. Record positive-fixture result, seede
 
 ## Measured result
 
-Focused prototype: PASS.
+Focused prototype and exact remote candidate: PASS.
 
 - valid 54-item fixture: PASS;
 - seeded structural faults detected: 4/4;
 - ungated baseline structural faults detected: 0/4;
 - deterministic repeatability: PASS;
 - tracked adapter/fixture privacy scan: PASS;
-- repository automated-test floor: pending branch integration/CI.
+- exact remote head before this evidence-only update: `704347e9e3ff6259e5dbf54d12ab801533e6b12d`;
+- AgentSwitchboard automated-test-floor run `37666370182`: PASS on Ubuntu and Windows;
+- all other repository PR workflows observed for that head: PASS.
 
-P82 disposition remains **INCONCLUSIVE** until the repository floor is green. The thesis is not promoted on focused proof alone.
+## P82 disposition
+
+**PROMOTE.** The bounded thesis is supported: a declarative project adapter plus a deterministic pre-render compiler can reject the seeded structural drafting failures before prose generation without embedding live/private project evidence.
+
+The promotion is intentionally narrow. Proof remains static/synthetic and does not establish live Drive retrieval, Gmail drafting/sending, LLM prose quality, provider runtime behavior, deployment, or production use.
+
+Next route: **P07** for the next bounded implementation slice—a read-only source-adapter interface and one live H&H evidence loader that feeds this existing deterministic compiler.
