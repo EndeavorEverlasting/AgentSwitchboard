@@ -1,0 +1,57 @@
+name: Judgment closure and outcome integrity
+
+on:
+  pull_request:
+    paths:
+      - "tooling/harness/operational/judgment-closure/**"
+      - "tests/test_judgment_closure.py"
+      - "plans/active/ASB-2026-10-JUDGMENT-CLOSURE-OUTCOME-INTEGRITY.*"
+      - "plans/plan-registry.json"
+      - ".github/workflows/judgment-closure.yml"
+  push:
+    branches: [main]
+    paths:
+      - "tooling/harness/operational/judgment-closure/**"
+      - "tests/test_judgment_closure.py"
+      - "plans/active/ASB-2026-10-JUDGMENT-CLOSURE-OUTCOME-INTEGRITY.*"
+      - "plans/plan-registry.json"
+      - ".github/workflows/judgment-closure.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  admission-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Parse contracts and plan
+        run: |
+          python -m json.tool tooling/harness/operational/judgment-closure/contract.v1.json >/dev/null
+          python -m json.tool plans/active/ASB-2026-10-JUDGMENT-CLOSURE-OUTCOME-INTEGRITY.plan.json >/dev/null
+          python -m json.tool plans/plan-registry.json >/dev/null
+      - name: Compile deterministic evaluator and canaries
+        run: |
+          python -m py_compile tooling/harness/operational/judgment-closure/evaluate.py
+          python -m py_compile tests/test_judgment_closure.py
+      - name: Run adversarial judgment and substitution canaries
+        run: python -m unittest tests.test_judgment_closure -v
+      - name: Preserve existing public-plan contract
+        run: python tests/test_public_plan_contracts.py
+      - name: Patch hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "$GITHUB_BASE_REF" ]; then
+            git diff --check "origin/$GITHUB_BASE_REF...HEAD"
+          else
+            git diff --check HEAD^..HEAD
+          fi
