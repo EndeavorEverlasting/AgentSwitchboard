@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "critical",
   "createdUtc": "2026-10-09T01:17:00Z",
-  "updatedUtc": "2026-10-09T01:20:00Z",
+  "updatedUtc": "2026-10-09T01:40:00Z",
   "mission": "Turn the recurring premature-handoff and documentation-for-software substitution defect into a shared, publicly inspectable machine contract, deterministic evaluator, negative canaries, and integration gates consumed by AFK Factory and other authorized agents.",
   "owner": {
     "surface": "tooling/harness/operational/judgment-closure",
@@ -16,7 +16,11 @@
   },
   "delivery": {
     "branch": "feat/judgment-closure-p04-20261008",
-    "pullRequest": null,
+    "pullRequest": {
+      "number": 360,
+      "url": "https://github.com/EndeavorEverlasting/AgentSwitchboard/pull/360",
+      "state": "merged"
+    },
     "baseRef": "main",
     "commitRequired": true
   },
@@ -80,7 +84,7 @@
     {
       "taskId": "JG-G1",
       "title": "Implement judgment closure contract and evaluator",
-      "status": "in-progress",
+      "status": "completed",
       "owner": "ASB operational harness",
       "dependencies": [
         "JG-G0"
@@ -102,13 +106,14 @@
       ],
       "evidence": [
         "tooling/harness/operational/judgment-closure/contract.v1.json",
-        "tooling/harness/operational/judgment-closure/evaluate.py"
+        "tooling/harness/operational/judgment-closure/evaluate.py",
+        "PR #360 merged@4746f6de8a64e8c22a61d07476f074a5bafc84bc"
       ]
     },
     {
       "taskId": "JG-G2",
       "title": "Adversarial tests challenge schema games and handoff laundering",
-      "status": "in-progress",
+      "status": "completed",
       "owner": "ASB regression lane",
       "dependencies": [
         "JG-G0"
@@ -126,13 +131,14 @@
         "Run independent implementation and existing public plan validation"
       ],
       "evidence": [
-        "tests/test_judgment_closure.py"
+        "tests/test_judgment_closure.py",
+        "17 GitHub-hosted adversarial unittest cases PASS, PR #360 exact head dff185044b7acc20629341313d462a956988fe9f"
       ]
     },
     {
       "taskId": "JG-G3",
       "title": "Converge CI and public plan registry",
-      "status": "ready",
+      "status": "completed",
       "owner": "ASB integration lane",
       "dependencies": [
         "JG-G1",
@@ -151,7 +157,9 @@
         "Provider readback verifies PR head and check states",
         "No private source or unrelated registry mutation"
       ],
-      "evidence": []
+      "evidence": [
+        "All 10 reported GitHub Actions workflows success at PR #360 head dff185044b7acc20629341313d462a956988fe9f"
+      ]
     },
     {
       "taskId": "JG-G4",
@@ -186,8 +194,8 @@
   ],
   "proof": {
     "target": "Implemented and CI-tested decision/handoff admission plus deployed consumer gate measured on real handoffs",
-    "achieved": "Core contract/evaluator/tests authored on isolated feature branch; CI and runtime adoption not yet proven",
-    "ceiling": "Structural validator and adversarial fixture proof after tests run; no autonomous judgment correctness, remote model behavior, user outcome or live execution proof"
+    "achieved": "G0-G3 implemented; 17 judgment tests PASS, existing public-plan validator PASS, all 10 PR-head GitHub Actions workflows PASS; PR #360 merged into main@4746f6de8a64e8c22a61d07476f074a5bafc84bc; G4 consumer adoption pending.",
+    "ceiling": "CI-validated and integrated structural admission only; mainline documentation receipt updated post-merge; live local handoff producer adoption, semantic correctness, autonomous model behavior and requested end-user outcomes not yet proven."
   },
   "handoff": {
     "nextOwner": "ASB operational harness P07 execution/integration lane",
@@ -196,7 +204,8 @@
       "P04 graph concurrency width 2 after shared contract freeze (evaluator vs regression tests), followed by serialized convergence; remote provider writes in this session do not prove two independent coding workers.",
       "All real code decisions are owned in ASB; P-number definitions stay upstream in TokenCorridor.",
       "Keep one concise machine-actionable intake entry; do not force users to paste multi-page agent handoffs.",
-      "The product later integrates evaluator before Switchboard execution dispatch and at completion claim; plan is not itself adoption proof."
+      "The product later integrates evaluator before Switchboard execution dispatch and at completion claim; plan is not itself adoption proof.",
+      "G4 is the sole next implementation gate: bind the evaluated case packet at the existing operational handoff producer/terminal completion surface; G5 requires independently reviewed outcome counterexamples."
     ]
   }
 }
