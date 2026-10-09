@@ -1,9 +1,9 @@
 # P04 — Judgment Closure + Outcome Integrity
 
-**Plan ID:** ASB-2026-10-JUDGMENT-CLOSURE-OUTCOME-INTEGRITY  
-**Public canonical owner:** EndeavorEverlasting/AgentSwitchboard — operational harness admission, not Prompt Kit definitions  
-**Upstream prompt owner:** TokenCorridor Prompt Kit, prompt-invocation-upstream/v1 (P04 factoring, P07 execution, P82 empirical refinement)  
-**Current execution host:** connected GitHub provider from current chat; hosted CI validates code; Cursor/OpenCode local consumer requires separate runtime proof.  
+**Plan ID:** ASB-2026-10-JUDGMENT-CLOSURE-OUTCOME-INTEGRITY
+**Public canonical owner:** EndeavorEverlasting/AgentSwitchboard — operational harness admission, not Prompt Kit definitions
+**Upstream prompt owner:** TokenCorridor Prompt Kit, prompt-invocation-upstream/v1 (P04 factoring, P07 execution, P82 empirical refinement)
+**Current execution host:** connected GitHub provider from current chat; hosted CI validates code; Cursor/OpenCode local consumer requires separate runtime proof.
 **Status:** implementation being built; CI convergence and real consumer adoption are separate proof gates.
 
 ## What the operator recognized
