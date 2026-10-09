@@ -223,6 +223,14 @@
       "status": "proposed",
       "priority": "high",
       "dependencies": []
+    },
+    {
+      "planId": "ASB-2026-10-JUDGMENT-CLOSURE-OUTCOME-INTEGRITY",
+      "path": "plans/active/ASB-2026-10-JUDGMENT-CLOSURE-OUTCOME-INTEGRITY.plan.json",
+      "summaryPath": "plans/active/ASB-2026-10-JUDGMENT-CLOSURE-OUTCOME-INTEGRITY.md",
+      "status": "active",
+      "priority": "critical",
+      "dependencies": []
     }
   ]
 }
