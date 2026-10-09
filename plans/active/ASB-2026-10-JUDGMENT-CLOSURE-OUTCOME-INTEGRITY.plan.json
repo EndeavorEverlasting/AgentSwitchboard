@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "critical",
   "createdUtc": "2026-10-09T01:17:00Z",
-  "updatedUtc": "2026-10-09T01:17:00Z",
+  "updatedUtc": "2026-10-09T01:20:00Z",
   "mission": "Turn the recurring premature-handoff and documentation-for-software substitution defect into a shared, publicly inspectable machine contract, deterministic evaluator, negative canaries, and integration gates consumed by AFK Factory and other authorized agents.",
   "owner": {
     "surface": "tooling/harness/operational/judgment-closure",
@@ -32,8 +32,8 @@
     "tooling/harness/operational/judgment-closure/**",
     "tests/test_judgment_closure.py",
     ".github/workflows/judgment-closure.yml",
-    "plans/active/ASB-2026-10-judgment-closure-outcome-integrity.plan.json",
-    "plans/active/ASB-2026-10-judgment-closure-outcome-integrity.md",
+    "plans/active/ASB-2026-10-JUDGMENT-CLOSURE-OUTCOME-INTEGRITY.plan.json",
+    "plans/active/ASB-2026-10-JUDGMENT-CLOSURE-OUTCOME-INTEGRITY.md",
     "plans/plan-registry.json membership for this plan"
   ],
   "forbiddenScope": [
@@ -55,7 +55,7 @@
     {
       "taskId": "JG-G0",
       "title": "Freeze ownership and decision graph from current repository evidence",
-      "status": "in-progress",
+      "status": "completed",
       "owner": "P04 coordinator",
       "dependencies": [],
       "inputs": [
@@ -65,14 +65,17 @@
         "prior handoff failure: requested implementation, delivered documentation"
       ],
       "outputs": [
-        "plans/active/ASB-2026-10-judgment-closure-outcome-integrity.md"
+        "plans/active/ASB-2026-10-JUDGMENT-CLOSURE-OUTCOME-INTEGRITY.md"
       ],
       "acceptanceCriteria": [
         "One owner each for Prompt Kit, ASB evaluator, live execution and external provider authority",
         "Source decision and consumer contract are separately identified",
         "All remaining material judgments are CLOSED, CONDITIONAL with observable branches, or explicitly BLOCKED"
       ],
-      "evidence": []
+      "evidence": [
+        "public ASB repo main@07eca00b8745cb642271a3ed08a57598b804ec1e",
+        "TokenCorridor prompt-invocation-upstream/v1 source reviewed"
+      ]
     },
     {
       "taskId": "JG-G1",
@@ -97,7 +100,10 @@
         "Preserve partial results instead of upgrading proof",
         "Fail closed on absent authority and missing evidence"
       ],
-      "evidence": []
+      "evidence": [
+        "tooling/harness/operational/judgment-closure/contract.v1.json",
+        "tooling/harness/operational/judgment-closure/evaluate.py"
+      ]
     },
     {
       "taskId": "JG-G2",
@@ -119,7 +125,9 @@
         "Prove incomplete case may be labeled PARTIAL but cannot pass ready or complete",
         "Run independent implementation and existing public plan validation"
       ],
-      "evidence": []
+      "evidence": [
+        "tests/test_judgment_closure.py"
+      ]
     },
     {
       "taskId": "JG-G3",
