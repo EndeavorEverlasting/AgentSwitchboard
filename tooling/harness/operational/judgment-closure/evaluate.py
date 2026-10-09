@@ -147,6 +147,8 @@ def evaluate(case: dict[str, Any], contract: dict[str, Any] | None = None) -> di
         elif (requested in ("IMPLEMENTATION", "DEPLOYMENT")
               and u["canExecuteHere"] and u["authorizedHere"] and not u["executedHere"]):
             fail("JC.DELEGATION.PREMATURE", f"authorized executable work remains here: {uid}")
+        if u.get("executedHere") is True:
+            refs_ok(u.get("executionEvidenceRefs"), f"work unit {uid} execution")
         if u.get("canExecuteHere") is False and not _nonblank(u.get("placementEvidence")):
             fail("JC.WORK.OWNERSHIP", f"nonlocal work unit {uid} needs placement evidence")
         if u.get("authorizedHere") is False and not _nonblank(u.get("authorityBlocker")):
