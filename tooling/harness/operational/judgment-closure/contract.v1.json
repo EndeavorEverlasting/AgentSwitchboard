@@ -1,0 +1,93 @@
+{
+  "schema": "agentswitchboard.judgment-closure-contract/v1",
+  "id": "judgment-closure-outcome-integrity",
+  "owner": {
+    "canonical": "EndeavorEverlasting/AgentSwitchboard",
+    "surface": "operational harness decision/evidence gate",
+    "prompt_upstream": "EndeavorEverlasting/TokenCorridor",
+    "prompt_interface": "prompt-invocation-upstream/v1",
+    "invocations": [
+      "P04",
+      "P07",
+      "P82"
+    ],
+    "role": "enforce delivery/decision handoff admissibility; never author canonical P-number definitions"
+  },
+  "purpose": "Prevent architectural judgment, authorized executable work, and user-requested outcomes from being silently substituted with plans or delegated as ambiguous instructions.",
+  "precedence": "Repository/platform safety, current operator intent, canonical upstream prompt authority, then this reusable admission contract. This contract cannot authorize mutation.",
+  "request_compatibility": {
+    "requested": [
+      "DESIGN",
+      "PLAN",
+      "IMPLEMENTATION",
+      "DEPLOYMENT"
+    ],
+    "delivered": [
+      "DESIGN",
+      "PLAN",
+      "IMPLEMENTATION",
+      "DEPLOYMENT"
+    ],
+    "order": [
+      "DESIGN",
+      "PLAN",
+      "IMPLEMENTATION",
+      "DEPLOYMENT"
+    ],
+    "partial_delivery_permitted": true,
+    "complete_claim_requires_at_least_requested_stage": true
+  },
+  "decision_states": [
+    "CLOSED",
+    "CONDITIONAL",
+    "UNRESOLVED"
+  ],
+  "decision_policy": {
+    "CLOSED": "Nonempty chosen action, rejected alternative, rationale and referenced evidence.",
+    "CONDITIONAL": "Executable observation probe plus at least two explicit distinguishable outcomes mapped to deterministic actions with bounded fallback.",
+    "UNRESOLVED": "Must not pass a judgment-closed handoff; mark NEEDS_JUDGMENT or real blocker with evidence; never silently delegate."
+  },
+  "evidence_policy": {
+    "required": "Stable source, revision, support scope, access class, and typed proof ceiling; self-asserted text is not proof of execution.",
+    "permitted_visibility": [
+      "PUBLIC_TRACKED",
+      "SANITIZED_OPAQUE"
+    ],
+    "forbidden": "Credentials, private user/project details, invented provider readback or capabilities."
+  },
+  "execution_policy": {
+    "current_runtime": "If safe authorized available work is within current-runtime owned scope, do it before a terminal handoff; otherwise record a concrete no-capability/authority gate.",
+    "delegation": "Receiving agent receives selected mechanism and deterministic contingent branches, not 'choose implementation' without proof of an unavailable decision dependency.",
+    "safety": "No plan, prompt, model vote, expert output or checklist supplies repository-write, merge, credential, deployment or live-target authorization."
+  },
+  "review_lenses": [
+    "counterfactual",
+    "second_order",
+    "inversion",
+    "authority_and_privacy",
+    "opportunity_cost"
+  ],
+  "proof_states": [
+    "DESIGNED",
+    "IMPLEMENTED",
+    "LOCALLY_VALIDATED",
+    "CI_VALIDATED",
+    "INTEGRATED",
+    "DEPLOYED",
+    "PRODUCTION_OBSERVED"
+  ],
+  "rule_ids": [
+    "JC.INPUT.INTEGRITY",
+    "JC.EVIDENCE.REFERENCE",
+    "JC.DECISION.CLOSURE",
+    "JC.DECISION.CONDITIONAL_FALSIFIER",
+    "JC.WORK.OWNERSHIP",
+    "JC.DELEGATION.PREMATURE",
+    "JC.OUTCOME.SUBSTITUTION",
+    "JC.OUTCOME.PROOF",
+    "JC.ADVERSARIAL.LENSES"
+  ],
+  "validator": "tooling/harness/operational/judgment-closure/evaluate.py",
+  "tests": "tests/test_judgment_closure.py",
+  "proof_ceiling": "Deterministic structural/cross-reference enforcement and adversarial fixtures. No validator can independently certify factual correctness of judgments, model competence, actual intent satisfaction, live mutation, or human emotional experience."
+}
