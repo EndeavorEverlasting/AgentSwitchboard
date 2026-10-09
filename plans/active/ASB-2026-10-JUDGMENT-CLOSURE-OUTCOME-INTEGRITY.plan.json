@@ -1,0 +1,194 @@
+{
+  "schema": "agentswitchboard.public-plan.v1",
+  "planId": "ASB-2026-10-JUDGMENT-CLOSURE-OUTCOME-INTEGRITY",
+  "title": "P04 Judgment Closure and Outcome Integrity Enforcement",
+  "repository": "EndeavorEverlasting/AgentSwitchboard",
+  "visibility": "public",
+  "status": "active",
+  "priority": "critical",
+  "createdUtc": "2026-10-09T01:17:00Z",
+  "updatedUtc": "2026-10-09T01:17:00Z",
+  "mission": "Turn the recurring premature-handoff and documentation-for-software substitution defect into a shared, publicly inspectable machine contract, deterministic evaluator, negative canaries, and integration gates consumed by AFK Factory and other authorized agents.",
+  "owner": {
+    "surface": "tooling/harness/operational/judgment-closure",
+    "role": "cross-agent execution admission and outcome-integrity enforcement",
+    "agent": null
+  },
+  "delivery": {
+    "branch": "feat/judgment-closure-p04-20261008",
+    "pullRequest": null,
+    "baseRef": "main",
+    "commitRequired": true
+  },
+  "wave": "P04 G0 interface freeze -> G1/G2 disjoint core and regression canaries -> G3 integration -> G4 runtime adoption",
+  "lane": "JG-CORE",
+  "dependencies": [],
+  "safeParallelWork": [
+    "JG-TEST tests/test_judgment_closure.py is disjoint from JG-CORE code after contract freeze",
+    "JG-PUBLIC public plan/registry/CI is independent of contract implementation until convergence",
+    "TokenCorridor prompt semantic owners and ASB execution adapters remain separate ownership lanes"
+  ],
+  "ownedScope": [
+    "tooling/harness/operational/judgment-closure/**",
+    "tests/test_judgment_closure.py",
+    ".github/workflows/judgment-closure.yml",
+    "plans/active/ASB-2026-10-judgment-closure-outcome-integrity.plan.json",
+    "plans/active/ASB-2026-10-judgment-closure-outcome-integrity.md",
+    "plans/plan-registry.json membership for this plan"
+  ],
+  "forbiddenScope": [
+    "canonical P-number registry mutations in TokenCorridor or Triage",
+    "private prompt contents, private provider IDs, credentials or operator-specific workstation paths",
+    "automatic PR merge, unsanctioned repository mutation or live deployments",
+    "rewriting generic operational-harness router or public-plan schemas without evidence",
+    "claiming static or CI validation proves human judgment, feelings, productive autonomy or operator outcome"
+  ],
+  "expectedArtifacts": [
+    "public versioned closure contract",
+    "deterministic admission CLI returning violation rule IDs and explicit proof ceiling",
+    "adversarial tests including fabricated completion and premature delegation",
+    "P04 owner/decision graph and public registry entry",
+    "CI gate for new contract and existing public plans",
+    "consumer adoption seam in existing Work Graph/Switchboard handoff router once reviewed"
+  ],
+  "tasks": [
+    {
+      "taskId": "JG-G0",
+      "title": "Freeze ownership and decision graph from current repository evidence",
+      "status": "in-progress",
+      "owner": "P04 coordinator",
+      "dependencies": [],
+      "inputs": [
+        "AGENTS.md and HARNESS.md",
+        "TokenCorridor prompt-invocation-upstream/v1",
+        "ASB public-plan-coordination skill and public registry",
+        "prior handoff failure: requested implementation, delivered documentation"
+      ],
+      "outputs": [
+        "plans/active/ASB-2026-10-judgment-closure-outcome-integrity.md"
+      ],
+      "acceptanceCriteria": [
+        "One owner each for Prompt Kit, ASB evaluator, live execution and external provider authority",
+        "Source decision and consumer contract are separately identified",
+        "All remaining material judgments are CLOSED, CONDITIONAL with observable branches, or explicitly BLOCKED"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "JG-G1",
+      "title": "Implement judgment closure contract and evaluator",
+      "status": "in-progress",
+      "owner": "ASB operational harness",
+      "dependencies": [
+        "JG-G0"
+      ],
+      "inputs": [
+        "P04 upstream resolution and runtime-partition contract",
+        "harness and artifact integrity conventions"
+      ],
+      "outputs": [
+        "tooling/harness/operational/judgment-closure/contract.v1.json",
+        "tooling/harness/operational/judgment-closure/evaluate.py"
+      ],
+      "acceptanceCriteria": [
+        "Reject documentation substitution as complete implementation",
+        "Reject delegation of safe authorized current-runtime actions",
+        "Require evidence-linked CLOSED decisions or falsifiable CONDITIONAL branches",
+        "Preserve partial results instead of upgrading proof",
+        "Fail closed on absent authority and missing evidence"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "JG-G2",
+      "title": "Adversarial tests challenge schema games and handoff laundering",
+      "status": "in-progress",
+      "owner": "ASB regression lane",
+      "dependencies": [
+        "JG-G0"
+      ],
+      "inputs": [
+        "frozen admission contract"
+      ],
+      "outputs": [
+        "tests/test_judgment_closure.py"
+      ],
+      "acceptanceCriteria": [
+        "Run positive, negative, conditional and tampered-reference canaries",
+        "Assert a long sophisticated plan cannot equal tested implementation",
+        "Prove incomplete case may be labeled PARTIAL but cannot pass ready or complete",
+        "Run independent implementation and existing public plan validation"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "JG-G3",
+      "title": "Converge CI and public plan registry",
+      "status": "ready",
+      "owner": "ASB integration lane",
+      "dependencies": [
+        "JG-G1",
+        "JG-G2"
+      ],
+      "inputs": [
+        "exact-head tests",
+        "public plan schema and validator"
+      ],
+      "outputs": [
+        ".github/workflows/judgment-closure.yml",
+        "plans/plan-registry.json"
+      ],
+      "acceptanceCriteria": [
+        "CI runs focused tests and existing public plans",
+        "Provider readback verifies PR head and check states",
+        "No private source or unrelated registry mutation"
+      ],
+      "evidence": []
+    },
+    {
+      "taskId": "JG-G4",
+      "title": "Adopt shared gate in real outgoing agent handoff and measure reduced operator correction",
+      "status": "pending",
+      "owner": "ASB operational routing/AFK consumer lane",
+      "dependencies": [
+        "JG-G3"
+      ],
+      "inputs": [
+        "passing G3 admission gate",
+        "production routing owner evidence"
+      ],
+      "outputs": [
+        "runtime-backed handoff admission receipt and consumer integration validation"
+      ],
+      "acceptanceCriteria": [
+        "Existing bounded handoff producer calls evaluator before declaring READY_HANDOFF",
+        "Run live or replayed operator correction cases with an independent semantic reviewer",
+        "Report false-admissions and false-rejections; do not claim implementation outcome from structural checks",
+        "Upstream P04/P07/P82 prompt mutation happens only under canonical prompt owner"
+      ],
+      "evidence": []
+    }
+  ],
+  "validation": [
+    "python -m unittest tests.test_judgment_closure -v",
+    "python tests/test_public_plan_contracts.py",
+    "python -m py_compile tooling/harness/operational/judgment-closure/evaluate.py tests/test_judgment_closure.py",
+    "git diff --check origin/main...HEAD",
+    "GitHub Actions .github/workflows/judgment-closure.yml exact PR-head check"
+  ],
+  "proof": {
+    "target": "Implemented and CI-tested decision/handoff admission plus deployed consumer gate measured on real handoffs",
+    "achieved": "Core contract/evaluator/tests authored on isolated feature branch; CI and runtime adoption not yet proven",
+    "ceiling": "Structural validator and adversarial fixture proof after tests run; no autonomous judgment correctness, remote model behavior, user outcome or live execution proof"
+  },
+  "handoff": {
+    "nextOwner": "ASB operational harness P07 execution/integration lane",
+    "nextCommand": "python -m unittest tests.test_judgment_closure -v",
+    "notes": [
+      "P04 graph concurrency width 2 after shared contract freeze (evaluator vs regression tests), followed by serialized convergence; remote provider writes in this session do not prove two independent coding workers.",
+      "All real code decisions are owned in ASB; P-number definitions stay upstream in TokenCorridor.",
+      "Keep one concise machine-actionable intake entry; do not force users to paste multi-page agent handoffs.",
+      "The product later integrates evaluator before Switchboard execution dispatch and at completion claim; plan is not itself adoption proof."
+    ]
+  }
+}
