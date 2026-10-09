@@ -48,7 +48,8 @@ def sample(requested="IMPLEMENTATION", delivered="IMPLEMENTATION", claim="COMPLE
              "ownedScope": ["tooling/runtime/scheduler/**"],
              "forbiddenScope": ["provider-credentials/**"],
              "decisionIds": ["D1"], "proofGate": "focused unit suite",
-             "canExecuteHere": True, "authorizedHere": True, "executedHere": True},
+             "canExecuteHere": True, "authorizedHere": True, "executedHere": True,
+             "executionEvidenceRefs": ["E2"]},
         ],
         "reviewLenses": [
             {"lens": lens, "finding": "Test whether recurrence hides unresolved failures",
@@ -133,6 +134,11 @@ class JudgmentClosureTests(unittest.TestCase):
         packet = sample()
         packet["proof"]["state"] = "DESIGNED"
         self.assert_rule(packet, "JC.OUTCOME.PROOF")
+
+    def test_execution_claim_without_receipt_reference_is_rejected(self):
+        packet = sample()
+        packet["workUnits"][0].pop("executionEvidenceRefs")
+        self.assert_rule(packet, "JC.EVIDENCE.REFERENCE")
 
     def test_executable_unperformed_current_runtime_work_rejected(self):
         packet = sample()
