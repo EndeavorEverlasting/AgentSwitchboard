@@ -8,6 +8,7 @@ AgentSwitchboard must be able to enter and inspect these repositories readily:
 2. `EndeavorEverlasting/BlacksmithGuild`
 3. `EndeavorEverlasting/web-excel-repair-triage`
 4. `EndeavorEverlasting/SysAdminSuite`
+5. `EndeavorEverlasting/PiShark`
 
 AgentSwitchboard works on itself through the same evidence, scope, isolation, validation, and handoff rules used for child repositories. It receives no exemption from its own contract.
 
@@ -104,6 +105,7 @@ These artifacts may describe local Git state and directory names. They are local
 - SysAdminSuite has a mature harness on its default branch and retains authority for survey, deployment, package, workstation, and target-mutation workflows.
 - Web Excel Repair Triage has strong product rules on its default branch and active harness-spine work, but the family readiness contract intentionally requires the complete default-branch harness surface before reporting `ready`.
 - AgentSwitchboard's own family harness is defined by this branch and remains stacked on the canonical operating-contract branch until review and integration.
+- PiShark is a private child for read-only diagnostic receipts and P01 advisory privacy decision gates. Its review packet is not authorization to sign in, clear browser data, or assert historical exposure has been erased. Family intake does not execute those operations.
 
 ## Validation
 
