@@ -115,6 +115,70 @@
         "commitPolicy": "Operational evidence remains untracked; only sanitized fixtures, schemas, policies, and explicit reports are tracked."
       },
       "proofCeiling": "AgentSwitchboard may prove route and contract compatibility only."
+    },
+    {
+      "id": "pishark",
+      "fullName": "EndeavorEverlasting/PiShark",
+      "role": "child",
+      "cloneUrl": "https://github.com/EndeavorEverlasting/PiShark.git",
+      "directoryNames": [
+        "PiShark"
+      ],
+      "authorityBoundary": "Retains local Windows read-only network observation, privacy-decision completeness checks, consent scope, offline proof, private receipts, and independent field authorization.",
+      "requiredPaths": [
+        "AGENTS.md",
+        "CODEBASE_MAP.md",
+        "harness/api/pishark-sprint.v1.json",
+        "harness/api/p01-harness.v1.json",
+        "harness/workflows/privacy-decision.v1.json",
+        "docs/skills/privacy-decision/SKILL.md",
+        "docs/OPERATOR_REPORT_TEMPLATE.md",
+        "tools/validate_privacy_decision.py",
+        "HANDOFF_CURSOR.md"
+      ],
+      "entrypoints": {
+        "agentRules": [
+          "AGENTS.md"
+        ],
+        "codebaseMap": "CODEBASE_MAP.md",
+        "skillRoots": [
+          "docs/skills"
+        ],
+        "workflowRoots": [
+          "harness/workflows"
+        ],
+        "runContextAuthorities": [
+          "harness/api/p01-harness.v1.json"
+        ],
+        "artifactRegistryAuthorities": [
+          "harness/api/p01-harness.v1.json"
+        ],
+        "validatorEntrypoints": [
+          "tools/validate_repo.py",
+          "tools/validate_privacy_decision.py"
+        ],
+        "operatorReportAuthorities": [
+          "docs/OPERATOR_REPORT_TEMPLATE.md"
+        ],
+        "handoffAuthorities": [
+          "HANDOFF_CURSOR.md"
+        ],
+        "readOnlyIntelligence": [
+          "harness/api/pishark-sprint.v1.json",
+          "harness/workflows/privacy-decision.v1.json"
+        ]
+      },
+      "validationCommands": [
+        "python -m unittest discover -s tests -v",
+        "python tools/validate_repo.py",
+        "python tools/validate_privacy_decision.py --check-repo"
+      ],
+      "generatedOutputPolicy": {
+        "tracked": false,
+        "defaultRoot": "incident-data/",
+        "commitPolicy": "Local private privacy packets and incident receipts are gitignored. Synthetic/redacted source proof only may be tracked."
+      },
+      "proofCeiling": "Repository family intake and static harness readiness only; no browser unlinkability, account privacy repair, Windows field, or provider consent proof."
     }
   ]
 }
