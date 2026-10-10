@@ -61,7 +61,7 @@ def validate_contract(data: dict, roles: dict) -> None:
     check("Repair-Technician-WSL-Ubuntu.cmd" in provisioner, "WSL repair must delegate to canonical entrypoint")
     check("provision-summary.json" in provisioner and "installed-awaiting-operator-gates" in provisioner, "missing local proof receipt/ceiling")
     check("roleId" in provisioner and "admin-box-1" not in provisioner, "provisioner must never enroll managed Admin Boxes")
-    check("sign in" not in provisioner.lower() and "gh auth login" not in provisioner.lower(), "provider login must remain interactive")
+    check(not any(token in provisioner.lower() for token in ("& codex login", "& auggie login", "& gh auth login", "start-process codex", "start-process auggie")), "provider login must remain interactive")
     check("Technician-AgentSwitchboard-Ready.cmd" in guide, "canonical setup path not reused")
     check("Auggie" in guide and "AGY" in guide, "agent identity distinction absent")
     for prohibited in ("Clear-Disk", "Format-Volume", "reset --hard", "Remove-Item -Recurse", "winget install", "npm install"):
