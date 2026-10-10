@@ -70,8 +70,11 @@ jobs:
           $state = Get-Content -Raw $reports[0].FullName | ConvertFrom-Json
           if ($state.state -ne 'inspected-only' -or $state.profile -ne 'engineering-full') { throw 'Incorrect full-profile inspection classification' }
           $invalidOutput = Join-Path $env:RUNNER_TEMP 'asb-full-profile-invalid-role'
-          & pwsh -NoProfile -File ./tooling/profiles/windows/Invoke-PersonalWorkstationProvision.ps1 -EnvironmentRoleId admin-box-1 -Profile engineering-full -Mode Apply -OutputRoot $invalidOutput 2>$null
-          if ($LASTEXITCODE -eq 0) { throw 'Managed Admin Box role incorrectly accepted' }
+          $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'tooling/profiles/windows/Invoke-PersonalWorkstationProvision.ps1'
+          $err = Join-Path $env:RUNNER_TEMP 'asb-invalid-role-stderr.txt'
+          $args = @('-NoProfile','-File',$scriptPath,'-EnvironmentRoleId','admin-box-1','-Profile','engineering-full','-Mode','Apply','-OutputRoot',$invalidOutput)
+          $bad = Start-Process -FilePath (Get-Command pwsh).Source -ArgumentList $args -NoNewWindow -Wait -PassThru -RedirectStandardError $err
+          if ($bad.ExitCode -eq 0) { throw 'Managed Admin Box role incorrectly accepted' }
           if (Test-Path $invalidOutput) { throw 'Invalid role unexpectedly created provisioning state' }
       - name: PowerShell operational contract
         shell: pwsh
