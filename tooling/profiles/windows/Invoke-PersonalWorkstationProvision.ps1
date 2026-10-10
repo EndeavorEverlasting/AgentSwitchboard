@@ -208,7 +208,7 @@ try {
     $inspector = Join-Path $RepoRoot 'tooling/profiles/windows/Get-PersonalWorkstationBootstrapStatus.ps1'
     if ($Mode -eq 'Inspect') {
         & $inspector -EnvironmentRoleId $EnvironmentRoleId -OutputRoot $runDir
-        if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) { throw 'Inspect-only reporter failed.' }
+        # A PowerShell function/script need not set LASTEXITCODE. Exceptions propagate directly.
         Add-Stage 'preflight' 'observed' 'Read-only PATH discovery produced a machine-local report.'
         $receipt.state = 'inspected-only'
         $receipt.nextAction = "Run this script with -Mode Apply -Profile $Profile if you authorize tool installation."
