@@ -91,6 +91,7 @@ AgentSwitchboard must be able to inspect and coordinate work for:
 - `EndeavorEverlasting/BlacksmithGuild`
 - `EndeavorEverlasting/web-excel-repair-triage`
 - `EndeavorEverlasting/SysAdminSuite`
+- `EndeavorEverlasting/PiShark` — private read-only observation and advisory privacy-decision harness; no automatic browser or account actions
 
 The machine-readable profiles live in [`.ai/harness/repository-family.registry.json`](.ai/harness/repository-family.registry.json). Each profile identifies the child's local rules, codebase map, skills, workflows, run-context authority, artifact registry, validators, reports, handoff contract, output policy, and proof ceiling.
 
