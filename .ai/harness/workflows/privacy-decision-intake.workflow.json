@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "privacy-decision-intake",
+  "mode": "ADVISORY_ONLY",
+  "childRepository": "EndeavorEverlasting/PiShark",
+  "childAuthority": "harness/workflows/privacy-decision.v1.json",
+  "triggers": [
+    "browser or account sign-in recommendations",
+    "browser isolation and identity compartment changes",
+    "tracking mitigation and cleanup advice"
+  ],
+  "steps": [
+    "Read current operator-provided configuration evidence without requesting additional identities or sessions.",
+    "Before any recommended action, require observed/inferred/unknown separation, linkability model, recipients, irreversibility, no-change alternative and residual risks.",
+    "If local child checkout exists, run only its offline structural validator on a synthetic or consented local packet.",
+    "Surface ready-for-review or blocked recommendation with proof ceiling; explicitly require separate operator decision before any action."
+  ],
+  "forbidden": [
+    "provider sign-in",
+    "browser/profile mutation",
+    "cookie or site-data clearing",
+    "network probes",
+    "private-report upload",
+    "historical-privacy-reversal claims"
+  ],
+  "runtimeBinding": "NOT_AUTO_ENFORCED; static family route and documentation until an authorized deterministic trigger is integrated",
+  "proofCeiling": "Read-only intake and advisory packet completeness only; not privacy unlinkability, history erasure, provider behavior or implementation of a global agent hook."
+}
