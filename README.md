@@ -22,7 +22,7 @@ See [Agent startup readiness](docs/workstation/agent-startup-readiness.md).
 
 ## Personal Windows workstation: start coding first
 
-For a fresh personal desktop or laptop, use the [personal developer workstation bootstrap](docs/workstation/personal-development-workstation.md). It separates the **code-now** gate (native PowerShell/Git/Node + Codex/Auggie) from the optional **engineering-full** AgentSwitchboard/WSL fleet. Select the workstation role explicitly, preserve existing checkouts and credentials, and capture inspect-only receipts. Managed Admin Boxes are not covered by this personal recipe.
+For a fresh personal desktop or laptop, use the [personal developer workstation bootstrap](docs/workstation/personal-development-workstation.md). **First-use apps:** Brave and Wispr Flow are inspected/installed ahead of the lengthy CLI and WSL restore through the tracked essential-app installer, without using Microsoft Store or replacing existing Wispr data. It separates the **code-now** gate (native PowerShell/Git/Node + Codex/Auggie) from the optional **engineering-full** AgentSwitchboard/WSL fleet. Select the workstation role explicitly, preserve existing checkouts and credentials, and capture inspect-only receipts. Managed Admin Boxes are not covered by this personal recipe.
 
 ## One-click Windows setup
 
