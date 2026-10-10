@@ -6,9 +6,11 @@ on:
       - 'tooling/profiles/windows/harness/machine-profile/**'
       - 'tooling/profiles/windows/Get-MachineProfileOperationalStatus.ps1'
       - 'tooling/profiles/windows/Get-PersonalWorkstationBootstrapStatus.ps1'
+      - 'tooling/profiles/windows/Invoke-PersonalWorkstationProvision.ps1'
       - 'tests/test_personal_workstation_bootstrap_contract.py'
       - 'docs/workstation/personal-development-workstation.md'
       - 'tooling/profiles/windows/Get-PersonalWorkstationBootstrapStatus.ps1'
+      - 'tooling/profiles/windows/Invoke-PersonalWorkstationProvision.ps1'
       - 'tests/test_personal_workstation_bootstrap_contract.py'
       - 'docs/workstation/personal-development-workstation.md'
       - 'scripts/Test-MachineProfileOperationalHarness.ps1'
@@ -57,6 +59,20 @@ jobs:
           if ($reports.Count -ne 1) { throw 'Expected one personal-workstation inspection receipt' }
           $result = Get-Content -Raw $reports[0].FullName | ConvertFrom-Json
           if ($result.mode -ne 'inspect-only' -or $result.environmentRoleId -ne 'desktop-workstation') { throw 'Inspection receipt mismatched its role/mode' }
+      - name: Windows full-profile orchestration inspect-only smoke
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'asb-full-profile-inspect'
+          ./tooling/profiles/windows/Invoke-PersonalWorkstationProvision.ps1 -EnvironmentRoleId desktop-workstation -Profile engineering-full -Mode Inspect -OutputRoot $out
+          $reports = @(Get-ChildItem -Path $out -Filter provision-summary.json -Recurse -File)
+          if ($reports.Count -ne 1) { throw 'Expected exactly one provision-summary inspection receipt' }
+          $state = Get-Content -Raw $reports[0].FullName | ConvertFrom-Json
+          if ($state.state -ne 'inspected-only' -or $state.profile -ne 'engineering-full') { throw 'Incorrect full-profile inspection classification' }
+          $invalidOutput = Join-Path $env:RUNNER_TEMP 'asb-full-profile-invalid-role'
+          & pwsh -NoProfile -File ./tooling/profiles/windows/Invoke-PersonalWorkstationProvision.ps1 -EnvironmentRoleId admin-box-1 -Profile engineering-full -Mode Apply -OutputRoot $invalidOutput 2>$null
+          if ($LASTEXITCODE -eq 0) { throw 'Managed Admin Box role incorrectly accepted' }
+          if (Test-Path $invalidOutput) { throw 'Invalid role unexpectedly created provisioning state' }
       - name: PowerShell operational contract
         shell: pwsh
         run: ./scripts/Test-MachineProfileOperationalHarness.ps1
