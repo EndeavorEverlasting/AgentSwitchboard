@@ -7,7 +7,7 @@
   "status": "active",
   "priority": "critical",
   "createdUtc": "2026-10-09T01:17:00Z",
-  "updatedUtc": "2026-10-09T01:40:00Z",
+  "updatedUtc": "2026-10-10T07:09:04Z",
   "mission": "Turn the recurring premature-handoff and documentation-for-software substitution defect into a shared, publicly inspectable machine contract, deterministic evaluator, negative canaries, and integration gates consumed by AFK Factory and other authorized agents.",
   "owner": {
     "surface": "tooling/harness/operational/judgment-closure",
@@ -107,7 +107,8 @@
       "evidence": [
         "tooling/harness/operational/judgment-closure/contract.v1.json",
         "tooling/harness/operational/judgment-closure/evaluate.py",
-        "PR #360 merged@4746f6de8a64e8c22a61d07476f074a5bafc84bc"
+        "PR #360 merged@4746f6de8a64e8c22a61d07476f074a5bafc84bc",
+        "Refinement: premature-delegation gate now stage-agnostic (DESIGN/PLAN can no longer ship authorized current-runtime work); blank acceptance criteria rejected"
       ]
     },
     {
@@ -132,7 +133,7 @@
       ],
       "evidence": [
         "tests/test_judgment_closure.py",
-        "17 GitHub-hosted adversarial unittest cases PASS, PR #360 exact head dff185044b7acc20629341313d462a956988fe9f"
+        "20 GitHub-hosted/local adversarial unittest cases PASS after stage-agnostic premature-delegation and blank-acceptance canaries (PR #360 exact head dff185044b7acc20629341313d462a956988fe9f baseline 17)"
       ]
     },
     {
@@ -194,7 +195,7 @@
   ],
   "proof": {
     "target": "Implemented and CI-tested decision/handoff admission plus deployed consumer gate measured on real handoffs",
-    "achieved": "G0-G3 implemented; 17 judgment tests PASS, existing public-plan validator PASS, all 10 PR-head GitHub Actions workflows PASS; PR #360 merged into main@4746f6de8a64e8c22a61d07476f074a5bafc84bc; G4 consumer adoption pending.",
+    "achieved": "G0-G3 implemented; 17 judgment tests PASS baseline, refined to 20 PASS (stage-agnostic premature-delegation rejection, blank-acceptance rejection, positive control); existing public-plan validator PASS; all 10 PR-head GitHub Actions workflows PASS; PR #360 merged into main@4746f6de8a64e8c22a61d07476f074a5bafc84bc; G4 consumer adoption pending.",
     "ceiling": "CI-validated and integrated structural admission only; mainline documentation receipt updated post-merge; live local handoff producer adoption, semantic correctness, autonomous model behavior and requested end-user outcomes not yet proven."
   },
   "handoff": {
