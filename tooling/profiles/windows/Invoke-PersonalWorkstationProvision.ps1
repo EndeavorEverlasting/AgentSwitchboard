@@ -117,8 +117,9 @@ function Ensure-Foundation {
         if ($packageId -notin @('Microsoft.PowerShell','Git.Git','OpenJS.NodeJS.LTS','GitHub.cli')) {
             throw "Package not on approved foundation allowlist: $packageId"
         }
-        Add-Stage ([string]$component.id) 'installing' "Approved WinGet package: $packageId"
-        & $winget.Source install --id $packageId --exact --source winget --accept-source-agreements --accept-package-agreements
+        $operation = if ($version) { 'upgrade' } else { 'install' }
+        Add-Stage ([string]$component.id) 'installing' "Approved WinGet $operation package: $packageId"
+        & $winget.Source $operation --id $packageId --exact --source winget --accept-source-agreements --accept-package-agreements
         if ($LASTEXITCODE -ne 0) {
             throw "WinGet failed for $packageId (exit $LASTEXITCODE). No subsequent stages executed."
         }
