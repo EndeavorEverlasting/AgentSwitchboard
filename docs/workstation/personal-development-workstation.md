@@ -1,8 +1,8 @@
 # Personal developer workstation — bootstrap
 
-**Owner:** AgentSwitchboard Windows workstation profile  
-**Canonical machine/role identity:** [machine-profile bootstrap](machine-profile-bootstrap.md) and its `environment-role.registry.json`  
-**Machine-independent contract:** `tooling/profiles/windows/harness/machine-profile/personal-workstation-bootstrap.v1.json`  
+**Owner:** AgentSwitchboard Windows workstation profile
+**Canonical machine/role identity:** [machine-profile bootstrap](machine-profile-bootstrap.md) and its `environment-role.registry.json`
+**Machine-independent contract:** `tooling/profiles/windows/harness/machine-profile/personal-workstation-bootstrap.v1.json`
 **Acceptance:** capability-specific evidence, not a green installer exit.
 
 ## Quick navigation
