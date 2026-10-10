@@ -52,8 +52,9 @@ def evaluate(case: dict[str, Any], contract: dict[str, Any] | None = None) -> di
     claim = req.get("completionClaim")
     if requested not in ORDER or delivered not in ORDER or claim not in ("COMPLETE", "READY_HANDOFF", "PARTIAL"):
         fail("JC.INPUT.INTEGRITY", "request needs typed requestedStage, deliveredStage and completionClaim")
-    if not _nonblank(req.get("userOutcome")) or not _items(req.get("acceptance")):
-        fail("JC.INPUT.INTEGRITY", "nonempty user outcome and acceptance criteria required")
+    acceptance = req.get("acceptance")
+    if not _nonblank(req.get("userOutcome")) or not _items(acceptance) or not all(_nonblank(item) for item in _items(acceptance)):
+        fail("JC.INPUT.INTEGRITY", "nonempty user outcome and nonblank acceptance criteria required")
 
     evidence_by_id: dict[str, dict] = {}
     for item in _items(case.get("evidence")):
@@ -144,8 +145,7 @@ def evaluate(case: dict[str, Any], contract: dict[str, Any] | None = None) -> di
                 fail("JC.DECISION.CLOSURE", f"work unit {uid} depends on absent decision {did}")
         if not isinstance(u.get("canExecuteHere"), bool) or not isinstance(u.get("authorizedHere"), bool) or not isinstance(u.get("executedHere"), bool):
             fail("JC.WORK.OWNERSHIP", f"work unit {uid} needs explicit observed booleans")
-        elif (requested in ("IMPLEMENTATION", "DEPLOYMENT")
-              and u["canExecuteHere"] and u["authorizedHere"] and not u["executedHere"]):
+        elif u["canExecuteHere"] and u["authorizedHere"] and not u["executedHere"]:
             fail("JC.DELEGATION.PREMATURE", f"authorized executable work remains here: {uid}")
         if u.get("executedHere") is True:
             refs_ok(u.get("executionEvidenceRefs"), f"work unit {uid} execution")

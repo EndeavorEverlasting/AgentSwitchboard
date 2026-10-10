@@ -145,6 +145,24 @@ class JudgmentClosureTests(unittest.TestCase):
         packet["workUnits"][0]["executedHere"] = False
         self.assert_rule(packet, "JC.DELEGATION.PREMATURE")
 
+    def test_premature_delegation_rejected_at_any_requested_stage(self):
+        for stage in ("DESIGN", "PLAN", "IMPLEMENTATION", "DEPLOYMENT"):
+            with self.subTest(stage=stage):
+                packet = sample(requested=stage, delivered=stage, claim="COMPLETE")
+                packet["workUnits"][0]["executedHere"] = False
+                self.assert_rule(packet, "JC.DELEGATION.PREMATURE")
+
+    def test_plan_stage_with_executed_current_runtime_work_still_admits(self):
+        packet = sample(requested="PLAN", delivered="PLAN", claim="COMPLETE")
+        packet["proof"]["state"] = "DESIGNED"
+        result = jc.evaluate(packet)
+        self.assertEqual(result["admission"], "ADMITTED", result)
+
+    def test_blank_acceptance_criterion_is_rejected(self):
+        packet = sample()
+        packet["request"]["acceptance"].append("   ")
+        self.assert_rule(packet, "JC.INPUT.INTEGRITY")
+
     def test_unavailable_runtime_requires_explanation_not_guess(self):
         packet = sample(delivered="PLAN", claim="PARTIAL")
         packet["workUnits"][0].update(canExecuteHere=False, executedHere=False)
