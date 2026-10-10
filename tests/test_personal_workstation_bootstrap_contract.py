@@ -9,6 +9,7 @@ CONTRACT = BASE / "harness" / "machine-profile" / "personal-workstation-bootstra
 ROLES = BASE / "harness" / "machine-profile" / "environment-role.registry.json"
 SCRIPT = BASE / "Get-PersonalWorkstationBootstrapStatus.ps1"
 DOC = ROOT / "docs" / "workstation" / "personal-development-workstation.md"
+PROVISIONER = BASE / "Invoke-PersonalWorkstationProvision.ps1"
 
 
 def check(condition: bool, message: str) -> None:
@@ -48,11 +49,19 @@ def validate_contract(data: dict, roles: dict) -> None:
     check(native["agy"]["id"] != native["auggie"]["id"], "AGY/Auggie conflated")
 
     src = SCRIPT.read_text(encoding="utf-8")
+    provisioner = PROVISIONER.read_text(encoding="utf-8")
     guide = DOC.read_text(encoding="utf-8")
     check("Inspect ONLY".lower() in src.lower(), "inspection-only contract not visible")
     check("Get-Command" in src and "status.json" in src and "status.md" in src, "inspector not evidence-backed")
     check("[Parameter(Mandatory)]" in src and "EnvironmentRoleId" in src, "explicit role selector absent")
     check("winget install" in guide and "npm.cmd install -g" in guide, "operator fast path incomplete")
+    check("engineering-full -Mode Apply" in guide, "full profile operator action not documented")
+    check("Ensure-Foundation" in provisioner and "Ensure-NativeAgents" in provisioner, "provisioner missing native prerequisites")
+    check("Ensure-CanonicalFleet" in provisioner and "Technician-AgentSwitchboard-Ready.cmd" in provisioner, "fleet must delegate to canonical installer")
+    check("Repair-Technician-WSL-Ubuntu.cmd" in provisioner, "WSL repair must delegate to canonical entrypoint")
+    check("provision-summary.json" in provisioner and "installed-awaiting-operator-gates" in provisioner, "missing local proof receipt/ceiling")
+    check("roleId" in provisioner and "admin-box-1" not in provisioner, "provisioner must never enroll managed Admin Boxes")
+    check("sign in" not in provisioner.lower() and "gh auth login" not in provisioner.lower(), "provider login must remain interactive")
     check("Technician-AgentSwitchboard-Ready.cmd" in guide, "canonical setup path not reused")
     check("Auggie" in guide and "AGY" in guide, "agent identity distinction absent")
     for prohibited in ("Clear-Disk", "Format-Volume", "reset --hard", "Remove-Item -Recurse", "winget install", "npm install"):
