@@ -5,6 +5,12 @@ on:
     paths:
       - 'tooling/profiles/windows/harness/machine-profile/**'
       - 'tooling/profiles/windows/Get-MachineProfileOperationalStatus.ps1'
+      - 'tooling/profiles/windows/Get-PersonalWorkstationBootstrapStatus.ps1'
+      - 'tests/test_personal_workstation_bootstrap_contract.py'
+      - 'docs/workstation/personal-development-workstation.md'
+      - 'tooling/profiles/windows/Get-PersonalWorkstationBootstrapStatus.ps1'
+      - 'tests/test_personal_workstation_bootstrap_contract.py'
+      - 'docs/workstation/personal-development-workstation.md'
       - 'scripts/Test-MachineProfileOperationalHarness.ps1'
       - 'tests/test_machine_profile_operational_harness.py'
       - 'docs/workstation/machine-profile-bootstrap.md'
@@ -39,6 +45,18 @@ jobs:
           python-version: '3.12'
       - name: Portable operational contract
         run: python tests/test_machine_profile_operational_harness.py
+      - name: Personal workstation bootstrap contract
+        run: python tests/test_personal_workstation_bootstrap_contract.py
+      - name: Windows personal workstation inspect-only smoke
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'asb-personal-bootstrap-contract-smoke'
+          ./tooling/profiles/windows/Get-PersonalWorkstationBootstrapStatus.ps1 -EnvironmentRoleId desktop-workstation -OutputRoot $out
+          $reports = @(Get-ChildItem -Path $out -Filter status.json -Recurse -File)
+          if ($reports.Count -ne 1) { throw 'Expected one personal-workstation inspection receipt' }
+          $result = Get-Content -Raw $reports[0].FullName | ConvertFrom-Json
+          if ($result.mode -ne 'inspect-only' -or $result.environmentRoleId -ne 'desktop-workstation') { throw 'Inspection receipt mismatched its role/mode' }
       - name: PowerShell operational contract
         shell: pwsh
         run: ./scripts/Test-MachineProfileOperationalHarness.ps1
