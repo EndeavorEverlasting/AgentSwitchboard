@@ -37,6 +37,23 @@ Then authenticate interactively via `codex` (select ChatGPT sign-in if offered) 
 
 Select a clean, user-authorized repo, record its origin/branch/HEAD/dirty state, and have an agent perform a read-only orientation before granting writing scope. This is the **code-now acceptance gate**; don't delay it for Docker, WSL, Android SDK or restoration work.
 
+## Full-profile one-shot coordinator (resumable)
+
+For a full personal DTop restore, **the requested target is `engineering-full`**. The tracked, source-reviewed coordinator composes the existing canonical installers; it doesn't replace them. After a verified checkout is available, run it in two explicit modes:
+
+```powershell
+$repo = Join-Path $env:USERPROFILE 'dev\AgentSwitchBoard-Live'
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repo 'tooling\profiles\windows\Invoke-PersonalWorkstationProvision.ps1') -EnvironmentRoleId desktop-workstation -Profile engineering-full -Mode Inspect
+# After inspecting the status and approving tool installation:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repo 'tooling\profiles\windows\Invoke-PersonalWorkstationProvision.ps1') -EnvironmentRoleId desktop-workstation -Profile engineering-full -Mode Apply
+```
+
+The Apply mode is **opt-in**, verifies canonical Git origin, installs missing PowerShell 7/Git/Node LTS/GitHub CLI through approved WinGet package IDs, installs missing native Codex/Auggie through approved npm package IDs, then delegates Ubuntu repair and full AGY/OpenCode/WezTerm/GNHF setup to the pre-existing technician entrypoints. It never silently signs in to a provider, updates an existing Git checkout, deploys project code, or configures Windows activation. Existing working commands are observed rather than reinstalled. Missing PATH, UAC permission, Ubuntu first-user setup, installer errors and reboot are explicit **stop/resume** gates.
+
+A new machine must first obtain the actual repository checkout, and Git must be available to prove its origin. The coordinator **does not secretly download or execute an unpinned remote script**. After any blocked step, repair exactly that step and rerun the same command; it produces an individual `provision-summary.json` under `%LOCALAPPDATA%\AgentSwitchboard\personal-workstation-bootstrap\runs\<runId>`.
+
+**Proof after Apply:** local installation/version checks and the canonical technician receipt, not provider login, running a production agent task, the FirstMate crew runtime, Android SDK, Docker, Windows updates, or full-machine acceptance. It is expected to report `installed-awaiting-operator-gates` rather than falsely claiming the entire workstation is finished. If a separate optional SDK is needed for an active project, install it in the project-owned lane after the core fleet.
+
 ## 2 — Existing AgentSwitchboard fleet: full engineering station
 
 AgentSwitchboard already owns the WinGet/WezTerm, WSL Ubuntu, tmux, AGY, OpenCode, Copilot CLI, and optional Hermes/Pi installation surfaces; **reuse them**. FirstMate under WSL owns the multi-agent crew runtime. GNHF is a bounded Windows launcher, not another crew orchestrator.
