@@ -30,11 +30,9 @@ function Get-WisprState {
     $apps = @()
     if (Test-Path -LiteralPath $base -PathType Container) {
         foreach ($folder in @(Get-ChildItem -LiteralPath $base -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -like 'app-*' })) {
-            $apps += @((Join-Path $folder.FullName 'WisprFlow.exe'), (Join-Path $folder.FullName 'Wispr Flow.exe')) |
-                Where-Object { Test-Path -LiteralPath $_ -PathType Leaf }
+            foreach ($name in @('WisprFlow.exe', 'Wispr Flow.exe')) { $candidate = Join-Path $folder.FullName $name; if (Test-Path -LiteralPath $candidate -PathType Leaf) { $apps += $candidate } }
         }
-        $apps += @((Join-Path $base 'WisprFlow.exe'), (Join-Path $base 'Wispr Flow.exe')) |
-            Where-Object { Test-Path -LiteralPath $_ -PathType Leaf }
+        foreach ($name in @('WisprFlow.exe', 'Wispr Flow.exe')) { $candidate = Join-Path $base $name; if (Test-Path -LiteralPath $candidate -PathType Leaf) { $apps += $candidate } }
     }
     if ($apps.Count -gt 0 -and (Test-Path -LiteralPath $update -PathType Leaf)) { return 'installed-files-present' }
     if ($apps.Count -gt 0 -or (Test-Path -LiteralPath $update -PathType Leaf)) { return 'partial-install-review-required' }
