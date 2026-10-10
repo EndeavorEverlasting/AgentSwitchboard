@@ -6,7 +6,8 @@
     "roleRegistry": "tooling/profiles/windows/harness/machine-profile/environment-role.registry.json",
     "crewRuntime": "FirstMate (WSL/Ubuntu)",
     "singleAgentFleet": "tooling/gnhf",
-    "secrets": "operator-authentication-only"
+    "secrets": "operator-authentication-only",
+    "essentialApps": "tooling/profiles/windows/Invoke-PersonalEssentialApps.ps1"
   },
   "roles": [
     "desktop-workstation",
@@ -19,6 +20,7 @@
       "id": "code-now",
       "label": "First useful coding session",
       "requires": [
+        "essential-apps",
         "windows-foundation",
         "native-agents",
         "first-repo-smoke"
@@ -29,6 +31,7 @@
       "id": "engineering-full",
       "label": "Full engineering workstation",
       "requires": [
+        "essential-apps",
         "windows-foundation",
         "native-agents",
         "first-repo-smoke",
@@ -40,6 +43,39 @@
     }
   ],
   "stages": [
+    {
+      "id": "essential-apps",
+      "platform": "windows",
+      "requiredFor": [
+        "code-now",
+        "engineering-full"
+      ],
+      "dependencies": [],
+      "executor": "Invoke-PersonalEssentialApps.ps1",
+      "components": [
+        {
+          "id": "brave",
+          "command": "brave",
+          "probeKind": "windows-app",
+          "wingetId": "Brave.Brave",
+          "necessity": "core"
+        },
+        {
+          "id": "wispr-flow",
+          "command": "WisprFlow",
+          "probeKind": "windows-app",
+          "downloadUrl": "https://dl.wisprflow.ai/windows/latest",
+          "publisher": "Wispr AI",
+          "necessity": "core"
+        }
+      ],
+      "proof": [
+        "existing apps detected",
+        "official installer verification",
+        "manual browser and dictation acceptance"
+      ],
+      "safety": "Protect existing app files and data; use official signed installers only."
+    },
     {
       "id": "windows-foundation",
       "platform": "windows",

@@ -216,6 +216,10 @@ try {
     } else {
         if (-not (Find-Exe 'git.exe')) { throw 'Git is missing. Install Git.Git with WinGet, reopen PowerShell, and rerun the verified checkout script.' }
         Assert-Checkout
+        $appRunner = Join-Path $RepoRoot 'tooling/profiles/windows/Invoke-PersonalEssentialApps.ps1'
+        & $appRunner -Mode Apply -OutputRoot $runDir
+        $appExit = $LASTEXITCODE
+        Add-Stage 'essential-apps' $(if ($appExit -eq 0) { 'observed' } else { 'operator-required' }) 'Review essential-apps-summary.json for browser and dictation status.'
         Ensure-Foundation
         Ensure-NativeAgents
         if ($Profile -eq 'engineering-full') {

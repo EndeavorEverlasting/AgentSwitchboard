@@ -35,6 +35,24 @@ $null = New-Item -ItemType Directory -Path $runDir -Force
 
 $stageResults = @(
     foreach ($stage in $contract.stages) {
+        if ($stage.id -eq 'essential-apps') {
+            $runner = Join-Path $PSScriptRoot 'Invoke-PersonalEssentialApps.ps1'
+            & $runner -Mode Inspect -OutputRoot $runDir
+            $appReceipts = @(Get-ChildItem -LiteralPath $runDir -Filter 'essential-apps-summary.json' -Recurse -File)
+            if ($appReceipts.Count -ne 1) { throw 'Essential apps inspection did not produce one receipt.' }
+            $appReport = Get-Content -LiteralPath $appReceipts[0].FullName -Raw -Encoding UTF8 | ConvertFrom-Json
+            $observations = @($appReport.apps | ForEach-Object {
+                [pscustomobject]@{
+                    id = [string]$_.id
+                    command = 'windows-app'
+                    necessity = 'core'
+                    result = [string]$_.state
+                    resolvedPath = $null
+                    version = $null
+                    authenticated = $null
+                }
+            })
+        } else {
         $observations = @(
             foreach ($component in $stage.components) {
                 # Existence on PATH is not validation of version, auth, or ability to run.
@@ -50,14 +68,15 @@ $stageResults = @(
                 }
             }
         )
-        $missingCore = @($observations | Where-Object { $_.necessity -eq 'core' -and $_.result -eq 'not-found-on-path' })
+        }
+        $missingCore = @($observations | Where-Object { $_.necessity -eq 'core' -and $_.result -in @('not-found-on-path', 'not-detected', 'partial-install-review-required') })
         [pscustomobject]@{
             id = [string]$stage.id
             platform = [string]$stage.platform
             dependencies = @($stage.dependencies)
             componentObservations = $observations
             status = if ($missingCore.Count -gt 0) { 'needs-prerequisites' } elseif ($observations.Count -eq 0) { 'manual-gate' } else { 'discovery-only' }
-            proofCeiling = 'PATH discovery only; versions, auth, installer success, and live agent functionality not verified'
+            proofCeiling = 'Command discovery or on-disk app file presence only; installation health, browser defaults, voice permissions, auth, and real application use unverified'
         }
     }
 )
