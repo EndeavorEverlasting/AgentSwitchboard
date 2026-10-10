@@ -7,10 +7,30 @@
 
 ## Quick navigation
 
-1. **Code-now:** install the minimum, then start Codex or Auggie.
-2. **Full engineering station:** converge the existing AgentSwitchboard Windows/WSL fleet.
-3. **Selective add-ons:** project SDKs, editors, local models, providers.
-4. **Safety and verification:** protect local data and record true readiness.
+1. **First-use apps:** install or detect Brave and Wispr Flow.
+2. **Code-now:** install the minimum, then start Codex or Auggie.
+3. **Full engineering station:** converge the existing AgentSwitchboard Windows/WSL fleet.
+4. **Selective add-ons:** project SDKs, editors, local models, providers.
+5. **Safety and verification:** protect local data and record true readiness.
+
+## 0 — First-use apps: Brave + Wispr Flow
+
+A working private browser and voice dictation are now **first-priority** on personal Windows desktops/laptops, before long-running SDK and WSL installations. Use the existing machine-specific script from a verified checkout:
+
+```powershell
+$repo = Join-Path $env:USERPROFILE 'dev\AgentSwitchBoard-Live'
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repo 'tooling\profiles\windows\Invoke-PersonalEssentialApps.ps1') -Mode Inspect
+# If you authorize installation of missing apps:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repo 'tooling\profiles\windows\Invoke-PersonalEssentialApps.ps1') -Mode Apply
+```
+
+The main `Invoke-PersonalWorkstationProvision.ps1 -Mode Apply -Profile engineering-full` also runs this stage **before** Node, Codex, WSL, and the extended fleet. It records an independent private receipt under `%LOCALAPPDATA%\AgentSwitchboard\personal-workstation-bootstrap\runs`. A failure to install optional GUI apps is recorded and does not require discarding functioning coding tools.
+
+**Brave:** identify an existing user- or machine-scope `brave.exe` first. Install missing Brave with `winget install --id Brave.Brave --exact --source winget`; no Microsoft Store, no browser search results or third-party mirrors. The user's already-running direct installer should finish before invoking Apply, so duplicate installations are avoided. Select Brave manually in **Windows Settings → Apps → Default apps → Brave**. The script does not change the browser association or silently import other browsers' data.
+
+**Wispr Flow:** identify existing per-user application and updater files first; a partially missing install is flagged for review, not deleted or forcibly reinstalled. For a missing installation, use the [vendor's direct Windows installer](https://dl.wisprflow.ai/windows/latest), verify its **Wispr AI** Authenticode signature, then run the official user installer. Its downloader can hand off to a subsequent wizard; installer process exit does not prove that setup completed. After installation, open Wispr from Start, sign in to your account, grant Windows microphone permission, and test dictation in an editor. Never assume credentials or permissions transferred from another machine. Do not use similarly named **Flow Launcher** or generic third-party packages.
+
+**Safety from previous incidents:** installed application trees are live program files, **not disk-cleanup targets**. Do not use any FileSteward cleanup routine to remove `%LOCALAPPDATA%\WisprFlow`, its updater, its versioned app folders, or voice app data while setting up the workstation. This bootstrap does not uninstall, remove, or relocate them. Windows application appearance and microphone behavior still require on-device acceptance.
 
 ## 1 — Code-now: first coding session
 
