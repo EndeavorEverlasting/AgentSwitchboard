@@ -1,0 +1,354 @@
+{
+  "schema": "agentswitchboard.personal-workstation-bootstrap.v1",
+  "authority": {
+    "owner": "AgentSwitchboard",
+    "machineProfile": "tooling/profiles/windows/harness/machine-profile/machine-profile.registry.json",
+    "roleRegistry": "tooling/profiles/windows/harness/machine-profile/environment-role.registry.json",
+    "crewRuntime": "FirstMate (WSL/Ubuntu)",
+    "singleAgentFleet": "tooling/gnhf",
+    "secrets": "operator-authentication-only"
+  },
+  "roles": [
+    "desktop-workstation",
+    "personal-windows-laptop"
+  ],
+  "roleSelection": "explicit-or-local-binding-only",
+  "repoPathSource": "machine-profile:pathRoles.developmentCheckout",
+  "profiles": [
+    {
+      "id": "code-now",
+      "label": "First useful coding session",
+      "requires": [
+        "windows-foundation",
+        "native-agents",
+        "first-repo-smoke"
+      ],
+      "acceptance": "At least one authenticated coding agent runs a bounded read-only repo orientation; no unauthorized file changes."
+    },
+    {
+      "id": "engineering-full",
+      "label": "Full engineering workstation",
+      "requires": [
+        "windows-foundation",
+        "native-agents",
+        "first-repo-smoke",
+        "workspace-fleet",
+        "language-labs",
+        "privacy-recovery"
+      ],
+      "acceptance": "All selected capability checks have measured versions, recorded receipts, and individually truthful readiness."
+    }
+  ],
+  "stages": [
+    {
+      "id": "windows-foundation",
+      "platform": "windows",
+      "requiredFor": [
+        "code-now",
+        "engineering-full"
+      ],
+      "dependencies": [],
+      "executor": "explicit-winget-install-plus-version-probes",
+      "components": [
+        {
+          "id": "powershell7",
+          "command": "pwsh",
+          "wingetId": "Microsoft.PowerShell",
+          "verify": [
+            "pwsh",
+            "--version"
+          ],
+          "necessity": "core"
+        },
+        {
+          "id": "git",
+          "command": "git",
+          "wingetId": "Git.Git",
+          "verify": [
+            "git",
+            "--version"
+          ],
+          "necessity": "core"
+        },
+        {
+          "id": "node-lts",
+          "command": "node",
+          "wingetId": "OpenJS.NodeJS.LTS",
+          "verify": [
+            "node",
+            "--version"
+          ],
+          "minimumMajor": 22,
+          "necessity": "core"
+        },
+        {
+          "id": "github-cli",
+          "command": "gh",
+          "wingetId": "GitHub.cli",
+          "verify": [
+            "gh",
+            "--version"
+          ],
+          "necessity": "core"
+        }
+      ],
+      "proof": [
+        "fresh-shell PATH resolution",
+        "installed command version captured"
+      ],
+      "safety": "Never reinstall a healthy tool; do not silently change account association, system policy, disk partitions or Defender settings."
+    },
+    {
+      "id": "native-agents",
+      "platform": "windows",
+      "requiredFor": [
+        "code-now",
+        "engineering-full"
+      ],
+      "dependencies": [
+        "windows-foundation"
+      ],
+      "executor": "vendor-package-and-interactive-login",
+      "components": [
+        {
+          "id": "codex",
+          "command": "codex",
+          "npmPackage": "@openai/codex",
+          "verify": [
+            "codex",
+            "--version"
+          ],
+          "login": "interactive codex",
+          "necessity": "core"
+        },
+        {
+          "id": "auggie",
+          "command": "auggie",
+          "npmPackage": "@augmentcode/auggie",
+          "verify": [
+            "auggie",
+            "--version"
+          ],
+          "login": "interactive auggie login",
+          "necessity": "core"
+        },
+        {
+          "id": "agy",
+          "command": "agy",
+          "repoEntry": "Technician-AgentSwitchboard-Ready.cmd setup",
+          "verify": [
+            "agy",
+            "--version"
+          ],
+          "necessity": "full"
+        },
+        {
+          "id": "opencode",
+          "command": "opencode",
+          "repoEntry": "Technician-AgentSwitchboard-Ready.cmd setup",
+          "verify": [
+            "opencode",
+            "--version"
+          ],
+          "necessity": "full"
+        }
+      ],
+      "proof": [
+        "command version and path",
+        "explicit authentication/result distinct from binary presence",
+        "readiness probes for Auggie/AGY/OpenCode"
+      ],
+      "safety": "No unattended provider login, credentials in tracked files, or automatic repository write."
+    },
+    {
+      "id": "first-repo-smoke",
+      "platform": "windows",
+      "requiredFor": [
+        "code-now",
+        "engineering-full"
+      ],
+      "dependencies": [
+        "native-agents"
+      ],
+      "executor": "operator-selected-repository",
+      "components": [],
+      "proof": [
+        "repo origin/branch/head and dirty state captured",
+        "agent can explain repo in read-only mode",
+        "no mutation unless task explicitly scoped"
+      ],
+      "safety": "Preserve unrelated work; no force-push, reset, clean or automatic trusted-workspace consent."
+    },
+    {
+      "id": "workspace-fleet",
+      "platform": "windows-wsl",
+      "requiredFor": [
+        "engineering-full"
+      ],
+      "dependencies": [
+        "windows-foundation"
+      ],
+      "executor": "Technician-AgentSwitchboard-Ready.cmd setup",
+      "components": [
+        {
+          "id": "wezterm",
+          "command": "wezterm",
+          "verify": [
+            "wezterm",
+            "--version"
+          ],
+          "necessity": "full"
+        },
+        {
+          "id": "wsl",
+          "command": "wsl",
+          "verify": [
+            "wsl",
+            "--list",
+            "--verbose"
+          ],
+          "necessity": "full"
+        },
+        {
+          "id": "tmux",
+          "command": "tmux",
+          "verify": [
+            "tmux",
+            "-V"
+          ],
+          "necessity": "full"
+        },
+        {
+          "id": "pi",
+          "command": "pi",
+          "repoEntry": "Bootstrap-Pi-SystemWide.cmd",
+          "necessity": "optional"
+        },
+        {
+          "id": "hermes",
+          "command": "hermes",
+          "repoEntry": "Setup-AgentSwitchboard.cmd",
+          "necessity": "optional"
+        },
+        {
+          "id": "ollama",
+          "command": "ollama",
+          "necessity": "optional"
+        }
+      ],
+      "proof": [
+        "Ubuntu initialized and WSL owned",
+        "AgentSwitchboard technician-ready and GNHF fleet receipts",
+        "FirstMate separately certified for multi-agent crew"
+      ],
+      "safety": "A reboot, elevation, distro account, first-party installer review, and provider consent are operator gates; ASB fleet is not FirstMate crew runtime."
+    },
+    {
+      "id": "language-labs",
+      "platform": "windows-and-wsl",
+      "requiredFor": [
+        "engineering-full"
+      ],
+      "dependencies": [
+        "windows-foundation"
+      ],
+      "executor": "per-project-sdk-install-only",
+      "components": [
+        {
+          "id": "python",
+          "command": "python",
+          "necessity": "conditional"
+        },
+        {
+          "id": "uv",
+          "command": "uv",
+          "necessity": "conditional"
+        },
+        {
+          "id": "dotnet",
+          "command": "dotnet",
+          "necessity": "conditional"
+        },
+        {
+          "id": "rust",
+          "command": "cargo",
+          "necessity": "conditional"
+        },
+        {
+          "id": "go",
+          "command": "go",
+          "necessity": "conditional"
+        },
+        {
+          "id": "android-sdk",
+          "command": "android",
+          "necessity": "conditional"
+        },
+        {
+          "id": "docker",
+          "command": "docker",
+          "necessity": "conditional"
+        }
+      ],
+      "proof": [
+        "only project-required runtimes installed",
+        "project compiler/tests green"
+      ],
+      "safety": "Android SDK on another device is not proof for this host; do not install heavy SDKs as mandatory preflight."
+    },
+    {
+      "id": "privacy-recovery",
+      "platform": "windows",
+      "requiredFor": [
+        "engineering-full"
+      ],
+      "dependencies": [
+        "windows-foundation"
+      ],
+      "executor": "operator-reviewed-settings",
+      "components": [],
+      "proof": [
+        "activation + administrator membership checked separately",
+        "updates and GPU/chipset drivers verified",
+        "secrets and SSH keys enrolled interactively",
+        "Drive/backup sources verified before any restore"
+      ],
+      "safety": "No automatic Microsoft sign-in, OneDrive workspace redirection, secret copying, disk-format action or recovery source manipulation."
+    }
+  ],
+  "storagePolicy": {
+    "repositoryRoot": "machine-profile:pathRoles.developmentCheckout",
+    "scratchData": "optional operator-selected secondary storage",
+    "neverInferFromDriveLetters": true,
+    "neverAutoMoveProfiles": true
+  },
+  "evidence": {
+    "localOnly": "%LOCALAPPDATA%\\AgentSwitchboard\\personal-workstation-bootstrap\\runs",
+    "privateDrive": "existing personal-system-recovery-workspace (link in private mapping only)",
+    "publicArtifacts": [
+      "contract",
+      "reusable guide",
+      "synthetic tests"
+    ],
+    "evidenceKinds": [
+      "designed",
+      "implemented",
+      "locally-validated",
+      "integration-validated",
+      "production-verified"
+    ],
+    "prohibitedPublicData": [
+      "account names",
+      "machine names",
+      "serial numbers",
+      "secrets",
+      "personal file paths",
+      "screenshots"
+    ]
+  },
+  "roleExclusions": [
+    "admin-box-1",
+    "admin-box-2"
+  ],
+  "proofCeiling": "A profile and read-only local preflight do not certify package installation, provider auth, model access, Windows activation, FirstMate crew, or project development readiness."
+}
