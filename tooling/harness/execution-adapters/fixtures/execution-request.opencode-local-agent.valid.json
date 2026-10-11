@@ -1,0 +1,35 @@
+{
+  "schema": "agentswitchboard.execution-request/v1",
+  "requestId": "req_opencode_20261011_001",
+  "correlationId": "corr-opencode-contract-static",
+  "causationId": "lane-opencode-readonly",
+  "adapterKind": "opencode-local-agent",
+  "mission": "Inspect an authorized repo without modifying it.",
+  "workingDirectory": ".",
+  "timeoutSeconds": 300,
+  "mutation": {
+    "allowed": false,
+    "allowedScopes": [],
+    "forbiddenScopes": [
+      "**"
+    ]
+  },
+  "executionPolicy": {
+    "profile": "READ_ONLY",
+    "networkAllowed": true,
+    "interactiveAuthAllowed": false,
+    "maxOutputBytes": 16384
+  },
+  "input": {
+    "kind": "opencode-local-agent",
+    "prompt": "Read the repository and report only the evidence; do not modify files.",
+    "description": "OpenCode read-only native agent contract fixture",
+    "repositoryRef": "EndeavorEverlasting/TokenCorridor"
+  },
+  "provenance": {
+    "source": "EXECUTION_ADAPTER_OPENCODE_CONTRACT_V1",
+    "planId": "ASB-2026-09-EXECUTION-ADAPTER-TRIO-V1",
+    "laneId": "OC-RO-001",
+    "promptRef": "P04-via-upstream"
+  }
+}
