@@ -128,6 +128,9 @@
         },
         {
           "$ref": "#/$defs/cursorCloudAgentInput"
+        },
+        {
+          "$ref": "#/$defs/opencodeLocalAgentInput"
         }
       ]
     },
@@ -273,6 +276,38 @@
           "maxLength": 500
         }
       }
+    },
+    "opencodeLocalAgentInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "prompt",
+        "description",
+        "repositoryRef"
+      ],
+      "properties": {
+        "kind": {
+          "const": "opencode-local-agent"
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200000
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "repositoryRef": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 500
+        }
+      }
     }
   },
   "allOf": [
@@ -320,6 +355,22 @@
         "properties": {
           "input": {
             "$ref": "#/$defs/cursorCloudAgentInput"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "adapterKind": {
+            "const": "opencode-local-agent"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "input": {
+            "$ref": "#/$defs/opencodeLocalAgentInput"
           }
         }
       }
