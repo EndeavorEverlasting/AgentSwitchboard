@@ -274,6 +274,17 @@ def main() -> None:
     bad_oc["input"]["kind"] = "cursor-cloud-agent"
     assert_negative(lambda: validate_json_schema(bad_oc, request_schema), "OpenCode input/kind mismatch was accepted")
     bad_oc = copy.deepcopy(opencode_request)
+    bad_oc["adapterKind"] = "unknown-adapter"
+    assert_negative(lambda: validate_json_schema(bad_oc, request_schema), "unknown adapter spoofed OpenCode input")
+    bad_oc = copy.deepcopy(opencode_request)
+    bad_oc["executionPolicy"]["profile"] = "REPO_EDIT"
+    bad_oc["mutation"]["allowed"] = True
+    assert_negative(lambda: validate_json_schema(bad_oc, request_schema), "write-enabled OpenCode request admitted")
+    bad_oc = copy.deepcopy(opencode_request)
+    bad_oc["executionPolicy"]["profile"] = "VALIDATION"
+    assert_negative(lambda: validate_json_schema(bad_oc, request_schema), "unverified agent profile admitted")
+
+    bad_oc = copy.deepcopy(opencode_request)
     bad_oc["input"]["prompt"] = ""
     assert_negative(lambda: validate_json_schema(bad_oc, request_schema), "empty OpenCode prompt was accepted")
     long_oc = copy.deepcopy(opencode_request)
