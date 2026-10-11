@@ -1,0 +1,40 @@
+name: Execution adapter request/receipt schema v1
+
+on:
+  pull_request:
+    paths:
+      - 'tooling/harness/execution-adapters/**'
+      - 'tests/test_execution_adapter_contract.py'
+      - '.github/workflows/execution-adapter-schema-v1.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tooling/harness/execution-adapters/**'
+      - 'tests/test_execution_adapter_contract.py'
+      - '.github/workflows/execution-adapter-schema-v1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract-canaries:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Execution adapter schema and semantic negatives
+        run: python tests/test_execution_adapter_contract.py
+      - name: JSON syntax and hygiene
+        shell: bash
+        run: |
+          python -m json.tool tooling/harness/execution-adapters/schemas/execution-request.v1.schema.json >/dev/null
+          python -m json.tool tooling/harness/execution-adapters/execution-adapter-contract.v1.json >/dev/null
+          python -m json.tool tooling/harness/execution-adapters/fixtures/execution-request.opencode-local-agent.valid.json >/dev/null
+          git diff --check ${{ github.event.pull_request.base.sha || 'HEAD^' }}...${{ github.event.pull_request.head.sha || 'HEAD' }}

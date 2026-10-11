@@ -243,7 +243,7 @@ def main() -> None:
     assert contract["contractId"] == "agentswitchboard.execution-adapter.v1"
     assert contract["status"] == "accepted-contract-only"
     assert [item["adapterKind"] for item in contract["adapterKinds"]] == [
-        "local-argv", "claude-code", "cursor-cloud-agent"
+        "local-argv", "claude-code", "cursor-cloud-agent", "opencode-local-agent"
     ]
     assert contract["ownership"]["brokerOwner"].startswith("AgentSwitchboard")
     assert "FirstMate" in contract["ownership"]["crewRuntimeBoundary"]
@@ -261,10 +261,37 @@ def main() -> None:
         load_json(FIXTURE_DIR / "execution-request.local-argv.valid.json"),
         load_json(FIXTURE_DIR / "execution-request.claude-code.valid.json"),
         load_json(FIXTURE_DIR / "execution-request.cursor-cloud-agent.valid.json"),
+        load_json(FIXTURE_DIR / "execution-request.opencode-local-agent.valid.json"),
     ]
     for request in requests:
         validate_json_schema(request, request_schema)
         validate_request_semantics(request)
+
+    opencode_request = requests[-1]
+    assert opencode_request["adapterKind"] == "opencode-local-agent"
+    assert len(opencode_request["input"]["prompt"]) > 0
+    bad_oc = copy.deepcopy(opencode_request)
+    bad_oc["input"]["kind"] = "cursor-cloud-agent"
+    assert_negative(lambda: validate_json_schema(bad_oc, request_schema), "OpenCode input/kind mismatch was accepted")
+    bad_oc = copy.deepcopy(opencode_request)
+    bad_oc["adapterKind"] = "unknown-adapter"
+    assert_negative(lambda: validate_json_schema(bad_oc, request_schema), "unknown adapter spoofed OpenCode input")
+    bad_oc = copy.deepcopy(opencode_request)
+    bad_oc["executionPolicy"]["profile"] = "REPO_EDIT"
+    bad_oc["mutation"]["allowed"] = True
+    assert_negative(lambda: validate_json_schema(bad_oc, request_schema), "write-enabled OpenCode request admitted")
+    bad_oc = copy.deepcopy(opencode_request)
+    bad_oc["executionPolicy"]["profile"] = "VALIDATION"
+    assert_negative(lambda: validate_json_schema(bad_oc, request_schema), "unverified agent profile admitted")
+
+    bad_oc = copy.deepcopy(opencode_request)
+    bad_oc["input"]["prompt"] = ""
+    assert_negative(lambda: validate_json_schema(bad_oc, request_schema), "empty OpenCode prompt was accepted")
+    long_oc = copy.deepcopy(opencode_request)
+    long_oc["input"]["prompt"] = "x" * 45248
+    validate_json_schema(long_oc, request_schema)
+    long_oc["input"]["prompt"] = "x" * 200001
+    assert_negative(lambda: validate_json_schema(long_oc, request_schema), "unbounded OpenCode prompt was accepted")
 
     capability = load_json(FIXTURE_DIR / "capability-report.blocked-auth.valid.json")
     validate_json_schema(capability, capability_schema)

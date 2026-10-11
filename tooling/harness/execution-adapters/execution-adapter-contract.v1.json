@@ -49,6 +49,13 @@
       "targetImplementation": "tooling/harness/execution-adapters/adapters/cursor_cloud_agent.py",
       "currentSource": "PR #332 lineage under tooling/harness/triage-consumer/dispatch/**",
       "minimumRuntimeProof": "CURSOR_CLOUD_AGENT_RUNTIME_OBSERVED"
+    },
+    {
+      "adapterKind": "opencode-local-agent",
+      "nativeHarness": "OpenCode local read-only native agent",
+      "targetImplementation": "EndeavorEverlasting/TokenCorridor:src/tokencorridor/execution/adapters/adapters/opencode_local_agent.py",
+      "currentSource": "TokenCorridor PR #188 candidate; not integrated/live verified",
+      "minimumRuntimeProof": "CONTRACT_STATIC"
     }
   ],
   "readinessStates": [
@@ -128,6 +135,13 @@
       "Task launch must be machine-closed: request to real Task invocation to observed terminal result without operator intervention.",
       "A transport/socket existing is not equivalent to TASK_DISPATCH_READY.",
       "EXECUTED requires a fresh cloudAgentBcId (or provider-equivalent stable execution identity) and observed completion."
+    ],
+    "opencode-local-agent": [
+      "input.kind must equal opencode-local-agent and match adapterKind.",
+      "Canonical prompt up to 200000 characters; transport must prove the full prompt arrived intact, not truncate for Windows argv.",
+      "Read-only requests require verified restricted agent permissions and scope enforcement; no unrestricted Build fallback.",
+      "Paid-model selection requires explicit budget approval and cannot change after capability probe.",
+      "OpenCode's own runtime evidence is never independent proof of user outcome."
     ]
   },
   "minimumEndToEndProof": {
@@ -151,6 +165,13 @@
       "A deterministic external artifact/result verifies the bounded task effect.",
       "Wrong host, unavailable API/Task bridge, and timeout paths fail closed.",
       "Normalized receipt validates."
+    ],
+    "opencode-local-agent": [
+      "Host detects actual OpenCode version and admits only an accepted read-only restricted agent.",
+      "Canonical P04/P07/P82 prompts arrive intact via proved transport.",
+      "No file modifications during read-only canary; prove from independent git status and fixture hashes.",
+      "Missing auth/paid model without consent/timeout/unavailable executable fail closed.",
+      "Normalized receipt validates; actual native session and independent concurrency remain separate gates."
     ]
   },
   "migration": {
