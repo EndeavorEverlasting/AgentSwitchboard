@@ -371,6 +371,20 @@
         "properties": {
           "input": {
             "$ref": "#/$defs/opencodeLocalAgentInput"
+          },
+          "executionPolicy": {
+            "properties": {
+              "profile": {
+                "const": "READ_ONLY"
+              }
+            }
+          },
+          "mutation": {
+            "properties": {
+              "allowed": {
+                "const": false
+              }
+            }
           }
         }
       }
@@ -404,6 +418,32 @@
             "required": [
               "allowed"
             ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "input": {
+            "properties": {
+              "kind": {
+                "const": "opencode-local-agent"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          }
+        },
+        "required": [
+          "input"
+        ]
+      },
+      "then": {
+        "properties": {
+          "adapterKind": {
+            "const": "opencode-local-agent"
           }
         }
       }
