@@ -1,0 +1,25 @@
+name: Product authority regression
+on:
+  pull_request:
+    paths: [AGENTS.md, .github/workflows/product-authority.yml]
+  push:
+    paths: [AGENTS.md, .github/workflows/product-authority.yml]
+permissions:
+  contents: read
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check settled product authority
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s = Path("AGENTS.md").read_text(encoding="utf-8")
+          required = ("AgentSwitchboard is a retired product", "TokenCorridor owns the product control plane", "Technical cleanup does not reopen retirement")
+          for marker in required:
+              assert marker in s, "MISSING_PRODUCT_AUTHORITY:" + marker
+          print("PASS: retired donor != active product; TokenCorridor owns control plane")
+          PY
