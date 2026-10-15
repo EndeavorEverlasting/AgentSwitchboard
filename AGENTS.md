@@ -1,10 +1,10 @@
 # Agent Operating Contract
 
 ## Retired product and canonical routing (P00 / P01 / P04)
-AgentSwitchboard is a retired product; source evidence and verified legacy caller compatibility only. TokenCorridor owns the product control plane: prompts, routing, dispatch authority, Work Graph, proofs and website. Automation provides reusable mechanisms; native agents/FirstMate are runtimes, not products. Technical cleanup does not reopen retirement. Do not create new AgentSwitchboard product lanes or infer ownership from historical docs.
+AgentSwitchboard is a retired product (donor/verified old callers only). TokenCorridor owns the product control plane. Technical cleanup does not reopen retirement. No new ASB work; FirstMate/agents are runtimes.
 
 
-`AGENTS.md` is the root operating authority and single source of truth for how agents operate in AgentSwitchboard. Detailed triggered rules remain normative in `docs/governance/agent-operating-details.md`; they are incorporated by reference, not loaded as ambient context.
+`AGENTS.md` is the root operating authority for this **compatibility repository**; detail is in `docs/governance/agent-operating-details.md` (demand-load).
 
 ## Agent operating principles
 
@@ -60,11 +60,11 @@ If remote state or ownership is uncertain, perform read-only intake first. Prese
 5. Load `SKILLS.md`, `CAPABILITIES.md`, `TRIGGERS.md`, `CODEBASE_MAP.md`, plans, schemas, reports, or implementation only when the selected route/task requires them.
 6. Use `tooling/harness/context/glossary.json` only for unclear repository terms.
 
-Repository-family work loads `.ai/harness/repository-family.registry.json`. Public-plan work loads `plans/plan-registry.json` and `.ai/skills/public-plan-coordination/SKILL.md` after that trigger is selected. `.ai/agent-contract.json` remains the machine-readable repository contract.
+Repository-family: `.ai/harness/repository-family.registry.json`. Public plans: `plans/plan-registry.json` and `.ai/skills/public-plan-coordination/SKILL.md`. Contract: `.ai/agent-contract.json`.
 
 ## Triggered governance detail
 
-Load `docs/governance/agent-operating-details.md` for launch/dependency gates, broad multi-surface sprints, cross-device transport, live continuation, AXI/interface design, multi-agent/local-model orchestration, privacy proof, autovalidation loops, or another clause not fully stated here.
+Demand-load `docs/governance/agent-operating-details.md` for cross-device, multi-agent, runtime, privacy, launch and continuation procedures.
 
 Relevant policy pairs:
 - harness doctrine: `docs/governance/harness-doctrine.md` + `.ai/harness/harness-doctrine.policy.json`;
