@@ -1,5 +1,9 @@
 # Agent Operating Contract
 
+## Retired product and canonical routing (P00 / P01 / P04)
+AgentSwitchboard is a retired product; source evidence and verified legacy caller compatibility only. TokenCorridor owns the product control plane: prompts, routing, dispatch authority, Work Graph, proofs and website. Automation provides reusable mechanisms; native agents/FirstMate are runtimes, not products. Technical cleanup does not reopen retirement. Do not create new AgentSwitchboard product lanes or infer ownership from historical docs.
+
+
 `AGENTS.md` is the root operating authority and single source of truth for how agents operate in AgentSwitchboard. Detailed triggered rules remain normative in `docs/governance/agent-operating-details.md`; they are incorporated by reference, not loaded as ambient context.
 
 ## Agent operating principles
