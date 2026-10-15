@@ -2,7 +2,16 @@
 
 Windows-first automation for installing, configuring, routing, smoke-testing, and validating coding agents across multiple hosted model providers.
 
-AgentSwitchboard is being built as an **agentic engineering control plane**: engineers define intent and acceptance boundaries, agents perform contextual planning and implementation, and deterministic code supplies fast, repeatable guardrails. The goal is to move routine coding execution into evidence-backed AI Developer Workflows rather than placing a human inside every edit-test-repair loop.
+Historically, AgentSwitchboard was developed as an **agentic engineering control plane**; the following describes existing legacy behavior, not the desired separate product end state: engineers define intent and acceptance boundaries, agents perform contextual planning and implementation, and deterministic code supplies fast, repeatable guardrails. The goal is to move routine coding execution into evidence-backed AI Developer Workflows rather than placing a human inside every edit-test-repair loop.
+
+## Migration posture: historical donor / compatibility, not the destination product
+
+**This repository is operational legacy during a phased consolidation into the TokenCorridor destination.** Its launchers, policies and adapter code remain readable and may be needed by existing installed callers until they pass measured parity, caller-rewiring and rollback gates. It must not be treated as an independent long-term product/control-plane owner, new website destination or justification to route new orchestration features away from the unified destination.
+
+- **Do not start fresh AgentSwitchboard product initiatives** solely because historical documents call this repository canonical. Capture the capability gap in the destination owner's migration/convergence backlog instead.
+- **Keep compatibility functional:** current launch commands below describe *legacy behavior*, not proof that replacement installations exist. Do not disable an active legacy caller, break a public contract or delete state until exact destination parity, uninstall/rollback and caller census are proven.
+- **Evidence only:** existing ASB docs/code are prior art to inspect and transplant; external runtime products (FirstMate/OpenCode/Cursor) are adapters/substrates, not independent umbrella control planes.
+- Public repository records must not contain private TokenCorridor state, credentials, workstation identifiers, raw user/work receipts or a backlink granting access to private systems.
 
 ## Readiness-first startup
 
@@ -68,7 +77,7 @@ Reusable child-repository adoption files live under [`templates/repository-agent
 
 ## Agent operating contract
 
-AgentSwitchboard is the canonical policy source for the EndeavorEverlasting repository family.
+Historically, AgentSwitchboard has served as the repository-family policy source. These local policies remain enforceable for existing compatibility callers until explicit destination cutover proof; they do **not** assign permanent product authority to AgentSwitchboard.
 
 Start with [`AGENTS.md`](AGENTS.md), use [`CODEBASE_MAP.md`](CODEBASE_MAP.md) to load the smallest relevant surface, then read the tool adapter and routing documents:
 
