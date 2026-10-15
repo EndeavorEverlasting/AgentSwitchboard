@@ -4,7 +4,7 @@
 AgentSwitchboard is a retired product (donor/verified old callers only). TokenCorridor owns the product control plane. Technical cleanup does not reopen retirement. No new ASB work; FirstMate/agents are runtimes.
 
 
-`AGENTS.md` is the root operating authority for this **compatibility repository**; detail is in `docs/governance/agent-operating-details.md` (demand-load).
+`AGENTS.md` is the root operating authority and single source of truth for this compatibility repository; detail: `docs/governance/agent-operating-details.md` (demand-load).
 
 ## Agent operating principles
 
