@@ -10,6 +10,7 @@ ROLES = BASE / "harness" / "machine-profile" / "environment-role.registry.json"
 SCRIPT = BASE / "Get-PersonalWorkstationBootstrapStatus.ps1"
 DOC = ROOT / "docs" / "workstation" / "personal-development-workstation.md"
 PROVISIONER = BASE / "Invoke-PersonalWorkstationProvision.ps1"
+ESSENTIAL = BASE / "Invoke-PersonalEssentialApps.ps1"
 
 
 def check(condition: bool, message: str) -> None:
@@ -21,7 +22,7 @@ def validate_contract(data: dict, roles: dict) -> None:
     check(data["schema"] == "agentswitchboard.personal-workstation-bootstrap.v1", "wrong contract schema")
     ids = [stage["id"] for stage in data["stages"]]
     check(len(set(ids)) == len(ids), "stage IDs are not unique")
-    check(ids[:3] == ["windows-foundation", "native-agents", "first-repo-smoke"], "code-now dependency floor changed")
+    check(ids[:4] == ["essential-apps", "windows-foundation", "native-agents", "first-repo-smoke"], "code-now dependency floor changed")
     for index, stage in enumerate(data["stages"]):
         for dep in stage["dependencies"]:
             check(dep in ids[:index], f"forward or unknown dependency: {dep}")
@@ -36,24 +37,37 @@ def validate_contract(data: dict, roles: dict) -> None:
     check(data["repoPathSource"] == "machine-profile:pathRoles.developmentCheckout", "path owner forked")
     profiles = {p["id"]: set(p["requires"]) for p in data["profiles"]}
     check({"code-now", "engineering-full"} == set(profiles), "profile choice drifted")
-    check(profiles["code-now"] == set(ids[:3]), "code-now expanded beyond first useful task")
+    check(profiles["code-now"] == set(ids[:4]), "code-now expanded beyond first useful task")
     check(profiles["engineering-full"] == set(ids), "full profile missing stage")
     check(data["authority"]["crewRuntime"].startswith("FirstMate"), "ASB should not become crew runtime")
 
-    foundation = {x["id"]: x for x in data["stages"][0]["components"]}
+    foundation = {x["id"]: x for x in data["stages"][1]["components"]}
     check({"powershell7", "git", "node-lts", "github-cli"} <= set(foundation), "foundation missing tools")
     check(foundation["node-lts"]["minimumMajor"] >= 22, "Auggie Node floor regressed")
-    native = {x["id"]: x for x in data["stages"][1]["components"]}
+    native = {x["id"]: x for x in data["stages"][2]["components"]}
     check(native["codex"]["npmPackage"] == "@openai/codex", "Codex package identity drifted")
     check(native["auggie"]["npmPackage"] == "@augmentcode/auggie", "Auggie package identity drifted")
     check(native["agy"]["id"] != native["auggie"]["id"], "AGY/Auggie conflated")
 
     src = SCRIPT.read_text(encoding="utf-8")
     provisioner = PROVISIONER.read_text(encoding="utf-8")
+    essential = ESSENTIAL.read_text(encoding="utf-8")
     guide = DOC.read_text(encoding="utf-8")
+    apps = {c["id"]: c for c in data["stages"][0]["components"]}
+    check(set(apps) == {"brave", "wispr-flow"}, "essential app identity drift")
+    check(apps["brave"]["wingetId"] == "Brave.Brave", "brave package identity")
+    check(apps["wispr-flow"]["downloadUrl"] == "https://dl.wisprflow.ai/windows/latest", "unapproved Wispr source")
+    check("Get-AuthenticodeSignature" in essential and "Wispr AI" in essential, "signed Wispr verification missing")
+    check("--source winget" in essential and "--id Brave.Brave" in essential, "Store-free Brave WinGet package missing")
+    check("Get-WisprState" in essential and "Update.exe" in essential, "Wispr orphan-install guard absent")
+    for dangerous in ("Remove-Item", "Clear-Disk", "Format-Volume", "msstore"):
+        check(dangerous not in essential, f"essential apps installer contains prohibited behavior: {dangerous}")
+    check("Invoke-PersonalEssentialApps.ps1" in src and "Invoke-PersonalEssentialApps.ps1" in provisioner,
+          "essential app stage not integrated into inspect/apply")
     check("Inspect ONLY".lower() in src.lower(), "inspection-only contract not visible")
     check("Get-Command" in src and "status.json" in src and "status.md" in src, "inspector not evidence-backed")
     check("[Parameter(Mandatory)]" in src and "EnvironmentRoleId" in src, "explicit role selector absent")
+    check("Brave" in guide and "Wispr" in guide, "first-use app guide incomplete")
     check("winget install" in guide and "npm.cmd install -g" in guide, "operator fast path incomplete")
     check("engineering-full -Mode Apply" in guide, "full profile operator action not documented")
     check("Ensure-Foundation" in provisioner and "Ensure-NativeAgents" in provisioner, "provisioner missing native prerequisites")
@@ -84,7 +98,7 @@ def main() -> None:
     else:
         raise AssertionError("managed-role contamination unexpectedly passed")
     broken = copy.deepcopy(data)
-    broken["stages"][0]["components"][2]["minimumMajor"] = 18
+    broken["stages"][1]["components"][2]["minimumMajor"] = 18
     try:
         validate_contract(broken, roles)
     except AssertionError:

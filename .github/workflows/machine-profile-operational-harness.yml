@@ -6,10 +6,12 @@ on:
       - 'tooling/profiles/windows/harness/machine-profile/**'
       - 'tooling/profiles/windows/Get-MachineProfileOperationalStatus.ps1'
       - 'tooling/profiles/windows/Get-PersonalWorkstationBootstrapStatus.ps1'
+      - 'tooling/profiles/windows/Invoke-PersonalEssentialApps.ps1'
       - 'tooling/profiles/windows/Invoke-PersonalWorkstationProvision.ps1'
       - 'tests/test_personal_workstation_bootstrap_contract.py'
       - 'docs/workstation/personal-development-workstation.md'
       - 'tooling/profiles/windows/Get-PersonalWorkstationBootstrapStatus.ps1'
+      - 'tooling/profiles/windows/Invoke-PersonalEssentialApps.ps1'
       - 'tooling/profiles/windows/Invoke-PersonalWorkstationProvision.ps1'
       - 'tests/test_personal_workstation_bootstrap_contract.py'
       - 'docs/workstation/personal-development-workstation.md'
@@ -49,6 +51,18 @@ jobs:
         run: python tests/test_machine_profile_operational_harness.py
       - name: Personal workstation bootstrap contract
         run: python tests/test_personal_workstation_bootstrap_contract.py
+      - name: Windows essential apps non-mutating inspect smoke
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $output = Join-Path $env:RUNNER_TEMP 'asb-essential-apps-test'
+          ./tooling/profiles/windows/Invoke-PersonalEssentialApps.ps1 -Mode Inspect -OutputRoot $output
+          $receipts = @(Get-ChildItem -LiteralPath $output -Filter essential-apps-summary.json -Recurse -File)
+          if ($receipts.Count -ne 1) { throw 'Expected one essential app inspection receipt.' }
+          $receipt = Get-Content -LiteralPath $receipts[0].FullName -Raw | ConvertFrom-Json
+          if ($receipt.mode -ne 'Inspect' -or $receipt.state -ne 'inspection-complete') { throw 'Inspect mode did not return inspection-complete.' }
+          $ids = @($receipt.apps | ForEach-Object { $_.id })
+          if (@(Compare-Object @('brave','wispr-flow') $ids).Count -ne 0) { throw 'Essential app identities drifted.' }
       - name: Windows personal workstation inspect-only smoke
         if: runner.os == 'Windows'
         shell: pwsh
