@@ -79,6 +79,7 @@ $manifest = Read-JsonFile '.ai/harness/manifest.json'
 $registry = Read-JsonFile '.ai/harness/repository-family.registry.json'
 $artifactRegistry = Read-JsonFile '.ai/harness/artifact-registry.json'
 $workflow = Read-JsonFile '.ai/harness/workflows/repository-family-intake.workflow.json'
+$privacyWorkflow = Read-JsonFile '.ai/harness/workflows/privacy-decision-intake.workflow.json'
 
 if ($null -ne $manifest) {
     Add-Result ($manifest.schemaVersion -eq 1) 'manifest/schema-version' 'expected schemaVersion 1'
@@ -104,10 +105,11 @@ if ($null -ne $registry) {
         'EndeavorEverlasting/AgentSwitchboard',
         'EndeavorEverlasting/BlacksmithGuild',
         'EndeavorEverlasting/web-excel-repair-triage',
-        'EndeavorEverlasting/SysAdminSuite'
+        'EndeavorEverlasting/SysAdminSuite',
+        'EndeavorEverlasting/PiShark'
     )
 
-    Add-Result ($repositories.Count -eq 4) 'registry/repository-count' 'registry must contain exactly four repositories'
+    Add-Result ($repositories.Count -eq 5) 'registry/repository-count' 'registry must contain exactly five repositories'
     $actualNames = @($repositories | ForEach-Object { [string]$_.fullName })
     foreach ($expected in $expectedRepositories) {
         Add-Result ($actualNames -contains $expected) "registry/repository/${expected}" 'required repository is not registered'
@@ -198,6 +200,12 @@ if ($null -ne $workflow) {
     }
 }
 
+if ($null -ne $privacyWorkflow) {
+    Add-Result ($privacyWorkflow.workflowId -eq 'privacy-decision-intake') 'privacy-intake/id' 'unexpected privacy intake workflow id'
+    Add-Result ($privacyWorkflow.mode -eq 'ADVISORY_ONLY') 'privacy-intake/advisory-only' 'privacy gate must never execute changes'
+    Add-Result ($privacyWorkflow.childRepository -eq 'EndeavorEverlasting/PiShark') 'privacy-intake/child-owner' 'PiShark is the child owner'
+    Add-Result (@($privacyWorkflow.forbidden).Count -ge 4) 'privacy-intake/forbidden' 'privacy forbid list incomplete'
+}
 $schemaPaths = @(
     '.ai/harness/schemas/repository-family-registry.schema.json',
     '.ai/harness/schemas/run-context.schema.json',

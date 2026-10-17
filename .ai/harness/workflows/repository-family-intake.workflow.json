@@ -20,7 +20,7 @@
   ],
   "steps": [
     "Resolve and verify the AgentSwitchboard repository root.",
-    "Load the exact four-repository family registry.",
+    "Load the exact five-repository family registry.",
     "Find local clones by registered directory names without cloning or fetching.",
     "Inspect Git identity, branch, HEAD, dirty state, and required harness paths read-only.",
     "Classify each repository as ready, partial, blocked, or not_present.",
@@ -45,7 +45,7 @@
     "live target mutation"
   ],
   "stopConditions": [
-    "The registry is malformed or does not contain exactly the supported four repositories.",
+    "The registry is malformed or does not contain exactly the supported five repositories.",
     "The requested output directory is inside any inspected repository.",
     "The AgentSwitchboard checkout cannot be identified safely.",
     "Git is unavailable."

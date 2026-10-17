@@ -25,8 +25,8 @@ $OutputRoot = [IO.Path]::GetFullPath($OutputRoot)
 $registryPath = Join-Path $repoRoot '.ai/harness/repository-family.registry.json'
 $registry = Get-Content -LiteralPath $registryPath -Raw | ConvertFrom-Json
 $repositories = @($registry.repositories)
-if ($repositories.Count -ne 4) {
-    throw 'Repository-family registry must contain exactly four repositories.'
+if ($repositories.Count -ne 5) {
+    throw 'Repository-family registry must contain exactly five repositories.'
 }
 
 $git = (Get-Command git -ErrorAction Stop).Source
@@ -205,7 +205,7 @@ $statusDocument = [ordered]@{
     schema = 'agentswitchboard.repository-family-status.v1'
     runContext = $runContext
     summary = [ordered]@{
-        total = 4
+        total = $repositories.Count
         ready = $ready
         partial = $partial
         blocked = $blocked

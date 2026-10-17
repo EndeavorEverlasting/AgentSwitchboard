@@ -77,8 +77,8 @@ jobs:
               raise SystemExit(f'unexpected artifact set: {actual}')
           status = json.loads((root / 'repository-family-status.json').read_text(encoding='utf-8-sig'))
           handoff = json.loads((root / 'final-handoff.json').read_text(encoding='utf-8-sig'))
-          assert status['summary']['total'] == 4
-          assert len(status['repositories']) == 4
+          assert status['summary']['total'] == 5
+          assert len(status['repositories']) == 5
           assert status['proofLevel'] == 'read-only-repository-intake'
           assert handoff['receivingAgentMustReinspectState'] is True
           combined = '\n'.join(p.read_text(encoding='utf-8-sig') for p in root.iterdir() if p.is_file())
@@ -152,8 +152,8 @@ jobs:
           }
           $status = Get-Content -LiteralPath (Join-Path $root 'repository-family-status.json') -Raw | ConvertFrom-Json
           $handoff = Get-Content -LiteralPath (Join-Path $root 'final-handoff.json') -Raw | ConvertFrom-Json
-          if ($status.summary.total -ne 4 -or @($status.repositories).Count -ne 4) {
-            throw 'Family status must contain exactly four repositories.'
+          if ($status.summary.total -ne 5 -or @($status.repositories).Count -ne 5) {
+            throw 'Family status must contain exactly five repositories.'
           }
           if ($status.proofLevel -ne 'read-only-repository-intake') {
             throw 'Unexpected proof level.'
